@@ -1,0 +1,62 @@
+Application iOS de CoproFirst — permission additionnelle (GNU AGPL v3, article 7)
+
+Copyright © 2026 Philippe TRESSARD.
+
+Ce programme est un logiciel libre : vous pouvez le redistribuer et le modifier
+selon les termes de la GNU Affero General Public License publiée par la Free
+Software Foundation, en version 3 ou, à votre choix, toute version ultérieure
+(texte intégral : LICENSES/AGPL-3.0-or-later.txt). Il est complété par la
+permission additionnelle qui suit, accordée au titre de l'article 7 de cette
+licence.
+
+1. Objet
+
+   Les conditions de distribution d'Apple — App Store, TestFlight, et tout
+   service de distribution d'applications d'Apple qui leur succéderait —
+   imposent à qui reçoit une application des restrictions que l'article 10 de
+   l'AGPL interdit d'ajouter : nombre d'appareils, gestion numérique des droits,
+   conditions d'utilisation propres au magasin. Sans permission additionnelle,
+   ce programme ne pourrait pas y être publié dès qu'il contient le code d'un
+   autre auteur que le titulaire ci-dessus.
+
+2. Permission
+
+   Vous êtes autorisé à distribuer le programme, ou une œuvre fondée sur lui,
+   sous forme de code objet par l'intermédiaire de ces services, même lorsque
+   leurs conditions imposent aux destinataires les restrictions décrites au
+   point 1. Ces restrictions ne sont pas réputées ajoutées par vous au sens de
+   l'article 10 de l'AGPL.
+
+3. Conditions
+
+   La permission ne vaut qu'à ces conditions :
+
+   a. le Source correspondant de la version distribuée reste mis à disposition
+      de chacun, sans frais, selon les termes de l'AGPL — y compris l'accès au
+      code source offert aux utilisateurs par l'interface du programme
+      (article 13) ;
+   b. la version distribuée indique, dans son interface ou sa fiche, où
+      obtenir ce Source correspondant et sous quelle licence ;
+   c. aucune autre restriction que celles du point 1 n'est imposée aux
+      destinataires.
+
+   Hors de ces services, l'AGPL s'applique sans cette permission.
+
+4. Versions modifiées
+
+   Si vous modifiez le programme, vous pouvez étendre cette permission à votre
+   version ; vous n'y êtes pas tenu. Si vous ne le faites pas, retirez cette
+   permission de votre version, comme l'article 7 de l'AGPL vous y autorise.
+
+5. Contributions
+
+   Toute contribution proposée à ce dépôt est acceptée sous les termes de
+   l'AGPL v3 ou ultérieure ASSORTIE de la présente permission. La proposer vaut
+   accord pour qu'elle soit distribuée ainsi.
+
+Cette permission ne concerne pas les fichiers que REUSE.toml place sous une
+autre licence, ni les bibliothèques tierces, qui gardent chacune la leur
+(DEPENDANCES.md).
+
+LE PROGRAMME EST FOURNI « TEL QUEL », SANS AUCUNE GARANTIE, DANS LES LIMITES
+PRÉVUES PAR LA LOI ET PAR LES ARTICLES 15 ET 16 DE L'AGPL.

@@ -1,0 +1,26 @@
+#!/bin/bash
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# pre-commit — armé une fois par clone : git config core.hooksPath .githooks
+# Refuse un commit sur une branche en retard sur origin (standards/08 §2), puis
+# rejoue les garde-fous du dépôt et REUSE.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+BRANCHE=$(git branch --show-current)
+if git rev-parse --verify -q "origin/$BRANCHE" >/dev/null; then
+  RETARD=$(git rev-list --count "HEAD..origin/$BRANCHE")
+  if [ "$RETARD" -gt 0 ]; then
+    echo "❌ $BRANCHE a $RETARD commit(s) de retard sur origin : git fetch origin && git merge --ff-only origin/$BRANCHE" >&2
+    exit 1
+  fi
+fi
+
+bash scripts/verifier-depot.sh
+if command -v reuse >/dev/null; then
+  reuse lint --quiet || { echo "❌ reuse lint" >&2; exit 1; }
+else
+  echo "❓ reuse absent : conformité REUSE INCONNUE (pipx install reuse)" >&2
+  exit 1
+fi

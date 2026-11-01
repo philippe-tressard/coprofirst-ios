@@ -1,0 +1,89 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Le projet Xcode se GÉNÈRE depuis ce fichier (XcodeGen) : CoproFirst.xcodeproj
+# n'est pas versionné. `bash scripts/generer-projet.sh` après chaque modification.
+name: CoproFirst
+options:
+  bundleIdPrefix: fr.coprofirst
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: fr
+  createIntermediateGroups: true
+  groupSortPosition: top
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    TARGETED_DEVICE_FAMILY: "1"
+    # Aucun compte Apple Developer encore : rien ne se signe (README, « État »).
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
+    SWIFT_EMIT_LOC_STRINGS: "YES"
+packages:
+  ClientAPI:
+    path: Paquets/ClientAPI
+targets:
+  CoproFirst:
+    type: application
+    platform: iOS
+    sources:
+      - path: CoproFirst
+    dependencies:
+      - package: ClientAPI
+    info:
+      path: CoproFirst/Info.plist
+      properties:
+        CFBundleDisplayName: CoproFirst
+        CFBundleDevelopmentRegion: fr
+        # Français seul : aucune autre langue n'est proposée (CLAUDE.md).
+        CFBundleLocalizations: [fr]
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app
+        PRODUCT_NAME: CoproFirst
+        GENERATE_INFOPLIST_FILE: "NO"
+  CoproFirstTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: CoproFirstTests
+    dependencies:
+      - target: CoproFirst
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+  CoproFirstUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: CoproFirstUITests
+    dependencies:
+      - target: CoproFirst
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: CoproFirst
+schemes:
+  CoproFirst:
+    build:
+      targets:
+        CoproFirst: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      language: fr
+      region: FR
+      targets:
+        - CoproFirstTests
+        - CoproFirstUITests

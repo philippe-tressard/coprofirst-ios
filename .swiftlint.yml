@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# SwiftLint — lancé par la CI en --strict : un avertissement fait échouer.
+included:
+  - CoproFirst
+  - CoproFirstTests
+  - CoproFirstUITests
+  - Paquets/ClientAPI/Sources
+  - Paquets/ClientAPI/Tests
+  - Paquets/ClientAPI/Package.swift
+excluded:
+  - .build
+  - Paquets/ClientAPI/.build
+# Les noms de tests sont des phrases en français (`lAccueilPorteLeNomDuProduit`).
+disabled_rules:
+  - identifier_name
+opt_in_rules:
+  - empty_count
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - sorted_imports
+# La limite de 500 lignes par fichier est celle du socle (standards/02 §6),
+# contrôlée aussi par scripts/verifier-depot.sh pour tous les fichiers.
+file_length:
+  warning: 500
+  error: 500
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+# swift-format ajoute la virgule finale des listes sur plusieurs lignes : SwiftLint
+# l'exige au lieu de la refuser, sinon les deux outils se contredisent.
+trailing_comma:
+  mandatory_comma: true

@@ -1,0 +1,63 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# CI : garde-fous du dépôt et REUSE, puis build, tests et SwiftLint sur macOS.
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  depot:
+    name: Dépôt (500 lignes, encodage, modes, LICENSE, REUSE)
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Garde-fous du dépôt
+        run: bash scripts/verifier-depot.sh
+      - name: REUSE
+        run: |
+          python3 -m venv "$RUNNER_TEMP/reuse"
+          "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check reuse==6.2.0
+          "$RUNNER_TEMP/reuse/bin/reuse" lint
+
+  ios:
+    name: Build, tests, SwiftLint
+    runs-on: macos-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: SwiftLint
+        run: swiftlint lint --strict --quiet
+      - name: Tests du client d'API (généré depuis openapi.json)
+        working-directory: Paquets/ClientAPI
+        run: swift test --disable-automatic-resolution
+      - name: Projet Xcode (XcodeGen)
+        run: bash scripts/generer-projet.sh
+      - name: Build et tests (unitaires et interface) au simulateur
+        run: |
+          DESTINATION=$(bash scripts/destination-simulateur.sh)
+          echo "Destination : $DESTINATION"
+          xcodebuild test \
+            -project CoproFirst.xcodeproj \
+            -scheme CoproFirst \
+            -destination "$DESTINATION" \
+            -derivedDataPath .build/DerivedData \
+            -skipPackagePluginValidation \
+            -onlyUsePackageVersionsFromResolvedFile \
+            CODE_SIGNING_ALLOWED=NO

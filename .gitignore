@@ -1,0 +1,58 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# LISTE BLANCHE (standards/03 §2, standards/14 §0) : tout est exclu à la racine, ce
+# qui se versionne se ré-inclut ici, nommément. Un fichier neuf à la racine reste
+# donc hors du dépôt tant qu'on ne l'a pas décidé — clé .p8, profil, export, cache.
+# ⚠️ Après avoir ajouté une ligne : `git status` (standards/14 §6.2).
+
+# 1. Tout est exclu à la racine
+/*
+
+# 2. Ré-inclusions explicites
+!/.gitignore
+!/.github/
+!/.githooks/
+!/.claude/
+!/.swiftlint.yml
+!/.swift-format
+!/CLAUDE.md
+!/README.md
+!/DEPENDANCES.md
+!/LICENSE
+!/LICENSES/
+!/REUSE.toml
+!/outillage.env
+!/project.yml
+!/scripts/
+!/Paquets/
+!/CoproFirst/
+!/CoproFirstTests/
+!/CoproFirstUITests/
+
+# 3. Exclus PARTOUT, même dans un dossier ré-inclus
+# Produits de build et réglages personnels d'Xcode
+.build/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+.swiftpm/
+# Le projet Xcode et l'Info.plist se génèrent depuis project.yml (XcodeGen)
+*.xcodeproj/
+*.xcworkspace/
+/CoproFirst/Info.plist
+# Signature et secrets : clés d'API App Store Connect et APNs, certificats, profils
+*.p8
+*.p12
+*.cer
+*.certSigningRequest
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
+*secret*
+*token*
+# Réglages locaux de Claude Code (permissions du poste)
+.claude/settings.local.json
+# Bruit du système
+.DS_Store
