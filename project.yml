@@ -16,10 +16,13 @@ settings:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
     TARGETED_DEVICE_FAMILY: "1"
-    # Aucun compte Apple Developer encore : rien ne se signe (README, « État »).
-    CODE_SIGNING_ALLOWED: "NO"
-    CODE_SIGN_IDENTITY: ""
-    DEVELOPMENT_TEAM: ""
+    # Équipe Apple Developer (compte de particulier, ouvert le 01/11/2026) :
+    # signature automatique. L'identifiant d'équipe n'est pas secret — il figure
+    # dans chaque app signée. Les certificats et la connexion de Xcode au compte
+    # restent sur le poste (skill publication-app-store) ; la CI ne signe pas
+    # (CODE_SIGNING_ALLOWED=NO dans .github/workflows/ci.yml).
+    DEVELOPMENT_TEAM: GUX8KASNTG
+    CODE_SIGN_STYLE: Automatic
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
     LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
@@ -47,6 +50,9 @@ targets:
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
     settings:
       base:
+        # FIGÉ le 01/11/2026 : c'est un contrat — liens universels
+        # (GUX8KASNTG.fr.coprofirst.app, coprofirst#2459), APNs, App Store Connect.
+        # En changer après la création de l'app dans App Store Connect est impossible.
         PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app
         PRODUCT_NAME: CoproFirst
         GENERATE_INFOPLIST_FILE: "NO"

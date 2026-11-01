@@ -18,13 +18,25 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 | Étape | État |
 |---|---|
-| Compte Apple Developer | ❌ **pas ouvert** — geste de Philippe ; choisir **particulier** ou **organisation** avant l'inscription (vendeur affiché, D-U-N-S) |
-| Signature | ❌ désactivée (`CODE_SIGNING_ALLOWED: NO` dans `project.yml`) |
-| Identifiant d'app | `fr.coprofirst.app` — provisoire, se fige à la création de l'app dans App Store Connect |
+| Compte Apple Developer | ✅ ouvert le 01/11/2026, **au titre de particulier** : le vendeur affiché sur l'App Store est le nom civil du titulaire — il ne s'écrit **pas** dans ce dépôt public |
+| Équipe | `GUX8KASNTG` — pas un secret (elle figure dans chaque app signée) ; `DEVELOPMENT_TEAM` de `project.yml` |
+| Signature | automatique (`CODE_SIGN_STYLE: Automatic`), **au poste seulement** ; la CI ne signe pas (`CODE_SIGNING_ALLOWED=NO` dans `ci.yml`), aucun certificat ni secret Apple dans GitHub |
+| Identifiant d'app | `fr.coprofirst.app` — **figé** le 01/11/2026 : c'est un contrat (liens universels `GUX8KASNTG.fr.coprofirst.app`, APNs, App Store Connect) |
 | Exception App Store de la licence | ✅ posée au premier commit (`LICENSES/LicenseRef-CoproFirst-AppStore.txt`) |
 | Icône | ❌ absente — le logo entre avec sa licence propre (`REUSE.toml`) |
 | Liens universels | bloqués par l'identifiant d'équipe Apple (coprofirst#2459) |
 | Push APNs | relais de la plateforme à spécifier (coprofirst#2458) |
+
+## Ce qui reste un geste de Philippe
+
+- **Connecter Xcode au compte** (Xcode › Réglages › Comptes) : c'est lui qui
+  s'identifie, au poste. Je ne saisis, ne demande ni ne lis jamais un mot de
+  passe Apple, un code de double authentification, une clé `.p8` ou un
+  certificat — ni dans le dépôt, ni dans une conversation (`standards/03` §3).
+- Créer l'app dans App Store Connect, accepter les contrats d'Apple.
+- Le jour où la CI devra signer ou envoyer sur TestFlight : une clé d'API App
+  Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
+  la CI la lit, personne ne la voit passer.
 
 ## À faire avant la première soumission
 
