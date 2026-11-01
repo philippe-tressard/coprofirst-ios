@@ -13,8 +13,8 @@ fonctionnalités de l'application web, par étapes.
 ## État
 
 **Amorce** (novembre 2026) : un écran d'accueil et le client d'API généré. L'app
-n'est **pas signée** et n'est distribuée nulle part : il n'y a pas encore de compte
-Apple Developer.
+n'est distribuée nulle part. Elle se signe au poste (signature automatique, équipe
+Apple `GUX8KASNTG`) ; la CI construit et teste sans signer.
 
 ## Construire
 

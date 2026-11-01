@@ -50,6 +50,8 @@ jobs:
       - name: Projet Xcode (XcodeGen)
         run: bash scripts/generer-projet.sh
       - name: Build et tests (unitaires et interface) au simulateur
+        # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
+        # (skill publication-app-store). project.yml signe, le poste seul.
         run: |
           DESTINATION=$(bash scripts/destination-simulateur.sh)
           echo "Destination : $DESTINATION"

@@ -25,8 +25,10 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   scripts/generer-openapi.sh` le produit depuis `/Volumes/Data/Dev/5hostachy/api`
   (venv à soi, aucune base) et écrit sa provenance dans
   `Paquets/ClientAPI/PROVENANCE-OPENAPI.md`. Les chemins s'entendent sous `/api`.
-- **État au 01/11/2026** : amorce — écran d'accueil seul. Pas de compte Apple
-  Developer : **aucune signature**, pas de TestFlight (skill `publication-app-store`).
+- **État au 01/11/2026** : amorce — écran d'accueil seul. Compte Apple Developer
+  ouvert (particulier, équipe `GUX8KASNTG`) : signature automatique **au poste**,
+  jamais en CI ; identifiant `fr.coprofirst.app` **figé** (contrat : liens
+  universels, APNs). Pas encore de TestFlight (skill `publication-app-store`).
 - **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint,
   swift-format) ; Homebrew sur le poste, binaires vérifiés par empreinte en CI.
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
