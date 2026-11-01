@@ -35,8 +35,14 @@ telecharger "https://github.com/realm/SwiftLint/releases/download/$SWIFTLINT_VER
   "$SWIFTLINT_SHA256" "$TRAVAIL/swiftlint.zip"
 unzip -q "$TRAVAIL/swiftlint.zip" -d "$OUTILS/swiftlint"
 ln -sf "$OUTILS/swiftlint/swiftlint" "$OUTILS/bin/swiftlint"
-ln -sf "$OUTILS/xcodegen/bin/xcodegen" "$OUTILS/bin/xcodegen"
 
-[ -n "${GITHUB_PATH:-}" ] && echo "$OUTILS/bin" >> "$GITHUB_PATH"
-"$OUTILS/bin/xcodegen" --version
+# XcodeGen cherche ses préréglages (share/xcodegen/SettingPresets) à côté de son
+# exécutable : appelé par un lien, il ne les trouve pas et génère des cibles de
+# test SANS nom de produit (« Multiple commands produce …/.xctest »). Son dossier
+# va donc tel quel dans le PATH, sans lien.
+if [ -n "${GITHUB_PATH:-}" ]; then
+  echo "$OUTILS/bin" >> "$GITHUB_PATH"
+  echo "$OUTILS/xcodegen/bin" >> "$GITHUB_PATH"
+fi
+"$OUTILS/xcodegen/bin/xcodegen" --version
 "$OUTILS/bin/swiftlint" version

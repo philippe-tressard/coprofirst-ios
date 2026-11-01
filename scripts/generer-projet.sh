@@ -19,7 +19,14 @@ if [ "$VERSION" != "$XCODEGEN_VERSION" ]; then
   exit 1
 fi
 
-xcodegen generate --quiet
+# Sans ses préréglages, XcodeGen ne fait qu'avertir — et produit un projet dont les
+# cibles de test n'ont pas de nom. L'avertissement est donc un refus.
+SORTIE=$(xcodegen generate 2>&1)
+if grep -q 'settings found' <<< "$SORTIE"; then
+  echo "$SORTIE" >&2
+  echo "❌ XcodeGen n'a pas trouvé ses préréglages (SettingPresets) : installation incomplète ou appel par un lien" >&2
+  exit 1
+fi
 SWIFTPM=CoproFirst.xcodeproj/project.xcworkspace/xcshareddata/swiftpm
 mkdir -p "$SWIFTPM"
 cp Paquets/ClientAPI/Package.resolved "$SWIFTPM/Package.resolved"
