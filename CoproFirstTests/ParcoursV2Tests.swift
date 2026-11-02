@@ -99,7 +99,8 @@ private func page(_ id: String) -> PageDeNavigation {
         return rendu.uiImage?.size.width ?? 0
     }
     var sansExposant = Chronologie.espacer("HIER · DIMANCHE 1")
-    sansExposant[sansExposant.range(of: "1")!].tracking = 0
+    let chiffre = try #require(sansExposant.range(of: "1"))
+    sansExposant[chiffre].tracking = 0
     var er = AttributedString("er")
     er.font = .caption2.weight(.semibold)
     let ecart = largeur(affiche) - largeur(sansExposant)

@@ -12,6 +12,8 @@
 #   5. LICENSE = permission App Store + texte de l'AGPL, assemblés par
 #      `--ecrire-licence` : les deux textes vivent dans LICENSES/, LICENSE n'en est
 #      que la réunion, et ce contrôle refuse qu'il en diverge.
+#   6. aucune automatisation ne soumet à Apple : rien ne part en revue sans le
+#      « oui » écrit de Philippe pour la version (skill publication-app-store).
 #   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
 #      coprofirst (scripts/generer-charte.py).
 #
@@ -87,6 +89,17 @@ while IFS= read -r f; do
   fi
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
+# Les gestes qui envoient une version en revue chez Apple : soumission à l'App
+# Store, distribution aux testeurs externes de TestFlight. Ils n'ont pas de place
+# dans une automatisation — la soumission est manuelle, après validation du rendu.
+GESTES_REVUE='submit_for_review|distribute_external|upload_to_app_store|deliver|submit-for-review|reviewSubmissions'
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  if grep -nEi "$GESTES_REVUE" "$f" >/dev/null; then
+    echec "$f : geste de soumission à Apple automatisé ($(grep -oEi "$GESTES_REVUE" "$f" | head -1)) — interdit, skill publication-app-store"
+  fi
+done < <(grep -E '^(fastlane/|\.github/workflows/)' <<< "$FICHIERS")
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -95,4 +108,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
