@@ -55,3 +55,33 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
     #expect(requete.path == "/health")
     #expect(base.absoluteString == "https://demo.coprofirst.fr/api/")
 }
+
+@Test(arguments: [
+    "2026-11-02T09:30:00Z",
+    "2026-11-02T09:30:00.123456Z",
+    "2026-11-02T09:30:00+00:00",
+    "2026-11-02T09:30:00",
+    "2026-11-02T09:30:00.5",
+])
+func lesDatesDeLAPISeLisent(texte: String) throws {
+    let date = try TranscodeurDates().decode(texte)
+    let attendu = try Date("2026-11-02T09:30:00Z", strategy: .iso8601)
+    #expect(abs(date.timeIntervalSince(attendu)) < 1)
+}
+
+/// Les champs facultatifs du contrat (`Optional[...]` de FastAPI) existent bien côté
+/// Swift : sans la normalisation de generer-openapi.sh, le générateur les supprimait
+/// en silence — ce test ne compilerait plus.
+@Test func lesChampsFacultatifsSontGeneres() throws {
+    let json = #"""
+        {"id": 1, "numero": "A-1", "titre": "T", "description": "D", "categorie": "c",
+         "statut": "ouvert", "priorite": "haute", "cree_le": "2026-11-02T09:30:00Z",
+         "me_concerne": true, "perimetre_cible": null, "auteur_nom": null}
+        """#
+    let decodeur = JSONDecoder()
+    decodeur.dateDecodingStrategy = .iso8601
+    let ticket = try decodeur.decode(Components.Schemas.TicketRead.self, from: Data(json.utf8))
+    #expect(ticket.meConcerne == true)
+    #expect(ticket.perimetreCible == nil)
+    #expect(ticket.auteurNom == nil)
+}

@@ -40,7 +40,7 @@ fait après le « oui ».
 | Signature | automatique (`CODE_SIGN_STYLE: Automatic`), **au poste seulement** ; la CI ne signe pas (`CODE_SIGNING_ALLOWED=NO` dans `ci.yml`), aucun certificat ni secret Apple dans GitHub |
 | Identifiant d'app | `fr.coprofirst.app` — **figé** le 01/11/2026 : c'est un contrat (liens universels `GUX8KASNTG.fr.coprofirst.app`, APNs, App Store Connect) |
 | Exception App Store de la licence | ✅ posée au premier commit (`LICENSES/LicenseRef-CoproFirst-AppStore.txt`) |
-| Icône | ❌ absente — le logo entre avec sa licence propre (`REUSE.toml`) |
+| Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
 | Liens universels | bloqués par l'identifiant d'équipe Apple (coprofirst#2459) |
 | Push APNs | relais de la plateforme à spécifier (coprofirst#2458) |
 

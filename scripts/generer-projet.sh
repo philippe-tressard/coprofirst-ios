@@ -21,7 +21,7 @@ fi
 
 # Sans ses préréglages, XcodeGen ne fait qu'avertir — et produit un projet dont les
 # cibles de test n'ont pas de nom. L'avertissement est donc un refus.
-SORTIE=$(xcodegen generate 2>&1)
+SORTIE=$(xcodegen generate 2>&1) || { echo "$SORTIE" >&2; echo "❌ XcodeGen a échoué" >&2; exit 1; }
 if grep -q 'settings found' <<< "$SORTIE"; then
   echo "$SORTIE" >&2
   echo "❌ XcodeGen n'a pas trouvé ses préréglages (SettingPresets) : installation incomplète ou appel par un lien" >&2

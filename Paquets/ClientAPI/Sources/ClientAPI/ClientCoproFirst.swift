@@ -23,3 +23,46 @@ public enum ClientCoproFirst {
         Client(serverURL: adresseAPI(installation: installation), transport: transport)
     }
 }
+
+extension ClientCoproFirst {
+    /// Un client sur une session URLSession donnée — une par installation, pour que
+    /// les cookies de l'une ne partent jamais vers l'autre.
+    public static func client(installation: URL, session: URLSession) -> Client {
+        Client(
+            serverURL: adresseAPI(installation: installation),
+            configuration: Configuration(dateTranscoder: TranscodeurDates()),
+            transport: URLSessionTransport(configuration: .init(session: session))
+        )
+    }
+
+    /// La cause d'une erreur du client généré (réseau, décodage), sans son emballage.
+    public static func cause(_ erreur: any Error) -> any Error {
+        (erreur as? ClientError)?.underlyingError ?? erreur
+    }
+}
+
+/// Les dates de l'API : ISO 8601 avec ou sans fractions de seconde, et sans fuseau
+/// lu comme UTC — FastAPI sérialise selon le type Python, pas toujours avec `Z`.
+public struct TranscodeurDates: DateTranscoder {
+    public init() {}
+
+    public func encode(_ date: Date) throws -> String {
+        date.formatted(.iso8601)
+    }
+
+    public func decode(_ texte: String) throws -> Date {
+        let essais: [Date.ISO8601FormatStyle] = [
+            .iso8601.year().month().day().dateTimeSeparator(.standard).time(includingFractionalSeconds: true)
+                .timeZone(separator: .omitted),
+            .iso8601,
+        ]
+        for style in essais {
+            if let date = try? style.parse(texte) { return date }
+        }
+        // Sans fuseau : UTC.
+        for style in essais {
+            if let date = try? style.parse(texte + "Z") { return date }
+        }
+        throw DecodingError.dataCorrupted(.init(codingPath: [], debugDescription: "Date illisible : \(texte)"))
+    }
+}

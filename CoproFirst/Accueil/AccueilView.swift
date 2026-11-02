@@ -3,33 +3,70 @@
 
 import SwiftUI
 
-/// Premier écran : le nom du produit, en attendant la vitrine (coprofirst-site#42).
-///
-/// Couleurs système seulement : celles de CoproFirst se généreront depuis ses
-/// sources, jamais recopiées (CLAUDE.md).
+/// Écran 1 — « le sceau » : le nom, une devise, deux portes.
 struct AccueilView: View {
+    @Environment(Parcours.self) private var parcours
+    @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
+    @State private var apparu = false
+
     var body: some View {
-        VStack(spacing: 12) {
-            Text(Accueil.titre)
-                .font(.largeTitle.bold())
-                .accessibilityAddTraits(.isHeader)
-                .accessibilityIdentifier("accueil.titre")
-            Text(Accueil.accroche)
-                .font(.title3)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+        // Le sceau tient l'écran ; quand le texte grandit, il défile au lieu de tronquer.
+        GeometryReader { cadre in
+            ScrollView {
+                sceau.frame(minHeight: cadre.size.height)
+            }
+            .scrollBounceBehavior(.basedOnSize)
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(palette.bg)
+        .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            // Une seule entrée, à la première ouverture : le sceau se pose.
+            withAnimation(.smooth(duration: 0.5)) { apparu = true }
+        }
     }
-}
 
-/// Les textes de l'écran d'accueil, écrits une fois : la vue et les tests les lisent ici.
-enum Accueil {
-    static let titre = "CoproFirst"
-    static let accroche = "Le logiciel libre de gestion de copropriété."
-}
-
-#Preview {
-    AccueilView()
+    private var sceau: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
+            VStack(spacing: 20) {
+                Medaillon(cote: 112)
+                    .accessibilityHidden(true)
+                    .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                Text(ContenuVitrine.nom)
+                    .font(.titre(.largeTitle))
+                    .foregroundStyle(palette.primary)
+                    .accessibilityAddTraits(.isHeader)
+                Capsule()
+                    .fill(palette.accent)
+                    .frame(width: 48, height: 3)
+                    .accessibilityHidden(true)
+                Text(ContenuVitrine.devise)
+                    .font(.titre(.title3))
+                    .foregroundStyle(palette.textMuted)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.horizontal, Mise.marge)
+            .opacity(apparu ? 1 : 0)
+            .offset(y: apparu || mouvementReduit ? 0 : 12)
+            Spacer(minLength: 24)
+            VStack(spacing: 12) {
+                Button(ContenuVitrine.entrer) {
+                    parcours.chemin.append(.connexion(.init()))
+                }
+                .buttonStyle(.plein)
+                .accessibilityIdentifier("accueil.entrer")
+                Button(ContenuVitrine.decouvrirDemo) { parcours.chemin.append(.demo) }
+                    .buttonStyle(.contour)
+                    .accessibilityIdentifier("accueil.demo")
+                Button(ContenuVitrine.enSavoirPlus) { parcours.chemin.append(.enSavoirPlus) }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(palette.primary)
+                    .frame(minHeight: Mise.cible)
+            }
+            .padding(.horizontal, Mise.marge)
+            .padding(.bottom, 8)
+        }
+        .frame(maxWidth: .infinity)
+    }
 }

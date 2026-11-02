@@ -12,6 +12,16 @@ included:
 excluded:
   - .build
   - Paquets/ClientAPI/.build
+  # GÉNÉRÉS par scripts/generer-charte.py : une ligne par jeton, sans retour.
+  - CoproFirst/Charte/Palette.swift
+  - CoproFirst/Charte/Palette+Seine.swift
+  - CoproFirst/Charte/Palette+Bordeaux.swift
+  - CoproFirst/Charte/Palette+Bouteille.swift
+  - CoproFirst/Charte/Palette+Cuivre.swift
+  - CoproFirst/Charte/Palette+Prune.swift
+  - CoproFirst/Charte/Palette+Roi.swift
+  - CoproFirst/Charte/NaturesDuFil.swift
+  - CoproFirst/Navigation/PagesParDefaut.swift
 # Les noms de tests sont des phrases en français (`lAccueilPorteLeNomDuProduit`).
 disabled_rules:
   - identifier_name
@@ -33,3 +43,6 @@ line_length:
 # l'exige au lieu de la refuser, sinon les deux outils se contredisent.
 trailing_comma:
   mandatory_comma: true
+# swift-format met l'accolade d'une condition sur plusieurs lignes à la ligne : idem.
+opening_brace:
+  ignore_multiline_statement_conditions: true
