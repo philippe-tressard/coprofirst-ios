@@ -4,12 +4,28 @@
 # Conformité REUSE (standards/14 §6.2). Les fichiers qui portent leur en-tête SPDX
 # n'ont rien à faire ici ; ne s'y déclarent que ceux qui ne le peuvent pas.
 #
-# Le LOGO de CoproFirst n'est pas encore dans ce dépôt. Le jour où il y entre (icône
-# de l'app, écran d'accueil), chacun de ses fichiers se déclare ici sous
-# `LicenseRef-CoproFirst-Logo` (hors de l'AGPL : MARQUE.md de coprofirst), et le
-# texte de cette licence rejoint LICENSES/ — adapté pour nommer CE dépôt : celui de
-# coprofirst ne couvre que les fichiers de coprofirst.
 version = 1
+
+# Le LOGO de CoproFirst : le dessin du site (front/static/favicon.svg de
+# coprofirst), recopié À L'IDENTIQUE, et l'icône de l'app qui en est rendue (fond
+# blanc, 1024 px). Hors de l'AGPL et de l'exception App Store : sa licence propre,
+# qui couvre l'app iOS publiée par son auteur (coprofirst#2474, MARQUE.md).
+# scripts/verifier-logo.sh tient l'identité de la licence et du dessin.
+[[annotations]]
+path = [
+  "CoproFirst/Ressources/Assets.xcassets/Logo.imageset/logo.svg",
+  "CoproFirst/Ressources/Assets.xcassets/AppIcon.appiconset/icone-1024.png",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "LicenseRef-CoproFirst-Logo"
+
+# Les descriptions du catalogue d'images : du JSON, sans en-tête possible.
+[[annotations]]
+path = "CoproFirst/Ressources/Assets.xcassets/**/Contents.json"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"
 
 # Le JSON n'admet pas de commentaire : l'en-tête ne peut pas y vivre.
 [[annotations]]

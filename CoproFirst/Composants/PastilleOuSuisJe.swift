@@ -51,7 +51,8 @@ struct PastilleOuSuisJe: ToolbarContent {
     }
 }
 
-/// Le logo téléversé par la résidence, sinon le médaillon du produit.
+/// Le logo téléversé par la résidence, sinon celui de CoproFirst — comme le site, qui
+/// montre le logo neutre tant que la résidence n'a pas téléversé le sien.
 struct Logo: View {
     let installation: Installation?
 
@@ -69,17 +70,13 @@ struct Logo: View {
     }
 }
 
-/// Le médaillon qui remplit son cadre (pastille, ligne de liste).
+/// Le logo de CoproFirst qui remplit son cadre (pastille, ligne de liste).
 private struct MedaillonPlein: View {
-    @Environment(\.palette) private var palette
-
     var body: some View {
-        Image(systemName: "building.2.fill")
+        Image("Logo")
             .resizable()
             .scaledToFit()
-            .padding(4)
-            .foregroundStyle(palette.surAccent)
-            .background(palette.accent, in: .rect(cornerRadius: 5, style: .continuous))
+            .accessibilityHidden(true)
     }
 }
 

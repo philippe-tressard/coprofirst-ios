@@ -30,9 +30,8 @@ struct AccueilView: View {
         VStack(spacing: 0) {
             Spacer(minLength: 24)
             VStack(spacing: 20) {
-                // Le logo de CoproFirst n'est pas encore sous une licence qui couvre l'app
-                // (REUSE.toml) : le médaillon du produit en tient la place.
                 Medaillon(cote: 112)
+                    .accessibilityHidden(true)
                     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
                 Text(ContenuVitrine.nom)
                     .font(.titre(.largeTitle))

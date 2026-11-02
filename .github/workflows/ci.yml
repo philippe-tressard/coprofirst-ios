@@ -26,6 +26,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Garde-fous du dépôt
         run: bash scripts/verifier-depot.sh
+      - name: Logo et sa licence identiques à coprofirst
+        run: bash scripts/verifier-logo.sh
       - name: REUSE
         run: |
           python3 -m venv "$RUNNER_TEMP/reuse"
