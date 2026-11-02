@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import Foundation
+import SwiftUI
 import Testing
 
 @testable import CoproFirst
@@ -74,4 +75,39 @@ private func page(_ id: String) -> PageDeNavigation {
     }
     #expect(Palette.pour(code: "inexistante").code == "seine")
     #expect(Palette.pour(code: nil).code == "seine")
+}
+
+/// « 1ᵉʳ » se rend collé (« 1 e r » à la capture du 02/11/2026) : un vrai exposant
+/// « er », sans interlettrage — et le RENDU le prouve, pas seulement les attributs.
+@MainActor
+@Test func lePremierDuMoisSeRendColle() throws {
+    let cal = Chronologie.calendrier
+    let maintenant = try #require(cal.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 10)))
+    let premier = try #require(cal.date(from: DateComponents(year: 2026, month: 11, day: 1, hour: 9)))
+    let affiche = Chronologie.enteteAffiche(premier, maintenant: maintenant)
+    #expect(String(affiche.characters) == "HIER · DIMANCHE 1er")
+    let exposant = try #require(affiche.range(of: "er"))
+    for run in affiche[exposant].runs {
+        #expect((run.baselineOffset ?? 0) > 0, "« er » en exposant")
+        #expect(run.tracking == 0)
+    }
+
+    // Le rendu : « …1er » ne dépasse « …1 » que de la largeur d'un « er » en petit
+    // corps. Les lettres modificatives en ajoutaient bien davantage.
+    func largeur(_ texte: AttributedString) -> CGFloat {
+        let rendu = ImageRenderer(content: Text(texte).font(.caption.weight(.semibold)).fixedSize())
+        return rendu.uiImage?.size.width ?? 0
+    }
+    var sansExposant = Chronologie.espacer("HIER · DIMANCHE 1")
+    sansExposant[sansExposant.range(of: "1")!].tracking = 0
+    var er = AttributedString("er")
+    er.font = .caption2.weight(.semibold)
+    let ecart = largeur(affiche) - largeur(sansExposant)
+    let attendu = largeur(er)
+    #expect(attendu > 0)
+    #expect(ecart <= attendu + 0.5, "« er » collé au chiffre : écart \(ecart) pt pour \(attendu) pt")
+
+    // Un autre jour n'a pas d'exposant : tout est espacé.
+    let deux = Chronologie.enteteAffiche(maintenant, maintenant: maintenant)
+    #expect(deux.runs.allSatisfy { $0.tracking == Chronologie.interlettrage })
 }

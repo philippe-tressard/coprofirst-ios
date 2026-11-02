@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import Foundation
+import SwiftUI
 
 /// Un élément du fil de la résidence — lu dans `FluxItem` de GET /flux, le flux que
 /// lit le tableau de bord du site.
@@ -66,5 +67,34 @@ enum Chronologie {
         let mois = jour.formatted(.dateTime.month(.wide).locale(Locale(identifier: "fr_FR")))
         let annee = memeAnnee ? "" : " \(calendrier.component(.year, from: jour))"
         return "\(jourSemaine) \(numero) \(mois)\(annee)".uppercased()
+    }
+
+    /// L'interlettrage des libellés en capitales (`styleLibelle`), en points.
+    static let interlettrage: CGFloat = 0.6
+
+    /// L'en-tête tel qu'il s'affiche : en capitales espacées, et « 1ᵉʳ » collé.
+    ///
+    /// Les lettres modificatives « ᵉʳ » (U+1D49, U+02B3) ont leur propre chasse dans
+    /// la police système : elles s'écartaient du chiffre (« 1 e r », capture du
+    /// 02/11/2026), interlettrage ou non. Le « er » devient un VRAI exposant — petit
+    /// corps, surélevé, sans interlettrage.
+    static func enteteAffiche(_ jour: Date, maintenant: Date = .now) -> AttributedString {
+        espacer(entete(jour, maintenant: maintenant))
+    }
+
+    static func espacer(_ texte: String) -> AttributedString {
+        var affiche = AttributedString(texte)
+        affiche.tracking = interlettrage
+        if let modificatives = affiche.range(of: "ᵉʳ") {
+            // Le chiffre qui précède aussi : l'interlettrage s'ajoute APRÈS chaque glyphe.
+            let chiffre = affiche.characters.index(before: modificatives.lowerBound)
+            affiche[chiffre..<modificatives.lowerBound].tracking = 0
+            var exposant = AttributedString("er")
+            exposant.font = .caption2.weight(.semibold)
+            exposant.baselineOffset = 3
+            exposant.tracking = 0
+            affiche.replaceSubrange(modificatives, with: exposant)
+        }
+        return affiche
     }
 }

@@ -24,7 +24,7 @@ struct FilView: View {
                     Section {
                         squelette
                     } header: {
-                        EnTeteJour(texte: "Aujourd'hui".uppercased())
+                        EnTeteJour(texte: Chronologie.espacer("Aujourd'hui".uppercased()))
                     }
                 }
                 ForEach(jours) { jour in
@@ -33,7 +33,7 @@ struct FilView: View {
                             CarteDuFil(element: element).padding(.horizontal, Mise.marge)
                         }
                     } header: {
-                        EnTeteJour(texte: Chronologie.entete(jour.jour))
+                        EnTeteJour(texte: Chronologie.enteteAffiche(jour.jour))
                     }
                 }
             }
@@ -87,12 +87,15 @@ struct FilView: View {
 
 /// L'en-tête d'un jour, collé en haut tant que sa journée défile.
 struct EnTeteJour: View {
-    let texte: String
+    /// Déjà en capitales et espacé (`Chronologie.enteteAffiche`) : ni `textCase` ni
+    /// `tracking` ici, qui s'appliqueraient aussi au « 1ᵉʳ ».
+    let texte: AttributedString
     @Environment(\.palette) private var palette
 
     var body: some View {
         Text(texte)
-            .styleLibelle()
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(palette.textMuted)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, Mise.marge)
             .padding(.vertical, 8)
