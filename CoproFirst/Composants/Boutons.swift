@@ -9,6 +9,8 @@ enum GenreBouton {
 }
 
 struct StyleBouton: ButtonStyle {
+
+    @Environment(\.palette) private var palette
     let genre: GenreBouton
     @Environment(\.isEnabled) private var actif
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -23,7 +25,7 @@ struct StyleBouton: ButtonStyle {
             .overlay {
                 if genre == .contour {
                     RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                        .strokeBorder(Charte.primary, lineWidth: 1.5)
+                        .strokeBorder(palette.primary, lineWidth: 1.5)
                 }
             }
             .opacity(actif ? 1 : 0.45)
@@ -35,16 +37,16 @@ struct StyleBouton: ButtonStyle {
 
     private var premierPlan: Color {
         switch genre {
-        case .plein: Charte.surPlein
-        case .contour, .clair: Charte.primary
+        case .plein: palette.surPlein
+        case .contour, .clair: palette.primary
         }
     }
 
     private var fond: Color {
         switch genre {
-        case .plein: Charte.primaryPlein
+        case .plein: palette.primaryPlein
         case .contour: .clear
-        case .clair: Charte.primaryLight
+        case .clair: palette.primaryLight
         }
     }
 }

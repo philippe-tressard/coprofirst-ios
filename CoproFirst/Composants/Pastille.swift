@@ -5,6 +5,7 @@ import SwiftUI
 
 /// Une pastille de filtre. Le compte ne s'affiche que sur la pastille retenue.
 struct Pastille: View {
+    @Environment(\.palette) private var palette
     let libelle: String
     let retenue: Bool
     var compte: Int?
@@ -23,11 +24,11 @@ struct Pastille: View {
             .font(.subheadline.weight(.medium))
             .padding(.horizontal, 14)
             .frame(minHeight: Mise.cible)
-            .foregroundStyle(retenue ? Charte.surPlein : Charte.text)
-            .background(retenue ? Charte.primaryPlein : Charte.surface, in: .capsule)
+            .foregroundStyle(retenue ? palette.surPlein : palette.text)
+            .background(retenue ? palette.primaryPlein : palette.surface, in: .capsule)
             .overlay {
                 if !retenue {
-                    Capsule().strokeBorder(Charte.border, lineWidth: 1)
+                    Capsule().strokeBorder(palette.border, lineWidth: 1)
                 }
             }
             .contentShape(.capsule)

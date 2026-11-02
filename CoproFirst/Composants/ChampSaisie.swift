@@ -5,6 +5,7 @@ import SwiftUI
 
 /// Un champ de la charte : libellé en capitales au-dessus, contour visible à 3:1.
 struct ChampSaisie<Champ: View>: View {
+    @Environment(\.palette) private var palette
     let libelle: String
     @ViewBuilder let champ: () -> Champ
     var enErreur = false
@@ -16,13 +17,13 @@ struct ChampSaisie<Champ: View>: View {
                 .accessibilityHidden(true)
             champ()
                 .font(.body)
-                .foregroundStyle(Charte.text)
+                .foregroundStyle(palette.text)
                 .padding(.horizontal, 14)
                 .frame(minHeight: 50)
-                .background(Charte.surface, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
+                .background(palette.surface, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
                 .overlay {
                     RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                        .strokeBorder(enErreur ? Charte.danger : Charte.borderChamp, lineWidth: 1)
+                        .strokeBorder(enErreur ? palette.danger : palette.borderChamp, lineWidth: 1)
                 }
                 .accessibilityLabel(Text(libelle.capitalized(with: Locale(identifier: "fr_FR"))))
         }

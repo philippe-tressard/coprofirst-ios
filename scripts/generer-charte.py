@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Les couleurs de la charte, GÉNÉRÉES depuis les sources de coprofirst.
+"""La charte et ce qu'en tire l'app, GÉNÉRÉS depuis les sources de coprofirst.
 
-Lit `socle.css` (le thème clair, bloc `:root`) et `palette-sombre.css` (le bloc
-`:root[data-theme='dark']`) dans `front/src/styles/` de coprofirst, et écrit
-`CoproFirst/Charte/Charte+Couleurs.swift` : une couleur dynamique par jeton
-`--color-*`, claire et sombre. Jamais de couleur recopiée à la main
-(garde-fou de `projets.json`, coprofirst#2460).
+Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
 
-Un jeton absent de la palette sombre y garde sa valeur claire — c'est la règle
-de `lint:palette-sombre` (« IDENTIQUE avec sa raison »). Un jeton `var(--x)` est
-résolu ; un `color-mix()` n'est pas porté et se liste en tête du fichier.
+- les PALETTES : la charte (`socle.css`, `palette-sombre.css`, palette `seine`)
+  et chaque palette de `palettes.css`, au clair et au sombre, selon la cascade
+  du site — un jeton que la palette ne redéfinit pas garde celui de la charte ;
+  → `CoproFirst/Charte/Palette.swift` et `Palette+<code>.swift` ;
+- les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément,
+  lus dans la table `NATURES` de `front/src/lib/flux.ts`
+  → `CoproFirst/Charte/NaturesDuFil.swift` ;
+- les PAGES et leur ordre par défaut (`PAGES` de `front/src/lib/pages.ts`), que
+  `pages_order` de GET /config réordonne → `CoproFirst/Navigation/PagesParDefaut.swift`.
 
-Usage : python3 scripts/generer-charte.py [chemin/vers/coprofirst/front/src/styles]
+`GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
+l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
+
+Usage : python3 scripts/generer-charte.py [chemin/vers/coprofirst/front]
 """
 
 from __future__ import annotations
@@ -24,13 +29,15 @@ import subprocess
 import sys
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
-SORTIE = RACINE / "CoproFirst" / "Charte" / "Charte+Couleurs.swift"
-STYLES = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/Volumes/Data/Dev/5hostachy/front/src/styles")
+FRONT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/Volumes/Data/Dev/5hostachy/front")
+STYLES = FRONT / "src" / "styles"
+CHARTE = RACINE / "CoproFirst" / "Charte"
+NAVIGATION = RACINE / "CoproFirst" / "Navigation"
 
-JETON = re.compile(r"--color-([a-z0-9-]+)\s*:\s*([^;]+);")
+JETON = re.compile(r"--((?:color|fil)-[a-z0-9-]+)\s*:\s*([^;]+);")
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 RGBA = re.compile(r"^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$")
-VAR = re.compile(r"^var\(--color-([a-z0-9-]+)\)$")
+VAR = re.compile(r"^var\(--((?:color|fil)-[a-z0-9-]+)\)$")
 
 
 def bloc(texte: str, selecteur: str) -> str:
@@ -48,17 +55,14 @@ def bloc(texte: str, selecteur: str) -> str:
     raise ValueError(f"bloc non fermé : {selecteur}")
 
 
-def sans_commentaires(texte: str) -> str:
-    return re.sub(r"/\*.*?\*/", "", texte, flags=re.S)
-
-
 def jetons(corps: str) -> dict[str, str]:
-    return {nom: valeur.strip() for nom, valeur in JETON.findall(sans_commentaires(corps))}
+    sans = re.sub(r"/\*.*?\*/", "", corps, flags=re.S)
+    return {nom: valeur.strip() for nom, valeur in JETON.findall(sans)}
 
 
-def resoudre(nom: str, table: dict[str, str], repli: dict[str, str] | None = None, vus=()) -> tuple | None:
-    """(rouge, vert, bleu, alpha) du jeton, ou None s'il n'est pas portable."""
-    valeur = table.get(nom) if nom in table else (repli or {}).get(nom)
+def resoudre(nom: str, table: dict[str, str], vus=()) -> tuple | None:
+    """(rouge, vert, bleu, alpha) du jeton dans `table`, ou None s'il n'est pas portable."""
+    valeur = table.get(nom)
     if valeur is None or nom in vus:
         return None
     if m := HEX.match(valeur):
@@ -67,13 +71,18 @@ def resoudre(nom: str, table: dict[str, str], repli: dict[str, str] | None = Non
     if m := RGBA.match(valeur):
         return (int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4)))
     if m := VAR.match(valeur):
-        return resoudre(m.group(1), table, repli, (*vus, nom))
+        return resoudre(m.group(1), table, (*vus, nom))
     return None
 
 
-def nom_swift(nom: str) -> str:
+def camel(nom: str) -> str:
     morceaux = nom.split("-")
     return morceaux[0] + "".join(m.capitalize() for m in morceaux[1:])
+
+
+def propriete(jeton: str) -> str:
+    """`color-primary` → `primary`, `fil-rouge-fond` → `filRougeFond`."""
+    return camel(jeton[len("color-"):]) if jeton.startswith("color-") else camel(jeton)
 
 
 def litteral(c: tuple) -> str:
@@ -81,40 +90,128 @@ def litteral(c: tuple) -> str:
     return f"RVBA(0x{r:02X}, 0x{v:02X}, 0x{b:02X}, {a:g})"
 
 
+# L'en-tête que le script ÉCRIT dans chaque fichier généré : une chaîne, pas la
+# déclaration de ce script — REUSE ne doit pas la lire.
+# REUSE-IgnoreStart
+def entete(source: str, commit: str) -> str:
+    return (
+        "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
+        "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
+        "//\n"
+        "// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.\n"
+        f"// Source : coprofirst@{commit}, {source}.\n"
+    )
+# REUSE-IgnoreEnd
+
+
+def ecrire(chemin: pathlib.Path, texte: str) -> None:
+    chemin.parent.mkdir(parents=True, exist_ok=True)
+    with open(chemin, "w", encoding="utf-8", newline="\n") as f:
+        f.write(texte)
+
+
+def palettes(commit: str) -> list[str]:
+    socle = jetons(bloc((STYLES / "socle.css").read_text(encoding="utf-8"), ":root,"))
+    sombre = jetons(bloc((STYLES / "palette-sombre.css").read_text(encoding="utf-8"), ":root[data-theme='dark']"))
+    texte = (STYLES / "palettes.css").read_text(encoding="utf-8")
+    codes = ["seine"] + sorted(set(re.findall(r":root\[data-palette='([a-z]+)'\]", texte)))
+
+    # La cascade du site : au clair, la palette sur la charte ; au sombre, la charte
+    # sombre par-dessus la palette claire, puis la palette sombre par-dessus tout.
+    tables = {}
+    for code in codes:
+        clair_p = sombre_p = {}
+        if code != "seine":
+            clair_p = jetons(bloc(texte, f":root[data-palette='{code}'],"))
+            sombre_p = jetons(bloc(texte, f":root[data-palette='{code}'][data-theme='dark']"))
+        tables[code] = ({**socle, **clair_p}, {**socle, **clair_p, **sombre, **sombre_p})
+
+    # Un jeton n'entre que s'il se résout partout : la structure est la même pour toutes.
+    portables = [
+        j for j in sorted(socle)
+        if all(resoudre(j, t) is not None for paire in tables.values() for t in paire)
+    ]
+    ecartes = sorted(set(socle) - set(portables))
+
+    struct = entete("front/src/styles/socle.css", commit)
+    struct += "// Jetons non portés (color-mix, valeur non littérale) :\n"
+    struct += "".join(f"//   --{e}: {socle[e]}\n" for e in ecartes)
+    struct += "\nimport SwiftUI\n\n"
+    struct += "/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*` ou `--fil-*` chacune,\n"
+    struct += "/// claire et sombre. La charte est `seine` ; une résidence choisit la sienne (`site_palette`).\n"
+    struct += "struct Palette: Sendable {\n    let code: String\n"
+    struct += "".join(f"    /// `--{j}`\n    let {propriete(j)}: Color\n" for j in portables)
+    struct += "}\n\nextension Palette {\n    /// Toutes les palettes, par code (`site_palette` de GET /config).\n"
+    struct += "    static let parCode: [String: Palette] = [\n"
+    struct += "".join(f'        "{c}": .{c},\n' for c in codes)
+    struct += "    ]\n}\n"
+    ecrire(CHARTE / "Palette.swift", struct)
+
+    for code in codes:
+        clair, fonce = tables[code]
+        corps = entete("front/src/styles/socle.css, palette-sombre.css, palettes.css", commit)
+        corps += f"\nimport SwiftUI\n\nextension Palette {{\n    static let {code} = Palette(\n"
+        corps += f'        code: "{code}",\n'
+        corps += ",\n".join(
+            f"        {propriete(j)}: Color(clair: {litteral(resoudre(j, clair))}, sombre: {litteral(resoudre(j, fonce))})"
+            for j in portables
+        )
+        corps += "\n    )\n}\n"
+        ecrire(CHARTE / f"Palette+{code.capitalize()}.swift", corps)
+    return codes
+
+
+def natures(commit: str) -> int:
+    texte = (FRONT / "src" / "lib" / "flux.ts").read_text(encoding="utf-8")
+    trouvees = re.findall(
+        r"\n\t([a-z_]+): \{\s*libelle: '([^']*)',\s*couleur: 'var\(--([a-z-]+)\)',"
+        r"\s*fond: 'var\(--([a-z-]+)\)',\s*icone: '([^']*)'",
+        texte,
+    )
+    if not trouvees:
+        raise SystemExit("❌ table NATURES introuvable dans flux.ts")
+    corps = entete("front/src/lib/flux.ts (NATURES)", commit)
+    corps += "\n/// Ce que le fil montre de chaque type d'élément : libellé, teinte, pictogramme (Lucide).\n"
+    corps += "enum NaturesDuFil {\n    static let parType: [String: NatureDuFil] = [\n"
+    for type_, libelle, couleur, fond, icone in trouvees:
+        corps += (
+            f'        "{type_}": NatureDuFil(libelle: "{libelle}", couleur: \\.{propriete(couleur)}, '
+            f'fond: \\.{propriete(fond)}, icone: "{icone}"),\n'
+        )
+    corps += "    ]\n}\n"
+    ecrire(CHARTE / "NaturesDuFil.swift", corps)
+    return len(trouvees)
+
+
+def pages(commit: str) -> int:
+    texte = (FRONT / "src" / "lib" / "pages.ts").read_text(encoding="utf-8")
+    debut = texte.index("export const PAGES: PageDef[] = [")
+    table = texte[debut : texte.index("\n];", debut)]
+    lignes = []
+    for entree in re.findall(r"\n\t\{\n(.*?)\n\t\}", table, re.S):
+        def champ(cle: str) -> str | None:
+            m = re.search(rf"^\t\t{cle}: (?:'([^']*)'|null)", entree, re.M)
+            return m.group(1) if m else None
+        if champ("href") is None:
+            continue  # sans entrée de navigation : ni ordonnée, ni dans la barre
+        lignes.append(
+            f'        PageDeNavigation(id: "{champ("id")}", route: "{champ("href")}", '
+            f'libelle: "{champ("navLabel")}", titre: "{champ("titre")}", icone: "{champ("icone")}"),\n'
+        )
+    corps = entete("front/src/lib/pages.ts (PAGES)", commit)
+    corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"
+    corps += "enum PagesParDefaut {\n    static let toutes: [PageDeNavigation] = [\n" + "".join(lignes) + "    ]\n}\n"
+    ecrire(NAVIGATION / "PagesParDefaut.swift", corps)
+    return len(lignes)
+
+
 def main() -> None:
-    socle = (STYLES / "socle.css").read_text(encoding="utf-8")
-    sombre = (STYLES / "palette-sombre.css").read_text(encoding="utf-8")
-    clair = jetons(bloc(socle, ":root,"))
-    fonce = jetons(bloc(sombre, ":root[data-theme='dark']"))
-
-    lignes, ecartes = [], []
-    for nom in sorted(clair):
-        c = resoudre(nom, clair)
-        # Au sombre : la valeur sombre, résolue d'abord dans la palette sombre puis,
-        # pour un `var()` vers un jeton qu'elle ne redéfinit pas, dans la claire.
-        s = resoudre(nom, {**clair, **fonce})
-        if c is None or s is None:
-            ecartes.append(f"--color-{nom}: {clair[nom]}")
-            continue
-        lignes.append(f"    /// `--color-{nom}`\n    static let {nom_swift(nom)} = Color(clair: {litteral(c)}, sombre: {litteral(s)})")
-
-    depot = subprocess.run(["git", "-C", str(STYLES), "rev-parse", "--short=9", "HEAD"],
-                           capture_output=True, text=True, check=True).stdout.strip()
-    entete = f"""// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
-// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-//
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
-// Source : coprofirst@{depot}, front/src/styles/socle.css et palette-sombre.css.
-// Non portés (color-mix ou valeur non littérale) :
-""" + "".join(f"//   {e}\n" for e in ecartes) + """
-import SwiftUI
-
-/// Les couleurs de la charte de CoproFirst : une par jeton `--color-*`, claire et sombre.
-enum Charte {
-"""
-    with open(SORTIE, "w", encoding="utf-8", newline="\n") as f:
-        f.write(entete + "\n\n".join(lignes) + "\n}\n")
-    print(f"✅ {SORTIE.relative_to(RACINE)} : {len(lignes)} couleurs, {len(ecartes)} écartées (coprofirst@{depot})")
+    commit = subprocess.run(["git", "-C", str(FRONT), "rev-parse", "--short=9", "HEAD"],
+                            capture_output=True, text=True, check=True).stdout.strip()
+    codes = palettes(commit)
+    n_natures = natures(commit)
+    n_pages = pages(commit)
+    print(f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; {n_pages} pages")
 
 
 if __name__ == "__main__":

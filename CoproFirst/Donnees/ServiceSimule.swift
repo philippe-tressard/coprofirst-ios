@@ -6,8 +6,13 @@ import Foundation
 /// Une installation simulée, pour les aperçus et les tests d'interface : aucune
 /// requête ne part. Tout y est inventé — aucun nom de personne, aucune adresse réelle.
 final class ServiceSimule: ServiceCoproFirst {
+    /// Une résidence inventée, à sa palette (bouteille), avec la barre par défaut du site.
     static let residence = Installation(
-        adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false)
+        adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
+        codePalette: "bouteille")
+    /// La démonstration, telle que la simule l'app (sans requête).
+    static let demo = Installation(
+        adresse: URL(string: "https://demo.coprofirst.fr")!, nom: "Résidence Les Glycines", aUnLogo: false)
 
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
@@ -21,7 +26,11 @@ final class ServiceSimule: ServiceCoproFirst {
         switch adresse.host() {
         case "inconnue.exemple.fr": throw ErreurService.hoteInconnu
         case "injoignable.exemple.fr": throw ErreurService.injoignable
-        default: return Installation(adresse: adresse, nom: Self.residence.nom, aUnLogo: false)
+        case "demo.coprofirst.fr": return Self.demo
+        default:
+            var installation = Self.residence
+            installation.adresse = adresse
+            return installation
         }
     }
 
@@ -34,6 +43,18 @@ final class ServiceSimule: ServiceCoproFirst {
 
     func reprendre(_ installation: Installation) async throws {
         throw ErreurService.sessionExpiree
+    }
+
+    func activerFaceID(_ installation: Installation) async -> Bool { true }
+
+    func fil(_ installation: Installation) async throws -> [ElementDuFil] {
+        try await Task.sleep(for: delai)
+        return Self.fil
+    }
+
+    func entrerEnDemo(_ code: String) async throws -> Installation? {
+        try await Task.sleep(for: delai)
+        return Self.demo
     }
 
     func affaires(_ installation: Installation) async throws -> [Affaire] {
@@ -80,6 +101,49 @@ final class ServiceSimule: ServiceCoproFirst {
                 apercu: "La télécommande fonctionne de nouveau après le remplacement de la carte électronique.",
                 creeLe: jours(21), statut: "résolu", urgente: false, meConcerne: true,
                 lieu: "Garage", messages: 4),
+        ]
+    }()
+}
+
+extension ServiceSimule {
+    /// Le fil inventé : trois jours, toutes les natures, une urgence.
+    static let fil: [ElementDuFil] = {
+        let calendrier = Chronologie.calendrier
+        let aujourdhui = calendrier.startOfDay(for: .now)
+        func le(_ jours: Int, _ heure: Int) -> Date {
+            let jour = calendrier.date(byAdding: .day, value: -jours, to: aujourdhui) ?? aujourdhui
+            return calendrier.date(byAdding: .hour, value: heure, to: jour) ?? jour
+        }
+        func element(
+            _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
+            badges: [String] = [], meConcerne: Bool = false
+        ) -> ElementDuFil {
+            ElementDuFil(
+                id: id, type: type, date: date, titre: titre, detail: detail, badges: badges,
+                publicationUrgente: false, statut: nil, meConcerne: meConcerne)
+        }
+        return [
+            element(
+                "t41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
+                "Niveau -1, place 12. Le plombier passe dans la matinée.", badges: ["urgent"], meConcerne: true),
+            element(
+                "p12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
+                "Remplacement d'une vanne dans la cave du bâtiment A."),
+            element(
+                "s3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
+                "Trois dates proposées, réponses jusqu'à vendredi."),
+            element(
+                "d7", "document", le(1, 11), "Procès-verbal de l'assemblée générale",
+                "Ajouté dans Documents › Assemblées."),
+            element(
+                "c2", "point_conseil", le(2, 17), "Point avec le syndic",
+                "Ordre du jour : ascenseur, ravalement, contrat d'entretien."),
+            element(
+                "t38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
+                "Le devis retenu sera présenté au conseil syndical.", meConcerne: true),
+            element(
+                "t31", "ticket_resolu", le(4, 15), "Portail du garage remis en service",
+                "La carte électronique a été remplacée."),
         ]
     }()
 }

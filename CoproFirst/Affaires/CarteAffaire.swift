@@ -6,6 +6,7 @@ import SwiftUI
 /// Une affaire dans la liste : date, titre, aperçu sur trois lignes, lieu et messages.
 /// Une affaire urgente porte un liseré rouge à gauche.
 struct CarteAffaire: View {
+    @Environment(\.palette) private var palette
     let affaire: Affaire
     @Environment(\.dynamicTypeSize) private var tailleTexte
 
@@ -19,23 +20,23 @@ struct CarteAffaire: View {
             enTete {
                 Text(affaire.creeLe, format: .relative(presentation: .named))
                     .font(.footnote)
-                    .foregroundStyle(Charte.textMuted)
+                    .foregroundStyle(palette.textMuted)
                 if affaire.urgente {
                     Text("Urgente")
                         .font(.caption.weight(.bold))
-                        .foregroundStyle(Charte.danger)
+                        .foregroundStyle(palette.danger)
                 }
                 if !tailleTexte.isAccessibilitySize { Spacer(minLength: 0) }
                 Text(affaire.numero)
                     .font(.caption.monospacedDigit())
-                    .foregroundStyle(Charte.textMuted)
+                    .foregroundStyle(palette.textMuted)
             }
             Text(affaire.titre)
                 .font(.headline)
-                .foregroundStyle(Charte.text)
+                .foregroundStyle(palette.text)
             Text(affaire.apercu)
                 .font(.subheadline)
-                .foregroundStyle(Charte.textMuted)
+                .foregroundStyle(palette.textMuted)
                 .lineLimit(3)
             if affaire.lieu != nil || affaire.messages != nil {
                 HStack(spacing: 16) {
@@ -51,23 +52,23 @@ struct CarteAffaire: View {
                     }
                 }
                 .font(.footnote)
-                .foregroundStyle(Charte.textMuted)
+                .foregroundStyle(palette.textMuted)
                 .labelStyle(.titleAndIcon)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
         .padding(.leading, affaire.urgente ? 4 : 0)
-        .background(Charte.surface)
+        .background(palette.surface)
         .overlay(alignment: .leading) {
             if affaire.urgente {
-                Charte.danger.frame(width: 4)
+                palette.danger.frame(width: 4)
             }
         }
         .clipShape(.rect(cornerRadius: Mise.rayon, style: .continuous))
         .overlay {
             RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                .strokeBorder(Charte.border, lineWidth: 1)
+                .strokeBorder(palette.border, lineWidth: 1)
         }
         .contentShape(.rect(cornerRadius: Mise.rayon))
         .accessibilityElement(children: .ignore)

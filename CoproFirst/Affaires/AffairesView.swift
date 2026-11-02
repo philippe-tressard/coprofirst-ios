@@ -5,6 +5,7 @@ import SwiftUI
 
 /// Écran 4 — les affaires de la résidence : recherche, filtres, cartes.
 struct AffairesView: View {
+    @Environment(\.palette) private var palette
     let installation: Installation
     @Environment(Parcours.self) private var parcours
     @Environment(Reseau.self) private var reseau
@@ -31,13 +32,14 @@ struct AffairesView: View {
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .background(Charte.bg)
+        .background(palette.bg)
         .overlay { etatVide }
         .navigationTitle("Affaires")
         .searchable(text: $etat.recherche, prompt: "Rechercher une affaire")
         .refreshable { await etat.charger(installation, avec: parcours.service) }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            PastilleOuSuisJe(installation: installation, cloche: true)
+            ToolbarItem(placement: .topBarLeading) {
                 Button {
                     nouvelle = true
                 } label: {
@@ -46,7 +48,7 @@ struct AffairesView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.circle)
-                .tint(Charte.primaryPlein)
+                .tint(palette.primaryPlein)
                 .accessibilityLabel("Nouvelle affaire")
                 .accessibilityIdentifier("affaires.nouvelle")
             }
@@ -111,7 +113,7 @@ struct AffairesView: View {
             } label: {
                 Label("Archiver", systemImage: "archivebox")
             }
-            .tint(Charte.primaryPlein)
+            .tint(palette.primaryPlein)
         }
     }
 

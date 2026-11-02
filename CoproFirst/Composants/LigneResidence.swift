@@ -5,28 +5,29 @@ import SwiftUI
 
 /// Une résidence déjà connue : pictogramme, nom, adresse, chevron.
 struct LigneResidence: View {
+    @Environment(\.palette) private var palette
     let installation: Installation
 
     var body: some View {
         HStack(spacing: 14) {
             Image(systemName: "building.2.fill")
                 .font(.body.weight(.semibold))
-                .foregroundStyle(Charte.primary)
+                .foregroundStyle(palette.primary)
                 .frame(width: 40, height: 40)
-                .background(Charte.primaryLight, in: .rect(cornerRadius: 10, style: .continuous))
+                .background(palette.primaryLight, in: .rect(cornerRadius: 10, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(installation.nom)
                     .font(.headline)
-                    .foregroundStyle(Charte.text)
+                    .foregroundStyle(palette.text)
                 Text(installation.hote)
                     .font(.subheadline)
-                    .foregroundStyle(Charte.textMuted)
+                    .foregroundStyle(palette.textMuted)
             }
             Spacer(minLength: 8)
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
-                .foregroundStyle(Charte.textMuted)
+                .foregroundStyle(palette.textMuted)
                 .accessibilityHidden(true)
         }
         .frame(minHeight: Mise.cible)

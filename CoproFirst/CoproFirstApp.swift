@@ -9,7 +9,6 @@ struct CoproFirstApp: App {
     @State private var reseau = Reseau()
 
     init() {
-        ApparenceNavigation.appliquer()
         _parcours = State(initialValue: Lancement.parcours(ProcessInfo.processInfo.arguments))
     }
 
@@ -23,7 +22,8 @@ struct CoproFirstApp: App {
 }
 
 /// Les arguments de lancement des tests d'interface et des captures :
-/// `-api-simulee` (aucune requête ne part), `-ecran residence|connexion|affaires`.
+/// `-api-simulee` (aucune requête ne part) et
+/// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`.
 /// Hors de ces arguments, l'app parle aux vraies installations.
 enum Lancement {
     @MainActor
@@ -31,25 +31,29 @@ enum Lancement {
         guard arguments.contains("-api-simulee") else {
             return Parcours(service: ServiceAPI(), connues: InstallationsConnues())
         }
-        let reglages = UserDefaults(suiteName: "fr.coprofirst.app.simulee") ?? .standard
-        reglages.removePersistentDomain(forName: "fr.coprofirst.app.simulee")
-        let connues = InstallationsConnues(reglages: reglages)
+        let suite = "fr.coprofirst.app.simulee"
+        let reglages = UserDefaults(suiteName: suite) ?? .standard
+        reglages.removePersistentDomain(forName: suite)
+        let parcours = Parcours(service: ServiceSimule(), connues: InstallationsConnues(reglages: reglages))
         let residence = ServiceSimule.residence
-        let parcours = Parcours(service: ServiceSimule(), connues: connues)
         let ecran = arguments.firstIndex(of: "-ecran").flatMap {
             arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
         }
         switch ecran {
-        case "residence":
-            connues.retenir(residence)
-            connues.retenir(
-                Installation(
-                    adresse: URL(string: "https://demo.coprofirst.fr")!, nom: "Résidence Les Glycines",
-                    aUnLogo: false))
-            parcours.chemin = [.residence]
+        case "en-savoir-plus":
+            parcours.chemin = [.enSavoirPlus]
         case "connexion":
-            parcours.chemin = [.residence, .connexion(residence)]
+            parcours.reconnue = residence
+            parcours.chemin = [.connexion(.init(installation: residence))]
+        case "faceid":
+            parcours.ouvrir(residence, premiereConnexion: true)
+        case "demo":
+            parcours.chemin = [.demo]
+        case "fil":
+            parcours.connues.noterFaceIDProposee(residence)
+            parcours.ouvrir(residence)
         case "affaires":
+            parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
         default:
             break

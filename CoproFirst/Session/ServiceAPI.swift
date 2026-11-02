@@ -17,7 +17,15 @@ final class ServiceAPI: ServiceCoproFirst {
         case .ok(let ok):
             let cles = try ok.body.json.additionalProperties
             guard let nom = cles["site_nom"], !nom.isEmpty else { throw ErreurService.pasCoproFirst }
-            return Installation(adresse: adresse, nom: nom, aUnLogo: !(cles["site_logo"] ?? "").isEmpty)
+            let prefixe = "page_config_"
+            let libelles = cles.reduce(into: [String: String]()) { libelles, cle in
+                guard cle.key.hasPrefix(prefixe), let libelle = OrdrePages.libelle(surcharge: cle.value) else { return }
+                libelles[String(cle.key.dropFirst(prefixe.count))] = libelle
+            }
+            return Installation(
+                adresse: adresse, nom: nom, aUnLogo: !(cles["site_logo"] ?? "").isEmpty,
+                codePalette: cles["site_palette"], ordrePages: OrdrePages.lire(cles["pages_order"]),
+                libellesPages: libelles)
         case .undocumented(let statut, _):
             throw ErreurService.depuis(statut: statut)
         }
@@ -30,9 +38,9 @@ final class ServiceAPI: ServiceCoproFirst {
         }
         switch sortie {
         case .ok:
-            if let jeton = cookie("refresh_token", installation) {
-                Trousseau.enregistrer(jeton, pour: installation.hote)
-            }
+            // La session vit en mémoire ; elle ne va au Trousseau que si l'utilisateur
+            // accepte Face ID (activerFaceID).
+            break
         case .unprocessableContent:
             throw ErreurService.identifiantsRefuses
         case .undocumented(let statut, _):
@@ -62,6 +70,27 @@ final class ServiceAPI: ServiceCoproFirst {
             throw ErreurService.sessionExpiree
         }
     }
+
+    func activerFaceID(_ installation: Installation) async -> Bool {
+        guard let jeton = cookie("refresh_token", installation) else { return false }
+        Trousseau.enregistrer(jeton, pour: installation.hote)
+        return Trousseau.contient(pour: installation.hote)
+    }
+
+    func fil(_ installation: Installation) async throws -> [ElementDuFil] {
+        let sortie = try await appeler { try await client(installation.adresse).getFluxFluxGet() }
+        switch sortie {
+        case .ok(let ok):
+            return try ok.body.json.items?.map(ElementDuFil.init(item:)) ?? []
+        case .unprocessableContent:
+            throw ErreurService.inattendue(422)
+        case .undocumented(let statut, _):
+            throw statut == 401 ? ErreurService.sessionExpiree : ErreurService.depuis(statut: statut)
+        }
+    }
+
+    /// Aucune route ne sert les identifiants publics de la démo : pas d'entrée directe.
+    func entrerEnDemo(_ code: String) async throws -> Installation? { nil }
 
     func affaires(_ installation: Installation) async throws -> [Affaire] {
         let sortie = try await appeler { try await client(installation.adresse).listTicketsTicketsGet() }
@@ -147,6 +176,23 @@ extension Affaire {
             meConcerne: ticket.meConcerne ?? false,
             lieu: nil,
             messages: nil
+        )
+    }
+}
+
+extension ElementDuFil {
+    init(item: Components.Schemas.FluxItem) {
+        let meta = item.meta?.additionalProperties.value ?? [:]
+        self.init(
+            id: item.id ?? "\(item._type)-\(item.date.timeIntervalSince1970)",
+            type: item._type,
+            date: item.date,
+            titre: item.titre,
+            detail: item.detail,
+            badges: item.badges ?? [],
+            publicationUrgente: (meta["urgente"] as? Bool) ?? false,
+            statut: meta["statut"] as? String,
+            meConcerne: item.meConcerne ?? false
         )
     }
 }

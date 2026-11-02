@@ -1,0 +1,102 @@
+// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+import SwiftUI
+
+/// Écran 6 — le fil de la résidence, jour par jour : le premier écran après la connexion.
+struct FilView: View {
+    let installation: Installation
+    @Environment(Parcours.self) private var parcours
+    @Environment(Reseau.self) private var reseau
+    @Environment(\.palette) private var palette
+    @State private var jours: [JourDuFil] = []
+    @State private var phase = Phase.chargement
+
+    private enum Phase: Equatable {
+        case chargement, pret
+        case erreur(ErreurService)
+    }
+
+    var body: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
+                if phase == .chargement {
+                    Section {
+                        squelette
+                    } header: {
+                        EnTeteJour(texte: "Aujourd'hui".uppercased())
+                    }
+                }
+                ForEach(jours) { jour in
+                    Section {
+                        ForEach(jour.elements) { element in
+                            CarteDuFil(element: element).padding(.horizontal, Mise.marge)
+                        }
+                    } header: {
+                        EnTeteJour(texte: Chronologie.entete(jour.jour))
+                    }
+                }
+            }
+            .padding(.bottom, 16)
+        }
+        .background(palette.bg)
+        .overlay { etatVide }
+        .refreshable { await charger() }
+        .navigationTitle(OrdrePages.libelleFil)
+        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
+        .safeAreaInset(edge: .top, spacing: 0) {
+            if !reseau.enLigne { BandeauHorsLigne() }
+        }
+        .task { await charger() }
+    }
+
+    private var squelette: some View {
+        // Des identifiants à part : partagés avec les vrais éléments, SwiftUI
+        // réutilisait les vues du squelette — encore grisées une fois le fil chargé.
+        ForEach(0..<3, id: \.self) { rang in
+            CarteDuFil(element: ServiceSimule.fil[rang]).padding(.horizontal, Mise.marge)
+        }
+        .redacted(reason: .placeholder)
+        .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var etatVide: some View {
+        if case .erreur(let erreur) = phase {
+            MessageErreur(texte: erreur.phrase) { Task { await charger() } }
+                .padding(Mise.marge)
+        } else if phase == .pret, jours.isEmpty {
+            ContentUnavailableView(
+                "Rien de neuf", systemImage: "sparkles",
+                description: Text("Le fil se remplira des affaires, actualités et documents de la résidence."))
+        }
+    }
+
+    private func charger() async {
+        do {
+            let elements = try await parcours.service.fil(installation)
+            withAnimation(.snappy) {
+                jours = Chronologie.parJour(elements)
+                phase = .pret
+            }
+        } catch {
+            withAnimation(.snappy) { phase = .erreur(ErreurService.depuis(error)) }
+        }
+    }
+}
+
+/// L'en-tête d'un jour, collé en haut tant que sa journée défile.
+struct EnTeteJour: View {
+    let texte: String
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Text(texte)
+            .styleLibelle()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, Mise.marge)
+            .padding(.vertical, 8)
+            .background(.bar)
+            .accessibilityAddTraits(.isHeader)
+    }
+}

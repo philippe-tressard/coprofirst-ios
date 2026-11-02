@@ -38,6 +38,27 @@ Le greffon `swift-openapi-generator` demande, à la première ouverture, d'être
 autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 `-skipPackagePluginValidation`.
 
+## Écrans livrés
+
+Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
+adresse ou son QR code — aucun annuaire), Face ID proposé après la première
+connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires. La
+barre du bas suit l'ordre réglé par l'administration de la résidence
+(`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
+
+Pour les essayer sans réseau, l'app accepte des arguments de lancement :
+`-api-simulee` (une résidence inventée, aucune requête ne part) et
+`-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`.
+
+## Charte
+
+Les couleurs, la table des natures du fil et l'ordre par défaut des pages sont
+**générés** depuis les sources de CoproFirst, jamais recopiés :
+`python3 scripts/generer-charte.py` écrit `CoproFirst/Charte/Palette*.swift` (la
+charte et les palettes d'une résidence, claires et sombres), `NaturesDuFil.swift`
+et `CoproFirst/Navigation/PagesParDefaut.swift`. Le contrôle du dépôt refuse une
+couleur écrite à la main dans l'app.
+
 ## Contrat d'API
 
 Le client est **généré** depuis

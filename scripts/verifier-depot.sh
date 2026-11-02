@@ -81,7 +81,7 @@ done < <(git ls-files --stage)
 COULEURS_MAIN='Color\(red:|UIColor\(red:|colorLiteral|RVBA\(0x|Color\.(red|blue|green|orange|yellow|purple|pink|black|white|gray)\b'
 while IFS= read -r f; do
   [ -f "$f" ] || continue
-  case "$f" in CoproFirst/Charte/Charte+Couleurs.swift|CoproFirst/Charte/Charte.swift) continue ;; esac
+  case "$f" in CoproFirst/Charte/Palette*.swift|CoproFirst/Charte/Charte.swift) continue ;; esac
   if grep -nE "$COULEURS_MAIN" "$f" >/dev/null; then
     echec "$f : couleur écrite à la main ($(grep -noE "$COULEURS_MAIN" "$f" | head -1)) — passer par Charte (généré)"
   fi

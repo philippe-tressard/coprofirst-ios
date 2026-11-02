@@ -26,7 +26,7 @@ struct RVBA: Sendable {
 
 extension Color {
     /// Une couleur qui suit le thème du système : la valeur claire de `socle.css`,
-    /// la sombre de `palette-sombre.css` (Charte+Couleurs.swift, généré).
+    /// la sombre de `palette-sombre.css` (Palette+*.swift, générés).
     init(clair: RVBA, sombre: RVBA) {
         self.init(
             uiColor: UIColor { traits in
@@ -56,17 +56,26 @@ extension Font {
 extension View {
     /// Le libellé d'un champ ou d'une section : en capitales, comme le site.
     func styleLibelle() -> some View {
-        font(.caption.weight(.semibold))
+        modifier(StyleLibelle())
+    }
+}
+
+private struct StyleLibelle: ViewModifier {
+    @Environment(\.palette) private var palette
+
+    func body(content: Content) -> some View {
+        content
+            .font(.caption.weight(.semibold))
             .tracking(0.6)
             .textCase(.uppercase)
-            .foregroundStyle(Charte.textMuted)
+            .foregroundStyle(palette.textMuted)
     }
 }
 
 /// L'apparence des barres de navigation : grands titres en serif, couleur de la charte.
 enum ApparenceNavigation {
     @MainActor
-    static func appliquer() {
+    static func appliquer(_ palette: Palette) {
         func serif(_ style: UIFont.TextStyle, graisse: UIFont.Weight) -> UIFont {
             let base = UIFontDescriptor.preferredFontDescriptor(withTextStyle: style)
             let gras = base.addingAttributes([.traits: [UIFontDescriptor.TraitKey.weight: graisse]])
@@ -74,7 +83,7 @@ enum ApparenceNavigation {
             return UIFontMetrics(forTextStyle: style).scaledFont(for: UIFont(descriptor: descripteur, size: 0))
         }
         let apparence = UINavigationBar.appearance()
-        let couleur = UIColor(Charte.text)
+        let couleur = UIColor(palette.text)
         apparence.largeTitleTextAttributes = [.font: serif(.largeTitle, graisse: .bold), .foregroundColor: couleur]
         apparence.titleTextAttributes = [.font: serif(.headline, graisse: .semibold), .foregroundColor: couleur]
     }

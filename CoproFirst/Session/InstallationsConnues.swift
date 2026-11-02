@@ -18,6 +18,17 @@ final class InstallationsConnues {
         liste = (try? JSONDecoder().decode([Installation].self, from: donnees)) ?? []
     }
 
+    /// La dernière résidence ouverte : celle que Face ID rouvre au retour.
+    var derniere: Installation? { liste.first }
+
+    func faceIDProposee(_ installation: Installation) -> Bool {
+        reglages.bool(forKey: "faceid-propose." + installation.hote)
+    }
+
+    func noterFaceIDProposee(_ installation: Installation) {
+        reglages.set(true, forKey: "faceid-propose." + installation.hote)
+    }
+
     /// La plus récente en tête ; une même adresse n'apparaît qu'une fois.
     func retenir(_ installation: Installation) {
         liste.removeAll { $0.adresse == installation.adresse }

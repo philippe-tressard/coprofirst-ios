@@ -35,10 +35,11 @@ struct Filtres: View {
 
 /// Hors ligne : dit une fois, en haut, tant que ça dure.
 struct BandeauHorsLigne: View {
+    @Environment(\.palette) private var palette
     var body: some View {
         Label("Hors ligne — les affaires affichées peuvent dater.", systemImage: "wifi.slash")
             .font(.footnote.weight(.medium))
-            .foregroundStyle(Charte.text)
+            .foregroundStyle(palette.text)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .background(.bar)

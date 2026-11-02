@@ -7,13 +7,36 @@ import Foundation
 /// les liste — l'app ne connaît que celles que l'utilisateur a saisies ou scannées.
 struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// L'adresse du site, réduite à `https://<hôte>`.
-    let adresse: URL
+    var adresse: URL
     /// Le nom de la résidence (`site_nom` de GET /config).
     var nom: String
     /// Un logo téléversé par la résidence (`site_logo` non vide).
     var aUnLogo: Bool
+    /// Le code de sa palette (`site_palette`), absent avant les versions qui le servent.
+    var codePalette: String?
+    /// L'ordre de navigation réglé par l'administration (`pages_order`).
+    var ordrePages: [String]?
+    /// Les libellés de menu surchargés (`page_config_<id>` → `navLabel`).
+    var libellesPages: [String: String] = [:]
+
+    init(
+        adresse: URL, nom: String, aUnLogo: Bool, codePalette: String? = nil,
+        ordrePages: [String]? = nil, libellesPages: [String: String] = [:]
+    ) {
+        self.adresse = adresse
+        self.nom = nom
+        self.aUnLogo = aUnLogo
+        self.codePalette = codePalette
+        self.ordrePages = ordrePages
+        self.libellesPages = libellesPages
+    }
 
     var id: URL { adresse }
+    var palette: Palette { .pour(code: codePalette) }
+    /// La barre du bas de cette résidence, dans son ordre.
+    var pages: [PageDeNavigation] {
+        OrdrePages.ordonner(PagesParDefaut.toutes, ordre: ordrePages, libelles: libellesPages)
+    }
     var hote: String { adresse.host() ?? adresse.absoluteString }
     var adresseLogo: URL? {
         aUnLogo ? adresse.appending(path: "api/config/logo.png") : nil
