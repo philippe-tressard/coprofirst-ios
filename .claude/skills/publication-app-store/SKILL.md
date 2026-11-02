@@ -10,6 +10,23 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 # Publication sur l'App Store
 
+## 🔴 Rien ne part en revue chez Apple sans le « oui » écrit de Philippe
+
+Règle de Philippe (02/11/2026). Le pourquoi et le détail sont dans la mémoire
+`feedback_aucune_soumission_sans_validation_rendu` de la banque du projet ;
+ce qui suit est son application au dépôt.
+
+| | |
+|---|---|
+| **Interdit** sans son « oui » écrit **pour CETTE version**, captures à l'appui | soumission à l'App Store ; version proposée aux testeurs **externes** de TestFlight (elle passe par la revue d'Apple) ; tout `deliver`, `pilot` vers un groupe externe, « Submit for Review » |
+| **Permis** — c'est ce qui lui sert à juger | simulateur ; installation sur son iPhone depuis Xcode ; TestFlight **interne** |
+
+Une validation ne vaut pas pour la version suivante. Une automatisation de
+publication (fastlane, workflow) n'a **aucune voie** vers la revue : pas de lane
+ni de job qui soumet d'office. `scripts/verifier-depot.sh` refuse ces gestes
+dans `fastlane/` et `.github/workflows/` — la soumission reste un geste manuel,
+fait après le « oui ».
+
 > Squelette posé à l'amorce (01/11/2026). Ce qu'il faut vérifier se lit dans
 > `standards/14` §3 bis ; les **règles d'Apple en vigueur** se relisent avant
 > chaque soumission — cette skill dit où en est CoproFirst-iOS, pas ce qu'Apple exige.
