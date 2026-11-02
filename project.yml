@@ -46,6 +46,10 @@ targets:
         # Français seul : aucune autre langue n'est proposée (CLAUDE.md).
         CFBundleLocalizations: [fr]
         ITSAppUsesNonExemptEncryption: false
+        # Le QR code de la fiche d'arrivée porte l'adresse du site de la résidence.
+        NSCameraUsageDescription: "La caméra lit le QR code de votre fiche d'arrivée, qui donne l'adresse de votre résidence."
+        # Le jeton de session gardé au Trousseau ne se lit qu'après Face ID.
+        NSFaceIDUsageDescription: "Face ID ouvre votre espace sans ressaisir votre mot de passe."
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
     settings:

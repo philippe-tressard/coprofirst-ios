@@ -8,10 +8,12 @@
 #   1. aucun fichier versionné de plus de 500 lignes (standards/02 §6)
 #   2. ni BOM ni CRLF (standards/10)
 #   3. bit d'exécution sur les scripts, et sur eux seuls (standards/08 §3)
-#   4. syntaxe de chaque script bash (standards/05 §6)
+#   4. syntaxe de chaque script bash et Python (standards/05 §6)
 #   5. LICENSE = permission App Store + texte de l'AGPL, assemblés par
 #      `--ecrire-licence` : les deux textes vivent dans LICENSES/, LICENSE n'en est
 #      que la réunion, et ce contrôle refuse qu'il en diverge.
+#   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
+#      coprofirst (scripts/generer-charte.py).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -61,10 +63,29 @@ while IFS=$'\t' read -r meta f; do
   if [[ "$f" == *.sh || "$f" == .githooks/* ]]; then
     [ "$mode" = "100755" ] || echec "$f : mode $mode, attendu 100755 (git update-index --chmod=+x)"
     bash -n "$f" 2>/dev/null || echec "$f : syntaxe bash invalide"
+  elif [[ "$f" == *.py ]]; then
+    # Un script Python lancé directement porte son shebang et son bit d'exécution.
+    if head -1 "$f" | grep -q '^#!'; then
+      [ "$mode" = "100755" ] || echec "$f : shebang sans bit d'exécution (git update-index --chmod=+x)"
+    fi
+    python3 -c 'import ast, sys; ast.parse(open(sys.argv[1], encoding="utf-8").read())' "$f" 2>/dev/null \
+      || echec "$f : syntaxe Python invalide"
   elif [ "$mode" = "100755" ]; then
     echec "$f : exécutable sans être un script (git update-index --chmod=-x)"
   fi
 done < <(git ls-files --stage)
+
+# Les couleurs se GÉNÈRENT depuis les sources de coprofirst (scripts/generer-charte.py) :
+# aucune couleur écrite à la main dans le code Swift de l'app. Seuls le fichier
+# généré et la fabrique qu'il appelle (Charte.swift) en portent.
+COULEURS_MAIN='Color\(red:|UIColor\(red:|colorLiteral|RVBA\(0x|Color\.(red|blue|green|orange|yellow|purple|pink|black|white|gray)\b'
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  case "$f" in CoproFirst/Charte/Charte+Couleurs.swift|CoproFirst/Charte/Charte.swift) continue ;; esac
+  if grep -nE "$COULEURS_MAIN" "$f" >/dev/null; then
+    echec "$f : couleur écrite à la main ($(grep -noE "$COULEURS_MAIN" "$f" | head -1)) — passer par Charte (généré)"
+  fi
+done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"

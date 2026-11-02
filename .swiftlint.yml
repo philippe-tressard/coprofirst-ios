@@ -33,3 +33,6 @@ line_length:
 # l'exige au lieu de la refuser, sinon les deux outils se contredisent.
 trailing_comma:
   mandatory_comma: true
+# swift-format met l'accolade d'une condition sur plusieurs lignes à la ligne : idem.
+opening_brace:
+  ignore_multiline_statement_conditions: true

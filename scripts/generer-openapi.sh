@@ -53,6 +53,35 @@ sys.path.insert(0, sys.argv[1])
 from app.main import app  # noqa: E402
 
 schema = app.openapi()
+
+
+def nullable(noeud):
+    """`anyOf: [X, {type: null}]` → X rendu nullable (forme OpenAPI 3.1 `type: [t, "null"]`).
+
+    FastAPI écrit ainsi tout champ `Optional[...]`, et swift-openapi-generator 1.14
+    ne lit pas cette forme : il SUPPRIME le champ en silence (« Schema "null" is
+    not supported, skipping ») — `TicketRead` y perdait `me_concerne`,
+    `perimetre_cible`, `auteur_nom`… Pour une référence (`$ref`), la nullabilité
+    tombe : un champ facultatif absent ou `null` se décode en `nil` de toute façon.
+    """
+    if isinstance(noeud, list):
+        return [nullable(n) for n in noeud]
+    if not isinstance(noeud, dict):
+        return noeud
+    noeud = {cle: nullable(valeur) for cle, valeur in noeud.items()}
+    branches = noeud.get("anyOf")
+    if isinstance(branches, list) and {"type": "null"} in branches:
+        autres = [b for b in branches if b != {"type": "null"}]
+        if len(autres) == 1:
+            seule = dict(autres[0])
+            if isinstance(seule.get("type"), str):
+                seule["type"] = [seule["type"], "null"]
+            reste = {cle: valeur for cle, valeur in noeud.items() if cle != "anyOf"}
+            return {**seule, **reste} if "$ref" not in seule else seule
+    return noeud
+
+
+schema = nullable(schema)
 with open(sys.argv[2], "w", encoding="utf-8", newline="\n") as f:
     json.dump(schema, f, ensure_ascii=False, indent=2, sort_keys=True)
     f.write("\n")
@@ -83,6 +112,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Commit | \`$COMMIT\` (branche \`$BRANCHE\`)$([ -n "$SALE" ] && echo " — ⚠️ arbre de travail MODIFIÉ") |
 | Version du contrat | \`$CONTRAT\` (\`API_VERSION\` de \`api/app/main.py\`) |
 | Préfixe servi | \`/api\` : les chemins du schéma s'entendent sous \`https://<hôte>/api\` |
+| Normalisation | \`anyOf: [X, null]\` réécrit en \`type: [X, "null"]\` (\`\$ref\` : nullabilité retirée) — le générateur supprimait ces champs |
 
 Provisoire : coprofirst#2456 publiera le contrat ; ce fichier viendra alors de là.
 EOF
