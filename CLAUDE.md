@@ -44,8 +44,10 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   `AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore`. `LICENSE` est la
   réunion des deux textes, réassemblée par `bash scripts/verifier-depot.sh
   --ecrire-licence`, jamais écrite à la main.
-- **Le logo** n'est pas encore dans le dépôt ; il y entrera sous
-  `LicenseRef-CoproFirst-Logo` (`REUSE.toml`).
+- **Le logo** de CoproFirst est intégré (icône, accueil, pastille) sous sa licence
+  propre `LicenseRef-CoproFirst-Logo`, élargie à l'app par coprofirst#2474
+  (`REUSE.toml`) ; le texte est recopié à l'identique et `scripts/verifier-logo.sh`
+  en garde l'identité (`scripts/importer-logo.sh` pour le recopier).
 - **Ce dépôt et coprofirst ne partagent que le contrat d'API publié** — jamais du
   code recopié. Couleurs, tailles, ordre des sections, formats : à **générer**
   depuis les sources de coprofirst. Un besoin côté serveur devient un ticket (ou
