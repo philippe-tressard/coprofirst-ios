@@ -31,7 +31,8 @@ struct OngletsView: View {
     }
 }
 
-/// L'écran natif d'une page du site ; celles qui ne sont pas encore livrées le disent.
+/// Un onglet de la barre : sa pile de navigation, et l'écran que le registre des
+/// menus inscrit pour sa page (`RegistreDesMenus`) — « Bientôt » sinon.
 private struct EcranDePage: View {
     let page: PageDeNavigation
     let installation: Installation
@@ -39,26 +40,24 @@ private struct EcranDePage: View {
 
     var body: some View {
         NavigationStack(path: $chemin) {
-            switch page.id {
-            case OrdrePages.idFil: FilView(installation: installation, chemin: $chemin)
-            case "mes-demandes": AffairesView(installation: installation)
-            default: Bientot(page: page, installation: installation)
-            }
+            RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
         }
     }
 }
 
+/// Les pages au-delà des quatre premières : leur écran s'ouvre dans la pile de « Plus ».
 private struct PlusView: View {
     let pages: [PageDeNavigation]
     let installation: Installation
     @Environment(\.palette) private var palette
+    @State private var chemin = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $chemin) {
             List {
                 ForEach(pages) { page in
                     NavigationLink {
-                        Bientot(page: page, installation: installation)
+                        RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
                     } label: {
                         Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone))
                             .foregroundStyle(palette.text)
@@ -80,21 +79,5 @@ private struct PlusView: View {
             .navigationTitle("Plus")
             .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         }
-    }
-}
-
-private struct Bientot: View {
-    let page: PageDeNavigation
-    let installation: Installation
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        ContentUnavailableView(
-            "Bientôt", systemImage: Pictogrammes.symbole(page.icone),
-            description: Text("« \(page.titre) » arrive dans une prochaine version de l'app.")
-        )
-        .background(palette.bg)
-        .navigationTitle(page.titre)
-        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
     }
 }

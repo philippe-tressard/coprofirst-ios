@@ -46,6 +46,10 @@ connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires. 
 barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
 
+Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou réservé
+au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
+jugé en CI.
+
 Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`.
@@ -55,9 +59,13 @@ Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 Les couleurs, la table des natures du fil et l'ordre par défaut des pages sont
 **générés** depuis les sources de CoproFirst, jamais recopiés :
 `python3 scripts/generer-charte.py` écrit `CoproFirst/Charte/Palette*.swift` (la
-charte et les palettes d'une résidence, claires et sombres), `NaturesDuFil.swift`
-et `CoproFirst/Navigation/PagesParDefaut.swift`. Le contrôle du dépôt refuse une
-couleur écrite à la main dans l'app.
+charte et les palettes d'une résidence, claires et sombres), `NaturesDuFil.swift`,
+`CoproFirst/Navigation/PagesParDefaut.swift` et la liste des onglets du site
+(`Parite/ONGLETS-DU-SITE.md`). Le contrôle du dépôt refuse une couleur écrite à
+la main dans l'app.
+
+Les générateurs lisent un clone de CoproFirst : `$COPROFIRST_RACINE` (par défaut
+`/Volumes/Data/Dev/5hostachy`), ou le chemin passé en argument.
 
 ## Contrat d'API
 
