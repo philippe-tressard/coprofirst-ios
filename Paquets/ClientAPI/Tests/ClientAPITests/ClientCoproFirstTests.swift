@@ -88,11 +88,12 @@ func lesDatesDeLAPISeLisent(texte: String) throws {
 
 /// Le libellé du logement (`libelle_logement`, contrat ≥ 1.2.0, coprofirst#2500) : servi
 /// tel quel, `null` quand il n'y a rien à dire, absent d'un serveur plus ancien.
-@Test(arguments: [
-    (#", "libelle_logement": "Bât. A, T3, 2ème""#, "Bât. A, T3, 2ème"),
-    (#", "libelle_logement": null"#, nil),
-    ("", nil),
-] as [(String, String?)])
+@Test(
+    arguments: [
+        (#", "libelle_logement": "Bât. A, T3, 2ème""#, "Bât. A, T3, 2ème"),
+        (#", "libelle_logement": null"#, nil),
+        ("", nil),
+    ] as [(String, String?)])
 func leLibelleDuLogementSeLit(champ: String, attendu: String?) throws {
     let json = #"""
         {"id": 7, "nom": "Durand", "prenom": "Alix", "email": "alix@exemple.fr",
