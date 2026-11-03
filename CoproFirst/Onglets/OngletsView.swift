@@ -34,11 +34,12 @@ struct OngletsView: View {
 private struct EcranDePage: View {
     let page: PageDeNavigation
     let installation: Installation
+    @State private var chemin = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $chemin) {
             switch page.id {
-            case OrdrePages.idFil: FilView(installation: installation)
+            case OrdrePages.idFil: FilView(installation: installation, chemin: $chemin)
             case "mes-demandes": AffairesView(installation: installation)
             default: Bientot(page: page, installation: installation)
             }

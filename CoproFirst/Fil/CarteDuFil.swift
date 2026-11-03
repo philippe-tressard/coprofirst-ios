@@ -45,6 +45,12 @@ struct CarteDuFil: View {
                 }
             }
             Spacer(minLength: 0)
+            // Une carte du fil s'ouvre TOUJOURS : le chevron le dit.
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.semibold))
+                .foregroundStyle(palette.textMuted)
+                .frame(maxHeight: .infinity)
+                .accessibilityHidden(true)
         }
         .padding(14)
         .padding(.leading, element.urgent ? 4 : 0)

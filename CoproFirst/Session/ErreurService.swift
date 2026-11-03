@@ -19,6 +19,8 @@ enum ErreurService: Error, Equatable, Sendable {
     case tropDEssais
     /// La session a expiré : il faut se reconnecter.
     case sessionExpiree
+    /// L'élément n'existe plus, ou n'est pas lisible par ce compte.
+    case introuvable
     /// Tout le reste — le code reste dans le journal, pas à l'écran.
     case inattendue(Int)
 
@@ -38,6 +40,8 @@ enum ErreurService: Error, Equatable, Sendable {
             "Trop d'essais. Patientez quelques minutes avant de réessayer."
         case .sessionExpiree:
             "Votre session a expiré. Connectez-vous de nouveau."
+        case .introuvable:
+            "Cet élément n'est plus disponible, ou vous n'y avez pas accès."
         case .inattendue:
             "La résidence n'a pas pu répondre. Réessayez dans un instant."
         }

@@ -1,0 +1,177 @@
+// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+import SwiftUI
+
+/// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
+/// Actualité : en-tête, description, photos, Historique, et « Répondre » si la
+/// route l'accepte.
+struct DetailAffaireView: View {
+    let id: Int
+    let installation: Installation
+    @Environment(Parcours.self) private var parcours
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        let service = parcours.service
+        let installation = installation
+        Chargement(
+            charger: { [id] in try await service.affaire(id, dans: installation) },
+            contenu: { affaire, recharger in
+                ContenuAffaire(affaire: affaire, installation: installation, recharger: recharger)
+            },
+            squelette: { ContenuAffaire(affaire: Self.squelette, installation: installation, recharger: {}) }
+        )
+        .background(palette.bg)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// La forme d'une affaire, le temps qu'elle arrive.
+    static let squelette = DetailAffaire(
+        id: 0, numero: "A-0000", titre: "Une affaire de la résidence qui se charge",
+        description: String(repeating: "Le détail de l'affaire arrive. ", count: 5), categorie: "",
+        statut: "ouvert", urgente: false, creeLe: .now, auteur: "Le conseil syndical", lieu: "Bâtiment",
+        photos: [], suites: [], peutRepondre: false)
+}
+
+private struct ContenuAffaire: View {
+    let affaire: DetailAffaire
+    let installation: Installation
+    let recharger: () -> Void
+    @Environment(\.palette) private var palette
+    @State private var repondre = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                EnTeteAffaire(affaire: affaire)
+                Text(affaire.description)
+                    .font(.body)
+                    .foregroundStyle(palette.text)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+                if !affaire.photos.isEmpty {
+                    GaleriePhotos(chemins: affaire.photos, installation: installation)
+                }
+                Historique(suites: affaire.suites)
+            }
+            .padding(Mise.marge)
+        }
+        .background(palette.bg)
+        .navigationTitle(affaire.numero)
+        .refreshable { recharger() }
+        .safeAreaInset(edge: .bottom) {
+            if affaire.peutRepondre {
+                Button {
+                    repondre = true
+                } label: {
+                    Label("Répondre", systemImage: "arrowshape.turn.up.left.fill")
+                }
+                .buttonStyle(.plein)
+                .accessibilityIdentifier("affaire.repondre")
+                .padding(.horizontal, Mise.marge)
+                .padding(.vertical, 10)
+                .background(.bar)
+            }
+        }
+        .sheet(isPresented: $repondre) {
+            RepondreFeuille(affaire: affaire, installation: installation) {
+                repondre = false
+                recharger()
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+        }
+    }
+}
+
+private struct EnTeteAffaire: View {
+    let affaire: DetailAffaire
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Text(affaire.estActualite ? "Actualité" : "Affaire")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(affaire.estActualite ? palette.primary : palette.filRouge)
+                if affaire.urgente {
+                    Label("Urgente", systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(palette.danger)
+                }
+                Spacer(minLength: 0)
+                PastilleStatut(statut: affaire.statut)
+            }
+            Text(affaire.titre)
+                .font(.titre(.title))
+                .foregroundStyle(palette.text)
+                .accessibilityAddTraits(.isHeader)
+            VStack(alignment: .leading, spacing: 4) {
+                if let lieu = affaire.lieu {
+                    Label(lieu, systemImage: "mappin")
+                }
+                Label {
+                    Text(affaire.creeLe, format: .dateTime.day().month(.wide).year().hour().minute())
+                } icon: {
+                    Image(systemName: "calendar")
+                }
+                if let auteur = affaire.auteur {
+                    Label(auteur, systemImage: "person")
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(palette.textMuted)
+        }
+        .padding(.leading, affaire.urgente ? 12 : 0)
+        .overlay(alignment: .leading) {
+            if affaire.urgente { palette.danger.frame(width: 4).clipShape(.capsule) }
+        }
+    }
+}
+
+/// L'Historique, dans l'ordre : ce qui a été écrit, et ce qui a changé d'état.
+private struct Historique: View {
+    let suites: [SuiteAffaire]
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Historique")
+                .styleLibelle()
+                .accessibilityAddTraits(.isHeader)
+            if suites.isEmpty {
+                Text("Aucune suite pour l'instant.")
+                    .font(.subheadline)
+                    .foregroundStyle(palette.textMuted)
+            }
+            ForEach(suites) { suite in
+                Carte {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(suite.auteur ?? "La résidence")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(palette.text)
+                            Spacer(minLength: 8)
+                            Text(suite.date, format: .relative(presentation: .named))
+                                .font(.caption)
+                                .foregroundStyle(palette.textMuted)
+                        }
+                        if let changement = suite.changementDEtat {
+                            Label(changement, systemImage: "arrow.triangle.2.circlepath")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(palette.primary)
+                        }
+                        if let contenu = suite.contenu, !contenu.isEmpty {
+                            Text(contenu)
+                                .font(.body)
+                                .foregroundStyle(palette.text)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                .accessibilityElement(children: .combine)
+            }
+        }
+    }
+}

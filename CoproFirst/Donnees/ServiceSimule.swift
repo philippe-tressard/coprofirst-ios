@@ -114,36 +114,39 @@ extension ServiceSimule {
             let jour = calendrier.date(byAdding: .day, value: -jours, to: aujourdhui) ?? aujourdhui
             return calendrier.date(byAdding: .hour, value: heure, to: jour) ?? jour
         }
+        // Le constructeur des éléments inventés : un paramètre par champ du fil.
+        // swiftlint:disable:next function_parameter_count
         func element(
             _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
-            badges: [String] = [], meConcerne: Bool = false
+            badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil
         ) -> ElementDuFil {
             ElementDuFil(
-                id: id, type: type, date: date, titre: titre, detail: detail, badges: badges,
-                publicationUrgente: false, statut: nil, meConcerne: meConcerne)
+                id: "\(type):\(id)", type: type, date: date, titre: titre, detail: detail, badges: badges,
+                publicationUrgente: false, statut: nil, meConcerne: meConcerne, cible: cible)
         }
         return [
             element(
-                "t41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
-                "Niveau -1, place 12. Le plombier passe dans la matinée.", badges: ["urgent"], meConcerne: true),
+                "41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
+                "Niveau -1, place 12. Le plombier passe dans la matinée.", badges: ["urgent"], meConcerne: true,
+                cible: .affaire(id: 41)),
             element(
-                "p12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
-                "Remplacement d'une vanne dans la cave du bâtiment A."),
+                "12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
+                "Remplacement d'une vanne dans la cave du bâtiment A.", cible: .affaire(id: 12)),
             element(
-                "s3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
-                "Trois dates proposées, réponses jusqu'à vendredi."),
+                "3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
+                "Trois dates proposées, réponses jusqu'à vendredi.", cible: .sondage(id: 3)),
             element(
-                "d7", "document", le(1, 11), "Procès-verbal de l'assemblée générale",
-                "Ajouté dans Documents › Assemblées."),
+                "7", "document", le(1, 11), "Procès-verbal de l'assemblée générale",
+                "Ajouté dans Documents › Assemblées.", cible: .document(id: 7, nom: "proces-verbal-ag.pdf")),
             element(
-                "c2", "point_conseil", le(2, 17), "Point avec le syndic",
-                "Ordre du jour : ascenseur, ravalement, contrat d'entretien."),
+                "2", "point_conseil", le(2, 17), "Point avec le syndic",
+                "Ordre du jour : ascenseur, ravalement, contrat d'entretien.", cible: .resume(lien: nil)),
             element(
-                "t38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
-                "Le devis retenu sera présenté au conseil syndical.", meConcerne: true),
+                "38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
+                "Le devis retenu sera présenté au conseil syndical.", meConcerne: true, cible: .affaire(id: 38)),
             element(
-                "t31", "ticket_resolu", le(4, 15), "Portail du garage remis en service",
-                "La carte électronique a été remplacée."),
+                "31", "ticket_resolu", le(4, 15), "Portail du garage remis en service",
+                "La carte électronique a été remplacée.", cible: .affaire(id: 31)),
         ]
     }()
 }

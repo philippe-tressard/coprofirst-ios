@@ -29,6 +29,8 @@ final class Parcours {
     /// La feuille « Ouvrir avec Face ID ? », proposée une fois après la 1ʳᵉ connexion.
     var proposerFaceID = false
     var changerDeResidence = false
+    /// Un élément du fil à ouvrir dès l'arrivée (argument `-ouvrir` des captures).
+    var aOuvrir: String?
     let service: any ServiceCoproFirst
     let connues: InstallationsConnues
 

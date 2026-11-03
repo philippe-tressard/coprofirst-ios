@@ -9,7 +9,7 @@ import Foundation
 /// la session est éphémère — en mémoire —, et le jeton de rafraîchissement est
 /// recopié au Trousseau pour la prochaine ouverture (coprofirst#2457).
 final class ServiceAPI: ServiceCoproFirst {
-    private let sessions = SessionsParHote()
+    let sessions = SessionsParHote()
 
     func decouvrir(_ adresse: URL) async throws -> Installation {
         let sortie = try await appeler { try await client(adresse).getConfigConfigGet() }
@@ -113,11 +113,11 @@ final class ServiceAPI: ServiceCoproFirst {
 
     // MARK: - Session HTTP de chaque installation
 
-    private func client(_ adresse: URL) -> Client {
+    func client(_ adresse: URL) -> Client {
         ClientCoproFirst.client(installation: adresse, session: sessions.session(pour: adresse))
     }
 
-    private func appeler<T>(_ appel: () async throws -> T) async throws -> T {
+    func appeler<T>(_ appel: () async throws -> T) async throws -> T {
         do {
             return try await appel()
         } catch {
@@ -140,7 +140,7 @@ final class ServiceAPI: ServiceCoproFirst {
 }
 
 /// Une URLSession éphémère par hôte : cookies en mémoire, jamais partagés.
-private final class SessionsParHote: @unchecked Sendable {
+final class SessionsParHote: @unchecked Sendable {
     private var parHote: [String: URLSession] = [:]
     private let verrou = NSLock()
 
@@ -183,8 +183,12 @@ extension Affaire {
 extension ElementDuFil {
     init(item: Components.Schemas.FluxItem) {
         let meta = item.meta?.additionalProperties.value ?? [:]
+        // Un nombre JSON peut arriver entier ou flottant selon le décodeur.
+        func entier(_ cle: String) -> Int? {
+            (meta[cle] as? Int) ?? (meta[cle] as? Double).map { Int($0) }
+        }
         self.init(
-            id: item.id ?? "\(item._type)-\(item.date.timeIntervalSince1970)",
+            id: "\(item._type):\(item.id ?? "\(item.date.timeIntervalSince1970)")",
             type: item._type,
             date: item.date,
             titre: item.titre,
@@ -192,7 +196,13 @@ extension ElementDuFil {
             badges: item.badges ?? [],
             publicationUrgente: (meta["urgente"] as? Bool) ?? false,
             statut: meta["statut"] as? String,
-            meConcerne: item.meConcerne ?? false
+            meConcerne: item.meConcerne ?? false,
+            cible: .pour(
+                type: item._type,
+                meta: .init(
+                    ticketId: entier("ticket_id"), sondageId: entier("sondage_id"), documentId: entier("document_id"),
+                    fichierNom: meta["fichier_nom"] as? String),
+                lien: item.lien)
         )
     }
 }
