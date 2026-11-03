@@ -105,3 +105,26 @@ func leLibelleDuLogementSeLit(champ: String, attendu: String?) throws {
     let moi = try decodeur.decode(Components.Schemas.UserRead.self, from: Data(json.utf8))
     #expect(moi.libelleLogement == attendu)
 }
+
+/// Le contrat de l'app ne déclare aucun paramètre `in: cookie` (#26) : la
+/// normalisation de generer-openapi.sh les retire — iOS envoie les cookies de session
+/// seul, et swift-openapi-generator en faisait ~390 avertissements par build.
+@Test func leContratNeDeclareAucunParametreCookie() throws {
+    let contrat = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+        .appending(path: "Sources/ClientAPI/openapi.json")
+    let racine = try #require(JSONSerialization.jsonObject(with: Data(contentsOf: contrat)) as? [String: Any])
+    let chemins = try #require(racine["paths"] as? [String: [String: Any]])
+    var cookies: [String] = []
+    for (chemin, element) in chemins {
+        let cibles = [element] + element.values.compactMap { $0 as? [String: Any] }
+        for cible in cibles {
+            for parametre in cible["parameters"] as? [[String: Any]] ?? []
+            where parametre["in"] as? String == "cookie" {
+                cookies.append("\(chemin) \(parametre["name"] ?? "?")")
+            }
+        }
+    }
+    #expect(chemins.count > 100, "le contrat se lit")
+    #expect(cookies.isEmpty, "paramètres cookie : \(cookies.prefix(3))")
+}
