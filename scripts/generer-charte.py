@@ -18,7 +18,11 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
   compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
 - les RÔLES et STATUTS d'un utilisateur (`ROLE`, `STATUT`, `LIBELLES_HERITES` de
   `front/src/lib/roles.ts`) et les rôles que l'en-tête de l'accueil met en avant
-  (`EnteteAccueil.svelte`) → `CoproFirst/Charte/RolesUtilisateur.swift`.
+  (`EnteteAccueil.svelte`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
+- la LISTE BLANCHE du texte riche : balises et attributs (`ALLOWED_TAGS`,
+  `ALLOWED_ATTR` de `front/src/lib/sanitize.ts`), schémas de lien (`SCHEMAS_URL`
+  de `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
+  → `CoproFirst/Charte/BalisesDuSite.swift` (#22).
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
 l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -264,6 +268,41 @@ def roles(commit: str) -> int:
     return len(role) + len(statut)
 
 
+def balises(commit: str) -> int:
+    sanitize = re.sub(r"//[^\n]*", "", (FRONT / "src" / "lib" / "sanitize.ts").read_text(encoding="utf-8"))
+
+    def liste(nom: str) -> list[str]:
+        m = re.search(rf"const {nom} = \[(.*?)\];", sanitize, re.S)
+        if not m:
+            raise SystemExit(f"❌ {nom} introuvable dans sanitize.ts")
+        return re.findall(r"'([a-z0-9]+)'", m.group(1))
+
+    tags, attrs = liste("ALLOWED_TAGS"), liste("ALLOWED_ATTR")
+    html_sur = (FRONT.parent / "api" / "app" / "utils" / "html_sur.py").read_text(encoding="utf-8")
+    m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
+    s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
+    if not m or not s:
+        raise SystemExit("❌ BALISES ou SCHEMAS_URL introuvable dans api/app/utils/html_sur.py")
+    if set(re.findall(r'"([a-z0-9]+)"', m.group(1))) != set(tags):
+        raise SystemExit("❌ html_sur.BALISES diverge de sanitize.ts ALLOWED_TAGS — à signaler à coprofirst")
+    schemas = sorted(re.findall(r'"([a-z]+)"', s.group(1)))
+    if len(tags) < 10 or not schemas:
+        raise SystemExit("❌ liste blanche du texte riche illisible")
+
+    def ensemble(valeurs: list[str]) -> str:
+        return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
+
+    corps = entete("front/src/lib/sanitize.ts (ALLOWED_TAGS, ALLOWED_ATTR) et api/app/utils/html_sur.py", commit)
+    corps += "\n/// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).\n"
+    corps += "enum BalisesDuSite {\n"
+    corps += f"    static let balises: Set<String> = {ensemble(tags)}\n"
+    corps += f"    static let attributs: Set<String> = {ensemble(attrs)}\n"
+    corps += "    /// Les schémas d'un lien touchable (`SCHEMAS_URL`, appliqué par l'API).\n"
+    corps += f"    static let schemasDeLien: Set<String> = {ensemble(schemas)}\n}}\n"
+    ecrire(CHARTE / "BalisesDuSite.swift", corps)
+    return len(tags)
+
+
 def main() -> None:
     commit = subprocess.run(["git", "-C", str(FRONT), "rev-parse", "--short=9", "HEAD"],
                             capture_output=True, text=True, check=True).stdout.strip()
@@ -272,9 +311,11 @@ def main() -> None:
     n_pages = pages(commit)
     n_statuts = statuts(commit)
     n_roles = roles(commit)
+    n_balises = balises(commit)
     print(
         f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
-        f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur"
+        f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur ; "
+        f"{n_balises} balises de texte riche"
     )
 
 

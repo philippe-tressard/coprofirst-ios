@@ -34,7 +34,7 @@ struct CarteAffaire: View {
             Text(affaire.titre)
                 .font(.headline)
                 .foregroundStyle(palette.text)
-            Text(affaire.apercu)
+            Text(TexteDuSite.apercu(affaire.apercu))
                 .font(.subheadline)
                 .foregroundStyle(palette.textMuted)
                 .lineLimit(3)
@@ -83,7 +83,7 @@ struct CarteAffaire: View {
         morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
         if let lieu = affaire.lieu { morceaux.append(lieu) }
         if let messages = affaire.messages { morceaux.append("\(messages) messages") }
-        morceaux.append(affaire.apercu)
+        morceaux.append(TexteDuSite.apercu(affaire.apercu))
         return Text(morceaux.joined(separator: ", "))
     }
 }

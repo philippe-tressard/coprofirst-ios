@@ -57,8 +57,8 @@ private struct ContenuSondage: View {
                     .font(.titre(.title))
                     .foregroundStyle(palette.text)
                     .accessibilityAddTraits(.isHeader)
-                if let description = sondage.description, !description.isEmpty {
-                    Text(description).font(.body).foregroundStyle(palette.textMuted)
+                if let description = sondage.description.map(TexteDuSite.riche), !description.characters.isEmpty {
+                    Text(description).font(.body).foregroundStyle(palette.textMuted).tint(palette.primary)
                 }
                 VStack(spacing: 10) {
                     ForEach(sondage.options) { option in
