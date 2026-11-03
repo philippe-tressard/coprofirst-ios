@@ -14,14 +14,15 @@ private func page(_ id: String) -> PageDeNavigation {
 @Test func laBarreSuitLOrdreRegleParLAdministration() {
     let pages = ["tableau-de-bord", "residence", "mes-demandes", "mon-lot", "faq"].map(page)
     let rangees = OrdrePages.ordonner(
-        pages, ordre: ["faq", "inconnue", "residence", "faq"], libelles: ["residence": "Chez nous"])
+        pages, ordre: ["faq", "inconnue", "residence", "faq"],
+        surcharges: ["residence": SurchargePage(navLabel: "Chez nous")])
     #expect(rangees.map(\.id) == ["faq", "residence", "tableau-de-bord", "mes-demandes", "mon-lot"])
     #expect(rangees.first { $0.id == "residence" }?.libelle == "Chez nous")
     #expect(rangees.first { $0.id == "tableau-de-bord" }?.libelle == "Fil", "le tableau de bord devient le fil")
 }
 
 @Test func sansReglageLOrdreEstCeluiDuSite() {
-    let ids = OrdrePages.ordonner(PagesParDefaut.toutes, ordre: nil, libelles: [:]).map(\.id)
+    let ids = OrdrePages.ordonner(PagesParDefaut.toutes, ordre: nil, surcharges: [:]).map(\.id)
     #expect(ids == PagesParDefaut.toutes.map(\.id))
     #expect(ids.first == OrdrePages.idFil)
 }
@@ -30,8 +31,11 @@ private func page(_ id: String) -> PageDeNavigation {
     #expect(OrdrePages.lire(#"["faq","residence"]"#) == ["faq", "residence"])
     #expect(OrdrePages.lire("faq, residence") == ["faq", "residence"])
     #expect(OrdrePages.lire("") == nil)
-    #expect(OrdrePages.libelle(surcharge: #"{"navLabel":"Chez nous","titre":"T"}"#) == "Chez nous")
-    #expect(OrdrePages.libelle(surcharge: "pas du JSON") == nil)
+    #expect(
+        SurchargePage(json: #"{"navLabel":"Chez nous","titre":"T"}"#)
+            == SurchargePage(navLabel: "Chez nous", titre: "T"))
+    #expect(SurchargePage(json: #"{"navLabel":"","titre":"T"}"#)?.navLabel == nil, "un libellé vide ne compte pas")
+    #expect(SurchargePage(json: "pas du JSON") == nil)
 }
 
 @Test func lesEnTetesDeJourDisentAujourdhuiHierPuisLaDate() throws {

@@ -24,7 +24,8 @@ struct CoproFirstApp: App {
 /// Les arguments de lancement des tests d'interface et des captures :
 /// `-api-simulee` (aucune requête ne part) et
 /// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`, et avec `fil`,
-/// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil.
+/// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
+/// une page que l'administration a renommée.
 /// Hors de ces arguments, l'app parle aux vraies installations.
 enum Lancement {
     @MainActor
@@ -51,6 +52,11 @@ enum Lancement {
         case "demo":
             parcours.chemin = [.demo]
         case "fil":
+            var residence = residence
+            if arguments.contains("-page-renommee") {
+                // L'administration a renommé « Mes lots & accès » : son nom passe avant le raccourci.
+                residence.surchargesPages = ["mon-lot": SurchargePage(navLabel: "Clés et badges")]
+            }
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
             parcours.aOuvrir = arguments.firstIndex(of: "-ouvrir").flatMap {
