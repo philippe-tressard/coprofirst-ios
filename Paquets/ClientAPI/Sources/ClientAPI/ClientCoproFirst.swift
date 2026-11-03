@@ -39,6 +39,16 @@ extension ClientCoproFirst {
     public static func cause(_ erreur: any Error) -> any Error {
         (erreur as? ClientError)?.underlyingError ?? erreur
     }
+
+    /// Le FICHIER qu'une route a servi alors que le contrat annonçait du JSON : le
+    /// client généré refuse le type, et son erreur porte la réponse. Rendu sur un 200
+    /// seulement, jusqu'à `plafond` octets ; `nil` pour toute autre erreur.
+    public static func fichierServi(_ erreur: any Error, plafond: Int = 50 * 1024 * 1024) async throws -> Data? {
+        guard let erreur = erreur as? ClientError, erreur.response?.status == .ok,
+            let corps = erreur.responseBody
+        else { return nil }
+        return try await Data(collecting: corps, upTo: plafond)
+    }
 }
 
 /// Les dates de l'API : ISO 8601 avec ou sans fractions de seconde, et sans fuseau

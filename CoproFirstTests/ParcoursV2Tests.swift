@@ -59,7 +59,7 @@ private func page(_ id: String) -> PageDeNavigation {
     func element(_ type: String, badges: [String] = [], urgente: Bool = false, statut: String? = nil) -> ElementDuFil {
         ElementDuFil(
             id: "x", type: type, date: .now, titre: "T", detail: nil, badges: badges,
-            publicationUrgente: urgente, statut: statut, meConcerne: false)
+            publicationUrgente: urgente, statut: statut, meConcerne: false, cible: .resume(lien: nil))
     }
     #expect(element("ticket_ouvert", badges: ["urgent"]).urgent)
     #expect(!element("ticket_ouvert").urgent)

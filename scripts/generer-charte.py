@@ -13,7 +13,9 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
   lus dans la table `NATURES` de `front/src/lib/flux.ts`
   → `CoproFirst/Charte/NaturesDuFil.swift` ;
 - les PAGES et leur ordre par défaut (`PAGES` de `front/src/lib/pages.ts`), que
-  `pages_order` de GET /config réordonne → `CoproFirst/Navigation/PagesParDefaut.swift`.
+  `pages_order` de GET /config réordonne → `CoproFirst/Navigation/PagesParDefaut.swift` ;
+- les STATUTS d'une affaire, libellé et pastille (`STATUTS_TICKET` et ses deux
+  compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift`.
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
 l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -205,13 +207,35 @@ def pages(commit: str) -> int:
     return len(lignes)
 
 
+def statuts(commit: str) -> int:
+    texte = (FRONT / "src" / "lib" / "tickets.ts").read_text(encoding="utf-8")
+    debut = texte.index("export const STATUTS_TICKET")
+    fin = texte.index("export const STATUT_TICKET_LABELS", debut)
+    table = texte[debut:fin]
+    trouves = re.findall(r"value: '([^']+)',\s*label: '([^']+)',.*?badge: '([^']+)'", table, re.S)
+    trouves += re.findall(r"\n\t([^\s:]+): \{ label: '([^']+)', badge: '([^']+)' \}", table)
+    if len(trouves) < 6:
+        raise SystemExit("❌ STATUTS_TICKET introuvable dans tickets.ts")
+    corps = entete("front/src/lib/tickets.ts (STATUTS_TICKET et compléments)", commit)
+    corps += "\n/// Le libellé et la pastille de chaque statut d'une affaire, comme le site les écrit.\n"
+    corps += "enum StatutsAffaire {\n    static let parCode: [String: (libelle: String, pastille: String)] = [\n"
+    corps += "".join(f'        "{v}": ("{l}", "{b}"),\n' for v, l, b in trouves)
+    corps += "    ]\n}\n"
+    ecrire(CHARTE / "StatutsAffaire.swift", corps)
+    return len(trouves)
+
+
 def main() -> None:
     commit = subprocess.run(["git", "-C", str(FRONT), "rev-parse", "--short=9", "HEAD"],
                             capture_output=True, text=True, check=True).stdout.strip()
     codes = palettes(commit)
     n_natures = natures(commit)
     n_pages = pages(commit)
-    print(f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; {n_pages} pages")
+    n_statuts = statuts(commit)
+    print(
+        f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
+        f"{n_pages} pages ; {n_statuts} statuts"
+    )
 
 
 if __name__ == "__main__":

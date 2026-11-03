@@ -7,6 +7,9 @@ import SwiftUI
 /// Un élément du fil de la résidence — lu dans `FluxItem` de GET /flux, le flux que
 /// lit le tableau de bord du site.
 struct ElementDuFil: Identifiable, Hashable, Sendable {
+    /// \`type:id\`, JAMAIS l'id seul (\`cleFluxItem\` du site) : le fil agrège plusieurs
+    /// tables, et deux éléments de types différents peuvent porter le même id — un
+    /// sondage ouvert puis clos en est un cas garanti.
     let id: String
     let type: String
     let date: Date
@@ -17,6 +20,8 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     let publicationUrgente: Bool
     let statut: String?
     let meConcerne: Bool
+    /// Ce qu'ouvre un toucher sur la carte.
+    let cible: CibleDuFil
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 

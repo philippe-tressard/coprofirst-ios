@@ -6,11 +6,14 @@ import SwiftUI
 /// Écran 6 — le fil de la résidence, jour par jour : le premier écran après la connexion.
 struct FilView: View {
     let installation: Installation
+    @Binding var chemin: NavigationPath
     @Environment(Parcours.self) private var parcours
     @Environment(Reseau.self) private var reseau
     @Environment(\.palette) private var palette
     @State private var jours: [JourDuFil] = []
     @State private var phase = Phase.chargement
+    @State private var resume: ElementDuFil?
+    @Namespace private var zoom
 
     private enum Phase: Equatable {
         case chargement, pret
@@ -30,7 +33,8 @@ struct FilView: View {
                 ForEach(jours) { jour in
                     Section {
                         ForEach(jour.elements) { element in
-                            CarteDuFil(element: element).padding(.horizontal, Mise.marge)
+                            CarteOuvrable(element: element, zoom: zoom) { resume = element }
+                                .padding(.horizontal, Mise.marge)
                         }
                     } header: {
                         EnTeteJour(texte: Chronologie.enteteAffiche(jour.jour))
@@ -43,11 +47,23 @@ struct FilView: View {
         .overlay { etatVide }
         .refreshable { await charger() }
         .navigationTitle(OrdrePages.libelleFil)
+        .navigationDestination(for: ElementDuFil.self) { element in
+            DestinationDuFil(element: element, installation: installation)
+                .destinationZoom(id: element.id, dans: zoom)
+        }
+        .sheet(item: $resume) { element in
+            ResumeFeuille(element: element, installation: installation)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+        }
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         .safeAreaInset(edge: .top, spacing: 0) {
             if !reseau.enLigne { BandeauHorsLigne() }
         }
-        .task { await charger() }
+        .task {
+            await charger()
+            ouvrirDemande()
+        }
     }
 
     private var squelette: some View {
@@ -70,6 +86,14 @@ struct FilView: View {
                 "Rien de neuf", systemImage: "sparkles",
                 description: Text("Le fil se remplira des affaires, actualités et documents de la résidence."))
         }
+    }
+
+    /// L'élément demandé au lancement (`-ouvrir`), une fois le fil chargé.
+    private func ouvrirDemande() {
+        guard let id = parcours.aOuvrir else { return }
+        parcours.aOuvrir = nil
+        guard let element = jours.flatMap(\.elements).first(where: { $0.id == id }) else { return }
+        if case .resume = element.cible { resume = element } else { chemin.append(element) }
     }
 
     private func charger() async {

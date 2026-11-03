@@ -22,6 +22,17 @@ protocol ServiceCoproFirst: Sendable {
     /// Entrer dans la démo sous un personnage, d'un toucher — ou `nil` quand aucune
     /// route ne sert ses identifiants (coprofirst#2460) : l'écran pré-remplit alors.
     func entrerEnDemo(_ code: String) async throws -> Installation?
+    /// GET /tickets/{id}, ses évolutions, et le droit de répondre.
+    func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire
+    /// POST /tickets/{id}/evolutions : une suite écrite (type `commentaire`).
+    func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws
+    /// GET /sondages/{id} ; POST /sondages/{id}/voter.
+    func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage
+    func voter(_ option: Int, au sondage: Int, dans installation: Installation) async throws
+    /// GET /documents/{id}/télécharger : le fichier, écrit dans un dossier temporaire.
+    func document(_ id: Int, nom: String?, dans installation: Installation) async throws -> URL
+    /// Une photo protégée (`/uploads/…`), lue avec la session de l'installation.
+    func photo(_ chemin: String, dans installation: Installation) async throws -> Data
     /// GET /tickets : les affaires lisibles par l'utilisateur connecté.
     func affaires(_ installation: Installation) async throws -> [Affaire]
     /// L'utilisateur peut-il archiver ? L'écran n'offre que ce que le serveur permet.
