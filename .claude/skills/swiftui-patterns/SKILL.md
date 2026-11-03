@@ -67,6 +67,11 @@ suffit de régénérer le projet (`bash scripts/generer-projet.sh`).
    ticket (`"annuaire": AnnuaireView.self,`) — les lignes vides qui séparent les
    tickets évitent les conflits entre sessions parallèles.
 3. Ses lignes de `Parite/PARITE.md` passent de `prévu` à `fait`, dans sa section.
+
+Les **onglets** d'une page et ce qu'un compte en ouvre : `OngletsDuSite.ouverts(page:
+droits:)` avec `DroitsOnglet(profil: parcours.ouverteAJour?.profil)` (#29). La table
+est générée depuis `pages.ts` (réserves comprises), la règle est celle du site : un
+écran n'écrit jamais lui-même « le locataire ne voit pas le carnet ».
    `verifier-parite.py` refuse un `fait` que le registre n'ouvre pas.
 
 Un onglet du site (`liste`, `kanban`…) est une **section de l'écran du menu**

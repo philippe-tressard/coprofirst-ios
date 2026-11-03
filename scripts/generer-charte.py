@@ -24,7 +24,9 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
   de `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
   → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
 - les ONGLETS de chaque page du site (`PAGES` et `PAGES_ROLES`), que la table de
-  parité doit tous classer → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py).
+  parité doit tous classer → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py) ;
+  et leurs RÉSERVES, avec qui porte chaque droit (`stores/auth.ts`, `roles.ts`)
+  → `CoproFirst/Charte/OngletsDuSite.swift` (scripts/charte_onglets.py, #29).
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
 l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -42,6 +44,7 @@ import re
 import subprocess
 import sys
 
+import charte_onglets
 import lecture_ts
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
@@ -303,6 +306,8 @@ def balises(commit: str) -> int:
     corps += f"    static let schemasDeLien: Set<String> = {ensemble(schemas)}\n}}\n"
     ecrire(CHARTE / "BalisesDuSite.swift", corps)
     return len(tags)
+
+
 def libelle_lisible(label) -> str:
     """Le libellé d'un onglet sans son pictogramme ; une constante garde son nom."""
     if isinstance(label, lecture_ts.Identifiant):
@@ -337,6 +342,14 @@ def parite(commit: str) -> int:
 # REUSE-IgnoreEnd
 
 
+def onglets(commit: str) -> int:
+    table, roles = tables_des_pages()
+    corps, n = charte_onglets.swift(FRONT, table + roles)
+    source = "front/src/lib/pages.ts, pages-roles.ts, stores/auth.ts et roles.ts"
+    ecrire(CHARTE / "OngletsDuSite.swift", entete(source, commit) + corps)
+    return n
+
+
 def main() -> None:
     commit = subprocess.run(["git", "-C", str(FRONT), "rev-parse", "--short=9", "HEAD"],
                             capture_output=True, text=True, check=True).stdout.strip()
@@ -347,6 +360,7 @@ def main() -> None:
     n_roles = roles(commit)
     n_balises = balises(commit)
     n_onglets = parite(commit)
+    onglets(commit)
     print(
         f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
         f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur ; "
