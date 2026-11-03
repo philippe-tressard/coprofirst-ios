@@ -22,23 +22,31 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
 - la LISTE BLANCHE du texte riche : balises et attributs (`ALLOWED_TAGS`,
   `ALLOWED_ATTR` de `front/src/lib/sanitize.ts`), schémas de lien (`SCHEMAS_URL`
   de `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
-  → `CoproFirst/Charte/BalisesDuSite.swift` (#22).
+  → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
+- les ONGLETS de chaque page du site (`PAGES` et `PAGES_ROLES`), que la table de
+  parité doit tous classer → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py).
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
 l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
 
 Usage : python3 scripts/generer-charte.py [chemin/vers/coprofirst/front]
+  Sans argument : $COPROFIRST_RACINE/front — le clone de coprofirst du poste
+  (défaut : /Volumes/Data/Dev/5hostachy).
 """
 
 from __future__ import annotations
 
+import os
 import pathlib
 import re
 import subprocess
 import sys
 
+import lecture_ts
+
 RACINE = pathlib.Path(__file__).resolve().parents[1]
-FRONT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/Volumes/Data/Dev/5hostachy/front")
+RACINE_COPROFIRST = os.environ.get("COPROFIRST_RACINE", "/Volumes/Data/Dev/5hostachy")
+FRONT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else f"{RACINE_COPROFIRST}/front")
 STYLES = FRONT / "src" / "styles"
 CHARTE = RACINE / "CoproFirst" / "Charte"
 NAVIGATION = RACINE / "CoproFirst" / "Navigation"
@@ -193,20 +201,21 @@ def natures(commit: str) -> int:
     return len(trouvees)
 
 
+def tables_des_pages() -> tuple[list[dict], list[dict]]:
+    """`PAGES` (sans l'étalement `...PAGES_ROLES`) et `PAGES_ROLES`, lues par lecture_ts."""
+    lib = FRONT / "src" / "lib"
+    return (lecture_ts.table((lib / "pages.ts").read_text(encoding="utf-8"), "PAGES"),
+            lecture_ts.table((lib / "pages-roles.ts").read_text(encoding="utf-8"), "PAGES_ROLES"))
+
+
 def pages(commit: str) -> int:
-    texte = (FRONT / "src" / "lib" / "pages.ts").read_text(encoding="utf-8")
-    debut = texte.index("export const PAGES: PageDef[] = [")
-    table = texte[debut : texte.index("\n];", debut)]
     lignes = []
-    for entree in re.findall(r"\n\t\{\n(.*?)\n\t\}", table, re.S):
-        def champ(cle: str) -> str | None:
-            m = re.search(rf"^\t\t{cle}: (?:'([^']*)'|null)", entree, re.M)
-            return m.group(1) if m else None
-        if champ("href") is None:
+    for p in tables_des_pages()[0]:
+        if p.get("href") is None:
             continue  # sans entrée de navigation : ni ordonnée, ni dans la barre
         lignes.append(
-            f'        PageDeNavigation(id: "{champ("id")}", route: "{champ("href")}", '
-            f'libelle: "{champ("navLabel")}", titre: "{champ("titre")}", icone: "{champ("icone")}"),\n'
+            f'        PageDeNavigation(id: "{p["id"]}", route: "{p["href"]}", '
+            f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}"),\n'
         )
     corps = entete("front/src/lib/pages.ts (PAGES)", commit)
     corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"
@@ -269,15 +278,8 @@ def roles(commit: str) -> int:
 
 
 def balises(commit: str) -> int:
-    sanitize = re.sub(r"//[^\n]*", "", (FRONT / "src" / "lib" / "sanitize.ts").read_text(encoding="utf-8"))
-
-    def liste(nom: str) -> list[str]:
-        m = re.search(rf"const {nom} = \[(.*?)\];", sanitize, re.S)
-        if not m:
-            raise SystemExit(f"❌ {nom} introuvable dans sanitize.ts")
-        return re.findall(r"'([a-z0-9]+)'", m.group(1))
-
-    tags, attrs = liste("ALLOWED_TAGS"), liste("ALLOWED_ATTR")
+    sanitize = (FRONT / "src" / "lib" / "sanitize.ts").read_text(encoding="utf-8")
+    tags, attrs = (lecture_ts.table(sanitize, nom) for nom in ("ALLOWED_TAGS", "ALLOWED_ATTR"))
     html_sur = (FRONT.parent / "api" / "app" / "utils" / "html_sur.py").read_text(encoding="utf-8")
     m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
     s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
@@ -301,6 +303,38 @@ def balises(commit: str) -> int:
     corps += f"    static let schemasDeLien: Set<String> = {ensemble(schemas)}\n}}\n"
     ecrire(CHARTE / "BalisesDuSite.swift", corps)
     return len(tags)
+def libelle_lisible(label) -> str:
+    """Le libellé d'un onglet sans son pictogramme ; une constante garde son nom."""
+    if isinstance(label, lecture_ts.Identifiant):
+        return f"`{label}`"
+    return re.sub(r"^[^\w«(]+", "", label or "").strip()
+
+
+# REUSE-IgnoreStart
+def parite(commit: str) -> int:
+    """Chaque onglet de chaque page du site, une ligne : ce que la table de parité classe."""
+    table, roles = tables_des_pages()
+    lignes = []
+    for p in table + roles:
+        onglets = p.get("onglets") or []
+        if not onglets:
+            lignes.append(f"| `{p['id']}` | — | {p.get('titre') or p.get('nom')} |\n")
+        for o in onglets:
+            lignes.append(f"| `{p['id']}` | `{o['id']}` | {libelle_lisible(o.get('label'))} |\n")
+    corps = (
+        "<!--\nSPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
+        "SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n-->\n\n"
+        "# Les onglets du site\n\n"
+        "GÉNÉRÉ par `scripts/generer-charte.py` — NE PAS MODIFIER À LA MAIN.\n"
+        f"Source : coprofirst@{commit}, `front/src/lib/pages.ts` (`PAGES`) et "
+        "`pages-roles.ts` (`PAGES_ROLES`).\n\n"
+        "Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — "
+        "`scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.\n\n"
+        "| Page | Onglet | Libellé sur le site |\n|---|---|---|\n" + "".join(lignes)
+    )
+    ecrire(RACINE / "Parite" / "ONGLETS-DU-SITE.md", corps)
+    return len(lignes)
+# REUSE-IgnoreEnd
 
 
 def main() -> None:
@@ -312,10 +346,11 @@ def main() -> None:
     n_statuts = statuts(commit)
     n_roles = roles(commit)
     n_balises = balises(commit)
+    n_onglets = parite(commit)
     print(
         f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
         f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur ; "
-        f"{n_balises} balises de texte riche"
+        f"{n_balises} balises de texte riche ; {n_onglets} onglets à classer"
     )
 
 

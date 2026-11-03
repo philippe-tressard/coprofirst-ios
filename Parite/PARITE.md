@@ -1,0 +1,141 @@
+<!--
+SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+-->
+
+# Parité avec le site — et feuille de route
+
+L'app ne recopie pas le site : elle en porte les écrans **un par un**, et cette
+table dit, pour **chaque onglet de chaque page** du site, où il en est (#10).
+
+| État | Sens |
+|---|---|
+| `fait` | l'écran natif existe et le registre des menus l'ouvre |
+| `prévu` | un ticket le porte — colonne « Ticket », obligatoire |
+| `site seulement` | l'app ne le portera pas ; elle renvoie au site, et le dit |
+
+**Jugée en CI** (`scripts/verifier-parite.py`, lancé par `verifier-depot.sh`) :
+un onglet du site absent d'ici, une ligne qui n'existe plus sur le site, un état
+inconnu, un « prévu » sans ticket — et une page dite `fait` que
+`CoproFirst/Navigation/RegistreDesMenus.swift` n'ouvre pas — font échouer la CI.
+La liste des onglets du site est **générée** : [ONGLETS-DU-SITE.md](ONGLETS-DU-SITE.md)
+(`scripts/generer-charte.py`). Quand le site ajoute un onglet, la régénération
+le fait apparaître, et la CI exige qu'on le classe ici.
+
+**Une session = une section.** Chaque lot ne touche que la sienne : il passe ses
+lignes de `prévu` à `fait` dans la PR qui livre l'écran, et ajoute une ligne au
+registre des menus. Ni les lignes ni les sections ne se déplacent — deux sessions
+parallèles ne se gênent pas.
+
+## Feuille de route
+
+1. **#10 — le contrôle de parité** : cette table, le registre des menus, un
+   dossier par fonctionnalité, les composants communs (skill `swiftui-patterns`).
+2. **Écrans des résidents, en quatre sessions parallèles** : #11, #12, #13, #14.
+3. **#15** — Espace conseil syndical et Délégations.
+4. **#16** — Administration, en partie.
+5. Bloqués côté serveur : **#17** notifications push (coprofirst#2458),
+   **#18** liens universels (coprofirst#2459).
+6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
+   (charte, pages, onglets, contrat d'API) : un écart ouvre un ticket.
+
+## La table
+
+### Livré
+
+Le fil, écran d'accueil de la résidence ouverte.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `tableau-de-bord` | — | fait |  | Le fil (`Fonctions/Fil`) — parcours v2, #4 à #8 |
+
+### #11 — Mes affaires
+
+Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `mes-demandes` | `liste` | prévu | #11 | Une liste et le détail existent déjà (`Fonctions/Affaires`) ; #11 les complète |
+| `mes-demandes` | `kanban` | prévu | #11 |  |
+| `mes-demandes` | `archives` | prévu | #11 |  |
+
+### #12 — Ma résidence et Annuaire
+
+Session parallèle. Dossiers : `Fonctions/Residence`, `Fonctions/Annuaire`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `residence` | `fiche` | prévu | #12 |  |
+| `residence` | `carnet` | prévu | #12 |  |
+| `residence` | `reglement` | prévu | #12 |  |
+| `annuaire` | — | prévu | #12 |  |
+
+### #13 — Mes lots & accès et Prestataires
+
+Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `mon-lot` | `lots` | prévu | #13 |  |
+| `mon-lot` | `badges` | prévu | #13 |  |
+| `mon-lot` | `telecommandes` | prévu | #13 |  |
+| `mon-lot` | `location` | prévu | #13 |  |
+| `prestataires` | `prestataires` | prévu | #13 |  |
+| `prestataires` | `contrats` | prévu | #13 |  |
+| `prestataires` | `consommations` | prévu | #13 |  |
+
+### #14 — Communauté, FAQ, Profil et Notifications
+
+Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctions/Profil`, `Fonctions/Notifications`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `communaute` | `sondages` | prévu | #14 |  |
+| `communaute` | `idees` | prévu | #14 |  |
+| `communaute` | `annonces` | prévu | #14 |  |
+| `communaute` | `avis` | prévu | #14 |  |
+| `faq` | — | prévu | #14 |  |
+| `profil` | — | prévu | #14 | Profil partiel (rôles, déconnexion) sous « Plus » ; #14 le complète |
+| `notifications` | — | prévu | #14 |  |
+
+### #15 — Espace conseil syndical et Délégations
+
+Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/Delegations`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `espace-cs` | `validations` | prévu | #15 |  |
+| `espace-cs` | `badges` | prévu | #15 |  |
+| `espace-cs` | `reporting` | prévu | #15 |  |
+| `espace-cs` | `annonces-hall` | prévu | #15 |  |
+| `espace-cs` | `annuaire` | prévu | #15 |  |
+| `espace-cs` | `courriels` | prévu | #15 |  |
+| `delegations` | — | prévu | #15 |  |
+
+### #16 — Administration, en partie
+
+Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « site seulement » (arbitrage du 03/11/2026), et l'app le signale. Dossier : `Fonctions/Admin`.
+
+| Page | Onglet | État | Ticket | Note |
+|---|---|---|---|---|
+| `admin` | `a_traiter` | prévu | #16 |  |
+| `admin` | `utilisateurs` | prévu | #16 |  |
+| `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `telemetry` | prévu | #16 |  |
+| `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `copropriete` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `perimetres` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `equipements` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `fonctionnement` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `legal` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `services` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `smtp` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `whatsapp` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `ia` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `pages` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `connexion` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `emails` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `installation` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+| `admin` | `maintenance` | prévu | #16 |  |
+| `admin` | `installations` | site seulement | #16 | Paramétrage : l'app renvoie au site |

@@ -35,6 +35,8 @@ targets:
     type: application
     platform: iOS
     sources:
+      # Tout le dossier, par motif : un dossier neuf (`Fonctions/<Menu>/`, #10) est
+      # compilé sans toucher ce fichier — les sessions parallèles ne s'y croisent pas.
       - path: CoproFirst
     dependencies:
       - package: ClientAPI

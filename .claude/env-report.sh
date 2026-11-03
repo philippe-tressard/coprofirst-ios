@@ -6,8 +6,16 @@
 # banque de mémoire et les garde-fous, le hook global les affiche déjà depuis
 # ~/.claude/projets.json : ils ne se recopient pas ici (skill nouveau-projet §2).
 set -uo pipefail
-ATTENDU="/Volumes/Data/Dev/CoproFirst-iOS"
+# Le répertoire attendu se lit au registre des projets — jamais écrit ici : il dit la
+# disposition du disque du poste, et un dépôt public n'a pas à la publier.
+ATTENDU=$(python3 -c 'import json, os, sys
+d = json.load(open(os.path.expanduser("~/.claude/projets.json")))
+for p in (d.get("projets", d) if isinstance(d, dict) else d):
+    if p.get("nom") == "CoproFirst-iOS":
+        print(p.get("repertoire", {}).get("macos", ""))' 2>/dev/null)
 COURANT=$(pwd)
+# Un worktree de session (.claude/worktrees/…) appartient au projet.
+case "$COURANT" in "$ATTENDU"/.claude/worktrees/*) COURANT=$ATTENDU ;; esac
 echo "═══════════════ ENVIRONNEMENT DE TRAVAIL ═══════════════"
 echo "  Répertoire    : $COURANT"
 echo "  Dépôt/branche : $(git config --get remote.origin.url 2>/dev/null || echo 'aucun dépôt distant') [$(git branch --show-current 2>/dev/null)]"
@@ -24,7 +32,9 @@ else
   echo "  Simulateur    : 🔴 aucun runtime iOS — xcodebuild -downloadPlatform iOS"
 fi
 echo "  Contrat d'API : $(sed -n 's/^| Commit | `\([0-9a-f]\{9\}\).*/coprofirst@\1/p' Paquets/ClientAPI/PROVENANCE-OPENAPI.md 2>/dev/null)"
-if [ "$COURANT" != "$ATTENDU" ]; then
+if [ -z "$ATTENDU" ]; then
+  echo "  Répertoire attendu : ❓ INCONNU (registre ~/.claude/projets.json illisible)"
+elif [ "$COURANT" != "$ATTENDU" ]; then
   echo "  ⚠️  RÉPERTOIRE INATTENDU (attendu $ATTENDU) — signale-le à l'utilisateur"
   echo "      AVANT d'agir : mémoires et étiquette partiront au mauvais endroit."
 fi
