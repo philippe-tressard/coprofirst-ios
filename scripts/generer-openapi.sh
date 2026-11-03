@@ -8,6 +8,8 @@
 # un téléchargement du fichier publié, et le client ne lit plus que lui.
 #
 # Usage : bash scripts/generer-openapi.sh [chemin/vers/coprofirst/api]
+#   Sans argument : $COPROFIRST_RACINE/api — le clone de coprofirst du poste
+#   (défaut : /Volumes/Data/Dev/5hostachy).
 #
 # - Python : un venv À SOI (~/.cache/coprofirst-ios/venv-openapi), sur le Python
 #   3.12 de Homebrew — celui de l'image de l'API —, jamais le Python du poste.
@@ -18,7 +20,7 @@
 set -euo pipefail
 
 RACINE=$(cd "$(dirname "$0")/.." && pwd)
-API=${1:-/Volumes/Data/Dev/5hostachy/api}
+API=${1:-${COPROFIRST_RACINE:-/Volumes/Data/Dev/5hostachy}/api}
 PYTHON=${PYTHON_OPENAPI:-/opt/homebrew/bin/python3.12}
 VENV="$HOME/.cache/coprofirst-ios/venv-openapi"
 CIBLE="$RACINE/Paquets/ClientAPI/Sources/ClientAPI/openapi.json"

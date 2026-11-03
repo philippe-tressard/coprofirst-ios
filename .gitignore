@@ -25,6 +25,7 @@
 !/outillage.env
 !/project.yml
 !/scripts/
+!/Parite/
 !/Paquets/
 !/CoproFirst/
 !/CoproFirstTests/
@@ -52,7 +53,13 @@ xcuserdata/
 .env.*
 *secret*
 *token*
+# Le cache de Python (scripts/lecture_ts.py, importé par generer-charte.py)
+__pycache__/
 # Réglages locaux de Claude Code (permissions du poste)
 .claude/settings.local.json
+# Les worktrees des sessions parallèles : un dépôt git chacun. `!/.claude/` les
+# ré-inclurait, et un `git add` depuis la copie principale les ajouterait comme
+# dépôts imbriqués. verifier-depot.sh refuse qu'un de leurs chemins soit suivi.
+.claude/worktrees/
 # Bruit du système
 .DS_Store

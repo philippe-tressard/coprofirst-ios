@@ -15,7 +15,11 @@
 #   6. aucune automatisation ne soumet à Apple : rien ne part en revue sans le
 #      « oui » écrit de Philippe pour la version (skill publication-app-store).
 #   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
-#      coprofirst (scripts/generer-charte.py).
+#      coprofirst (scripts/generer-charte.py) ;
+#   8. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
+#      parallèles sont des dépôts, pas des fichiers du projet ;
+#   9. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
+#      et le registre des menus dit vrai (scripts/verifier-parite.py, #10).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -100,6 +104,17 @@ while IFS= read -r f; do
   fi
 done < <(grep -E '^(fastlane/|\.github/workflows/)' <<< "$FICHIERS")
 
+# Un worktree de session ajouté par erreur arrive comme lien de sous-module ou
+# comme fichiers : les deux se voient dans l'index.
+if grep -qE '^\.claude/worktrees(/|$)' <<< "$FICHIERS"; then
+  echec ".claude/worktrees/ est suivi — git rm -r --cached .claude/worktrees (exclu par .gitignore)"
+fi
+
+# La parité : son autotest d'abord (un contrôle qui ne refuse rien ne prouve rien),
+# puis la table elle-même. INCONNU (sortie 2) est un échec, jamais un succès.
+python3 -I scripts/verifier-parite.py --autotest >/dev/null || echec "verifier-parite.py : autotest en échec"
+PARITE=$(python3 -I scripts/verifier-parite.py) || { echo "$PARITE"; echec "parité avec le site (Parite/PARITE.md)"; }
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -108,4 +123,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun worktree suivi ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

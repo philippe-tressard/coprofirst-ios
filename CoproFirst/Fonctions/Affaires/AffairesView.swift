@@ -139,3 +139,9 @@ private extension View {
             .listRowInsets(EdgeInsets(top: 6, leading: Mise.marge, bottom: 6, trailing: Mise.marge))
     }
 }
+
+extension AffairesView: EcranDeMenu {
+    init(contexte: ContexteDeMenu) {
+        self.init(installation: contexte.installation)
+    }
+}

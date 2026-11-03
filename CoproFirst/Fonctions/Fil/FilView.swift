@@ -129,3 +129,9 @@ struct EnTeteJour: View {
             .accessibilityAddTraits(.isHeader)
     }
 }
+
+extension FilView: EcranDeMenu {
+    init(contexte: ContexteDeMenu) {
+        self.init(installation: contexte.installation, chemin: contexte.chemin)
+    }
+}

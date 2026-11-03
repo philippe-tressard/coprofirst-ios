@@ -1,0 +1,38 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Dependabot — les montées de dépendances (#10, accord de Philippe du 03/11/2026).
+#
+# Comme dans philippe-tressard/coprofirst : les mises à jour mineures et correctives
+# sont GROUPÉES (peu risquées, fusionnables d'un bloc) ; une MAJEURE arrive seule,
+# dans sa PR, parce qu'elle mérite d'être regardée. Toute PR passe par la même CI
+# que les autres (main est protégée) — et rien ne part chez Apple.
+#
+# Les versions de l'outillage (XcodeGen, SwiftLint, swift-format, outillage.env) ne
+# sont pas des paquets : Dependabot ne les voit pas, elles montent à la main.
+version: 2
+updates:
+  # Les actions de la CI, épinglées par SHA : Dependabot propose le SHA suivant.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions-mineures:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "chore(ci)"
+
+  # Les paquets Swift du client d'API (Paquets/ClientAPI/Package.swift, versions
+  # exactes) : l'app n'en a pas d'autre (project.yml ne déclare que ce paquet local).
+  - package-ecosystem: swift
+    directory: /Paquets/ClientAPI
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      swift-mineures:
+        update-types: [minor, patch]
+    commit-message:
+      prefix: "chore(deps)"
