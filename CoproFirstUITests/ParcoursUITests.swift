@@ -72,4 +72,30 @@ final class ParcoursUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Portail du garage remis en service"].waitForExistence(timeout: 3))
         XCTAssertFalse(app.staticTexts["Fuite d'eau au plafond du parking"].exists)
     }
+
+    @MainActor
+    func testLaBarreAfficheLesLibellesCourts() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
+        app.launch()
+        let barre = app.tabBars.firstMatch
+        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        for libelle in ["Fil", "Résidence", "Affaires", "Accès", "Plus"] {
+            XCTAssertTrue(barre.buttons[libelle].exists, "« \(libelle) » dans la barre")
+        }
+        XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)
+        barre.buttons["Accès"].tap()
+        XCTAssertTrue(app.navigationBars["Mes lots & accès"].waitForExistence(timeout: 3), "l'écran garde son titre")
+    }
+
+    @MainActor
+    func testUnePageRenommeeGardeSonNomDansLaBarre() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "fil", "-page-renommee"]
+        app.launch()
+        let barre = app.tabBars.firstMatch
+        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.buttons["Clés et badges"].exists)
+        XCTAssertFalse(barre.buttons["Accès"].exists)
+    }
 }

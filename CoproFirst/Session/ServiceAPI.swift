@@ -18,14 +18,14 @@ final class ServiceAPI: ServiceCoproFirst {
             let cles = try ok.body.json.additionalProperties
             guard let nom = cles["site_nom"], !nom.isEmpty else { throw ErreurService.pasCoproFirst }
             let prefixe = "page_config_"
-            let libelles = cles.reduce(into: [String: String]()) { libelles, cle in
-                guard cle.key.hasPrefix(prefixe), let libelle = OrdrePages.libelle(surcharge: cle.value) else { return }
-                libelles[String(cle.key.dropFirst(prefixe.count))] = libelle
+            let surcharges = cles.reduce(into: [String: SurchargePage]()) { surcharges, cle in
+                guard cle.key.hasPrefix(prefixe), let surcharge = SurchargePage(json: cle.value) else { return }
+                surcharges[String(cle.key.dropFirst(prefixe.count))] = surcharge
             }
             return Installation(
                 adresse: adresse, nom: nom, aUnLogo: !(cles["site_logo"] ?? "").isEmpty,
                 codePalette: cles["site_palette"], ordrePages: OrdrePages.lire(cles["pages_order"]),
-                libellesPages: libelles)
+                surchargesPages: surcharges)
         case .undocumented(let statut, _):
             throw ErreurService.depuis(statut: statut)
         }

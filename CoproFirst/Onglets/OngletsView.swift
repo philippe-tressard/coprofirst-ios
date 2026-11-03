@@ -82,7 +82,7 @@ private struct Bientot: View {
             description: Text("« \(page.titre) » arrive dans une prochaine version de l'app.")
         )
         .background(palette.bg)
-        .navigationTitle(page.libelle)
+        .navigationTitle(page.titre)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
     }
 }

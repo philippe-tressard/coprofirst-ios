@@ -16,26 +16,27 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     var codePalette: String?
     /// L'ordre de navigation réglé par l'administration (`pages_order`).
     var ordrePages: [String]?
-    /// Les libellés de menu surchargés (`page_config_<id>` → `navLabel`).
-    var libellesPages: [String: String] = [:]
+    /// Ce que l'administration a écrit pour chaque page (`page_config_<id>`).
+    /// Facultatif : une résidence retenue par une version antérieure se relit encore.
+    var surchargesPages: [String: SurchargePage]?
 
     init(
         adresse: URL, nom: String, aUnLogo: Bool, codePalette: String? = nil,
-        ordrePages: [String]? = nil, libellesPages: [String: String] = [:]
+        ordrePages: [String]? = nil, surchargesPages: [String: SurchargePage]? = nil
     ) {
         self.adresse = adresse
         self.nom = nom
         self.aUnLogo = aUnLogo
         self.codePalette = codePalette
         self.ordrePages = ordrePages
-        self.libellesPages = libellesPages
+        self.surchargesPages = surchargesPages
     }
 
     var id: URL { adresse }
     var palette: Palette { .pour(code: codePalette) }
     /// La barre du bas de cette résidence, dans son ordre.
     var pages: [PageDeNavigation] {
-        OrdrePages.ordonner(PagesParDefaut.toutes, ordre: ordrePages, libelles: libellesPages)
+        OrdrePages.ordonner(PagesParDefaut.toutes, ordre: ordrePages, surcharges: surchargesPages ?? [:])
     }
     var hote: String { adresse.host() ?? adresse.absoluteString }
     var adresseLogo: URL? {
