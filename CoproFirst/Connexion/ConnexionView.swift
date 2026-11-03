@@ -35,6 +35,14 @@ struct ConnexionView: View {
                     saisie: $saisieResidence, reconnue: parcours.reconnue, enCours: decouverte.enCours,
                     erreur: decouverte.erreur, scanner: { scanner = true })
                 if let aide = preremplissage.aide { AideDemo(texte: aide) }
+                if let avis = parcours.avis {
+                    Label(avis, systemImage: "info.circle.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(palette.text)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(palette.neutreFond, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
+                }
                 ChampSaisie(
                     libelle: "Adresse électronique",
                     champ: {

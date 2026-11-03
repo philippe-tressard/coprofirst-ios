@@ -98,4 +98,28 @@ final class ParcoursUITests: XCTestCase {
         XCTAssertTrue(barre.buttons["Clés et badges"].exists)
         XCTAssertFalse(barre.buttons["Accès"].exists)
     }
+
+    @MainActor
+    func testLaPastilleMontreLesRolesEtSeDeconnecte() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
+        app.launch()
+        XCTAssertTrue(app.buttons["fil.lot"].waitForExistence(timeout: 5), "le logement en haut à gauche")
+
+        app.buttons["pastille.residence"].tap()
+        let roles = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "Conseil syndical")).firstMatch
+        XCTAssertTrue(roles.waitForExistence(timeout: 5), "les rôles de la résidence")
+
+        app.buttons["residence.deconnecter"].tap()
+        // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
+        let confirmer = app.buttons["sortie.confirmer"].firstMatch
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "le geste se confirme")
+        confirmer.tap()
+
+        let adresse = app.textFields["connexion.residence"]
+        XCTAssertTrue(adresse.waitForExistence(timeout: 5), "retour à la connexion")
+        XCTAssertEqual(adresse.value as? String, "tilleuls.exemple.fr", "adresse pré-remplie")
+        XCTAssertFalse(app.tabBars.firstMatch.exists, "le fil n'est plus affiché")
+    }
 }

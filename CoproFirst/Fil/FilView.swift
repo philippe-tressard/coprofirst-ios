@@ -23,6 +23,7 @@ struct FilView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
+                LigneLot(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
                 if phase == .chargement {
                     Section {
                         squelette
@@ -63,6 +64,7 @@ struct FilView: View {
         .task {
             await charger()
             ouvrirDemande()
+            await parcours.rafraichirProfil()
         }
     }
 

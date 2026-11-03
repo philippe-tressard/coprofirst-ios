@@ -29,10 +29,36 @@ final class InstallationsConnues {
         reglages.set(true, forKey: "faceid-propose." + installation.hote)
     }
 
+    /// Après une déconnexion : Face ID sera reproposé à la prochaine connexion.
+    func oublierFaceID(_ installation: Installation) {
+        reglages.removeObject(forKey: "faceid-propose." + installation.hote)
+    }
+
+    /// Le profil de l'utilisateur dans cette résidence, au dernier passage.
+    func noter(_ profil: ProfilResidence, pour installation: Installation) {
+        guard let rang = liste.firstIndex(where: { $0.adresse == installation.adresse }) else { return }
+        liste[rang].profil = profil
+        enregistrer()
+    }
+
+    /// « Oublier toutes les résidences » : comme une app neuve.
+    func vider() {
+        for installation in liste { oublierFaceID(installation) }
+        liste = []
+        enregistrer()
+    }
+
     /// La plus récente en tête ; une même adresse n'apparaît qu'une fois.
     func retenir(_ installation: Installation) {
+        var installation = installation
+        // Le profil connu survit à une nouvelle découverte, qui ne le sert pas.
+        installation.profil = installation.profil ?? liste.first { $0.adresse == installation.adresse }?.profil
         liste.removeAll { $0.adresse == installation.adresse }
         liste.insert(installation, at: 0)
+        enregistrer()
+    }
+
+    private func enregistrer() {
         reglages.set(try? JSONEncoder().encode(liste), forKey: Self.cle)
     }
 }

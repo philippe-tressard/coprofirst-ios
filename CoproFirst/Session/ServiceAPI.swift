@@ -157,6 +157,11 @@ final class SessionsParHote: @unchecked Sendable {
         }
     }
 
+    /// Retire la session de cet hôte ; la prochaine requête en ouvre une neuve, vide.
+    func retirer(_ adresse: URL) -> URLSession? {
+        verrou.withLock { parHote.removeValue(forKey: adresse.host() ?? adresse.absoluteString) }
+    }
+
     func cookies(_ adresse: URL) -> [HTTPCookie] {
         session(pour: adresse).configuration.httpCookieStorage?.cookies(for: adresse) ?? []
     }

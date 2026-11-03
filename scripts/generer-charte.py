@@ -15,7 +15,10 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
 - les PAGES et leur ordre par défaut (`PAGES` de `front/src/lib/pages.ts`), que
   `pages_order` de GET /config réordonne → `CoproFirst/Navigation/PagesParDefaut.swift` ;
 - les STATUTS d'une affaire, libellé et pastille (`STATUTS_TICKET` et ses deux
-  compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift`.
+  compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
+- les RÔLES et STATUTS d'un utilisateur (`ROLE`, `STATUT`, `LIBELLES_HERITES` de
+  `front/src/lib/roles.ts`) et les rôles que l'en-tête de l'accueil met en avant
+  (`EnteteAccueil.svelte`) → `CoproFirst/Charte/RolesUtilisateur.swift`.
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul :
 l'app, qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -101,6 +104,7 @@ def entete(source: str, commit: str) -> str:
         "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
         "//\n"
         "// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.\n"
+        "// swift-format-ignore-file\n"
         f"// Source : coprofirst@{commit}, {source}.\n"
     )
 # REUSE-IgnoreEnd
@@ -225,6 +229,41 @@ def statuts(commit: str) -> int:
     return len(trouves)
 
 
+def roles(commit: str) -> int:
+    lib = FRONT / "src" / "lib"
+    texte = (lib / "roles.ts").read_text(encoding="utf-8")
+
+    def table(nom: str) -> list[tuple[str, str]]:
+        debut = texte.index(f"const {nom} = parAttribut({{")
+        corps = texte[debut : texte.index("\n});", debut)]
+        corps = re.sub(r"//[^\n]*", "", corps)
+        return re.findall(r"([^\s{:,]+): \{\s*libelle: '([^']+)'", corps)
+
+    herites = texte[texte.index("const LIBELLES_HERITES") :]
+    herites = re.findall(r"\n\t([^\s:]+): '([^']+)'", herites[: herites.index("};")])
+    accueil = (lib / "components" / "EnteteAccueil.svelte").read_text(encoding="utf-8")
+    m = re.search(r"for \(const r of \[([^\]]+)\]\)", accueil)
+    if not m:
+        raise SystemExit("❌ rôles mis en avant introuvables dans EnteteAccueil.svelte")
+    en_avant = re.findall(r"'([^']+)'", m.group(1))
+    role, statut = table("ROLE"), table("STATUT")
+    if len(role) < 4 or len(statut) < 4:
+        raise SystemExit("❌ tables ROLE / STATUT introuvables dans roles.ts")
+
+    def dico(nom: str, paires: list[tuple[str, str]]) -> str:
+        return f"    static let {nom}: [String: String] = [\n" + "".join(
+            f'        "{c}": "{l}",\n' for c, l in paires) + "    ]\n"
+
+    corps = entete("front/src/lib/roles.ts et components/EnteteAccueil.svelte", commit)
+    corps += "\n/// Les libellés des rôles et statuts d'un utilisateur, comme le site les écrit.\n"
+    corps += "enum RolesUtilisateur {\n"
+    corps += dico("libellesRole", role) + dico("libellesStatut", statut) + dico("libellesHerites", herites)
+    corps += "    /// Les rôles que l'en-tête de l'accueil ajoute au statut, dans cet ordre.\n"
+    corps += "    static let misEnAvant: [String] = [" + ", ".join(f'"{r}"' for r in en_avant) + "]\n}\n"
+    ecrire(CHARTE / "RolesUtilisateur.swift", corps)
+    return len(role) + len(statut)
+
+
 def main() -> None:
     commit = subprocess.run(["git", "-C", str(FRONT), "rev-parse", "--short=9", "HEAD"],
                             capture_output=True, text=True, check=True).stdout.strip()
@@ -232,9 +271,10 @@ def main() -> None:
     n_natures = natures(commit)
     n_pages = pages(commit)
     n_statuts = statuts(commit)
+    n_roles = roles(commit)
     print(
         f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
-        f"{n_pages} pages ; {n_statuts} statuts"
+        f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur"
     )
 
 

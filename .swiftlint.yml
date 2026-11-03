@@ -22,6 +22,7 @@ excluded:
   - CoproFirst/Charte/Palette+Roi.swift
   - CoproFirst/Charte/NaturesDuFil.swift
   - CoproFirst/Charte/StatutsAffaire.swift
+  - CoproFirst/Charte/RolesUtilisateur.swift
   - CoproFirst/Navigation/PagesParDefaut.swift
 # Les noms de tests sont des phrases en français (`lAccueilPorteLeNomDuProduit`).
 disabled_rules:

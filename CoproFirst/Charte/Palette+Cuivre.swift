@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
-// Source : coprofirst@203f626a1, front/src/styles/socle.css, palette-sombre.css, palettes.css.
+// swift-format-ignore-file
+// Source : coprofirst@3c08a6aeb, front/src/styles/socle.css, palette-sombre.css, palettes.css.
 
 import SwiftUI
 

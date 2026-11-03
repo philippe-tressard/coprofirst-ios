@@ -8,13 +8,14 @@ import SwiftUI
 struct OngletsView: View {
     let installation: Installation
     @Environment(\.palette) private var palette
-    @State private var selection = OrdrePages.idFil
+    @Environment(Parcours.self) private var parcours
 
     private static let visibles = 4
 
     var body: some View {
         let pages = installation.pages
-        TabView(selection: $selection) {
+        @Bindable var parcours = parcours
+        TabView(selection: $parcours.onglet) {
             ForEach(pages.prefix(Self.visibles)) { page in
                 EcranDePage(page: page, installation: installation)
                     .tabItem { Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone)) }
@@ -54,13 +55,24 @@ private struct PlusView: View {
 
     var body: some View {
         NavigationStack {
-            List(pages) { page in
-                NavigationLink {
-                    Bientot(page: page, installation: installation)
-                } label: {
-                    Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone))
-                        .foregroundStyle(palette.text)
+            List {
+                ForEach(pages) { page in
+                    NavigationLink {
+                        Bientot(page: page, installation: installation)
+                    } label: {
+                        Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone))
+                            .foregroundStyle(palette.text)
+                    }
+                    .listRowBackground(palette.surface)
                 }
+                // Le profil n'a pas d'entrée de menu sur le site (pages.ts : href null) :
+                // il vit ici, avec la déconnexion.
+                NavigationLink {
+                    ProfilView()
+                } label: {
+                    Label("Profil", systemImage: "person.crop.circle").foregroundStyle(palette.text)
+                }
+                .accessibilityIdentifier("plus.profil")
                 .listRowBackground(palette.surface)
             }
             .scrollContentBackground(.hidden)

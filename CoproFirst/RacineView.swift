@@ -36,7 +36,7 @@ struct RacineView: View {
             }
         }
         .sheet(isPresented: $parcours.changerDeResidence) {
-            ChangerDeResidenceFeuille()
+            FeuilleResidence()
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
