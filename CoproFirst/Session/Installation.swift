@@ -19,6 +19,8 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// Ce que l'administration a écrit pour chaque page (`page_config_<id>`).
     /// Facultatif : une résidence retenue par une version antérieure se relit encore.
     var surchargesPages: [String: SurchargePage]?
+    /// Qui est l'utilisateur ici, au dernier passage (GET /auth/me) — facultatif.
+    var profil: ProfilResidence?
 
     init(
         adresse: URL, nom: String, aUnLogo: Bool, codePalette: String? = nil,

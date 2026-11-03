@@ -31,6 +31,10 @@ final class Parcours {
     var changerDeResidence = false
     /// Un élément du fil à ouvrir dès l'arrivée (argument `-ouvrir` des captures).
     var aOuvrir: String?
+    /// L'onglet affiché dans l'espace de la résidence (identifiant de page).
+    var onglet = OrdrePages.idFil
+    /// Ce que l'écran de connexion doit dire en arrivant (déconnexion hors ligne…).
+    var avis: String?
     let service: any ServiceCoproFirst
     let connues: InstallationsConnues
 
@@ -46,6 +50,8 @@ final class Parcours {
         connues.retenir(installation)
         reconnue = installation
         ouverte = installation
+        onglet = OrdrePages.idFil
+        avis = nil
         chemin = []
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
@@ -59,5 +65,49 @@ final class Parcours {
         ouverte = nil
         reconnue = installation
         chemin = [.connexion(Preremplissage(installation: installation))]
+    }
+
+    /// La résidence ouverte, telle que la liste la connaît (profil compris).
+    var ouverteAJour: Installation? {
+        guard let ouverte else { return nil }
+        return connues.liste.first { $0.adresse == ouverte.adresse } ?? ouverte
+    }
+
+    /// Relit le profil de l'utilisateur dans la résidence ouverte (GET /auth/me).
+    func rafraichirProfil() async {
+        guard let installation = ouverte, let profil = try? await service.profil(installation) else { return }
+        connues.noter(profil, pour: installation)
+    }
+
+    /// Quitter CETTE résidence : retour à la connexion, adresse pré-remplie.
+    func deconnecter(_ installation: Installation) async {
+        let atteint = await service.deconnecter(installation)
+        connues.oublierFaceID(installation)
+        changerDeResidence = false
+        ouverte = nil
+        reconnue = installation
+        chemin = [.connexion(Preremplissage(installation: installation))]
+        avis =
+            atteint
+            ? nil
+            : "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
+    }
+
+    /// « Oublier toutes les résidences » : chaque session fermée, la liste vidée,
+    /// retour à l'accueil — comme une app neuve.
+    func oublierTout() async {
+        var injoignables = 0
+        for installation in connues.liste {
+            let atteint = await service.deconnecter(installation)
+            injoignables += atteint ? 0 : 1
+        }
+        connues.vider()
+        changerDeResidence = false
+        ouverte = nil
+        reconnue = nil
+        chemin = []
+        avis =
+            injoignables == 0
+            ? nil : "Certaines résidences n'ont pas répondu : leurs sessions sont effacées de cet appareil."
     }
 }

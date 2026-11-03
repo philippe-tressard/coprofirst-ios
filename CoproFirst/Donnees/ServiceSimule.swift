@@ -5,7 +5,7 @@ import Foundation
 
 /// Une installation simulée, pour les aperçus et les tests d'interface : aucune
 /// requête ne part. Tout y est inventé — aucun nom de personne, aucune adresse réelle.
-final class ServiceSimule: ServiceCoproFirst {
+final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Une résidence inventée, à sa palette (bouteille), avec la barre par défaut du site.
     static let residence = Installation(
         adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
@@ -16,6 +16,13 @@ final class ServiceSimule: ServiceCoproFirst {
 
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
+    /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
+    private var deconnectes: Set<String> = []
+    private let verrou = NSLock()
+    /// Le profil servi par la résidence inventée (un compte du conseil syndical).
+    var profilSimule = ProfilResidence(
+        statut: "copropriétaire_résident", roles: ["résident", "propriétaire", "conseil_syndical"],
+        libelleLogement: "Bât. A, T3, 2ème")
 
     init(delai: Duration = .milliseconds(450)) {
         self.delai = delai
@@ -37,18 +44,48 @@ final class ServiceSimule: ServiceCoproFirst {
     func connecter(_ installation: Installation, email: String, motDePasse: String) async throws {
         try await Task.sleep(for: delai)
         if motDePasse == "refuse" { throw ErreurService.identifiantsRefuses }
+        _ = verrou.withLock { deconnectes.remove(installation.hote) }
     }
 
-    func aUneSessionGardee(_ installation: Installation) -> Bool { false }
+    func aUneSessionGardee(_ installation: Installation) -> Bool {
+        verrou.withLock { gardees.contains(installation.hote) }
+    }
+
+    /// Les sessions « gardées » après Face ID — la simulation du Trousseau.
+    private var gardees: Set<String> = []
 
     func reprendre(_ installation: Installation) async throws {
-        throw ErreurService.sessionExpiree
+        guard aUneSessionGardee(installation) else { throw ErreurService.sessionExpiree }
+        _ = verrou.withLock { deconnectes.remove(installation.hote) }
     }
 
-    func activerFaceID(_ installation: Installation) async -> Bool { true }
+    func activerFaceID(_ installation: Installation) async -> Bool {
+        verrou.withLock { _ = gardees.insert(installation.hote) }
+        return true
+    }
+
+    func profil(_ installation: Installation) async throws -> ProfilResidence {
+        try await Task.sleep(for: .milliseconds(200))
+        try exigerSession(installation)
+        return profilSimule
+    }
+
+    func deconnecter(_ installation: Installation) async -> Bool {
+        try? await Task.sleep(for: .milliseconds(200))
+        verrou.withLock {
+            deconnectes.insert(installation.hote)
+            gardees.remove(installation.hote)
+        }
+        return true
+    }
+
+    private func exigerSession(_ installation: Installation) throws {
+        if verrou.withLock({ deconnectes.contains(installation.hote) }) { throw ErreurService.sessionExpiree }
+    }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {
         try await Task.sleep(for: delai)
+        try exigerSession(installation)
         return Self.fil
     }
 

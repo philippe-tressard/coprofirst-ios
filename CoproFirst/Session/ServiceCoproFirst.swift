@@ -33,6 +33,12 @@ protocol ServiceCoproFirst: Sendable {
     func document(_ id: Int, nom: String?, dans installation: Installation) async throws -> URL
     /// Une photo protégée (`/uploads/…`), lue avec la session de l'installation.
     func photo(_ chemin: String, dans installation: Installation) async throws -> Data
+    /// GET /auth/me : statut et rôles dans CETTE résidence.
+    func profil(_ installation: Installation) async throws -> ProfilResidence
+    /// Se déconnecter, à une seule porte : POST /auth/logout (le serveur révoque le
+    /// jeton), puis TOUJOURS l'effacement local — jeton du Trousseau, cookies, session
+    /// HTTP de cet hôte. Rend `false` si le serveur n'a pas pu être joint.
+    func deconnecter(_ installation: Installation) async -> Bool
     /// GET /tickets : les affaires lisibles par l'utilisateur connecté.
     func affaires(_ installation: Installation) async throws -> [Affaire]
     /// L'utilisateur peut-il archiver ? L'écran n'offre que ce que le serveur permet.
