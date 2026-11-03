@@ -16,9 +16,11 @@
 #      « oui » écrit de Philippe pour la version (skill publication-app-store).
 #   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
 #      coprofirst (scripts/generer-charte.py) ;
-#   8. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
+#   8. aucun moteur web pour le texte du site : ni WebKit, ni conversion HTML de
+#      NSAttributedString — le HTML passe par TexteDuSite, seul (#22) ;
+#   9. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
 #      parallèles sont des dépôts, pas des fichiers du projet ;
-#   9. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
+#  10. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
 #      et le registre des menus dit vrai (scripts/verifier-parite.py, #10).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
@@ -93,6 +95,17 @@ while IFS= read -r f; do
   fi
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
+# Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
+# et charge, NSAttributedString(.html) passe par WebKit et charge des ressources
+# distantes. Ni l'un ni l'autre dans l'app.
+MOTEUR_WEB='import WebKit|WKWebView|\.documentType|DocumentType\.html|NSAttributedString\(data:'
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  # Le code seul : un commentaire qui explique l'interdit a le droit de le nommer.
+  trouve=$(grep -nE "$MOTEUR_WEB" "$f" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
+  [ -z "$trouve" ] || echec "$f : moteur web pour du HTML (${trouve%%:*}) — passer par TexteDuSite"
+done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+
 # Les gestes qui envoient une version en revue chez Apple : soumission à l'App
 # Store, distribution aux testeurs externes de TestFlight. Ils n'ont pas de place
 # dans une automatisation — la soumission est manuelle, après validation du rendu.
@@ -123,4 +136,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun worktree suivi ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun moteur web, aucun worktree suivi ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

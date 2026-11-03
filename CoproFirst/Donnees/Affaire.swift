@@ -8,6 +8,7 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let id: Int
     let numero: String
     let titre: String
+    /// La description telle que l'API la sert : du HTML riche — `TexteDuSite.apercu` la lit.
     let apercu: String
     let creeLe: Date
     let statut: String
@@ -55,7 +56,7 @@ extension [Affaire] {
         return filter { affaire in
             filtre.retient(affaire)
                 && (mots.isEmpty
-                    || [affaire.titre, affaire.apercu, affaire.numero].contains {
+                    || [affaire.titre, TexteDuSite.apercu(affaire.apercu), affaire.numero].contains {
                         $0.localizedStandardContains(mots)
                     })
         }

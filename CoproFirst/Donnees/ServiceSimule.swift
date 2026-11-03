@@ -111,8 +111,10 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         return [
             Affaire(
                 id: 41, numero: "A-0041", titre: "Fuite d'eau au plafond du parking",
-                apercu: "Une infiltration goutte au niveau -1, place 12. Le sol est glissant : un seau a été posé "
-                    + "en attendant le plombier. Merci de contourner la zone.",
+                // Du HTML, comme l'API le sert (éditeur du site) : la simulation ne doit
+                // pas cacher ce que la porte `TexteDuSite` a à faire (#22).
+                apercu: "<p>Une infiltration goutte au niveau -1, place 12. Le sol est <strong>glissant</strong>"
+                    + "&nbsp;: un seau a été posé en attendant le plombier.</p><p>Merci de contourner la zone.</p>",
                 creeLe: jours(0.2), statut: "en_cours", urgente: true, meConcerne: true,
                 lieu: "Parking, niveau -1", messages: 6),
             Affaire(
@@ -164,7 +166,8 @@ extension ServiceSimule {
         return [
             element(
                 "41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
-                "Niveau -1, place 12. Le plombier passe dans la matinée.", badges: ["urgent"], meConcerne: true,
+                "<p>Niveau -1, place 12. Le plombier passe dans la <em>matinée</em>.</p>", badges: ["urgent"],
+                meConcerne: true,
                 cible: .affaire(id: 41)),
             element(
                 "12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",

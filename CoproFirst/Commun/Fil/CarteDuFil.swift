@@ -37,7 +37,7 @@ struct CarteDuFil: View {
                 Text(element.titre)
                     .font(.headline)
                     .foregroundStyle(palette.text)
-                if let detail = element.detail, !detail.isEmpty {
+                if let detail = element.detail.map(TexteDuSite.apercu), !detail.isEmpty {
                     Text(detail)
                         .font(.subheadline)
                         .foregroundStyle(palette.textMuted)
@@ -69,7 +69,7 @@ struct CarteDuFil: View {
     private func libelleVocal(_ nature: NatureDuFil) -> Text {
         var morceaux = [element.urgent ? "Urgent" : nature.libelle, element.titre]
         morceaux.append(element.date.formatted(.dateTime.hour().minute()))
-        if let detail = element.detail { morceaux.append(detail) }
+        if let detail = element.detail { morceaux.append(TexteDuSite.apercu(detail)) }
         return Text(morceaux.joined(separator: ", "))
     }
 }

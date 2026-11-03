@@ -19,6 +19,10 @@ Rien de ce qui suit ne se recopie à la main (garde-fou de `projets.json`) :
 - les RÔLES et STATUTS d'un utilisateur (`ROLE`, `STATUT`, `LIBELLES_HERITES` de
   `front/src/lib/roles.ts`) et les rôles que l'en-tête de l'accueil met en avant
   (`EnteteAccueil.svelte`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
+- la LISTE BLANCHE du texte riche : balises et attributs (`ALLOWED_TAGS`,
+  `ALLOWED_ATTR` de `front/src/lib/sanitize.ts`), schémas de lien (`SCHEMAS_URL`
+  de `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
+  → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
 - les ONGLETS de chaque page du site (`PAGES` et `PAGES_ROLES`), que la table de
   parité doit tous classer → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py).
 
@@ -273,6 +277,32 @@ def roles(commit: str) -> int:
     return len(role) + len(statut)
 
 
+def balises(commit: str) -> int:
+    sanitize = (FRONT / "src" / "lib" / "sanitize.ts").read_text(encoding="utf-8")
+    tags, attrs = (lecture_ts.table(sanitize, nom) for nom in ("ALLOWED_TAGS", "ALLOWED_ATTR"))
+    html_sur = (FRONT.parent / "api" / "app" / "utils" / "html_sur.py").read_text(encoding="utf-8")
+    m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
+    s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
+    if not m or not s:
+        raise SystemExit("❌ BALISES ou SCHEMAS_URL introuvable dans api/app/utils/html_sur.py")
+    if set(re.findall(r'"([a-z0-9]+)"', m.group(1))) != set(tags):
+        raise SystemExit("❌ html_sur.BALISES diverge de sanitize.ts ALLOWED_TAGS — à signaler à coprofirst")
+    schemas = sorted(re.findall(r'"([a-z]+)"', s.group(1)))
+    if len(tags) < 10 or not schemas:
+        raise SystemExit("❌ liste blanche du texte riche illisible")
+
+    def ensemble(valeurs: list[str]) -> str:
+        return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
+
+    corps = entete("front/src/lib/sanitize.ts (ALLOWED_TAGS, ALLOWED_ATTR) et api/app/utils/html_sur.py", commit)
+    corps += "\n/// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).\n"
+    corps += "enum BalisesDuSite {\n"
+    corps += f"    static let balises: Set<String> = {ensemble(tags)}\n"
+    corps += f"    static let attributs: Set<String> = {ensemble(attrs)}\n"
+    corps += "    /// Les schémas d'un lien touchable (`SCHEMAS_URL`, appliqué par l'API).\n"
+    corps += f"    static let schemasDeLien: Set<String> = {ensemble(schemas)}\n}}\n"
+    ecrire(CHARTE / "BalisesDuSite.swift", corps)
+    return len(tags)
 def libelle_lisible(label) -> str:
     """Le libellé d'un onglet sans son pictogramme ; une constante garde son nom."""
     if isinstance(label, lecture_ts.Identifiant):
@@ -315,11 +345,12 @@ def main() -> None:
     n_pages = pages(commit)
     n_statuts = statuts(commit)
     n_roles = roles(commit)
+    n_balises = balises(commit)
     n_onglets = parite(commit)
     print(
         f"✅ coprofirst@{commit} : palettes {', '.join(codes)} ; {n_natures} natures du fil ; "
         f"{n_pages} pages ; {n_statuts} statuts ; {n_roles} rôles et statuts d'utilisateur ; "
-        f"{n_onglets} onglets à classer"
+        f"{n_balises} balises de texte riche ; {n_onglets} onglets à classer"
     )
 
 

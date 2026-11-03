@@ -69,8 +69,10 @@ extension ServiceSimule {
         case 41:
             return DetailAffaire(
                 id: 41, numero: "A-0041", titre: "Fuite d'eau au plafond du parking",
-                description: "Une infiltration goutte au niveau -1, place 12. Le sol est glissant : un seau a été "
-                    + "posé en attendant le plombier. Merci de contourner la zone.",
+                description: "<p>Une infiltration goutte au niveau -1, place 12. Le sol est <strong>glissant</strong>"
+                    + "&nbsp;: un seau a été posé en attendant le plombier.</p><ul><li>Merci de contourner la "
+                    + "zone.</li><li>Photos jointes ci-dessous.</li></ul><p>Le contrat d'entretien : "
+                    + "<a href=\"https://www.example.org/contrat\">consulter</a>.</p>",
                 categorie: "plomberie", statut: "en_cours", urgente: true, creeLe: ilYA(5),
                 auteur: "Un résident du bâtiment A", lieu: "Parking, niveau -1",
                 photos: ["/uploads/tickets/41-1.jpg", "/uploads/tickets/41-2.jpg"],
@@ -80,7 +82,8 @@ extension ServiceSimule {
                         ancienStatut: "ouvert", nouveauStatut: "en_cours", photos: []),
                     SuiteAffaire(
                         id: 2, type: "commentaire", date: ilYA(3), auteur: "Le conseil syndical",
-                        contenu: "Le syndic est prévenu ; le plombier passe demain matin.", ancienStatut: nil,
+                        contenu: "<p>Le syndic est prévenu ; le plombier passe <strong>demain matin</strong>.</p>",
+                        ancienStatut: nil,
                         nouveauStatut: nil, photos: []),
                     SuiteAffaire(
                         id: 3, type: "reponse", date: ilYA(1), auteur: "Le syndic",
