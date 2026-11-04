@@ -59,15 +59,25 @@ enum Lancement {
             }
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
+            profilConnu(parcours, residence)
             parcours.aOuvrir = arguments.firstIndex(of: "-ouvrir").flatMap {
                 arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
             }
         case "affaires":
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
+            profilConnu(parcours, residence)
         default:
             break
         }
         return parcours
+    }
+
+    /// Le profil d'un passage précédent, comme une résidence déjà connue le garde : la
+    /// barre (`PagesOuvertes`) est complète dès l'arrivée, sans attendre GET /auth/me.
+    @MainActor
+    private static func profilConnu(_ parcours: Parcours, _ residence: Installation) {
+        guard let simule = parcours.service as? ServiceSimule else { return }
+        parcours.connues.noter(simule.profilSimule, pour: residence)
     }
 }
