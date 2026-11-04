@@ -8,11 +8,11 @@ import Foundation
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
-        async let ticket = appeler { try await client.getTicketTicketsTicketIdGet(path: .init(ticketId: id)) }
+        async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
         async let evolutions = appeler {
-            try await client.getEvolutionsTicketsTicketIdEvolutionsGet(path: .init(ticketId: id))
+            try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
         }
-        async let moi = appeler { try await client.meAuthMeGet() }
+        async let moi = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -35,7 +35,7 @@ extension ServiceAPI {
 
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).addEvolutionTicketsTicketIdEvolutionsPost(
+            try await client(installation.adresse).postTicketsTicketIdEvolutions(
                 path: .init(ticketId: affaire), body: .json(.init(contenu: texte, _type: "commentaire")))
         }
         switch sortie {
@@ -47,7 +47,7 @@ extension ServiceAPI {
 
     func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage {
         let sortie = try await appeler {
-            try await client(installation.adresse).getSondageSondagesSondageIdGet(path: .init(sondageId: id))
+            try await client(installation.adresse).getSondagesSondageId(path: .init(sondageId: id))
         }
         switch sortie {
         case .ok(let ok):
@@ -61,7 +61,7 @@ extension ServiceAPI {
 
     func voter(_ option: Int, au sondage: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).voterSondagesSondageIdVoterPost(
+            try await client(installation.adresse).postSondagesSondageIdVoter(
                 path: .init(sondageId: sondage), body: .json(.init(optionId: option)))
         }
         switch sortie {
@@ -78,7 +78,7 @@ extension ServiceAPI {
         let donnees: Data
         do {
             let sortie = try await client(installation.adresse)
-                .downloadDocumentDocumentsDocIdTéléchargerGet(path: .init(docId: id))
+                .getDocumentsDocIdTélécharger(path: .init(docId: id))
             switch sortie {
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             default: throw ErreurService.inattendue(200)

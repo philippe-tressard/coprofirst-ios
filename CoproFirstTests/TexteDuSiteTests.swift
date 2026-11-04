@@ -112,3 +112,58 @@ import Testing
     let petit = try #require(ImageRenderer(content: normal).uiImage)
     #expect(grand.size.height > petit.size.height * 1.5, "le texte grandit avec Dynamic Type")
 }
+
+// MARK: - Les listes de l'éditeur du site (#25)
+
+/// La forme exacte de l'éditeur du site (Tiptap) : chaque élément est `<li><p>…</p></li>`.
+@Test func leMarqueurEtLeTexteRestentSurLaMemeLigne() {
+    let html = """
+        <p>Constat :</p><ol><li><p>le portillon ne s'ouvre pas ;</p></li>\
+        <li><p>le badge clignote rouge.</p></li></ol>
+        """
+    let blocs = TexteDuSite.blocs(html)
+    #expect(blocs.map(\.marqueur) == [nil, "1.", "2."])
+    #expect(
+        blocs.map { String($0.texte.characters) } == [
+            "Constat :", "le portillon ne s'ouvre pas ;", "le badge clignote rouge.",
+        ])
+    #expect(blocs.map(\.ecart) == [false, true, false])
+    #expect(
+        String(TexteDuSite.riche(html).characters)
+            == "Constat :\n\n1. le portillon ne s'ouvre pas ;\n2. le badge clignote rouge.")
+    #expect(TexteDuSite.apercu(html) == "Constat : 1. le portillon ne s'ouvre pas ; 2. le badge clignote rouge.")
+}
+
+/// Deux `<p>` dans un même élément : le second passe à la ligne, sans marqueur, au même niveau.
+@Test func unSecondParagrapheDansUnElementSAligneSurLeTexte() {
+    let blocs = TexteDuSite.blocs("<ul><li><p>Premier</p><p>suite du premier</p></li><li><p>Second</p></li></ul>")
+    #expect(blocs.map(\.marqueur) == ["•", nil, "•"])
+    #expect(blocs.map(\.niveau) == [1, 1, 1])
+    #expect(blocs.map(\.ecart) == [false, false, false])
+}
+
+/// Une sous-liste vit dans le `<li>`, après son `<p>` : un niveau de plus.
+@Test func uneSousListeEstUnNiveauPlusLoin() {
+    let blocs = TexteDuSite.blocs(
+        "<ol><li><p>Bâtiment A</p><ul><li><p>hall</p></li><li><p>cave</p></li></ul></li><li><p>Bâtiment B</p></li></ol>"
+    )
+    #expect(blocs.map(\.marqueur) == ["1.", "•", "•", "2."])
+    #expect(blocs.map(\.niveau) == [1, 2, 2, 1])
+}
+
+/// Un `<li>` sans `<p>` (HTML écrit à la main, ancien contenu) se lit pareil.
+@Test func unElementSansParagrapheGardeSonMarqueur() {
+    #expect(TexteDuSite.blocs("<ul><li>un</li><li><strong>deux</strong></li></ul>").map(\.marqueur) == ["•", "•"])
+    #expect(String(TexteDuSite.riche("<ul><li>un</li><li>deux</li></ul>").characters) == "• un\n• deux")
+}
+
+/// Le retrait suspendu : en très grand texte, l'élément long passe sur plusieurs lignes
+/// sans que son marqueur reste seul en tête.
+@MainActor
+@Test func unElementLongSeRendSousSonMarqueur() throws {
+    let html = "<ol><li><p>" + String(repeating: "le portillon ne s'ouvre pas ; ", count: 6) + "</p></li></ol>"
+    let vue = TexteRiche(html: html).frame(width: 320).environment(\.dynamicTypeSize, .accessibility3)
+    let image = try #require(ImageRenderer(content: vue).uiImage)
+    #expect(image.size.height > 100, "plusieurs lignes, rendues ensemble")
+    #expect(TexteRiche(html: html).blocs.count == 1, "un seul bloc : le marqueur et tout le texte")
+}
