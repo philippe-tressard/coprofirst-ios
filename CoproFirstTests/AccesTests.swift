@@ -99,8 +99,8 @@ import Testing
 @Test func leLotEtLesNomsSAffichentBruts() {
     #expect(LotsSimules.lots[0].typeLu == "appartement T3")
     #expect(LotsSimules.lots[1].typeLu == "cave")
-    #expect(LibellesAcces.nom(" Marie ", "Durand") == "Marie Durand")
-    #expect(LibellesAcces.nom(nil, "  ") == "—")
+    #expect(FormatsDuSite.nom(" Marie ", "Durand") == "Marie Durand")
+    #expect(FormatsDuSite.nom(nil, "  ") == "—")
 }
 
 @Test func lesBauxSeGroupentParLocataire() {
