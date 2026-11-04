@@ -68,6 +68,11 @@ suffit de régénérer le projet (`bash scripts/generer-projet.sh`).
    tickets évitent les conflits entre sessions parallèles.
 3. Ses lignes de `Parite/PARITE.md` passent de `prévu` à `fait`, dans sa section.
 
+Un **fichier généré** depuis coprofirst (table, libellés, règle de données) : un module
+`scripts/generateurs/<domaine>.py` — `SOURCES` (les fichiers lus, pour la concordance
+de #20) et `generer(ctx)` —, découvert seul par `generer-charte.py`. Une session
+ajoute SON module ; elle n'édite ni `generer-charte.py` ni le module d'un autre.
+
 Les **onglets** d'une page et ce qu'un compte en ouvre : `OngletsDuSite.ouverts(page:
 droits:)` avec `DroitsOnglet(profil: parcours.ouverteAJour?.profil)` (#29). La table
 est générée depuis `pages.ts` (réserves comprises), la règle est celle du site : un

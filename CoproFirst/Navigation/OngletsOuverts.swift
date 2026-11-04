@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 /// Un onglet d'une page du site (`OngletDef` de `pages.ts`) — la table est GÉNÉRÉE :
-/// `OngletsDuSite.parPage` (Charte/OngletsDuSite.swift, scripts/charte_onglets.py).
+/// `OngletsDuSite.parPage` (Charte/OngletsDuSite.swift, scripts/generateurs/onglets.py).
 struct OngletDuSite: Hashable, Sendable, Identifiable {
     let id: String
     /// Le libellé du site, pictogramme retiré ; l'administration peut le renommer
