@@ -29,10 +29,39 @@ func lesDatesSontCellesDuSite(iso: String, date: String, courte: String) {
     #expect(FormatsDuSite.dateCourte(iso) == courte)
 }
 
+/// `fmtDateLong` et `fmtDatetime` (#12) : chaque attendu est leur sortie sous Node
+/// (coprofirst v3.62.0, `front/src/lib/date.ts`, fuseau du poste : Paris).
+@Test(arguments: [
+    ("2026-06-12", "12 juin 2026", "12 juin 2026, 02:00"),  // un jour seul : minuit UTC
+    ("2026-08-01", "1 août 2026", "1 août 2026, 02:00"),
+    ("2026-04-02T14:30:00Z", "2 avril 2026", "2 avr. 2026, 16:30"),
+    // Minuit à 2 h à Paris : le jour de Paris n'est pas le jour UTC.
+    ("2026-07-25T21:59:00Z", "25 juillet 2026", "25 juil. 2026, 23:59"),
+    ("2026-07-25T22:00:00Z", "26 juillet 2026", "26 juil. 2026, 00:00"),
+    ("2026-07-25T23:30:00Z", "26 juillet 2026", "26 juil. 2026, 01:30"),
+    ("2026-01-31T23:30:00Z", "1 février 2026", "1 févr. 2026, 00:30"),
+    // Passage à l'heure d'hiver (25/10, 3 h → 2 h) : deux instants, la même heure affichée.
+    ("2026-10-24T23:59:00Z", "25 octobre 2026", "25 oct. 2026, 01:59"),
+    ("2026-10-25T00:30:00Z", "25 octobre 2026", "25 oct. 2026, 02:30"),
+    ("2026-10-25T01:30:00Z", "25 octobre 2026", "25 oct. 2026, 02:30"),
+    // Passage à l'heure d'été (29/03, 2 h → 3 h) : 2 h n'existe pas.
+    ("2026-03-29T00:59:00Z", "29 mars 2026", "29 mars 2026, 01:59"),
+    ("2026-03-29T01:00:00Z", "29 mars 2026", "29 mars 2026, 03:00"),
+    // Sans fuseau : l'heure locale du navigateur, celle de Paris.
+    ("2026-07-25T23:30:00.123456", "25 juillet 2026", "25 juil. 2026, 23:30"),
+    ("2026-10-20T08:05:00", "20 octobre 2026", "20 oct. 2026, 08:05"),
+])
+func lesDatesLonguesEtLesHeuresSontCellesDuSite(iso: String, longue: String, heure: String) {
+    #expect(FormatsDuSite.dateLongue(iso) == longue)
+    #expect(FormatsDuSite.dateHeure(iso) == heure)
+}
+
 @Test func uneDateAbsenteSEcritParUnTiret() {
     #expect(FormatsDuSite.date(nil as String?) == "—")
     #expect(FormatsDuSite.dateCourte("") == "—")
     #expect(FormatsDuSite.date(nil as Date?) == "—")
+    #expect(FormatsDuSite.dateLongue(nil as String?) == "—")
+    #expect(FormatsDuSite.dateHeure("") == "—")
 }
 
 @Test func uneDateDejaDecodeeSeFormateAParis() throws {
