@@ -33,8 +33,8 @@ struct ResumeFeuille: View {
                     .font(.titre(.title2))
                     .foregroundStyle(palette.text)
                     .accessibilityAddTraits(.isHeader)
-                if let detail = element.detail.map(TexteDuSite.riche), !detail.characters.isEmpty {
-                    Text(detail).font(.body).foregroundStyle(palette.text).tint(palette.primary)
+                if let detail = element.detail.map(TexteRiche.init(html:)), !detail.vide {
+                    detail.font(.body).foregroundStyle(palette.text).tint(palette.primary)
                         .textSelection(.enabled)
                 }
                 if case .resume(let lien?) = element.cible,
