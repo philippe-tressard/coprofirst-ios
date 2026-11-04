@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : coprofirst@b40a3189c, front/src/lib/theme.ts, preferences.ts et roles.ts ; api/app/utils/preferences_mail.py et mots_de_passe.py.
+// Source : coprofirst@8a9025d7e, front/src/lib/theme.ts, preferences.ts et roles.ts ; api/app/utils/preferences_mail.py et mots_de_passe.py.
 
 /// Ce que le site écrit du Profil et que le contrat ne sert pas.
 enum TablesProfil {
