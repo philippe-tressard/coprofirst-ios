@@ -113,6 +113,7 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
     corps += f"    static let rolesAdministrateur: Set<String> = {_ensemble(_roles(auth, 'isAdmin'))}\n"
     corps += f"    static let rolesOperateur: Set<String> = {_ensemble(_roles(auth, 'isOperateur'))}\n"
     corps += f"    static let rolesProprioOuCS: Set<String> = {_ensemble(_roles(auth, 'isProprioOuCS'))}\n"
+    corps += f"    static let rolesCS: Set<String> = {_ensemble(_roles(auth, 'isCS'))}\n"
     corps += f"    static let statutsLocataire: Set<String> = {_ensemble(_statuts(roles_ts, 'estLocataire'))}\n"
     corps += f"    static let statutsGestionnaire: Set<String> = {_ensemble(_statuts(roles_ts, 'estGestionnaire'))}\n"
     corps += "}\n"

@@ -19,11 +19,15 @@ private let coproprietaire = DroitsOnglet(
 private let locataire = DroitsOnglet(roles: ["résident"], role: "résident", statut: "locataire")
 
 @Test func lesDroitsSeLisentCommeLeSite() {
-    #expect(conseilSyndical == DroitsOnglet(proprioOuCS: true))
+    #expect(conseilSyndical == DroitsOnglet(proprioOuCS: true, cs: true))
     #expect(coproprietaire == DroitsOnglet(proprioOuCS: true))
     #expect(locataire == DroitsOnglet(locataire: true))
     #expect(DroitsOnglet(roles: [], role: "admin", statut: nil).administrateur, "`role` seul quand `roles` est vide")
     #expect(DroitsOnglet(roles: [], role: nil, statut: "syndic").gestionnaire)
+    // `$isCS` du site inclut l'administrateur ; le copropriétaire n'en est pas.
+    #expect(DroitsOnglet(roles: ["admin"], role: "admin", statut: nil).cs)
+    #expect(!coproprietaire.cs)
+    #expect(OngletsDuSite.rolesCS == ["conseil_syndical", "admin"], "lu dans isCS de stores/auth.ts")
 }
 
 @Test func leLocataireNeVoitNiCarnetNiReglementNiKanban() {

@@ -30,16 +30,20 @@ struct DroitsOnglet: Hashable, Sendable {
     var proprioOuCS = false
     var locataire = false
     var gestionnaire = false
+    /// Conseil syndical ou administration — `$isCS` du site, qui inclut l'administrateur.
+    /// Aucune réserve d'onglet ne l'emploie ; un écran le lit (le Règlement, #12).
+    var cs = false
 
     init(
         administrateur: Bool = false, operateur: Bool = false, proprioOuCS: Bool = false,
-        locataire: Bool = false, gestionnaire: Bool = false
+        locataire: Bool = false, gestionnaire: Bool = false, cs: Bool = false
     ) {
         self.administrateur = administrateur
         self.operateur = operateur
         self.proprioOuCS = proprioOuCS
         self.locataire = locataire
         self.gestionnaire = gestionnaire
+        self.cs = cs
     }
 
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
@@ -52,7 +56,8 @@ struct DroitsOnglet: Hashable, Sendable {
             operateur: !portes.isDisjoint(with: OngletsDuSite.rolesOperateur),
             proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprioOuCS),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
-            gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut))
+            gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
+            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS))
     }
 }
 
