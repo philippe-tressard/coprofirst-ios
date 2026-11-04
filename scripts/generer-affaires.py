@@ -13,7 +13,6 @@ libellés, l'ordre et les teintes vivent dans le front du site. Rien ne se recop
   `COLONNE_PAR_STATUT_TICKET`, `MOT_COLONNE_VIDE` de `kanban.ts`), leurs teintes
   au clair (`socle.css`) et au sombre (`palette-sombre.css`) ;
 - l'ORDRE des statuts, leurs GROUPES de suivi et les statuts CLOS (`tickets.ts`) ;
-- les ONGLETS de la page `mes-demandes` et leur réserve (`pages.ts`).
 
 Sortie : `CoproFirst/Fonctions/Affaires/Genere/TablesAffaires.swift` — dans le
 dossier du menu, pour qu'aucune session parallèle n'y touche. Script à part de
@@ -134,7 +133,7 @@ def entete(provenance: str) -> str:
         "// swift-format-ignore-file\n"
         "// swiftlint:disable line_length\n"
         f"// Source : {provenance}\n"
-        "//   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, pages.ts ;\n"
+        "//   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts ;\n"
         "//   front/src/styles/socle.css et palette-sombre.css.\n"
     )
 
@@ -211,22 +210,6 @@ def statuts() -> str:
     )
 
 
-def onglets() -> str:
-    page = next(p for p in lecture_ts.table(lire("pages.ts"), "PAGES") if p["id"] == "mes-demandes")
-    titre_archives = sans_pictogramme(re.sub(r"\$\{[^}]*\}", "", re.search(
-        r"\bTITRE_ARCHIVES\s*=\s*`([^`]*)`", lire("archives.ts")).group(1)))
-    lignes = []
-    for o in page["onglets"]:
-        label = o["label"]
-        libelle = titre_archives if isinstance(label, lecture_ts.Identifiant) else sans_pictogramme(label)
-        reserve = f"{chaine(o['reserve'])}" if o.get("reserve") else "nil"
-        lignes.append(f"        OngletAffaires(id: {chaine(o['id'])}, libelle: {chaine(libelle)}, reserve: {reserve}),\n")
-    return (
-        "    /// Les onglets de la page `mes-demandes`, et la réserve de chacun (`pages.ts`).\n"
-        "    static let onglets: [OngletAffaires] = [\n" + "".join(lignes) + "    ]\n"
-    )
-
-
 def provenance() -> str:
     """La version publiée lue et son commit COMPLET, comme PROVENANCE-OPENAPI.md : le
     fichier généré répond à une version, pas à l'état d'un poste."""
@@ -238,7 +221,7 @@ def main() -> None:
     source = provenance()
     corps = entete(source) + "\nimport SwiftUI\n\n/// Ce que le site écrit des affaires et que le contrat ne sert pas.\nenum TablesAffaires {\n"
     # Une ligne par entrée, sans retour : SwiftLint suspend la longueur, puis la rétablit.
-    corps += categories() + kanban() + statuts() + onglets() + "}\n// swiftlint:enable line_length\n"
+    corps += categories() + kanban() + statuts() + "}\n// swiftlint:enable line_length\n"
     SORTIE.parent.mkdir(parents=True, exist_ok=True)
     with open(SORTIE, "w", encoding="utf-8", newline="\n") as f:
         f.write(corps)

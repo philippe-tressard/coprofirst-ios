@@ -5,7 +5,7 @@
 // swift-format-ignore-file
 // swiftlint:disable line_length
 // Source : philippe-tressard/coprofirst v3.61.0 (commit 4239610fcf1658b53c84664087f7e5d0650fe834),
-//   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, pages.ts ;
+//   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts ;
 //   front/src/styles/socle.css et palette-sombre.css.
 
 import SwiftUI
@@ -67,11 +67,5 @@ enum TablesAffaires {
     ]
     /// La catégorie d'une actualité (`CATEGORIE_ACTUALITE`).
     static let categorieActualite = "actualite"
-    /// Les onglets de la page `mes-demandes`, et la réserve de chacun (`pages.ts`).
-    static let onglets: [OngletAffaires] = [
-        OngletAffaires(id: "liste", libelle: "Liste", reserve: nil),
-        OngletAffaires(id: "kanban", libelle: "Kanban", reserve: "nonLocataire"),
-        OngletAffaires(id: "archives", libelle: "Archives", reserve: nil),
-    ]
 }
 // swiftlint:enable line_length

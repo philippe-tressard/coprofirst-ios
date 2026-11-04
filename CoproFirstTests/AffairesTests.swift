@@ -100,14 +100,14 @@ import Testing
     #expect(!DroitsAffaires(profil: nil).moderateur, "sans profil, rien n'est offert")
 }
 
-@Test func leKanbanEstFermeAuxLocatairesEtAuProfilInconnu() throws {
-    let kanban = try #require(TablesAffaires.onglets.first { $0.id == "kanban" })
-    #expect(kanban.reserve == "nonLocataire")
-    #expect(!DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"])).ouvre(kanban))
-    #expect(DroitsAffaires(profil: .init(statut: "copropriétaire_bailleur", roles: [])).ouvre(kanban))
-    #expect(!DroitsAffaires(profil: nil).ouvre(kanban), "profil non lu : l'onglet réservé reste caché")
-    let inconnue = OngletAffaires(id: "x", libelle: "X", reserve: "reserveInconnue")
-    #expect(!DroitsAffaires(profil: .init(statut: nil, roles: ["admin"])).ouvre(inconnue))
+@Test func leKanbanEstFermeAuxLocatairesEtAuProfilInconnu() {
+    func ouvre(_ profil: ProfilResidence?) -> Bool {
+        DroitsAffaires(profil: profil).onglets.contains { $0.id == "kanban" }
+    }
+    #expect(!ouvre(.init(statut: "locataire", roles: ["résident"])))
+    #expect(ouvre(.init(statut: "copropriétaire_bailleur", roles: [])))
+    #expect(!ouvre(nil), "profil non lu : l'onglet réservé reste caché")
+    #expect(DroitsAffaires(profil: nil).onglets.map(\.id) == ["liste", "archives"])
 }
 
 @Test func lesCategoriesReserveesNeSontOffertesQuAuConseil() {

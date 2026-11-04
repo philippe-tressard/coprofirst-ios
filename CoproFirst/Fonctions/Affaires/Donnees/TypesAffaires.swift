@@ -45,13 +45,6 @@ struct GroupeDeSuivi: Hashable, Sendable {
     let statuts: [String]
 }
 
-/// Un onglet de la page Affaires et sa réserve (`nonLocataire`…), ou `nil`.
-struct OngletAffaires: Identifiable, Hashable, Sendable {
-    let id: String
-    let libelle: String
-    let reserve: String?
-}
-
 extension TablesAffaires {
     static let categorieParCode: [String: CategorieAffaire] = Dictionary(
         uniqueKeysWithValues: categories.map { ($0.code, $0) })

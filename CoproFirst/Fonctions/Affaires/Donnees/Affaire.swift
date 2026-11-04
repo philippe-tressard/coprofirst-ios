@@ -114,28 +114,26 @@ extension [Affaire] {
 /// Qui peut quoi, ici — le même rôle que la route accepte.
 ///
 /// « Modérer » = conseil syndical ou administration : `est_moderateur` du serveur
-/// (`auth/deps.py`), `isCS` du site. Il garde le glissement au Kanban, l'archivage
-/// (`archive_manuel`, 403 sinon) et les catégories réservées (`categorie_reservee`).
-/// La règle se lit dans les rôles servis par GET /auth/me ; tant que l'API ne sert
-/// pas les droits eux-mêmes, l'app ne déduit rien de plus (besoin noté pour
-/// coprofirst#2460).
+/// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il garde
+/// le glissement au Kanban, l'archivage (`archive_manuel`, 403 sinon) et les catégories
+/// réservées (`categorie_reservee`). Tant que l'API ne sert pas les droits eux-mêmes,
+/// l'app ne déduit rien de plus (philippe-tressard/coprofirst#2508).
 struct DroitsAffaires: Equatable, Sendable {
+    /// La page du site que porte ce menu (`pages.ts`).
+    static let page = "mes-demandes"
+
     let moderateur: Bool
-    /// `nil` tant que le profil n'est pas lu : un onglet réservé reste caché.
-    let locataire: Bool?
+    /// Les onglets ouverts à ce compte (`OngletsDuSite.ouverts`, la règle du site).
+    /// Profil pas encore lu : les seuls onglets sans réserve — un réservé reste caché.
+    let onglets: [OngletDuSite]
 
     init(profil: ProfilResidence?) {
-        moderateur = profil.map { !Set($0.roles).isDisjoint(with: ["conseil_syndical", "admin"]) } ?? false
-        locataire = profil.map { $0.statut == "locataire" }
-    }
-
-    /// L'onglet est-il ouvert à ce compte ? Une réserve inconnue le ferme.
-    func ouvre(_ onglet: OngletAffaires) -> Bool {
-        switch onglet.reserve {
-        case nil: true
-        case "nonLocataire": locataire == false
-        default: false
-        }
+        let droits = DroitsOnglet(profil: profil)
+        moderateur = profil != nil && droits.cs
+        onglets =
+            profil == nil
+            ? (OngletsDuSite.parPage[Self.page] ?? []).filter { $0.reserve == nil }
+            : OngletsDuSite.ouverts(page: Self.page, droits: droits)
     }
 
     /// Les catégories qu'il peut poser, dans l'ordre du site, « Actualité » en tête.
