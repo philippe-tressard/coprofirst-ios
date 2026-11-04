@@ -119,6 +119,7 @@ final class CompteurNonLues {
 
     private(set) var parHote: [String: Int] = [:]
     @ObservationIgnored private var lues: [String: Date] = [:]
+    @ObservationIgnored private var enCours: Set<String> = []
 
     func nombre(_ installation: Installation) -> Int { parHote[installation.hote] ?? 0 }
 
@@ -127,10 +128,18 @@ final class CompteurNonLues {
         lues[installation.hote] = .now
     }
 
+    /// Une lecture à la fois par résidence, détachée de la vue : la barre d'outils se
+    /// redessine et annule ses tâches, la lecture va quand même au bout. Un échec ne
+    /// compte pas comme lu — l'apparition suivante réessaie.
     func rafraichir(_ installation: Installation, avec service: any ServiceNotifications) async {
-        if let derniere = lues[installation.hote], derniere.timeIntervalSinceNow > -30 { return }
-        lues[installation.hote] = .now
-        guard let liste = try? await service.notifications(installation) else { return }
-        parHote[installation.hote] = liste.filter { !$0.lue }.count
+        let hote = installation.hote
+        if enCours.contains(hote) { return }
+        if let derniere = lues[hote], derniere.timeIntervalSinceNow > -30 { return }
+        enCours.insert(hote)
+        let lecture = Task { try? await service.notifications(installation) }
+        let liste = await lecture.value
+        enCours.remove(hote)
+        guard let liste else { return }
+        noter(liste.filter { !$0.lue }.count, pour: installation)
     }
 }

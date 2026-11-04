@@ -108,9 +108,10 @@ struct FlowEtiquettes: Layout {
         for rangee in ranger(largeur: bounds.width, subviews) {
             var x = bounds.minX
             for indice in rangee.indices {
-                let taille = subviews[indice].sizeThatFits(.unspecified)
+                let proposition = ProposedViewSize(width: bounds.width, height: nil)
+                let taille = subviews[indice].sizeThatFits(proposition)
                 subviews[indice].place(
-                    at: CGPoint(x: x, y: y + (rangee.hauteur - taille.height) / 2), proposal: .unspecified)
+                    at: CGPoint(x: x, y: y + (rangee.hauteur - taille.height) / 2), proposal: proposition)
                 x += taille.width + espace
             }
             y += rangee.hauteur + espace
@@ -125,8 +126,10 @@ struct FlowEtiquettes: Layout {
 
     private func ranger(largeur: CGFloat, _ subviews: Subviews) -> [Rangee] {
         var rangees = [Rangee()]
+        // Une étiquette ne dépasse jamais la largeur : trop longue, elle passe à la ligne en elle-même.
+        let proposition = ProposedViewSize(width: largeur.isFinite ? largeur : nil, height: nil)
         for (indice, vue) in subviews.enumerated() {
-            let taille = vue.sizeThatFits(.unspecified)
+            let taille = vue.sizeThatFits(proposition)
             let ajout = rangees[rangees.count - 1].indices.isEmpty ? taille.width : taille.width + espace
             if rangees[rangees.count - 1].largeur + ajout > largeur, !rangees[rangees.count - 1].indices.isEmpty {
                 rangees.append(Rangee())

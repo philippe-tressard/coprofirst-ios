@@ -14,9 +14,7 @@ struct PastilleOuSuisJe: ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Pastille(installation: installation)
         }
-        if cloche, let installation {
-            ToolbarItem(placement: .topBarTrailing) { ClocheNotifications(installation: installation) }
-        }
+        if cloche, let installation { ClocheNotifications(installation: installation) }
     }
 
     private struct Pastille: View {

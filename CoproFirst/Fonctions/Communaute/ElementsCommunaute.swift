@@ -13,7 +13,6 @@ struct PastilleCommunaute: View {
         let teinte = TeintePastille.couleurs(pastille)
         Text(libelle)
             .font(.caption.weight(.semibold))
-            .lineLimit(1)
             .foregroundStyle(palette[keyPath: teinte.texte])
             .padding(.horizontal, 9)
             .padding(.vertical, 3)

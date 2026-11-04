@@ -13,12 +13,14 @@ struct CommunauteView: View {
     @Environment(\.palette) private var palette
     @State private var etat = EtatCommunaute()
     @State private var creation: OngletCommunaute?
+    @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
         @Bindable var etat = etat
         contenu
             .background(palette.bg)
             .navigationTitle(titre)
+            .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
             .safeAreaInset(edge: .top, spacing: 0) {
                 if etat.onglets.count > 1 {
                     Picker("Rubrique", selection: $etat.onglet.animation(.snappy)) {
@@ -29,7 +31,8 @@ struct CommunauteView: View {
                     .pickerStyle(.segmented)
                     .padding(.horizontal, Mise.marge)
                     .padding(.vertical, 8)
-                    .background(.bar)
+                    // Le fond s'arrête au sélecteur : il ne remonte pas sous le grand titre.
+                    .background(palette.bg, ignoresSafeAreaEdges: [])
                     .accessibilityIdentifier("communaute.onglets")
                 }
             }

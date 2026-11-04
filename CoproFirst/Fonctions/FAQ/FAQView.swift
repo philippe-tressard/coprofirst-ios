@@ -26,6 +26,7 @@ struct FAQView: View {
     var titre = "FAQ"
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
+    @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
         let service = parcours.serviceFAQ
@@ -39,6 +40,7 @@ struct FAQView: View {
         )
         .background(palette.bg)
         .navigationTitle(titre)
+        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
     }
 

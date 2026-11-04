@@ -14,6 +14,7 @@ struct ProfilView: View {
     @State private var erreur: ErreurService?
     @State private var identite = false
     @State private var phrase: String?
+    @Environment(\.dynamicTypeSize) private var tailleTexte
     @AppStorage(ThemeChoisi.cle) private var theme = TablesProfil.themeParDefaut
 
     var body: some View {
@@ -47,6 +48,7 @@ struct ProfilView: View {
         .scrollContentBackground(.hidden)
         .background(palette.bg)
         .navigationTitle("Profil")
+        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
         .confirmationDeSortie($geste, parcours: parcours)
         .sheet(isPresented: $identite) {
             if let compte, let ouverte = parcours.ouverteAJour {
@@ -82,7 +84,7 @@ struct ProfilView: View {
     /// La résidence, puis « Résidence & statut » du site : profil d'utilisateur,
     /// bâtiment, état du compte, ancienneté.
     private func sectionResidence(_ ouverte: Installation) -> some View {
-        Section("Résidence") {
+        Section {
             VStack(alignment: .leading, spacing: 10) {
                 Text(ouverte.nom).font(.headline).foregroundStyle(palette.text)
                 if let logement = ouverte.profil?.libelleLogement, !logement.isEmpty {
@@ -109,6 +111,8 @@ struct ProfilView: View {
                 }
                 .listRowBackground(palette.surface)
             }
+        } header: {
+            Text("Résidence").styleLibelle()
         }
     }
 
@@ -129,20 +133,22 @@ struct ProfilView: View {
             }
             .listRowBackground(palette.surface)
         } header: {
-            Text("Informations personnelles")
+            Text("Informations personnelles").styleLibelle()
         } footer: {
             Text("La photo de profil et l'étage de votre logement se règlent sur le site.")
         }
     }
 
     private func sectionSecurite(_ ouverte: Installation) -> some View {
-        Section("Sécurité") {
+        Section {
             NavigationLink {
                 MotDePasseView(installation: ouverte)
             } label: {
                 Label("Modifier le mot de passe", systemImage: "key")
             }
             .listRowBackground(palette.surface)
+        } header: {
+            Text("Sécurité").styleLibelle()
         }
     }
 
@@ -159,7 +165,7 @@ struct ProfilView: View {
             .listRowBackground(palette.surface)
             .accessibilityIdentifier("profil.theme")
         } header: {
-            Text("Apparence")
+            Text("Apparence").styleLibelle()
         } footer: {
             Text("Ce choix vaut pour cet appareil : il est retenu par l'app, pas par votre compte.")
         }
@@ -225,7 +231,7 @@ private struct SectionDroits: View {
             }
             if let phrase { Text(phrase).font(.footnote).foregroundStyle(palette.textMuted) }
         } header: {
-            Text("Vos droits (RGPD)")
+            Text("Vos droits (RGPD)").styleLibelle()
         }
         .listRowBackground(palette.surface)
         .confirmationDialog("Effacer mes données de navigation", isPresented: $effacer, titleVisibility: .visible) {
