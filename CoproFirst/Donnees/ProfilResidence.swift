@@ -14,6 +14,10 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// CoproFirst ≥ 3.61.0, coprofirst#2500) : l'app l'affiche sans règle à elle. Absent
     /// ou `null` — serveur plus ancien, rien à dire — : rien ne s'affiche.
     var libelleLogement: String?
+    /// Les délégations ACTIVES où le compte est l'aidant (`delegations_aidant` de
+    /// `GET /auth/me`) : elles lui ouvrent la page Délégations (`Nav.svelte`, #15).
+    /// Facultatif : un profil gardé avant #15 se relit sans lui.
+    var delegationsAidant: Int?
 
     /// Les rôles comme l'en-tête de l'accueil les annonce : le statut, puis les rôles
     /// qui ajoutent quelque chose (`misEnAvant`), sans doublon — `EnteteAccueil.svelte`.
