@@ -1,0 +1,95 @@
+// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+import Foundation
+
+/// Les formats du site, à la MÊME règle que lui (#37) — fr-FR, fuseau de Paris :
+///
+/// | App | Site (coprofirst v3.61.0) | Rendu |
+/// |---|---|---|
+/// | `date(_:)` | `fmtDate`, `front/src/lib/date.ts` | « 2 avr. 2026 » |
+/// | `dateCourte(_:)` | `fmtDateShort`, idem | « 02/04/2026 » |
+/// | `nombre(_:)` | `fmtNombre`, `front/src/lib/utils.ts` | « 47 047 », « 64,5 » |
+/// | `montant(_:devise:decimales:)` | `fmtMontant`, idem | « 1 234,5 € » |
+///
+/// Une valeur absente s'écrit « — », comme sur le site. Aucun écran n'écrit son
+/// propre format de date ou de nombre : il passe par ici.
+enum FormatsDuSite {
+    static let tiret = "—"
+    private static let locale = Locale(identifier: "fr_FR")
+    private static let posix = Locale(identifier: "en_US_POSIX")
+    static let paris = TimeZone(identifier: "Europe/Paris") ?? .gmt
+
+    // MARK: Dates
+
+    /// `fmtDate` : « 2 avr. 2026 ».
+    static func date(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.day().month(.abbreviated).year())
+    }
+
+    /// `fmtDateShort` : « 10/04/2026 ».
+    static func dateCourte(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.day(.twoDigits).month(.twoDigits).year())
+    }
+
+    /// Une date telle que l'API la sert (chaîne ISO), lue comme `new Date()` la lit.
+    static func date(_ iso: String?) -> String { date(lire(iso)) }
+    static func dateCourte(_ iso: String?) -> String { dateCourte(lire(iso)) }
+
+    private static var style: Date.FormatStyle {
+        Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, timeZone: paris)
+    }
+
+    /// Une chaîne ISO lue comme le navigateur la lit (`new Date(d)`) :
+    /// - un JOUR seul (« 2026-04-10 ») est minuit UTC ;
+    /// - un horodatage avec `Z` ou un décalage est absolu ;
+    /// - un horodatage SANS fuseau est l'heure locale du navigateur — celle de Paris
+    ///   pour le site : c'est elle qui est retenue ici.
+    static func lire(_ iso: String?) -> Date? {
+        guard let iso, !iso.isEmpty else { return nil }
+        if iso.count == 10 { return analyser(iso, motif: "yyyy-MM-dd", fuseau: .gmt) }
+        if let absolu = try? Date.ISO8601FormatStyle(includingFractionalSeconds: true).parse(iso) { return absolu }
+        if let absolu = try? Date.ISO8601FormatStyle().parse(iso) { return absolu }
+        for motif in ["yyyy-MM-dd'T'HH:mm:ss.SSSSSS", "yyyy-MM-dd'T'HH:mm:ss.SSS", "yyyy-MM-dd'T'HH:mm:ss"] {
+            if let local = analyser(iso, motif: motif, fuseau: paris) { return local }
+        }
+        return nil
+    }
+
+    private static func analyser(_ texte: String, motif: String, fuseau: TimeZone) -> Date? {
+        let formateur = DateFormatter()
+        formateur.locale = posix
+        formateur.timeZone = fuseau
+        formateur.dateFormat = motif
+        return formateur.date(from: texte)
+    }
+
+    // MARK: Nombres
+
+    /// `fmtNombre` : `Intl.NumberFormat('fr-FR')` — espace fine insécable entre les
+    /// milliers, virgule décimale, trois décimales au plus, arrondi « au plus proche ».
+    static func nombre(_ valeur: Double?) -> String {
+        guard let valeur else { return tiret }
+        return decimal(valeur).formatted(
+            .number.locale(locale).precision(.fractionLength(0...3)).rounded(rule: .toNearestOrAwayFromZero))
+    }
+
+    static func nombre(_ valeur: Int?) -> String { nombre(valeur.map(Double.init)) }
+
+    /// `fmtMontant` : une devise, de zéro à `decimales` décimales (2, ou 4 pour le coût
+    /// d'un appel d'IA).
+    static func montant(_ valeur: Double?, devise: String = "EUR", decimales: Int = 2) -> String {
+        guard let valeur else { return tiret }
+        return decimal(valeur).formatted(
+            .currency(code: devise).locale(locale).precision(.fractionLength(0...decimales))
+                .rounded(rule: .toNearestOrAwayFromZero))
+    }
+
+    /// Le nombre tel que JavaScript l'écrit (la plus courte écriture décimale) :
+    /// arrondir `12.345` donne alors « 12,35 », comme `Intl`, et non « 12,34 ».
+    private static func decimal(_ valeur: Double) -> Decimal {
+        Decimal(string: String(valeur), locale: posix) ?? Decimal(valeur)
+    }
+}

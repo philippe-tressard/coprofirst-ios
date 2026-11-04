@@ -28,6 +28,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer-charte.py`) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
+| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtNombre`, `fmtMontant` ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
 | Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
@@ -85,6 +86,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `ChampSaisie` | un champ de la charte : libellé en capitales, contour à 3:1, état `enErreur` | `Commun/Composants/` |
 | `Carte` | la surface d'une carte : sans ombre, le filet de la charte la détache | idem |
 | `Pastille`, `PastilleStatut` | une pastille de filtre (compte sur la retenue) ; le statut d'une affaire (`StatutsAffaire`, généré) | idem |
+| `PastilleTeinte`, `LibelleTeinte` | une pastille teintée par la classe `badge-*` du site (`compacte` pour une ligne dense) ; `PastilleStatut` en est le cas des affaires ; une valeur inconnue d'une table s'affiche brute, en gris (`LibelleTeinte.brut`) (#37) | idem |
 | `Medaillon`, `Logo` | le logo de CoproFirst, qui suit Dynamic Type — jamais modifié (sa licence) | idem |
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
@@ -95,7 +97,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `GaleriePhotos`, `RepondreFeuille`, `ResumeFeuille` | les photos protégées ; répondre ; le résumé d'un élément du fil | idem |
 | `CarteDuFil`, `CarteOuvrable`, `DestinationDuFil` | une carte du fil ; toucher → résumé ; la cible (`affaire`, `sondage`, `document`) → son détail | `Commun/Fil/` |
 | `FeuilleResidence`, `PastillesRoles`, `.confirmationDeSortie` | la feuille « où suis-je » ; les rôles ; se déconnecter / changer de résidence | `Commun/Compte/` |
-| `TexteDuSite.apercu` / `.riche` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `riche` pour un détail (`Text(TexteDuSite.riche(html)).tint(palette.primary)`) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
+| `TexteDuSite.apercu`, `TexteRiche(html:)` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `TexteRiche(html:)` pour un détail (`.font`, `.foregroundStyle`, `.tint(palette.primary)` de l'appelant ; listes en retrait suspendu, `<li><p>` de l'éditeur compris) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
 
 ## À trancher quand le premier cas arrive
 
