@@ -13,10 +13,16 @@ final class AffairesUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "affaires"]
         app.launch()
-        let onglet = app.buttons["Affaires"].firstMatch
+        let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
         XCTAssertTrue(onglet.waitForExistence(timeout: 5))
         onglet.tap()
         return app
+    }
+
+    /// Un élément par son identifiant, QUEL QUE SOIT SON TYPE : un même contrôle n'a pas
+    /// le même type d'accessibilité sous iOS 26.5 (CI) et 27.2 (poste) — leçon de #12.
+    private func element(_ identifiant: String, dans app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: identifiant).firstMatch
     }
 
     private func capturer(_ nom: String) {
@@ -38,39 +44,39 @@ final class AffairesUITests: XCTestCase {
     @MainActor
     func testLesTroisOngletsEtLaCreation() throws {
         let app = lancer()
-        let carte = app.buttons["affaires.carte.A-0041"]
+        let carte = element("affaires.carte.A-0041", dans: app)
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["affaires.carte.A-0022"].exists, "une archivée n'est pas dans la Liste")
+        XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une archivée n'est pas dans la Liste")
         capturer("1-liste")
 
-        app.buttons["Kanban"].firstMatch.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["kanban.colonne.cs"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["kanban.carte.A-0035"].exists, "« Ouvert » se range dans la colonne CS")
+        app.descendants(matching: .any)["Kanban"].firstMatch.tap()
+        XCTAssertTrue(element("kanban.colonne.cs", dans: app).waitForExistence(timeout: 5))
+        XCTAssertTrue(element("kanban.carte.A-0035", dans: app).exists, "« Ouvert » se range dans la colonne CS")
         capturer("2-kanban")
 
-        app.buttons["Archives"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["archives.carte.A-0022"].waitForExistence(timeout: 5))
+        app.descendants(matching: .any)["Archives"].firstMatch.tap()
+        XCTAssertTrue(element("archives.carte.A-0022", dans: app).waitForExistence(timeout: 5))
         capturer("3-archives")
 
-        app.buttons["Liste"].firstMatch.tap()
-        app.buttons["affaires.nouvelle"].tap()
-        let panne = app.buttons["nouvelle.categorie.panne"]
+        app.descendants(matching: .any)["Liste"].firstMatch.tap()
+        element("affaires.nouvelle", dans: app).tap()
+        let panne = element("nouvelle.categorie.panne", dans: app)
         XCTAssertTrue(panne.waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["nouvelle.envoyer"].isEnabled, "rien n'est saisi")
+        XCTAssertFalse(element("nouvelle.envoyer", dans: app).isEnabled, "rien n'est saisi")
         panne.tap()
         capturer("4-categories")
-        let titre = app.textFields["nouvelle.titre"]
+        let titre = element("nouvelle.titre", dans: app)
         atteindre(titre, dans: app)
         titre.tap()
         titre.typeText("Porte du local vélos bloquée")
-        let description = app.textFields["nouvelle.description"]
+        let description = element("nouvelle.description", dans: app)
         atteindre(description, dans: app)
         description.tap()
         description.typeText("La serrure ne tourne plus depuis ce matin.")
         capturer("5-saisie")
-        app.buttons["nouvelle.envoyer"].tap()
+        element("nouvelle.envoyer", dans: app).tap()
         XCTAssertTrue(
-            app.staticTexts["Porte du local vélos bloquée"].waitForExistence(timeout: 5),
+            element("affaires.carte.A-0042", dans: app).waitForExistence(timeout: 5),
             "l'affaire créée paraît en tête de la Liste")
         capturer("6-creee")
     }
@@ -78,9 +84,22 @@ final class AffairesUITests: XCTestCase {
     @MainActor
     func testUneCarteOuvreSonDetail() throws {
         let app = lancer()
-        let carte = app.buttons["affaires.carte.A-0041"]
+        let carte = element("affaires.carte.A-0041", dans: app)
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
         XCTAssertTrue(app.navigationBars["A-0041"].waitForExistence(timeout: 5))
+    }
+
+    @MainActor
+    func testLeFiltreSuiviNeGardeQueSonEtat() throws {
+        let app = lancer()
+        XCTAssertTrue(element("affaires.carte.A-0041", dans: app).waitForExistence(timeout: 5))
+        let resolues = element("affaires.suivi.résolu", dans: app)
+        XCTAssertTrue(resolues.waitForExistence(timeout: 3))
+        if !resolues.isHittable { element("affaires.suivi.toutes", dans: app).swipeLeft() }
+        resolues.tap()
+        XCTAssertTrue(element("affaires.carte.A-0031", dans: app).waitForExistence(timeout: 3))
+        XCTAssertFalse(element("affaires.carte.A-0041", dans: app).exists, "une affaire chez le syndic sort")
+        XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une résolue archivée reste aux Archives")
     }
 }

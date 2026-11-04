@@ -58,22 +58,6 @@ final class ParcoursUITests: XCTestCase {
     }
 
     @MainActor
-    func testLesAffairesSeFiltrentEtSeCherchent() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "affaires"]
-        app.launch()
-
-        app.tabBars.buttons["Affaires"].tap()
-        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5))
-        let resolues = app.buttons["Résolues"]
-        app.buttons["Toutes"].swipeLeft()
-        XCTAssertTrue(resolues.waitForExistence(timeout: 3) && resolues.isHittable)
-        resolues.tap()
-        XCTAssertTrue(app.staticTexts["Portail du garage remis en service"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.staticTexts["Fuite d'eau au plafond du parking"].exists)
-    }
-
-    @MainActor
     func testLaBarreAfficheLesLibellesCourts() throws {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
