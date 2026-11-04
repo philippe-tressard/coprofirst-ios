@@ -7,7 +7,7 @@ import Foundation
 /// Le menu Affaires par le client GÉNÉRÉ — aucune route écrite à la main.
 extension ServiceAPI: ServiceAffaires {
     func affaires(_ installation: Installation) async throws -> [Affaire] {
-        let sortie = try await appeler { try await client(installation.adresse).listTicketsTicketsGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getTickets() }
         switch sortie {
         case .ok(let ok): return try ok.body.json.map(Affaire.init(ticket:))
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -17,7 +17,7 @@ extension ServiceAPI: ServiceAffaires {
 
     func rechercher(_ terme: String, dans installation: Installation) async throws -> [Int] {
         let sortie = try await appeler {
-            try await client(installation.adresse).rechercherTicketsRechercheGet(query: .init(q: terme))
+            try await client(installation.adresse).getTicketsRecherche(query: .init(q: terme))
         }
         switch sortie {
         case .ok(let ok):
@@ -32,14 +32,14 @@ extension ServiceAPI: ServiceAffaires {
     func offrirMeConcerne(_ installation: Installation) async -> Bool {
         // Une lecture qui échoue tait la pastille, sans gêner la liste (`offrirLaPastille`).
         guard
-            case .ok(let ok) = try? await client(installation.adresse).mesPerimetresLotsMesPerimetresGet(),
+            case .ok(let ok) = try? await client(installation.adresse).getLotsMesPerimetres(),
             let mes = try? ok.body.json
         else { return false }
         return !mes.batiments.isEmpty || !mes.desservis.isEmpty
     }
 
     func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire] {
-        let sortie = try await appeler { try await client(installation.adresse).listerPerimetresPerimetresGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.filter { $0.actif && $0.selectionnable }.map {
@@ -61,7 +61,7 @@ extension ServiceAPI: ServiceAffaires {
             perimetreCible: saisie.perimetre.map { [$0] },
             titre: saisie.titre.trimmingCharacters(in: .whitespacesAndNewlines), urgente: saisie.urgente)
         let sortie = try await appeler {
-            try await client(installation.adresse).createTicketTicketsPost(body: .json(corps))
+            try await client(installation.adresse).postTickets(body: .json(corps))
         }
         switch sortie {
         case .created(let cree): return Affaire(ticket: try cree.body.json)
@@ -72,7 +72,7 @@ extension ServiceAPI: ServiceAffaires {
 
     func candidatesALaFusion(_ affaire: Affaire, dans installation: Installation) async throws -> Int {
         let sortie = try await appeler {
-            try await client(installation.adresse).candidatesALaFusionTicketsTicketIdFusionGet(
+            try await client(installation.adresse).getTicketsTicketIdFusion(
                 path: .init(ticketId: affaire.id))
         }
         switch sortie {
@@ -88,7 +88,7 @@ extension ServiceAPI: ServiceAffaires {
         }
         let corps = Components.Schemas.TicketEvolutionCreate(notifier: false, nouveauStatut: nouveau, _type: "etat")
         let sortie = try await appeler {
-            try await client(installation.adresse).addEvolutionTicketsTicketIdEvolutionsPost(
+            try await client(installation.adresse).postTicketsTicketIdEvolutions(
                 path: .init(ticketId: affaire.id), body: .json(corps))
         }
         switch sortie {
@@ -100,7 +100,7 @@ extension ServiceAPI: ServiceAffaires {
 
     func archiver(_ affaire: Affaire, dans installation: Installation) async throws -> Affaire {
         let sortie = try await appeler {
-            try await client(installation.adresse).updateTicketTicketsTicketIdPatch(
+            try await client(installation.adresse).patchTicketsTicketId(
                 path: .init(ticketId: affaire.id), body: .json(.init(archiveManuel: true)))
         }
         switch sortie {

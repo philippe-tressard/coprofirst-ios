@@ -12,7 +12,7 @@ final class ServiceAPI: ServiceCoproFirst {
     let sessions = SessionsParHote()
 
     func decouvrir(_ adresse: URL) async throws -> Installation {
-        let sortie = try await appeler { try await client(adresse).getConfigConfigGet() }
+        let sortie = try await appeler { try await client(adresse).getConfig() }
         switch sortie {
         case .ok(let ok):
             let cles = try ok.body.json.additionalProperties
@@ -33,7 +33,7 @@ final class ServiceAPI: ServiceCoproFirst {
 
     func connecter(_ installation: Installation, email: String, motDePasse: String) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).loginAuthLoginPost(
+            try await client(installation.adresse).postAuthLogin(
                 body: .json(.init(email: email, password: motDePasse)))
         }
         switch sortie {
@@ -58,7 +58,7 @@ final class ServiceAPI: ServiceCoproFirst {
                 pour: installation.hote, raison: "Ouvrir votre espace à \(installation.nom)")
         else { throw ErreurService.sessionExpiree }
         poserCookie("refresh_token", valeur: jeton, installation)
-        let sortie = try await appeler { try await client(installation.adresse).refreshAuthRefreshPost() }
+        let sortie = try await appeler { try await client(installation.adresse).postAuthRefresh() }
         switch sortie {
         case .ok:
             // Le serveur fait tourner le jeton : la nouvelle valeur remplace l'ancienne.
@@ -78,7 +78,7 @@ final class ServiceAPI: ServiceCoproFirst {
     }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {
-        let sortie = try await appeler { try await client(installation.adresse).getFluxFluxGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getFlux() }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.items?.map(ElementDuFil.init(item:)) ?? []

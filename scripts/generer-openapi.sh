@@ -83,7 +83,28 @@ def nullable(noeud):
     return noeud
 
 
-schema = nullable(schema)
+def sans_cookies(schema):
+    """Retire les paramètres `in: cookie` de chaque route (#26).
+
+    Le serveur déclare ses cookies de session (`access_token`, `refresh_token`)
+    comme paramètres de chaque route ; swift-openapi-generator ne sait pas les
+    générer et le dit ~390 fois au build (« Cookie params is not supported »),
+    noyant les avertissements qui comptent. L'app n'a pas à les passer : iOS
+    (`URLSession` et son stockage de cookies) les envoie seul. Le contrat publié
+    par le serveur n'est pas touché ; seule la copie de l'app l'est.
+    """
+    for chemin in schema.get("paths", {}).values():
+        for cible in [chemin, *(o for o in chemin.values() if isinstance(o, dict))]:
+            if "parameters" in cible:
+                gardes = [p for p in cible["parameters"] if p.get("in") != "cookie"]
+                if gardes:
+                    cible["parameters"] = gardes
+                else:
+                    del cible["parameters"]
+    return schema
+
+
+schema = sans_cookies(nullable(schema))
 with open(sys.argv[2], "w", encoding="utf-8", newline="\n") as f:
     json.dump(schema, f, ensure_ascii=False, indent=2, sort_keys=True)
     f.write("\n")
@@ -94,7 +115,9 @@ PY
 mv "$TRAVAIL/openapi.json" "$CIBLE"
 DEPOT=$(git -C "$API" rev-parse --show-toplevel)
 COMMIT=$(git -C "$DEPOT" rev-parse HEAD)
+# Une branche, sinon l'étiquette exacte (un clone d'une release est détaché).
 BRANCHE=$(git -C "$DEPOT" branch --show-current)
+[ -n "$BRANCHE" ] || BRANCHE=$(git -C "$DEPOT" describe --tags --exact-match 2>/dev/null || echo "détaché")
 SALE=$(git -C "$DEPOT" status --porcelain -- api | head -1)
 CONTRAT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["info"]["version"])' "$CIBLE")
 
@@ -111,10 +134,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | | |
 |---|---|
 | Source | \`philippe-tressard/coprofirst\`, dossier \`api/\`, par \`app.openapi()\` |
-| Commit | \`$COMMIT\` (branche \`$BRANCHE\`)$([ -n "$SALE" ] && echo " — ⚠️ arbre de travail MODIFIÉ") |
+| Commit | \`$COMMIT\` (\`$BRANCHE\`)$([ -n "$SALE" ] && echo " — ⚠️ arbre de travail MODIFIÉ") |
 | Version du contrat | \`$CONTRAT\` (\`API_VERSION\` de \`api/app/main.py\`) |
 | Préfixe servi | \`/api\` : les chemins du schéma s'entendent sous \`https://<hôte>/api\` |
-| Normalisation | \`anyOf: [X, null]\` réécrit en \`type: [X, "null"]\` (\`\$ref\` : nullabilité retirée) — le générateur supprimait ces champs |
+| Normalisation | \`anyOf: [X, null]\` réécrit en \`type: [X, "null"]\` (\`\$ref\` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres \`in: cookie\` retirés — iOS envoie les cookies de session seul |
 
 Provisoire : coprofirst#2456 publiera le contrat ; ce fichier viendra alors de là.
 EOF

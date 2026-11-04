@@ -65,7 +65,10 @@ charte et les palettes d'une résidence, claires et sombres), `NaturesDuFil.swif
 la main dans l'app.
 
 Les générateurs lisent un clone de CoproFirst : `$COPROFIRST_RACINE` (par défaut
-`/Volumes/Data/Dev/5hostachy`), ou le chemin passé en argument.
+`/Volumes/Data/Dev/5hostachy`), ou le chemin passé en argument. Il y en a un par
+domaine dans `scripts/generateurs/` (palettes, charte, onglets…), que
+`generer-charte.py` découvre et lance tous ; `--sources` liste les fichiers de
+CoproFirst qu'ils lisent.
 
 ## Contrat d'API
 

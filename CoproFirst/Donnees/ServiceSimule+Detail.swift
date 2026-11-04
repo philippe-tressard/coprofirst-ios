@@ -70,8 +70,9 @@ extension ServiceSimule {
             return DetailAffaire(
                 id: 41, numero: "A-0041", titre: "Fuite d'eau au plafond du parking",
                 description: "<p>Une infiltration goutte au niveau -1, place 12. Le sol est <strong>glissant</strong>"
-                    + "&nbsp;: un seau a été posé en attendant le plombier.</p><ul><li>Merci de contourner la "
-                    + "zone.</li><li>Photos jointes ci-dessous.</li></ul><p>Le contrat d'entretien : "
+                    + "&nbsp;: un seau a été posé en attendant le plombier.</p><ol><li><p>Merci de contourner la "
+                    + "zone, et de ne pas déplacer le seau posé sous la fuite ;</p></li><li><p>photos jointes "
+                    + "ci-dessous.</p></li></ol><p>Le contrat d'entretien : "
                     + "<a href=\"https://www.example.org/contrat\">consulter</a>.</p>",
                 categorie: "plomberie", statut: "en_cours", urgente: true, creeLe: ilYA(5),
                 auteur: "Un résident du bâtiment A", lieu: "Parking, niveau -1",
