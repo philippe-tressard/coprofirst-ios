@@ -15,7 +15,6 @@ struct NotificationsView: View {
     @Environment(\.dismiss) private var fermer
     @State private var etat = EtatNotifications()
     @State private var aSupprimer: NotificationRecue?
-    @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
         List {
@@ -35,7 +34,7 @@ struct NotificationsView: View {
         .background(palette.bg)
         .overlay { etatVide }
         .navigationTitle(TextesNotifications.titre)
-        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+        .titreDeMenu()
         .toolbar { barre }
         .refreshable { await etat.charger(installation, avec: parcours.serviceNotifications) }
         .task { await etat.charger(installation, avec: parcours.serviceNotifications) }
@@ -193,7 +192,7 @@ private struct LigneNotification: View {
         let recente = notification.creeLe > Date.now.addingTimeInterval(-24 * 3600)
         return Text(
             recente
-                ? notification.creeLe.formatted(date: .omitted, time: .shortened)
+                ? FormatsDuSite.heure(notification.creeLe)
                 : FormatsDuSite.dateCourte(notification.creeLe)
         )
         .font(.caption)

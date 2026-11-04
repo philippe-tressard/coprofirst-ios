@@ -14,7 +14,6 @@ struct AffairesView: View {
     @Environment(Parcours.self) private var parcours
     @Environment(Reseau.self) private var reseau
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
-    @Environment(\.dynamicTypeSize) private var tailleTexte
     @State private var etat = EtatAffaires()
     @State private var onglet = "liste"
     @State private var nouvelle = false
@@ -34,7 +33,7 @@ struct AffairesView: View {
         .background(palette.bg)
         .navigationTitle(titre)
         // Aux tailles d'accessibilité, un grand titre fixe prendrait la moitié de l'écran.
-        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+        .titreDeMenu()
         .navigationDestination(for: AffaireAOuvrir.self) { cible in
             DetailAffaireView(id: cible.id, installation: installation)
         }

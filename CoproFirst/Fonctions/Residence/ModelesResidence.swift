@@ -146,13 +146,6 @@ struct ContenuCarnet: Hashable, Sendable {
     var enAlerte: [EntreeCarnet] { entrees.filter { !($0.alerte ?? "").isEmpty } }
 }
 
-/// Un périmètre de la résidence (GET /perimetres) : le filtre du carnet.
-struct Perimetre: Hashable, Sendable, Identifiable {
-    let code: String
-    var libelle: String
-    var id: String { code }
-}
-
 /// L'état de l'assistant du règlement (GET /reglement).
 struct EtatReglement: Hashable, Sendable {
     var disponible: Bool

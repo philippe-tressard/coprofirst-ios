@@ -9,7 +9,7 @@ import Foundation
 ///
 /// ⚠️ Aucune route n'est écrite ici : chacune est une opération du client généré.
 /// Un geste n'est OFFERT qu'au rôle que la route accepte (`DroitsAcces`) ; le serveur
-/// reste le seul juge, et un refus s'affiche avec sa phrase (`RefusDuServeur`).
+/// reste le seul juge, et un refus s'affiche avec sa phrase (`RefusDuServeur`, Commun/Session).
 protocol ServiceAcces: Sendable {
     /// GET /lots/mes-lots : les lots du COMPTE, et seulement eux (jamais ceux d'un voisin).
     func mesLots(_ installation: Installation) async throws -> [LotDuCompte]
@@ -35,16 +35,6 @@ extension Parcours {
     /// Le service de « Mes lots & accès », s'il est réalisé (il l'est par les deux
     /// services de l'app : `ServiceAccesTests` le vérifie).
     var serviceAcces: (any ServiceAcces)? { service as? any ServiceAcces }
-}
-
-/// Un refus du serveur, dit avec SA phrase (`detail`) — comme le site l'affiche.
-struct RefusDuServeur: Error, Equatable, Sendable {
-    let phrase: String
-
-    /// La phrase à montrer pour une erreur quelconque.
-    static func phrase(_ erreur: any Error) -> String {
-        (erreur as? RefusDuServeur)?.phrase ?? ErreurService.depuis(erreur).phrase
-    }
 }
 
 enum TypeAcces: String, CaseIterable, Sendable, Identifiable {

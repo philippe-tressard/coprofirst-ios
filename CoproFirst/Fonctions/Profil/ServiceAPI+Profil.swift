@@ -36,9 +36,7 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        // Le mot de passe actuel refusé, ou un nouveau trop faible : la phrase du serveur
-        // (`RefusDuServeur`, lu par `ServiceAPI.refus`, Fonctions/Acces — à monter dans
-        // Commun/ avec #41).
+        // Le mot de passe actuel refusé, ou un nouveau trop faible : la phrase du serveur.
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
@@ -56,7 +54,7 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -82,7 +80,7 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -111,7 +109,7 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -131,7 +129,7 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 }

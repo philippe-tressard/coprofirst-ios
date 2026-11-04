@@ -34,6 +34,7 @@ struct ResidenceView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.bg)
         .navigationTitle(titre)
+        .titreDeMenu()
         .barreDuHaut {
             VStack(spacing: 0) {
                 if !reseau.enLigne { BandeauHorsLigne() }

@@ -100,10 +100,9 @@ struct MotDePasseView: View {
     @State private var nouveau = ""
     @State private var confirmation = ""
     @State private var envoi = false
+    /// Un refus (actuel incorrect, nouveau trop faible) porte la phrase du serveur.
     @State private var erreur: ErreurService?
     @State private var reussi = false
-    /// La phrase du serveur quand il refuse (actuel incorrect, nouveau trop faible).
-    @State private var refus: String?
 
     var body: some View {
         Form {
@@ -122,7 +121,7 @@ struct MotDePasseView: View {
                     Text(attente)
                 }
             }
-            if let message = refus ?? erreur?.phrase {
+            if let message = erreur?.phrase {
                 MessageErreur(texte: message).listRowBackground(Color.clear).listRowInsets(.init())
             }
             Section {
@@ -161,10 +160,7 @@ struct MotDePasseView: View {
         do {
             try await parcours.serviceProfil.changerMotDePasse(actuel: actuel, nouveau: nouveau, dans: installation)
             erreur = nil
-            refus = nil
             reussi = true
-        } catch let refusServeur as RefusDuServeur {
-            withAnimation(.snappy) { refus = refusServeur.phrase }
         } catch {
             withAnimation(.snappy) { erreur = ErreurService.depuis(error) }
         }

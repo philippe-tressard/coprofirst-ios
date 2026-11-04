@@ -28,7 +28,7 @@ extension ServiceSimule: ServiceProfil {
 
     func changerMotDePasse(actuel: String, nouveau: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
-        if actuel == "refuse" { throw RefusDuServeur(phrase: "Mot de passe actuel incorrect.") }
+        if actuel == "refuse" { throw ErreurService.refus(.init(phrase: "Mot de passe actuel incorrect.")) }
     }
 
     func enregistrerPreferences(_ json: String, restreindre: Bool, dans installation: Installation) async throws {

@@ -15,7 +15,7 @@ struct NouvelleAffaireView: View {
     @Environment(\.palette) private var palette
     @State private var categorie: String?
     @State private var saisie = SaisieAffaire(categorie: "", titre: "", description: "", urgente: false)
-    @State private var perimetres: [PerimetreAffaire] = []
+    @State private var perimetres: [Perimetre] = []
     @State private var envoi = false
     @State private var erreur: String?
     @State private var abandon = false
@@ -124,6 +124,9 @@ struct NouvelleAffaireView: View {
                     .foregroundStyle(palette.textMuted)
             } else if !perimetres.isEmpty {
                 Picker("Lieu", selection: $saisie.perimetre) {
+                    // Sans lieu, le serveur pose son périmètre par défaut : l'app ne le
+                    // devine pas (coprofirst#2514).
+                    Text("Non précisé").tag(String?.none)
                     ForEach(perimetres) { perimetre in
                         Text(String(repeating: "   ", count: perimetre.profondeur) + perimetre.libelle)
                             .tag(Optional(perimetre.code))
@@ -171,10 +174,7 @@ struct NouvelleAffaireView: View {
 
     private func chargerLesLieux() async {
         guard let service, let lus = try? await service.perimetres(installation) else { return }
-        withAnimation(.snappy) {
-            perimetres = lus
-            if saisie.perimetre == nil { saisie.perimetre = lus.parDefaut?.code ?? lus.first?.code }
-        }
+        withAnimation(.snappy) { perimetres = lus.filter(\.selectionnable) }
     }
 
     private func envoyer() async {

@@ -74,7 +74,7 @@ struct DemanderAccesView: View {
             fait(TextesAcces.demandeEnvoyee)
             fermer()
         } catch {
-            withAnimation(.snappy) { erreur = RefusDuServeur.phrase(error) }
+            withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
         }
     }
 }
@@ -143,7 +143,7 @@ struct DeclarerAccesView: View {
             fait(importResolu ? TextesAcces.accesEnregistreImport : TextesAcces.accesEnregistre)
             fermer()
         } catch {
-            withAnimation(.snappy) { erreur = RefusDuServeur.phrase(error) }
+            withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
         }
     }
 }

@@ -24,13 +24,6 @@ extension ServiceSimule: ServiceResidence {
             libellesEquipements: ["ascenseur": "Ascenseur", "chaufferie": "Chaufferie", "toiture": "Toiture"])
     }
 
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        [
-            Perimetre(code: "bat_a", libelle: "Bâtiment A"), Perimetre(code: "bat_b", libelle: "Bâtiment B"),
-            Perimetre(code: "parking", libelle: "Parking"),
-        ]
-    }
-
     func accesReglement(_ installation: Installation) async throws -> Bool { true }
 
     func reglement(_ installation: Installation) async throws -> (EtatReglement, [QuestionReglement]) {

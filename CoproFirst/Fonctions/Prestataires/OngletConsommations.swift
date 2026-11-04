@@ -66,7 +66,7 @@ struct OngletConsommations: View {
                 choisi = choisi ?? lus.first?.typeCompteur
                 if lus.isEmpty { releves = [] }
             } catch {
-                erreur = RefusDuServeur.phrase(error)
+                erreur = ErreurService.depuis(error).phrase
             }
         }
         .task(id: choisi) {
@@ -76,7 +76,7 @@ struct OngletConsommations: View {
                 releves = try await service.releves(choisi, dans: installation)
                 erreur = nil
             } catch {
-                erreur = RefusDuServeur.phrase(error)
+                erreur = ErreurService.depuis(error).phrase
             }
         }
         .sheet(item: Binding(get: { photo.map(PhotoOuverte.init) }, set: { photo = $0?.chemin })) { ouverte in

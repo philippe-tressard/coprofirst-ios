@@ -137,7 +137,7 @@ private struct ContenuAcces: View {
             erreur = nil
             etat.annoncer(TextesAcces.signalementEnregistre)
         } catch {
-            erreur = RefusDuServeur.phrase(error)
+            erreur = ErreurService.depuis(error).phrase
         }
     }
 }

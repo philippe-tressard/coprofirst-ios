@@ -22,6 +22,7 @@ struct PrestatairesView: View {
             }
         }
         .navigationTitle(contexte.page.titre)
+        .titreDeMenu()
     }
 
     private func page(_ service: any ServicePrestataires) -> some View {

@@ -13,14 +13,13 @@ struct CommunauteView: View {
     @Environment(\.palette) private var palette
     @State private var etat = EtatCommunaute()
     @State private var creation: OngletCommunaute?
-    @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
         @Bindable var etat = etat
         contenu
             .background(palette.bg)
             .navigationTitle(titre)
-            .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+            .titreDeMenu()
             .modifier(BarreEnHaut(visible: etat.onglets.count > 1) {
                 BarreRubriques(onglets: etat.onglets, choisi: $etat.onglet)
             })

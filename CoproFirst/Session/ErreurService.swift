@@ -3,7 +3,8 @@
 
 import Foundation
 
-/// Ce qui peut empêcher d'entrer : chaque cas dit une phrase, jamais un code brut.
+/// Ce qui peut empêcher d'entrer ou d'agir : chaque cas dit une phrase, jamais un
+/// code brut — celle du serveur quand il en donne une (`refus`, #41).
 enum ErreurService: Error, Equatable, Sendable {
     /// 421 : l'adresse répond, mais n'y sert aucune résidence.
     case hoteInconnu
@@ -21,6 +22,8 @@ enum ErreurService: Error, Equatable, Sendable {
     case sessionExpiree
     /// L'élément n'existe plus, ou n'est pas lisible par ce compte.
     case introuvable
+    /// Un geste refusé, avec la phrase du serveur (`detail`) — la sienne, pas la nôtre.
+    case refus(RefusDuServeur)
     /// Tout le reste — le code reste dans le journal, pas à l'écran.
     case inattendue(Int)
 
@@ -42,9 +45,22 @@ enum ErreurService: Error, Equatable, Sendable {
             "Votre session a expiré. Connectez-vous de nouveau."
         case .introuvable:
             "Cet élément n'est plus disponible, ou vous n'y avez pas accès."
+        case .refus(let refus):
+            refus.phrase
         case .inattendue:
             "La résidence n'a pas pu répondre. Réessayez dans un instant."
         }
+    }
+
+    /// La phrase du serveur, s'il en a donné une : un écran qui écrit sa propre phrase
+    /// d'échec (« Erreur lors de l'export. », celle du site) la cède à celle-ci.
+    var phraseDuServeur: String? {
+        if case .refus(let refus) = self { refus.phrase } else { nil }
+    }
+
+    /// La phrase d'échec d'un geste : celle du serveur, sinon celle de l'écran.
+    static func phrase(_ erreur: any Error, sinon phraseDeLEcran: String) -> String {
+        depuis(erreur).phraseDuServeur ?? phraseDeLEcran
     }
 
     /// Une erreur de transport ramenée à l'un des cas ci-dessus.
