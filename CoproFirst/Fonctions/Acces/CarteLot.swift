@@ -46,7 +46,7 @@ struct ConstatsDuLot: View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(ordonnes, id: \.self) { constat in
                 let teinte =
-                    TablesDesComposants.gravites.first { $0.code == constat.gravite }?.teinte ?? .brut(constat.gravite)
+                    ProvisoireAcces.gravites.first { $0.code == constat.gravite }?.teinte ?? .brut(constat.gravite)
                 VStack(alignment: .leading, spacing: 4) {
                     PastilleTeinte(libelle: teinte.libelle, badge: teinte.badge, compacte: true)
                     Text(constat.message).font(.subheadline).foregroundStyle(palette.text)
@@ -57,7 +57,7 @@ struct ConstatsDuLot: View {
     }
 
     private var ordonnes: [ConstatDuLot] {
-        let rang = { (code: String) in TablesDesComposants.gravites.firstIndex { $0.code == code } ?? 9 }
+        let rang = { (code: String) in ProvisoireAcces.gravites.firstIndex { $0.code == code } ?? 9 }
         return constats.sorted { rang($0.gravite) < rang($1.gravite) }
     }
 }

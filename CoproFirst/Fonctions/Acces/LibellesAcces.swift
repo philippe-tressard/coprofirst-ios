@@ -21,7 +21,7 @@ enum LibellesAcces {
     static func statutAcces(_ code: String) -> LibelleTeinte { TablesAcces.statutsAcces[code] ?? .brut(code) }
     static func statutBail(_ code: String) -> LibelleTeinte { TablesAcces.statutsBail[code] ?? .brut(code) }
     static func statutObjet(_ code: String) -> LibelleTeinte {
-        TablesDesComposants.statutsObjet[code] ?? .brut(code)
+        ProvisoireAcces.statutsObjet[code] ?? .brut(code)
     }
 
     static func typeAcces(_ code: String) -> String {

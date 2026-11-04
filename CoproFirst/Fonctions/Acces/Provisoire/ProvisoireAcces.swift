@@ -7,7 +7,7 @@ import Foundation
 /// qu'aucun générateur ne lit proprement. coprofirst#2507 demande de les sortir dans
 /// un module de `#lib` ; elles se généreront alors comme les autres (`Genere/`).
 /// Recopiées à l'identique de coprofirst v3.61.0.
-enum TablesDesComposants {
+enum ProvisoireAcces {
     /// Le type d'un objet remis au locataire — `components/InventaireBail.svelte`.
     static let typesObjet: [String: String] = [
         "cle": "🔑 Clé", "telecommande": "📡 Télécommande", "vigik": "🏷️ Vigik", "autre": "📦 Autre",
