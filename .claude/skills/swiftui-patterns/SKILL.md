@@ -72,6 +72,33 @@ suffit de régénérer le projet (`bash scripts/generer-projet.sh`).
 Un onglet du site (`liste`, `kanban`…) est une **section de l'écran du menu**
 (segment, picker), pas une entrée du registre : le registre ne connaît que les pages.
 
+### Un service par menu, réalisé par extension (#11)
+
+Ce qu'un menu demande au serveur ne s'ajoute **pas** à `ServiceCoproFirst`
+(`Session/`) : quatre sessions y écriraient au même endroit. Le menu déclare son
+propre protocole **dans son dossier**, et les deux services le réalisent par
+extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Donnees/`.
+
+| Fichier du menu | Contient |
+|---|---|
+| `Service<Menu>.swift` | `protocol Service<Menu>: Sendable`, ses types, et l'accès depuis la session : `extension ServiceCoproFirst { var menu<Menu>: (any Service<Menu>)? { self as? any Service<Menu> } }` |
+| `Service<Menu>+API.swift` | `extension ServiceAPI: Service<Menu>` — le client GÉNÉRÉ, rien d'écrit à la main |
+| `Service<Menu>+Simule.swift` | `extension ServiceSimule: Service<Menu>` et ses données inventées (un magasin par instance : deux tests ne se marchent pas dessus) |
+
+- **Aucun `nil` silencieux.** Un test affecte les deux services au protocole
+  (`let _: any Service<Menu> = ServiceAPI()`, idem `ServiceSimule`) : un oubli de
+  conformité casse le build (`CoproFirstTests/ServiceAffairesTests.swift`). À
+  l'écran, un service absent se dit en une phrase (`ErreurAffaires.serviceAbsent`),
+  jamais par une liste vide.
+- **Un modèle que seul le menu lit vit dans le menu** ; il ne monte dans
+  `Donnees/` qu'à son deuxième lecteur, comme un composant monte dans `Commun/`.
+- **Les tables que le contrat ne sert pas** (libellés, ordre, teintes du front du
+  site) se génèrent dans `Fonctions/<Menu>/Genere/`, par un script qui épingle le
+  commit de coprofirst lu et refuse un arbre modifié (`scripts/generer-affaires.py`).
+  La 1re ligne du fichier généré dit « GÉNÉRÉ par scripts/… — NE PAS MODIFIER » :
+  `verifier-depot.sh` n'y admet de couleur qu'à ce prix, et refuse un fichier de
+  `Genere/` sans cet en-tête.
+
 ### Les composants communs — à réutiliser, pas à modifier
 
 Une session de fonctionnalité **s'en sert tels quels**. S'il en manque un ou s'il
