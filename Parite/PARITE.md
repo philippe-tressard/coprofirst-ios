@@ -110,7 +110,7 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 | `espace-cs` | `annonces-hall` | prévu | #15 |  |
 | `espace-cs` | `annuaire` | prévu | #15 |  |
 | `espace-cs` | `courriels` | prévu | #15 |  |
-| `delegations` | — | prévu | #15 |  |
+| `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis et réponses typées : coprofirst#2525 |
 
 ### #16 — Administration, en partie
 
