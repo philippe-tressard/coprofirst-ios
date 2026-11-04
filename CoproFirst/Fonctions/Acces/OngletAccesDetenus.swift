@@ -110,6 +110,7 @@ private struct ContenuAcces: View {
             presenting: aSignaler
         ) { acces in
             Button(TextesAcces.signalerPerdu, role: .destructive) { Task { await signaler(acces) } }
+                .accessibilityIdentifier("acces.perdu.confirmer")
             Button(TextesAcces.annuler, role: .cancel) { aSignaler = nil }
         }
     }

@@ -96,10 +96,12 @@ struct AccesView: View {
         Menu {
             if etat.droits.peutDemander(lots: etat.lots) {
                 Button { feuille = .demander } label: { Label(TextesAcces.nouvelAcces, systemImage: "plus.circle") }
+                    .accessibilityIdentifier("acces.geste.demander")
             }
             Button { feuille = .declarer } label: {
                 Label(TextesAcces.declarerUnAcces, systemImage: "checkmark.seal")
             }
+            .accessibilityIdentifier("acces.geste.declarer")
         } label: {
             Image(systemName: "plus").font(.body.weight(.semibold))
         }

@@ -6,6 +6,10 @@ import XCTest
 /// « Mes lots & accès » (#13), sur l'API simulée : chaque onglet s'ouvre, et les
 /// gestes d'accès aboutissent. Chaque étape joint sa capture (gardée dans le
 /// résultat du test : ce sont les captures de la PR).
+///
+/// ⚠️ Un élément se cherche par son IDENTIFIANT ou son libellé, jamais par son type
+/// (`app.buttons`, `app.links`…) : le type d'accessibilité diffère d'une version
+/// d'iOS à l'autre (poste en iOS 27, CI en iOS 26 — leçon de #12).
 final class AccesUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -24,82 +28,91 @@ final class AccesUITests: XCTestCase {
     }
 
     @MainActor
-    private func capturer(_ app: XCUIApplication, _ nom: String) {
-        let piece = XCTAttachment(screenshot: app.screenshot())
-        piece.name = nom
-        piece.lifetime = .keepAlways
-        add(piece)
-    }
-
-    @MainActor
     func testLesQuatreOngletsSOuvrent() throws {
         let app = ouvrirAcces()
-        XCTAssertTrue(app.staticTexts["Caractéristiques"].waitForExistence(timeout: 5), "la carte du lot")
-        capturer(app, "acces-1-mes-lots")
+        XCTAssertTrue(app.libelleAcces("Caractéristiques").waitForExistence(timeout: 5), "la carte du lot")
+        app.capturerAcces("acces-1-mes-lots", dans: self)
 
-        app.buttons["acces.lot.417"].tap()
-        XCTAssertTrue(app.staticTexts["Sous-sol A"].waitForExistence(timeout: 3), "le lot choisi s'affiche")
+        app.elementAcces("acces.lot.417").tap()
+        XCTAssertTrue(app.libelleAcces("Sous-sol A").waitForExistence(timeout: 3), "le lot choisi s'affiche")
 
-        app.buttons["onglet.badges"].tap()
-        XCTAssertTrue(app.staticTexts["A4F21C07"].waitForExistence(timeout: 5), "les badges détenus")
-        capturer(app, "acces-2-badges")
+        app.elementAcces("onglet.badges").tap()
+        XCTAssertTrue(app.libelleAcces("A4F21C07").waitForExistence(timeout: 5), "les badges détenus")
+        app.capturerAcces("acces-2-badges", dans: self)
 
-        app.buttons["onglet.telecommandes"].tap()
-        XCTAssertTrue(app.staticTexts["TC-2048"].waitForExistence(timeout: 5), "les télécommandes détenues")
-        capturer(app, "acces-3-telecommandes")
+        app.elementAcces("onglet.telecommandes").tap()
+        XCTAssertTrue(app.libelleAcces("TC-2048").waitForExistence(timeout: 5), "les télécommandes détenues")
+        app.capturerAcces("acces-3-telecommandes", dans: self)
 
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
-        app.buttons["onglet.telecommandes"].swipeLeft()
-        app.buttons["onglet.location"].tap()
-        XCTAssertTrue(app.staticTexts["Locataire du lot 31"].waitForExistence(timeout: 5), "un bail actif")
-        capturer(app, "acces-4-gestion-locative")
-        app.segmentedControls.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.staticTexts["Ancien locataire du lot 31"].waitForExistence(timeout: 3), "les archives")
+        app.elementAcces("onglet.telecommandes").swipeLeft()
+        app.elementAcces("onglet.location").tap()
+        XCTAssertTrue(app.libelleAcces("Locataire du lot 31").waitForExistence(timeout: 5), "un bail actif")
+        app.capturerAcces("acces-4-gestion-locative", dans: self)
+        app.libelleAcces("📁 Archives").tap()
+        XCTAssertTrue(app.libelleAcces("Ancien locataire du lot 31").waitForExistence(timeout: 3), "les archives")
     }
 
     @MainActor
     func testSignalerPerduPuisDeclarer() throws {
         let app = ouvrirAcces()
-        app.buttons["onglet.badges"].tap()
-        let perdu = app.buttons["acces.perdu.12"]
+        app.elementAcces("onglet.badges").tap()
+        let perdu = app.elementAcces("acces.perdu.12")
         XCTAssertTrue(perdu.waitForExistence(timeout: 5))
         perdu.tap()
-        // Le bouton de la confirmation, pas celui d'une ligne.
-        app.buttons.matching(
-            NSPredicate(format: "label == %@ AND NOT (identifier BEGINSWITH %@)", "Signaler perdu", "acces.perdu")
-        ).firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["Signalement enregistré"].waitForExistence(timeout: 3))
-        XCTAssertFalse(app.buttons["acces.perdu.12"].exists, "un accès perdu ne se signale plus")
+        app.elementAcces("acces.perdu.confirmer").tap()
+        XCTAssertTrue(app.libelleAcces("Signalement enregistré").waitForExistence(timeout: 3))
+        XCTAssertFalse(app.elementAcces("acces.perdu.12").exists, "un accès perdu ne se signale plus")
 
-        app.buttons["acces.gestes"].tap()
-        app.buttons["Déclarer un accès"].tap()
-        let code = app.textFields["acces.declarer.code"]
+        app.elementAcces("acces.gestes").tap()
+        app.elementAcces("acces.geste.declarer").tap()
+        let code = app.elementAcces("acces.declarer.code")
         XCTAssertTrue(code.waitForExistence(timeout: 3))
         code.typeText("TC-7777")
-        capturer(app, "acces-5-declarer")
-        app.buttons["acces.feuille.enregistrer"].tap()
-        XCTAssertTrue(app.staticTexts["Accès enregistré"].waitForExistence(timeout: 5))
-        app.buttons["onglet.telecommandes"].tap()
-        XCTAssertTrue(app.staticTexts["TC-7777"].waitForExistence(timeout: 5), "la liste est relue")
+        app.capturerAcces("acces-5-declarer", dans: self)
+        app.elementAcces("acces.feuille.enregistrer").tap()
+        XCTAssertTrue(app.libelleAcces("Accès enregistré").waitForExistence(timeout: 5))
+        app.elementAcces("onglet.telecommandes").tap()
+        XCTAssertTrue(app.libelleAcces("TC-7777").waitForExistence(timeout: 5), "la liste est relue")
     }
 
     @MainActor
     func testNouvelAccesNeProposeQueSesLots() throws {
         let app = ouvrirAcces()
-        app.buttons["onglet.badges"].tap()
-        app.buttons["acces.gestes"].tap()
-        app.buttons["Nouvel accès"].tap()
+        app.elementAcces("onglet.badges").tap()
+        app.elementAcces("acces.gestes").tap()
+        app.elementAcces("acces.geste.demander").tap()
         XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].waitForExistence(timeout: 3))
-        app.buttons["acces.feuille.enregistrer"].tap()
-        let exige = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Sélectionnez un lot")).firstMatch
-        XCTAssertTrue(exige.waitForExistence(timeout: 3), "un lot est exigé")
-        app.buttons["acces.demande.lot"].tap()
-        XCTAssertTrue(app.buttons["Lot 15"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.buttons["Lot 450"].exists)
-        app.buttons["Lot 15"].tap()
-        capturer(app, "acces-6-nouvel-acces")
-        app.buttons["acces.feuille.enregistrer"].tap()
-        XCTAssertTrue(app.staticTexts["Demande envoyée au conseil syndical"].waitForExistence(timeout: 5))
+        app.elementAcces("acces.feuille.enregistrer").tap()
+        XCTAssertTrue(app.libelleAcces("Sélectionnez un lot").waitForExistence(timeout: 3), "un lot est exigé")
+        app.elementAcces("acces.demande.lot").tap()
+        XCTAssertTrue(app.libelleAcces("Lot 15").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.libelleAcces("Lot 450").exists)
+        app.libelleAcces("Lot 15").tap()
+        app.capturerAcces("acces-6-nouvel-acces", dans: self)
+        app.elementAcces("acces.feuille.enregistrer").tap()
+        XCTAssertTrue(app.libelleAcces("Demande envoyée au conseil syndical").waitForExistence(timeout: 5))
+    }
+}
+
+/// La recherche des tests d'interface de #13 (Accès, Prestataires) : par identifiant
+/// ou par libellé, quel que soit le type de l'élément.
+extension XCUIApplication {
+    func elementAcces(_ identifiant: String) -> XCUIElement {
+        descendants(matching: .any).matching(identifier: identifiant).firstMatch
+    }
+
+    /// Le premier élément dont le libellé COMMENCE par ce texte (une carte réunit
+    /// souvent plusieurs textes en un seul libellé).
+    func libelleAcces(_ debut: String) -> XCUIElement {
+        descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", debut)).firstMatch
+    }
+
+    @MainActor
+    func capturerAcces(_ nom: String, dans test: XCTestCase) {
+        let piece = XCTAttachment(screenshot: screenshot())
+        piece.name = nom
+        piece.lifetime = .keepAlways
+        test.add(piece)
     }
 }
