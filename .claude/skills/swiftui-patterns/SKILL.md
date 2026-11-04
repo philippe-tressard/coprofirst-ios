@@ -107,7 +107,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `GaleriePhotos`, `RepondreFeuille`, `ResumeFeuille` | les photos protégées ; répondre ; le résumé d'un élément du fil | idem |
 | `CarteDuFil`, `CarteOuvrable`, `DestinationDuFil` | une carte du fil ; toucher → résumé ; la cible (`affaire`, `sondage`, `document`) → son détail | `Commun/Fil/` |
 | `FeuilleResidence`, `PastillesRoles`, `.confirmationDeSortie` | la feuille « où suis-je » ; les rôles ; se déconnecter / changer de résidence | `Commun/Compte/` |
-| `TexteDuSite.apercu` / `.riche` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `riche` pour un détail (`Text(TexteDuSite.riche(html)).tint(palette.primary)`) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
+| `TexteDuSite.apercu`, `TexteRiche(html:)` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `TexteRiche(html:)` pour un détail (`.font`, `.foregroundStyle`, `.tint(palette.primary)` de l'appelant ; listes en retrait suspendu, `<li><p>` de l'éditeur compris) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
 
 ## À trancher quand le premier cas arrive
 

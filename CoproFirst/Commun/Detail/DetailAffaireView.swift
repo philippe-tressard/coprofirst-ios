@@ -45,7 +45,7 @@ private struct ContenuAffaire: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 EnTeteAffaire(affaire: affaire)
-                Text(TexteDuSite.riche(affaire.description))
+                TexteRiche(html: affaire.description)
                     .font(.body)
                     .foregroundStyle(palette.text)
                     .tint(palette.primary)
@@ -163,8 +163,8 @@ private struct Historique: View {
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(palette.primary)
                         }
-                        if let contenu = suite.contenu.map(TexteDuSite.riche), !contenu.characters.isEmpty {
-                            Text(contenu)
+                        if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
+                            contenu
                                 .font(.body)
                                 .foregroundStyle(palette.text)
                                 .tint(palette.primary)
