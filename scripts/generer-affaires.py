@@ -19,6 +19,9 @@ Sortie : `CoproFirst/Fonctions/Affaires/Genere/TablesDuSite.swift` — dans le
 dossier du menu, pour qu'aucune session parallèle n'y touche. Script à part de
 `generer-charte.py` : relancer celui-ci régénérerait toute la charte.
 
+Les sources se lisent À LA VERSION PUBLIÉE épinglée (`REVISION`, `COPROFIRST_REVISION`
+pour une autre), par `git show` : ni `dev`, ni un arbre modifié.
+
 Usage : python3 scripts/generer-affaires.py [chemin/vers/coprofirst/front]
 """
 
@@ -35,8 +38,9 @@ import lecture_ts
 RACINE = pathlib.Path(__file__).resolve().parents[1]
 RACINE_COPROFIRST = os.environ.get("COPROFIRST_RACINE", "/Volumes/Data/Dev/5hostachy")
 FRONT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else f"{RACINE_COPROFIRST}/front")
-LIB = FRONT / "src" / "lib"
-STYLES = FRONT / "src" / "styles"
+# La version PUBLIÉE de coprofirst que les installations font tourner — celle que la
+# concordance quotidienne (#20) compare. Jamais l'arbre de travail de `dev`.
+REVISION = os.environ.get("COPROFIRST_REVISION", "v3.61.0")
 SORTIE = RACINE / "CoproFirst" / "Fonctions" / "Affaires" / "Genere" / "TablesDuSite.swift"
 
 JETON = re.compile(r"--((?:kanban|teinte)-[a-z0-9-]+)\s*:\s*([^;]+);")
@@ -44,8 +48,19 @@ HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 VAR = re.compile(r"^var\(--([a-z0-9-]+)\)$")
 
 
+def git(*args: str) -> str:
+    return subprocess.run(["git", "-C", str(FRONT), *args], capture_output=True, text=True,
+                          check=True).stdout
+
+
+def source(chemin: str) -> str:
+    """Un fichier du front, tel qu'il est À LA RÉVISION épinglée (`src/…`)."""
+    prefixe = git("rev-parse", "--show-prefix").strip()
+    return git("show", f"{REVISION}:{prefixe}{chemin}")
+
+
 def lire(nom: str) -> str:
-    return (LIB / nom).read_text(encoding="utf-8")
+    return source(f"src/lib/{nom}")
 
 
 def bloc(texte: str, selecteur: str) -> str:
@@ -151,8 +166,8 @@ def categories() -> str:
 
 def kanban() -> str:
     texte = lire("kanban.ts")
-    clair = jetons(bloc((STYLES / "socle.css").read_text(encoding="utf-8"), ":root,"))
-    sombre = {**clair, **jetons(bloc((STYLES / "palette-sombre.css").read_text(encoding="utf-8"),
+    clair = jetons(bloc(source("src/styles/socle.css"), ":root,"))
+    sombre = {**clair, **jetons(bloc(source("src/styles/palette-sombre.css"),
                                      ":root[data-theme='dark']"))}
     lignes = []
     for c in lecture_ts.table(texte, "KANBAN_COLS"):
@@ -212,22 +227,11 @@ def onglets() -> str:
     )
 
 
-SOURCES = [
-    "src/lib/tickets-categories.ts", "src/lib/kanban.ts", "src/lib/tickets.ts", "src/lib/pages.ts",
-    "src/lib/archives.ts", "src/styles/socle.css", "src/styles/palette-sombre.css",
-]
-
-
 def provenance() -> str:
-    """Le commit COMPLET de coprofirst, sa branche — et le refus d'un arbre modifié :
-    le fichier généré doit répondre à un commit, comme PROVENANCE-OPENAPI.md."""
-    def git(*args: str) -> str:
-        return subprocess.run(["git", "-C", str(FRONT), *args], capture_output=True, text=True,
-                              check=True).stdout.strip()
-    sales = git("status", "--porcelain", "--", *SOURCES)
-    if sales:
-        raise SystemExit(f"❌ sources modifiées dans coprofirst, rien n'est écrit :\n{sales}")
-    return f"philippe-tressard/coprofirst@{git('rev-parse', 'HEAD')} (branche {git('branch', '--show-current')}),"
+    """La version publiée lue et son commit COMPLET, comme PROVENANCE-OPENAPI.md : le
+    fichier généré répond à une version, pas à l'état d'un poste."""
+    commit = git("rev-parse", f"{REVISION}^{{commit}}").strip()
+    return f"philippe-tressard/coprofirst {REVISION} (commit {commit}),"
 
 
 def main() -> None:

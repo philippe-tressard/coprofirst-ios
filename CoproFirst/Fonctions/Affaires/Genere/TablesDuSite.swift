@@ -4,7 +4,7 @@
 //
 // swift-format-ignore-file
 // swiftlint:disable line_length
-// Source : philippe-tressard/coprofirst@9faa6e6cbc99474cd592e7534feb9f0dd701dc1c (branche dev),
+// Source : philippe-tressard/coprofirst v3.61.0 (commit 4239610fcf1658b53c84664087f7e5d0650fe834),
 //   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, pages.ts ;
 //   front/src/styles/socle.css et palette-sombre.css.
 
