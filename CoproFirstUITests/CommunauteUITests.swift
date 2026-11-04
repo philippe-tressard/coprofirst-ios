@@ -64,6 +64,24 @@ final class CommunauteUITests: XCTestCase {
         return element
     }
 
+    /// Une rubrique de la Communauté : la barre défile jusqu'à elle (très grand texte).
+    private func rubrique(_ app: XCUIApplication, _ id: String) {
+        let onglet = el(app, "communaute.onglet.\(id)")
+        XCTAssertTrue(onglet.waitForExistence(timeout: 5))
+        var essais = 0
+        // Hors de l'écran, l'élément n'a pas de point d'activation : on compare les cadres.
+        let ecran = app.windows.firstMatch.frame
+        while !ecran.contains(onglet.frame), essais < 4 {
+            // Un glissé du doigt sur la barre, de droite à gauche, à sa hauteur.
+            let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
+            let depart = origine.withOffset(CGVector(dx: ecran.width * 0.85, dy: onglet.frame.midY))
+            depart.press(forDuration: 0.05, thenDragTo: origine.withOffset(
+                CGVector(dx: ecran.width * 0.15, dy: onglet.frame.midY)))
+            essais += 1
+        }
+        onglet.tap()
+    }
+
     private func ouvrirDansPlus(_ app: XCUIApplication, _ libelle: String) {
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 8))
@@ -80,7 +98,7 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
         capture("1-communaute-sondages")
 
-        el(app, "communaute.onglets").buttons.element(boundBy: 1).tap()
+        rubrique(app, "idees")
         let coeur = atteindre(app, el(app, "idee.5.voter"))
         XCTAssertTrue(coeur.exists)
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
@@ -93,7 +111,7 @@ final class CommunauteUITests: XCTestCase {
         capture("3-idee-et-reponses")
         app.navigationBars.buttons.firstMatch.tap()
 
-        el(app, "communaute.onglets").buttons.element(boundBy: 2).tap()
+        rubrique(app, "annonces")
         let annonce = atteindre(app, el(app, "annonce.21"))
         XCTAssertTrue(annonce.exists)
         capture("4-communaute-annonces")
@@ -102,7 +120,7 @@ final class CommunauteUITests: XCTestCase {
         capture("5-annonce")
         app.navigationBars.buttons.firstMatch.tap()
 
-        el(app, "communaute.onglets").buttons.element(boundBy: 3).tap()
+        rubrique(app, "avis")
         XCTAssertTrue(app.descendants(matching: .any)["avis.4"].waitForExistence(timeout: 8))
         capture("6-communaute-avis")
         el(app, "communaute.creer").tap()

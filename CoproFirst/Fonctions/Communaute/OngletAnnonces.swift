@@ -82,29 +82,10 @@ struct OngletAnnonces: View {
                 }
                 .padding(.vertical, 4)
             }
-            HStack {
-                Menu {
-                    Picker("Catégorie", selection: $categorie.animation(.snappy)) {
-                        Text("Toutes catégories").tag(String?.none)
-                        ForEach(RegleCommunaute.categoriesAnnonce, id: \.code) {
-                            Text($0.libelle).tag(Optional($0.code))
-                        }
-                    }
-                } label: {
-                    Label(
-                        categorie.map { RegleCommunaute.libelle($0, dans: RegleCommunaute.categoriesAnnonce) }
-                            ?? "Toutes catégories", systemImage: "line.3.horizontal.decrease.circle")
-                }
-                Spacer()
-                Menu {
-                    Picker("Tri", selection: $tri.animation(.snappy)) {
-                        ForEach(RegleCommunaute.trisAnnonce, id: \.code) { Text($0.libelle).tag($0.code) }
-                    }
-                } label: {
-                    Label(
-                        RegleCommunaute.libelle(tri, dans: RegleCommunaute.trisAnnonce),
-                        systemImage: "arrow.up.arrow.down")
-                }
+            // Côte à côte quand ils tiennent, l'un sous l'autre aux grandes tailles.
+            ViewThatFits(in: .horizontal) {
+                HStack { menuCategorie; Spacer(); menuTri }
+                VStack(alignment: .leading, spacing: 8) { menuCategorie; menuTri }
             }
             .font(.subheadline.weight(.medium))
             .tint(palette.primary)
@@ -112,6 +93,33 @@ struct OngletAnnonces: View {
         .textCase(nil)
         .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 8, trailing: 0))
         .sensoryFeedback(.selection, trigger: [type ?? "", categorie ?? "", tri])
+    }
+
+    private var menuCategorie: some View {
+        Menu {
+            Picker("Catégorie", selection: $categorie.animation(.snappy)) {
+                Text("Toutes catégories").tag(String?.none)
+                ForEach(RegleCommunaute.categoriesAnnonce, id: \.code) {
+                    Text($0.libelle).tag(Optional($0.code))
+                }
+            }
+        } label: {
+            Label(
+                categorie.map { RegleCommunaute.libelle($0, dans: RegleCommunaute.categoriesAnnonce) }
+                    ?? "Toutes catégories", systemImage: "line.3.horizontal.decrease.circle")
+        }
+    }
+
+    private var menuTri: some View {
+        Menu {
+            Picker("Tri", selection: $tri.animation(.snappy)) {
+                ForEach(RegleCommunaute.trisAnnonce, id: \.code) { Text($0.libelle).tag($0.code) }
+            }
+        } label: {
+            Label(
+                RegleCommunaute.libelle(tri, dans: RegleCommunaute.trisAnnonce),
+                systemImage: "arrow.up.arrow.down")
+        }
     }
 }
 
@@ -144,11 +152,12 @@ struct EtiquettesAnnonce: View {
     var body: some View {
         FlowEtiquettes(espace: 6) {
             let statut = RegleCommunaute.statutsAnnonce.first { $0.code == annonce.statut }
-            PastilleCommunaute(libelle: statut?.libelle ?? annonce.statut, pastille: statut?.pastille ?? "badge-gray")
-            PastilleCommunaute(
-                libelle: RegleCommunaute.libelle(annonce.categorie, dans: RegleCommunaute.categoriesAnnonce))
+            PastilleTeinte(libelle: statut?.libelle ?? annonce.statut, badge: statut?.pastille ?? "badge-gray")
+            PastilleTeinte(
+                libelle: RegleCommunaute.libelle(annonce.categorie, dans: RegleCommunaute.categoriesAnnonce),
+                badge: "badge-gray")
             if let prix = annonce.prix {
-                Text(prix, format: .currency(code: "EUR").precision(.fractionLength(0...2)))
+                Text(FormatsDuSite.montant(prix))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(palette.text)
                 if annonce.negotiable == true {

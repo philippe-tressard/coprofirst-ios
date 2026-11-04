@@ -99,7 +99,7 @@ struct ProfilView: View {
                     LabeledContent("Profil d'utilisateur", value: RolesUtilisateur.libelleStatut(compte.statut))
                     LabeledContent("Bâtiment", value: compte.batimentNom ?? "—")
                     LabeledContent("Statut du compte", value: compte.actif ? "Actif" : "Inactif")
-                    LabeledContent("Membre depuis", value: compte.creeLe.formatted(date: .long, time: .omitted))
+                    LabeledContent("Membre depuis", value: FormatsDuSite.date(compte.creeLe))
                     if let derniere = compte.derniereConnexion {
                         LabeledContent(
                             "Dernière connexion", value: derniere.formatted(date: .abbreviated, time: .shortened))

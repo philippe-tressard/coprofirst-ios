@@ -21,21 +21,9 @@ struct CommunauteView: View {
             .background(palette.bg)
             .navigationTitle(titre)
             .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                if etat.onglets.count > 1 {
-                    Picker("Rubrique", selection: $etat.onglet.animation(.snappy)) {
-                        ForEach(etat.onglets) { onglet in
-                            Text(onglet.court).tag(onglet).accessibilityLabel(onglet.libelle)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, Mise.marge)
-                    .padding(.vertical, 8)
-                    // Le fond s'arrête au sélecteur : il ne remonte pas sous le grand titre.
-                    .background(palette.bg, ignoresSafeAreaEdges: [])
-                    .accessibilityIdentifier("communaute.onglets")
-                }
-            }
+            .modifier(BarreEnHaut(visible: etat.onglets.count > 1) {
+                BarreRubriques(onglets: etat.onglets, choisi: $etat.onglet)
+            })
             .safeAreaInset(edge: .bottom, spacing: 0) { BandeauCommunaute(bandeau: $etat.bandeau) }
             .toolbar {
                 PastilleOuSuisJe(installation: installation, cloche: true)
@@ -62,7 +50,7 @@ struct CommunauteView: View {
             }
             .padding(Mise.marge)
             .frame(maxHeight: .infinity, alignment: .top)
-        case .complet, .avisSeul:
+        case .ouvert:
             switch etat.onglet {
             case .sondages: OngletSondages(etat: etat, installation: installation)
             case .idees: OngletIdees(etat: etat, installation: installation)
@@ -79,7 +67,7 @@ struct CommunauteView: View {
         let possible: Bool = {
             switch etat.onglet {
             case .sondages: false
-            case .idees, .annonces: etat.acces == .complet
+            case .idees, .annonces: etat.onglets.contains(etat.onglet)
             case .avis: etat.avis.phase == .pret && etat.monAvisId == nil
             }
         }()
@@ -113,6 +101,83 @@ struct CommunauteView: View {
         case .annonces: FormulaireAnnonce(etat: etat, installation: installation)
         case .avis: FormulaireAvis(etat: etat, installation: installation)
         case .sondages: EmptyView()
+        }
+    }
+}
+
+/// Les rubriques de la page, en barre qui défile : les libellés du site restent entiers
+/// (« Petites annonces » ne tient pas dans un segment), la rubrique choisie est
+/// soulignée comme sur le site, et le trait glisse de l'une à l'autre.
+private struct BarreRubriques: View {
+    let onglets: [OngletCommunaute]
+    @Binding var choisi: OngletCommunaute
+    @Environment(\.palette) private var palette
+    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
+    @Namespace private var trait
+
+    var body: some View {
+        ScrollViewReader { defilement in
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 22) {
+                    ForEach(onglets) { onglet in
+                        let retenu = onglet == choisi
+                        Button {
+                            withAnimation(mouvementReduit ? .none : .snappy) { choisi = onglet }
+                        } label: {
+                            Text(onglet.libelle)
+                                .font(.subheadline.weight(retenu ? .semibold : .regular))
+                                .foregroundStyle(retenu ? palette.text : palette.textMuted)
+                                .padding(.vertical, 10)
+                                .frame(minHeight: Mise.cible)
+                                .overlay(alignment: .bottom) {
+                                    if retenu {
+                                        Capsule()
+                                            .fill(palette.primary)
+                                            .frame(height: 3)
+                                            .matchedGeometryEffect(id: "trait", in: trait)
+                                    }
+                                }
+                                .contentShape(.rect)
+                        }
+                        .buttonStyle(.plain)
+                        // Une barre de navigation ne grandit pas sans fin : au-delà, la loupe
+                        // d'accessibilité montre le libellé en grand (appui long).
+                        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+                        .accessibilityShowsLargeContentViewer()
+                        .id(onglet)
+                        .accessibilityAddTraits(retenu ? [.isSelected, .isHeader] : [])
+                        .accessibilityIdentifier("communaute.onglet.\(onglet.rawValue)")
+                    }
+                }
+                .padding(.horizontal, Mise.marge)
+            }
+            .onChange(of: choisi) { _, nouveau in
+                withAnimation(mouvementReduit ? .none : .snappy) { defilement.scrollTo(nouveau, anchor: .center) }
+            }
+        }
+        .overlay(alignment: .bottom) { Rectangle().fill(palette.border).frame(height: 1) }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("communaute.onglets")
+    }
+}
+
+/// La barre des rubriques sous le titre. Sous iOS 26, `safeAreaBar` : le contenu qui
+/// défile dessous reçoit l'effet de bord du système. Avant, un encart au fond de la page,
+/// qui s'arrête à la barre et ne remonte pas sous le grand titre.
+private struct BarreEnHaut<Barre: View>: ViewModifier {
+    let visible: Bool
+    @ViewBuilder let barre: () -> Barre
+    @Environment(\.palette) private var palette
+
+    func body(content: Content) -> some View {
+        if !visible {
+            content
+        } else if #available(iOS 26, *) {
+            content.safeAreaBar(edge: .top, spacing: 0) { barre() }
+        } else {
+            content.safeAreaInset(edge: .top, spacing: 0) {
+                barre().background(palette.bg, ignoresSafeAreaEdges: [])
+            }
         }
     }
 }

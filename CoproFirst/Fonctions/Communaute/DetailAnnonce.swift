@@ -27,7 +27,8 @@ struct DetailAnnonce: View {
                         Text(annonce.titre).font(.titre(.title2)).foregroundStyle(palette.text)
                             .accessibilityAddTraits(.isHeader)
                         EtiquettesAnnonce(annonce: annonce)
-                        Text(annonce.creeLe.jourDuSite).font(.footnote).foregroundStyle(palette.textMuted)
+                        Text(FormatsDuSite.dateCourte(annonce.creeLe))
+                            .font(.footnote).foregroundStyle(palette.textMuted)
                     }
                     Text(TexteDuSite.riche(annonce.description))
                         .font(.body).foregroundStyle(palette.text).tint(palette.primary)

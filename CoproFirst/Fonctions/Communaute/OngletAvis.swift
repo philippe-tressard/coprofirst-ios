@@ -124,12 +124,14 @@ private struct CarteAvis: View {
             Etoiles(note: avis.note)
             Text(avis.titre).font(.headline).foregroundStyle(palette.text)
             FlowEtiquettes(espace: 6) {
-                if !avis.luDeTous { PastilleCommunaute(libelle: "Auteur et conseil seulement") }
-                if avis.retenu { PastilleCommunaute(libelle: "Retenu pour coprofirst.fr", pastille: "badge-green") }
+                if !avis.luDeTous { PastilleTeinte(libelle: "Auteur et conseil seulement", badge: "badge-gray") }
+                if avis.retenu {
+                    PastilleTeinte(libelle: "Retenu pour coprofirst.fr", badge: "badge-green")
+                }
                 if let auteur = [avis.auteurNom, avis.auteurRole].compactMap({ $0 }).joined(separator: " · ").nonVide {
                     Text(auteur).font(.caption).foregroundStyle(palette.textMuted)
                 }
-                Text(avis.creeLe.jourDuSite).font(.caption).foregroundStyle(palette.textMuted)
+                Text(FormatsDuSite.dateCourte(avis.creeLe)).font(.caption).foregroundStyle(palette.textMuted)
             }
             Text(TexteDuSite.riche(avis.description))
                 .font(.subheadline).foregroundStyle(palette.text).tint(palette.primary)
@@ -143,7 +145,7 @@ private struct CarteAvis: View {
             }
             if let reponse = avis.reponse?.nonVide {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Réponse de l'équipe" + (avis.reponseLe.map { " · \($0.jourDuSite)" } ?? ""))
+                    Text("Réponse de l'équipe" + (avis.reponseLe.map { " · \(FormatsDuSite.dateCourte($0))" } ?? ""))
                         .styleLibelle()
                     Text(reponse).font(.subheadline).foregroundStyle(palette.text)
                 }

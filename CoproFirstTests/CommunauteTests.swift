@@ -15,15 +15,14 @@ import Testing
 
 /// Une Communauté factice : le compte et l'Avis se règlent, le reste ne sert pas.
 private struct Factice: ServiceCommunaute {
+    var statut = "copropriétaire_résident"
     var motif: String?
-    var avisRefuse = false
 
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
-        MoiCommunaute(id: 1, statut: "syndic", roles: [], motifRefus: motif)
+        MoiCommunaute(id: 1, statut: statut, roles: ["résident"], motifRefus: motif)
     }
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis {
-        if avisRefuse { throw ErreurService.introuvable }
-        return ListeAvis(avis: [], gestionnaire: false, monAvisId: nil)
+        ListeAvis(avis: [], gestionnaire: false, monAvisId: nil)
     }
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] { [] }
     func idees(_ installation: Installation) async throws -> [Idee] { [] }
@@ -45,24 +44,24 @@ private struct Factice: ServiceCommunaute {
 }
 
 @MainActor
-@Test func lesOngletsOuvertsSontCeuxQueLeServeurSert() async {
+@Test func lesOngletsOuvertsSuiventLaRegleDuSiteEtLaConclusionDuServeur() async {
     let residence = ServiceSimule.residence
 
-    let ouvert = EtatCommunaute()
-    await ouvert.ouvrir(residence, avec: Factice(motif: nil))
-    #expect(ouvert.onglets == OngletCommunaute.allCases, "sans motif de refus, les quatre onglets")
+    let resident = EtatCommunaute()
+    await resident.ouvrir(residence, avec: Factice())
+    #expect(resident.onglets == OngletCommunaute.allCases, "un résident : les quatre rubriques, dans l'ordre du site")
+    #expect(OngletCommunaute.allCases.map(\.libelle) == ["Sondages", "Boîte à idées", "Petites annonces", "Avis"])
 
-    let gestionnaire = EtatCommunaute()
-    await gestionnaire.ouvrir(residence, avec: Factice(motif: """
-        La rubrique Communauté n'est pas accessible à votre profil
-        """))
-    #expect(gestionnaire.onglets == [.avis], "refusé mais l'Avis servi : l'Avis seul")
-    #expect(gestionnaire.onglet == .avis)
+    let syndic = EtatCommunaute()
+    let profil = "La rubrique Communauté n'est pas accessible à votre profil"
+    await syndic.ouvrir(residence, avec: Factice(statut: "syndic", motif: profil))
+    #expect(syndic.onglets == [.avis], "réserve « nonGestionnaire » : l'Avis seul")
+    #expect(syndic.onglet == .avis)
 
     let suspendu = EtatCommunaute()
     let motif = "Votre accès à la rubrique Communauté a été définitivement suspendu."
-    await suspendu.ouvrir(residence, avec: Factice(motif: motif, avisRefuse: true))
-    #expect(suspendu.acces == .ferme(motif), "l'Avis refusé aussi : le motif du serveur, mot pour mot")
+    await suspendu.ouvrir(residence, avec: Factice(motif: motif))
+    #expect(suspendu.acces == .ferme(motif), "un motif que la réserve n'explique pas : tout est fermé, mot pour mot")
     #expect(suspendu.onglets.isEmpty)
 }
 

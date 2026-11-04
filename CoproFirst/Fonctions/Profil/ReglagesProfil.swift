@@ -158,7 +158,7 @@ struct DemandeModificationView: View {
                     ForEach(demandes) { demande in
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
-                                Text(demande.creeLe.formatted(date: .numeric, time: .omitted))
+                                Text(FormatsDuSite.dateCourte(demande.creeLe))
                                     .font(.caption).monospacedDigit()
                                 Spacer()
                                 Text(Self.etats[demande.etat] ?? demande.etat).font(.caption.weight(.semibold))

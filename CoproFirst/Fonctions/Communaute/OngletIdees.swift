@@ -89,7 +89,7 @@ private struct LigneIdee: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(idee.titre).font(.headline).foregroundStyle(palette.text)
                 let statut = RegleCommunaute.statutsIdee.first { $0.code == idee.statut }
-                PastilleCommunaute(libelle: statut?.libelle ?? idee.statut, pastille: statut?.pastille ?? "badge-gray")
+                PastilleTeinte(libelle: statut?.libelle ?? idee.statut, badge: statut?.pastille ?? "badge-gray")
                 Text(TexteDuSite.apercu(idee.description))
                     .font(.subheadline)
                     .foregroundStyle(palette.textMuted)
@@ -155,11 +155,12 @@ struct DetailIdee: View {
                         }
                         VStack(alignment: .leading, spacing: 10) {
                             let statut = RegleCommunaute.statutsIdee.first { $0.code == idee.statut }
-                            PastilleCommunaute(
-                                libelle: statut?.libelle ?? idee.statut, pastille: statut?.pastille ?? "badge-gray")
+                            PastilleTeinte(
+                                libelle: statut?.libelle ?? idee.statut, badge: statut?.pastille ?? "badge-gray")
                             Text(idee.titre).font(.titre(.title2)).foregroundStyle(palette.text)
                                 .accessibilityAddTraits(.isHeader)
-                            Text(idee.creeLe.jourDuSite).font(.footnote).foregroundStyle(palette.textMuted)
+                            Text(FormatsDuSite.dateCourte(idee.creeLe))
+                                .font(.footnote).foregroundStyle(palette.textMuted)
                         }
                     }
                     Text(TexteDuSite.riche(idee.description))

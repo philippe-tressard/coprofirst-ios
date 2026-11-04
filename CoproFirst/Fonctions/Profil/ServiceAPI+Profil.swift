@@ -7,7 +7,7 @@ import Foundation
 /// Le profil par le client GÉNÉRÉ.
 extension ServiceAPI: ServiceProfil {
     func compte(_ installation: Installation) async throws -> Compte {
-        let sortie = try await appeler { try await client(installation.adresse).meAuthMeGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
         switch sortie {
         case .ok(let ok): return Compte(lu: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -30,7 +30,7 @@ extension ServiceAPI: ServiceProfil {
 
     func changerMotDePasse(actuel: String, nouveau: String, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).changePasswordAuthChangePasswordPost(
+            try await client(installation.adresse).postAuthChangePassword(
                 body: .json(.init(motDePasseActuel: actuel, nouveauMotDePasse: nouveau)))
         }
         switch sortie {
@@ -54,7 +54,7 @@ extension ServiceAPI: ServiceProfil {
 
     func refuserTelemetrie(_ refus: Bool, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).toggleOptOutTelemetrieAuthMeOptOutTelemetriePatch(
+            try await client(installation.adresse).patchAuthMeOptOutTelemetrie(
                 body: .json(.init(optOutTelemetrie: refus)))
         }
         switch sortie {
@@ -66,7 +66,7 @@ extension ServiceAPI: ServiceProfil {
 
     /// Le JSON servi, écrit tel quel dans un fichier à partager (`mes-donnees-telemetrie.json`).
     func exporterTelemetrie(_ installation: Installation) async throws -> URL {
-        let sortie = try await appeler { try await client(installation.adresse).exportTelemetrieAuthMeTelemetrieGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthMeTelemetrie() }
         switch sortie {
         case .ok(let ok):
             let encodeur = JSONEncoder()
@@ -81,7 +81,7 @@ extension ServiceAPI: ServiceProfil {
 
     func effacerTelemetrie(_ installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).effacerTelemetrieAuthMeTelemetrieDelete()
+            try await client(installation.adresse).deleteAuthMeTelemetrie()
         }
         switch sortie {
         case .noContent: return
@@ -92,7 +92,7 @@ extension ServiceAPI: ServiceProfil {
 
     func demandesModification(_ installation: Installation) async throws -> [DemandeModification] {
         let sortie = try await appeler {
-            try await client(installation.adresse).mesDemandesModifAuthMeDemandesModificationGet()
+            try await client(installation.adresse).getAuthMeDemandesModification()
         }
         switch sortie {
         case .ok(let ok):
@@ -109,7 +109,7 @@ extension ServiceAPI: ServiceProfil {
     func demanderModification(statut: String?, batiment: Int?, motif: String, dans installation: Installation)
         async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).creerDemandeModifAuthMeDemandeModificationPost(
+            try await client(installation.adresse).postAuthMeDemandeModification(
                 body: .json(.init(batimentIdSouhaite: batiment, motif: motif.nulSiVide, statutSouhaite: statut)))
         }
         switch sortie {
@@ -121,7 +121,7 @@ extension ServiceAPI: ServiceProfil {
 
     /// La réponse n'est pas typée dans le contrat : relue en miroir.
     func batiments(_ installation: Installation) async throws -> [BatimentResidence] {
-        let sortie = try await appeler { try await client(installation.adresse).listBatimentsAuthBatimentsGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthBatiments() }
         switch sortie {
         case .ok(let ok): return try Relecture.lire([BatimentResidence].self, depuis: try ok.body.json)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -130,7 +130,7 @@ extension ServiceAPI: ServiceProfil {
 
     private func modifier(_ corps: Components.Schemas.MeUpdate, _ installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).updateMeAuthMePatch(body: .json(corps))
+            try await client(installation.adresse).patchAuthMe(body: .json(corps))
         }
         switch sortie {
         case .ok: return

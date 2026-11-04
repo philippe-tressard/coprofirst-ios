@@ -3,23 +3,6 @@
 
 import SwiftUI
 
-/// Une pastille de statut ou de catégorie, teintée comme la classe `badge-*` du site.
-struct PastilleCommunaute: View {
-    let libelle: String
-    var pastille = "badge-gray"
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        let teinte = TeintePastille.couleurs(pastille)
-        Text(libelle)
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(palette[keyPath: teinte.texte])
-            .padding(.horizontal, 9)
-            .padding(.vertical, 3)
-            .background(palette[keyPath: teinte.fond], in: .capsule)
-    }
-}
-
 /// Les éléments archivés, repliés sous la liste : « 📁 Archives (n) ».
 struct SectionArchives<Element: Identifiable, Ligne: View>: View {
     let elements: [Element]
@@ -167,9 +150,4 @@ struct BandeauCommunaute: View {
             return nouveau.reussi ? .success : .error
         }
     }
-}
-
-extension Date {
-    /// La date courte du site : « 04/11/2026 ».
-    var jourDuSite: String { formatted(date: .numeric, time: .omitted) }
 }

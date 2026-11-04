@@ -20,13 +20,11 @@ struct ListeChargee<Element: Sendable>: Sendable {
 /// L'écran Communauté : qui regarde, quels onglets lui sont ouverts, et les quatre listes.
 @MainActor @Observable
 final class EtatCommunaute {
-    /// Ce que le serveur ouvre à ce compte — jamais recalculé par l'app.
+    /// Ce qui est ouvert à ce compte : la règle générée des onglets (un gestionnaire
+    /// n'a que l'Avis), et la conclusion du serveur (`communaute_motif_refus`).
     enum Acces: Equatable {
         case verification
-        /// Les quatre onglets.
-        case complet
-        /// Le serveur refuse la Communauté mais sert l'Avis (gestionnaire : #2075).
-        case avisSeul
+        case ouvert([OngletCommunaute])
         /// Tout est fermé ; la phrase est celle du serveur.
         case ferme(String)
         case erreur(ErreurService)
@@ -45,30 +43,24 @@ final class EtatCommunaute {
     var bandeau: PhraseDuGeste?
 
     var onglets: [OngletCommunaute] {
-        switch acces {
-        case .complet: OngletCommunaute.allCases
-        case .avisSeul: [.avis]
-        default: []
-        }
+        if case .ouvert(let onglets) = acces { return onglets }
+        return []
     }
 
-    /// GET /auth/me, puis : sans motif de refus, tout s'ouvre ; avec un motif, l'Avis
-    /// est essayé — servi, il reste seul ; refusé, l'écran dit le motif du serveur.
+    /// GET /auth/me, puis les rubriques que la règle des onglets ouvre. Un motif de
+    /// refus que la réserve n'explique pas (une suspension) ferme tout, l'Avis
+    /// compris : l'écran dit alors la phrase du serveur, mot pour mot.
     func ouvrir(_ installation: Installation, avec service: any ServiceCommunaute) async {
         do {
             let lu = try await service.moiCommunaute(installation)
             moi = lu
-            guard let motif = lu.motifRefus else {
-                withAnimation(.snappy) { acces = .complet }
-                return
-            }
-            await chargerAvis(installation, avec: service)
+            let ouverts = OngletCommunaute.ouverts(lu.droits)
             withAnimation(.snappy) {
-                if case .erreur = avis.phase {
+                if let motif = lu.motifRefus, !lu.droits.gestionnaire || ouverts.isEmpty {
                     acces = .ferme(motif)
                 } else {
-                    acces = .avisSeul
-                    onglet = .avis
+                    acces = .ouvert(ouverts)
+                    if !ouverts.contains(onglet), let premier = ouverts.first { onglet = premier }
                 }
             }
         } catch {

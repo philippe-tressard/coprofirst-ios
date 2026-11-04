@@ -3,7 +3,7 @@
 //
 // GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@9faa6e6cb, front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
+// Source : coprofirst@b40a3189c, front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
 
 /// Ce que le site écrit de la Communauté et que le contrat ne sert pas.
 enum TablesCommunaute {

@@ -194,7 +194,7 @@ private struct LigneNotification: View {
         return Text(
             recente
                 ? notification.creeLe.formatted(date: .omitted, time: .shortened)
-                : notification.creeLe.formatted(date: .numeric, time: .omitted)
+                : FormatsDuSite.dateCourte(notification.creeLe)
         )
         .font(.caption)
         .monospacedDigit()

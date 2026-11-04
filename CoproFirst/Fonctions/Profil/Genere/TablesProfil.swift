@@ -3,7 +3,7 @@
 //
 // GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@9faa6e6cb, front/src/lib/theme.ts, preferences.ts et roles.ts ; api/app/utils/preferences_mail.py et mots_de_passe.py.
+// Source : coprofirst@b40a3189c, front/src/lib/theme.ts, preferences.ts et roles.ts ; api/app/utils/preferences_mail.py et mots_de_passe.py.
 
 /// Ce que le site écrit du Profil et que le contrat ne sert pas.
 enum TablesProfil {

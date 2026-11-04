@@ -50,7 +50,7 @@ extension Parcours {
 
 extension ServiceAPI: ServiceFAQ {
     func questionsFAQ(_ installation: Installation) async throws -> [QuestionFAQ] {
-        let sortie = try await appeler { try await client(installation.adresse).listFaqFaqGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getFaq() }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.map {

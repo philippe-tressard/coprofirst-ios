@@ -122,12 +122,12 @@ private struct LigneReponse: View {
                 Text(reponse.auteurNom ?? "Un résident")
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(palette.text)
-                if let batiment = reponse.auteurBatiment { PastilleCommunaute(libelle: batiment) }
+                if let batiment = reponse.auteurBatiment { PastilleTeinte(libelle: batiment, badge: "badge-gray") }
                 if let role = reponse.auteurRole {
-                    PastilleCommunaute(libelle: role, pastille: reponse.estCs == true ? "badge-blue" : "badge-gray")
+                    PastilleTeinte(libelle: role, badge: reponse.estCs == true ? "badge-blue" : "badge-gray")
                 }
                 if reponse.estCs == true { Text("⭐").accessibilityHidden(true) }
-                Text(reponse.creeLe.jourDuSite).font(.caption).foregroundStyle(palette.textMuted)
+                Text(FormatsDuSite.dateCourte(reponse.creeLe)).font(.caption).foregroundStyle(palette.textMuted)
             }
             Text(reponse.contenu)
                 .font(.body)

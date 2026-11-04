@@ -9,7 +9,7 @@ import Foundation
 /// coprofirst#2460 (déclarer leurs `response_model`).
 extension ServiceAPI: ServiceCommunaute {
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
-        let sortie = try await appeler { try await client(installation.adresse).meAuthMeGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
         switch sortie {
         case .ok(let ok):
             let moi = try ok.body.json
@@ -22,7 +22,7 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
-        let sortie = try await appeler { try await client(installation.adresse).listSondagesSondagesGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getSondages() }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.map {
@@ -37,7 +37,7 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func idees(_ installation: Installation) async throws -> [Idee] {
-        let sortie = try await appeler { try await client(installation.adresse).listIdeesIdeesGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getIdees() }
         switch sortie {
         case .ok(let ok): return try Relecture.lire([Idee].self, depuis: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -47,7 +47,7 @@ extension ServiceAPI: ServiceCommunaute {
 
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).createIdeeIdeesPost(
+            try await client(installation.adresse).postIdees(
                 body: .json(.init(description: description, titre: titre)))
         }
         try verifier(sortie.statutCree)
@@ -55,7 +55,7 @@ extension ServiceAPI: ServiceCommunaute {
 
     func voterIdee(_ id: Int, dans installation: Installation) async throws -> String? {
         let sortie = try await appeler {
-            try await client(installation.adresse).voterIdeesIdeeIdVoterPost(path: .init(ideeId: id))
+            try await client(installation.adresse).postIdeesIdeeIdVoter(path: .init(ideeId: id))
         }
         switch sortie {
         case .created(let cree):
@@ -67,7 +67,7 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func annonces(_ installation: Installation) async throws -> [Annonce] {
-        let sortie = try await appeler { try await client(installation.adresse).listAnnoncesAnnoncesGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAnnonces() }
         switch sortie {
         case .ok(let ok): return try Relecture.lire([Annonce].self, depuis: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -82,7 +82,7 @@ extension ServiceAPI: ServiceCommunaute {
             description: saisie.description, negotiable: vente ? saisie.negociable : false,
             prix: vente ? saisie.prix : nil, titre: saisie.titre, typeAnnonce: .init(rawValue: saisie.type))
         let sortie = try await appeler {
-            try await client(installation.adresse).createAnnonceAnnoncesPost(body: .json(corps))
+            try await client(installation.adresse).postAnnonces(body: .json(corps))
         }
         switch sortie {
         case .ok: return
@@ -94,7 +94,7 @@ extension ServiceAPI: ServiceCommunaute {
     func changerStatutAnnonce(_ id: Int, statut: String, dans installation: Installation) async throws {
         guard let code = Components.Schemas.StatutAnnonce(rawValue: statut) else { throw ErreurService.inattendue(422) }
         let sortie = try await appeler {
-            try await client(installation.adresse).updateStatutAnnoncesAnnonceIdStatutPatch(
+            try await client(installation.adresse).patchAnnoncesAnnonceIdStatut(
                 path: .init(annonceId: id), body: .json(.init(statut: code)))
         }
         switch sortie {
@@ -106,7 +106,7 @@ extension ServiceAPI: ServiceCommunaute {
 
     func supprimerAnnonce(_ id: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).deleteAnnonceAnnoncesAnnonceIdDelete(path: .init(annonceId: id))
+            try await client(installation.adresse).deleteAnnoncesAnnonceId(path: .init(annonceId: id))
         }
         switch sortie {
         case .ok: return
@@ -121,12 +121,12 @@ extension ServiceAPI: ServiceCommunaute {
         switch cible {
         case .idee(let id):
             let sortie = try await appeler {
-                try await client.createReponseIdeesCibleIdReponsesPost(path: .init(cibleId: id), body: .json(corps))
+                try await client.postIdeesCibleIdReponses(path: .init(cibleId: id), body: .json(corps))
             }
             try verifier(sortie.statutCree)
         case .annonce(let id):
             let sortie = try await appeler {
-                try await client.createReponseAnnoncesCibleIdReponsesPost(path: .init(cibleId: id), body: .json(corps))
+                try await client.postAnnoncesCibleIdReponses(path: .init(cibleId: id), body: .json(corps))
             }
             try verifier(sortie.statutCree)
         case .reponse:
@@ -140,12 +140,12 @@ extension ServiceAPI: ServiceCommunaute {
         switch cible {
         case .idee(let cibleId):
             let sortie = try await appeler {
-                try await client.deleteReponseIdeesCibleIdReponsesRepIdDelete(path: .init(cibleId: cibleId, repId: id))
+                try await client.deleteIdeesCibleIdReponsesRepId(path: .init(cibleId: cibleId, repId: id))
             }
             try verifier(sortie.statutSupprime)
         case .annonce(let cibleId):
             let sortie = try await appeler {
-                try await client.deleteReponseAnnoncesCibleIdReponsesRepIdDelete(
+                try await client.deleteAnnoncesCibleIdReponsesRepId(
                     path: .init(cibleId: cibleId, repId: id))
             }
             try verifier(sortie.statutSupprime)
@@ -156,14 +156,14 @@ extension ServiceAPI: ServiceCommunaute {
 
     func signalerAuConseil(_ cible: CibleCommunaute, motif: String, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).creerSignalementSignalementsPost(
+            try await client(installation.adresse).postSignalements(
                 body: .json(.init(cibleId: cible.id, cibleType: cible.typeSignalement, motif: motif)))
         }
         try verifier(sortie.statutCree)
     }
 
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis {
-        let sortie = try await appeler { try await client(installation.adresse).listerAvisGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAvis() }
         switch sortie {
         case .ok(let ok):
             let liste = try ok.body.json
@@ -179,7 +179,7 @@ extension ServiceAPI: ServiceCommunaute {
         let corps = Components.Schemas.AvisCreate(
             consentementPublication: saisie.consentementEnvoye, description: saisie.description, note: saisie.note,
             remarque: saisie.remarqueEnvoyee, titre: saisie.titre)
-        let sortie = try await appeler { try await client(installation.adresse).deposerAvisPost(body: .json(corps)) }
+        let sortie = try await appeler { try await client(installation.adresse).postAvis(body: .json(corps)) }
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -192,7 +192,7 @@ extension ServiceAPI: ServiceCommunaute {
             consentementPublication: saisie.consentementEnvoye, description: saisie.description, note: saisie.note,
             remarque: saisie.remarqueEnvoyee, titre: saisie.titre)
         let sortie = try await appeler {
-            try await client(installation.adresse).corrigerAvisAvisIdPatch(path: .init(avisId: id), body: .json(corps))
+            try await client(installation.adresse).patchAvisAvisId(path: .init(avisId: id), body: .json(corps))
         }
         switch sortie {
         case .ok: return
@@ -203,7 +203,7 @@ extension ServiceAPI: ServiceCommunaute {
 
     func archiverAvis(_ id: Int, archive: Bool, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).archiverAvisAvisIdArchivagePatch(
+            try await client(installation.adresse).patchAvisAvisIdArchivage(
                 path: .init(avisId: id), body: .json(.init(archivee: archive)))
         }
         switch sortie {
@@ -221,7 +221,7 @@ extension ServiceAPI: ServiceCommunaute {
 
 // Le statut d'échec d'une écriture qui rend 201, d'une suppression qui rend 204 —
 // `nil` sur une réussite. Une extension par sortie : chacune est un type généré.
-extension Operations.CreateIdeeIdeesPost.Output {
+extension Operations.PostIdees.Output {
     fileprivate var statutCree: Int? {
         switch self {
         case .created: nil
@@ -231,7 +231,7 @@ extension Operations.CreateIdeeIdeesPost.Output {
     }
 }
 
-extension Operations.CreateReponseIdeesCibleIdReponsesPost.Output {
+extension Operations.PostIdeesCibleIdReponses.Output {
     fileprivate var statutCree: Int? {
         switch self {
         case .created: nil
@@ -241,7 +241,7 @@ extension Operations.CreateReponseIdeesCibleIdReponsesPost.Output {
     }
 }
 
-extension Operations.CreateReponseAnnoncesCibleIdReponsesPost.Output {
+extension Operations.PostAnnoncesCibleIdReponses.Output {
     fileprivate var statutCree: Int? {
         switch self {
         case .created: nil
@@ -251,7 +251,7 @@ extension Operations.CreateReponseAnnoncesCibleIdReponsesPost.Output {
     }
 }
 
-extension Operations.CreerSignalementSignalementsPost.Output {
+extension Operations.PostSignalements.Output {
     fileprivate var statutCree: Int? {
         switch self {
         case .created: nil
@@ -261,7 +261,7 @@ extension Operations.CreerSignalementSignalementsPost.Output {
     }
 }
 
-extension Operations.DeleteReponseIdeesCibleIdReponsesRepIdDelete.Output {
+extension Operations.DeleteIdeesCibleIdReponsesRepId.Output {
     fileprivate var statutSupprime: Int? {
         switch self {
         case .noContent: nil
@@ -271,7 +271,7 @@ extension Operations.DeleteReponseIdeesCibleIdReponsesRepIdDelete.Output {
     }
 }
 
-extension Operations.DeleteReponseAnnoncesCibleIdReponsesRepIdDelete.Output {
+extension Operations.DeleteAnnoncesCibleIdReponsesRepId.Output {
     fileprivate var statutSupprime: Int? {
         switch self {
         case .noContent: nil

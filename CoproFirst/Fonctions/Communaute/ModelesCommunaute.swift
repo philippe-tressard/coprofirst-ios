@@ -16,6 +16,27 @@ struct MoiCommunaute: Hashable, Sendable {
 
     var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }
     var estAdmin: Bool { roles.contains("admin") }
+    /// Ce que le compte est, pour juger des onglets — la règle GÉNÉRÉE du site.
+    var droits: DroitsOnglet { DroitsOnglet(roles: roles, role: nil, statut: statut) }
+}
+
+/// Les rubriques de la page `communaute`. Leurs identifiants sont ceux du site ;
+/// libellés et réserves viennent de la table GÉNÉRÉE (`OngletsDuSite`, #30).
+enum OngletCommunaute: String, CaseIterable, Identifiable {
+    case sondages, idees, annonces, avis
+
+    static let page = "communaute"
+    var id: String { rawValue }
+
+    /// Le libellé du site ; l'identifiant à défaut, pour qu'un manque se voie.
+    var libelle: String {
+        OngletsDuSite.parPage[Self.page]?.first { $0.id == rawValue }?.libelle ?? rawValue
+    }
+
+    /// Les rubriques qu'un compte ouvre, dans l'ordre du site (`ongletsOuverts`).
+    static func ouverts(_ droits: DroitsOnglet) -> [OngletCommunaute] {
+        OngletsDuSite.ouverts(page: page, droits: droits).compactMap { OngletCommunaute(rawValue: $0.id) }
+    }
 }
 
 /// Un sondage de la liste (`SondageRead`, typé dans le contrat).

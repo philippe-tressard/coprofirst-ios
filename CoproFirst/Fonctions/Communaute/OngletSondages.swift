@@ -78,11 +78,11 @@ private struct LigneSondage: View {
                     .lineLimit(2)
             }
             FlowEtiquettes {
-                PastilleCommunaute(
+                PastilleTeinte(
                     libelle: sondage.cloture ? "🔒 Clôturé" : "Ouvert",
-                    pastille: sondage.cloture ? "badge-gray" : "badge-green")
+                    badge: sondage.cloture ? "badge-gray" : "badge-green")
                 if let fin = sondage.clotureLe, !sondage.cloture {
-                    Text("Clôture le \(fin.jourDuSite)")
+                    Text("Clôture le \(FormatsDuSite.dateCourte(fin))")
                 }
                 Text(sondage.nbVotants == 1 ? "1 votant" : "\(sondage.nbVotants) votants")
             }

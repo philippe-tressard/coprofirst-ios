@@ -40,7 +40,7 @@ extension Parcours {
 extension ServiceAPI: ServiceNotifications {
     func notifications(_ installation: Installation) async throws -> [NotificationRecue] {
         let sortie = try await appeler {
-            try await client(installation.adresse).listNotificationsNotificationsGet()
+            try await client(installation.adresse).getNotifications()
         }
         switch sortie {
         case .ok(let ok): return try ok.body.json.map(NotificationRecue.init(lue:))
@@ -51,7 +51,7 @@ extension ServiceAPI: ServiceNotifications {
 
     func marquerLue(_ id: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).marquerLueNotificationsNotifIdLuePatch(path: .init(notifId: id))
+            try await client(installation.adresse).patchNotificationsNotifIdLue(path: .init(notifId: id))
         }
         switch sortie {
         case .ok: return
@@ -62,7 +62,7 @@ extension ServiceAPI: ServiceNotifications {
 
     func toutMarquerLu(_ installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).toutMarquerLuNotificationsToutMarquerLuPost()
+            try await client(installation.adresse).postNotificationsToutMarquerLu()
         }
         switch sortie {
         case .ok: return
@@ -73,7 +73,7 @@ extension ServiceAPI: ServiceNotifications {
 
     func supprimerNotification(_ id: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).supprimerNotificationNotificationsNotifIdDelete(
+            try await client(installation.adresse).deleteNotificationsNotifId(
                 path: .init(notifId: id))
         }
         switch sortie {
