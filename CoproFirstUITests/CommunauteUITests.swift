@@ -32,13 +32,21 @@ final class CommunauteUITests: XCTestCase {
     }
 
     /// Le libellé ou la valeur de l'élément contient-il `texte`, d'ici `delai` secondes ?
-    private func lu(_ element: XCUIElement, contient texte: String, delai: TimeInterval = 8) -> Bool {
-        let fin = Date().addingTimeInterval(delai)
-        repeat {
-            if "\(element.label) \(element.value ?? "")".contains(texte) { return true }
-            Thread.sleep(forTimeInterval: 0.3)
-        } while Date() < fin
-        return false
+    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur), d'ici `delai` ?
+    /// Par prédicat sur TOUS les éléments de l'identifiant : sous iOS 26.5, un bouton de
+    /// barre d'outils est enveloppé dans un conteneur de même identifiant, que
+    /// `firstMatch` rendrait — sans le libellé ni la valeur du bouton.
+    private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String, delai: TimeInterval = 8)
+        -> Bool {
+        let predicat = NSPredicate(
+            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: delai)
+    }
+
+    /// Un élément de cet identifiant est-il inactif ? (Le conteneur, lui, l'est toujours.)
+    private func inactif(_ app: XCUIApplication, _ identifiant: String) -> Bool {
+        let predicat = NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 3)
     }
 
     /// Un élément par son identifiant (ou son libellé), QUEL QUE SOIT SON TYPE : un `Link`
@@ -103,7 +111,8 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(coeur.exists)
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
         coeur.tap()
-        XCTAssertTrue(lu(coeur, contient: "Retirer mon vote", delai: 5), "le cœur se remplit, le vote se voit")
+        XCTAssertTrue(
+            lu(app, "idee.5.voter", contient: "Retirer mon vote", delai: 5), "le cœur se remplit, le vote se voit")
         capture("2-communaute-idees")
 
         atteindre(app, el(app, "idee.3")).tap()
@@ -125,7 +134,7 @@ final class CommunauteUITests: XCTestCase {
         capture("6-communaute-avis")
         el(app, "communaute.creer").tap()
         XCTAssertTrue(app.navigationBars["Donner mon avis"].waitForExistence(timeout: 5))
-        XCTAssertFalse(el(app, "formulaire.enregistrer").isEnabled, "rien n'est saisi : le bouton attend")
+        XCTAssertTrue(inactif(app, "formulaire.enregistrer"), "rien n'est saisi : le bouton attend")
         capture("7-donner-mon-avis")
     }
 
@@ -136,7 +145,7 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(cloche.waitForExistence(timeout: 8))
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
-            lu(cloche, contient: "2"), "la cloche dit 2 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
+            lu(app, "cloche", contient: "2"), "la cloche dit 2 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
         XCTAssertTrue(tout.waitForExistence(timeout: 8))
@@ -144,7 +153,7 @@ final class CommunauteUITests: XCTestCase {
         tout.tap()
         XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
         el(app, "notifications.ok").tap()
-        XCTAssertFalse(lu(el(app, "cloche"), contient: "2", delai: 3), "la cloche n'a plus de pastille")
+        XCTAssertFalse(lu(app, "cloche", contient: "2", delai: 3), "la cloche n'a plus de pastille")
     }
 
     @MainActor
