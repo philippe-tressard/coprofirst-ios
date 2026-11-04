@@ -1,0 +1,93 @@
+// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+import SwiftUI
+import Testing
+
+@testable import CoproFirst
+
+/// Les formats du site (#37). Chaque attendu est la sortie de `front/src/lib/date.ts`
+/// et `utils.ts` (coprofirst v3.61.0) sous Node — le même `Intl` que le navigateur.
+
+@Test(arguments: [
+    ("2026-04-02", "2 avr. 2026", "02/04/2026"),
+    ("2026-08-01", "1 août 2026", "01/08/2026"),  // le 1er, sans zéro devant
+    ("2026-05-01", "1 mai 2026", "01/05/2026"),
+    ("2026-12-31", "31 déc. 2026", "31/12/2026"),
+    // Minuit à 2 h à Paris : le jour de Paris n'est pas le jour UTC.
+    ("2026-07-25T21:59:00Z", "25 juil. 2026", "25/07/2026"),
+    ("2026-07-25T22:00:00Z", "26 juil. 2026", "26/07/2026"),
+    ("2026-07-25T23:30:00Z", "26 juil. 2026", "26/07/2026"),
+    // Fin de mois en hiver (UTC+1) : le 1er du mois suivant à Paris.
+    ("2026-01-31T23:30:00Z", "1 févr. 2026", "01/02/2026"),
+    ("2026-03-31T22:30:00+00:00", "1 avr. 2026", "01/04/2026"),
+    // Sans fuseau : l'heure locale du navigateur, celle de Paris.
+    ("2026-07-25T23:30:00.123456", "25 juil. 2026", "25/07/2026"),
+])
+func lesDatesSontCellesDuSite(iso: String, date: String, courte: String) {
+    #expect(FormatsDuSite.date(iso) == date)
+    #expect(FormatsDuSite.dateCourte(iso) == courte)
+}
+
+@Test func uneDateAbsenteSEcritParUnTiret() {
+    #expect(FormatsDuSite.date(nil as String?) == "—")
+    #expect(FormatsDuSite.dateCourte("") == "—")
+    #expect(FormatsDuSite.date(nil as Date?) == "—")
+}
+
+@Test func uneDateDejaDecodeeSeFormateAParis() throws {
+    let instant = try #require(try? Date.ISO8601FormatStyle().parse("2026-07-25T23:30:00Z"))
+    #expect(FormatsDuSite.date(instant) == "26 juil. 2026")
+}
+
+@Test(arguments: [
+    (47_047.0, "47\u{202F}047"),
+    (64.5, "64,5"),
+    (3.14159, "3,142"),
+    (-1_234.5, "-1\u{202F}234,5"),
+    (0.0, "0"),
+    (1_000_000.0, "1\u{202F}000\u{202F}000"),
+    (12.345, "12,345"),
+    (1.0005, "1,001"),  // arrondi au plus proche, comme `Intl`
+])
+func lesNombresSontCeuxDuSite(valeur: Double, attendu: String) {
+    #expect(FormatsDuSite.nombre(valeur) == attendu)
+}
+
+@Test func unNombreAbsentSEcritParUnTiret() {
+    #expect(FormatsDuSite.nombre(nil as Int?) == "—")
+    #expect(FormatsDuSite.nombre(42) == "42")
+}
+
+@Test(arguments: [
+    (1_234.5, "1\u{202F}234,5\u{00A0}€"),
+    (1_234.0, "1\u{202F}234\u{00A0}€"),
+    (12.345, "12,35\u{00A0}€"),  // JavaScript arrondit l'écriture décimale, pas le binaire
+    (0.0041, "0\u{00A0}€"),
+])
+func lesMontantsSontCeuxDuSite(valeur: Double, attendu: String) {
+    #expect(FormatsDuSite.montant(valeur) == attendu)
+}
+
+@Test func unMontantDIAGardeQuatreDecimales() {
+    #expect(FormatsDuSite.montant(0.0041, devise: "USD", decimales: 4) == "0,0041\u{00A0}$US")
+    #expect(FormatsDuSite.montant(nil) == "—")
+}
+
+/// `PastilleStatut` est devenue un cas de `PastilleTeinte` : les teintes des
+/// statuts d'affaire n'ont pas bougé.
+@MainActor
+@Test func lesTeintesDesAffairesNOntPasChange() {
+    let attendues: [String: (KeyPath<Palette, Color>, KeyPath<Palette, Color>)] = [
+        "badge-blue": (\.info, \.infoFond), "badge-purple": (\.violet, \.violetFond),
+        "badge-orange": (\.orangeTexte, \.orangeFond), "badge-yellow": (\.jauneTexte, \.jauneFond),
+        "badge-green": (\.successTexte, \.successFond), "badge-gray": (\.textMuted, \.neutreFond),
+    ]
+    for (_, pastille) in StatutsAffaire.parCode.values.map({ $0 }) {
+        let (texte, fond) = PastilleTeinte.teintes(pastille)
+        #expect(attendues[pastille]?.0 == texte && attendues[pastille]?.1 == fond, "\(pastille)")
+    }
+    let (texteRouge, fondRouge) = PastilleTeinte.teintes("badge-red")
+    #expect(texteRouge == \Palette.danger && fondRouge == \Palette.dangerFond)
+    #expect(LibelleTeinte.brut("inconnu") == LibelleTeinte("inconnu", "badge-gray"))
+}
