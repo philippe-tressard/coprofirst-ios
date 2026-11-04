@@ -3,145 +3,125 @@
 
 import SwiftUI
 
-/// Écran 4 — les affaires de la résidence : recherche, filtres, cartes.
+/// Le menu « Mes affaires » (`mes-demandes`) : Liste · Kanban · Archives, et
+/// « Nouvelle affaire ». Un onglet du site est un segment de cet écran (#10).
 struct AffairesView: View {
-    @Environment(\.palette) private var palette
     let installation: Installation
+    var titre = "Mes affaires"
+    /// La pile de l'onglet : une carte y pousse le détail de son affaire.
+    @Binding var chemin: NavigationPath
+    @Environment(\.palette) private var palette
     @Environment(Parcours.self) private var parcours
     @Environment(Reseau.self) private var reseau
+    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
+    @Environment(\.dynamicTypeSize) private var tailleTexte
     @State private var etat = EtatAffaires()
+    @State private var onglet = "liste"
     @State private var nouvelle = false
 
+    private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
+    /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
+    private var onglets: [OngletAffaires] { TablesDuSite.onglets.filter(droits.ouvre) }
+
     var body: some View {
-        List {
-            Section {
-                ForEach(lignes) { ligne in
-                    switch ligne {
-                    case .squelette:
-                        CarteAffaireSquelette().rangee()
-                    case .affaire(let affaire):
-                        CarteAffaire(affaire: affaire)
-                            .rangee()
-                            .swipeActions(edge: .trailing) { actionArchiver(affaire) }
-                            .contextMenu { menu(affaire) }
-                    }
-                }
-            } header: {
-                Filtres(etat: etat)
-            }
+        let service = parcours.service.menuAffaires
+        // L'en-tête au-dessus du contenu, pas en marge de la liste : posé en marge, il
+        // couvrait le grand titre des onglets qui défilent (Liste, Archives).
+        VStack(spacing: 0) {
+            enTete
+            contenu(service).frame(maxHeight: .infinity)
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
         .background(palette.bg)
-        .overlay { etatVide }
-        .navigationTitle("Affaires")
-        .searchable(text: $etat.recherche, prompt: "Rechercher une affaire")
-        .refreshable { await etat.charger(installation, avec: parcours.service) }
+        .navigationTitle(titre)
+        // Aux tailles d'accessibilité, un grand titre fixe prendrait la moitié de l'écran.
+        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+        .navigationDestination(for: AffaireAOuvrir.self) { cible in
+            DetailAffaireView(id: cible.id, installation: installation)
+        }
         .toolbar {
             PastilleOuSuisJe(installation: installation, cloche: true)
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    nouvelle = true
-                } label: {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.semibold))
-                }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.circle)
-                .tint(palette.primaryPlein)
-                .accessibilityLabel("Nouvelle affaire")
-                .accessibilityIdentifier("affaires.nouvelle")
-            }
-        }
-        .safeAreaInset(edge: .top, spacing: 0) {
-            if !reseau.enLigne { BandeauHorsLigne() }
+            ToolbarItem(placement: .topBarLeading) { boutonNouvelle }
         }
         .sheet(isPresented: $nouvelle) {
-            NouvelleAffaireView()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-        }
-        .task { await etat.charger(installation, avec: parcours.service) }
-    }
-
-    private enum Ligne: Identifiable {
-        case squelette(Int)
-        case affaire(Affaire)
-
-        var id: String {
-            switch self {
-            case .squelette(let n): "squelette-\(n)"
-            case .affaire(let affaire): "affaire-\(affaire.id)"
+            NouvelleAffaireView(installation: installation, droits: droits, service: service) { creee in
+                etat.ajouter(creee)
+                onglet = "liste"
             }
         }
-    }
-
-    private var lignes: [Ligne] {
-        etat.phase == .chargement ? (0..<4).map(Ligne.squelette) : etat.retenues.map(Ligne.affaire)
+        .alert(
+            "Le geste n'a pas abouti",
+            isPresented: Binding(get: { etat.avis != nil }, set: { if !$0 { etat.avis = nil } }),
+            actions: { Button("OK", role: .cancel) {} },
+            message: { Text(etat.avis ?? "") }
+        )
+        .onChange(of: onglets) { _, ouverts in
+            if !ouverts.contains(where: { $0.id == onglet }) { onglet = "liste" }
+        }
+        .task {
+            await etat.charger(installation, avec: service)
+            await parcours.rafraichirProfil()
+        }
     }
 
     @ViewBuilder
-    private var etatVide: some View {
-        if case .erreur(let erreur) = etat.phase {
-            MessageErreur(texte: erreur.phrase) {
-                Task { await etat.charger(installation, avec: parcours.service) }
+    private func contenu(_ service: (any ServiceAffaires)?) -> some View {
+        switch onglet {
+        case "kanban":
+            KanbanAffaires(etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir)
+        case "archives":
+            ArchivesAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir)
+        default:
+            ListeAffaires(
+                etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir
+            ) {
+                nouvelle = true
             }
-            .padding(Mise.marge)
-        } else if etat.phase == .pret, etat.retenues.isEmpty {
-            if !etat.recherche.isEmpty {
-                ContentUnavailableView.search(text: etat.recherche)
-            } else {
-                ContentUnavailableView {
-                    Label("Aucune affaire", systemImage: "checkmark.bubble")
-                } description: {
-                    Text("Rien à signaler ici. Un problème dans la résidence ? Signalez-le.")
-                } actions: {
-                    Button("Nouvelle affaire") { nouvelle = true }
-                        .buttonStyle(.plein)
-                        .fixedSize()
+        }
+    }
+
+    private func ouvrir(_ affaire: Affaire) { chemin.append(AffaireAOuvrir(id: affaire.id)) }
+
+    /// Le choix de l'onglet, sur la matière de la barre : le contenu défile dessous.
+    private var enTete: some View {
+        VStack(spacing: 0) {
+            if !reseau.enLigne { BandeauHorsLigne() }
+            if onglets.count > 1 {
+                Picker("Onglet", selection: $onglet.animation(mouvementReduit ? nil : .snappy)) {
+                    ForEach(onglets) { onglet in
+                        Text(onglet.libelle).tag(onglet.id)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, Mise.marge)
+                .padding(.vertical, 8)
+                .accessibilityIdentifier("affaires.onglets")
             }
         }
+        .sensoryFeedback(.selection, trigger: onglet)
     }
 
-    @ViewBuilder
-    private func actionArchiver(_ affaire: Affaire) -> some View {
-        // L'écran n'offre que ce que le serveur permet ; archiver, jamais supprimer.
-        if parcours.service.peutArchiver(installation) {
-            Button {
-                Task { await etat.archiver(affaire, dans: installation, avec: parcours.service) }
-            } label: {
-                Label("Archiver", systemImage: "archivebox")
-            }
-            .tint(palette.primaryPlein)
-        }
-    }
-
-    @ViewBuilder
-    private func menu(_ affaire: Affaire) -> some View {
+    private var boutonNouvelle: some View {
         Button {
-            UIPasteboard.general.string = affaire.numero
+            nouvelle = true
         } label: {
-            Label("Copier le numéro", systemImage: "number")
+            Image(systemName: "plus")
+                .font(.body.weight(.semibold))
         }
-        ShareLink(item: installation.adresse.appending(path: "tickets/\(affaire.id)")) {
-            Label("Partager le lien", systemImage: "square.and.arrow.up")
-        }
-        actionArchiver(affaire)
+        .buttonStyle(.borderedProminent)
+        .buttonBorderShape(.circle)
+        .tint(palette.primaryPlein)
+        .accessibilityLabel("Nouvelle affaire")
+        .accessibilityIdentifier("affaires.nouvelle")
     }
 }
 
-private extension View {
-    /// Une carte posée dans la liste : sans séparateur, sur le fond de la page.
-    func rangee() -> some View {
-        listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 6, leading: Mise.marge, bottom: 6, trailing: Mise.marge))
-    }
+/// Une affaire à ouvrir dans la pile de l'onglet : son détail (`DetailAffaireView`).
+struct AffaireAOuvrir: Hashable {
+    let id: Int
 }
 
 extension AffairesView: EcranDeMenu {
     init(contexte: ContexteDeMenu) {
-        self.init(installation: contexte.installation)
+        self.init(installation: contexte.installation, titre: contexte.page.titre, chemin: contexte.chemin)
     }
 }

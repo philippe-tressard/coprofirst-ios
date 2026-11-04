@@ -15,7 +15,8 @@
 #   6. aucune automatisation ne soumet à Apple : rien ne part en revue sans le
 #      « oui » écrit de Philippe pour la version (skill publication-app-store).
 #   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
-#      coprofirst (scripts/generer-charte.py) ;
+#      coprofirst (scripts/generer-charte.py, ou le générateur d'un menu dans
+#      `Fonctions/<Menu>/Genere/`, en-tête « GÉNÉRÉ » en 1re ligne) ;
 #   8. aucun moteur web pour le texte du site : ni WebKit, ni conversion HTML de
 #      NSAttributedString — le HTML passe par TexteDuSite, seul (#22) ;
 #   9. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
@@ -87,12 +88,42 @@ done < <(git ls-files --stage)
 # aucune couleur écrite à la main dans le code Swift de l'app. Seuls le fichier
 # généré et la fabrique qu'il appelle (Charte.swift) en portent.
 COULEURS_MAIN='Color\(red:|UIColor\(red:|colorLiteral|RVBA\(0x|Color\.(red|blue|green|orange|yellow|purple|pink|black|white|gray)\b'
+# Un fichier qu'un générateur écrit dans le dossier d'un menu (`Fonctions/<Menu>/Genere/`,
+# #11) peut porter des couleurs — à condition que sa PREMIÈRE ligne le dise. Un fichier
+# de Genere/ sans cet en-tête est refusé, qu'il porte une couleur ou non.
+EN_TETE_GENERE='^// GÉNÉRÉ par scripts/[^ ]+ — NE PAS MODIFIER'
+GENERE='^CoproFirst/Fonctions/[^/]+/Genere/[^/]+\.swift$'
+genere_declare() { [[ "$1" =~ $GENERE ]] && head -1 "$2" | grep -qE "$EN_TETE_GENERE"; }
+# $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_couleur() {
+  case "$1" in CoproFirst/Charte/Palette*.swift|CoproFirst/Charte/Charte.swift) return ;; esac
+  if [[ "$1" =~ $GENERE ]] && ! genere_declare "$1" "$2"; then
+    echo "fichier de Genere/ sans l'en-tête « GÉNÉRÉ par scripts/… — NE PAS MODIFIER » en 1re ligne"
+  elif ! genere_declare "$1" "$2" && grep -nE "$COULEURS_MAIN" "$2" >/dev/null; then
+    echo "couleur écrite à la main ($(grep -noE "$COULEURS_MAIN" "$2" | head -1)) — passer par Charte (généré)"
+  fi
+}
+# Autotest, dans les deux sens : un contrôle qui ne refuse rien ne prouve rien.
+autotest_couleurs() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '// GÉNÉRÉ par scripts/x.py — NE PAS MODIFIER À LA MAIN.\nlet c = RVBA(0x01, 0x02, 0x03, 1)\n' > "$d/declare"
+  printf '// Écrit à la main.\nlet c = RVBA(0x01, 0x02, 0x03, 1)\n' > "$d/nu"
+  printf '// Écrit à la main.\nlet n = 1\n' > "$d/sans"
+  [ -z "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/declare")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/nu")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/sans")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Vue.swift "$d/declare")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Vue.swift "$d/nu")" ] || ok=1
+  [ -z "$(refus_couleur CoproFirst/Charte/Palette+Seine.swift "$d/nu")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_couleurs || echec "verifier-depot.sh : autotest des couleurs en échec"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
-  case "$f" in CoproFirst/Charte/Palette*.swift|CoproFirst/Charte/Charte.swift) continue ;; esac
-  if grep -nE "$COULEURS_MAIN" "$f" >/dev/null; then
-    echec "$f : couleur écrite à la main ($(grep -noE "$COULEURS_MAIN" "$f" | head -1)) — passer par Charte (généré)"
-  fi
+  motif=$(refus_couleur "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
