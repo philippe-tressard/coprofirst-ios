@@ -36,7 +36,8 @@ enum RegistreDesMenus {
 
         // #12 — "residence", "annuaire"
 
-        // #13 — "mon-lot", "prestataires"
+        "mon-lot": AccesView.self,
+        "prestataires": PrestatairesView.self,
 
         // #14 — "communaute", "faq", "notifications"
 

@@ -76,13 +76,13 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mon-lot` | `lots` | prévu | #13 |  |
-| `mon-lot` | `badges` | prévu | #13 |  |
-| `mon-lot` | `telecommandes` | prévu | #13 |  |
-| `mon-lot` | `location` | prévu | #13 |  |
-| `prestataires` | `prestataires` | prévu | #13 |  |
-| `prestataires` | `contrats` | prévu | #13 |  |
-| `prestataires` | `consommations` | prévu | #13 |  |
+| `mon-lot` | `lots` | fait | #13 | `Fonctions/Acces` — locataire, bailleur, autres ; le tableau des charges renvoie au site (calculé dans son front) |
+| `mon-lot` | `badges` | fait | #13 | Détenus, signaler perdu, nouvel accès, déclarer ; accès confiés (locataire), vue par locataire (bailleur) |
+| `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
+| `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
+| `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
+| `prestataires` | `contrats` | fait | #13 | En lecture : résumé, échéances, documents |
+| `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 
 ### #14 — Communauté, FAQ, Profil et Notifications
 
