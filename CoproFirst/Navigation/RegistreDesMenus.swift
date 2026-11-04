@@ -34,7 +34,8 @@ enum RegistreDesMenus {
 
         "mes-demandes": AffairesView.self,
 
-        // #12 — "residence", "annuaire"
+        "residence": ResidenceView.self,
+        "annuaire": AnnuaireView.self,
 
         "mon-lot": AccesView.self,
         "prestataires": PrestatairesView.self,
