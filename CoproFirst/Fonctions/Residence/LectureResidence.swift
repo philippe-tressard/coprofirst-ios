@@ -12,9 +12,9 @@ extension FicheResidence {
         self.init(
             nom: c.nom, adresse: c.adresse, photo: c.photoUrl, immatriculation: c.numeroImmatriculation,
             lotsPrincipaux: c.nbLotsPrincipaux, lotsTotal: c.nbLotsTotal, parkingsCommuns: c.nbParkingsCommuns ?? 0,
-            assurance: c.assuranceCompagnie, assuranceEcheance: Dates.jour(c.assuranceEcheance),
+            assurance: c.assuranceCompagnie, assuranceEcheance: FormatsDuSite.lire(c.assuranceEcheance),
             assuranceReconduit: c.assuranceReconduit ?? false, syndic: c.syndicCabinet,
-            syndicEcheance: Dates.jour(c.syndicEcheance), syndicEchu: c.syndicEchu ?? false)
+            syndicEcheance: FormatsDuSite.lire(c.syndicEcheance), syndicEchu: c.syndicEchu ?? false)
     }
 }
 
@@ -31,7 +31,7 @@ extension DocumentResidence {
         self.init(
             id: d.id, titre: d.titre, description: d.description.flatMap { $0.isEmpty ? nil : $0 },
             fichier: d.fichierNom, batimentId: d.batimentId, annee: d.annee,
-            date: Dates.jour(d.dateAg ?? d.dateDocument), parent: d.documentParentId, regle: d.regleResidenceId,
+            date: FormatsDuSite.lire(d.dateAg ?? d.dateDocument), parent: d.documentParentId, regle: d.regleResidenceId,
             rapport: d.diagnosticRapportId)
     }
 }
@@ -43,7 +43,7 @@ extension TypeDiagnostic {
             nonApplicable: t.nonApplicable ?? false,
             rapports: (t.rapports ?? []).map {
                 RapportDiagnostic(
-                    id: $0.id, titre: $0.titre, fichier: $0.fichierNom, date: Dates.jour($0.dateRapport),
+                    id: $0.id, titre: $0.titre, fichier: $0.fichierNom, date: FormatsDuSite.lire($0.dateRapport),
                     synthese: $0.synthese.flatMap { $0.isEmpty ? nil : $0 })
             })
     }

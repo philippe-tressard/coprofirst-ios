@@ -90,7 +90,7 @@ extension ServiceCoproFirst {
 
 extension ServiceAPI: ServiceAnnuaire {
     func annuaire(_ installation: Installation) async throws -> Annuaire {
-        let sortie = try await appeler { try await client(installation.adresse).annuaireAdminAnnuaireGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getAdminAnnuaire() }
         switch sortie {
         case .ok(let ok):
             let decodeur = JSONDecoder()

@@ -31,54 +31,59 @@ import Testing
     }
 }
 
-// MARK: - Onglets réservés (mêmes droits que le site)
+// MARK: - Onglets réservés (la table générée du site, #30)
 
-private func profil(statut: String?, _ roles: String...) -> ProfilResidence {
-    ProfilResidence(statut: statut, roles: roles, libelleLogement: nil)
+private func droits(statut: String?, _ roles: String...) -> DroitsOnglet {
+    DroitsOnglet(profil: ProfilResidence(statut: statut, roles: roles, libelleLogement: nil))
 }
 
+private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
+
 @Test func unLocataireNeVoitQueLaFiche() {
-    let locataire = profil(statut: "locataire", "résident")
-    #expect(OngletResidence.ouverts(locataire, accesReglement: true) == [.fiche])
-    #expect(DroitsResidence.locataire(locataire))
+    let locataire = droits(statut: "locataire", "résident")
+    #expect(ids(OngletsResidence.ouverts(locataire, accesReglement: true)) == ["fiche"])
+    #expect(locataire.locataire)
 }
 
 @Test func unProprietaireVoitLeCarnetEtLeReglement() {
-    let proprietaire = profil(statut: "copropriétaire_résident", "résident", "propriétaire")
-    #expect(OngletResidence.ouverts(proprietaire, accesReglement: true) == [.fiche, .carnet, .reglement])
-    #expect(!DroitsResidence.cs(proprietaire))
+    let proprietaire = droits(statut: "copropriétaire_résident", "résident", "propriétaire")
+    #expect(ids(OngletsResidence.ouverts(proprietaire, accesReglement: true)) == ["fiche", "carnet", "reglement"])
+    #expect(!proprietaire.cs)
 }
 
-@Test func leConseilEtLAdministrateurSontProprioOuCS() {
-    #expect(DroitsResidence.proprioOuCS(profil(statut: "locataire", "conseil_syndical")))
-    #expect(DroitsResidence.proprioOuCS(profil(statut: nil, "admin")))
-    #expect(DroitsResidence.cs(profil(statut: nil, "admin")))
-    #expect(!DroitsResidence.proprioOuCS(nil), "profil inconnu : rien de réservé ne s'ouvre")
+/// Chaque onglet ouvert a son écran : un onglet que l'app ne sait pas rendre ne
+/// s'affiche pas, plutôt que d'ouvrir la Fiche sous un autre nom.
+@Test func chaqueOngletDuSiteASonEcran() {
+    let cs = droits(statut: nil, "conseil_syndical")
+    #expect(cs.cs && cs.proprioOuCS)
+    for onglet in OngletsResidence.ouverts(cs, accesReglement: true) {
+        #expect(OngletResidence(rawValue: onglet.id) != nil, "« \(onglet.id) » sans écran")
+    }
+    #expect(OngletsResidence.ouverts(DroitsOnglet(profil: nil), accesReglement: true).count == 1, "profil inconnu")
 }
 
 /// L'administration n'a pas ouvert l'assistant : l'onglet se masque. Tant qu'elle n'a
 /// pas répondu (`nil`), il reste — un lien reçu avant ne serait pas renvoyé ailleurs.
 @Test func leReglementSeMasqueQuandLAccesEstFerme() {
-    let proprietaire = profil(statut: "copropriétaire_bailleur", "propriétaire")
-    #expect(OngletResidence.ouverts(proprietaire, accesReglement: false) == [.fiche, .carnet])
-    #expect(OngletResidence.ouverts(proprietaire, accesReglement: nil).contains(.reglement))
+    let proprietaire = droits(statut: "copropriétaire_bailleur", "propriétaire")
+    #expect(ids(OngletsResidence.ouverts(proprietaire, accesReglement: false)) == ["fiche", "carnet"])
+    #expect(ids(OngletsResidence.ouverts(proprietaire, accesReglement: nil)).contains("reglement"))
 }
 
 // MARK: - Fiche
 
 @Test func laFicheDitLeMandatEchuEtLaReconduction() throws {
-    let jour = try #require(Dates.jour("2026-06-30"))
+    let jour = try #require(FormatsDuSite.lire("2026-06-30"))
     #expect(TextesResidence.mandat(jour, echu: true) == " — mandat échu depuis le 30/06/2026")
     #expect(TextesResidence.mandat(jour, echu: false) == " — mandat jusqu'au 30/06/2026")
     #expect(TextesResidence.echeance(jour, reconduit: true) == " — échéance 30/06/2026 (reconduit tacitement)")
     #expect(TextesResidence.echeance(nil, reconduit: true).isEmpty)
 }
 
-@Test func unJourServiResteLeMemeJour() throws {
-    let jour = try #require(Dates.jour("2026-03-01T00:00:00"))
-    #expect(Calendar.current.component(.day, from: jour) == 1)
-    #expect(Dates.jour("pas une date") == nil)
-    #expect(Dates.jour(nil) == nil)
+/// La gouttière : la date de `fmtDate` en trois morceaux, comme `partiesDate` du site.
+@Test func laGouttiereDecoupeLaDateDuSite() throws {
+    let jour = try #require(FormatsDuSite.lire("2026-04-02"))
+    #expect(Gouttiere.parties(jour) == ["2", "avr.", "2026"])
 }
 
 @Test func lesAnnexesSeRangentSousLeurFiche() {

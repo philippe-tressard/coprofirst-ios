@@ -12,20 +12,22 @@ struct ResidenceView: View {
     @Environment(Reseau.self) private var reseau
     @Environment(\.palette) private var palette
     @Environment(\.dynamicTypeSize) private var taille
-    @State private var onglet = OngletResidence.fiche
+    @State private var onglet = OngletResidence.fiche.rawValue
     @State private var accesReglement: Bool?
 
-    private var profil: ProfilResidence? { parcours.ouverteAJour?.profil }
-    private var ouverts: [OngletResidence] { OngletResidence.ouverts(profil, accesReglement: accesReglement) }
+    private var droits: DroitsOnglet { DroitsOnglet(profil: parcours.ouverteAJour?.profil) }
+    private var ouverts: [OngletDuSite] { OngletsResidence.ouverts(droits, accesReglement: accesReglement) }
 
     var body: some View {
         Group {
             if let service = parcours.service.residence {
-                switch onglet {
-                case .fiche: FicheView(installation: installation, service: service)
-                case .carnet: CarnetView(installation: installation, service: service)
+                switch OngletResidence(rawValue: onglet) ?? .fiche {
+                case .fiche: FicheView(installation: installation, service: service, droits: droits)
+                case .carnet: CarnetView(installation: installation, service: service, droits: droits)
                 case .reglement:
-                    ReglementView(installation: installation, service: service, profil: profil) { onglet = .fiche }
+                    ReglementView(installation: installation, service: service, cs: droits.cs) {
+                        onglet = OngletResidence.fiche.rawValue
+                    }
                 }
             }
         }
@@ -44,11 +46,11 @@ struct ResidenceView: View {
         }
         .onChange(of: ouverts) { _, ouverts in
             // Un onglet qui se ferme (rôle, accès retiré) ramène sur la Fiche — `BarreOnglets`.
-            if !ouverts.contains(onglet) { onglet = .fiche }
+            if !ouverts.contains(where: { $0.id == onglet }) { onglet = OngletResidence.fiche.rawValue }
         }
         .task {
             await parcours.rafraichirProfil()
-            guard DroitsResidence.proprioOuCS(profil), let service = parcours.service.residence else { return }
+            guard droits.proprioOuCS, let service = parcours.service.residence else { return }
             // Une réponse en échec ne masque rien : l'onglet ouvert dira l'erreur.
             accesReglement = (try? await service.accesReglement(installation)) ?? true
         }
@@ -59,7 +61,7 @@ struct ResidenceView: View {
     @ViewBuilder
     private var choixOnglet: some View {
         let choix = Picker("Onglet", selection: $onglet) {
-            ForEach(ouverts) { Text($0.libelle).tag($0) }
+            ForEach(ouverts) { Text($0.libelle).tag($0.id) }
         }
         Group {
             if taille.isAccessibilitySize {

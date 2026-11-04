@@ -40,7 +40,7 @@ enum TextesCarnet {
 struct CarnetView: View {
     let installation: Installation
     let service: any ServiceResidence
-    @Environment(Parcours.self) private var parcours
+    let droits: DroitsOnglet
     @Environment(\.palette) private var palette
     @State private var perimetre: String?
     @State private var perimetres: [Perimetre] = []
@@ -72,7 +72,7 @@ struct CarnetView: View {
         LazyVStack(alignment: .leading, spacing: 20) {
             Text(TextesCarnet.aide).font(.subheadline).foregroundStyle(palette.textMuted)
             if !perimetres.isEmpty { filtre(compte: carnet.entrees.count) }
-            if DroitsResidence.cs(parcours.ouverteAJour?.profil) {
+            if droits.cs {
                 Label(TextesCarnet.bilanSurLeSite, systemImage: "chart.bar")
                     .font(.footnote)
                     .foregroundStyle(palette.textMuted)
@@ -98,7 +98,7 @@ struct CarnetView: View {
             HStack(spacing: 6) {
                 Image(systemName: "line.3.horizontal.decrease.circle")
                 Text(perimetres.first { $0.code == perimetre }?.libelle ?? TextesCarnet.tous)
-                Text(compte, format: .number).monospacedDigit().fontWeight(.bold)
+                Text(FormatsDuSite.nombre(compte)).monospacedDigit().fontWeight(.bold)
                 Image(systemName: "chevron.up.chevron.down").font(.caption)
             }
             .font(.subheadline.weight(.medium))
@@ -164,14 +164,10 @@ private struct CarteEntree: View {
             }
             HStack(spacing: 8) {
                 if let alerte = entree.alerte, !alerte.isEmpty {
-                    Text("⚠️ \(alerte)")
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(palette.orangeTexte)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
-                        .background(palette.orangeFond, in: .capsule)
+                    // Le badge orange du site (`badge-orange`).
+                    PastilleTeinte(libelle: "⚠️ \(alerte)", badge: "badge-orange", compacte: true)
                 }
-                if let numero = entree.numero { CapsuleNeutre(texte: "#\(numero)") }
+                if let numero = entree.numero { PastilleTeinte.neutre("#\(numero)") }
             }
             lien
         }

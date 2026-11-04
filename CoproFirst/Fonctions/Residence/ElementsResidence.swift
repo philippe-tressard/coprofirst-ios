@@ -52,7 +52,7 @@ struct Gouttiere: View {
             // Aux très grandes tailles, la gouttière tient sur une ligne, au-dessus du contenu.
             Label {
                 Text(
-                    [date.map { $0.formatted(.dateTime.day().month(.abbreviated).year()) }, nature.abrege]
+                    [date.map(FormatsDuSite.date), nature.abrege]
                         .compactMap { $0 }.joined(separator: " · "))
             } icon: {
                 Image(systemName: nature.symbole)
@@ -64,13 +64,17 @@ struct Gouttiere: View {
         }
     }
 
+    /// `fmtDate` en trois morceaux — « 2 », « avr. », « 2026 » —, comme `partiesDate`.
+    nonisolated static func parties(_ date: Date) -> [String] {
+        FormatsDuSite.date(date).split(whereSeparator: \.isWhitespace).map(String.init)
+    }
+
     private var colonne: some View {
         VStack(spacing: 2) {
-            if let date {
-                Text(date, format: .dateTime.day()).font(.title3.weight(.semibold)).monospacedDigit()
-                // « juin », « nov. » : en minuscules, comme le site (le format isolé capitalise).
-                Text(date.formatted(.dateTime.month(.abbreviated)).lowercased()).font(.caption2)
-                Text(date, format: .dateTime.year()).font(.caption2).monospacedDigit()
+            if let parties = date.map(Self.parties), parties.count == 3 {
+                Text(parties[0]).font(.title3.weight(.semibold)).monospacedDigit()
+                Text(parties[1]).font(.caption2)
+                Text(parties[2]).font(.caption2).monospacedDigit()
                     .padding(.bottom, 4)
             }
             Image(systemName: nature.symbole).font(.footnote)
@@ -79,7 +83,7 @@ struct Gouttiere: View {
         .foregroundStyle(palette.textMuted)
         .frame(width: largeur)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(date.map { $0.formatted(date: .long, time: .omitted) } ?? "")
+        .accessibilityLabel(date.map(FormatsDuSite.date) ?? "")
     }
 }
 
@@ -94,7 +98,8 @@ struct EnTeteRubrique: View {
             Text(titre).font(.titre(.title3)).foregroundStyle(palette.text)
             Spacer()
             if let compte, compte > 0 {
-                Text(compte, format: .number).font(.subheadline).monospacedDigit().foregroundStyle(palette.textMuted)
+                Text(FormatsDuSite.nombre(compte))
+                    .font(.subheadline).monospacedDigit().foregroundStyle(palette.textMuted)
             }
         }
         .accessibilityElement(children: .combine)
@@ -112,19 +117,11 @@ struct RubriqueVide: View {
     }
 }
 
-/// Une capsule qui DÉCRIT (bâtiment, année, fréquence) : neutre, elle ne signale pas.
-struct CapsuleNeutre: View {
-    let texte: String
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        Text(texte)
-            .font(.caption.weight(.medium))
-            .foregroundStyle(palette.text)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(palette.neutreFond, in: .capsule)
-            .overlay { Capsule().strokeBorder(palette.neutreBordure, lineWidth: 1) }
+extension PastilleTeinte {
+    /// Une capsule qui DÉCRIT (bâtiment, année, fréquence, numéro) : grise, elle ne
+    /// signale pas — `badge-gray` du site.
+    static func neutre(_ libelle: String) -> PastilleTeinte {
+        PastilleTeinte(libelle: libelle, badge: "badge-gray", compacte: true)
     }
 }
 

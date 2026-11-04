@@ -23,7 +23,7 @@ enum TextesAnnuaire {
 
     /// « Voté en AG 2026 - 12 juin 2026 ».
     static func voteEnAG(_ annee: Int, le date: Date?) -> String {
-        "Voté en AG \(String(annee))" + (date.map { " - \($0.formatted(date: .long, time: .omitted))" } ?? "")
+        "Voté en AG \(String(annee))" + (date.map { " - \(FormatsDuSite.dateLongue($0))" } ?? "")
     }
 }
 
@@ -91,7 +91,7 @@ private struct SectionConseil: View {
         VStack(alignment: .leading, spacing: 12) {
             EnTeteAnnuaire(titre: TextesAnnuaire.conseil)
             if let annee = annuaire.cs.agAnnee {
-                Text(TextesAnnuaire.voteEnAG(annee, le: Dates.jour(annuaire.cs.agDate)))
+                Text(TextesAnnuaire.voteEnAG(annee, le: FormatsDuSite.lire(annuaire.cs.agDate)))
                     .font(.subheadline).foregroundStyle(palette.textMuted)
             }
             if let lien = annuaire.whatsappUrl.flatMap(URL.init(string:)) {

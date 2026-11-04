@@ -9,6 +9,8 @@ import Foundation
 /// |---|---|---|
 /// | `date(_:)` | `fmtDate`, `front/src/lib/date.ts` | « 2 avr. 2026 » |
 /// | `dateCourte(_:)` | `fmtDateShort`, idem | « 02/04/2026 » |
+/// | `dateLongue(_:)` | `fmtDateLong`, idem | « 2 avril 2026 » |
+/// | `dateHeure(_:)` | `fmtDatetime`, idem | « 2 avr. 2026, 16:30 » |
 /// | `nombre(_:)` | `fmtNombre`, `front/src/lib/utils.ts` | « 47 047 », « 64,5 » |
 /// | `montant(_:devise:decimales:)` | `fmtMontant`, idem | « 1 234,5 € » |
 ///
@@ -34,9 +36,24 @@ enum FormatsDuSite {
         return valeur.formatted(style.day(.twoDigits).month(.twoDigits).year())
     }
 
+    /// `fmtDateLong` : « 2 avril 2026 » (#12).
+    static func dateLongue(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.day().month(.wide).year())
+    }
+
+    /// `fmtDatetime` : « 2 avr. 2026, 16:30 » — la date de `fmtDate`, une virgule,
+    /// l'heure sur 24 h à Paris (#12).
+    static func dateHeure(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return "\(date(valeur)), \(valeur.formatted(style.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits)))"
+    }
+
     /// Une date telle que l'API la sert (chaîne ISO), lue comme `new Date()` la lit.
     static func date(_ iso: String?) -> String { date(lire(iso)) }
     static func dateCourte(_ iso: String?) -> String { dateCourte(lire(iso)) }
+    static func dateLongue(_ iso: String?) -> String { dateLongue(lire(iso)) }
+    static func dateHeure(_ iso: String?) -> String { dateHeure(lire(iso)) }
 
     private static var style: Date.FormatStyle {
         Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, timeZone: paris)

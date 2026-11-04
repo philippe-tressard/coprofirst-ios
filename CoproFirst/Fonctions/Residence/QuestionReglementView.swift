@@ -37,7 +37,7 @@ struct QuestionReglementView: View {
 
     /// « Posée le … Avis indicatif… Rédigé par …, d'après …. » (`CarteQuestionReglement`).
     private var mention: String {
-        let posee = question.poseeLe.formatted(.dateTime.day().month(.abbreviated).year().hour().minute())
+        let posee = FormatsDuSite.dateHeure(question.poseeLe)
         var texte = "Posée le \(posee). Avis indicatif, qui ne se substitue pas aux actes authentiques."
         switch (question.modele, question.provenance) {
         case let (modele?, provenance?): texte += " Rédigé par \(modele), d'après \(provenance)."
@@ -49,7 +49,7 @@ struct QuestionReglementView: View {
     }
 
     private func riche(_ html: String) -> some View {
-        Text(TexteDuSite.riche(html)).tint(palette.primary).foregroundStyle(palette.text)
+        TexteRiche(html: html).tint(palette.primary).foregroundStyle(palette.text)
     }
 
     @ViewBuilder

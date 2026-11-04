@@ -36,7 +36,7 @@ struct RubriqueRegles: View {
                         }
                         if let html = regle.contenu, !html.isEmpty {
                             if depliee {
-                                Text(TexteDuSite.riche(html)).tint(palette.primary).foregroundStyle(palette.text)
+                                TexteRiche(html: html).tint(palette.primary).foregroundStyle(palette.text)
                             } else {
                                 Text(TexteDuSite.apercu(html)).lineLimit(3).foregroundStyle(palette.textMuted)
                             }
@@ -102,11 +102,11 @@ struct RubriqueDocuments: View {
     private func badges(_ document: DocumentResidence) -> some View {
         switch gouttiere {
         case .plan:
-            CapsuleNeutre(texte: contenu.libelleBatiment(document.batimentId))
+            PastilleTeinte.neutre(contenu.libelleBatiment(document.batimentId))
         case .assemblee:
             // Le périmètre d'un compte-rendu (« 🔹 Bât. A · Parking ») se compose dans le
             // front du site (`BadgePerimetre`) : l'app attend que l'API le serve (coprofirst#2505).
-            if let annee = document.annee { CapsuleNeutre(texte: String(annee)) }
+            if let annee = document.annee { PastilleTeinte.neutre(String(annee)) }
         default:
             EmptyView()
         }
@@ -138,7 +138,7 @@ struct RubriqueDiagnostics: View {
                 CarteAGouttiere(gouttiere: Gouttiere(nature: .diagnostic, date: dernier)) {
                     Text(type.nom).font(.headline).foregroundStyle(palette.text)
                     Text(type.texteLegislatif).font(.subheadline).foregroundStyle(palette.textMuted)
-                    if let frequence = type.frequence, !frequence.isEmpty { CapsuleNeutre(texte: frequence) }
+                    if let frequence = type.frequence, !frequence.isEmpty { PastilleTeinte.neutre(frequence) }
                     ForEach(type.rapports) { rapport in ligne(rapport) }
                 }
             }
@@ -161,7 +161,7 @@ struct RubriqueDiagnostics: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(rapport.titre).font(.subheadline.weight(.medium)).foregroundStyle(palette.text)
                         if let date = rapport.date {
-                            Text(date, format: .dateTime.day(.twoDigits).month(.twoDigits).year())
+                            Text(FormatsDuSite.dateCourte(date))
                                 .font(.caption).foregroundStyle(palette.textMuted)
                         }
                     }
@@ -187,7 +187,7 @@ struct RubriqueDiagnostics: View {
                 }
                 .buttonStyle(.plain)
                 if ouverte {
-                    Text(TexteDuSite.riche(html))
+                    TexteRiche(html: html)
                         .tint(palette.primary)
                         .foregroundStyle(palette.text)
                         .padding(.leading, 12)

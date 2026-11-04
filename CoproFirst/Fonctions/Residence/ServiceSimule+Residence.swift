@@ -61,7 +61,7 @@ private let verrouQuestions = NSLock()
 
 extension ServiceSimule {
     static let contenuFiche: ContenuFiche = {
-        func jour(_ texte: String) -> Date? { Dates.jour(texte) }
+        func jour(_ texte: String) -> Date? { FormatsDuSite.lire(texte) }
         func document(
             _ id: Int, _ titre: String, _ fichier: String, description: String? = nil, batiment: Int? = nil,
             annee: Int? = nil, date: String? = nil, parent: Int? = nil, regle: Int? = nil, rapport: Int? = nil
@@ -152,7 +152,8 @@ extension ServiceSimule {
         id: 1, question: "Puis-je installer une climatisation sur mon balcon ?",
         reponse: "<p>Oui, <strong>sous conditions</strong> : l'unité extérieure modifie l'aspect de la façade, "
             + "ce qui demande une autorisation de l'assemblée générale.</p>",
-        verdictLibelle: "Sous conditions", poseeLe: Dates.jour("2026-10-20") ?? .now, texteEnVigueur: true,
+        verdictLibelle: "Sous conditions", poseeLe: FormatsDuSite.lire("2026-10-20T08:05:00") ?? .now,
+        texteEnVigueur: true,
         selonReglement: "<p>L'article 9 interdit de modifier l'aspect extérieur sans accord de l'AG.</p>",
         selonAG: nil, synthese: nil, reserves: "<p>Le bruit de l'unité reste soumis aux règles de voisinage.</p>",
         provenance: "le règlement de copropriété de 2019", modele: "l'assistant", auteur: nil, dansLaFAQ: false,

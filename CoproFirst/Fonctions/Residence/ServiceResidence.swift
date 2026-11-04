@@ -38,7 +38,7 @@ extension ServiceAPI: ServiceResidence {
         let client = client(installation.adresse)
         func documents(_ categorie: String? = nil, annexes: String? = nil) async throws -> [DocumentResidence] {
             let sortie = try await appeler {
-                try await client.listDocumentsDocumentsGet(query: .init(categorie: categorie, annexesDe: annexes))
+                try await client.getDocuments(query: .init(categorie: categorie, annexesDe: annexes))
             }
             switch sortie {
             case .ok(let ok): return try ok.body.json.map(DocumentResidence.init(lu:))
@@ -46,10 +46,10 @@ extension ServiceAPI: ServiceResidence {
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        async let copropriete = appeler { try await client.getCoproprieteCoproprieteGet() }
-        async let batiments = appeler { try await client.getBatimentsCoproprieteBatimentsGet() }
-        async let regles = appeler { try await client.listReglesReglesResidenceGet() }
-        async let diagnostics = appeler { try await client.listTypesDiagnosticsTypesGet() }
+        async let copropriete = appeler { try await client.getCopropriete() }
+        async let batiments = appeler { try await client.getCoproprieteBatiments() }
+        async let regles = appeler { try await client.getReglesResidence() }
+        async let diagnostics = appeler { try await client.getDiagnosticsTypes() }
         async let plans = documents("plan_residence")
         async let reglements = documents("reglement_copropriete")
         async let comptesRendus = documents("pv_ag")
@@ -86,7 +86,7 @@ extension ServiceAPI: ServiceResidence {
     func rapport(_ id: Int, nom: String, dans installation: Installation) async throws -> URL {
         let client = client(installation.adresse)
         return try await fichierServi(nom: nom, defaut: "rapport-\(id)") {
-            let sortie = try await client.downloadRapportDiagnosticsRapportsRapportIdTéléchargerGet(
+            let sortie = try await client.getDiagnosticsRapportsRapportIdTélécharger(
                 path: .init(rapportId: id))
             if case .undocumented(let statut, _) = sortie { throw ErreurService.depuisLecture(statut) }
         }
@@ -94,9 +94,9 @@ extension ServiceAPI: ServiceResidence {
 
     func carnet(perimetre: String?, dans installation: Installation) async throws -> ContenuCarnet {
         let client = client(installation.adresse)
-        async let equipements = appeler { try await client.listerEquipementsEquipementsGet() }
+        async let equipements = appeler { try await client.getEquipements() }
         let sortie = try await appeler {
-            try await client.lireCarnetCarnetEntretienGet(query: .init(perimetre: perimetre))
+            try await client.getCarnetEntretien(query: .init(perimetre: perimetre))
         }
         var libelles: [String: String] = [:]
         if case .ok(let ok) = try? await equipements, let lus = try? ok.body.json {
@@ -113,7 +113,7 @@ extension ServiceAPI: ServiceResidence {
     }
 
     func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        let sortie = try await appeler { try await client(installation.adresse).listerPerimetresPerimetresGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
         switch sortie {
         case .ok(let ok): return try ok.body.json.filter(\.actif).map { Perimetre(code: $0.code, libelle: $0.libelle) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -122,7 +122,7 @@ extension ServiceAPI: ServiceResidence {
     }
 
     func accesReglement(_ installation: Installation) async throws -> Bool {
-        let sortie = try await appeler { try await client(installation.adresse).accesReglementAccesGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getReglementAcces() }
         switch sortie {
         case .ok(let ok): return try ok.body.json.acces
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -132,8 +132,8 @@ extension ServiceAPI: ServiceResidence {
 
     func reglement(_ installation: Installation) async throws -> (EtatReglement, [QuestionReglement]) {
         let client = client(installation.adresse)
-        async let etat = appeler { try await client.etatReglementGet() }
-        async let questions = appeler { try await client.listerQuestionsReglementQuestionsGet() }
+        async let etat = appeler { try await client.getReglement() }
+        async let questions = appeler { try await client.getReglementQuestions() }
         let lu: Components.Schemas.EtatReglement
         switch try await etat {
         case .ok(let ok): lu = try ok.body.json
@@ -153,7 +153,7 @@ extension ServiceAPI: ServiceResidence {
 
     func poser(_ question: String, dans installation: Installation) async throws -> QuestionReglement {
         let sortie = try await appeler {
-            try await client(installation.adresse).poserQuestionReglementQuestionsPost(
+            try await client(installation.adresse).postReglementQuestions(
                 body: .json(.init(question: question)))
         }
         switch sortie {

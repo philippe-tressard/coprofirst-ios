@@ -38,12 +38,11 @@ enum TextesReglement {
 struct ReglementView: View {
     let installation: Installation
     let service: any ServiceResidence
-    let profil: ProfilResidence?
+    /// `$isCS` du site (conseil syndical ou administration) : il choisit les textes.
+    let cs: Bool
     var ouvrirFiche: () -> Void = {}
     @Environment(\.palette) private var palette
     @State private var nouvelles: [QuestionReglement] = []
-
-    private var cs: Bool { DroitsResidence.cs(profil) }
 
     var body: some View {
         let service = service
@@ -231,7 +230,7 @@ struct PiedQuestion: View {
     private var capsules: some View {
         // La couleur du verdict (oui, non, sous conditions…) se décide dans le front du
         // site (`BadgeVerdict`) : l'app la montre neutre en attendant l'API (coprofirst#2505).
-        CapsuleNeutre(texte: question.verdictLibelle)
+        PastilleTeinte.neutre(question.verdictLibelle)
         if !question.extraits.isEmpty {
             let n = question.extraits.count
             Text("\(question.verifies)/\(n) extrait\(n > 1 ? "s" : "") vérifié\(question.verifies > 1 ? "s" : "")")

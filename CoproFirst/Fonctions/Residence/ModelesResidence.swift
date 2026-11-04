@@ -115,7 +115,7 @@ struct EntreeCarnet: Codable, Hashable, Sendable, Identifiable {
     var id: String { "\(origine)-\(lien ?? libelle)-\(date)" }
 
     /// Le jour de l'entrée (le serveur sert une date ISO, `AAAA-MM-JJ`).
-    var jour: Date? { Dates.jour(date) }
+    var jour: Date? { FormatsDuSite.lire(date) }
 }
 
 /// Le carnet tel que le serveur le sert : les entrées, dans son ordre.
@@ -197,15 +197,5 @@ struct ExtraitReglement: Hashable, Sendable {
     var origine: String? {
         let morceaux = [acte, page].compactMap { $0 }.filter { !$0.isEmpty }
         return morceaux.isEmpty ? reference : morceaux.joined(separator: " — ")
-    }
-}
-
-/// Les dates du serveur : `AAAA-MM-JJ` pour un jour, sur le calendrier de l'app.
-enum Dates {
-    static func jour(_ texte: String?) -> Date? {
-        guard let texte else { return nil }
-        // Lu à minuit sur le fuseau de l'appareil : le jour affiché reste celui servi.
-        let format = Date.ISO8601FormatStyle(timeZone: .current).year().month().day()
-        return try? Date(String(texte.prefix(10)), strategy: format)
     }
 }

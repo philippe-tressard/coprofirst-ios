@@ -9,7 +9,7 @@ import SwiftUI
 struct FicheView: View {
     let installation: Installation
     let service: any ServiceResidence
-    @Environment(Parcours.self) private var parcours
+    let droits: DroitsOnglet
 
     var body: some View {
         let service = service
@@ -33,8 +33,7 @@ struct FicheView: View {
     }
 
     private func sections(_ contenu: ContenuFiche) -> some View {
-        let profil = parcours.ouverteAJour?.profil
-        let locataire = DroitsResidence.locataire(profil)
+        let locataire = droits.locataire
         return LazyVStack(alignment: .leading, spacing: 28) {
             VStack(alignment: .leading, spacing: 16) {
                 BanniereResidence(fiche: contenu.fiche, installation: installation)
@@ -94,6 +93,7 @@ private struct BanniereResidence: View {
 /// qu'elle a CONTRACTÉ (assurance, syndic), puis sa composition par bâtiment.
 private struct CarteFiche: View {
     let contenu: ContenuFiche
+    @Environment(\.dynamicTypeSize) private var taille
     @Environment(\.palette) private var palette
 
     private var fiche: FicheResidence { contenu.fiche }
@@ -104,18 +104,24 @@ private struct CarteFiche: View {
                 if !fiche.adresse.isEmpty {
                     Champ(libelle: TextesResidence.adresse) { Text(fiche.adresse) }
                 }
-                let colonnes = [GridItem(.adaptive(minimum: 140), alignment: .topLeading)]
+                // Une colonne aux très grandes tailles : deux y couperaient chaque libellé.
+                let colonnes =
+                    taille.isAccessibilitySize
+                    ? [GridItem(.flexible(), alignment: .topLeading)]
+                    : [GridItem(.adaptive(minimum: 140), alignment: .topLeading)]
                 LazyVGrid(columns: colonnes, alignment: .leading, spacing: 12) {
                     if let immatriculation = fiche.immatriculation {
                         Champ(libelle: TextesResidence.immatriculation) {
+                            // Un numéro ne se coupe pas : il rétrécit plutôt, aux très grandes tailles.
                             Text(immatriculation).fontWeight(.bold).foregroundStyle(palette.primary)
+                                .lineLimit(1).minimumScaleFactor(0.5)
                         }
                     }
                     if let lots = fiche.lotsPrincipaux {
-                        Champ(libelle: TextesResidence.lotsPrincipaux) { Text(lots, format: .number) }
+                        Champ(libelle: TextesResidence.lotsPrincipaux) { Text(FormatsDuSite.nombre(lots)) }
                     }
                     if let lots = fiche.lotsTotal {
-                        Champ(libelle: TextesResidence.lotsTotal) { Text(lots, format: .number) }
+                        Champ(libelle: TextesResidence.lotsTotal) { Text(FormatsDuSite.nombre(lots)) }
                     }
                 }
                 if fiche.assurance != nil || fiche.syndic != nil {
@@ -237,5 +243,5 @@ private struct CompositionBatiments: View {
     }
 
     /// « — » pour zéro, comme le tableau du site.
-    private func valeur(_ nombre: Int) -> String { nombre > 0 ? nombre.formatted() : "—" }
+    private func valeur(_ nombre: Int) -> String { nombre > 0 ? FormatsDuSite.nombre(nombre) : FormatsDuSite.tiret }
 }
