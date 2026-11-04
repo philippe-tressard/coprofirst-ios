@@ -25,7 +25,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | API | **le client généré** (`ClientCoproFirst.client(installation:)`), jamais `URLSession` à la main ; une route absente = un ticket dans coprofirst | `Paquets/ClientAPI` |
 | Préfixe `/api` | ajouté par `ClientCoproFirst.adresseAPI`, et nulle part ailleurs | idem |
 | Concurrence | Swift 6, `SWIFT_STRICT_CONCURRENCY: complete` | `project.yml` |
-| Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte | `CoproFirstTests/`, `CoproFirstUITests/` |
+| Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte ni leur type — « Tests d'interface » ci-dessous | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer-charte.py`) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
 | Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtNombre`, `fmtMontant` ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
@@ -135,6 +135,33 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `CarteDuFil`, `CarteOuvrable`, `DestinationDuFil` | une carte du fil ; toucher → résumé ; la cible (`affaire`, `sondage`, `document`) → son détail | `Commun/Fil/` |
 | `FeuilleResidence`, `PastillesRoles`, `.confirmationDeSortie` | la feuille « où suis-je » ; les rôles ; se déconnecter / changer de résidence | `Commun/Compte/` |
 | `TexteDuSite.apercu`, `TexteRiche(html:)` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `TexteRiche(html:)` pour un détail (`.font`, `.foregroundStyle`, `.tint(palette.primary)` de l'appelant ; listes en retrait suspendu, `<li><p>` de l'éditeur compris) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
+
+## Tests d'interface — la CI tranche, pas le poste (#11, #12)
+
+La CI tourne sous **iOS 26.5** (iPhone 17 Pro), le poste sous **iOS 27.2** : un même
+contrôle n'y a pas la même forme d'accessibilité. Un test vert au poste n'est pas vert ;
+seule la CI le dit.
+
+1. **Jamais par le TYPE.** Ni `app.buttons[…]`, ni `app.links[…]`, ni `app.textFields[…]` :
+   un `Link` est un lien au poste et autre chose sur le runner (#12). Par identifiant,
+   quel que soit le type :
+   ```swift
+   app.descendants(matching: .any).matching(identifier: "nouvelle.titre").firstMatch
+   ```
+   Un élément sans identifiant (onglet de la barre, segment d'un `Picker`) se cherche
+   par son libellé, de la même façon : `app.descendants(matching: .any)["Kanban"]`.
+2. **Un identifiant peut être porté par un CONTENEUR** (« Other ») qui enveloppe le
+   contrôle — un bouton de barre d'outils sous iOS 26. `firstMatch` convient pour
+   `tap()`, **pas** pour lire `isEnabled` ou `value` : le conteneur est toujours actif.
+   L'état se lit par un prédicat sur tous les éléments de l'identifiant (#11) :
+   ```swift
+   app.descendants(matching: .any)
+       .matching(NSPredicate(format: "identifier == %@ AND isEnabled == false", "nouvelle.envoyer"))
+       .firstMatch.exists
+   ```
+3. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
+   journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
+   affecting … » donne le type réellement trouvé).
 
 ## À trancher quand le premier cas arrive
 
