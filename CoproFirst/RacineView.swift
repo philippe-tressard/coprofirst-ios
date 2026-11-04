@@ -41,6 +41,7 @@ struct RacineView: View {
                 .presentationDragIndicator(.visible)
         }
         .environment(\.palette, palette)
+        .themeChoisi()
         .animation(.smooth(duration: 0.35), value: parcours.ouverte)
         .animation(.smooth(duration: 0.4), value: palette.code)
         .onChange(of: palette.code, initial: true) { ApparenceNavigation.appliquer(palette) }

@@ -26,6 +26,7 @@ import Testing
 /// Une page sans écran inscrit s'ouvre quand même : « Bientôt », jamais un vide.
 @MainActor
 @Test func unePageNonInscriteDitBientot() {
-    #expect(RegistreDesMenus.ecrans["faq"] == nil, "si la FAQ arrive (#14), choisir une autre page ici")
-    #expect(PagesParDefaut.toutes.contains { $0.id == "faq" })
+    // Les huit pages de la barre ont toutes un ticket (#11 à #14) : la page témoin
+    // est hors de la barre, réservée à un rôle.
+    #expect(RegistreDesMenus.ecrans["delegations"] == nil, "si les Délégations arrivent (#15), choisir une autre page")
 }

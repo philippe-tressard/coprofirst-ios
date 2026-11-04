@@ -14,16 +14,7 @@ struct PastilleOuSuisJe: ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
             Pastille(installation: installation)
         }
-        if cloche {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                } label: {
-                    Image(systemName: "bell")
-                }
-                .accessibilityLabel("Alertes")
-                .accessibilityHint("Bientôt")
-            }
-        }
+        if cloche, let installation { ClocheNotifications(installation: installation) }
     }
 
     private struct Pastille: View {
