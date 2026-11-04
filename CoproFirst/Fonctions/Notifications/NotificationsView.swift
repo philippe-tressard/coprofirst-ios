@@ -98,7 +98,7 @@ struct NotificationsView: View {
     private var barre: some ToolbarContent {
         if enFeuille {
             ToolbarItem(placement: .confirmationAction) {
-                Button("OK") { fermer() }
+                Button("OK") { fermer() }.accessibilityIdentifier("notifications.ok")
             }
         }
         ToolbarItem(placement: .bottomBar) {

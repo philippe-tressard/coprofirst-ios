@@ -74,6 +74,7 @@ struct DetailAnnonce: View {
             if let courriel = annonce.auteurEmail, let lien = URL(string: "mailto:\(courriel)") {
                 Link(destination: lien) { Label(auteur, systemImage: "envelope") }
                     .tint(palette.primary)
+                    .accessibilityIdentifier("annonce.contact")
             } else {
                 Label(auteur, systemImage: "person").foregroundStyle(palette.textMuted)
             }

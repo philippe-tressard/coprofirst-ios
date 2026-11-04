@@ -41,6 +41,17 @@ final class CommunauteUITests: XCTestCase {
         return false
     }
 
+    /// Un élément par son identifiant (ou son libellé), QUEL QUE SOIT SON TYPE : un `Link`
+    /// n'a pas le même type d'accessibilité sous iOS 26 (CI) et 27 (poste).
+    private func el(_ app: XCUIApplication, _ identifiant: String) -> XCUIElement {
+        app.descendants(matching: .any)[identifiant].firstMatch
+    }
+
+    /// Le premier élément dont le libellé contient `texte`, quel que soit son type.
+    private func texte(_ app: XCUIApplication, _ texte: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", texte)).firstMatch
+    }
+
     /// L'élément, ramené à l'écran : en très grand texte, il faut souvent défiler.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> XCUIElement {
@@ -57,7 +68,7 @@ final class CommunauteUITests: XCTestCase {
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 8))
         plus.tap()
-        let ligne = atteindre(app, app.buttons[libelle].firstMatch)
+        let ligne = atteindre(app, el(app, libelle))
         XCTAssertTrue(ligne.exists, "« \(libelle) » dans Plus")
         ligne.tap()
     }
@@ -66,57 +77,56 @@ final class CommunauteUITests: XCTestCase {
     func testLaCommunauteSOuvreEtUneIdeeSeSoutient() throws {
         let app = lancer()
         ouvrirDansPlus(app, "Communauté")
-        XCTAssertTrue(app.buttons["sondage.12"].waitForExistence(timeout: 8))
+        XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
         capture("1-communaute-sondages")
 
-        app.segmentedControls["communaute.onglets"].buttons.element(boundBy: 1).tap()
-        let coeur = atteindre(app, app.buttons["idee.5.voter"])
+        el(app, "communaute.onglets").buttons.element(boundBy: 1).tap()
+        let coeur = atteindre(app, el(app, "idee.5.voter"))
         XCTAssertTrue(coeur.exists)
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
         coeur.tap()
-        XCTAssertTrue(
-            app.buttons["Retirer mon vote"].waitForExistence(timeout: 5), "le cœur se remplit, le vote se voit")
+        XCTAssertTrue(lu(coeur, contient: "Retirer mon vote", delai: 5), "le cœur se remplit, le vote se voit")
         capture("2-communaute-idees")
 
-        atteindre(app, app.buttons["idee.3"]).tap()
-        XCTAssertTrue(atteindre(app, app.staticTexts["Excellente idée, je veux bien m'en occuper."]).exists)
+        atteindre(app, el(app, "idee.3")).tap()
+        XCTAssertTrue(atteindre(app, texte(app, "Excellente idée, je veux bien m'en occuper.")).exists)
         capture("3-idee-et-reponses")
         app.navigationBars.buttons.firstMatch.tap()
 
-        app.segmentedControls["communaute.onglets"].buttons.element(boundBy: 2).tap()
-        let annonce = atteindre(app, app.buttons["annonce.21"])
+        el(app, "communaute.onglets").buttons.element(boundBy: 2).tap()
+        let annonce = atteindre(app, el(app, "annonce.21"))
         XCTAssertTrue(annonce.exists)
         capture("4-communaute-annonces")
         annonce.tap()
-        XCTAssertTrue(atteindre(app, app.links["Voisine du 2ᵉ"]).exists, "le contact est un lien")
+        XCTAssertTrue(atteindre(app, el(app, "annonce.contact")).exists, "le contact est un lien")
         capture("5-annonce")
         app.navigationBars.buttons.firstMatch.tap()
 
-        app.segmentedControls["communaute.onglets"].buttons.element(boundBy: 3).tap()
+        el(app, "communaute.onglets").buttons.element(boundBy: 3).tap()
         XCTAssertTrue(app.descendants(matching: .any)["avis.4"].waitForExistence(timeout: 8))
         capture("6-communaute-avis")
-        app.buttons["communaute.creer"].tap()
+        el(app, "communaute.creer").tap()
         XCTAssertTrue(app.navigationBars["Donner mon avis"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.buttons["formulaire.enregistrer"].isEnabled, "rien n'est saisi : le bouton attend")
+        XCTAssertFalse(el(app, "formulaire.enregistrer").isEnabled, "rien n'est saisi : le bouton attend")
         capture("7-donner-mon-avis")
     }
 
     @MainActor
     func testLaClocheOuvreLesNotificationsEtToutSeMarqueLu() throws {
         let app = lancer()
-        let cloche = app.buttons["cloche"].firstMatch
+        let cloche = el(app, "cloche")
         XCTAssertTrue(cloche.waitForExistence(timeout: 8))
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
             lu(cloche, contient: "2"), "la cloche dit 2 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
         cloche.tap()
-        let tout = app.buttons["notifications.toutMarquerLu"]
+        let tout = el(app, "notifications.toutMarquerLu")
         XCTAssertTrue(tout.waitForExistence(timeout: 8))
         capture("8-notifications")
         tout.tap()
         XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
-        app.buttons["OK"].tap()
-        XCTAssertFalse(lu(app.buttons["cloche"].firstMatch, contient: "2", delai: 3), "la cloche n'a plus de pastille")
+        el(app, "notifications.ok").tap()
+        XCTAssertFalse(lu(el(app, "cloche"), contient: "2", delai: 3), "la cloche n'a plus de pastille")
     }
 
     @MainActor
@@ -126,15 +136,15 @@ final class CommunauteUITests: XCTestCase {
         let question = atteindre(app, app.descendants(matching: .any)["faq.2"])
         XCTAssertTrue(question.exists)
         question.tap()
-        let reponse = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Pas de gravats"))
-        XCTAssertTrue(atteindre(app, reponse.firstMatch).exists, "la réponse s'est dépliée")
+        let reponse = texte(app, "Pas de gravats")
+        XCTAssertTrue(atteindre(app, reponse).exists, "la réponse s'est dépliée")
         capture("9-faq")
         app.navigationBars.buttons.firstMatch.tap()
 
-        atteindre(app, app.buttons["Profil"].firstMatch).tap()
-        XCTAssertTrue(atteindre(app, app.staticTexts["resident@exemple.fr"]).exists)
+        atteindre(app, el(app, "plus.profil")).tap()
+        XCTAssertTrue(atteindre(app, texte(app, "resident@exemple.fr")).exists)
         capture("10-profil")
-        let sombre = atteindre(app, app.segmentedControls["profil.theme"].buttons["Sombre"])
+        let sombre = atteindre(app, el(app, "profil.theme").buttons["Sombre"])
         XCTAssertTrue(sombre.exists)
         sombre.tap()
         XCTAssertTrue(sombre.isSelected, "le thème choisi est retenu")
