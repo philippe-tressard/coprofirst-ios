@@ -32,23 +32,33 @@ extension ServiceSimule: ServiceCommunaute {
 
     func idees(_ installation: Installation) async throws -> [Idee] {
         try await Task.sleep(for: .milliseconds(400))
-        return [
-            Idee(
-                id: 3, titre: "Un composteur partagé dans le jardin",
-                description: "<p>Pour réduire nos déchets et nourrir les massifs.</p>", auteurId: 7,
-                statut: "retenue", creeLe: Self.dans(jours: -12), nbVotes: 18, monVote: true, archivee: false,
-                reponses: [Self.reponse(1, "Excellente idée, je veux bien m'en occuper.", estCs: false)]),
-            Idee(
-                id: 5, titre: "Une boîte à livres dans le hall A",
-                description: "<p>Une étagère où chacun dépose et emprunte.</p>", auteurId: 4, statut: "ouverte",
-                creeLe: Self.dans(jours: -1), nbVotes: 9, monVote: false, archivee: false,
-                reponses: [Self.reponse(2, "Le conseil syndical en parlera jeudi.", estCs: true)]),
-            Idee(
-                id: 1, titre: "Repeindre la cage d'escalier", description: "<p>Elle en a bien besoin.</p>",
-                auteurId: 2, statut: "realisee", creeLe: Self.dans(jours: -200), nbVotes: 31, monVote: false,
-                archivee: true, reponses: []),
-        ]
+        // Les votes donnés pendant la session : la liste relue les montre, comme le serveur.
+        let basculees = VotesSimules.pour(self).lire()
+        return Self.ideesInitiales.map { idee in
+            guard basculees.contains(idee.id) else { return idee }
+            var votee = idee
+            votee.monVote.toggle()
+            votee.nbVotes += votee.monVote ? 1 : -1
+            return votee
+        }
     }
+
+    private static let ideesInitiales: [Idee] = [
+        Idee(
+            id: 3, titre: "Un composteur partagé dans le jardin",
+            description: "<p>Pour réduire nos déchets et nourrir les massifs.</p>", auteurId: 7,
+            statut: "retenue", creeLe: ServiceSimule.dans(jours: -12), nbVotes: 18, monVote: true, archivee: false,
+            reponses: [ServiceSimule.reponse(1, "Excellente idée, je veux bien m'en occuper.", estCs: false)]),
+        Idee(
+            id: 5, titre: "Une boîte à livres dans le hall A",
+            description: "<p>Une étagère où chacun dépose et emprunte.</p>", auteurId: 4, statut: "ouverte",
+            creeLe: ServiceSimule.dans(jours: -1), nbVotes: 9, monVote: false, archivee: false,
+            reponses: [ServiceSimule.reponse(2, "Le conseil syndical en parlera jeudi.", estCs: true)]),
+        Idee(
+            id: 1, titre: "Repeindre la cage d'escalier", description: "<p>Elle en a bien besoin.</p>",
+            auteurId: 2, statut: "realisee", creeLe: ServiceSimule.dans(jours: -200), nbVotes: 31, monVote: false,
+            archivee: true, reponses: []),
+    ]
 
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
@@ -56,7 +66,7 @@ extension ServiceSimule: ServiceCommunaute {
 
     func voterIdee(_ id: Int, dans installation: Installation) async throws -> String? {
         try await Task.sleep(for: .milliseconds(200))
-        return "Vote enregistré"
+        return VotesSimules.pour(self).basculer(id) ? "Vote enregistré" : "Vote retiré"
     }
 
     func annonces(_ installation: Installation) async throws -> [Annonce] {
@@ -147,5 +157,35 @@ extension ServiceSimule: ServiceCommunaute {
             id: id, auteurId: estCs ? 1 : 5, contenu: contenu, creeLe: dans(jours: -0.5),
             auteurNom: estCs ? "Conseil syndical" : "Voisin du bât. A", auteurBatiment: "Bât. A",
             auteurRole: estCs ? "Conseil syndical" : "Résident", estCs: estCs)
+    }
+}
+
+/// Les idées dont le vote a basculé pendant la session — un jeu par service simulé,
+/// pour que deux tests ne se voient pas (une extension n'a pas de propriété stockée).
+private final class VotesSimules: @unchecked Sendable {
+    private static let verrouGlobal = NSLock()
+    nonisolated(unsafe) private static var parService: [ObjectIdentifier: VotesSimules] = [:]
+    private let verrou = NSLock()
+    private var basculees: Set<Int> = []
+
+    static func pour(_ service: ServiceSimule) -> VotesSimules {
+        verrouGlobal.withLock {
+            let cle = ObjectIdentifier(service)
+            if let votes = parService[cle] { return votes }
+            let neufs = VotesSimules()
+            parService[cle] = neufs
+            return neufs
+        }
+    }
+
+    func lire() -> Set<Int> { verrou.withLock { basculees } }
+
+    /// Bascule le vote ; rend `true` quand l'idée est désormais basculée.
+    func basculer(_ id: Int) -> Bool {
+        verrou.withLock {
+            if basculees.remove(id) != nil { return false }
+            basculees.insert(id)
+            return true
+        }
     }
 }

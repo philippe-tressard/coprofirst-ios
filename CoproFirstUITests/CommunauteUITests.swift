@@ -112,7 +112,7 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
         coeur.tap()
         XCTAssertTrue(
-            lu(app, "idee.5.voter", contient: "Retirer mon vote", delai: 5), "le cœur se remplit, le vote se voit")
+            lu(app, "idee.5.voter", contient: "Retirer mon vote"), "le cœur se remplit, le vote se voit")
         capture("2-communaute-idees")
 
         atteindre(app, el(app, "idee.3")).tap()

@@ -110,3 +110,16 @@ private struct Factice: ServiceCommunaute {
     #expect(idee.nbVotes == 2 && idee.monVote)
     #expect(idee.creeLe == ISO8601DateFormatter().date(from: "2026-11-04T08:30:00Z"), "sans fuseau = UTC")
 }
+
+/// L'API simulée retient un vote : la liste relue après le geste le montre (sans quoi
+/// le cœur se viderait aussitôt — vu au test d'interface).
+@Test func unVoteSimuleSeRelitEtSeRetire() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let residence = ServiceSimule.residence
+    let avant = try #require(try await service.idees(residence).first { $0.id == 5 })
+    #expect(try await service.voterIdee(5, dans: residence) == "Vote enregistré")
+    let apres = try #require(try await service.idees(residence).first { $0.id == 5 })
+    #expect(apres.monVote != avant.monVote && apres.nbVotes == avant.nbVotes + 1)
+    #expect(try await service.voterIdee(5, dans: residence) == "Vote retiré")
+    #expect(try await service.idees(residence).first { $0.id == 5 } == avant, "le second toucher retire le vote")
+}
