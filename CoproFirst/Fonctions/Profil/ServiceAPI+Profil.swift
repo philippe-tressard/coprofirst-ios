@@ -36,14 +36,10 @@ extension ServiceAPI: ServiceProfil {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        // Le mot de passe actuel refusé, ou un nouveau trop faible : la phrase du serveur.
-        case .undocumented(400, let charge):
-            var octets: [UInt8] = []
-            if let corps = charge.body {
-                for try await morceau in corps where octets.count < 4_096 { octets += morceau }
-            }
-            throw RefusDuServeur(json: Data(octets)) ?? ErreurService.inattendue(400)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        // Le mot de passe actuel refusé, ou un nouveau trop faible : la phrase du serveur
+        // (`RefusDuServeur`, lu par `ServiceAPI.refus`, Fonctions/Acces — à monter dans
+        // Commun/ avec #41).
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -150,19 +146,4 @@ extension Compte {
             restreindreAMesBatiments: moi.restreindreAMesBatiments ?? false,
             refusTelemetrie: moi.optOutTelemetrie ?? false)
     }
-}
-
-/// Un refus que le serveur explique (`{"detail": "…"}`) : sa phrase, telle quelle.
-struct RefusDuServeur: Error, Equatable {
-    let phrase: String
-
-    init?(json: Data) {
-        struct Detail: Decodable { let detail: String }
-        guard let detail = try? JSONDecoder().decode(Detail.self, from: json), !detail.detail.isEmpty else {
-            return nil
-        }
-        phrase = detail.detail
-    }
-
-    init(phrase: String) { self.phrase = phrase }
 }
