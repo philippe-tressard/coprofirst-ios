@@ -10,10 +10,9 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     var roles: [String]
     /// « Bât. A, T3, 2ème » — le libellé du logement, TEL QUE LE SERVEUR LE SERT.
     ///
-    /// Le site le compose (`libelleLogement`, `#lib/utils.ts`) à partir des lots et
-    /// de l'étage ; cette règle est du code, pas une table : l'app ne la réécrit pas.
-    /// Tant que l'API ne sert pas ce libellé (besoin noté pour coprofirst#2460), il
-    /// reste absent et rien ne s'affiche.
+    /// Le serveur le compose (`libelle_logement` de `GET /auth/me`, contrat ≥ 1.2.0,
+    /// CoproFirst ≥ 3.61.0, coprofirst#2500) : l'app l'affiche sans règle à elle. Absent
+    /// ou `null` — serveur plus ancien, rien à dire — : rien ne s'affiche.
     var libelleLogement: String?
 
     /// Les rôles comme l'en-tête de l'accueil les annonce : le statut, puis les rôles
