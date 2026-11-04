@@ -149,6 +149,7 @@ private struct CarteFiche: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Ouvre l'annuaire du syndic")
+                .accessibilityIdentifier("residence.syndic")
             }
         }
     }

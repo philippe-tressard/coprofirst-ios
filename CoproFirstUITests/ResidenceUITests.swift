@@ -34,10 +34,13 @@ final class ResidenceUITests: XCTestCase {
         app.launch()
 
         app.tabBars.buttons["Résidence"].tap()
-        let syndic = app.buttons.containing(NSPredicate(format: "label CONTAINS 'Cabinet Exemple Gestion'")).firstMatch
+        let syndic = app.descendants(matching: .any).matching(identifier: "residence.syndic").firstMatch
         XCTAssertTrue(syndic.waitForExistence(timeout: 5))
         syndic.tap()
         XCTAssertTrue(app.staticTexts["Gestionnaire de copropriété"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.links.containing(NSPredicate(format: "label CONTAINS '01 00 00 00 01'")).firstMatch.exists)
+        // Par l'identifiant, pas par le type : un `Link` est un lien sous iOS 27, pas sous iOS 26.
+        let appeler = app.descendants(matching: .any).matching(identifier: "annuaire.appeler")
+            .matching(NSPredicate(format: "label CONTAINS '01 00 00 00 01'")).firstMatch
+        XCTAssertTrue(appeler.waitForExistence(timeout: 5))
     }
 }

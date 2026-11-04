@@ -86,18 +86,20 @@ struct Coordonnees: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if let email = personne.email, !email.isEmpty, let lien = URL(string: "mailto:\(email)") {
-                action(email, symbole: "envelope", lien: lien, aide: "Écrit un courriel")
+                action(email, symbole: "envelope", lien: lien, aide: "Écrit un courriel", id: "annuaire.courriel")
             }
             ForEach(personne.telephones, id: \.self) { numero in
                 let chiffres = numero.filter { $0.isNumber || $0 == "+" }
                 if let lien = URL(string: "tel:\(chiffres)") {
-                    action("📞 \(numero)", symbole: nil, lien: lien, aide: "Appelle ce numéro")
+                    action("📞 \(numero)", symbole: nil, lien: lien, aide: "Appelle ce numéro", id: "annuaire.appeler")
                 }
             }
         }
     }
 
-    private func action(_ texte: String, symbole: String?, lien: URL, aide: String) -> some View {
+    /// `id` : l'identifiant des tests d'interface — le TYPE d'un `Link` exposé à
+    /// l'accessibilité varie d'une version d'iOS à l'autre, pas son identifiant.
+    private func action(_ texte: String, symbole: String?, lien: URL, aide: String, id: String) -> some View {
         Link(destination: lien) {
             Group {
                 if let symbole { Label(texte, systemImage: symbole) } else { Text(texte) }
@@ -108,6 +110,7 @@ struct Coordonnees: View {
             .contentShape(.rect)
         }
         .accessibilityHint(aide)
+        .accessibilityIdentifier(id)
     }
 }
 
