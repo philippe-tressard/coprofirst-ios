@@ -23,8 +23,9 @@ struct CaracteristiquesDuLot: View {
 
     private var lignes: [(String, String)] {
         var lignes = avant
-        if lot.type != nil { lignes.append(("Type", LibellesAcces.typeComplet(lot.type, lot.typeAppartement))) }
-        if lot.etage != nil { lignes.append(("Étage", LibellesAcces.etage(lot.etage))) }
+        if lot.type != nil { lignes.append(("Type", lot.typeLu)) }
+        // L'étage tel que l'API le sert (« -1 », « 2 ») : `etageLabel` n'est pas recopié.
+        if let etage = lot.etage { lignes.append(("Étage", String(etage))) }
         // ⚠️ Le site écrit ici la valeur brute (« 64.5 m² ») et `fmtNombre` dans la vue
         // du bailleur (« 64,5 m² ») : l'app suit `fmtNombre` partout — écart signalé
         // dans le coprofirst#2507.
@@ -45,7 +46,7 @@ struct ConstatsDuLot: View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(ordonnes, id: \.self) { constat in
                 let teinte =
-                    LibellesAcces.gravites.first { $0.code == constat.gravite }?.teinte ?? .brut(constat.gravite)
+                    TablesDesComposants.gravites.first { $0.code == constat.gravite }?.teinte ?? .brut(constat.gravite)
                 VStack(alignment: .leading, spacing: 4) {
                     PastilleTeinte(libelle: teinte.libelle, badge: teinte.badge, compacte: true)
                     Text(constat.message).font(.subheadline).foregroundStyle(palette.text)
@@ -56,7 +57,7 @@ struct ConstatsDuLot: View {
     }
 
     private var ordonnes: [ConstatDuLot] {
-        let rang = { (code: String) in LibellesAcces.gravites.firstIndex { $0.code == code } ?? 9 }
+        let rang = { (code: String) in TablesDesComposants.gravites.firstIndex { $0.code == code } ?? 9 }
         return constats.sorted { rang($0.gravite) < rang($1.gravite) }
     }
 }

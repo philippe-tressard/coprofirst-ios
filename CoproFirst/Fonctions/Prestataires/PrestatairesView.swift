@@ -29,9 +29,9 @@ struct PrestatairesView: View {
         let conseil = DroitsAcces(parcours.ouverteAJour?.profil).conseil
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                BarreOngletsAcces(onglets: LibellesPrestataires.onglets, actif: $onglet)
-                if let descriptif = LibellesPrestataires.descriptifs[onglet] {
-                    Text(descriptif).font(.subheadline).foregroundStyle(palette.textMuted)
+                BarreOngletsAcces(onglets: TablesPrestataires.onglets, actif: $onglet)
+                if let descriptif = TablesPrestataires.onglets.first(where: { $0.id == onglet })?.descriptif {
+                    Text(TexteDuSite.apercu(descriptif)).font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 Chargement(
                     charger: { try await DonneesPrestataires.lire(installation, service: service) },
@@ -91,11 +91,6 @@ struct DonneesPrestataires: Sendable {
     func equipement(_ code: String) -> String { equipements.first { $0.code == code }?.libelle ?? code }
 
     func contrats(de prestataire: Prestataire) -> [Contrat] { contrats.filter { $0.prestataireId == prestataire.id } }
-
-    /// La prochaine visite d'un prestataire : la plus proche de ses contrats.
-    func prochaineVisite(de prestataire: Prestataire) -> String? {
-        contrats(de: prestataire).compactMap(\.prochaineVisite).min()
-    }
 
     func avis(de prestataire: Prestataire) -> [AvisPrestataire] {
         avis.filter { $0.prestataireId == prestataire.id }.sorted { $0.creeLe > $1.creeLe }

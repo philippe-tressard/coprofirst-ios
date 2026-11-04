@@ -18,7 +18,6 @@ enum TextesPrestataires {
     static let archivesRangees = "Les fiches archivées sont rangées dans les Archives, ci-dessous."
     static let archives = "📁 Archives"
     static func sousContrat(_ n: Int) -> String { "📄 Sous contrat (\(n))" }
-    static func noteMoyenne(_ moyenne: String, _ n: Int) -> String { "\(moyenne)/5 (\(n) avis)" }
     static let telephone = "Téléphone"
     static let email = "Email"
     static let adresse = "Adresse"
@@ -28,19 +27,15 @@ enum TextesPrestataires {
 
     // Contrats
     static func contratsActifs(_ n: Int) -> String { n > 1 ? "\(n) contrats actifs" : "\(n) contrat actif" }
-    static func visitesEnRetard(_ n: Int) -> String { n > 1 ? "⚠️ \(n) visites en retard" : "⚠️ \(n) visite en retard" }
-    static func aVenir(_ n: Int) -> String { "🗓 \(n) à venir" }
     static func sansEcheance(_ n: Int) -> String { "\(n) sans échéance" }
     static let aucunContrat = "Aucun contrat"
     static let aucunContratActif = "Aucun contrat actif"
     static let contratsArchivesRanges = "Les contrats archivés sont rangés dans les Archives, ci-dessous."
     static let sansIntervenant = "sans intervenant"
-    static let visiteEnRetard = "⚠️ Visite en retard"
     static let sansEcheanceCapsule = "Sans échéance"
     static let leContrat = "Le contrat"
     static let debut = "Début"
     static let dureeInitiale = "Durée initiale"
-    static let frequence = "Fréquence"
     static let description = "Description"
     static func documents(_ n: Int) -> String { "Documents (\(n))" }
     static let aucunDocument = "Aucun document."

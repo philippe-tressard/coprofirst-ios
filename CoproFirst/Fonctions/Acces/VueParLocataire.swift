@@ -60,9 +60,10 @@ struct VueParLocataire: View {
                         let statut = LibellesAcces.statutAcces(objet.statut)
                         HStack(spacing: 8) {
                             Text(objet.code).font(.subheadline.monospaced())
-                            // Écrit tel quel dans `OngletAcces.svelte` (vue par locataire).
+                            // Le site abrège ici (« 📡 TC », écrit dans `OngletAcces.svelte`) :
+                            // l'app prend le libellé de la table générée.
                             PastilleTeinte(
-                                libelle: objet.type == "vigik" ? "🏷️ Vigik" : "📡 TC",
+                                libelle: LibellesAcces.typeAcces(objet.type),
                                 badge: objet.type == "vigik" ? "badge-blue" : "badge-purple", compacte: true)
                             PastilleTeinte(libelle: statut.libelle, badge: statut.badge, compacte: true)
                         }

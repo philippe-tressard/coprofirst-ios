@@ -83,22 +83,24 @@ import Testing
     #expect(FormatsDuSite.nombre(nil as Int?) == "—")
 }
 
-// MARK: - Règles recopiées (provisoires)
+// MARK: - Tables générées, et rien de recopié
 
-@Test func lesEtagesEtLesTypesDeLot() {
-    #expect(LibellesAcces.etage(0) == "RDC")
-    #expect(LibellesAcces.etage(-1) == "SS 1")
-    #expect(LibellesAcces.etage(1) == "1er")
-    #expect(LibellesAcces.etage(2, suffixe: true) == "2ème étage")
-    #expect(LibellesAcces.typeComplet("appartement", "T3") == "Appartement – T3")
-    #expect(LibellesAcces.typeDeLot("local_commercial") == "Local commercial")
-    #expect(LibellesAcces.nomAffiche(" Marie ", "Durand") == "Marie DURAND")
-    #expect(LibellesAcces.nomLocataire(nil, nil) == "Locataire non renseigné")
+@Test func lesLibellesViennentDesTablesGenerees() {
+    #expect(LibellesAcces.statutAcces("perdu") == LibelleTeinte("Perdu", "badge-red"))
+    #expect(LibellesAcces.statutBail("en_cours_sortie").libelle == "En cours de sortie")
+    #expect(LibellesAcces.typeAcces("telecommande") == "📡 Télécommande parking")
+    #expect(LibellesPrestataires.type("reglementaire") == "📋 Réglementaire")
+    // Une valeur inconnue s'affiche brute : un libellé manquant doit se voir.
+    #expect(LibellesAcces.statutAcces("inconnu") == LibelleTeinte("inconnu", "badge-gray"))
+    #expect(LibellesAcces.typeAcces("badge_rfid") == "badge_rfid")
 }
 
-@Test func uneValeurInconnueSAfficheBrute() {
-    #expect(LibellesAcces.statutAcces("inconnu") == LibelleTeinte("inconnu", "badge-gray"))
-    #expect(LibellesAcces.statutAcces("perdu").libelle == "Perdu")
+/// `lotTypeLabel`, `etageLabel`, `nomAffiche` ne sont pas recopiés : la donnée brute.
+@Test func leLotEtLesNomsSAffichentBruts() {
+    #expect(LotsSimules.lots[0].typeLu == "appartement T3")
+    #expect(LotsSimules.lots[1].typeLu == "cave")
+    #expect(LibellesAcces.nom(" Marie ", "Durand") == "Marie Durand")
+    #expect(LibellesAcces.nom(nil, "  ") == "—")
 }
 
 @Test func lesBauxSeGroupentParLocataire() {
@@ -116,43 +118,25 @@ import Testing
     #expect(groupes[0].objets == [confie])
 }
 
-@Test func lesFrequencesEtLesNotes() {
-    #expect(LibellesPrestataires.frequence("mois", 1) == "↺ Mensuel")
-    #expect(LibellesPrestataires.frequence("fois_par_an", 2) == "↺ 2×/an")
-    #expect(LibellesPrestataires.frequence("inconnue", 2) == "")
-    #expect(LibellesPrestataires.moyenne([4, 5]) == "4.5")
-    #expect(LibellesPrestataires.moyenne([4, 4]) == "4")
-    #expect(LibellesPrestataires.moyenne([]) == nil)
-    #expect(LibellesPrestataires.etoiles(4.5) == "★★★★★")
-    #expect(LibellesPrestataires.etoiles(3) == "★★★☆☆")
-}
-
-@Test func uneVisitePasseeEstEnRetard() throws {
-    let jour = try #require(Calendar.current.date(from: DateComponents(year: 2026, month: 11, day: 4, hour: 15)))
-    #expect(LibellesPrestataires.enRetard("2026-11-03", aujourdhui: jour))
-    #expect(!LibellesPrestataires.enRetard("2026-11-04", aujourdhui: jour))
-    #expect(!LibellesPrestataires.enRetard(nil, aujourdhui: jour))
-}
-
 @Test func laRechercheIgnoreAccentsCasseEtOrdre() {
     let fiche = PrestatairesSimules.prestataires[1]
     #expect(LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "INCENDIE controles"))
     #expect(!LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "ascenseur"))
 }
 
-@Test func unContratAutreHeriteDeLaSpecialiteDuPrestataire() {
-    let contrat = PrestatairesSimules.contrats[2]
-    #expect(LibellesPrestataires.equipementDuContrat(contrat, prestataires: PrestatairesSimules.prestataires) == "eau")
+@Test func lesContratsSeRangentParEcheance() {
+    let ranges = PrestatairesSimules.contrats.sorted(by: LibellesPrestataires.parEcheance).map(\.id)
+    #expect(ranges == [2, 1, 3], "la visite la plus proche d'abord, sans échéance à la fin")
 }
 
 // MARK: - Les libellés d'onglets, contre la table générée depuis le site
 
-/// Tant que `Charte/OngletsDuSite.swift` n'existe pas, les libellés sont déclarés à
-/// la main : ce test les compare à `Parite/ONGLETS-DU-SITE.md`, GÉNÉRÉ depuis `pages.ts`.
+/// Deux générateurs lisent `pages.ts` (le mien, et `generer-charte.py` pour la table
+/// de parité) : ce test vérifie qu'ils disent la même chose.
 @Test func lesLibellesDOngletsSontCeuxDuSite() throws {
     let racine = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
     let table = try String(contentsOf: racine.appending(path: "Parite/ONGLETS-DU-SITE.md"), encoding: .utf8)
-    for (page, onglets) in [("mon-lot", LibellesAcces.onglets), ("prestataires", LibellesPrestataires.onglets)] {
+    for (page, onglets) in [("mon-lot", TablesAcces.onglets), ("prestataires", TablesPrestataires.onglets)] {
         for onglet in onglets {
             #expect(
                 table.contains("| `\(page)` | `\(onglet.id)` | \(onglet.libelle) |"),

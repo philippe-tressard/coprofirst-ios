@@ -52,13 +52,6 @@ struct CartePrestataire: View {
         FlowCapsules {
             PastilleTeinte(libelle: LibellesPrestataires.type(prestataire.type), badge: "badge-gray", compacte: true)
             PastilleTeinte(libelle: donnees.equipement(prestataire.specialite), badge: "badge-blue", compacte: true)
-            if let moyenne = LibellesPrestataires.moyenne(avis.map(\.note)) {
-                PastilleTeinte(
-                    libelle: "\(LibellesPrestataires.etoiles(Double(moyenne) ?? 0)) \(moyenne)", badge: "badge-yellow",
-                    compacte: true
-                )
-                .accessibilityLabel(TextesPrestataires.noteMoyenne(moyenne, avis.count))
-            }
             if !contrats.isEmpty {
                 PastilleTeinte(
                     libelle: TextesPrestataires.sousContrat(contrats.count), badge: "badge-green", compacte: true)
@@ -72,7 +65,8 @@ struct CartePrestataire: View {
         VStack(alignment: .leading, spacing: 2) {
             if !prestataire.contacts.isEmpty {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
-                    let nom = LibellesAcces.nomAffiche(contact.prenom, contact.nom)
+                    let lu = LibellesAcces.nom(contact.prenom, contact.nom)
+                    let nom = lu == FormatsDuSite.tiret ? "" : lu
                     let fonction = contact.fonction.map { " (\($0))" } ?? ""
                     lien(
                         "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(nom.isEmpty ? "" : " — \(nom)\(fonction)")",
@@ -104,9 +98,6 @@ struct CartePrestataire: View {
                 LigneFiche(libelle: TextesPrestataires.adresse, valeur: "📮 \(adresse)")
             }
             LigneFiche(libelle: TextesPrestataires.contrats, valeur: FormatsDuSite.nombre(contrats.count))
-            if let visite = donnees.prochaineVisite(de: prestataire) {
-                LigneFiche(libelle: TextesPrestataires.prochaineVisite, valeur: "🗓 \(FormatsDuSite.dateCourte(visite))")
-            }
             if let description = prestataire.description, !description.isEmpty {
                 Text(TexteDuSite.riche(description)).font(.subheadline).tint(palette.primary)
             }
@@ -136,8 +127,10 @@ private struct AvisDuConseil: View {
             ForEach(avis) { un in
                 VStack(alignment: .leading, spacing: 2) {
                     HStack(spacing: 8) {
-                        Text(LibellesPrestataires.etoiles(Double(un.note)))
-                            .foregroundStyle(palette.warning)
+                        Text("\(un.note)/5")
+                            .font(.subheadline.weight(.semibold))
+                            .monospacedDigit()
+                            .foregroundStyle(palette.text)
                             .accessibilityLabel("\(un.note) sur 5")
                         Text(un.auteurNom ?? FormatsDuSite.tiret).font(.subheadline.weight(.medium))
                         Text(FormatsDuSite.date(un.creeLe)).font(.caption).foregroundStyle(palette.textMuted)

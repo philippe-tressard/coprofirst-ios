@@ -29,8 +29,8 @@ final class EtatAcces {
 
     /// Les onglets du site, « Gestion locative » masqué à qui ne la gère pas
     /// (`masques` de `BarreOnglets`, page `mon-lot`).
-    var onglets: [(id: String, libelle: String)] {
-        LibellesAcces.onglets.filter { $0.id != "location" || droits.voitLocation(bauxTermines: bauxTermines.count) }
+    var onglets: [OngletDuSite] {
+        TablesAcces.onglets.filter { $0.id != "location" || droits.voitLocation(bauxTermines: bauxTermines.count) }
     }
 
     func charger(_ installation: Installation, avec service: any ServiceAcces, droits: DroitsAcces) async {

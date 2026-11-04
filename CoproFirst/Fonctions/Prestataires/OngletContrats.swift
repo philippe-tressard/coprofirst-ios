@@ -49,14 +49,12 @@ struct OngletContrats: View {
             deplie: Binding(get: { deplie == contrat.id }, set: { deplie = $0 ? contrat.id : nil }))
     }
 
-    /// Le résumé en tête : actifs, en retard, à venir, sans échéance.
+    /// Le résumé en tête : actifs, sans échéance. Le site compte aussi les visites
+    /// en retard et à venir : c'est une règle de son front, que l'app ne recopie pas
+    /// (coprofirst#2507 demande `en_retard`).
     private func resume(_ contrats: [Contrat]) -> String {
-        let retard = contrats.filter { LibellesPrestataires.enRetard($0.prochaineVisite) }.count
         let sans = contrats.filter { $0.prochaineVisite == nil }.count
         var morceaux = [TextesPrestataires.contratsActifs(contrats.count)]
-        if retard > 0 { morceaux.append(TextesPrestataires.visitesEnRetard(retard)) }
-        let aVenir = contrats.count - retard - sans
-        if aVenir > 0 { morceaux.append(TextesPrestataires.aVenir(aVenir)) }
         if sans > 0 { morceaux.append(TextesPrestataires.sansEcheance(sans)) }
         return morceaux.joined(separator: " · ")
     }
@@ -65,8 +63,9 @@ struct OngletContrats: View {
     private func groupes(_ contrats: [Contrat]) -> [(code: String, contrats: [Contrat])] {
         var parCode: [String: [Contrat]] = [:]
         for contrat in contrats {
-            parCode[LibellesPrestataires.equipementDuContrat(contrat, prestataires: donnees.prestataires), default: []]
-                .append(contrat)
+            // L'équipement tel que le contrat le porte : le repli du site sur la
+            // spécialité du prestataire (`typeEquipementDuContrat`) n'est pas recopié.
+            parCode[contrat.typeEquipement, default: []].append(contrat)
         }
         let rang = { (code: String) in donnees.equipements.first { $0.code == code }?.ordre ?? Int.max }
         return parCode.keys
@@ -87,7 +86,6 @@ private struct CarteContrat: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        let retard = !archive && LibellesPrestataires.enRetard(contrat.prochaineVisite)
         Carte {
             VStack(alignment: .leading, spacing: 10) {
                 Button {
@@ -117,27 +115,15 @@ private struct CarteContrat: View {
                     if let numero = contrat.numeroContrat, !numero.isEmpty {
                         PastilleTeinte(libelle: "🔖 \(numero)", badge: "badge-gray", compacte: true)
                     }
-                    if retard {
-                        PastilleTeinte(libelle: TextesPrestataires.visiteEnRetard, badge: "badge-red", compacte: true)
-                    } else if contrat.prochaineVisite == nil {
+                    if contrat.prochaineVisite == nil {
                         PastilleTeinte(
                             libelle: TextesPrestataires.sansEcheanceCapsule, badge: "badge-gray", compacte: true)
                     }
-                    let frequence = LibellesPrestataires.frequence(contrat.frequenceType, contrat.frequenceValeur)
-                    if !frequence.isEmpty { PastilleTeinte(libelle: frequence, badge: "badge-blue", compacte: true) }
                     if let documents, !documents.isEmpty {
                         PastilleTeinte(libelle: "📄 \(documents.count)", badge: "badge-gray", compacte: true)
                     }
                 }
                 if deplie { detail.transition(.opacity) }
-            }
-        }
-        .overlay(alignment: .leading) {
-            // Une visite en retard se voit d'un trait, comme l'urgence d'une carte du fil.
-            if retard {
-                UnevenRoundedRectangle(topLeadingRadius: Mise.rayon, bottomLeadingRadius: Mise.rayon)
-                    .fill(palette.danger)
-                    .frame(width: 4)
             }
         }
         .task { documents = try? await service.documents(contrat: contrat.id, dans: installation) }
@@ -153,8 +139,6 @@ private struct CarteContrat: View {
                     libelle: TextesPrestataires.dureeInitiale,
                     valeur: "\(FormatsDuSite.nombre(valeur)) \(contrat.dureeUnite ?? "")")
             }
-            let frequence = LibellesPrestataires.frequence(contrat.frequenceType, contrat.frequenceValeur)
-            if !frequence.isEmpty { LigneFiche(libelle: TextesPrestataires.frequence, valeur: frequence) }
             if contrat.prochaineVisite != nil {
                 LigneFiche(
                     libelle: TextesPrestataires.prochaineVisite,

@@ -51,10 +51,10 @@ final class AccesUITests: XCTestCase {
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
         app.buttons["onglet.telecommandes"].swipeLeft()
         app.buttons["onglet.location"].tap()
-        XCTAssertTrue(app.staticTexts["Locataire DU LOT 31"].waitForExistence(timeout: 5), "un bail actif")
+        XCTAssertTrue(app.staticTexts["Locataire du lot 31"].waitForExistence(timeout: 5), "un bail actif")
         capturer(app, "acces-4-gestion-locative")
         app.segmentedControls.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.staticTexts["Ancien locataire DU LOT 31"].waitForExistence(timeout: 3), "les archives")
+        XCTAssertTrue(app.staticTexts["Ancien locataire du lot 31"].waitForExistence(timeout: 3), "les archives")
     }
 
     @MainActor

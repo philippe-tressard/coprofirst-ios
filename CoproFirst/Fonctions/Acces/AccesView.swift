@@ -32,8 +32,12 @@ struct AccesView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 BarreOngletsAcces(onglets: etat.onglets, actif: $onglet)
-                if let descriptif = LibellesAcces.descriptifs[onglet] {
-                    Text(descriptif).font(.subheadline).foregroundStyle(palette.textMuted)
+                // Les descriptifs des deux onglets d'accès décrivent la page web (« bouton …
+                // en haut à droite », un lien de la FAQ) : ils égareraient dans l'app.
+                if !["badges", "telecommandes"].contains(onglet),
+                    let descriptif = TablesAcces.onglets.first(where: { $0.id == onglet })?.descriptif
+                {
+                    Text(TexteDuSite.apercu(descriptif)).font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 contenu(service)
             }
@@ -132,7 +136,7 @@ extension AccesView: EcranDeMenu {}
 
 /// La barre d'onglets du site, en pastilles qui défilent : un onglet par pastille.
 struct BarreOngletsAcces: View {
-    let onglets: [(id: String, libelle: String)]
+    let onglets: [OngletDuSite]
     @Binding var actif: String
 
     var body: some View {

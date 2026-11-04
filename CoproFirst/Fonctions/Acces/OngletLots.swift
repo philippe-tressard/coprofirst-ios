@@ -79,7 +79,7 @@ struct LotsStandard: View {
 
     /// « Bât. A / Appartement - 15 » (`optionsLots` du site).
     private func libelle(_ lot: LotDuCompte) -> String {
-        "\(lot.batimentNom ?? FormatsDuSite.tiret) / \(LibellesAcces.typeDeLot(lot.type)) - \(lot.numero)"
+        "\(lot.batimentNom ?? FormatsDuSite.tiret) / \(lot.type ?? FormatsDuSite.tiret) - \(lot.numero)"
     }
 }
 
@@ -124,7 +124,7 @@ struct LotsDuLocataire: View {
             apres.append(("Sortie prévue", FormatsDuSite.dateCourte(bail.dateSortiePrevue)))
         }
         let statut = LibellesAcces.statutBail(bail.statut)
-        let proprietaire = LibellesAcces.nomAffiche(bail.bailleurPrenom, bail.bailleurNom)
+        let proprietaire = LibellesAcces.nom(bail.bailleurPrenom, bail.bailleurNom)
         return Carte {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {
@@ -136,7 +136,7 @@ struct LotsDuLocataire: View {
                 ForEach(Array(apres.enumerated()), id: \.offset) { _, ligne in
                     LigneFiche(libelle: ligne.0, valeur: ligne.1)
                 }
-                if !proprietaire.isEmpty {
+                if proprietaire != FormatsDuSite.tiret {
                     Divider()
                     CoordonneesView(
                         titre: "\(TextesAcces.proprietaire) \(proprietaire)", email: bail.bailleurEmail,
@@ -209,7 +209,7 @@ private struct CarteLocataire: View {
                 ForEach(groupe.baux) { bail in
                     VStack(alignment: .leading, spacing: 2) {
                         if let lot = lots.first(where: { $0.id == bail.lotId }) {
-                            Text("\(lot.intitule) · \(LibellesAcces.typeComplet(lot.type, lot.typeAppartement))")
+                            Text("\(lot.intitule) · \(lot.typeLu)")
                                 .font(.subheadline.weight(.medium))
                         }
                         Text(periode(bail)).font(.subheadline).foregroundStyle(palette.textMuted)

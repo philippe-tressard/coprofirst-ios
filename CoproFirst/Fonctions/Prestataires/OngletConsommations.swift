@@ -126,7 +126,9 @@ struct OngletConsommations: View {
         var annees: [Int?] = []
         var parAnnee: [Int?: [Releve]] = [:]
         for releve in releves {
-            let annee = FormatsDuSite.annee(releve.dateReleve)
+            let annee = FormatsDuSite.lire(releve.dateReleve).map {
+                Calendar.current.component(.year, from: $0)
+            }
             if parAnnee[annee] == nil { annees.append(annee) }
             parAnnee[annee, default: []].append(releve)
         }

@@ -78,7 +78,7 @@ private struct UnBail: View {
                 if let lot {
                     Text(lot.intitule).font(.subheadline.weight(.semibold))
                     PastilleTeinte(
-                        libelle: LibellesAcces.typeComplet(lot.type, lot.typeAppartement), badge: "badge-gray",
+                        libelle: lot.typeLu, badge: "badge-gray",
                         compacte: true)
                 }
                 if plusieurs {
@@ -130,7 +130,7 @@ private struct Inventaire: View {
         if objet.renduLe != nil { details.append("Rendu le \(FormatsDuSite.date(objet.renduLe))") }
         return VStack(alignment: .leading, spacing: 4) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Text(LibellesAcces.typesObjet[objet.type] ?? objet.type).font(.subheadline)
+                Text(TablesDesComposants.typesObjet[objet.type] ?? objet.type).font(.subheadline)
                 Text(objet.libelle).font(.subheadline.weight(.medium)).foregroundStyle(palette.text)
                 Spacer(minLength: 0)
                 PastilleTeinte(libelle: statut.libelle, badge: statut.badge, compacte: true)

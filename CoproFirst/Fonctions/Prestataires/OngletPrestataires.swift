@@ -25,9 +25,9 @@ struct OngletPrestataires: View {
             ChampRecherche(texte: $recherche)
             pastilles(
                 TextesPrestataires.categorie, valeur: $categorie,
-                options: LibellesPrestataires.types.map { ($0.code, $0.libelle) })
+                options: TablesPrestataires.types.map { ($0.code, $0.libelle) })
             pastilles(
-                TextesPrestataires.contrat, valeur: $contrat, options: LibellesPrestataires.filtresContrat)
+                TextesPrestataires.contrat, valeur: $contrat, options: TablesPrestataires.filtresContrat)
             if courants.isEmpty && archivees.isEmpty {
                 NoteAcces(
                     titre: filtre
@@ -37,11 +37,11 @@ struct OngletPrestataires: View {
                 if courants.isEmpty {
                     NoteAcces(titre: TextesPrestataires.aucunActif(filtre), texte: TextesPrestataires.archivesRangees)
                 }
-                ForEach(LibellesPrestataires.types, id: \.code) { type in
+                ForEach(TablesPrestataires.types, id: \.code) { type in
                     let groupe = courants.filter { $0.type == type.code }
                     if !groupe.isEmpty { section(type, groupe, entete: categorie == nil, compact: courants.count > 7) }
                 }
-                let sansType = courants.filter { p in !LibellesPrestataires.types.contains { $0.code == p.type } }
+                let sansType = courants.filter { p in !TablesPrestataires.types.contains { $0.code == p.type } }
                 ForEach(sansType) { carte($0, compact: courants.count > 7) }
                 if !archivees.isEmpty {
                     DisclosureGroup {
