@@ -90,13 +90,13 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `communaute` | `sondages` | prévu | #14 |  |
-| `communaute` | `idees` | prévu | #14 |  |
-| `communaute` | `annonces` | prévu | #14 |  |
-| `communaute` | `avis` | prévu | #14 |  |
-| `faq` | — | prévu | #14 |  |
-| `profil` | — | prévu | #14 | Profil partiel (rôles, déconnexion) sous « Plus » ; #14 le complète |
-| `notifications` | — | prévu | #14 |  |
+| `communaute` | `sondages` | fait | #14 | Liste et vote (`SondageView`) ; créer, modifier, stopper : site (conseil syndical) |
+| `communaute` | `idees` | fait | #14 | Liste, filtre, vote, réponses, signalement, proposer ; corriger, statut, supprimer : site |
+| `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
+| `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
+| `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
+| `profil` | — | fait | #14 | Sous « Plus » ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
+| `notifications` | — | fait | #14 | La cloche de chaque écran |
 
 ### #15 — Espace conseil syndical et Délégations
 

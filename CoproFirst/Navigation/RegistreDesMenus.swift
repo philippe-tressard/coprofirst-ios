@@ -38,7 +38,13 @@ enum RegistreDesMenus {
 
         // #13 — "mon-lot", "prestataires"
 
-        // #14 — "communaute", "faq", "notifications"
+        "communaute": CommunauteView.self,
+
+        "faq": FAQView.self,
+
+        "profil": ProfilView.self,
+
+        "notifications": NotificationsView.self,
 
         // #15 — "espace-cs", "delegations"
 
