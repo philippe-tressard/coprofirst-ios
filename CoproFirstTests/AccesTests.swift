@@ -129,18 +129,26 @@ import Testing
     #expect(ranges == [2, 1, 3], "la visite la plus proche d'abord, sans échéance à la fin")
 }
 
-// MARK: - Les libellés d'onglets, contre la table générée depuis le site
+// MARK: - Les onglets viennent de `OngletsDuSite` (#30)
 
-/// Deux générateurs lisent `pages.ts` (le mien, et `generer-charte.py` pour la table
-/// de parité) : ce test vérifie qu'ils disent la même chose.
-@Test func lesLibellesDOngletsSontCeuxDuSite() throws {
-    let racine = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-    let table = try String(contentsOf: racine.appending(path: "Parite/ONGLETS-DU-SITE.md"), encoding: .utf8)
-    for (page, onglets) in [("mon-lot", TablesAcces.onglets), ("prestataires", TablesPrestataires.onglets)] {
-        for onglet in onglets {
-            #expect(
-                table.contains("| `\(page)` | `\(onglet.id)` | \(onglet.libelle) |"),
-                "« \(onglet.libelle) » (\(page)/\(onglet.id)) diffère du site")
-        }
+/// Les descriptifs générés ici et les onglets générés pour toute l'app lisent le même
+/// `pages.ts` : chaque onglet a son descriptif, et aucun descriptif n'est orphelin.
+@Test func chaqueOngletASonDescriptif() {
+    let tables = [("mon-lot", TablesAcces.descriptifs), ("prestataires", TablesPrestataires.descriptifs)]
+    for (page, descriptifs) in tables {
+        let ids = Set((OngletsDuSite.parPage[page] ?? []).map(\.id))
+        #expect(!ids.isEmpty, "\(page) : aucun onglet généré")
+        #expect(Set(descriptifs.keys) == ids, "\(page) : descriptifs et onglets divergent")
     }
+}
+
+/// « Gestion locative » : ouverte par le site à tous, masquée par l'écran à qui ne
+/// gère pas de bail (masquage qui dépend des données).
+@MainActor
+@Test func laGestionLocativeSeMasqueSansBail() {
+    let etat = EtatAcces()
+    etat.droits = DroitsAcces(ProfilResidence(statut: "locataire", roles: ["résident"]))
+    #expect(etat.onglets.map(\.id) == ["lots", "badges", "telecommandes"])
+    etat.droits = DroitsAcces(ProfilResidence(statut: "copropriétaire_bailleur", roles: ["propriétaire"]))
+    #expect(etat.onglets.map(\.id) == ["lots", "badges", "telecommandes", "location"])
 }

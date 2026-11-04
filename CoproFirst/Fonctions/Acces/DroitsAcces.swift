@@ -11,21 +11,23 @@ import Foundation
 /// (`auth/deps.py`), et un refus s'affiche avec sa phrase.
 struct DroitsAcces: Hashable, Sendable {
     let statut: String?
-    let roles: Set<String>
+    /// Ce que l'app sait déjà juger pour toutes les pages (`DroitsOnglet`, populations
+    /// GÉNÉRÉES depuis le site) : locataire, conseil syndical.
+    let onglet: DroitsOnglet
 
     init(_ profil: ProfilResidence?) {
         statut = profil?.statut
-        roles = Set(profil?.roles ?? [])
+        onglet = DroitsOnglet(profil: profil)
     }
 
-    var locataire: Bool { statut == "locataire" }
+    var locataire: Bool { onglet.locataire }
     /// Copropriétaire qui LOUE son lot.
     var bailleur: Bool { statut == "copropriétaire_bailleur" }
     /// Copropriétaire qui HABITE son lot.
     var resident: Bool { statut == "copropriétaire_résident" }
     var coproprietaire: Bool { bailleur || resident }
     /// `isCS` : conseil syndical ou administration.
-    var conseil: Bool { roles.contains("conseil_syndical") || roles.contains("admin") }
+    var conseil: Bool { onglet.cs }
 
     /// Quels baux CE compte gère (`lireBaux` de `mon-lot`) : les siens
     /// (copropriétaire), tous (conseil), aucun sinon (`nil`).

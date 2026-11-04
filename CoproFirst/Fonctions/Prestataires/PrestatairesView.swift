@@ -26,11 +26,13 @@ struct PrestatairesView: View {
 
     private func page(_ service: any ServicePrestataires) -> some View {
         let installation = contexte.installation
-        let conseil = DroitsAcces(parcours.ouverteAJour?.profil).conseil
+        let droits = DroitsAcces(parcours.ouverteAJour?.profil)
+        let conseil = droits.conseil
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                BarreOngletsAcces(onglets: TablesPrestataires.onglets, actif: $onglet)
-                if let descriptif = TablesPrestataires.onglets.first(where: { $0.id == onglet })?.descriptif {
+                BarreOngletsAcces(
+                    onglets: OngletsDuSite.ouverts(page: "prestataires", droits: droits.onglet), actif: $onglet)
+                if let descriptif = TablesPrestataires.descriptifs[onglet] {
                     Text(TexteDuSite.apercu(descriptif)).font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 Chargement(

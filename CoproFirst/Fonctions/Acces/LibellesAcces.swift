@@ -3,14 +3,6 @@
 
 import Foundation
 
-/// Un onglet d'une page du site : son identifiant, son libellé, son descriptif
-/// (`pages.ts`, lu par `scripts/generer-acces-prestataires.py`).
-struct OngletDuSite: Hashable, Sendable {
-    let id: String
-    let libelle: String
-    let descriptif: String
-}
-
 /// Les libellés de « Mes lots & accès » : ceux des tables GÉNÉRÉES (`Genere/`), et
 /// ceux que le site écrit dans un composant (`Provisoire/`).
 ///

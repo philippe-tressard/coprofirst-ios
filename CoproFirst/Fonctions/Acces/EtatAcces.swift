@@ -27,10 +27,13 @@ final class EtatAcces {
     var bauxActifs: [Bail] { baux.filter(\.enCours) }
     var bauxTermines: [Bail] { baux.filter(\.termine) }
 
-    /// Les onglets du site, « Gestion locative » masqué à qui ne la gère pas
-    /// (`masques` de `BarreOnglets`, page `mon-lot`).
+    /// Les onglets que ce compte ouvre (`OngletsDuSite.ouverts`), et « Gestion
+    /// locative » masquée à qui ne la gère pas : ce masquage dépend des DONNÉES (des
+    /// baux), seul l'écran le sait (`masques` de `BarreOnglets`, page `mon-lot`).
     var onglets: [OngletDuSite] {
-        TablesAcces.onglets.filter { $0.id != "location" || droits.voitLocation(bauxTermines: bauxTermines.count) }
+        OngletsDuSite.ouverts(page: "mon-lot", droits: droits.onglet).filter {
+            $0.id != "location" || droits.voitLocation(bauxTermines: bauxTermines.count)
+        }
     }
 
     func charger(_ installation: Installation, avec service: any ServiceAcces, droits: DroitsAcces) async {

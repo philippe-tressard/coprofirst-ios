@@ -8,7 +8,8 @@ Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
 `TypePrestataire`) : les libellés et les teintes vivent dans le front du site. Rien
 ne se recopie à la main (garde-fou de `projets.json`) ; ce script les lit :
 
-- les onglets des pages `mon-lot` et `prestataires` (`pages.ts`) ;
+- le descriptif des onglets de `mon-lot` et `prestataires` (`pages.ts`) — les onglets
+  eux-mêmes sont dans `Charte/OngletsDuSite.swift` (#30) ;
 - `STATUTS_ACCES` et `TYPES_ACCES` (`types-acces.ts`) ;
 - l'état d'un bail (`parAttribut` de `bail.ts`) ;
 - `TYPES_PRESTATAIRE` et `FILTRES_CONTRAT` (`prestataires.ts`).
@@ -76,15 +77,15 @@ def page(identifiant: str) -> dict:
     return next(p for p in lecture_ts.table(lire("pages.ts"), "PAGES") if p["id"] == identifiant)
 
 
-def onglets(identifiant: str) -> str:
-    lignes = [
-        f"        OngletDuSite(id: {chaine(o['id'])}, libelle: {chaine(sans_pictogramme(o['label']))}, "
-        f"descriptif: {chaine(o.get('descriptif', ''))}),\n"
-        for o in page(identifiant)["onglets"]
-    ]
+def descriptifs(identifiant: str) -> str:
+    """Le descriptif de chaque onglet de la page (`pages.ts`). Les onglets eux-mêmes —
+    libellé, ordre, réserve — sont générés une fois pour toute l'app :
+    `Charte/OngletsDuSite.swift` (#30)."""
+    lignes = "".join(
+        f"        {chaine(o['id'])}: {chaine(o.get('descriptif', ''))},\n" for o in page(identifiant)["onglets"])
     return (
-        f"    /// Les onglets de la page `{identifiant}`, leur libellé (sans pictogramme) et leur descriptif.\n"
-        "    static let onglets: [OngletDuSite] = [\n" + "".join(lignes) + "    ]\n"
+        f"    /// Le descriptif de chaque onglet de la page `{identifiant}` (texte du site, parfois HTML).\n"
+        "    static let descriptifs: [String: String] = [\n" + lignes + "    ]\n"
     )
 
 
@@ -100,7 +101,7 @@ def acces() -> str:
         f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in lecture_ts.table(texte, "TYPES_ACCES"))
     bail = objet_par_attribut(lire("bail.ts"), "ETAT")
     return (
-        onglets("mon-lot")
+        descriptifs("mon-lot")
         + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
         + "    /// Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).\n"
         "    static let typesAcces: [(code: String, libelle: String)] = [\n" + types + "    ]\n"
@@ -118,7 +119,7 @@ def prestataires() -> str:
     filtres = "".join(
         f"        ({chaine(f['val'])}, {chaine(f['label'])}),\n" for f in lecture_ts.table(texte, "FILTRES_CONTRAT"))
     return (
-        onglets("prestataires")
+        descriptifs("prestataires")
         + "    /// Les catégories de prestataires, dans l'ordre du site (`TYPES_PRESTATAIRE`).\n"
         "    static let types: [TypePrestataire] = [\n" + types + "    ]\n"
         "    /// Le filtre « Contrat » (`FILTRES_CONTRAT`).\n"

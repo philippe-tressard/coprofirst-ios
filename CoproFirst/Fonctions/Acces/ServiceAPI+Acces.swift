@@ -13,7 +13,7 @@ import OpenAPIRuntime
 /// coprofirst les type (coprofirst#2507). La route, elle, reste celle du client.
 extension ServiceAPI: ServiceAcces {
     func mesLots(_ installation: Installation) async throws -> [LotDuCompte] {
-        let sortie = try await appeler { try await client(installation.adresse).mesLotsLotsMesLotsGet() }
+        let sortie = try await appeler { try await client(installation.adresse).getLotsMesLots() }
         switch sortie {
         case .ok(let ok): return try Self.relire(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -23,7 +23,7 @@ extension ServiceAPI: ServiceAcces {
 
     func monBail(_ installation: Installation) async throws -> BailDuLocataire? {
         do {
-            let sortie = try await client(installation.adresse).monBailBailleurMonBailGet()
+            let sortie = try await client(installation.adresse).getBailleurMonBail()
             switch sortie {
             case .ok(let ok): return BailDuLocataire(try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -46,13 +46,13 @@ extension ServiceAPI: ServiceAcces {
     func baux(_ installation: Installation, tous: Bool) async throws -> [Bail] {
         let client = client(installation.adresse)
         if tous {
-            switch try await appeler({ try await client.tousLesBauxBailleurTousLesBauxGet() }) {
+            switch try await appeler({ try await client.getBailleurTousLesBaux() }) {
             case .ok(let ok): return try ok.body.json.map(Bail.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.mesBauxBailleurMesBauxGet() }) {
+        switch try await appeler({ try await client.getBailleurMesBaux() }) {
         case .ok(let ok): return try ok.body.json.map(Bail.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -63,13 +63,13 @@ extension ServiceAPI: ServiceAcces {
         let client = client(installation.adresse)
         switch type {
         case .vigik:
-            switch try await appeler({ try await client.mesVigiksAccesMesVigiksGet() }) {
+            switch try await appeler({ try await client.getAccesMesVigiks() }) {
             case .ok(let ok): return try Self.relire(try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         case .telecommande:
-            switch try await appeler({ try await client.mesTelecommandesAccesMesTelecommandesGet() }) {
+            switch try await appeler({ try await client.getAccesMesTelecommandes() }) {
             case .ok(let ok): return try Self.relire(try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -79,7 +79,7 @@ extension ServiceAPI: ServiceAcces {
 
     func accesRecus(_ installation: Installation) async throws -> [AccesDetenu] {
         let sortie = try await appeler {
-            try await client(installation.adresse).mesAccesRecusBailleurMesAccesRecusGet()
+            try await client(installation.adresse).getBailleurMesAccesRecus()
         }
         switch sortie {
         case .ok(let ok): return try ok.body.json.map(AccesDetenu.init)
@@ -94,7 +94,7 @@ extension ServiceAPI: ServiceAcces {
         let corps = Components.Schemas.CommandeAccesCreate(
             lotId: lot, motif: motif.isEmpty ? nil : motif, quantite: demande.quantite, _type: demande.type.rawValue)
         let sortie = try await appeler {
-            try await client(installation.adresse).creerCommandeAccesCommandesPost(body: .json(corps))
+            try await client(installation.adresse).postAccesCommandes(body: .json(corps))
         }
         switch sortie {
         case .created: return
@@ -106,7 +106,7 @@ extension ServiceAPI: ServiceAcces {
     func declarer(_ type: TypeAcces, code: String, dans installation: Installation) async throws -> Bool {
         let corps = Components.Schemas.DeclarerBadgeBody(code: code, _type: type.rawValue)
         let sortie = try await appeler {
-            try await client(installation.adresse).declarerBadgeAccesDeclarerBadgePost(body: .json(corps))
+            try await client(installation.adresse).postAccesDeclarerBadge(body: .json(corps))
         }
         switch sortie {
         case .created(let cree):
@@ -123,7 +123,7 @@ extension ServiceAPI: ServiceAcces {
         let statut: Int?
         if acces.type == TypeAcces.telecommande.rawValue {
             let sortie = try await appeler {
-                try await client.signalerTcPerduAccesTelecommandesTcIdPerduPatch(
+                try await client.patchAccesTelecommandesTcIdPerdu(
                     path: .init(tcId: acces.id), body: .json(.init()))
             }
             switch sortie {
@@ -133,7 +133,7 @@ extension ServiceAPI: ServiceAcces {
             }
         } else {
             let sortie = try await appeler {
-                try await client.signalerVigikPerduAccesVigiksVigikIdPerduPatch(
+                try await client.patchAccesVigiksVigikIdPerdu(
                     path: .init(vigikId: acces.id), body: .json(.init()))
             }
             switch sortie {
@@ -147,7 +147,7 @@ extension ServiceAPI: ServiceAcces {
 
     func recupererAcces(bail: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).recupererAccesBailleurBauxBailIdRecupererAccesPost(
+            try await client(installation.adresse).postBailleurBauxBailIdRecupererAcces(
                 path: .init(bailId: bail))
         }
         switch sortie {

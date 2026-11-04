@@ -9,11 +9,11 @@
 
 /// Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.
 enum TablesPrestataires {
-    /// Les onglets de la page `prestataires`, leur libellé (sans pictogramme) et leur descriptif.
-    static let onglets: [OngletDuSite] = [
-        OngletDuSite(id: "prestataires", libelle: "Prestataires", descriptif: "Intervenants et contrats d'entretien de la résidence."),
-        OngletDuSite(id: "contrats", libelle: "Contrats", descriptif: "Contrats d'entretien en cours, leur échéance et leurs documents."),
-        OngletDuSite(id: "consommations", libelle: "Consommations", descriptif: "Suivi des relevés de compteurs et abonnements de la résidence."),
+    /// Le descriptif de chaque onglet de la page `prestataires` (texte du site, parfois HTML).
+    static let descriptifs: [String: String] = [
+        "prestataires": "Intervenants et contrats d'entretien de la résidence.",
+        "contrats": "Contrats d'entretien en cours, leur échéance et leurs documents.",
+        "consommations": "Suivi des relevés de compteurs et abonnements de la résidence.",
     ]
     /// Les catégories de prestataires, dans l'ordre du site (`TYPES_PRESTATAIRE`).
     static let types: [TypePrestataire] = [

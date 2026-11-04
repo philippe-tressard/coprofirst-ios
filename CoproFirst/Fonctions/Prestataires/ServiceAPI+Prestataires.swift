@@ -9,13 +9,13 @@ extension ServiceAPI: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         let client = client(installation.adresse)
         if archives {
-            switch try await appeler({ try await client.listPrestatairesArchivesPrestatairesArchivesGet() }) {
+            switch try await appeler({ try await client.getPrestatairesArchives() }) {
             case .ok(let ok): return try ok.body.json.map(Prestataire.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.listPrestatairesPrestatairesGet() }) {
+        switch try await appeler({ try await client.getPrestataires() }) {
         case .ok(let ok): return try ok.body.json.map(Prestataire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -25,13 +25,13 @@ extension ServiceAPI: ServicePrestataires {
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat] {
         let client = client(installation.adresse)
         if archives {
-            switch try await appeler({ try await client.listContratsArchivesPrestatairesContratsArchivesGet() }) {
+            switch try await appeler({ try await client.getPrestatairesContratsArchives() }) {
             case .ok(let ok): return try ok.body.json.map(Contrat.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.listContratsPrestatairesContratsGet() }) {
+        switch try await appeler({ try await client.getPrestatairesContrats() }) {
         case .ok(let ok): return try ok.body.json.map(Contrat.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -39,7 +39,7 @@ extension ServiceAPI: ServicePrestataires {
     }
 
     func avis(_ installation: Installation) async throws -> [AvisPrestataire] {
-        switch try await appeler({ try await client(installation.adresse).listNotationsPrestatairesNotationsGet() }) {
+        switch try await appeler({ try await client(installation.adresse).getPrestatairesNotations() }) {
         case .ok(let ok): return try ok.body.json.map(AvisPrestataire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -47,7 +47,7 @@ extension ServiceAPI: ServicePrestataires {
     }
 
     func equipements(_ installation: Installation) async throws -> [Equipement] {
-        switch try await appeler({ try await client(installation.adresse).listerEquipementsEquipementsGet() }) {
+        switch try await appeler({ try await client(installation.adresse).getEquipements() }) {
         case .ok(let ok):
             return try ok.body.json.map { Equipement(code: $0.code, libelle: $0.libelle, ordre: $0.ordre) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
@@ -57,7 +57,7 @@ extension ServiceAPI: ServicePrestataires {
 
     func documents(contrat: Int, dans installation: Installation) async throws -> [DocumentContrat] {
         let sortie = try await appeler {
-            try await client(installation.adresse).listDocumentsDocumentsGet(query: .init(contratId: contrat))
+            try await client(installation.adresse).getDocuments(query: .init(contratId: contrat))
         }
         switch sortie {
         case .ok(let ok):
@@ -69,7 +69,7 @@ extension ServiceAPI: ServicePrestataires {
 
     func compteurs(_ installation: Installation) async throws -> [Compteur] {
         let sortie = try await appeler {
-            try await client(installation.adresse).listCompteursConfigPrestatairesCompteursConfigGet()
+            try await client(installation.adresse).getPrestatairesCompteursConfig()
         }
         switch sortie {
         case .ok(let ok):
@@ -85,7 +85,7 @@ extension ServiceAPI: ServicePrestataires {
 
     func releves(_ typeCompteur: String, dans installation: Installation) async throws -> [Releve] {
         let sortie = try await appeler {
-            try await client(installation.adresse).listRelevesPrestatairesRelevesGet(
+            try await client(installation.adresse).getPrestatairesReleves(
                 query: .init(typeCompteur: typeCompteur))
         }
         switch sortie {

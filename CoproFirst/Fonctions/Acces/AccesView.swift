@@ -35,7 +35,7 @@ struct AccesView: View {
                 // Les descriptifs des deux onglets d'accès décrivent la page web (« bouton …
                 // en haut à droite », un lien de la FAQ) : ils égareraient dans l'app.
                 if !["badges", "telecommandes"].contains(onglet),
-                    let descriptif = TablesAcces.onglets.first(where: { $0.id == onglet })?.descriptif
+                    let descriptif = TablesAcces.descriptifs[onglet]
                 {
                     Text(TexteDuSite.apercu(descriptif)).font(.subheadline).foregroundStyle(palette.textMuted)
                 }

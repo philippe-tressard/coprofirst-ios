@@ -9,12 +9,12 @@
 
 /// Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.
 enum TablesAcces {
-    /// Les onglets de la page `mon-lot`, leur libellé (sans pictogramme) et leur descriptif.
-    static let onglets: [OngletDuSite] = [
-        OngletDuSite(id: "lots", libelle: "Mes lots", descriptif: "Situation de vos lots dans la résidence : appartements, caves et parkings."),
-        OngletDuSite(id: "badges", libelle: "Mes badges d’accès (Vigik)", descriptif: "Vos badges Vigik : ceux que vous détenez (tableau ci-dessous), vos demandes (bouton « + Nouvel accès », en haut à droite, pour obtenir un badge supplémentaire) et vos déclarations (bouton « + Déclarer un accès », pour signaler un badge que vous détenez déjà). <a href=\"/faq#badge-prix\" style=\"font-size:.85rem\">Quel prix pour un badge ou une télécommande ?</a>"),
-        OngletDuSite(id: "telecommandes", libelle: "Télécommandes de parking", descriptif: "Vos télécommandes de parking : celles que vous détenez (tableau ci-dessous), vos demandes (bouton « + Nouvel accès », en haut à droite, pour obtenir une télécommande supplémentaire) et vos déclarations (bouton « + Déclarer un accès », pour signaler une télécommande que vous détenez déjà). <a href=\"/faq#badge-prix\" style=\"font-size:.85rem\">Quel prix pour un badge ou une télécommande ?</a>"),
-        OngletDuSite(id: "location", libelle: "Gestion locative", descriptif: "Suivi de vos baux, locataires et documents de gestion locative."),
+    /// Le descriptif de chaque onglet de la page `mon-lot` (texte du site, parfois HTML).
+    static let descriptifs: [String: String] = [
+        "lots": "Situation de vos lots dans la résidence : appartements, caves et parkings.",
+        "badges": "Vos badges Vigik : ceux que vous détenez (tableau ci-dessous), vos demandes (bouton « + Nouvel accès », en haut à droite, pour obtenir un badge supplémentaire) et vos déclarations (bouton « + Déclarer un accès », pour signaler un badge que vous détenez déjà). <a href=\"/faq#badge-prix\" style=\"font-size:.85rem\">Quel prix pour un badge ou une télécommande ?</a>",
+        "telecommandes": "Vos télécommandes de parking : celles que vous détenez (tableau ci-dessous), vos demandes (bouton « + Nouvel accès », en haut à droite, pour obtenir une télécommande supplémentaire) et vos déclarations (bouton « + Déclarer un accès », pour signaler une télécommande que vous détenez déjà). <a href=\"/faq#badge-prix\" style=\"font-size:.85rem\">Quel prix pour un badge ou une télécommande ?</a>",
+        "location": "Suivi de vos baux, locataires et documents de gestion locative.",
     ]
     /// L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).
     static let statutsAcces: [String: LibelleTeinte] = [
