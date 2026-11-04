@@ -17,7 +17,7 @@ struct KanbanAffaires: View {
     let ouvrir: (Affaire) -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
-    @State private var visible: String? = TablesDuSite.colonnesKanban.first?.id
+    @State private var visible: String? = TablesAffaires.colonnesKanban.first?.id
     @State private var cible: String?
     @State private var aClore: Cloture?
     @State private var deplacees = 0
@@ -71,7 +71,7 @@ struct KanbanAffaires: View {
                 .accessibilityIdentifier("kanban.compte")
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
-                    ForEach(TablesDuSite.colonnesKanban) { colonne in
+                    ForEach(TablesAffaires.colonnesKanban) { colonne in
                         Button {
                             withAnimation(mouvementReduit ? nil : .smooth) { visible = colonne.id }
                         } label: {
@@ -109,7 +109,7 @@ struct KanbanAffaires: View {
     private var colonnes: some View {
         ScrollView(.horizontal) {
             LazyHStack(alignment: .top, spacing: 12) {
-                ForEach(TablesDuSite.colonnesKanban) { colonne in
+                ForEach(TablesAffaires.colonnesKanban) { colonne in
                     ColonneDuKanban(
                         colonne: colonne, cartes: etat.phase == .chargement ? nil : etat.cartes(de: colonne),
                         cible: cible == colonne.id, peutDeplacer: droits.moderateur, ouvrir: ouvrir,
@@ -142,15 +142,15 @@ struct KanbanAffaires: View {
 
     /// Les colonnes où la carte peut aller : toutes, sauf la sienne.
     private func destinations(de affaire: Affaire) -> [ColonneKanban] {
-        TablesDuSite.colonnesKanban.filter { $0.id != affaire.colonne }
+        TablesAffaires.colonnesKanban.filter { $0.id != affaire.colonne }
     }
 
     /// Clore demande d'abord si des affaires liées pourraient y être fusionnées
     /// (`demanderFusion` du site) : l'app ne fusionne pas, elle le dit.
     private func demander(_ affaire: Affaire, vers colonne: ColonneKanban) {
-        guard let statut = TablesDuSite.statutParColonne[colonne.id], statut != affaire.statut else { return }
+        guard let statut = TablesAffaires.statutParColonne[colonne.id], statut != affaire.statut else { return }
         Task {
-            if TablesDuSite.statutsClos.contains(statut), !affaire.close, let service,
+            if TablesAffaires.statutsClos.contains(statut), !affaire.close, let service,
                 let candidates = try? await service.candidatesALaFusion(affaire, dans: installation), candidates > 0
             {
                 aClore = Cloture(affaire: affaire, statut: statut, candidates: candidates)
@@ -164,7 +164,7 @@ struct KanbanAffaires: View {
         await etat.deplacer(affaire, vers: statut, dans: installation, avec: service)
         if etat.avis == nil {
             deplacees += 1
-            if let colonne = TablesDuSite.colonneParStatut[statut] {
+            if let colonne = TablesAffaires.colonneParStatut[statut] {
                 withAnimation(mouvementReduit ? nil : .smooth) { visible = colonne }
             }
         }
@@ -206,7 +206,7 @@ private struct ColonneDuKanban: View {
                     if let cartes {
                         ForEach(cartes) { affaire in carte(affaire) }
                         if cartes.isEmpty {
-                            Text(TablesDuSite.colonneVide)
+                            Text(TablesAffaires.colonneVide)
                                 .font(.footnote)
                                 .foregroundStyle(palette.textMuted)
                                 .frame(maxWidth: .infinity, minHeight: 80)

@@ -38,12 +38,12 @@ extension ServiceAPI: ServiceAffaires {
         return !mes.batiments.isEmpty || !mes.desservis.isEmpty
     }
 
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] {
+    func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire] {
         let sortie = try await appeler { try await client(installation.adresse).listerPerimetresPerimetresGet() }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.filter { $0.actif && $0.selectionnable }.map {
-                Perimetre(
+                PerimetreAffaire(
                     code: $0.code, libelle: $0.libelle, profondeur: $0.profondeur, global: $0.porteeGlobale,
                     racine: $0.parent == nil)
             }

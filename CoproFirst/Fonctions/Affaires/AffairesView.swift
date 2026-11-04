@@ -21,7 +21,7 @@ struct AffairesView: View {
 
     private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
     /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
-    private var onglets: [OngletAffaires] { TablesDuSite.onglets.filter(droits.ouvre) }
+    private var onglets: [OngletAffaires] { TablesAffaires.onglets.filter(droits.ouvre) }
 
     var body: some View {
         let service = parcours.service.menuAffaires

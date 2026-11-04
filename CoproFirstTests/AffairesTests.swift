@@ -28,7 +28,7 @@ import Testing
 @Test func leFiltreDeSuiviRetientLesStatutsDeSonOption() {
     let affaires = ServiceSimule.affaires
     let options = OptionDeSuivi.presentes(dans: affaires.filter { !$0.archivee })
-    var filtres = FiltresListe()
+    var filtres = FiltresAffaires()
     filtres.suivi = "en_cours"
     let retenues = affaires.liste(filtres: filtres, options: options, trouvees: nil, avecArchives: false)
     #expect(Set(retenues.map(\.statut)) == ["en_ag", "en_cours", "chez_prestataire"])
@@ -36,10 +36,10 @@ import Testing
 
 @Test func laNatureEtLaPorteeFiltrentCommeLeSite() {
     let affaires = ServiceSimule.affaires
-    var filtres = FiltresListe(nature: "actualite")
+    var filtres = FiltresAffaires(nature: "actualite")
     let actualites = affaires.liste(filtres: filtres, options: [], trouvees: nil, avecArchives: false)
     #expect(!actualites.isEmpty && actualites.allSatisfy { $0.estActualite })
-    filtres = FiltresListe(meConcerne: true)
+    filtres = FiltresAffaires(meConcerne: true)
     let miennes = affaires.liste(filtres: filtres, options: [], trouvees: nil, avecArchives: false)
     // `selonPortee` : seule une affaire DITE étrangère sort — `nil` reste.
     #expect(miennes.allSatisfy { $0.meConcerne != false })
@@ -81,12 +81,12 @@ import Testing
 
 @Test func lesColonnesEtLesStatutsSeRepondent() {
     // L'inverse est dérivé : chaque colonne atteinte pose un statut qui y ramène.
-    for (colonne, statut) in TablesDuSite.statutParColonne {
-        #expect(TablesDuSite.colonneParStatut[statut] == colonne)
+    for (colonne, statut) in TablesAffaires.statutParColonne {
+        #expect(TablesAffaires.colonneParStatut[statut] == colonne)
     }
     // La colonne « fournisseur » est atteinte par chez_prestataire (#1092).
-    #expect(TablesDuSite.statutParColonne["fournisseur"] == "chez_prestataire")
-    #expect(Set(TablesDuSite.colonnesKanban.map(\.id)) == Set(TablesDuSite.colonneParStatut.values))
+    #expect(TablesAffaires.statutParColonne["fournisseur"] == "chez_prestataire")
+    #expect(Set(TablesAffaires.colonnesKanban.map(\.id)) == Set(TablesAffaires.colonneParStatut.values))
 }
 
 // MARK: - Droits
@@ -101,7 +101,7 @@ import Testing
 }
 
 @Test func leKanbanEstFermeAuxLocatairesEtAuProfilInconnu() throws {
-    let kanban = try #require(TablesDuSite.onglets.first { $0.id == "kanban" })
+    let kanban = try #require(TablesAffaires.onglets.first { $0.id == "kanban" })
     #expect(kanban.reserve == "nonLocataire")
     #expect(!DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"])).ouvre(kanban))
     #expect(DroitsAffaires(profil: .init(statut: "copropriétaire_bailleur", roles: [])).ouvre(kanban))
@@ -114,7 +114,7 @@ import Testing
     let resident = DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"]))
     let conseil = DroitsAffaires(profil: .init(statut: nil, roles: ["conseil_syndical"]))
     #expect(!resident.categories.contains { $0.reserveCS })
-    #expect(conseil.categories.count == TablesDuSite.categories.count)
+    #expect(conseil.categories.count == TablesAffaires.categories.count)
     #expect(conseil.categories.first?.code == "actualite", "« Actualité » en tête")
 }
 

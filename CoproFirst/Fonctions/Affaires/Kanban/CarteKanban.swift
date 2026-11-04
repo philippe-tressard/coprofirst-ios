@@ -52,7 +52,7 @@ struct CarteKanban: View {
 
     /// « 🛠️ Panne · A-0041 » — la catégorie et le numéro, comme le pied de carte du site.
     private var pied: String {
-        let categorie = TablesDuSite.categorieParCode[affaire.categorie].map { "\($0.emoji) \($0.libelle)" }
+        let categorie = TablesAffaires.categorieParCode[affaire.categorie].map { "\($0.emoji) \($0.libelle)" }
         return [categorie, affaire.numero].compactMap { $0 }.joined(separator: " · ")
     }
 }

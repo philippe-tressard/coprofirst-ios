@@ -32,12 +32,12 @@ struct Affaire: Identifiable, Hashable, Sendable {
     /// Le nombre de messages du fil — absent tant que le contrat ne le sert pas.
     let messages: Int?
 
-    var estActualite: Bool { categorie == TablesDuSite.categorieActualite }
-    var close: Bool { TablesDuSite.statutsClos.contains(statut) }
+    var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
+    var close: Bool { TablesAffaires.statutsClos.contains(statut) }
     /// La date qui range une affaire aux Archives : sa dernière activité.
     var dateDActivite: Date { misAJourLe ?? creeLe }
     /// La colonne du Kanban, ou `nil` : un statut inconnu SORT l'affaire du tableau.
-    var colonne: String? { TablesDuSite.colonneParStatut[statut] }
+    var colonne: String? { TablesAffaires.colonneParStatut[statut] }
 }
 
 /// Une option du filtre « Suivi » : un statut, ou un groupe de statuts.
@@ -53,8 +53,8 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
     static func presentes(dans affaires: [Affaire]) -> [OptionDeSuivi] {
         let presents = Set(affaires.map(\.statut))
         var options: [OptionDeSuivi] = []
-        for statut in TablesDuSite.ordreDesStatuts where presents.contains(statut) {
-            if let groupe = TablesDuSite.groupesDeSuivi.first(where: { $0.statuts.contains(statut) }) {
+        for statut in TablesAffaires.ordreDesStatuts where presents.contains(statut) {
+            if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut) }) {
                 if !options.contains(where: { $0.code == groupe.code }) {
                     options.append(.init(code: groupe.code, libelle: groupe.libelle, statuts: Set(groupe.statuts)))
                 }
@@ -68,7 +68,7 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
 }
 
 /// Ce que l'onglet Liste retient : état, nature, portée — la recherche à part.
-struct FiltresListe: Hashable, Sendable {
+struct FiltresAffaires: Hashable, Sendable {
     var suivi: String?
     var nature: String?
     var meConcerne = false
@@ -83,7 +83,7 @@ extension [Affaire] {
     /// que le serveur a trouvées, dans SON ordre (la pertinence), archives comprises
     /// si on les demande. Puis l'état, la nature et la portée.
     func liste(
-        filtres: FiltresListe, options: [OptionDeSuivi], trouvees: [Int]?, avecArchives: Bool
+        filtres: FiltresAffaires, options: [OptionDeSuivi], trouvees: [Int]?, avecArchives: Bool
     ) -> [Affaire] {
         let parId = Dictionary(map { ($0.id, $0) }, uniquingKeysWith: { premiere, _ in premiere })
         let base =
@@ -140,7 +140,7 @@ struct DroitsAffaires: Equatable, Sendable {
 
     /// Les catégories qu'il peut poser, dans l'ordre du site, « Actualité » en tête.
     var categories: [CategorieAffaire] {
-        let permises = TablesDuSite.categories.filter { moderateur || !$0.reserveCS }
+        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }
         return permises.filter(\.enTete) + permises.filter { !$0.enTete }
     }
 }

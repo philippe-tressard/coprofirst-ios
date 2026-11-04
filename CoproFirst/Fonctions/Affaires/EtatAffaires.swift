@@ -21,7 +21,7 @@ final class EtatAffaires {
 
     private(set) var phase = Phase.chargement
     private(set) var affaires: [Affaire] = []
-    var filtres = FiltresListe()
+    var filtres = FiltresAffaires()
     var recherche = ""
     var avecArchives = false
     /// Les identifiants trouvés par le serveur, dans son ordre — `nil` sans recherche.

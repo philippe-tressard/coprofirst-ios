@@ -3,7 +3,7 @@
 
 import SwiftUI
 
-/// Les formes que remplit `TablesDuSite` (généré par `scripts/generer-affaires.py`).
+/// Les formes que remplit `TablesAffaires` (généré par `scripts/generer-affaires.py`).
 
 /// Une catégorie d'affaire, comme le formulaire du site la propose.
 struct CategorieAffaire: Identifiable, Hashable, Sendable {
@@ -52,7 +52,7 @@ struct OngletAffaires: Identifiable, Hashable, Sendable {
     let reserve: String?
 }
 
-extension TablesDuSite {
+extension TablesAffaires {
     static let categorieParCode: [String: CategorieAffaire] = Dictionary(
         uniqueKeysWithValues: categories.map { ($0.code, $0) })
     static let colonneParId: [String: ColonneKanban] = Dictionary(

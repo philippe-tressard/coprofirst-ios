@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Le filtre « Suivi » en pastilles : « Toutes », puis les états présents — le
 /// compte n'apparaît que sur la pastille retenue.
-struct Filtres: View {
+struct PastillesDeSuivi: View {
     @Bindable var etat: EtatAffaires
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
 
@@ -42,7 +42,7 @@ struct Filtres: View {
 
 /// Nature et portée, dans un menu de la barre : le pictogramme se remplit quand
 /// un filtre est retenu, et dit combien.
-struct MenuFiltres: View {
+struct MenuFiltresAffaires: View {
     @Bindable var etat: EtatAffaires
     @Environment(\.palette) private var palette
 
@@ -50,7 +50,7 @@ struct MenuFiltres: View {
         Menu {
             Picker("Nature", selection: $etat.filtres.nature) {
                 Text("Toutes les natures").tag(String?.none)
-                ForEach(TablesDuSite.natures) { nature in
+                ForEach(TablesAffaires.natures) { nature in
                     Text("\(nature.emoji) \(nature.libelle)").tag(Optional(nature.code))
                 }
             }

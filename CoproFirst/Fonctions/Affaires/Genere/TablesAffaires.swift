@@ -11,7 +11,7 @@
 import SwiftUI
 
 /// Ce que le site écrit des affaires et que le contrat ne sert pas.
-enum TablesDuSite {
+enum TablesAffaires {
     /// Les catégories, dans l'ordre du site (fréquence attendue) — `CATEGORIES_TICKET`.
     static let categories: [CategorieAffaire] = [
         CategorieAffaire(code: "panne", libelle: "Panne", emoji: "🛠️", description: "Ascenseur, chauffage, éclairage, fuite, porte — à réparer", carnet: true, reserveCS: false, enTete: false),

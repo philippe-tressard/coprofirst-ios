@@ -39,7 +39,7 @@ struct ListeAffaires: View {
                     }
                 }
             } header: {
-                Filtres(etat: etat)
+                PastillesDeSuivi(etat: etat)
             }
         }
         .listStyle(.plain)
@@ -49,7 +49,7 @@ struct ListeAffaires: View {
         .task(id: etat.recherche) { await etat.chercher(installation, avec: service) }
         .refreshable { await etat.charger(installation, avec: service) }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) { MenuFiltres(etat: etat) }
+            ToolbarItem(placement: .topBarTrailing) { MenuFiltresAffaires(etat: etat) }
         }
     }
 

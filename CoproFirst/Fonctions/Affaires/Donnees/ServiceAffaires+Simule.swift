@@ -7,7 +7,7 @@ import Foundation
 /// (créer, déplacer, archiver) restent en mémoire le temps de la session.
 extension ServiceSimule: ServiceAffaires {
     /// Les affaires de CETTE installation simulée : deux tests ne se marchent pas dessus.
-    private var magasin: MagasinSimule { MagasinSimule.de(self) }
+    private var magasin: MagasinAffairesSimule { MagasinAffairesSimule.de(self) }
 
     func affaires(_ installation: Installation) async throws -> [Affaire] {
         try await Task.sleep(for: .milliseconds(450))
@@ -24,7 +24,7 @@ extension ServiceSimule: ServiceAffaires {
 
     func offrirMeConcerne(_ installation: Installation) async -> Bool { true }
 
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] {
+    func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire] {
         try await Task.sleep(for: .milliseconds(200))
         return Self.perimetres
     }
@@ -49,12 +49,13 @@ extension ServiceSimule: ServiceAffaires {
         return magasin.modifier(affaire.id) { $0.archivee = true } ?? affaire
     }
 
-    static let perimetres: [Perimetre] = [
-        Perimetre(code: "copropriete", libelle: "Toute la copropriété", profondeur: 0, global: true, racine: true),
-        Perimetre(code: "bat-a", libelle: "Bâtiment A", profondeur: 1, global: false, racine: false),
-        Perimetre(code: "bat-b", libelle: "Bâtiment B", profondeur: 1, global: false, racine: false),
-        Perimetre(code: "parking", libelle: "Parking", profondeur: 1, global: false, racine: false),
-        Perimetre(code: "jardin", libelle: "Jardin", profondeur: 1, global: false, racine: false),
+    static let perimetres: [PerimetreAffaire] = [
+        PerimetreAffaire(
+            code: "copropriete", libelle: "Toute la copropriété", profondeur: 0, global: true, racine: true),
+        PerimetreAffaire(code: "bat-a", libelle: "Bâtiment A", profondeur: 1, global: false, racine: false),
+        PerimetreAffaire(code: "bat-b", libelle: "Bâtiment B", profondeur: 1, global: false, racine: false),
+        PerimetreAffaire(code: "parking", libelle: "Parking", profondeur: 1, global: false, racine: false),
+        PerimetreAffaire(code: "jardin", libelle: "Jardin", profondeur: 1, global: false, racine: false),
     ]
 
     /// Les affaires inventées : toutes les colonnes du Kanban, une actualité, des archives.
@@ -128,16 +129,16 @@ extension ServiceSimule: ServiceAffaires {
 
 /// Les affaires de la simulation, modifiables par les gestes, derrière un verrou —
 /// un magasin par service simulé (une extension ne peut pas y ranger de propriété).
-final class MagasinSimule: @unchecked Sendable {
+final class MagasinAffairesSimule: @unchecked Sendable {
     private static let verrouGlobal = NSLock()
     /// Le service est retenu avec son magasin : un identifiant libéré puis réemployé
     /// rendrait le magasin d'un autre.
-    nonisolated(unsafe) private static var parService: [ObjectIdentifier: (ServiceSimule, MagasinSimule)] = [:]
+    nonisolated(unsafe) private static var parService: [ObjectIdentifier: (ServiceSimule, MagasinAffairesSimule)] = [:]
 
-    static func de(_ service: ServiceSimule) -> MagasinSimule {
+    static func de(_ service: ServiceSimule) -> MagasinAffairesSimule {
         verrouGlobal.withLock {
             if let existant = parService[ObjectIdentifier(service)] { return existant.1 }
-            let neuf = MagasinSimule()
+            let neuf = MagasinAffairesSimule()
             parService[ObjectIdentifier(service)] = (service, neuf)
             return neuf
         }
@@ -151,7 +152,7 @@ final class MagasinSimule: @unchecked Sendable {
     func creer(_ saisie: SaisieAffaire) -> Affaire {
         verrou.withLock {
             let id = (contenu.map(\.id).max() ?? 0) + 1
-            let actualite = saisie.categorie == TablesDuSite.categorieActualite
+            let actualite = saisie.categorie == TablesAffaires.categorieActualite
             let neuve = Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: saisie.titre, apercu: saisie.descriptionHTML,
                 creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert", categorie: saisie.categorie,

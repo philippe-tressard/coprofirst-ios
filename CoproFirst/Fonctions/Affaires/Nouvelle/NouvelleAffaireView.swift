@@ -15,7 +15,7 @@ struct NouvelleAffaireView: View {
     @Environment(\.palette) private var palette
     @State private var categorie: String?
     @State private var saisie = SaisieAffaire(categorie: "", titre: "", description: "", urgente: false)
-    @State private var perimetres: [Perimetre] = []
+    @State private var perimetres: [PerimetreAffaire] = []
     @State private var envoi = false
     @State private var erreur: String?
     @State private var abandon = false

@@ -15,7 +15,7 @@ libellés, l'ordre et les teintes vivent dans le front du site. Rien ne se recop
 - l'ORDRE des statuts, leurs GROUPES de suivi et les statuts CLOS (`tickets.ts`) ;
 - les ONGLETS de la page `mes-demandes` et leur réserve (`pages.ts`).
 
-Sortie : `CoproFirst/Fonctions/Affaires/Genere/TablesDuSite.swift` — dans le
+Sortie : `CoproFirst/Fonctions/Affaires/Genere/TablesAffaires.swift` — dans le
 dossier du menu, pour qu'aucune session parallèle n'y touche. Script à part de
 `generer-charte.py` : relancer celui-ci régénérerait toute la charte.
 
@@ -41,7 +41,7 @@ FRONT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else f"{RACINE_COPROFIRST}
 # La version PUBLIÉE de coprofirst que les installations font tourner — celle que la
 # concordance quotidienne (#20) compare. Jamais l'arbre de travail de `dev`.
 REVISION = os.environ.get("COPROFIRST_REVISION", "v3.61.0")
-SORTIE = RACINE / "CoproFirst" / "Fonctions" / "Affaires" / "Genere" / "TablesDuSite.swift"
+SORTIE = RACINE / "CoproFirst" / "Fonctions" / "Affaires" / "Genere" / "TablesAffaires.swift"
 
 JETON = re.compile(r"--((?:kanban|teinte)-[a-z0-9-]+)\s*:\s*([^;]+);")
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
@@ -236,7 +236,7 @@ def provenance() -> str:
 
 def main() -> None:
     source = provenance()
-    corps = entete(source) + "\nimport SwiftUI\n\n/// Ce que le site écrit des affaires et que le contrat ne sert pas.\nenum TablesDuSite {\n"
+    corps = entete(source) + "\nimport SwiftUI\n\n/// Ce que le site écrit des affaires et que le contrat ne sert pas.\nenum TablesAffaires {\n"
     # Une ligne par entrée, sans retour : SwiftLint suspend la longueur, puis la rétablit.
     corps += categories() + kanban() + statuts() + onglets() + "}\n// swiftlint:enable line_length\n"
     SORTIE.parent.mkdir(parents=True, exist_ok=True)

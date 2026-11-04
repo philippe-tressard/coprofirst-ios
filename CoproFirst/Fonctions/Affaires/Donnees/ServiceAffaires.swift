@@ -14,7 +14,7 @@ protocol ServiceAffaires: Sendable {
     /// GET /lots/mes-perimetres : y a-t-il de quoi filtrer « ce qui me concerne » ?
     func offrirMeConcerne(_ installation: Installation) async -> Bool
     /// GET /perimetres : les lieux qu'une affaire peut viser.
-    func perimetres(_ installation: Installation) async throws -> [Perimetre]
+    func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire]
     /// POST /tickets.
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire
     /// GET /tickets/{id}/fusion : combien d'affaires pourraient y être fusionnées.
@@ -33,7 +33,7 @@ extension ServiceCoproFirst {
 }
 
 /// Un lieu de la copropriété qu'une affaire peut viser (`PerimetreRead`).
-struct Perimetre: Identifiable, Hashable, Sendable {
+struct PerimetreAffaire: Identifiable, Hashable, Sendable {
     let code: String
     let libelle: String
     let profondeur: Int
@@ -44,10 +44,10 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var id: String { code }
 }
 
-extension [Perimetre] {
+extension [PerimetreAffaire] {
     /// Le périmètre proposé d'abord : la première racine à portée globale, dans
     /// l'ordre de l'API — `code_par_defaut` du serveur, `perimetreDefautListe` du site.
-    var parDefaut: Perimetre? { first { $0.racine && $0.global } }
+    var parDefaut: PerimetreAffaire? { first { $0.racine && $0.global } }
 }
 
 /// Ce que « Nouvelle affaire » envoie.
