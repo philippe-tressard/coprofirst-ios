@@ -101,13 +101,16 @@ import Testing
 }
 
 @Test func leKanbanEstFermeAuxLocatairesEtAuProfilInconnu() {
-    func ouvre(_ profil: ProfilResidence?) -> Bool {
-        DroitsAffaires(profil: profil).onglets.contains { $0.id == "kanban" }
-    }
-    #expect(!ouvre(.init(statut: "locataire", roles: ["résident"])))
-    #expect(ouvre(.init(statut: "copropriétaire_bailleur", roles: [])))
-    #expect(!ouvre(nil), "profil non lu : l'onglet réservé reste caché")
-    #expect(DroitsAffaires(profil: nil).onglets.map(\.id) == ["liste", "archives"])
+    // Les listes d'onglets sont calculées HORS de la macro, puis comparées. Sous Xcode
+    // 26.6 (CI), `#expect(!ouvre(x))` (fonction locale niée) échouait avec un résultat
+    // « <not evaluated> », vert sous Xcode 27.2 : cause non établie. Une liste comparée
+    // dit, en cas d'échec, quels onglets étaient réellement ouverts.
+    let locataire = DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"])).onglets.map(\.id)
+    let bailleur = DroitsAffaires(profil: .init(statut: "copropriétaire_bailleur", roles: [])).onglets.map(\.id)
+    let inconnu = DroitsAffaires(profil: nil).onglets.map(\.id)
+    #expect(locataire == ["liste", "archives"])
+    #expect(bailleur == ["liste", "kanban", "archives"])
+    #expect(inconnu == ["liste", "archives"], "profil non lu : l'onglet réservé reste caché")
 }
 
 @Test func lesCategoriesReserveesNeSontOffertesQuAuConseil() {
