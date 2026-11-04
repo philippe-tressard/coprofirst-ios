@@ -94,7 +94,9 @@ PY
 mv "$TRAVAIL/openapi.json" "$CIBLE"
 DEPOT=$(git -C "$API" rev-parse --show-toplevel)
 COMMIT=$(git -C "$DEPOT" rev-parse HEAD)
+# Une branche, sinon l'étiquette exacte (un clone d'une release est détaché).
 BRANCHE=$(git -C "$DEPOT" branch --show-current)
+[ -n "$BRANCHE" ] || BRANCHE=$(git -C "$DEPOT" describe --tags --exact-match 2>/dev/null || echo "détaché")
 SALE=$(git -C "$DEPOT" status --porcelain -- api | head -1)
 CONTRAT=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["info"]["version"])' "$CIBLE")
 
@@ -111,7 +113,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | | |
 |---|---|
 | Source | \`philippe-tressard/coprofirst\`, dossier \`api/\`, par \`app.openapi()\` |
-| Commit | \`$COMMIT\` (branche \`$BRANCHE\`)$([ -n "$SALE" ] && echo " — ⚠️ arbre de travail MODIFIÉ") |
+| Commit | \`$COMMIT\` (\`$BRANCHE\`)$([ -n "$SALE" ] && echo " — ⚠️ arbre de travail MODIFIÉ") |
 | Version du contrat | \`$CONTRAT\` (\`API_VERSION\` de \`api/app/main.py\`) |
 | Préfixe servi | \`/api\` : les chemins du schéma s'entendent sous \`https://<hôte>/api\` |
 | Normalisation | \`anyOf: [X, null]\` réécrit en \`type: [X, "null"]\` (\`\$ref\` : nullabilité retirée) — le générateur supprimait ces champs |
