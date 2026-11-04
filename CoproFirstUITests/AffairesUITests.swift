@@ -25,6 +25,15 @@ final class AffairesUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifiant).firstMatch
     }
 
+    /// Un contrôle de cet identifiant est-il désactivé ? Sous iOS 26.5, le premier élément
+    /// qui porte l'identifiant d'un bouton de barre est un conteneur (« Other ») toujours
+    /// actif : on interroge TOUS les éléments de l'identifiant, quel que soit leur type.
+    private func desactive(_ identifiant: String, dans app: XCUIApplication) -> Bool {
+        app.descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant))
+            .firstMatch.exists
+    }
+
     private func capturer(_ nom: String) {
         guard let dossier = ProcessInfo.processInfo.environment["CAPTURES_AFFAIRES"] else { return }
         let donnees = XCUIScreen.main.screenshot().pngRepresentation
@@ -62,7 +71,7 @@ final class AffairesUITests: XCTestCase {
         element("affaires.nouvelle", dans: app).tap()
         let panne = element("nouvelle.categorie.panne", dans: app)
         XCTAssertTrue(panne.waitForExistence(timeout: 5))
-        XCTAssertFalse(element("nouvelle.envoyer", dans: app).isEnabled, "rien n'est saisi")
+        XCTAssertTrue(desactive("nouvelle.envoyer", dans: app), "rien n'est saisi : Envoyer est désactivé")
         panne.tap()
         capturer("4-categories")
         let titre = element("nouvelle.titre", dans: app)
@@ -74,6 +83,7 @@ final class AffairesUITests: XCTestCase {
         description.tap()
         description.typeText("La serrure ne tourne plus depuis ce matin.")
         capturer("5-saisie")
+        XCTAssertFalse(desactive("nouvelle.envoyer", dans: app), "titre et description saisis : Envoyer s'active")
         element("nouvelle.envoyer", dans: app).tap()
         XCTAssertTrue(
             element("affaires.carte.A-0042", dans: app).waitForExistence(timeout: 5),
