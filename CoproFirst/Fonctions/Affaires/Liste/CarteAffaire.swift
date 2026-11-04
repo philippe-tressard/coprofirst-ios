@@ -3,11 +3,13 @@
 
 import SwiftUI
 
-/// Une affaire dans la liste : date, titre, aperçu sur trois lignes, lieu et messages.
-/// Une affaire urgente porte un liseré rouge à gauche.
+/// Une affaire dans la liste : date, titre, aperçu sur trois lignes, statut, lieu et
+/// messages. Une affaire urgente porte un liseré rouge à gauche ; une archivée
+/// s'atténue (« allure d'archive » du site), sans perdre le contraste de son texte.
 struct CarteAffaire: View {
     @Environment(\.palette) private var palette
     let affaire: Affaire
+    var archive = false
     @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
@@ -38,30 +40,34 @@ struct CarteAffaire: View {
                 .font(.subheadline)
                 .foregroundStyle(palette.textMuted)
                 .lineLimit(3)
-            if affaire.lieu != nil || affaire.messages != nil {
-                HStack(spacing: 16) {
-                    if let lieu = affaire.lieu {
-                        Label(lieu, systemImage: "mappin")
-                    }
-                    if let messages = affaire.messages {
-                        Label {
-                            Text(messages, format: .number).monospacedDigit()
-                        } icon: {
-                            Image(systemName: "bubble.left.and.bubble.right")
-                        }
+            // Aux tailles d'accessibilité, le pied passe en colonne, comme l'en-tête.
+            let pied =
+                tailleTexte.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+                : AnyLayout(HStackLayout(spacing: 16))
+            pied {
+                PastilleStatut(statut: affaire.statut)
+                if let lieu = affaire.lieu {
+                    Label(lieu, systemImage: "mappin")
+                }
+                if let messages = affaire.messages {
+                    Label {
+                        Text(messages, format: .number).monospacedDigit()
+                    } icon: {
+                        Image(systemName: "bubble.left.and.bubble.right")
                     }
                 }
-                .font(.footnote)
-                .foregroundStyle(palette.textMuted)
-                .labelStyle(.titleAndIcon)
             }
+            .font(.footnote)
+            .foregroundStyle(palette.textMuted)
+            .labelStyle(.titleAndIcon)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .padding(.leading, affaire.urgente ? 4 : 0)
+        .padding(.leading, affaire.urgente && !archive ? 4 : 0)
         .background(palette.surface)
         .overlay(alignment: .leading) {
-            if affaire.urgente {
+            if affaire.urgente && !archive {
                 palette.danger.frame(width: 4)
             }
         }
@@ -70,6 +76,7 @@ struct CarteAffaire: View {
             RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
                 .strokeBorder(palette.border, lineWidth: 1)
         }
+        .saturation(archive ? 0.25 : 1)
         .contentShape(.rect(cornerRadius: Mise.rayon))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(libelleVocal)
@@ -80,6 +87,8 @@ struct CarteAffaire: View {
         var morceaux: [String] = []
         if affaire.urgente { morceaux.append("Urgente") }
         morceaux.append(affaire.titre)
+        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)
+        if archive { morceaux.append("archivée") }
         morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
         if let lieu = affaire.lieu { morceaux.append(lieu) }
         if let messages = affaire.messages { morceaux.append("\(messages) messages") }
@@ -91,7 +100,7 @@ struct CarteAffaire: View {
 /// La même carte, en squelette, pendant le chargement.
 struct CarteAffaireSquelette: View {
     var body: some View {
-        CarteAffaire(affaire: ServiceSimule.affaires[2])
+        CarteAffaire(affaire: ServiceSimule.affaires[4])
             .redacted(reason: .placeholder)
             .accessibilityHidden(true)
     }

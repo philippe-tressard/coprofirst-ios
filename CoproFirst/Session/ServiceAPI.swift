@@ -92,25 +92,6 @@ final class ServiceAPI: ServiceCoproFirst {
     /// Aucune route ne sert les identifiants publics de la démo : pas d'entrée directe.
     func entrerEnDemo(_ code: String) async throws -> Installation? { nil }
 
-    func affaires(_ installation: Installation) async throws -> [Affaire] {
-        let sortie = try await appeler { try await client(installation.adresse).getTickets() }
-        switch sortie {
-        case .ok(let ok):
-            return try ok.body.json.map(Affaire.init(ticket:))
-        case .unprocessableContent:
-            throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _):
-            throw statut == 401 ? ErreurService.sessionExpiree : ErreurService.depuis(statut: statut)
-        }
-    }
-
-    /// Les droits ne sont pas encore servis par le contrat : rien n'est offert.
-    func peutArchiver(_ installation: Installation) -> Bool { false }
-
-    func archiver(_ affaire: Affaire, dans installation: Installation) async throws {
-        throw ErreurService.inattendue(403)
-    }
-
     // MARK: - Session HTTP de chaque installation
 
     func client(_ adresse: URL) -> Client {
@@ -164,24 +145,6 @@ final class SessionsParHote: @unchecked Sendable {
 
     func cookies(_ adresse: URL) -> [HTTPCookie] {
         session(pour: adresse).configuration.httpCookieStorage?.cookies(for: adresse) ?? []
-    }
-}
-
-extension Affaire {
-    init(ticket: Components.Schemas.TicketRead) {
-        self.init(
-            id: ticket.id,
-            numero: ticket.numero,
-            titre: ticket.titre,
-            apercu: ticket.description,
-            creeLe: ticket.creeLe,
-            statut: ticket.statut,
-            // La règle du site : urgente = priorité haute (#lib/tickets.ts, ticketUrgent).
-            urgente: ticket.priorite == "haute",
-            meConcerne: ticket.meConcerne ?? false,
-            lieu: nil,
-            messages: nil
-        )
     }
 }
 
