@@ -1,7 +1,7 @@
+// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
 // Source : coprofirst@b40a3189c, front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
 

@@ -1,7 +1,7 @@
+// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
 // Source : coprofirst@b40a3189c, front/src/lib/theme.ts, preferences.ts et roles.ts ; api/app/utils/preferences_mail.py et mots_de_passe.py.
 

@@ -97,10 +97,11 @@ def commit() -> str:
 # REUSE-IgnoreStart
 def entete(source: str) -> str:
     return (
+        # La 1re ligne dit « GÉNÉRÉ » : verifier-depot.sh l'exige de tout fichier de Genere/.
+        "// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.\n"
         "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
         "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
         "//\n"
-        "// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.\n"
         "// swift-format-ignore-file\n"
         f"// Source : coprofirst@{commit()}, {source}.\n\n"
     )
