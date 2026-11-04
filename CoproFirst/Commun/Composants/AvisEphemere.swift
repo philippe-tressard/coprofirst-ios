@@ -4,7 +4,8 @@
 import SwiftUI
 
 /// La phrase brève qui suit un geste (le « toast » du site) : elle monte du bas,
-/// reste 2,5 s, et se retire — un fondu seul quand le mouvement est réduit.
+/// reste le temps du site (`AvisDuSite.duree`, généré), et se retire — un fondu seul
+/// quand le mouvement est réduit.
 struct AvisEphemere: ViewModifier {
     @Binding var avis: String?
     @Environment(\.palette) private var palette
@@ -26,7 +27,7 @@ struct AvisEphemere: ViewModifier {
                         .accessibilityAddTraits(.updatesFrequently)
                         .task(id: avis) {
                             AccessibilityNotification.Announcement(avis).post()
-                            try? await Task.sleep(for: .seconds(2.5))
+                            try? await Task.sleep(for: AvisDuSite.duree)
                             self.avis = nil
                         }
                 }
