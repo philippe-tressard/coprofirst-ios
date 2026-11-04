@@ -14,7 +14,6 @@ struct ProfilView: View {
     @State private var erreur: ErreurService?
     @State private var identite = false
     @State private var phrase: String?
-    @Environment(\.dynamicTypeSize) private var tailleTexte
     @AppStorage(ThemeChoisi.cle) private var theme = TablesProfil.themeParDefaut
 
     var body: some View {
@@ -48,7 +47,7 @@ struct ProfilView: View {
         .scrollContentBackground(.hidden)
         .background(palette.bg)
         .navigationTitle("Profil")
-        .navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+        .titreDeMenu()
         .confirmationDeSortie($geste, parcours: parcours)
         .sheet(isPresented: $identite) {
             if let compte, let ouverte = parcours.ouverteAJour {
@@ -101,8 +100,7 @@ struct ProfilView: View {
                     LabeledContent("Statut du compte", value: compte.actif ? "Actif" : "Inactif")
                     LabeledContent("Membre depuis", value: FormatsDuSite.date(compte.creeLe))
                     if let derniere = compte.derniereConnexion {
-                        LabeledContent(
-                            "Dernière connexion", value: derniere.formatted(date: .abbreviated, time: .shortened))
+                        LabeledContent("Dernière connexion", value: FormatsDuSite.dateHeure(derniere))
                     }
                     NavigationLink("Demander une modification (profil / bâtiment)") {
                         DemandeModificationView(installation: ouverte)
@@ -252,7 +250,7 @@ private struct SectionDroits: View {
                         phrase = valeur ? "Collecte de statistiques désactivée." : "Collecte de statistiques réactivée."
                     } catch {
                         modifie(compte)
-                        phrase = "Erreur lors de la mise à jour."
+                        phrase = ErreurService.phrase(error, sinon: "Erreur lors de la mise à jour.")
                     }
                 }
             })
@@ -265,7 +263,7 @@ private struct SectionDroits: View {
             export = try await parcours.serviceProfil.exporterTelemetrie(installation)
             phrase = "Export prêt."
         } catch {
-            phrase = "Erreur lors de l'export."
+            phrase = ErreurService.phrase(error, sinon: "Erreur lors de l'export.")
         }
     }
 
@@ -274,7 +272,7 @@ private struct SectionDroits: View {
             try await parcours.serviceProfil.effacerTelemetrie(installation)
             phrase = "Données de navigation effacées."
         } catch {
-            phrase = "Erreur lors de la suppression."
+            phrase = ErreurService.phrase(error, sinon: "Erreur lors de la suppression.")
         }
     }
 }

@@ -35,7 +35,7 @@ extension ServiceSimule: ServiceAcces {
         try await Task.sleep(for: .milliseconds(450))
         guard let lot = demande.lotId, LotsSimules.lots.contains(where: { $0.id == lot }) else {
             // La règle du serveur : un lot qui n'est pas le sien est refusé.
-            throw RefusDuServeur(phrase: "Vous n'êtes pas associé à ce lot")
+            throw ErreurService.refus(.init(phrase: "Vous n'êtes pas associé à ce lot"))
         }
     }
 
@@ -76,7 +76,7 @@ final class AccesSimules: @unchecked Sendable {
             let tous = parType.values.flatMap { $0 }
             if tous.contains(where: { $0.code == code }) {
                 let nom = type == .vigik ? "Vigik" : "Télécommande"
-                throw RefusDuServeur(phrase: "\(nom) déjà enregistré sur votre compte")
+                throw ErreurService.refus(.init(phrase: "\(nom) déjà enregistré sur votre compte"))
             }
             let id = (tous.map(\.id).max() ?? 0) + 1
             parType[type, default: []].append(AccesDetenu(id: id, code: code, statut: "actif", type: type.rawValue))

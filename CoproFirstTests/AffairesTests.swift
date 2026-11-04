@@ -131,8 +131,16 @@ import Testing
     #expect(!SaisieAffaire(categorie: "panne", titre: " ", description: "x", urgente: false).complete)
 }
 
-@Test func lePerimetreParDefautEstLaPremiereRacineGlobale() {
-    #expect(ServiceSimule.perimetres.parDefaut?.code == "copropriete")
+/// Un seul modèle de périmètre (#41) : le carnet et le lieu d'une affaire lisent la
+/// même liste, par la même méthode des deux services.
+@Test func lePerimetreEstUnSeulModelePourLesDeuxMenus() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let residence: any ServiceResidence = service
+    let affaires: any ServiceAffaires = service
+    let duCarnet = try await residence.perimetres(ServiceSimule.residence)
+    let deLAffaire = try await affaires.perimetres(ServiceSimule.residence)
+    #expect(duCarnet == deLAffaire && duCarnet == ServiceSimule.perimetres)
+    let _: any ServicePerimetres = ServiceAPI()
 }
 
 // MARK: - Gestes, sur l'installation simulée

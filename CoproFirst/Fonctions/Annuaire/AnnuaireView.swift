@@ -64,6 +64,7 @@ struct AnnuaireView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.bg)
         .navigationTitle(titre)
+        .titreDeMenu()
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         .safeAreaInset(edge: .top, spacing: 0) {
             if !reseau.enLigne { BandeauHorsLigne() }

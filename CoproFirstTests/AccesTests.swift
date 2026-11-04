@@ -63,7 +63,7 @@ import Testing
 @Test func uneDemandeHorsDeSesLotsEstRefusee() async {
     let service = ServiceSimule(delai: .zero)
     let voisin = DemandeAcces(type: .vigik, lotId: 999)
-    await #expect(throws: RefusDuServeur.self) {
+    await #expect(throws: ErreurService.refus(.init(phrase: "Vous n'êtes pas associé à ce lot"))) {
         try await service.demander(voisin, dans: ServiceSimule.residence)
     }
 }

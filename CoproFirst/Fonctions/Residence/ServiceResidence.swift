@@ -8,7 +8,7 @@ import Foundation
 /// son dossier : `Session/` et `Donnees/` ne grossissent pas (motif des sessions
 /// parallèles de #10). Réalisé par le client généré et par l'API simulée ; un test
 /// vérifie à la compilation que les deux s'y conforment.
-protocol ServiceResidence: Sendable {
+protocol ServiceResidence: ServicePerimetres {
     /// La Fiche, en une vague : copropriété, bâtiments, règles, trois rubriques de
     /// documents, diagnostics et annexes.
     func fiche(_ installation: Installation) async throws -> ContenuFiche
@@ -17,8 +17,6 @@ protocol ServiceResidence: Sendable {
     /// GET /carnet-entretien, filtré par périmètre (`nil` : toute la résidence), et
     /// GET /equipements pour nommer les groupes.
     func carnet(perimetre: String?, dans installation: Installation) async throws -> ContenuCarnet
-    /// GET /perimetres : les choix du filtre du carnet.
-    func perimetres(_ installation: Installation) async throws -> [Perimetre]
     /// GET /reglement/acces : l'administration a-t-elle ouvert l'assistant aux
     /// copropriétaires ? `false` masque l'onglet, comme sur le site.
     func accesReglement(_ installation: Installation) async throws -> Bool
@@ -71,8 +69,8 @@ extension ServiceAPI: ServiceResidence {
             contenu.batiments = lus.map(Batiment.init(lu:))
         }
         if case .ok(let ok) = try? await regles, let lues = try? ok.body.json {
-            // La réponse n'est pas typée dans le contrat : relue telle quelle.
-            contenu.regles = (try? JSONDecoder().decode([RegleResidence].self, from: JSONEncoder().encode(lues))) ?? []
+            // La réponse n'est pas typée dans le contrat : relue en miroir.
+            contenu.regles = (try? Relecture.lire([RegleResidence].self, depuis: lues)) ?? []
         }
         if case .ok(let ok) = try? await diagnostics, let lus = try? ok.body.json {
             contenu.diagnostics = lus.map(TypeDiagnostic.init(lu:))
@@ -104,18 +102,9 @@ extension ServiceAPI: ServiceResidence {
         }
         switch sortie {
         case .ok(let ok):
-            // Non typée dans le contrat (coprofirst#2505) : relue telle quelle.
-            let carnet = try JSONDecoder().decode(Carnet.self, from: JSONEncoder().encode(try ok.body.json))
+            // Non typée dans le contrat (coprofirst#2505) : relue en miroir.
+            let carnet = try Relecture.lire(Carnet.self, depuis: try ok.body.json)
             return ContenuCarnet(entrees: carnet.entrees, libellesEquipements: libelles)
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-        }
-    }
-
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
-        switch sortie {
-        case .ok(let ok): return try ok.body.json.filter(\.actif).map { Perimetre(code: $0.code, libelle: $0.libelle) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -159,7 +148,7 @@ extension ServiceAPI: ServiceResidence {
         switch sortie {
         case .created(let cree): return QuestionReglement(lue: try cree.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 

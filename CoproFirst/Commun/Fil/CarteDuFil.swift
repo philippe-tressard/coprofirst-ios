@@ -30,7 +30,7 @@ struct CarteDuFil: View {
                     Text(element.urgent ? "Urgent" : nature.libelle)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(element.urgent ? palette.danger : palette[keyPath: nature.couleur])
-                    Text(element.date, format: .dateTime.hour().minute())
+                    Text(FormatsDuSite.heure(element.date))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(palette.textMuted)
                 }
@@ -68,7 +68,7 @@ struct CarteDuFil: View {
 
     private func libelleVocal(_ nature: NatureDuFil) -> Text {
         var morceaux = [element.urgent ? "Urgent" : nature.libelle, element.titre]
-        morceaux.append(element.date.formatted(.dateTime.hour().minute()))
+        morceaux.append(FormatsDuSite.heure(element.date))
         if let detail = element.detail { morceaux.append(TexteDuSite.apercu(detail)) }
         return Text(morceaux.joined(separator: ", "))
     }

@@ -26,6 +26,7 @@ struct AccesView: View {
             }
         }
         .navigationTitle(contexte.page.titre)
+        .titreDeMenu()
     }
 
     private func page(_ service: any ServiceAcces) -> some View {

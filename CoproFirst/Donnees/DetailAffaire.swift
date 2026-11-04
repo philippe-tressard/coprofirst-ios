@@ -60,7 +60,7 @@ enum DroitsAffaire {
 
 /// Un sondage, tel que GET /sondages/{id} le sert. Sa réponse n'est pas typée dans le
 /// contrat (construite à la main côté serveur, sans `response_model`) : ce miroir
-/// la lit (besoin noté pour coprofirst#2460).
+/// la lit par `Relecture` (besoin noté pour coprofirst#2460).
 struct DetailSondage: Codable, Hashable, Sendable {
     let id: Int
     let question: String
@@ -70,12 +70,6 @@ struct DetailSondage: Codable, Hashable, Sendable {
     let cloture: Bool
     let resultatsVisibles: Bool
 
-    enum CodingKeys: String, CodingKey {
-        case id, question, description, options, cloture
-        case monVote = "mon_vote"
-        case resultatsVisibles = "resultats_visibles"
-    }
-
     var totalVotes: Int { options.reduce(0) { $0 + ($1.nbVotes ?? 0) } }
 }
 
@@ -84,9 +78,4 @@ struct OptionSondage: Codable, Hashable, Sendable, Identifiable {
     let libelle: String
     /// Absent quand les résultats sont masqués — jamais 0 : « personne n'a voté » serait faux.
     let nbVotes: Int?
-
-    enum CodingKeys: String, CodingKey {
-        case id, libelle
-        case nbVotes = "nb_votes"
-    }
 }

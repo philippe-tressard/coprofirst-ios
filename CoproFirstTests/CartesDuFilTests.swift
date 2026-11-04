@@ -67,13 +67,13 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
          "resultats_visibles": true, "options": [{"id": 1, "libelle": "A", "ordre": 0, "nb_votes": 2},
          {"id": 2, "libelle": "B", "ordre": 1, "nb_votes": 1}], "commentaires": []}
         """#
-    let lu = try JSONDecoder().decode(DetailSondage.self, from: Data(visible.utf8))
+    let lu = try Relecture.lire(DetailSondage.self, json: Data(visible.utf8))
     #expect(lu.totalVotes == 3 && lu.monVote == nil && lu.resultatsVisibles)
     let masque = #"""
         {"id": 3, "question": "Q ?", "cloture": true, "mon_vote": 2, "resultats_visibles": false,
          "options": [{"id": 1, "libelle": "A"}]}
         """#
-    let clos = try JSONDecoder().decode(DetailSondage.self, from: Data(masque.utf8))
+    let clos = try Relecture.lire(DetailSondage.self, json: Data(masque.utf8))
     #expect(clos.options.first?.nbVotes == nil, "masqué : absent, jamais 0")
     #expect(clos.monVote == 2)
 }

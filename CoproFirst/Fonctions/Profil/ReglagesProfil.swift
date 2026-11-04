@@ -126,7 +126,8 @@ struct PreferencesView: View {
                 phrase = ("Préférences enregistrées", true)
             }
         } catch {
-            withAnimation(.snappy) { phrase = ("Erreur lors de l'enregistrement", false) }
+            let echec = ErreurService.phrase(error, sinon: "Erreur lors de l'enregistrement")
+            withAnimation(.snappy) { phrase = (echec, false) }
         }
     }
 }

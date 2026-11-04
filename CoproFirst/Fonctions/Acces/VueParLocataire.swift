@@ -82,7 +82,7 @@ struct VueParLocataire: View {
             etat.annoncer(TextesAcces.accesRecuperes)
             recharger()
         } catch {
-            erreur = RefusDuServeur.phrase(error)
+            erreur = ErreurService.depuis(error).phrase
         }
     }
 }

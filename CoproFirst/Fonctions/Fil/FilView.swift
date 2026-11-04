@@ -48,6 +48,7 @@ struct FilView: View {
         .overlay { etatVide }
         .refreshable { await charger() }
         .navigationTitle(OrdrePages.libelleFil)
+        .titreDeMenu()
         .navigationDestination(for: ElementDuFil.self) { element in
             DestinationDuFil(element: element, installation: installation)
                 .destinationZoom(id: element.id, dans: zoom)

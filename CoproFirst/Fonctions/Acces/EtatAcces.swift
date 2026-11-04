@@ -49,7 +49,7 @@ final class EtatAcces {
             lots = try await lus
             phase = .pret
         } catch {
-            phase = .erreur(RefusDuServeur.phrase(error))
+            phase = .erreur(ErreurService.depuis(error).phrase)
         }
     }
 

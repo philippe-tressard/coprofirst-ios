@@ -56,7 +56,7 @@ extension ServiceAPI: ServiceNotifications {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -67,7 +67,7 @@ extension ServiceAPI: ServiceNotifications {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -79,7 +79,7 @@ extension ServiceAPI: ServiceNotifications {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 }

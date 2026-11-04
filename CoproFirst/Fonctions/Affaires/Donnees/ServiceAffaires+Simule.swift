@@ -24,11 +24,6 @@ extension ServiceSimule: ServiceAffaires {
 
     func offrirMeConcerne(_ installation: Installation) async -> Bool { true }
 
-    func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire] {
-        try await Task.sleep(for: .milliseconds(200))
-        return Self.perimetres
-    }
-
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire {
         try await Task.sleep(for: .milliseconds(450))
         return magasin.creer(saisie)
@@ -48,15 +43,6 @@ extension ServiceSimule: ServiceAffaires {
         try await Task.sleep(for: .milliseconds(250))
         return magasin.modifier(affaire.id) { $0.archivee = true } ?? affaire
     }
-
-    static let perimetres: [PerimetreAffaire] = [
-        PerimetreAffaire(
-            code: "copropriete", libelle: "Toute la copropriété", profondeur: 0, global: true, racine: true),
-        PerimetreAffaire(code: "bat-a", libelle: "Bâtiment A", profondeur: 1, global: false, racine: false),
-        PerimetreAffaire(code: "bat-b", libelle: "Bâtiment B", profondeur: 1, global: false, racine: false),
-        PerimetreAffaire(code: "parking", libelle: "Parking", profondeur: 1, global: false, racine: false),
-        PerimetreAffaire(code: "jardin", libelle: "Jardin", profondeur: 1, global: false, racine: false),
-    ]
 
     /// Les affaires inventées : toutes les colonnes du Kanban, une actualité, des archives.
     static let affaires: [Affaire] = {

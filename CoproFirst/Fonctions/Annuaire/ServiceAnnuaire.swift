@@ -92,10 +92,7 @@ extension ServiceAPI: ServiceAnnuaire {
     func annuaire(_ installation: Installation) async throws -> Annuaire {
         let sortie = try await appeler { try await client(installation.adresse).getAdminAnnuaire() }
         switch sortie {
-        case .ok(let ok):
-            let decodeur = JSONDecoder()
-            decodeur.keyDecodingStrategy = .convertFromSnakeCase
-            return try decodeur.decode(Annuaire.self, from: JSONEncoder().encode(try ok.body.json))
+        case .ok(let ok): return try Relecture.lire(Annuaire.self, depuis: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

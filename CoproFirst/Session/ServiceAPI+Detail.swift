@@ -41,7 +41,7 @@ extension ServiceAPI {
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -51,9 +51,8 @@ extension ServiceAPI {
         }
         switch sortie {
         case .ok(let ok):
-            // La réponse n'est pas typée dans le contrat : relue telle quelle.
-            let brut = try JSONEncoder().encode(try ok.body.json)
-            return try JSONDecoder().decode(DetailSondage.self, from: brut)
+            // La réponse n'est pas typée dans le contrat : relue en miroir.
+            return try Relecture.lire(DetailSondage.self, depuis: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -67,7 +66,7 @@ extension ServiceAPI {
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 

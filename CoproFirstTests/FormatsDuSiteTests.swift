@@ -30,7 +30,8 @@ func lesDatesSontCellesDuSite(iso: String, date: String, courte: String) {
 }
 
 /// `fmtDateLong` et `fmtDatetime` (#12) : chaque attendu est leur sortie sous Node
-/// (coprofirst v3.62.0, `front/src/lib/date.ts`, fuseau du poste : Paris).
+/// (coprofirst v3.62.0, `front/src/lib/date.ts`, fuseau du poste : Paris) ; la
+/// « Dernière connexion » du Profil s'écrit ainsi (#41).
 @Test(arguments: [
     ("2026-06-12", "12 juin 2026", "12 juin 2026, 02:00"),  // un jour seul : minuit UTC
     ("2026-08-01", "1 août 2026", "1 août 2026, 02:00"),
@@ -56,12 +57,32 @@ func lesDatesLonguesEtLesHeuresSontCellesDuSite(iso: String, longue: String, heu
     #expect(FormatsDuSite.dateHeure(iso) == heure)
 }
 
+/// `fmtTime` (#41) : l'heure seule d'une notification du jour, d'une carte du fil —
+/// sortie de Node (coprofirst v3.62.1, `TZ=Europe/Paris`), changements d'heure compris.
+@Test(arguments: [
+    ("2026-06-12", "02:00"),  // un jour seul : minuit UTC
+    ("2026-04-02T14:30:00Z", "16:30"),
+    ("2026-07-25T21:59:00Z", "23:59"),
+    ("2026-07-25T22:00:00Z", "00:00"),
+    ("2026-10-25T00:30:00Z", "02:30"),  // heure d'hiver : deux instants, la même heure
+    ("2026-10-25T01:30:00Z", "02:30"),
+    ("2026-03-29T01:00:00Z", "03:00"),  // heure d'été : 2 h n'existe pas
+    ("2026-10-20T08:05:00", "08:05"),  // sans fuseau : l'heure de Paris
+    ("2026-11-04T09:07:00Z", "10:07"),
+])
+func lHeureSeuleEstCelleDuSite(iso: String, heure: String) throws {
+    #expect(FormatsDuSite.heure(iso) == heure)
+    let instant = try #require(FormatsDuSite.lire(iso))
+    #expect(FormatsDuSite.heure(instant) == heure, "une date déjà décodée s'écrit pareil")
+}
+
 @Test func uneDateAbsenteSEcritParUnTiret() {
     #expect(FormatsDuSite.date(nil as String?) == "—")
     #expect(FormatsDuSite.dateCourte("") == "—")
     #expect(FormatsDuSite.date(nil as Date?) == "—")
     #expect(FormatsDuSite.dateLongue(nil as String?) == "—")
     #expect(FormatsDuSite.dateHeure("") == "—")
+    #expect(FormatsDuSite.heure(nil as Date?) == "—")
 }
 
 @Test func uneDateDejaDecodeeSeFormateAParis() throws {

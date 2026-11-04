@@ -28,15 +28,15 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte ni leur type — « Tests d'interface » ci-dessous | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer-charte.py`) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
-| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12), `fmtNombre`, `fmtMontant` ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
+| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant` ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
 | Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
 | Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
-| Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») | `Session/ErreurService.swift` |
+| Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
 | Mouvement | `.snappy` pour un état, `.smooth` pour un changement de palette, `accessibilityReduceMotion` lu ; retours haptiques sur résidence reconnue, connexion, Face ID, filtre | — |
-| Grandes tailles | `@ScaledMetric` ou `.dynamicTypeSize(...xxxLarge)` pour un pictogramme ; une rangée passe en colonne si `dynamicTypeSize.isAccessibilitySize` ; un écran fixe défile | `CarteDuFil`, `AccueilView` |
+| Grandes tailles | `@ScaledMetric` ou `.dynamicTypeSize(...xxxLarge)` pour un pictogramme ; une rangée passe en colonne si `dynamicTypeSize.isAccessibilitySize` ; un écran fixe défile ; **le titre d'un écran de menu** : `.titreDeMenu()` après `.navigationTitle(…)` (grand titre, en ligne aux tailles d'accessibilité — #41), jamais un `navigationBarTitleDisplayMode` calculé dans l'écran | `CarteDuFil`, `AccueilView`, `Commun/Composants/TitreDeMenu.swift` |
 | Squelette | des identifiants propres (`0..<3`), jamais ceux des vrais éléments : SwiftUI réutiliserait les vues grisées | `FilView` |
 
 ## Arborescence (#10)
@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Dossier | Contient | Qui y touche |
 |---|---|---|
 | `Fonctions/<Menu>/` | **un dossier par menu du site** : ses écrans, ses textes, ses états — `Fil` (`tableau-de-bord`), `Affaires` (`mes-demandes`), `Profil` ; à venir : `Residence`, `Annuaire`, `Acces` (`mon-lot`), `Prestataires`, `Communaute`, `FAQ`, `Notifications`, `EspaceCS`, `Delegations`, `Admin` | la session du menu, **seule** |
-| `Commun/` | ce que **deux fonctionnalités ou plus** utilisent (catalogue ci-dessous) | personne en passant : un changement ici est un lot à part |
+| `Commun/` | ce que **deux fonctionnalités ou plus** utilisent (catalogue ci-dessous) ; `Commun/Session/` : les gestes communs du dialogue avec l'API (`Relecture`, `RefusDuServeur`) | personne en passant : un changement ici est un lot à part |
 | `Navigation/` | barre, « Plus », ordre des pages (`OrdrePages`), **registre des menus** | une ligne par menu au registre |
 | `Entree/` | ce qui précède la résidence ouverte : accueil, démo, vitrine, découverte (adresse, QR), connexion | — |
 | `Charte/`, `Session/`, `Donnees/` | couleurs générées, service et état, modèles | — |
@@ -103,6 +103,14 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   jamais par une liste vide.
 - **Un modèle que seul le menu lit vit dans le menu** ; il ne monte dans
   `Donnees/` qu'à son deuxième lecteur, comme un composant monte dans `Commun/`.
+  Exemple : `Perimetre` (`PerimetreRead`), lu par Ma résidence et Mes affaires, vit
+  dans `Donnees/Perimetre.swift` avec **sa** lecture, `ServicePerimetres` ; les deux
+  protocoles de menu en **héritent** (`protocol ServiceAffaires: ServicePerimetres`)
+  au lieu de redéclarer `perimetres(_:)` avec chacun son type de retour (#41).
+- **Une règle du serveur ne se recopie pas** (`standards/09` §8) : le périmètre par
+  défaut est `code_par_defaut` côté serveur ; l'app ne le devine pas — « Non précisé »
+  envoie un lieu vide, et le serveur pose son défaut — en attendant de le lire dans
+  l'API (coprofirst#2514).
 - **Les tables que le contrat ne sert pas** (libellés, ordre, teintes du front du
   site) se génèrent dans `Fonctions/<Menu>/Genere/`, par un script qui épingle le
   commit de coprofirst lu et refuse un arbre modifié (`scripts/generer-affaires.py`).
@@ -135,6 +143,14 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `CarteDuFil`, `CarteOuvrable`, `DestinationDuFil` | une carte du fil ; toucher → résumé ; la cible (`affaire`, `sondage`, `document`) → son détail | `Commun/Fil/` |
 | `FeuilleResidence`, `PastillesRoles`, `.confirmationDeSortie` | la feuille « où suis-je » ; les rôles ; se déconnecter / changer de résidence | `Commun/Compte/` |
 | `TexteDuSite.apercu`, `TexteRiche(html:)` | **le texte riche du site (HTML de l'éditeur)** : `apercu` pour une carte (texte simple, puis `lineLimit`), `TexteRiche(html:)` pour un détail (`.font`, `.foregroundStyle`, `.tint(palette.primary)` de l'appelant ; listes en retrait suspendu, `<li><p>` de l'éditeur compris) — **jamais** `Text(html)`, ni WebKit, ni `NSAttributedString(.html)` (`verifier-depot.sh` refuse) ; liste blanche générée (`BalisesDuSite`) | `Commun/Texte/` |
+
+## Lire une réponse, dire un refus (#41)
+
+| Geste | Règle | Où |
+|---|---|---|
+| **Réponse non typée** | une route sans `response_model` côté serveur rend un `OpenAPIValueContainer` : il se relit par `Relecture.lire(T.self, depuis: valeur)` (`json:` pour des octets, dans un test) — clés `snake_case` → `camelCase`, dates comme le client généré (ISO, sans fuseau = UTC). Le modèle ne déclare **pas** de `CodingKeys` en `snake_case` (la conversion les rendrait muets). Jamais un `JSONDecoder` monté dans un service. Chaque usage est un besoin noté pour coprofirst (#2460, #2505, #2507) | `Commun/Session/Relecture.swift` |
+| **Phrase du serveur** | la réponse non documentée d'un **geste** (POST, PATCH, DELETE) passe par `throw await Self.refus(statut, reponse)` : `{"detail": "…"}` devient `ErreurService.refus(RefusDuServeur)`, dont la `phrase` est celle du serveur ; sans phrase, le cas que dit le statut. Une **lecture** refusée garde `ErreurService.depuisLecture(statut)` (« introuvable »). Un service simulé lève la même chose : `ErreurService.refus(.init(phrase: …))` | `Commun/Session/RefusDuServeur.swift` (tests : `CommunSessionTests`) |
+| **Afficher un échec** | `ErreurService.depuis(error).phrase` ; un écran qui a sa propre phrase d'échec (celle du site, « Erreur lors de l'export. ») écrit `ErreurService.phrase(error, sinon: "…")` : la phrase du serveur passe devant. Un menu qui a ses erreurs (`ErreurAffaires`) range un refus en `.service(.refus(…))`, jamais une phrase fixe par statut | `Session/ErreurService.swift` |
 
 ## Tests d'interface — la CI tranche, pas le poste (#11, #12)
 

@@ -9,13 +9,13 @@ import OpenAPIRuntime
 ///
 /// ⚠️ Trois réponses ne sont pas typées dans le contrat (`/lots/mes-lots`,
 /// `/acces/mes-vigiks`, `/acces/mes-telecommandes` : pas de `response_model`) : elles
-/// sont relues telles quelles, comme `sondage` le fait déjà, en attendant que
+/// sont relues en miroir (`Relecture`, Commun/Session), en attendant que
 /// coprofirst les type (coprofirst#2507). La route, elle, reste celle du client.
 extension ServiceAPI: ServiceAcces {
     func mesLots(_ installation: Installation) async throws -> [LotDuCompte] {
         let sortie = try await appeler { try await client(installation.adresse).getLotsMesLots() }
         switch sortie {
-        case .ok(let ok): return try Self.relire(try ok.body.json)
+        case .ok(let ok): return try Relecture.lire([LotDuCompte].self, depuis: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -64,13 +64,13 @@ extension ServiceAPI: ServiceAcces {
         switch type {
         case .vigik:
             switch try await appeler({ try await client.getAccesMesVigiks() }) {
-            case .ok(let ok): return try Self.relire(try ok.body.json)
+            case .ok(let ok): return try Relecture.lire([AccesDetenu].self, depuis: try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         case .telecommande:
             switch try await appeler({ try await client.getAccesMesTelecommandes() }) {
-            case .ok(let ok): return try Self.relire(try ok.body.json)
+            case .ok(let ok): return try Relecture.lire([AccesDetenu].self, depuis: try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
@@ -89,7 +89,7 @@ extension ServiceAPI: ServiceAcces {
     }
 
     func demander(_ demande: DemandeAcces, dans installation: Installation) async throws {
-        guard let lot = demande.lotId else { throw RefusDuServeur(phrase: TextesAcces.choisirUnLot) }
+        guard let lot = demande.lotId else { throw ErreurService.refus(.init(phrase: TextesAcces.choisirUnLot)) }
         let motif = demande.motif.trimmingCharacters(in: .whitespacesAndNewlines)
         let corps = Components.Schemas.CommandeAccesCreate(
             lotId: lot, motif: motif.isEmpty ? nil : motif, quantite: demande.quantite, _type: demande.type.rawValue)
@@ -111,7 +111,7 @@ extension ServiceAPI: ServiceAcces {
         switch sortie {
         case .created(let cree):
             // Réponse non typée : `{type, id, code, import_resolu}`.
-            let lu: Declaration? = try? Self.relire(try cree.body.json)
+            let lu = try? Relecture.lire(Declaration.self, depuis: try cree.body.json)
             return lu?.importResolu ?? false
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
@@ -157,29 +157,8 @@ extension ServiceAPI: ServiceAcces {
         }
     }
 
-    // MARK: - Relectures
-
     private struct Declaration: Decodable {
         let importResolu: Bool?
-    }
-
-    /// Une réponse non typée, relue dans le modèle de l'écran (clés en `snake_case`).
-    static func relire<T: Decodable>(_ brut: OpenAPIValueContainer) throws -> T {
-        let decodeur = JSONDecoder()
-        decodeur.keyDecodingStrategy = .convertFromSnakeCase
-        return try decodeur.decode(T.self, from: JSONEncoder().encode(brut))
-    }
-
-    /// Un refus du serveur, avec SA phrase (`detail`) quand il en donne une.
-    static func refus(_ statut: Int, _ reponse: UndocumentedPayload) async -> any Error {
-        if statut == 401 { return ErreurService.sessionExpiree }
-        struct Detail: Decodable { let detail: String }
-        if let corps = reponse.body, let donnees = try? await Data(collecting: corps, upTo: 64 * 1024),
-            let lu = try? JSONDecoder().decode(Detail.self, from: donnees), !lu.detail.isEmpty
-        {
-            return RefusDuServeur(phrase: lu.detail)
-        }
-        return ErreurService.depuisLecture(statut)
     }
 }
 

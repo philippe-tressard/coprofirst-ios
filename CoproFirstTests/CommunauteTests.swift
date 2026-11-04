@@ -101,16 +101,6 @@ private struct Factice: ServiceCommunaute {
     #expect(!saisie.complete, "une note est obligatoire")
 }
 
-@Test func uneReponseNonTypeeSeRelitAvecSesDatesSansFuseau() throws {
-    struct Brut: Encodable {
-        let id = 3, titre = "Idée", description = "<p>x</p>", statut = "ouverte"
-        let cree_le = "2026-11-04T08:30:00", nb_votes = 2, mon_vote = true  // swiftlint:disable:this identifier_name
-    }
-    let idee = try Relecture.lire(Idee.self, depuis: Brut())
-    #expect(idee.nbVotes == 2 && idee.monVote)
-    #expect(idee.creeLe == ISO8601DateFormatter().date(from: "2026-11-04T08:30:00Z"), "sans fuseau = UTC")
-}
-
 /// L'API simulée retient un vote : la liste relue après le geste le montre (sans quoi
 /// le cœur se viderait aussitôt — vu au test d'interface).
 @Test func unVoteSimuleSeRelitEtSeRetire() async throws {

@@ -114,7 +114,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
         {"total": 1, "entrees": [{"date": "2026-05-02", "libelle": "Ramonage", "origine": "intervention",
         "detail": "", "perimetre": ["bat_a"], "lien": "/prestataires", "inconnu": 3}]}
         """
-    let carnet = try JSONDecoder().decode(Carnet.self, from: Data(json.utf8))
+    let carnet = try Relecture.lire(Carnet.self, json: Data(json.utf8))
     #expect(carnet.entrees.first?.libelle == "Ramonage")
     #expect(carnet.entrees.first?.equipement == nil)
     #expect(carnet.entrees.first?.jour != nil)
@@ -150,9 +150,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
            "est_principal": true}]},
          "whatsapp_url": null}
         """
-    let decodeur = JSONDecoder()
-    decodeur.keyDecodingStrategy = .convertFromSnakeCase
-    let annuaire = try decodeur.decode(Annuaire.self, from: Data(json.utf8))
+    let annuaire = try Relecture.lire(Annuaire.self, json: Data(json.utf8))
     #expect(annuaire.cs.membres.first?.estPresident == true)
     #expect(annuaire.cs.membres.first?.nomComplet == "Mme Alix Exemple")
     #expect(annuaire.syndic.membres.first?.telephones == ["01 02", "06 07"], "un doublon ne s'affiche qu'une fois")

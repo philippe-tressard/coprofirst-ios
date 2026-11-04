@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
-import ClientAPI
 import Foundation
 
 /// Qui regarde la Communauté (GET /auth/me) : ce qui ouvre les onglets et les gestes.
@@ -165,20 +164,6 @@ enum CibleCommunaute: Hashable, Sendable {
         switch self {
         case .idee(let id), .annonce(let id), .reponse(let id): id
         }
-    }
-}
-
-/// Une réponse non typée dans le contrat, relue en miroir : les clés en `snake_case`,
-/// les dates comme le client généré les lit (ISO, sans fuseau = UTC).
-enum Relecture {
-    static func lire<T: Decodable>(_ type: T.Type, depuis valeur: some Encodable) throws -> T {
-        let donnees = try JSONEncoder().encode(valeur)
-        let decodeur = JSONDecoder()
-        decodeur.keyDecodingStrategy = .convertFromSnakeCase
-        decodeur.dateDecodingStrategy = .custom { lecteur in
-            try TranscodeurDates().decode(lecteur.singleValueContainer().decode(String.self))
-        }
-        return try decodeur.decode(T.self, from: donnees)
     }
 }
 

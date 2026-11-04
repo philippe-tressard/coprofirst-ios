@@ -38,20 +38,6 @@ extension ServiceAPI: ServiceAffaires {
         return !mes.batiments.isEmpty || !mes.desservis.isEmpty
     }
 
-    func perimetres(_ installation: Installation) async throws -> [PerimetreAffaire] {
-        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
-        switch sortie {
-        case .ok(let ok):
-            return try ok.body.json.filter { $0.actif && $0.selectionnable }.map {
-                PerimetreAffaire(
-                    code: $0.code, libelle: $0.libelle, profondeur: $0.profondeur, global: $0.porteeGlobale,
-                    racine: $0.parent == nil)
-            }
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-        }
-    }
-
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire {
         guard let categorie = Components.Schemas.CategorieTicket(rawValue: saisie.categorie) else {
             throw ErreurAffaires.categorieInconnue
@@ -66,7 +52,7 @@ extension ServiceAPI: ServiceAffaires {
         switch sortie {
         case .created(let cree): return Affaire(ticket: try cree.body.json)
         case .unprocessableContent: throw ErreurAffaires.saisieRefusee
-        case .undocumented(let statut, _): throw ErreurAffaires.depuis(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -78,7 +64,7 @@ extension ServiceAPI: ServiceAffaires {
         switch sortie {
         case .ok(let ok): return try ok.body.json.count
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurAffaires.depuis(statut)
+        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
@@ -94,7 +80,7 @@ extension ServiceAPI: ServiceAffaires {
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurAffaires.saisieRefusee
-        case .undocumented(let statut, _): throw ErreurAffaires.depuis(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -106,7 +92,7 @@ extension ServiceAPI: ServiceAffaires {
         switch sortie {
         case .ok(let ok): return Affaire(ticket: try ok.body.json)
         case .unprocessableContent: throw ErreurAffaires.saisieRefusee
-        case .undocumented(let statut, _): throw ErreurAffaires.depuis(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 }
@@ -127,9 +113,10 @@ extension Affaire {
 }
 
 /// Ce qu'un geste du menu peut rencontrer, en une phrase.
+///
+/// Un geste refusé par la route (403…) dit la phrase du serveur : il arrive en
+/// `.service(.refus(…))`, par `ServiceAPI.refus` (#41) — jamais une phrase écrite ici.
 enum ErreurAffaires: Error, Equatable, Sendable {
-    /// 403 : la route refuse ce geste à ce compte.
-    case refusee
     /// 422 : le serveur refuse la saisie (un champ manque ou n'est pas permis).
     case saisieRefusee
     case categorieInconnue
@@ -140,16 +127,11 @@ enum ErreurAffaires: Error, Equatable, Sendable {
 
     var phrase: String {
         switch self {
-        case .refusee: "Ce geste est réservé au conseil syndical."
         case .saisieRefusee: "La résidence a refusé l'enregistrement. Vérifiez la saisie, puis réessayez."
         case .categorieInconnue: "Cette catégorie n'est pas connue de la résidence."
         case .serviceAbsent: "Les affaires ne sont pas disponibles dans cette version de l'app."
         case .service(let erreur): erreur.phrase
         }
-    }
-
-    static func depuis(_ statut: Int) -> ErreurAffaires {
-        statut == 403 ? .refusee : .service(ErreurService.depuisLecture(statut))
     }
 
     static func depuis(_ erreur: any Error) -> ErreurAffaires {

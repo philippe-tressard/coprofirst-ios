@@ -3,6 +3,7 @@
 
 import ClientAPI
 import Foundation
+import OpenAPIRuntime
 
 /// La Communauté par le client GÉNÉRÉ. Idées et annonces n'ont pas de réponse typée
 /// dans le contrat : elles se relisent en miroir (`Relecture`) — besoin noté pour
@@ -50,7 +51,7 @@ extension ServiceAPI: ServiceCommunaute {
             try await client(installation.adresse).postIdees(
                 body: .json(.init(description: description, titre: titre)))
         }
-        try verifier(sortie.statutCree)
+        try await verifier(sortie.echec)
     }
 
     func voterIdee(_ id: Int, dans installation: Installation) async throws -> String? {
@@ -62,7 +63,7 @@ extension ServiceAPI: ServiceCommunaute {
             struct Phrase: Decodable { let message: String? }
             return (try? Relecture.lire(Phrase.self, depuis: try cree.body.json))?.message
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -87,7 +88,7 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -100,7 +101,7 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -111,7 +112,7 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -123,12 +124,12 @@ extension ServiceAPI: ServiceCommunaute {
             let sortie = try await appeler {
                 try await client.postIdeesCibleIdReponses(path: .init(cibleId: id), body: .json(corps))
             }
-            try verifier(sortie.statutCree)
+            try await verifier(sortie.echec)
         case .annonce(let id):
             let sortie = try await appeler {
                 try await client.postAnnoncesCibleIdReponses(path: .init(cibleId: id), body: .json(corps))
             }
-            try verifier(sortie.statutCree)
+            try await verifier(sortie.echec)
         case .reponse:
             throw ErreurService.inattendue(400)
         }
@@ -142,13 +143,13 @@ extension ServiceAPI: ServiceCommunaute {
             let sortie = try await appeler {
                 try await client.deleteIdeesCibleIdReponsesRepId(path: .init(cibleId: cibleId, repId: id))
             }
-            try verifier(sortie.statutSupprime)
+            try await verifier(sortie.echec)
         case .annonce(let cibleId):
             let sortie = try await appeler {
                 try await client.deleteAnnoncesCibleIdReponsesRepId(
                     path: .init(cibleId: cibleId, repId: id))
             }
-            try verifier(sortie.statutSupprime)
+            try await verifier(sortie.echec)
         case .reponse:
             throw ErreurService.inattendue(400)
         }
@@ -159,7 +160,7 @@ extension ServiceAPI: ServiceCommunaute {
             try await client(installation.adresse).postSignalements(
                 body: .json(.init(cibleId: cible.id, cibleType: cible.typeSignalement, motif: motif)))
         }
-        try verifier(sortie.statutCree)
+        try await verifier(sortie.echec)
     }
 
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis {
@@ -183,7 +184,7 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -197,7 +198,7 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
@@ -209,74 +210,84 @@ extension ServiceAPI: ServiceCommunaute {
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
-    /// Un statut de réussite (`nil`) ou d'échec, dit en une phrase.
-    private func verifier(_ statut: Int?) throws {
-        if let statut { throw statut == 422 ? ErreurService.inattendue(422) : ErreurService.depuisLecture(statut) }
+    /// Une réussite (`nil`) ou un échec, dit en une phrase — celle du serveur s'il en donne une.
+    private func verifier(_ echec: EchecDEcriture?) async throws {
+        switch echec {
+        case nil: return
+        case .saisie: throw ErreurService.inattendue(422)
+        case .refus(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
     }
 }
 
-// Le statut d'échec d'une écriture qui rend 201, d'une suppression qui rend 204 —
-// `nil` sur une réussite. Une extension par sortie : chacune est un type généré.
+/// L'échec d'une écriture : la saisie refusée (422), ou un refus et sa réponse.
+private enum EchecDEcriture {
+    case saisie
+    case refus(Int, UndocumentedPayload)
+}
+
+// L'échec d'une écriture qui rend 201, d'une suppression qui rend 204 — `nil` sur
+// une réussite. Une extension par sortie : chacune est un type généré.
 extension Operations.PostIdees.Output {
-    fileprivate var statutCree: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .created: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
 
 extension Operations.PostIdeesCibleIdReponses.Output {
-    fileprivate var statutCree: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .created: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
 
 extension Operations.PostAnnoncesCibleIdReponses.Output {
-    fileprivate var statutCree: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .created: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
 
 extension Operations.PostSignalements.Output {
-    fileprivate var statutCree: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .created: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
 
 extension Operations.DeleteIdeesCibleIdReponsesRepId.Output {
-    fileprivate var statutSupprime: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .noContent: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
 
 extension Operations.DeleteAnnoncesCibleIdReponsesRepId.Output {
-    fileprivate var statutSupprime: Int? {
+    fileprivate var echec: EchecDEcriture? {
         switch self {
         case .noContent: nil
-        case .unprocessableContent: 422
-        case .undocumented(let statut, _): statut
+        case .unprocessableContent: .saisie
+        case .undocumented(let statut, let reponse): .refus(statut, reponse)
         }
     }
 }
