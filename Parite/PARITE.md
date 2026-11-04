@@ -65,10 +65,10 @@ Session parallèle. Dossiers : `Fonctions/Residence`, `Fonctions/Annuaire`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `residence` | `fiche` | prévu | #12 |  |
-| `residence` | `carnet` | prévu | #12 |  |
-| `residence` | `reglement` | prévu | #12 |  |
-| `annuaire` | — | prévu | #12 |  |
+| `residence` | `fiche` | fait | #12 | En lecture : la fiche, les documents et les rapports se déposent et se corrigent sur le site |
+| `residence` | `carnet` | fait | #12 | Le bilan de l'exercice (conseil syndical) et le filtre par année restent sur le site, et l'app le dit |
+| `residence` | `reglement` | fait | #12 | Poser une question et lire les avis ; publier dans la FAQ et supprimer restent sur le site |
+| `annuaire` | — | fait | #12 |  |
 
 ### #13 — Mes lots & accès et Prestataires
 
@@ -76,13 +76,13 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mon-lot` | `lots` | prévu | #13 |  |
-| `mon-lot` | `badges` | prévu | #13 |  |
-| `mon-lot` | `telecommandes` | prévu | #13 |  |
-| `mon-lot` | `location` | prévu | #13 |  |
-| `prestataires` | `prestataires` | prévu | #13 |  |
-| `prestataires` | `contrats` | prévu | #13 |  |
-| `prestataires` | `consommations` | prévu | #13 |  |
+| `mon-lot` | `lots` | fait | #13 | `Fonctions/Acces` — locataire, bailleur, autres ; le tableau des charges renvoie au site (calculé dans son front) |
+| `mon-lot` | `badges` | fait | #13 | Détenus, signaler perdu, nouvel accès, déclarer ; accès confiés (locataire), vue par locataire (bailleur) |
+| `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
+| `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
+| `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
+| `prestataires` | `contrats` | fait | #13 | En lecture : résumé, échéances, documents |
+| `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 
 ### #14 — Communauté, FAQ, Profil et Notifications
 
