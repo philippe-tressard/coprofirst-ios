@@ -19,7 +19,8 @@ Rien ne se recopie à la main (garde-fou de `projets.json`) ; ce script les lit 
 - le verdict de la relève des courriels (`VERDICTS`, `OngletCourriels.svelte`) et la
   pastille de chaque ton (`JournalVerdicts.svelte`).
 
-Sorties, dans le dossier de chaque menu : `CoproFirst/Fonctions/<Menu>/Genere/`.
+Sorties : `CoproFirst/Fonctions/Delegations/Genere/` et, pour les onglets du cadre CS,
+`CoproFirst/Fonctions/EspaceCS/Genere/`.
 
 Usage : python3 scripts/generer-delegations-cs.py   ($COPROFIRST_REVISION, $COPROFIRST_RACINE)
 """
@@ -156,14 +157,14 @@ def courriels() -> str:
 def main() -> None:
     src.ecrire("CoproFirst/Fonctions/Delegations/Genere/TablesDelegations.swift", SCRIPT,
                "front/src/lib/pages-roles.ts, src/routes/(app)/delegations/+page.svelte.", delegations())
-    src.ecrire("CoproFirst/Fonctions/Reporting/Genere/TablesReporting.swift", SCRIPT,
+    src.ecrire("CoproFirst/Fonctions/EspaceCS/Genere/TablesReporting.swift", SCRIPT,
                "front/src/lib/entretien-periodique.ts, reporting.ts, components/reporting/\n"
                "//   (TableauAffaires, VueSuiviAffaires, BarresCroisees) ; front/src/styles/socle.css et\n"
                "//   palette-sombre.css.", reporting(),
                imports="import SwiftUI\n")
-    src.ecrire("CoproFirst/Fonctions/AnnoncesHall/Genere/TablesAnnoncesHall.swift", SCRIPT,
+    src.ecrire("CoproFirst/Fonctions/EspaceCS/Genere/TablesAnnoncesHall.swift", SCRIPT,
                "front/src/lib/components/OngletAnnoncesHall.svelte.", annonces_hall())
-    src.ecrire("CoproFirst/Fonctions/Courriels/Genere/TablesCourriels.swift", SCRIPT,
+    src.ecrire("CoproFirst/Fonctions/EspaceCS/Genere/TablesCourriels.swift", SCRIPT,
                "front/src/lib/components/OngletCourriels.svelte, JournalVerdicts.svelte.",
                courriels())
 
