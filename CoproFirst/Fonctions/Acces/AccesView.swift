@@ -32,7 +32,7 @@ struct AccesView: View {
     private func page(_ service: any ServiceAcces) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                BarreOngletsAcces(onglets: etat.onglets, actif: $onglet)
+                BarreOnglets(onglets: etat.onglets, actif: $onglet)
                 // Les descriptifs des deux onglets d'accès décrivent la page web (« bouton …
                 // en haut à droite », un lien de la FAQ) : ils égareraient dans l'app.
                 if !["badges", "telecommandes"].contains(onglet),
@@ -136,31 +136,6 @@ struct AccesView: View {
 }
 
 extension AccesView: EcranDeMenu {}
-
-/// La barre d'onglets du site, en pastilles qui défilent : un onglet par pastille.
-struct BarreOngletsAcces: View {
-    let onglets: [OngletDuSite]
-    @Binding var actif: String
-
-    var body: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 8) {
-                ForEach(onglets, id: \.id) { onglet in
-                    Pastille(libelle: onglet.libelle, retenue: onglet.id == actif) {
-                        withAnimation(.snappy(duration: 0.22)) { actif = onglet.id }
-                    }
-                    .accessibilityIdentifier("onglet.\(onglet.id)")
-                }
-            }
-            .padding(.vertical, 4)
-        }
-        .scrollIndicators(.hidden)
-        .scrollClipDisabled()
-        .sensoryFeedback(.selection, trigger: actif)
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Onglets")
-    }
-}
 
 private struct SqueletteLots: View {
     var body: some View {

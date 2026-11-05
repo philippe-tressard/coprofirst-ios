@@ -120,13 +120,7 @@ private struct SectionConseil: View {
     }
 
     private func membre(_ personne: Annuaire.Membre, lieu: String?) -> some View {
-        var medaillons: [Medaille] = []
-        if personne.estGestionnaireSite == true {
-            medaillons.append(Medaille(titre: TextesAnnuaire.gestionnaire(site), symbole: "building.2"))
-        }
-        if personne.estPresident == true {
-            medaillons.append(Medaille(titre: TextesAnnuaire.president, symbole: "shield.lefthalf.filled"))
-        }
+        let medaillons = personne.medaillonsDuConseil(site: site)
         return CarteContact(personne: personne, medaillons: medaillons, installation: installation) {
             if let lieu { Text(lieu).font(.subheadline).foregroundStyle(palette.textMuted) }
         }
@@ -160,7 +154,7 @@ private struct SectionSyndic: View {
                 let principal = personne.estPrincipal == true
                 CarteContact(
                     personne: personne,
-                    medaillons: principal ? [Medaille(titre: TextesAnnuaire.principal, symbole: "star.fill")] : [],
+                    medaillons: personne.medaillonsDuSyndic,
                     principal: principal, installation: installation
                 ) {
                     if let fonction = personne.fonction, !fonction.isEmpty {

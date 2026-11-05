@@ -26,19 +26,12 @@ enum LibellesPrestataires {
     /// La recherche de la liste : tous les mots, dans n'importe quel ordre, sans
     /// accents ni casse, sur ce que la fiche affiche.
     static func correspond(_ prestataire: Prestataire, equipement: String, recherche: String) -> Bool {
-        let mots = replier(recherche).split(whereSeparator: \.isWhitespace)
-        guard !mots.isEmpty else { return true }
         let contacts = prestataire.contacts.flatMap { [$0.prenom, $0.nom, $0.fonction, $0.telephone, $0.email] }
         let fiche: [String?] = [
             prestataire.nom, equipement, type(prestataire.type), prestataire.telephone, prestataire.email,
             prestataire.adresse, prestataire.description.map(TexteDuSite.apercu),
         ]
-        let texte = replier((fiche + contacts).compactMap { $0 }.joined(separator: " "))
-        return mots.allSatisfy { texte.contains($0) }
-    }
-
-    static func replier(_ texte: String) -> String {
-        texte.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: Locale(identifier: "fr_FR"))
+        return Recherche.contientTousLesMots(fiche + contacts, recherche)
     }
 
     /// L'ordre d'une liste de contrats : la visite la plus proche d'abord, les

@@ -22,7 +22,8 @@ struct OngletPrestataires: View {
         let archivees = filtrer(archives ?? [])
         let filtre = !recherche.isEmpty || categorie != nil || contrat != nil
         VStack(alignment: .leading, spacing: 14) {
-            ChampRecherche(texte: $recherche)
+            ChampRecherche(
+                texte: $recherche, indication: TextesPrestataires.recherche, identifiant: "prestataires.recherche")
             pastilles(
                 TextesPrestataires.categorie, valeur: $categorie,
                 options: TablesPrestataires.types.map { ($0.code, $0.libelle) })
@@ -113,35 +114,6 @@ struct OngletPrestataires: View {
                 && (contrat == nil || (contrat == "sous_contrat") == sousContrat.contains(p.id))
                 && LibellesPrestataires.correspond(
                     p, equipement: donnees.equipement(p.specialite), recherche: recherche)
-        }
-    }
-}
-
-/// Le champ de recherche de la liste, dans la page (et non dans la barre de
-/// navigation : il ne vaut que pour cet onglet).
-struct ChampRecherche: View {
-    @Binding var texte: String
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").foregroundStyle(palette.textMuted).accessibilityHidden(true)
-            TextField(TextesPrestataires.recherche, text: $texte)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
-                .accessibilityIdentifier("prestataires.recherche")
-            if !texte.isEmpty {
-                Button { texte = "" } label: { Image(systemName: "xmark.circle.fill") }
-                    .foregroundStyle(palette.textMuted)
-                    .accessibilityLabel("Effacer la recherche")
-            }
-        }
-        .padding(.horizontal, 14)
-        .frame(minHeight: Mise.cible)
-        .background(palette.surface, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                .strokeBorder(palette.borderChamp, lineWidth: 1)
         }
     }
 }

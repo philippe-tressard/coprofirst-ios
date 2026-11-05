@@ -4,7 +4,8 @@
 import SwiftUI
 
 /// L'espace de la résidence ouverte : la barre du bas suit l'ORDRE RÉGLÉ PAR
-/// L'ADMINISTRATION (`pages_order`) ; au-delà de quatre entrées, « Plus ».
+/// L'ADMINISTRATION (`pages_order`) ; au-delà de quatre entrées, « Plus ». Une page
+/// réservée à un rôle n'y paraît qu'à qui l'a (`PagesOuvertes`, profil de GET /auth/me).
 struct OngletsView: View {
     let installation: Installation
     @Environment(\.palette) private var palette
@@ -13,7 +14,8 @@ struct OngletsView: View {
     private static let visibles = 4
 
     var body: some View {
-        let pages = installation.pages
+        let profil = parcours.ouverteAJour?.profil ?? installation.profil
+        let pages = PagesOuvertes.filtrer(installation.pages, droits: DroitsOnglet(profil: profil))
         @Bindable var parcours = parcours
         TabView(selection: $parcours.onglet) {
             ForEach(pages.prefix(Self.visibles)) { page in
@@ -28,6 +30,8 @@ struct OngletsView: View {
             }
         }
         .tint(palette.primary)
+        // La barre dépend des rôles : ils se relisent à l'ouverture de la résidence.
+        .task { await parcours.rafraichirProfil() }
     }
 }
 

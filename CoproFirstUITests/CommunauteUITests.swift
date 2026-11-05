@@ -3,33 +3,13 @@
 
 import XCTest
 
-/// Communauté, FAQ, Profil et Notifications (#14), contre l'API simulée. Avec la
-/// variable `TEST_RUNNER_CAPTURES=<dossier>`, chaque étape y laisse sa capture ;
-/// `TEST_RUNNER_THEME=sombre` et `TEST_RUNNER_GRAND_TEXTE=1` en changent le rendu.
+/// Communauté, FAQ, Profil et Notifications (#14), contre l'API simulée. Captures et
+/// rendus : `LancementCaptures`.
 final class CommunauteUITests: XCTestCase {
-    private let environnement = ProcessInfo.processInfo.environment
 
-    private func lancer() -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
-        // Le thème choisi au Profil se lit dans les réglages : l'argument le pose.
-        app.launchArguments += ["-theme", environnement["THEME"] ?? "auto"]
-        if environnement["GRAND_TEXTE"] != nil {
-            app.launchArguments += ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL"]
-        }
-        app.launch()
-        return app
-    }
+    @MainActor private func lancer() -> XCUIApplication { LancementCaptures.lancer() }
 
-    /// Une capture, quand un dossier est demandé ; rien sinon.
-    private func capture(_ nom: String) {
-        guard let dossier = environnement["CAPTURES"] else { return }
-        let suffixe = [environnement["THEME"], environnement["GRAND_TEXTE"] != nil ? "grand-texte" : nil]
-            .compactMap { $0 }.joined(separator: "-")
-        let fichier = URL(fileURLWithPath: dossier)
-            .appendingPathComponent(nom + (suffixe.isEmpty ? "" : "-" + suffixe) + ".png")
-        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: fichier)
-    }
+    @MainActor private func capture(_ nom: String) { LancementCaptures.capturer(nom) }
 
     /// Le libellé ou la valeur de l'élément contient-il `texte`, d'ici `delai` secondes ?
     /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur), d'ici `delai` ?
