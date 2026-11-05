@@ -28,12 +28,12 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte ni leur type — « Tests d'interface » ci-dessous | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer-charte.py`) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
-| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant` ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
+| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant`, et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
 | Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
-| Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
+| Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; une page réservée à un rôle (Prestataires, Espace CS, Admin, Délégations) n'y paraît qu'à qui l'a — `PagesOuvertes`, le filtre de `Nav.svelte`, écrit une fois, sur les populations générées (#15) ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
 | Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
 | Mouvement | `.snappy` pour un état, `.smooth` pour un changement de palette, `accessibilityReduceMotion` lu ; retours haptiques sur résidence reconnue, connexion, Face ID, filtre | — |
 | Grandes tailles | `@ScaledMetric` ou `.dynamicTypeSize(...xxxLarge)` pour un pictogramme ; une rangée passe en colonne si `dynamicTypeSize.isAccessibilitySize` ; un écran fixe défile ; **le titre d'un écran de menu** : `.titreDeMenu()` après `.navigationTitle(…)` (grand titre, en ligne aux tailles d'accessibilité — #41), jamais un `navigationBarTitleDisplayMode` calculé dans l'écran | `CarteDuFil`, `AccueilView`, `Commun/Composants/TitreDeMenu.swift` |
@@ -82,6 +82,14 @@ est générée depuis `pages.ts` (réserves comprises), la règle est celle du s
 
 Un onglet du site (`liste`, `kanban`…) est une **section de l'écran du menu**
 (segment, picker), pas une entrée du registre : le registre ne connaît que les pages.
+
+**Une page à beaucoup d'onglets, que plusieurs sessions remplissent** (l'Espace CS, #15) :
+un CADRE (`EspaceCSView` : titre, `BarreOnglets` sur `OngletsDuSite.ouverts`, descriptif
+généré, défilement, `avisEphemere`) et une TABLE d'onglets (`OngletsEspaceCS.ecrans`,
+une ligne par onglet, séparée par une ligne vide), chaque onglet dans SON dossier
+(`Fonctions/EspaceCS/<Onglet>/`) avec son protocole de service. Ajouter un onglet :
+le dossier, la vue conforme à `OngletEspaceCS` (`init(contexte:)`), une ligne dans la
+table, sa ligne de parité — le cadre ne se touche pas.
 
 ### Un service par menu, réalisé par extension (#11)
 
@@ -135,6 +143,10 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `Medaillon`, `Logo` | le logo de CoproFirst, qui suit Dynamic Type — jamais modifié (sa licence) | idem |
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
+| `BarreOnglets` | les onglets d'une page en pastilles qui défilent (`onglet.<id>` pour les tests) ; ses onglets viennent d'`OngletsDuSite.ouverts` | `Commun/Composants/BarreOnglets.swift` |
+| `.avisEphemere($avis)` | la phrase brève qui suit un geste (le « toast » du site) | `Commun/Composants/AvisEphemere.swift` |
+| `BoutonsFeuille` | « Annuler » / « Enregistrer » d'une feuille, « Enregistrement… » pendant l'envoi, `actif` | `Commun/Composants/BoutonsFeuille.swift` |
+| `ChampRecherche` + `Recherche.contientTousLesMots` | le champ de recherche d'une liste, dans la page ; la règle du site (tous les mots, sans accents ni casse) | `Commun/Composants/`, `Commun/Texte/Recherche.swift` |
 | `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** ; `largeurNom` réduit le nom quand un élément occupe la gauche de la barre (le logement du fil) : sans quoi iOS replie la pastille et la cloche dans « … » | idem |
 | `.sourceZoom` / `.destinationZoom` | la transition zoom d'iOS 18 (repli iOS 17) | `Commun/Composants/TransitionZoom.swift` |
 | `Chargement` | charger puis montrer : squelette, erreur + « Réessayer », contenu — **jamais un écran blanc** | `Commun/Detail/` |

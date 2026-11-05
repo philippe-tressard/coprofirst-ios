@@ -124,7 +124,7 @@ struct LotsDuLocataire: View {
             apres.append(("Sortie prévue", FormatsDuSite.dateCourte(bail.dateSortiePrevue)))
         }
         let statut = LibellesAcces.statutBail(bail.statut)
-        let proprietaire = LibellesAcces.nom(bail.bailleurPrenom, bail.bailleurNom)
+        let proprietaire = FormatsDuSite.nom(bail.bailleurPrenom, bail.bailleurNom)
         return Carte {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {

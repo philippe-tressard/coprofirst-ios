@@ -106,8 +106,8 @@ import Testing
     sansLibelle.etageLibelle = ""
     #expect(sansLibelle.typeLu == "cave")
     #expect(sansLibelle.etageLu == "-1")
-    #expect(LibellesAcces.nom(" Marie ", "Durand") == "Marie Durand")
-    #expect(LibellesAcces.nom(nil, "  ") == "—")
+    #expect(FormatsDuSite.nom(" Marie ", "Durand") == "Marie Durand")
+    #expect(FormatsDuSite.nom(nil, "  ") == "—")
 }
 
 @Test func lesBauxSeGroupentParLocataire() throws {

@@ -67,7 +67,8 @@ private func alerte(_ id: Int, ilYA heures: Double, lue: Bool = false, maintenan
     let service = ServiceSimule(delai: .zero)
     let etat = EtatNotifications()
     await etat.charger(residence, avec: service)
-    #expect(etat.nonLues == 2)
+    #expect(etat.liste.count == 150, "le volume d'un compte réel")
+    #expect(etat.nonLues == 12)
     await etat.toutMarquerLu(residence, avec: service)
     #expect(etat.nonLues == 0)
     #expect(CompteurNonLues.partage.nombre(residence) == 0)
@@ -112,4 +113,47 @@ private func alerte(_ id: Int, ilYA heures: Double, lue: Bool = false, maintenan
     #expect(ThemeChoisi.schema("sombre") == .dark)
     #expect(ThemeChoisi.schema("auto") == nil)
     #expect(ThemeChoisi.schema("inconnu") == nil, "une valeur inconnue = Automatique")
+}
+
+/// Un serveur qui refuse de supprimer certaines alertes.
+private struct SuppressionPartielle: ServiceNotifications {
+    let liste: [NotificationRecue]
+    let refusees: Set<Int>
+    func notifications(_ installation: Installation) async throws -> [NotificationRecue] { liste }
+    func marquerLue(_ id: Int, dans installation: Installation) async throws {}
+    func toutMarquerLu(_ installation: Installation) async throws {}
+    func supprimerNotification(_ id: Int, dans installation: Installation) async throws {
+        if refusees.contains(id) { throw ErreurService.inattendue(500) }
+    }
+}
+
+@MainActor
+@Test func plusieursAlertesSeSupprimentEtLesRefuseesReviennent() async {
+    let residence = ServiceSimule.residence
+    let liste = (1...10).map { alerte($0, ilYA: Double($0), lue: $0 > 3) }
+    let service = SuppressionPartielle(liste: liste, refusees: [2, 7])
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: service)
+
+    await etat.supprimer([1, 2, 3, 7, 9], dans: residence, avec: service)
+    #expect(etat.liste.map(\.id) == [2, 4, 5, 6, 7, 8, 10], "les refusées reviennent, à leur place")
+    #expect(etat.nonSupprimees == 2, "et une phrase dit combien")
+    #expect(TextesNotifications.nonSupprimees(2) == "2 notifications n'ont pas pu être supprimées.")
+    #expect(etat.nonLues == 1)
+    #expect(CompteurNonLues.partage.nombre(residence) == 1, "la cloche suit")
+}
+
+@MainActor
+@Test func laSuppressionGroupeeDeLApiSimuleeSeRelit() async {
+    let residence = ServiceSimule.residence
+    let service = ServiceSimule(delai: .zero)
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: service)
+    let lues = Set(etat.liste.filter(\.lue).map(\.id))
+    await etat.supprimer(lues, dans: residence, avec: service)
+    #expect(etat.nonSupprimees == 0)
+    await etat.charger(residence, avec: service)
+    #expect(etat.liste.count == 12 && etat.liste.allSatisfy { !$0.lue }, "il ne reste que les non lues")
+    #expect(TextesNotifications.supprimerSelection(0) == "Supprimer")
+    #expect(TextesNotifications.supprimerSelection(3) == "Supprimer (3)")
 }
