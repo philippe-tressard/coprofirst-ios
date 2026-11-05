@@ -88,7 +88,9 @@ final class ParcoursUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
-        XCTAssertTrue(app.buttons["fil.lot"].waitForExistence(timeout: 5), "le logement en haut à gauche")
+        let logement = app.buttons["fil.lot"]
+        XCTAssertTrue(logement.waitForExistence(timeout: 5), "le logement en haut à gauche, dans la barre")
+        XCTAssertLessThan(logement.frame.maxX, app.buttons["pastille.residence"].frame.minX, "à gauche de la résidence")
 
         app.buttons["pastille.residence"].tap()
         let roles = app.descendants(matching: .any)
@@ -105,5 +107,42 @@ final class ParcoursUITests: XCTestCase {
         XCTAssertTrue(adresse.waitForExistence(timeout: 5), "retour à la connexion")
         XCTAssertEqual(adresse.value as? String, "tilleuls.exemple.fr", "adresse pré-remplie")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "le fil n'est plus affiché")
+    }
+
+    /// Un libellé de logement trop long se tronque : la pastille de la résidence reste
+    /// dans la barre (avant, iOS la repliait dans un menu « … »).
+    @MainActor
+    func testUnLogementLongNeChassePasLaResidence() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "fil", "-logement-long"]
+        app.launch()
+        let logement = app.buttons["fil.lot"]
+        XCTAssertTrue(logement.waitForExistence(timeout: 5))
+        let residence = app.buttons["pastille.residence"]
+        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable, "la résidence reste visible")
+        XCTAssertTrue(app.buttons["cloche"].isHittable, "la cloche aussi")
+        XCTAssertLessThan(logement.frame.maxX, residence.frame.minX)
+
+        logement.tap()
+        // Le geste ouvre Mes lots & accès : l'onglet est retenu (attendu, la barre s'anime).
+        expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: app.tabBars.buttons["Accès"])
+        waitForExpectations(timeout: 3)
+    }
+
+    /// Aux tailles d'accessibilité, le logement redescend sous le titre : dans la barre,
+    /// iOS y coincerait le titre entre les deux côtés.
+    @MainActor
+    func testEnTresGrandTexteLeLogementPasseSousLeTitre() throws {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-api-simulee", "-ecran", "fil", "-logement-long",
+            "-UIPreferredContentSizeCategoryName", "UICTContentSizeCategoryAccessibilityXXXL",
+        ]
+        app.launch()
+        let logement = app.buttons["fil.lot"]
+        XCTAssertTrue(logement.waitForExistence(timeout: 5))
+        let residence = app.buttons["pastille.residence"]
+        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable)
+        XCTAssertGreaterThan(logement.frame.minY, residence.frame.maxY, "sous la barre, pas dedans")
     }
 }
