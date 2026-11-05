@@ -12,7 +12,7 @@ extension ServiceSimule: ServiceDelegations {
 
     func delegations(_ installation: Installation) async throws -> ListeDelegations {
         try await Task.sleep(for: .milliseconds(350))
-        return ListeDelegations(delegations: DelegationsSimulees.pour(self).lire(), moi: Self.moiDelegations)
+        return ListeDelegations(delegations: delegationsSimulees.valeur, moi: Self.moiDelegations)
     }
 
     func residentsDelegables(_ installation: Installation) async throws -> [ResidentDelegable] {
@@ -36,13 +36,13 @@ extension ServiceSimule: ServiceDelegations {
             id: 100 + Int.random(in: 0..<900), mandantId: mandant, mandantNom: nom(mandant), aidantId: aidant,
             aidantNom: nom(aidant), statut: "en_attente", motif: saisie.motif, dateDebut: Self.jour(0),
             dateFin: saisie.dateFin.map { FormatsDuSite.jourISO($0) })
-        DelegationsSimulees.pour(self).ajouter(creee)
+        delegationsSimulees.modifier { $0.insert(creee, at: 0) }
         return creee
     }
 
     func accepterDelegation(_ id: Int, dans installation: Installation) async throws -> Delegation {
         try await Task.sleep(for: .milliseconds(300))
-        return try DelegationsSimulees.pour(self).changer(id) { delegation in
+        return try changer(id) { delegation in
             guard delegation.statut == "en_attente" else {
                 throw ErreurService.refus(
                     .init(phrase: "Impossible d'accepter : cette délégation n'est plus en attente."))
@@ -53,9 +53,22 @@ extension ServiceSimule: ServiceDelegations {
 
     func revoquerDelegation(_ id: Int, dans installation: Installation) async throws -> Delegation {
         try await Task.sleep(for: .milliseconds(300))
-        return try DelegationsSimulees.pour(self).changer(id) { delegation in
+        return try changer(id) { delegation in
             guard delegation.revocable else { throw ErreurService.refus(.init(phrase: "Délégation déjà terminée")) }
             delegation.statut = "revoquee"
+        }
+    }
+
+    /// Les délégations de CE service simulé (`MagasinSimuleCS`, le magasin de l'Espace CS).
+    private var delegationsSimulees: MagasinSimuleCS<[Delegation]> {
+        MagasinSimuleCS.de(self) { DelegationsSimulees.initiales }
+    }
+
+    private func changer(_ id: Int, _ geste: (inout Delegation) throws -> Void) throws -> Delegation {
+        try delegationsSimulees.modifier { liste in
+            guard let index = liste.firstIndex(where: { $0.id == id }) else { throw ErreurService.introuvable }
+            try geste(&liste[index])
+            return liste[index]
         }
     }
 
@@ -65,12 +78,9 @@ extension ServiceSimule: ServiceDelegations {
     }
 }
 
-/// Les délégations d'UN service simulé : la liste de départ, puis ce que ses gestes en font.
-private final class DelegationsSimulees: @unchecked Sendable {
-    private static let verrouGlobal = NSLock()
-    nonisolated(unsafe) private static var parService: [ObjectIdentifier: DelegationsSimulees] = [:]
-    private let verrou = NSLock()
-    private var liste: [Delegation] = [
+/// Les délégations de départ d'un service simulé.
+private enum DelegationsSimulees {
+    static let initiales: [Delegation] = [
         Delegation(
             id: 12, mandantId: 3, mandantNom: "Lucie Exemple", aidantId: 7, aidantNom: "Camille Essai",
             statut: "en_attente", motif: "Assistance pendant une convalescence", dateDebut: ServiceSimule.jour(-2),
@@ -82,26 +92,4 @@ private final class DelegationsSimulees: @unchecked Sendable {
             id: 5, mandantId: 9, mandantNom: "Paul Fictif", aidantId: 4, aidantNom: "Marc Démo", statut: "revoquee",
             motif: "", dateDebut: ServiceSimule.jour(-400), dateFin: ServiceSimule.jour(-30)),
     ]
-
-    static func pour(_ service: ServiceSimule) -> DelegationsSimulees {
-        verrouGlobal.withLock {
-            let cle = ObjectIdentifier(service)
-            if let magasin = parService[cle] { return magasin }
-            let neuf = DelegationsSimulees()
-            parService[cle] = neuf
-            return neuf
-        }
-    }
-
-    func lire() -> [Delegation] { verrou.withLock { liste } }
-
-    func ajouter(_ delegation: Delegation) { verrou.withLock { liste.insert(delegation, at: 0) } }
-
-    func changer(_ id: Int, _ geste: (inout Delegation) throws -> Void) throws -> Delegation {
-        try verrou.withLock {
-            guard let index = liste.firstIndex(where: { $0.id == id }) else { throw ErreurService.introuvable }
-            try geste(&liste[index])
-            return liste[index]
-        }
-    }
 }

@@ -6,7 +6,7 @@ import Foundation
 /// Un suivi inventé, pour les aperçus, les tests et les captures : des affaires
 /// d'exemple, aucune requête. Les teintes sont celles que le serveur choisirait : les
 /// séries pour les catégories (`s1`…), les paliers pour les bâtiments (`p1`…).
-extension ServiceSimule: ServiceReporting {
+extension ServiceSimule: ServiceReportingCS {
     func suiviAffaires(_ releve: ReleveSuivi, dans installation: Installation) async throws -> SuiviAffaires {
         try await Task.sleep(for: .milliseconds(400))
         return releve == .entretien ? Self.suiviEntretien : Self.suiviAffaires

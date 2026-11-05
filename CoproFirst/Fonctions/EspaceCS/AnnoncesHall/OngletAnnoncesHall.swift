@@ -5,18 +5,17 @@ import SwiftUI
 
 /// L'onglet « Annonces Hall » de l'Espace CS (`OngletAnnoncesHall.svelte`, #15) : la
 /// création d'une affiche, et les archives des affiches déjà produites, avec leurs gestes.
-struct OngletAnnoncesHall: View {
-    let installation: Installation
-    @Environment(Parcours.self) private var parcours
+struct OngletAnnoncesHall: OngletEspaceCS {
+    let contexte: ContexteOngletCS
     @Environment(\.palette) private var palette
     @State private var vue = Vue.nouvelle
-    /// Le compte rendu de la dernière création, montré en tête des archives.
-    @State private var creee: String?
 
     enum Vue: Hashable { case nouvelle, archives }
 
+    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+
     var body: some View {
-        if let service = parcours.serviceAnnoncesHall {
+        if let service = contexte.serviceAnnoncesHall {
             VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 8) {
                     choix(TextesAnnoncesHall.nouvelle, .nouvelle, "annonces-hall.vue.nouvelle")
@@ -25,12 +24,12 @@ struct OngletAnnoncesHall: View {
                 .sensoryFeedback(.selection, trigger: vue)
                 switch vue {
                 case .nouvelle:
-                    NouvelleAnnonceHall(service: service, installation: installation) { annonce in
-                        creee = TextesAnnoncesHall.creee(annonce)
+                    NouvelleAnnonceHall(service: service, installation: contexte.installation) { annonce in
+                        contexte.avis.wrappedValue = TextesAnnoncesHall.creee(annonce)
                         withAnimation(.snappy) { vue = .archives }
                     }
                 case .archives:
-                    ArchivesAnnoncesHall(service: service, installation: installation, creee: $creee)
+                    ArchivesAnnoncesHall(service: service, contexte: contexte)
                 }
                 Text(TextesAnnoncesHall.surLeSite).font(.footnote).foregroundStyle(palette.textMuted)
             }
@@ -47,10 +46,8 @@ struct OngletAnnoncesHall: View {
 
 /// Les affiches en cours puis les archivées, chacune dépliable, et leurs gestes.
 private struct ArchivesAnnoncesHall: View {
-    let service: any ServiceAnnoncesHall
-    let installation: Installation
-    @Binding var creee: String?
-    @Environment(Parcours.self) private var parcours
+    let service: any ServiceAnnoncesHallCS
+    let contexte: ContexteOngletCS
     @Environment(\.palette) private var palette
     @State private var aSupprimer: AnnonceHall?
     @State private var erreur: ErreurService?
@@ -58,8 +55,9 @@ private struct ArchivesAnnoncesHall: View {
 
     var body: some View {
         let service = service
-        let installation = installation
-        let administrateur = DroitsOnglet(profil: parcours.ouverteAJour?.profil).administrateur
+        let installation = contexte.installation
+        // `$isAdmin` du site : la route de suppression exige l'administrateur (coprofirst#2525).
+        let administrateur = contexte.droits.administrateur
         Chargement(
             charger: {
                 async let actives = service.annoncesHall(archivees: false, dans: installation)
@@ -68,12 +66,6 @@ private struct ArchivesAnnoncesHall: View {
             },
             contenu: { annonces, recharger in
                 VStack(alignment: .leading, spacing: 12) {
-                    if let creee {
-                        Label(creee, systemImage: "checkmark.circle.fill")
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(palette.successTexte)
-                            .accessibilityIdentifier("annonces-hall.creee")
-                    }
                     if let erreur { MessageErreur(texte: erreur.phrase) }
                     if annonces.isEmpty {
                         ContentUnavailableView(
@@ -103,6 +95,7 @@ private struct ArchivesAnnoncesHall: View {
             },
             squelette: { SqueletteAnnoncesHall() }
         )
+        .id(contexte.actualisation)
         .sensoryFeedback(.success, trigger: gestes)
     }
 
@@ -115,7 +108,7 @@ private struct ArchivesAnnoncesHall: View {
         }
         aSupprimer = nil
         erreur = nil
-        creee = nil
+        let installation = contexte.installation
         do {
             switch geste {
             case .renvoyer: try await service.renvoyerAnnonceHall(annonce.id, dans: installation)
@@ -123,6 +116,7 @@ private struct ArchivesAnnoncesHall: View {
                 try await service.archiverAnnonceHall(annonce.id, archivee: !annonce.archivee, dans: installation)
             case .supprimer: try await service.supprimerAnnonceHall(annonce.id, dans: installation)
             }
+            contexte.avis.wrappedValue = TextesAnnoncesHall.fait(geste, annonce)
             gestes += 1
             recharger()
         } catch {

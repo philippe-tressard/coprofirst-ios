@@ -6,13 +6,13 @@ import SwiftUI
 /// Ce que l'onglet « Reporting » de l'Espace CS demande (#15) : le Suivi des affaires,
 /// CALCULÉ au serveur (`GET /suivi-affaires?mode=`) — la règle d'entrée, l'ancienneté
 /// et ses seuils, les répartitions y vivent ; l'écran ne recalcule rien.
-protocol ServiceReporting: Sendable {
+protocol ServiceReportingCS: Sendable {
     /// `affaires` (toutes les affaires non closes) ou `entretien` (les entretiens périodiques).
     func suiviAffaires(_ releve: ReleveSuivi, dans installation: Installation) async throws -> SuiviAffaires
 }
 
-extension Parcours {
-    var serviceReporting: (any ServiceReporting)? { service as? any ServiceReporting }
+extension ContexteOngletCS {
+    var serviceReporting: (any ServiceReportingCS)? { service as? any ServiceReportingCS }
 }
 
 /// Le relevé que lit un mode du suivi : le Suivi affaires et la relance lisent le même.

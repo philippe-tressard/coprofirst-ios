@@ -8,6 +8,8 @@ import SwiftUI
 struct NouvelleDelegation: View {
     let service: any ServiceDelegations
     let installation: Installation
+    /// La délégation est créée : la liste le dira.
+    let creee: () -> Void
     @Environment(\.dismiss) private var fermer
     @Environment(\.palette) private var palette
     @State private var saisie = SaisieDelegation()
@@ -91,7 +93,7 @@ struct NouvelleDelegation: View {
         Picker(titre, selection: valeur) {
             Text(TextesDelegations.choisir).tag(Int?.none)
             ForEach(comptes) { compte in
-                Text("\(LibellesAcces.nom(compte.prenom, compte.nom)) (\(compte.email))").tag(Int?.some(compte.id))
+                Text("\(FormatsDuSite.nom(compte.prenom, compte.nom)) (\(compte.email))").tag(Int?.some(compte.id))
             }
         }
         .pickerStyle(.navigationLink)
@@ -105,6 +107,7 @@ struct NouvelleDelegation: View {
         Task {
             do {
                 _ = try await service.creerDelegation(envoyee, dans: installation)
+                creee()
                 fermer()
             } catch {
                 self.erreur = ErreurService.depuis(error)

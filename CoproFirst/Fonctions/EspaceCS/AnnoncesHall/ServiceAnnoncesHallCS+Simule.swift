@@ -5,10 +5,15 @@ import Foundation
 
 /// Des affiches inventées, pour les aperçus, les tests et les captures : aucune personne
 /// réelle, aucune requête. Les gestes changent la liste de CE service.
-extension ServiceSimule: ServiceAnnoncesHall {
+extension ServiceSimule: ServiceAnnoncesHallCS {
+    /// Les affiches de CE service simulé (`MagasinSimuleCS`).
+    private var affiches: MagasinSimuleCS<[AnnonceHall]> {
+        MagasinSimuleCS.de(self) { AffichesSimulees.initiales }
+    }
+
     func annoncesHall(archivees: Bool, dans installation: Installation) async throws -> [AnnonceHall] {
         try await Task.sleep(for: .milliseconds(350))
-        return AffichesSimulees.pour(self).lire().filter { $0.archivee == archivees }
+        return affiches.valeur.filter { $0.archivee == archivees }
     }
 
     func creerAnnonceHall(_ saisie: SaisieAnnonceHall, dans installation: Installation) async throws -> AnnonceHall {
@@ -21,13 +26,13 @@ extension ServiceSimule: ServiceAnnoncesHall {
             destinataires: saisie.envoyerCS ? ["Lucie Exemple", "Marc Démo"] : [],
             envoyeLe: saisie.envoyerCS ? .now : nil, archivee: false, archiveeManuellement: false, ticketId: nil,
             creeLe: .now, auteurNom: "Camille Essai")
-        AffichesSimulees.pour(self).changer { $0.insert(creee, at: 0) }
+        affiches.modifier { $0.insert(creee, at: 0) }
         return creee
     }
 
     func archiverAnnonceHall(_ id: Int, archivee: Bool, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(250))
-        AffichesSimulees.pour(self).changer { liste in
+        affiches.modifier { liste in
             guard let i = liste.firstIndex(where: { $0.id == id }) else { return }
             liste[i].archivee = archivee
             liste[i].archiveeManuellement = archivee
@@ -40,16 +45,13 @@ extension ServiceSimule: ServiceAnnoncesHall {
 
     func supprimerAnnonceHall(_ id: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(250))
-        AffichesSimulees.pour(self).changer { $0.removeAll { $0.id == id } }
+        affiches.modifier { $0.removeAll { $0.id == id } }
     }
 }
 
-/// Les affiches d'UN service simulé.
-private final class AffichesSimulees: @unchecked Sendable {
-    private static let verrouGlobal = NSLock()
-    nonisolated(unsafe) private static var parService: [ObjectIdentifier: AffichesSimulees] = [:]
-    private let verrou = NSLock()
-    private var liste: [AnnonceHall] = [
+/// Les affiches de départ d'un service simulé.
+private enum AffichesSimulees {
+    static let initiales: [AnnonceHall] = [
         AffichesSimulees.affiche(7, "Coupure d'eau jeudi matin", jours: -2) {
             $0.message =
                 "<p>L'eau sera coupée <strong>jeudi de 8 h à 12 h</strong> pour le remplacement d'une vanne.</p>"
@@ -86,18 +88,4 @@ private final class AffichesSimulees: @unchecked Sendable {
         details(&affiche)
         return affiche
     }
-
-    static func pour(_ service: ServiceSimule) -> AffichesSimulees {
-        verrouGlobal.withLock {
-            let cle = ObjectIdentifier(service)
-            if let magasin = parService[cle] { return magasin }
-            let neuf = AffichesSimulees()
-            parService[cle] = neuf
-            return neuf
-        }
-    }
-
-    func lire() -> [AnnonceHall] { verrou.withLock { liste } }
-
-    func changer(_ geste: (inout [AnnonceHall]) -> Void) { verrou.withLock { geste(&liste) } }
 }

@@ -7,7 +7,7 @@ import SwiftUI
 /// périmètre, le format et la Diffusion — puis l'affiche est créée (PDF rendu et envois
 /// faits par le serveur). Sans photo ni assistant : ceux-là restent au site.
 struct NouvelleAnnonceHall: View {
-    let service: any ServiceAnnoncesHall
+    let service: any ServiceAnnoncesHallCS
     let installation: Installation
     let creee: (AnnonceHall) -> Void
     @Environment(\.palette) private var palette

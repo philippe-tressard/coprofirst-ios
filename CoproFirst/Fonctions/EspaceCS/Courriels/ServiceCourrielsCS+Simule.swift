@@ -4,7 +4,7 @@
 import Foundation
 
 /// Un journal inventé : des objets d'exemple, aucune adresse réelle.
-extension ServiceSimule: ServiceCourriels {
+extension ServiceSimule: ServiceCourrielsCS {
     func journalCourriels(_ installation: Installation) async throws -> JournalCourriels {
         try await Task.sleep(for: .milliseconds(350))
         let il = { (heures: Double) in Date.now.addingTimeInterval(-heures * 3_600) }

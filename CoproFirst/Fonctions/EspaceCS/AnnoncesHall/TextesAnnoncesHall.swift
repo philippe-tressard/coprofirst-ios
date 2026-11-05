@@ -49,6 +49,15 @@ enum TextesAnnoncesHall {
             : "Annonce \(annonce.formatLabel) créée — aucun membre du CS à notifier sur ce périmètre"
     }
 
+    /// La phrase brève qui suit un geste réussi — celle du site.
+    static func fait(_ geste: GesteAnnonceHall, _ annonce: AnnonceHall) -> String {
+        switch geste {
+        case .renvoyer: "Annonce renvoyée au CS du périmètre"
+        case .archiver: annonce.archivee ? "Annonce restaurée" : "Annonce archivée"
+        case .supprimer: "Annonce supprimée"
+        }
+    }
+
     static func supprimerQuestion(_ annonce: AnnonceHall) -> String { "Supprimer « \(annonce.titre) » ?" }
 
     static func supprimerMessage(_ annonce: AnnonceHall) -> String {

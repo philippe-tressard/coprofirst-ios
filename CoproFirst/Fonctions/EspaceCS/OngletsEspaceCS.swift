@@ -38,13 +38,13 @@ enum OngletsEspaceCS {
 
         "badges": OngletBadgesCS.self,
 
-        // #15 — "reporting"
+        "reporting": OngletReporting.self,
 
-        // #15 — "annonces-hall"
+        "annonces-hall": OngletAnnoncesHall.self,
 
         "annuaire": OngletAnnuaireCS.self,
 
-        // #15 — "courriels"
+        "courriels": OngletCourriels.self,
     ]
 
     /// La vue de l'onglet, ou « Bientôt » tant qu'aucune n'est inscrite.

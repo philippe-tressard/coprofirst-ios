@@ -7,24 +7,25 @@ import SwiftUI
 /// affaires, en lecture — ses chiffres, ses deux répartitions croisées et ses affaires,
 /// la plus ancienne en tête. Deux modes : les affaires, ou les entretiens périodiques.
 /// Ce que l'app laisse au site se dit sous la liste (`TextesReporting.surLeSite`).
-struct OngletReporting: View {
-    let installation: Installation
-    @Environment(Parcours.self) private var parcours
+struct OngletReporting: OngletEspaceCS {
+    let contexte: ContexteOngletCS
     @Environment(\.palette) private var palette
     /// Les modes que l'app porte : la relance du syndic se compose sur le site.
     private static let modes = TablesReporting.modes.filter { $0.code != "relance" }
     @State private var mode = OngletReporting.modes.first?.code ?? "suivi"
 
+    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+
     var body: some View {
-        if let service = parcours.serviceReporting {
+        if let service = contexte.serviceReporting {
             contenu(service)
         } else {
             MessageErreur(texte: ErreurService.inattendue(501).phrase)
         }
     }
 
-    private func contenu(_ service: any ServiceReporting) -> some View {
-        let installation = installation
+    private func contenu(_ service: any ServiceReportingCS) -> some View {
+        let installation = contexte.installation
         let releve = ReleveSuivi(mode: mode)
         return VStack(alignment: .leading, spacing: 16) {
             ScrollView(.horizontal, showsIndicators: false) {
@@ -45,7 +46,8 @@ struct OngletReporting: View {
                 },
                 squelette: { SuiviView(suivi: Self.squelette, entretien: false, installation: installation) }
             )
-            .id(releve)
+            // Un autre mode, ou « tirer pour actualiser » : le relevé se relit.
+            .id("\(releve.rawValue)-\(contexte.actualisation)")
             Text(TextesReporting.surLeSite)
                 .font(.footnote)
                 .foregroundStyle(palette.textMuted)

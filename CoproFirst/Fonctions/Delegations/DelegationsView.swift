@@ -14,8 +14,9 @@ struct DelegationsView: View {
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var creation = false
-    /// Un geste réussi : la liste relue, et un retour haptique.
+    /// Un geste réussi : la liste relue, un retour haptique et la phrase du site.
     @State private var gestes = 0
+    @State private var avis: String?
 
     init(contexte: ContexteDeMenu) { self.contexte = contexte }
 
@@ -37,23 +38,32 @@ struct DelegationsView: View {
         let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(TablesDelegations.descriptif)
-                    .font(.subheadline)
-                    .foregroundStyle(palette.textMuted)
-                    .fixedSize(horizontal: false, vertical: true)
+                // Dans la page, comme sur le site : en barre d'outils, le bouton se replie
+                // dans le menu « … » aux grandes tailles de texte.
+                if conseil {
+                    Button { creation = true } label: { Label(TextesDelegations.nouvelle, systemImage: "plus") }
+                        .buttonStyle(.contour)
+                        .accessibilityIdentifier("delegations.nouvelle")
+                }
                 Chargement(
                     charger: { try await service.delegations(installation) },
                     contenu: { liste, recharger in
                         ListeDesDelegations(
                             liste: liste, service: service, installation: installation,
-                            reussi: {
+                            reussi: { phrase in
                                 gestes += 1
+                                avis = phrase
                                 recharger()
                             })
                         .onChange(of: creation) { _, ouverte in if !ouverte { recharger() } }
                     },
                     squelette: { SqueletteDelegations() }
                 )
+                // Sous la liste : ce qu'une délégation permet, sans repousser les délégations.
+                Text(TablesDelegations.descriptif)
+                    .font(.footnote)
+                    .foregroundStyle(palette.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, Mise.marge)
             .padding(.bottom, 32)
@@ -61,18 +71,16 @@ struct DelegationsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(palette.bg)
+        .avisEphemere($avis)
         .sensoryFeedback(.success, trigger: gestes)
-        .toolbar {
-            if conseil {
-                ToolbarItem(placement: .primaryAction) {
-                    Button { creation = true } label: { Label(TextesDelegations.nouvelle, systemImage: "plus") }
-                        .accessibilityIdentifier("delegations.nouvelle")
+        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
+        .sheet(isPresented: $creation) {
+            NavigationStack {
+                NouvelleDelegation(service: service, installation: installation) {
+                    gestes += 1
+                    avis = TextesDelegations.creee
                 }
             }
-            PastilleOuSuisJe(installation: installation, cloche: true)
-        }
-        .sheet(isPresented: $creation) {
-            NavigationStack { NouvelleDelegation(service: service, installation: installation) }
         }
     }
 }
@@ -84,7 +92,7 @@ private struct ListeDesDelegations: View {
     let liste: ListeDelegations
     let service: any ServiceDelegations
     let installation: Installation
-    let reussi: () -> Void
+    let reussi: (String) -> Void
     @Environment(\.palette) private var palette
     @State private var aRevoquer: Delegation?
     @State private var enCours: Int?
@@ -94,9 +102,7 @@ private struct ListeDesDelegations: View {
         VStack(alignment: .leading, spacing: 12) {
             if let erreur { MessageErreur(texte: erreur.phrase).transition(.opacity) }
             if liste.delegations.isEmpty {
-                ContentUnavailableView(
-                    TextesDelegations.aucune, systemImage: "person.2",
-                    description: Text(TablesDelegations.descriptif))
+                ContentUnavailableView(TextesDelegations.aucune, systemImage: "person.2")
                 .accessibilityIdentifier("delegations.vide")
             }
             ForEach(liste.delegations) { delegation in
@@ -104,7 +110,11 @@ private struct ListeDesDelegations: View {
                     delegation: delegation, acceptable: delegation.acceptable(par: liste.moi),
                     enCours: enCours == delegation.id,
                     accepter: {
-                        Task { await geste(delegation) { try await service.accepterDelegation($0, dans: $1) } }
+                        Task {
+                            await geste(delegation, TextesDelegations.acceptee) {
+                                try await service.accepterDelegation($0, dans: $1)
+                            }
+                        }
                     },
                     revoquer: { aRevoquer = delegation })
             }
@@ -116,7 +126,11 @@ private struct ListeDesDelegations: View {
             titleVisibility: .visible, presenting: aRevoquer
         ) { delegation in
             Button(TextesDelegations.revoquer, role: .destructive) {
-                Task { await geste(delegation) { try await service.revoquerDelegation($0, dans: $1) } }
+                Task {
+                    await geste(delegation, TextesDelegations.revoquee) {
+                        try await service.revoquerDelegation($0, dans: $1)
+                    }
+                }
             }
             .accessibilityIdentifier("delegations.revoquer.confirmer")
             Button(TextesDelegations.annuler, role: .cancel) { aRevoquer = nil }
@@ -124,14 +138,15 @@ private struct ListeDesDelegations: View {
     }
 
     private func geste(
-        _ delegation: Delegation, _ appel: @escaping (Int, Installation) async throws -> Delegation
+        _ delegation: Delegation, _ phrase: String,
+        _ appel: @escaping (Int, Installation) async throws -> Delegation
     ) async {
         aRevoquer = nil
         enCours = delegation.id
         erreur = nil
         do {
             _ = try await appel(delegation.id, installation)
-            reussi()
+            reussi(phrase)
         } catch {
             self.erreur = ErreurService.depuis(error)
         }

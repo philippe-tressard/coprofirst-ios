@@ -5,7 +5,7 @@ import ClientAPI
 import Foundation
 
 /// Le journal des courriels par le client GÉNÉRÉ : la réponse est typée.
-extension ServiceAPI: ServiceCourriels {
+extension ServiceAPI: ServiceCourrielsCS {
     func journalCourriels(_ installation: Installation) async throws -> JournalCourriels {
         switch try await appeler({ try await client(installation.adresse).getCourrielsAffaires() }) {
         case .ok(let ok):

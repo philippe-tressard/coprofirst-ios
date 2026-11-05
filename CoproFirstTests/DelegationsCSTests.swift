@@ -11,14 +11,22 @@ import Testing
 
 // MARK: - Les deux services réalisent les protocoles
 
-@Test func lesDeuxServicesRealisentLesQuatreMenus() {
-    let services: [any ServiceCoproFirst] = [ServiceAPI(), ServiceSimule(delai: .zero)]
-    for service in services {
-        #expect(service is any ServiceDelegations)
-        #expect(service is any ServiceReporting)
-        #expect(service is any ServiceAnnoncesHall)
-        #expect(service is any ServiceCourriels)
-    }
+@Test func lesDeuxServicesRealisentLesDelegations() {
+    let _: any ServiceDelegations = ServiceAPI()
+    let _: any ServiceDelegations = ServiceSimule(delai: .zero)
+}
+
+/// La page Délégations s'ouvre au conseil et à l'aidant (`Nav.svelte`), pas au résident.
+@Test func laPageDesDelegationsSOuvreALAidant() {
+    let resident = ProfilResidence(statut: "copropriétaire_résident", roles: ["propriétaire"])
+    #expect(!PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: resident)))
+    var aide = resident
+    aide.delegationsAidant = 1
+    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aide)))
+    let aidant = ProfilResidence(statut: "aidant", roles: [])
+    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aidant)))
+    let conseil = ProfilResidence(statut: "copropriétaire_résident", roles: ["propriétaire", "conseil_syndical"])
+    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: conseil)))
 }
 
 // MARK: - Délégations

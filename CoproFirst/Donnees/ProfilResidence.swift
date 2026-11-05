@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Qui est l'utilisateur DANS une résidence : son statut, ses rôles, son logement.
@@ -18,6 +19,12 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// `GET /auth/me`) : elles lui ouvrent la page Délégations (`Nav.svelte`, #15).
     /// Facultatif : un profil gardé avant #15 se relit sans lui.
     var delegationsAidant: Int?
+
+    /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
+    /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
+    var estAidant: Bool {
+        statut == Components.Schemas.StatutUtilisateur.aidant.rawValue || (delegationsAidant ?? 0) > 0
+    }
 
     /// Les rôles comme l'en-tête de l'accueil les annonce : le statut, puis les rôles
     /// qui ajoutent quelque chose (`misEnAvant`), sans doublon — `EnteteAccueil.svelte`.

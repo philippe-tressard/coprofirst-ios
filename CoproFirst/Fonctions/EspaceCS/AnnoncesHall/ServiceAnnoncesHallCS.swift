@@ -7,7 +7,7 @@ import Foundation
 /// produites, leurs gestes, et la création d'une affiche. Réalisé par `ServiceAPI`
 /// (client généré) et `ServiceSimule`, dans ce dossier. Le lieu d'une affiche se choisit
 /// parmi les périmètres (`ServicePerimetres`, une seule lecture pour l'app).
-protocol ServiceAnnoncesHall: ServicePerimetres {
+protocol ServiceAnnoncesHallCS: ServicePerimetres {
     /// GET /annonces-hall?archivees= : les affiches en cours, ou les archivées.
     func annoncesHall(archivees: Bool, dans installation: Installation) async throws -> [AnnonceHall]
     /// POST /annonces-hall : l'affiche créée — son PDF rendu, ses envois faits.
@@ -20,8 +20,8 @@ protocol ServiceAnnoncesHall: ServicePerimetres {
     func supprimerAnnonceHall(_ id: Int, dans installation: Installation) async throws
 }
 
-extension Parcours {
-    var serviceAnnoncesHall: (any ServiceAnnoncesHall)? { service as? any ServiceAnnoncesHall }
+extension ContexteOngletCS {
+    var serviceAnnoncesHall: (any ServiceAnnoncesHallCS)? { service as? any ServiceAnnoncesHallCS }
 }
 
 /// Une affiche (`AnnonceHall` du site) — relue en miroir : la route n'a pas de

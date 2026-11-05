@@ -5,7 +5,7 @@ import ClientAPI
 import Foundation
 
 /// Le Suivi des affaires par le client GÉNÉRÉ : la réponse est typée (`SuiviAffairesRead`).
-extension ServiceAPI: ServiceReporting {
+extension ServiceAPI: ServiceReportingCS {
     func suiviAffaires(_ releve: ReleveSuivi, dans installation: Installation) async throws -> SuiviAffaires {
         let sortie = try await appeler {
             try await client(installation.adresse).getSuiviAffaires(query: .init(mode: releve.rawValue))

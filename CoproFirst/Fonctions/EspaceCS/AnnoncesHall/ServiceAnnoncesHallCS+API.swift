@@ -6,7 +6,7 @@ import Foundation
 
 /// Les Annonces Hall par le client GÉNÉRÉ. Leurs réponses ne sont pas typées dans le
 /// contrat : elles se relisent en miroir (`Relecture`) — besoin noté pour coprofirst#2525.
-extension ServiceAPI: ServiceAnnoncesHall {
+extension ServiceAPI: ServiceAnnoncesHallCS {
     func annoncesHall(archivees: Bool, dans installation: Installation) async throws -> [AnnonceHall] {
         let sortie = try await appeler {
             try await client(installation.adresse).getAnnoncesHall(query: .init(archivees: archivees))

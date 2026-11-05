@@ -6,51 +6,34 @@ import Foundation
 /// Des alertes inventées, pour les aperçus, les tests et les captures : aucune
 /// personne, aucune requête. Leur état (lue, supprimée) vit le temps du service.
 extension ServiceSimule: ServiceNotifications {
+    private var boite: MagasinSimuleCS<[NotificationRecue]> { MagasinSimuleCS.de(self) { BoiteSimulee.initiale() } }
+
     func notifications(_ installation: Installation) async throws -> [NotificationRecue] {
         try await Task.sleep(for: .milliseconds(350))
-        return BoiteSimulee.pour(self).lire()
+        return boite.valeur
     }
 
     func marquerLue(_ id: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(150))
-        BoiteSimulee.pour(self).modifier { $0 = $0.map { var n = $0; if n.id == id { n.lue = true }; return n } }
+        boite.modifier { $0 = $0.map { var n = $0; if n.id == id { n.lue = true }; return n } }
     }
 
     func toutMarquerLu(_ installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(200))
-        BoiteSimulee.pour(self).modifier { $0 = $0.map { var n = $0; n.lue = true; return n } }
+        boite.modifier { $0 = $0.map { var n = $0; n.lue = true; return n } }
     }
 
     func supprimerNotification(_ id: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(150))
-        BoiteSimulee.pour(self).modifier { $0.removeAll { $0.id == id } }
+        boite.modifier { $0.removeAll { $0.id == id } }
     }
 }
 
-/// La boîte d'un service simulé — une par instance, pour que deux tests ne se
-/// voient pas (une extension ne peut pas ajouter de propriété stockée).
-private final class BoiteSimulee: @unchecked Sendable {
-    private static let verrouGlobal = NSLock()
-    nonisolated(unsafe) private static var boites: [ObjectIdentifier: BoiteSimulee] = [:]
-
-    private let verrou = NSLock()
-    private var liste = BoiteSimulee.initiale()
-
-    static func pour(_ service: ServiceSimule) -> BoiteSimulee {
-        verrouGlobal.withLock {
-            let cle = ObjectIdentifier(service)
-            if let boite = boites[cle] { return boite }
-            let neuve = BoiteSimulee()
-            boites[cle] = neuve
-            return neuve
-        }
-    }
-
-    func lire() -> [NotificationRecue] { verrou.withLock { liste } }
-
-    func modifier(_ geste: (inout [NotificationRecue]) -> Void) { verrou.withLock { geste(&liste) } }
-
-    private static func initiale() -> [NotificationRecue] {
+/// Les notifications de départ. Chaque service simulé garde les siennes dans un
+/// `MagasinSimuleCS`, qui retient le service : une adresse libérée puis réemployée par
+/// un autre service (les tests en créent beaucoup) ne lui rend plus la boîte d'un autre.
+private enum BoiteSimulee {
+    static func initiale() -> [NotificationRecue] {
         let maintenant = Date()
         func il(_ heures: Double) -> Date { maintenant.addingTimeInterval(-heures * 3600) }
         return [

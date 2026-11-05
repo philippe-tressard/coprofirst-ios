@@ -7,13 +7,13 @@ import Foundation
 /// la relève des messages reçus à l'adresse des affaires (coprofirst#1447). Jamais le
 /// texte d'un message ; l'expéditeur n'est lu en entier que par l'administrateur — le
 /// serveur ne l'envoie pas au conseil.
-protocol ServiceCourriels: Sendable {
+protocol ServiceCourrielsCS: Sendable {
     /// GET /courriels-affaires — réponse typée (`JournalCourriels`).
     func journalCourriels(_ installation: Installation) async throws -> JournalCourriels
 }
 
-extension Parcours {
-    var serviceCourriels: (any ServiceCourriels)? { service as? any ServiceCourriels }
+extension ContexteOngletCS {
+    var serviceCourriels: (any ServiceCourrielsCS)? { service as? any ServiceCourrielsCS }
 }
 
 struct JournalCourriels: Hashable, Sendable {

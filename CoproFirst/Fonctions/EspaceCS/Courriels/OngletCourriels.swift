@@ -6,23 +6,22 @@ import SwiftUI
 /// L'onglet « Courriels affaires » de l'Espace CS (`OngletCourriels.svelte`, #15) : ce
 /// que la relève a fait de chaque message reçu à l'adresse des affaires, et pourquoi —
 /// une pliure par message, du plus récent au plus ancien.
-struct OngletCourriels: View {
-    let installation: Installation
-    @Environment(Parcours.self) private var parcours
-    @Environment(\.palette) private var palette
+struct OngletCourriels: OngletEspaceCS {
+    let contexte: ContexteOngletCS
+
+    init(contexte: ContexteOngletCS) { self.contexte = contexte }
 
     var body: some View {
-        if let service = parcours.serviceCourriels {
-            let installation = installation
-            VStack(alignment: .leading, spacing: 16) {
-                Chargement(
-                    charger: { try await service.journalCourriels(installation) },
-                    contenu: { journal, recharger in
-                        JournalView(journal: journal, installation: installation, recharger: recharger)
-                    },
-                    squelette: { JournalView(journal: Self.squelette, installation: installation, recharger: {}) }
-                )
-            }
+        if let service = contexte.serviceCourriels {
+            let installation = contexte.installation
+            Chargement(
+                charger: { try await service.journalCourriels(installation) },
+                contenu: { journal, recharger in
+                    JournalView(journal: journal, installation: installation, recharger: recharger)
+                },
+                squelette: { JournalView(journal: Self.squelette, installation: installation, recharger: {}) }
+            )
+            .id(contexte.actualisation)
         } else {
             MessageErreur(texte: ErreurService.inattendue(501).phrase)
         }
