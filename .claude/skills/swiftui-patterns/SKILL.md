@@ -74,7 +74,7 @@ Un **fichier généré** depuis coprofirst (table, libellés, règle de données
 de #20) et `generer(ctx)` —, découvert seul par `scripts/generer.py`. Une session
 ajoute SON module ; elle n'édite ni `generer.py` ni le module d'un autre. Un module ne lit
 coprofirst que par `ctx` (`ctx.lire`, `ctx.front`) : `generateurs/_source.py` seul y touche,
-à une **version publiée** (`--version vX.Y.Z`), jamais un clone ni l'arbre de travail —
+au **plancher** (`generateurs/_plancher.py`), jamais un clone ni l'arbre de travail —
 `verifier-depot.sh` refuse le reste. Une teinte est un jeton de la `Palette`, nommé par son
 chemin (`\.kanbanAg`) : aucune couleur dans `Genere/`.
 
@@ -120,8 +120,10 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   (`ecrire_table`). La 1re ligne dit « GÉNÉRÉ par scripts/generer.py — NE PAS
   MODIFIER » et l'en-tête nomme la version publiée lue : `verifier-depot.sh` refuse un
   fichier de `Genere/` sans elle, et toute couleur (une teinte = un jeton de `Palette`).
-  La CI régénère tout à la version déclarée et compare à l'octet ; le workflow
-  quotidien « Concordance avec CoproFirst » compare à la dernière version publiée (#20).
+  La CI et le workflow quotidien régénèrent tout depuis le plancher et comparent à
+  l'octet (#20). **Monter le plancher est une décision** : quand toutes les
+  installations connues ont dépassé la nouvelle version (ticket `a-monter`, qui dit
+  les champs devenus requis), on change `_plancher.py` et on régénère, dans la même PR.
 - **Une réponse de l'API simulée** s'écrit en JSON, à la forme de sa route, dans un
   `Fixtures*.swift` qui la déclare (`Reponse(nom:schema:json:)`) : `scripts/verifier-fixtures.py`
   la juge contre le schéma du serveur — un champ qu'il ne sert pas fait échouer (#13, #20).

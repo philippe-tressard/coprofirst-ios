@@ -12,10 +12,12 @@ coprofirst (`generateurs/_source.py`). Ajouter un domaine = ajouter un module
 s'édite pas pour cela.
 
 Usage :
-  python3 scripts/generer.py --version v3.67.4
-      Régénère tout depuis cette version publiée (une release de coprofirst).
-  python3 scripts/generer.py --derniere
-      Depuis la dernière release publiée.
+  python3 scripts/generer.py
+      Régénère tout depuis le PLANCHER (`generateurs/_plancher.py`) : la version sur
+      laquelle l'app se génère, et ce que la CI compare.
+  python3 scripts/generer.py --version v3.67.4  |  --derniere
+      Depuis une autre version publiée — pour voir ce qu'une montée changerait ; le
+      plancher, lui, ne monte que par `_plancher.py`.
   python3 scripts/generer.py --sources
       Les fichiers de coprofirst lus, un par ligne.
 """
@@ -31,6 +33,7 @@ import tempfile
 RACINE = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "scripts"))
 
+from generateurs import _plancher  # noqa: E402
 from generateurs._commun import Contexte  # noqa: E402
 from generateurs._source import SourceIllisible, Version, derniere_version  # noqa: E402
 
@@ -69,8 +72,9 @@ def executer(etiquette: str, sortie: pathlib.Path) -> tuple[Contexte, list[str]]
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    choix = parser.add_mutually_exclusive_group(required=True)
-    choix.add_argument("--version", help="une version publiée de coprofirst, vX.Y.Z")
+    choix = parser.add_mutually_exclusive_group()
+    choix.add_argument("--version", default=_plancher.VERSION,
+                       help=f"une version publiée de coprofirst, vX.Y.Z (défaut : le plancher, {_plancher.VERSION})")
     choix.add_argument("--derniere", action="store_true", help="la dernière release publiée")
     choix.add_argument("--sources", action="store_true", help="liste les fichiers de coprofirst lus")
     arguments = parser.parse_args()

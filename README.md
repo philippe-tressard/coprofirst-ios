@@ -58,7 +58,7 @@ Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 
 Le contrat d'API, les couleurs, les natures du fil, l'ordre des pages, les onglets
 et les tables des menus sont **générés** depuis CoproFirst, jamais recopiés :
-`python3 scripts/generer.py --version vX.Y.Z` (ou `--derniere`) écrit
+`python3 scripts/generer.py` écrit
 `openapi.json`, `CoproFirst/Charte/Palette*.swift` (la charte et les palettes d'une
 résidence, claires et sombres, teintes du Kanban comprises), `NaturesDuFil.swift`,
 `CoproFirst/Navigation/PagesParDefaut.swift`, les `Fonctions/<Menu>/Genere/` et la
@@ -71,11 +71,27 @@ dans l'en-tête « GÉNÉRÉ » de chaque fichier — jamais un clone ni une bra
 en a un par domaine dans `scripts/generateurs/`, que `generer.py` découvre et lance
 tous ; `--sources` liste les fichiers de CoproFirst qu'ils lisent.
 
-**Concordance** : la CI régénère tout à la version déclarée et compare à l'octet
-(`python3 scripts/concordance.py --declaree`) ; chaque jour, le workflow
-« Concordance avec CoproFirst » compare à la dernière release et juge les réponses
-de l'API simulée contre son contrat (`scripts/verifier-fixtures.py`). Un écart ou
-une version illisible ouvre un ticket `concordance`.
+**Le plancher.** L'app parle à des installations de versions différentes : elle se
+génère sur la plus ancienne version servie par une installation connue, écrite à un
+seul endroit, `scripts/generateurs/_plancher.py`, avec sa raison. Un contrat plus
+récent rendrait obligatoires des champs qu'une installation plus ancienne n'envoie
+pas. **Monter le plancher est une décision**, prise quand toutes les installations
+connues ont dépassé la nouvelle version : on change `_plancher.py` et on régénère
+(`python3 scripts/generer.py`) dans la même PR. `--version vX.Y.Z` ou `--derniere`
+permettent de voir ce qu'une montée changerait.
+
+**Concordance** (`scripts/concordance.py`) — deux verdicts, jamais confondus :
+
+- **écart au plancher** : ce qui est généré n'est plus ce que le plancher régénère,
+  ou une réponse de l'API simulée sert un champ que le serveur ne sert pas
+  (`scripts/verifier-fixtures.py`). Rouge, en CI à chaque PR et chaque jour ; le
+  workflow quotidien « Concordance avec CoproFirst » ouvre ou complète un ticket
+  `concordance` ;
+- **montée possible** : une version publiée au-dessus du plancher. Une information,
+  jamais un rouge : un ticket `a-monter`, ouvert une fois et tenu à jour, dit ce que
+  la montée exigerait (champs devenus requis, fichiers qui changeraient).
+
+Une version illisible donne INCONNU — rouge, jamais vert.
 
 ## Contrat d'API
 

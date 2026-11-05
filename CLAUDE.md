@@ -23,11 +23,14 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   `swift-openapi-generator` depuis `openapi.json`, la pièce jointe de la release de
   coprofirst (coprofirst#2456). Les chemins s'entendent sous `/api`.
 - **Tout ce qui vient de coprofirst se génère** — contrat, charte, palettes, pages,
-  onglets, tables des menus — par `python3 scripts/generer.py --version vX.Y.Z`, à
-  une **version publiée**, jamais un clone (#34) : un module par domaine dans
-  `scripts/generateurs/`, `_source.py` seul lit coprofirst. La CI régénère à la
-  version déclarée et compare à l'octet ; le workflow quotidien « Concordance avec
-  CoproFirst » compare à la dernière release, données de l'API simulée comprises
+  onglets, tables des menus — par `python3 scripts/generer.py`, depuis le
+  **plancher** (`scripts/generateurs/_plancher.py`, une version publiée), jamais un
+  clone (#34) : un module par domaine dans `scripts/generateurs/`, `_source.py` seul
+  lit coprofirst. Le plancher est la plus ancienne version servie par une
+  installation connue (l'app parle à plusieurs versions) ; il ne monte que sur
+  décision, quand toutes l'ont dépassé. La CI et le workflow quotidien « Concordance
+  avec CoproFirst » rendent rouge un écart au plancher (API simulée comprise) ; une
+  version au-dessus est une information, ticket `a-monter`
   (`scripts/concordance.py`, `scripts/verifier-fixtures.py`, #20).
 - **État au 01/11/2026** : amorce — écran d'accueil seul. Compte Apple Developer
   ouvert (particulier, équipe `GUX8KASNTG`) : signature automatique **au poste**,

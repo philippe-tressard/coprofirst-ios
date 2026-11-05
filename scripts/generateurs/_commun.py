@@ -18,7 +18,7 @@ FONCTIONS = pathlib.Path("CoproFirst/Fonctions")
 # La 1re ligne de tout fichier généré : `verifier-depot.sh` l'exige dans `Genere/`, et la
 # concordance (#20) reconnaît ainsi un fichier généré que plus aucun module n'écrit.
 SIGNATURE = "GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN."
-# Ce que l'en-tête dit de la source ; la concordance y lit la version déclarée.
+# Ce que l'en-tête dit de la source ; la concordance l'ignore face à une autre version.
 PROVENANCE = re.compile(r"philippe-tressard/coprofirst (v\d+\.\d+\.\d+) \(commit ([0-9a-f]{40})\)")
 
 

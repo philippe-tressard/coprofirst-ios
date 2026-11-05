@@ -26,13 +26,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Garde-fous du dépôt
         run: bash scripts/verifier-depot.sh
-      - name: Concordance à la version déclarée (rien de généré n'est retouché à la main)
-        # Régénère tout depuis la version de coprofirst que les en-têtes « GÉNÉRÉ »
-        # nomment, et compare à l'octet ; la dernière version publiée, c'est le
-        # workflow quotidien « Concordance avec CoproFirst » (#20).
+      - name: Écart au plancher (rien de généré n'est retouché à la main)
+        # Régénère tout depuis le plancher de coprofirst (scripts/generateurs/_plancher.py)
+        # et compare à l'octet, API simulée comprise ; une version publiée au-dessus,
+        # c'est le workflow quotidien « Concordance avec CoproFirst » (#20).
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 -I scripts/concordance.py --declaree
+        run: python3 -I scripts/concordance.py --plancher
       - name: Logo et sa licence identiques à coprofirst
         run: bash scripts/verifier-logo.sh
       - name: REUSE
