@@ -70,6 +70,26 @@ private final class BoiteSimulee: @unchecked Sendable {
                 id: 2, type: "compte", titre: "Compte validé",
                 corps: "<p>Le conseil syndical a validé votre compte. Bienvenue !</p>",
                 lue: true, urgente: false, creeLe: il(24 * 6)),
+        ] + anciennes(il)
+    }
+
+    /// Le volume d'un compte réel (146 alertes sur l'iPhone de Philippe, 05/11/2026) :
+    /// 146 alertes plus anciennes, une sur quinze non lue — 150 en tout, 12 non lues.
+    static let nombreAnciennes = 146
+
+    private static func anciennes(_ il: (Double) -> Date) -> [NotificationRecue] {
+        // Les modèles : type, titre, corps.
+        let modeles = [
+            ["ticket", "Votre affaire avance", "<p>Une affaire que vous suivez a changé de statut.</p>"],
+            ["publication", "Nouvelle actualité", "<p>Le conseil syndical a publié une information.</p>"],
+            ["sondage", "Sondage clôturé", "<p>Les résultats sont visibles dans la Communauté.</p>"],
+            ["document", "Nouveau document", "<p>Un procès-verbal a été ajouté à la résidence.</p>"],
         ]
+        return (0..<nombreAnciennes).map { rang in
+            let modele = modeles[rang % modeles.count]
+            return NotificationRecue(
+                id: 100 + rang, type: modele[0], titre: modele[1], corps: modele[2],
+                lue: !rang.isMultiple(of: 15), urgente: false, creeLe: il(24 * 7 + Double(rang) * 12))
+        }
     }
 }
