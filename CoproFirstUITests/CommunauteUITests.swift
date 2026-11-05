@@ -90,6 +90,24 @@ final class CommunauteUITests: XCTestCase {
         onglet.tap()
     }
 
+    /// La partie d'un élément qui se voit, entre les barres du haut et du bas (une
+    /// marge de 140 pt chacune) ; `nil` s'il n'en montre pas assez pour un doigt.
+    private func visible(_ app: XCUIApplication, _ element: XCUIElement) -> CGRect? {
+        guard element.exists else { return nil }
+        let fenetre = app.windows.firstMatch.frame
+        let zone = fenetre.insetBy(dx: 0, dy: 140)
+        let partie = element.frame.intersection(zone)
+        return partie.height >= 44 ? partie : nil
+    }
+
+    /// Toucher au milieu de ce qui se voit : une ligne en très grand texte dépasse
+    /// l'écran, et son centre peut tomber sous une barre.
+    private func toucherLaPartieVisible(_ app: XCUIApplication, _ element: XCUIElement) {
+        guard let partie = visible(app, element) else { return XCTFail("\(element) ne se voit pas") }
+        let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
+        origine.withOffset(CGVector(dx: partie.midX, dy: partie.midY)).tap()
+    }
+
     private func ouvrirDansPlus(_ app: XCUIApplication, _ libelle: String) {
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 8))
@@ -173,7 +191,17 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(modifier.waitForExistence(timeout: 8))
         XCTAssertTrue(modifier.isHittable, "« Modifier » se voit et se touche, en haut")
         modifier.tap()
-        for id in [5, 4, 3] { el(app, "notification.\(id)").tap() }
+        for id in [5, 4, 3] {
+            // Un cran à la fois : en très grand texte, une ligne vaut un écran, et un
+            // balayage rapide sortirait la voisine de la liste.
+            let ligne = el(app, "notification.\(id)")
+            var crans = 0
+            while visible(app, ligne) == nil, crans < 6 {
+                app.swipeUp(velocity: .slow)
+                crans += 1
+            }
+            toucherLaPartieVisible(app, ligne)
+        }
         let supprimer = el(app, "notifications.supprimerSelection")
         XCTAssertTrue(supprimer.waitForExistence(timeout: 5))
         XCTAssertTrue(supprimer.isHittable, "la suppression se voit, au bas de la liste")
@@ -186,7 +214,16 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(el(app, "notification.5").waitForNonExistence(timeout: 8), "les trois alertes sont parties")
         XCTAssertFalse(el(app, "notification.4").exists)
         XCTAssertFalse(el(app, "notification.3").exists)
-        XCTAssertTrue(el(app, "notification.2").exists, "les autres restent")
+        // Deux non lues parties (5 et 4) : 12 → 10 ; et la voisine reste (au-dessus,
+        // après la suppression, en très grand texte).
+        XCTAssertTrue(texte(app, "10 non lues").waitForExistence(timeout: 5), "le compte suit")
+        let restante = el(app, "notification.2")
+        var crans = 0
+        while !restante.exists, crans < 6 {
+            app.swipeDown(velocity: .slow)
+            crans += 1
+        }
+        XCTAssertTrue(restante.exists, "les autres restent")
     }
 
     @MainActor

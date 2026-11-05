@@ -173,6 +173,7 @@ struct NotificationsView: View {
                 selection = Set(etat.liste.filter(\.lue).map(\.id))
             }
             .disabled(!etat.liste.contains(where: \.lue))
+            .accessibilityShowsLargeContentViewer()
             .accessibilityIdentifier("notifications.selectionnerLues")
             Spacer(minLength: 8)
             Button(role: .destructive) {
@@ -185,9 +186,13 @@ struct NotificationsView: View {
             .buttonStyle(.borderedProminent)
             .tint(palette.dangerPlein)
             .disabled(selection.isEmpty)
+            .accessibilityShowsLargeContentViewer()
             .accessibilityIdentifier("notifications.supprimerSelection")
         }
         .font(.subheadline)
+        // Une barre ne grandit pas sans fin : elle mangerait la liste (très grand texte).
+        // Au-delà, la loupe d'accessibilité montre le libellé (appui long).
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.horizontal, Mise.marge)
         .padding(.vertical, 10)
         .frame(minHeight: Mise.cible)
