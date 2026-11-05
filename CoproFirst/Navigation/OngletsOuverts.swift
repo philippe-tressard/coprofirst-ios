@@ -33,10 +33,13 @@ struct DroitsOnglet: Hashable, Sendable {
     /// Conseil syndical ou administration — `$isCS` du site, qui inclut l'administrateur.
     /// Aucune réserve d'onglet ne l'emploie ; un écran le lit (le Règlement, #12).
     var cs = false
+    /// Le compte technique de l'installation : administrateur, sans lot ni conseil
+    /// (`$isAdminOnly` du site). Il n'a pas les outils du conseil (`PagesOuvertes`).
+    var adminSeul = false
 
     init(
         administrateur: Bool = false, operateur: Bool = false, proprioOuCS: Bool = false,
-        locataire: Bool = false, gestionnaire: Bool = false, cs: Bool = false
+        locataire: Bool = false, gestionnaire: Bool = false, cs: Bool = false, adminSeul: Bool = false
     ) {
         self.administrateur = administrateur
         self.operateur = operateur
@@ -44,6 +47,7 @@ struct DroitsOnglet: Hashable, Sendable {
         self.locataire = locataire
         self.gestionnaire = gestionnaire
         self.cs = cs
+        self.adminSeul = adminSeul
     }
 
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
@@ -57,7 +61,9 @@ struct DroitsOnglet: Hashable, Sendable {
             proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprioOuCS),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
             gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
-            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS))
+            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS),
+            adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)
+                && portes.isDisjoint(with: OngletsDuSite.rolesSansAdminSeul))
     }
 }
 

@@ -9,6 +9,26 @@ struct Medaille: Hashable {
     let symbole: String
 }
 
+extension Annuaire.Membre {
+    /// Les rôles d'un membre du conseil, mis en avant sur sa carte : gestionnaire du
+    /// site, président — l'Annuaire des résidents et celui de l'Espace CS.
+    func medaillonsDuConseil(site: String) -> [Medaille] {
+        var medaillons: [Medaille] = []
+        if estGestionnaireSite == true {
+            medaillons.append(Medaille(titre: TextesAnnuaire.gestionnaire(site), symbole: "building.2"))
+        }
+        if estPresident == true {
+            medaillons.append(Medaille(titre: TextesAnnuaire.president, symbole: "shield.lefthalf.filled"))
+        }
+        return medaillons
+    }
+
+    /// L'interlocuteur principal du syndic, mis en avant.
+    var medaillonsDuSyndic: [Medaille] {
+        estPrincipal == true ? [Medaille(titre: TextesAnnuaire.principal, symbole: "star.fill")] : []
+    }
+}
+
 /// La carte d'une personne de l'annuaire (`CarteContact.svelte`) : l'avatar, le nom,
 /// les médaillons, puis ce que la section y ajoute (lieu, fonction, coordonnées).
 struct CarteContact<Detail: View>: View {

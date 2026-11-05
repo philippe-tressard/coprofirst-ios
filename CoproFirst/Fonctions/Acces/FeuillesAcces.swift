@@ -56,7 +56,7 @@ struct DemanderAccesView: View {
             .background(palette.bg)
             .navigationTitle(TextesAcces.nouvelleDemande)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { BoutonsFeuille(envoi: envoi, envoyer: envoyer) }
+            .toolbar { BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer) }
             .disabled(envoi)
         }
         .onAppear { if lots.count == 1 { demande.lotId = lots[0].id } }
@@ -124,7 +124,7 @@ struct DeclarerAccesView: View {
             .background(palette.bg)
             .navigationTitle(TextesAcces.declarerExistant)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { BoutonsFeuille(envoi: envoi, envoyer: envoyer) }
+            .toolbar { BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer) }
             .disabled(envoi)
         }
         .onAppear { champ = true }
@@ -144,28 +144,6 @@ struct DeclarerAccesView: View {
             fermer()
         } catch {
             withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
-        }
-    }
-}
-
-/// « Annuler » et « Enregistrer » (« Enregistrement… » pendant l'envoi).
-private struct BoutonsFeuille: ToolbarContent {
-    let envoi: Bool
-    let envoyer: () async -> Void
-    @Environment(\.dismiss) private var fermer
-
-    var body: some ToolbarContent {
-        ToolbarItem(placement: .cancellationAction) {
-            Button(TextesAcces.annuler) { fermer() }
-        }
-        ToolbarItem(placement: .confirmationAction) {
-            if envoi {
-                ProgressView().accessibilityLabel("Enregistrement…")
-            } else {
-                Button(TextesAcces.enregistrer) { Task { await envoyer() } }
-                    .fontWeight(.semibold)
-                    .accessibilityIdentifier("acces.feuille.enregistrer")
-            }
         }
     }
 }

@@ -65,7 +65,7 @@ struct CartePrestataire: View {
         VStack(alignment: .leading, spacing: 2) {
             if !prestataire.contacts.isEmpty {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
-                    let lu = LibellesAcces.nom(contact.prenom, contact.nom)
+                    let lu = FormatsDuSite.nom(contact.prenom, contact.nom)
                     let nom = lu == FormatsDuSite.tiret ? "" : lu
                     let fonction = contact.fonction.map { " (\($0))" } ?? ""
                     lien(

@@ -53,6 +53,8 @@ enum Pictogrammes {
         "message-square-text": "exclamationmark.bubble.fill",
         "newspaper": "newspaper.fill",
         "refresh-cw": "arrow.triangle.2.circlepath",
+        "shield-half": "shield.lefthalf.filled",
+        "sliders-horizontal": "slider.horizontal.3",
         "user": "person.crop.circle",
         "users": "person.2.fill",
         "users-round": "person.3.fill",
