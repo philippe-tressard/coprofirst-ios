@@ -64,14 +64,29 @@ enum ErreurService: Error, Equatable, Sendable {
     }
 
     /// Une erreur de transport ramenée à l'un des cas ci-dessus.
+    ///
+    /// Une réponse REÇUE mais illisible (`DecodingError`, type de contenu inattendu)
+    /// n'est pas « pas une résidence CoproFirst » : le serveur a répondu, c'est
+    /// `.inattendue` (#13 : un champ manquant faisait lire « Cette adresse ne mène pas à
+    /// une résidence CoproFirst » dans une résidence ouverte). Ce jugement-là est
+    /// réservé à l'ENTRÉE dans une installation : `depuisEntree(_:)`.
     static func depuis(_ erreur: any Error) -> ErreurService {
         if let propre = erreur as? ErreurService { return propre }
         let urlError = (erreur as? URLError) ?? ((erreur as NSError).underlyingErrors.first as? URLError)
         switch urlError?.code {
         case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed: return .horsLigne
         case .some: return .injoignable
-        case .none: return .pasCoproFirst
+        // 0 : aucun statut HTTP en cause — la réponse est arrivée, elle ne se lit pas.
+        case .none: return .inattendue(0)
         }
+    }
+
+    /// À l'ENTRÉE dans une installation (GET /config d'une adresse saisie) : une
+    /// réponse qui ne se lit pas dit que l'adresse ne sert pas CoproFirst.
+    static func depuisEntree(_ erreur: any Error) -> ErreurService {
+        if erreur is ErreurService { return depuis(erreur) }
+        if case .inattendue = depuis(erreur) { return .pasCoproFirst }
+        return depuis(erreur)
     }
 
     /// Un statut HTTP non documenté par le contrat, ramené à un cas.

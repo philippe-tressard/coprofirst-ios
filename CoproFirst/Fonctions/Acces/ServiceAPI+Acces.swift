@@ -5,17 +5,13 @@ import ClientAPI
 import Foundation
 import OpenAPIRuntime
 
-/// « Mes lots & accès » par le client GÉNÉRÉ.
-///
-/// ⚠️ Trois réponses ne sont pas typées dans le contrat (`/lots/mes-lots`,
-/// `/acces/mes-vigiks`, `/acces/mes-telecommandes` : pas de `response_model`) : elles
-/// sont relues en miroir (`Relecture`, Commun/Session), en attendant que
-/// coprofirst les type (coprofirst#2507). La route, elle, reste celle du client.
+/// « Mes lots & accès » par le client GÉNÉRÉ — toutes les réponses sont typées depuis
+/// le contrat 1.5.0 (coprofirst v3.66.0, #2507) : plus aucune relecture à la main.
 extension ServiceAPI: ServiceAcces {
     func mesLots(_ installation: Installation) async throws -> [LotDuCompte] {
         let sortie = try await appeler { try await client(installation.adresse).getLotsMesLots() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([LotDuCompte].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(LotDuCompte.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -64,13 +60,14 @@ extension ServiceAPI: ServiceAcces {
         switch type {
         case .vigik:
             switch try await appeler({ try await client.getAccesMesVigiks() }) {
-            case .ok(let ok): return try Relecture.lire([AccesDetenu].self, depuis: try ok.body.json)
+            // Le type d'un accès est celui de la ROUTE appelée : `AccesPorteur` ne le porte pas.
+            case .ok(let ok): return try ok.body.json.map { AccesDetenu($0, type: .vigik) }
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         case .telecommande:
             switch try await appeler({ try await client.getAccesMesTelecommandes() }) {
-            case .ok(let ok): return try Relecture.lire([AccesDetenu].self, depuis: try ok.body.json)
+            case .ok(let ok): return try ok.body.json.map { AccesDetenu($0, type: .telecommande) }
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
@@ -110,9 +107,7 @@ extension ServiceAPI: ServiceAcces {
         }
         switch sortie {
         case .created(let cree):
-            // Réponse non typée : `{type, id, code, import_resolu}`.
-            let lu = try? Relecture.lire(Declaration.self, depuis: try cree.body.json)
-            return lu?.importResolu ?? false
+            return try cree.body.json.importResolu
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
@@ -156,10 +151,6 @@ extension ServiceAPI: ServiceAcces {
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
-
-    private struct Declaration: Decodable {
-        let importResolu: Bool?
-    }
 }
 
 extension Bail {
@@ -183,7 +174,28 @@ extension ObjetRemis {
     }
 }
 
+extension LotDuCompte {
+    init(_ lu: Components.Schemas.LotRead) {
+        self.init(
+            id: lu.id, numero: lu.numero, type: lu._type, typeAppartement: lu.typeAppartement, etage: lu.etage,
+            superficie: lu.superficie, batimentNom: lu.batimentNom, typeLien: lu.typeLien,
+            numeroUsage: lu.numeroUsage,
+            perimetres: (lu.perimetres ?? []).map { PerimetreDuLot(libelle: $0.libelle, relation: $0.relation) },
+            alertes: (lu.alertes ?? []).map { ConstatDuLot(code: $0.code, gravite: $0.gravite, message: $0.message) },
+            libelleTypeComplet: lu.libelleTypeComplet, etageLibelle: lu.etageLibelle)
+    }
+}
+
 extension AccesDetenu {
+    /// Un accès DÉTENU (`/acces/mes-vigiks`, `/acces/mes-telecommandes`) : son type est
+    /// celui de la route qui l'a servi.
+    init(_ acces: Components.Schemas.AccesPorteur, type: TypeAcces) {
+        self.init(
+            id: acces.id, code: acces.code, statut: acces.statut.rawValue, type: type.rawValue,
+            chezLocataire: acces.chezLocataire, bailId: acces.bailId)
+    }
+
+    /// Un accès CONFIÉ par un bailleur (`AccesOut`, qui porte son type).
     init(_ acces: Components.Schemas.AccesOut) {
         self.init(
             id: acces.id, code: acces.code, statut: acces.statut.rawValue, type: acces._type,

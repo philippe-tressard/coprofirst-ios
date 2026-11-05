@@ -12,7 +12,13 @@ final class ServiceAPI: ServiceCoproFirst {
     let sessions = SessionsParHote()
 
     func decouvrir(_ adresse: URL) async throws -> Installation {
-        let sortie = try await appeler { try await client(adresse).getConfig() }
+        // L'entrée : ici, et ici seulement, une réponse illisible veut dire « pas CoproFirst ».
+        let sortie: Operations.GetConfig.Output
+        do {
+            sortie = try await client(adresse).getConfig()
+        } catch {
+            throw ErreurService.depuisEntree(ClientCoproFirst.cause(error))
+        }
         switch sortie {
         case .ok(let ok):
             let cles = try ok.body.json.additionalProperties
