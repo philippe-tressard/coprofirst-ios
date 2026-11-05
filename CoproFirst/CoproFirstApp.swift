@@ -25,7 +25,8 @@ struct CoproFirstApp: App {
 /// `-api-simulee` (aucune requête ne part) et
 /// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`, et avec `fil`,
 /// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
-/// une page que l'administration a renommée.
+/// une page que l'administration a renommée, `-logement-long` pour un libellé de
+/// logement qui ne tient pas dans la barre.
 /// Hors de ces arguments, l'app parle aux vraies installations.
 enum Lancement {
     @MainActor
@@ -36,7 +37,11 @@ enum Lancement {
         let suite = "fr.coprofirst.app.simulee"
         let reglages = UserDefaults(suiteName: suite) ?? .standard
         reglages.removePersistentDomain(forName: suite)
-        let parcours = Parcours(service: ServiceSimule(), connues: InstallationsConnues(reglages: reglages))
+        let simule = ServiceSimule()
+        if arguments.contains("-logement-long") {
+            simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
+        }
+        let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
         let residence = ServiceSimule.residence
         let ecran = arguments.firstIndex(of: "-ecran").flatMap {
             arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
