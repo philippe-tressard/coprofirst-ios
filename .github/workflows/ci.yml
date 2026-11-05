@@ -54,14 +54,6 @@ jobs:
       - name: Build et tests (unitaires et interface) au simulateur
         # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
         # (skill publication-app-store). project.yml signe, le poste seul.
-        run: |
-          DESTINATION=$(bash scripts/destination-simulateur.sh)
-          echo "Destination : $DESTINATION"
-          xcodebuild test \
-            -project CoproFirst.xcodeproj \
-            -scheme CoproFirst \
-            -destination "$DESTINATION" \
-            -derivedDataPath .build/DerivedData \
-            -skipPackagePluginValidation \
-            -onlyUsePackageVersionsFromResolvedFile \
-            CODE_SIGNING_ALLOWED=NO
+        # Requêtes d'accessibilité expirées, mesure à l'échec et relance bornée,
+        # déclarée au résumé du run : scripts/tests-simulateur.sh (#50).
+        run: bash scripts/tests-simulateur.sh
