@@ -22,7 +22,7 @@ import pathlib
 import re
 
 import lecture_ts
-from generateurs._commun import CHARTE, NAVIGATION, tables_des_pages
+from generateurs._commun import CHARTE, NAVIGATION, SIGNATURE, tables_des_pages
 
 SOURCES = [
     "front/src/lib/pages.ts",
@@ -158,8 +158,8 @@ def parite(ctx) -> int:
         "<!--\nSPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
         "SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n-->\n\n"
         "# Les onglets du site\n\n"
-        "GÉNÉRÉ par `scripts/generer-charte.py` — NE PAS MODIFIER À LA MAIN.\n"
-        f"Source : coprofirst@{ctx.commit}, `front/src/lib/pages.ts` (`PAGES`) et "
+        f"{SIGNATURE}\n"
+        f"Source : {ctx.provenance}, `front/src/lib/pages.ts` (`PAGES`) et "
         "`pages-roles.ts` (`PAGES_ROLES`).\n\n"
         "Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — "
         "`scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.\n\n"

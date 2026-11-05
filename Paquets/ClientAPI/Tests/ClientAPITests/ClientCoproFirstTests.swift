@@ -70,7 +70,7 @@ func lesDatesDeLAPISeLisent(texte: String) throws {
 }
 
 /// Les champs facultatifs du contrat (`Optional[...]` de FastAPI) existent bien côté
-/// Swift : sans la normalisation de generer-openapi.sh, le générateur les supprimait
+/// Swift : sans la normalisation de `generateurs/contrat.py`, le générateur les supprimait
 /// en silence — ce test ne compilerait plus.
 @Test func lesChampsFacultatifsSontGeneres() throws {
     let json = #"""
@@ -107,7 +107,7 @@ func leLibelleDuLogementSeLit(champ: String, attendu: String?) throws {
 }
 
 /// Le contrat de l'app ne déclare aucun paramètre `in: cookie` (#26) : la
-/// normalisation de generer-openapi.sh les retire — iOS envoie les cookies de session
+/// normalisation de `generateurs/contrat.py` les retire — iOS envoie les cookies de session
 /// seul, et swift-openapi-generator en faisait ~390 avertissements par build.
 @Test func leContratNeDeclareAucunParametreCookie() throws {
     let contrat = URL(fileURLWithPath: #filePath)

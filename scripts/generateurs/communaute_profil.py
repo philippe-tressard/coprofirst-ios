@@ -1,11 +1,10 @@
-#!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Les tables de la Communauté et du Profil, GÉNÉRÉES depuis coprofirst (#14).
+"""Les tables de la Communauté et du Profil (#14).
 
 Le contrat d'API ne sert que des CODES : libellés, teintes et seuils vivent dans le
-code de coprofirst. Rien ne se recopie à la main (garde-fou de `projets.json`).
-Quand une règle vit des deux côtés, la source est le SERVEUR — c'est lui qui juge :
+code de coprofirst. Quand une règle vit des deux côtés, la source est le SERVEUR —
+c'est lui qui juge :
 
 - idées : `STATUTS_IDEE` (`front/src/lib/idees.ts`) ;
 - annonces : `TYPES_ANNONCE`, `CATEGORIES_ANNONCE`, `TRIS_ANNONCE`, `STATUTS_ANNONCE`
@@ -17,40 +16,29 @@ Quand une règle vit des deux côtés, la source est le SERVEUR — c'est lui qu
 - profils demandables (`STATUTS_DEMANDABLES`, `front/src/lib/roles.ts`) ;
 - longueur minimale d'un mot de passe (`verifier_robustesse`, `api/app/utils/mots_de_passe.py`).
 
-Sorties, dans les dossiers des menus — aucune session parallèle n'y touche :
-`CoproFirst/Fonctions/Communaute/Genere/TablesCommunaute.swift` et
-`CoproFirst/Fonctions/Profil/Genere/TablesProfil.swift`. Script à part de
-`generer-charte.py` (#14, en attendant `scripts/generateurs/`).
-
-Usage : python3 scripts/generer-communaute-profil.py [chemin/vers/coprofirst]
+→ `CoproFirst/Fonctions/Communaute/Genere/TablesCommunaute.swift` et
+`CoproFirst/Fonctions/Profil/Genere/TablesProfil.swift`.
 """
 
 from __future__ import annotations
 
-import os
-import pathlib
 import re
-import subprocess
-import sys
 
 import lecture_ts
+from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-RACINE = pathlib.Path(__file__).resolve().parents[1]
-COPROFIRST = pathlib.Path(
-    sys.argv[1] if len(sys.argv) > 1 else os.environ.get("COPROFIRST_RACINE", "/Volumes/Data/Dev/5hostachy"))
-LIB = COPROFIRST / "front" / "src" / "lib"
-API = COPROFIRST / "api" / "app" / "utils"
-SORTIE_COMMUNAUTE = RACINE / "CoproFirst" / "Fonctions" / "Communaute" / "Genere" / "TablesCommunaute.swift"
-SORTIE_PROFIL = RACINE / "CoproFirst" / "Fonctions" / "Profil" / "Genere" / "TablesProfil.swift"
-
-
-def lire(chemin: pathlib.Path) -> str:
-    return chemin.read_text(encoding="utf-8")
-
-
-def chaine(valeur) -> str:
-    texte = str(valeur).replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{texte}"'
+SOURCES = [
+    "front/src/lib/idees.ts",
+    "front/src/lib/annonces.ts",
+    "front/src/lib/theme.ts",
+    "front/src/lib/preferences.ts",
+    "front/src/lib/roles.ts",
+    "api/app/utils/avis.py",
+    "api/app/utils/preferences_mail.py",
+    "api/app/utils/mots_de_passe.py",
+]
+LIB = "front/src/lib/"
+API = "api/app/utils/"
 
 
 def entier(texte: str, motif: str, source: str) -> int:
@@ -86,28 +74,6 @@ def defauts_preferences(texte: str) -> dict[str, bool]:
     return {constantes[nom]: valeur == "True" for nom, valeur in paires}
 
 
-def commit() -> str:
-    return subprocess.run(
-        ["git", "-C", str(COPROFIRST), "rev-parse", "--short=9", "HEAD"], capture_output=True, text=True, check=True
-    ).stdout.strip()
-
-
-# L'en-tête que le script ÉCRIT dans le fichier généré : une chaîne, pas la
-# déclaration de ce script — REUSE ne doit pas la lire.
-# REUSE-IgnoreStart
-def entete(source: str) -> str:
-    return (
-        # La 1re ligne dit « GÉNÉRÉ » : verifier-depot.sh l'exige de tout fichier de Genere/.
-        "// GÉNÉRÉ par scripts/generer-communaute-profil.py — NE PAS MODIFIER À LA MAIN.\n"
-        "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
-        "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
-        "//\n"
-        "// swift-format-ignore-file\n"
-        f"// Source : coprofirst@{commit()}, {source}.\n\n"
-    )
-# REUSE-IgnoreEnd
-
-
 def element(type_: str, **champs) -> str:
     """Un élément de tableau Swift ; au-delà de 120 colonnes, un argument par ligne."""
     arguments = [f"{nom}: {chaine(valeur)}" for nom, valeur in champs.items()]
@@ -126,19 +92,16 @@ def libelles(table: list, cle: str = "val") -> str:
     return "".join(f"        ({chaine(e[cle])}, {chaine(e['label'])}),\n" for e in table)
 
 
-def communaute() -> str:
-    idees = lire(LIB / "idees.ts")
-    annonces = lire(LIB / "annonces.ts")
-    avis = lire(API / "avis.py")
+def communaute(ctx) -> str:
+    idees = ctx.lire(LIB + "idees.ts")
+    annonces = ctx.lire(LIB + "annonces.ts")
+    avis = ctx.lire(API + "avis.py")
     teintes = teintes_annonce(annonces)
     statuts_annonce = lecture_ts.table(annonces, "STATUTS_ANNONCE")
     manquantes = [s["val"] for s in statuts_annonce if s["val"] not in teintes]
     if manquantes:
         raise SystemExit(f"❌ statutAnnonceClass ne teinte pas : {manquantes}")
     return (
-        entete("front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py")
-        + "/// Ce que le site écrit de la Communauté et que le contrat ne sert pas.\n"
-        "enum TablesCommunaute {\n"
         "    /// Les états d'une idée, dans l'ordre du cycle de vie (`STATUTS_IDEE`).\n"
         "    static let statutsIdee: [EntreeStatut] = [\n"
         + "".join(statut(s["value"], s["label"], s["badge"]) for s in lecture_ts.table(idees, "STATUTS_IDEE"))
@@ -165,28 +128,22 @@ def communaute() -> str:
         f"    static let noteMax = {entier(avis, r'(?m)^NOTE_MAX\s*=\s*(\d+)', 'avis.py')}\n"
         f"    static let noteRemarque = {entier(avis, r'(?m)^NOTE_REMARQUE\s*=\s*(\d+)', 'avis.py')}\n"
         f"    static let notePubliable = {entier(avis, r'(?m)^NOTE_PUBLIABLE\s*=\s*(\d+)', 'avis.py')}\n"
-        "}\n"
     )
 
 
-def profil() -> str:
-    theme = lire(LIB / "theme.ts")
-    preferences = lire(LIB / "preferences.ts")
+def profil(ctx) -> str:
+    theme = ctx.lire(LIB + "theme.ts")
+    preferences = ctx.lire(LIB + "preferences.ts")
     constantes = dict(re.findall(r"\bconst ([A-Z_]+)\s*=\s*'([a-z_]+)'", preferences))
-    defauts = defauts_preferences(lire(API / "preferences_mail.py"))
+    defauts = defauts_preferences(ctx.lire(API + "preferences_mail.py"))
     canaux = lecture_ts.table(preferences, "CANAUX_NOTIFS")
     for canal in canaux:
         for cle in ("mon", "autres"):
             canal[cle] = constantes.get(str(canal[cle]), str(canal[cle]))
             if canal[cle] not in defauts:
                 raise SystemExit(f"❌ CANAUX_NOTIFS : {canal[cle]} n'a pas de défaut côté serveur")
-    longueur = entier(lire(API / "mots_de_passe.py"), r"len\(password\)\s*<\s*(\d+)", "mots_de_passe.py")
+    longueur = entier(ctx.lire(API + "mots_de_passe.py"), r"len\(password\)\s*<\s*(\d+)", "mots_de_passe.py")
     return (
-        entete(
-            "front/src/lib/theme.ts, preferences.ts et roles.ts ; "
-            "api/app/utils/preferences_mail.py et mots_de_passe.py")
-        + "/// Ce que le site écrit du Profil et que le contrat ne sert pas.\n"
-        "enum TablesProfil {\n"
         "    /// Le thème : une préférence de l'APPAREIL (le cookie du site), ses choix (`OPTIONS_THEME`).\n"
         f"    static let cleTheme = {chaine(chaine_ts(theme, 'COOKIE_THEME'))}\n"
         f"    static let themeParDefaut = {chaine(chaine_ts(theme, 'THEME_PAR_DEFAUT'))}\n"
@@ -205,24 +162,19 @@ def profil() -> str:
         + "    ]\n"
         "    /// Les profils qu'on peut demander depuis son profil (`STATUTS_DEMANDABLES`).\n"
         "    static let statutsDemandables: [String] = [\n"
-        + "".join(f"        {chaine(s)},\n" for s in lecture_ts.table(lire(LIB / "roles.ts"), "STATUTS_DEMANDABLES"))
+        + "".join(f"        {chaine(s)},\n" for s in lecture_ts.table(ctx.lire(LIB + "roles.ts"), "STATUTS_DEMANDABLES"))
         + "    ]\n"
         "    /// La longueur minimale d'un nouveau mot de passe (`verifier_robustesse`, serveur).\n"
         f"    static let longueurMinimaleMotDePasse = {longueur}\n"
-        "}\n"
     )
 
 
-def ecrire(chemin: pathlib.Path, texte: str) -> None:
-    chemin.parent.mkdir(parents=True, exist_ok=True)
-    chemin.write_text(texte, encoding="utf-8", newline="\n")
-    print(f"✅ {chemin.relative_to(RACINE)}")
-
-
-def main() -> None:
-    ecrire(SORTIE_COMMUNAUTE, communaute())
-    ecrire(SORTIE_PROFIL, profil())
-
-
-if __name__ == "__main__":
-    main()
+def generer(ctx) -> str:
+    ecrire_table(ctx, FONCTIONS / "Communaute" / "Genere" / "TablesCommunaute.swift",
+                 "front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py", "TablesCommunaute",
+                 "Ce que le site écrit de la Communauté et que le contrat ne sert pas.", communaute(ctx))
+    ecrire_table(ctx, FONCTIONS / "Profil" / "Genere" / "TablesProfil.swift",
+                 "front/src/lib/theme.ts, preferences.ts et roles.ts ; "
+                 "api/app/utils/preferences_mail.py et mots_de_passe.py", "TablesProfil",
+                 "Ce que le site écrit du Profil et que le contrat ne sert pas.", profil(ctx))
+    return "idées, annonces, avis, thème, préférences et profils"

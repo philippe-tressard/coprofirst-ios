@@ -1,17 +1,18 @@
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/styles/socle.css.
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/styles/socle.css.
 // Jetons non portés (color-mix, valeur non littérale) :
 //   --color-fond-logo: transparent
 //   --color-success-plein-survol: color-mix(in srgb, var(--color-success-plein) 85%, black)
 
 import SwiftUI
 
-/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*` ou `--fil-*` chacune,
-/// claire et sombre. La charte est `seine` ; une résidence choisit la sienne (`site_palette`).
+/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*`, `--fil-*` ou `--kanban-*`
+/// chacune, claire et sombre. La charte est `seine` ; une résidence choisit la sienne
+/// (`site_palette`).
 struct Palette: Sendable {
     let code: String
     /// `--color-accent`
@@ -162,6 +163,18 @@ struct Palette: Sendable {
     let filViolet: Color
     /// `--fil-violet-fond`
     let filVioletFond: Color
+    /// `--kanban-ag`
+    let kanbanAg: Color
+    /// `--kanban-annule`
+    let kanbanAnnule: Color
+    /// `--kanban-cs`
+    let kanbanCs: Color
+    /// `--kanban-fournisseur`
+    let kanbanFournisseur: Color
+    /// `--kanban-syndic`
+    let kanbanSyndic: Color
+    /// `--kanban-termine`
+    let kanbanTermine: Color
 }
 
 extension Palette {

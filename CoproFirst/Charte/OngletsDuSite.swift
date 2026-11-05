@@ -1,9 +1,9 @@
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/lib/pages.ts, pages-roles.ts, stores/auth.ts et roles.ts.
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/pages.ts, pages-roles.ts, stores/auth.ts et roles.ts.
 
 /// Les onglets de chaque page du site, dans leur ordre, avec leur réserve (#29).
 /// La règle qui en décide l'ouverture : `OngletsDuSite.ouverts` (Navigation/OngletsOuverts.swift).

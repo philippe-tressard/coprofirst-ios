@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Concordance avec CoproFirst (#20 ; standards/09 §8, règle 2) : chaque jour, tout ce
+# que l'app tire de coprofirst est régénéré depuis la DERNIÈRE VERSION PUBLIÉE et
+# comparé au dépôt (scripts/concordance.py), données de l'API simulée comprises.
+# Un écart, ou une version illisible (INCONNU, jamais vert), ouvre un ticket
+# « concordance » ou le complète ; le ticket se ferme à la main, avec la preuve.
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: Concordance avec CoproFirst
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      simuler_ecart:
+        description: "Poser un écart exprès (le contrôle doit passer au rouge, sans ticket)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: concordance
+  cancel-in-progress: false
+
+jobs:
+  concordance:
+    name: Dépôt contre la dernière version publiée
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Autotests (un écart posé exprès est vu, un cas zéro passe)
+        run: |
+          python3 -I scripts/concordance.py --autotest
+          python3 -I scripts/verifier-fixtures.py --autotest
+      - name: Concordance
+        id: concordance
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SIMULER: ${{ inputs.simuler_ecart && '--simuler-ecart' || '' }}
+        run: |
+          set +e
+          # shellcheck disable=SC2086 # SIMULER est vide ou une seule option.
+          python3 -I scripts/concordance.py --rapport "$RUNNER_TEMP/rapport.md" $SIMULER
+          code=$?
+          [ -s "$RUNNER_TEMP/rapport.md" ] || echo "❓ INCONNU — concordance.py s'est arrêté (code $code) avant d'écrire son rapport." > "$RUNNER_TEMP/rapport.md"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Ticket
+        if: ${{ !inputs.simuler_ecart }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CODE: ${{ steps.concordance.outputs.code }}
+        run: |
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          printf '\nExécution : %s\n' "$RUN" >> "$RUNNER_TEMP/rapport.md"
+          OUVERT=$(gh issue list --repo "$GITHUB_REPOSITORY" --label concordance --state open \
+            --json number --jq '.[0].number // empty')
+          if [ "$CODE" = "0" ]; then
+            # Revenu au vert : on le dit sur le ticket ouvert, on ne le ferme pas.
+            [ -z "$OUVERT" ] || gh issue comment "$OUVERT" --repo "$GITHUB_REPOSITORY" \
+              --body "✅ Concordance rétablie ($RUN). À fermer à la main, avec la preuve."
+          elif [ -n "$OUVERT" ]; then
+            gh issue comment "$OUVERT" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/rapport.md"
+          else
+            gh label create concordance --repo "$GITHUB_REPOSITORY" --color D93F0B --force \
+              --description "Écart entre l'app et la dernière version publiée de coprofirst (#20)"
+            gh issue create --repo "$GITHUB_REPOSITORY" --label concordance \
+              --title "Concordance avec CoproFirst : écart ou version illisible" \
+              --body-file "$RUNNER_TEMP/rapport.md"
+          fi
+      - name: Verdict
+        env:
+          CODE: ${{ steps.concordance.outputs.code }}
+        run: |
+          case "$CODE" in
+            0) echo "✅ concordant" ;;
+            1) echo "❌ écart — voir le rapport et le ticket « concordance »"; exit 1 ;;
+            *) echo "❓ INCONNU — rien n'a pu être comparé : ce n'est pas un vert"; exit 1 ;;
+          esac

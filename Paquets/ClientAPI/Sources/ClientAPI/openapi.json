@@ -32761,5 +32761,11 @@
         ]
       }
     }
-  }
+  },
+  "servers": [
+    {
+      "description": "l'installation",
+      "url": "/api"
+    }
+  ]
 }

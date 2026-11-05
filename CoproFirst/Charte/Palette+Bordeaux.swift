@@ -1,9 +1,9 @@
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/styles/socle.css, palette-sombre.css, palettes.css.
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/styles/socle.css, palette-sombre.css, palettes.css.
 
 import SwiftUI
 
@@ -83,6 +83,12 @@ extension Palette {
         filVert: Color(clair: RVBA(0x15, 0x80, 0x3D, 1), sombre: RVBA(0x1E, 0xB5, 0x56, 1)),
         filVertFond: Color(clair: RVBA(0xF0, 0xFD, 0xF4, 1), sombre: RVBA(0x17, 0x3B, 0x3B, 1)),
         filViolet: Color(clair: RVBA(0x6D, 0x28, 0xD9, 1), sombre: RVBA(0xB2, 0x8E, 0xEB, 1)),
-        filVioletFond: Color(clair: RVBA(0xF5, 0xF3, 0xFF, 1), sombre: RVBA(0x31, 0x34, 0x55, 1))
+        filVioletFond: Color(clair: RVBA(0xF5, 0xF3, 0xFF, 1), sombre: RVBA(0x31, 0x34, 0x55, 1)),
+        kanbanAg: Color(clair: RVBA(0x72, 0x40, 0xDA, 1), sombre: RVBA(0xA4, 0x7F, 0xF8, 1)),
+        kanbanAnnule: Color(clair: RVBA(0x5E, 0x64, 0x6F, 1), sombre: RVBA(0x9C, 0xA3, 0xAF, 1)),
+        kanbanCs: Color(clair: RVBA(0x15, 0x5C, 0xCE, 1), sombre: RVBA(0x58, 0x94, 0xF6, 1)),
+        kanbanFournisseur: Color(clair: RVBA(0xA5, 0x46, 0x02, 1), sombre: RVBA(0xF9, 0x73, 0x16, 1)),
+        kanbanSyndic: Color(clair: RVBA(0x7F, 0x5D, 0x05, 1), sombre: RVBA(0xF5, 0x9E, 0x0B, 1)),
+        kanbanTermine: Color(clair: RVBA(0x02, 0x72, 0x2F, 1), sombre: RVBA(0x22, 0xC5, 0x5E, 1))
     )
 }

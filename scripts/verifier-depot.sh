@@ -15,14 +15,21 @@
 #   6. aucune automatisation ne soumet à Apple : rien ne part en revue sans le
 #      « oui » écrit de Philippe pour la version (skill publication-app-store).
 #   7. aucune couleur écrite à la main dans l'app : elles se génèrent depuis
-#      coprofirst (scripts/generer-charte.py, ou le générateur d'un menu dans
-#      `Fonctions/<Menu>/Genere/`, en-tête « GÉNÉRÉ » en 1re ligne) ;
+#      coprofirst dans la `Palette` (scripts/generer.py) ; seuls les fichiers de
+#      chaque palette en portent, et une dispense qui ne couvre plus aucune couleur
+#      échoue. Un fichier de `Fonctions/<Menu>/Genere/` porte l'en-tête
+#      « GÉNÉRÉ » en 1re ligne — et aucune couleur (#34) ;
 #   8. aucun moteur web pour le texte du site : ni WebKit, ni conversion HTML de
 #      NSAttributedString — le HTML passe par TexteDuSite, seul (#22) ;
 #   9. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
 #      parallèles sont des dépôts, pas des fichiers du projet ;
 #  10. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
-#      et le registre des menus dit vrai (scripts/verifier-parite.py, #10).
+#      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
+#  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, par
+#      scripts/generateurs/_source.py seul : ni clone, ni arbre de travail, ni
+#      branche (#34, #20) ;
+#  12. chaque réponse de l'API simulée a la forme du schéma du serveur
+#      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -84,38 +91,46 @@ while IFS=$'\t' read -r meta f; do
   fi
 done < <(git ls-files --stage)
 
-# Les couleurs se GÉNÈRENT depuis les sources de coprofirst (scripts/generer-charte.py) :
-# aucune couleur écrite à la main dans le code Swift de l'app. Seuls le fichier
-# généré et la fabrique qu'il appelle (Charte.swift) en portent.
+# Les couleurs se GÉNÈRENT depuis les sources de coprofirst, dans la `Palette`
+# (scripts/generer.py) : aucune couleur écrite à la main dans le code Swift de l'app.
 COULEURS_MAIN='Color\(red:|UIColor\(red:|colorLiteral|RVBA\(0x|Color\.(red|blue|green|orange|yellow|purple|pink|black|white|gray)\b'
-# Un fichier qu'un générateur écrit dans le dossier d'un menu (`Fonctions/<Menu>/Genere/`,
-# #11) peut porter des couleurs — à condition que sa PREMIÈRE ligne le dise. Un fichier
-# de Genere/ sans cet en-tête est refusé, qu'il porte une couleur ou non.
-EN_TETE_GENERE='^// GÉNÉRÉ par scripts/[^ ]+ — NE PAS MODIFIER'
+# Les seuls fichiers qui en portent : chaque palette générée (`Palette+<code>.swift`).
+# Une dispense qui ne couvre plus de couleur échoue : une exception sans objet se retire.
+DISPENSES_COULEUR='^CoproFirst/Charte/Palette\+[A-Z][a-z]+\.swift$'
+# Un fichier qu'un générateur écrit dans le dossier d'un menu (`Fonctions/<Menu>/Genere/`)
+# dit en 1re ligne qu'il est généré ; ses teintes, il les nomme dans la `Palette` (#34).
+EN_TETE_GENERE='^// GÉNÉRÉ par scripts/generer\.py — NE PAS MODIFIER'
 GENERE='^CoproFirst/Fonctions/[^/]+/Genere/[^/]+\.swift$'
-genere_declare() { [[ "$1" =~ $GENERE ]] && head -1 "$2" | grep -qE "$EN_TETE_GENERE"; }
 # $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
 refus_couleur() {
-  case "$1" in CoproFirst/Charte/Palette*.swift|CoproFirst/Charte/Charte.swift) return ;; esac
-  if [[ "$1" =~ $GENERE ]] && ! genere_declare "$1" "$2"; then
-    echo "fichier de Genere/ sans l'en-tête « GÉNÉRÉ par scripts/… — NE PAS MODIFIER » en 1re ligne"
-  elif ! genere_declare "$1" "$2" && grep -nE "$COULEURS_MAIN" "$2" >/dev/null; then
-    echo "couleur écrite à la main ($(grep -noE "$COULEURS_MAIN" "$2" | head -1)) — passer par Charte (généré)"
+  local couleur
+  couleur=$(grep -noE "$COULEURS_MAIN" "$2" | head -1)
+  if [[ "$1" =~ $DISPENSES_COULEUR ]]; then
+    [ -n "$couleur" ] || echo "dispensé de la règle des couleurs sans en porter aucune — retirer la dispense"
+    return
+  fi
+  if [[ "$1" =~ $GENERE ]] && ! head -1 "$2" | grep -qE "$EN_TETE_GENERE"; then
+    echo "fichier de Genere/ sans l'en-tête « GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER » en 1re ligne"
+  elif [ -n "$couleur" ]; then
+    echo "couleur écrite à la main ($couleur) — un jeton de la Palette (générée)"
   fi
 }
 # Autotest, dans les deux sens : un contrôle qui ne refuse rien ne prouve rien.
 autotest_couleurs() {
   local d ok=0
   d=$(mktemp -d) || return 1
-  printf '// GÉNÉRÉ par scripts/x.py — NE PAS MODIFIER À LA MAIN.\nlet c = RVBA(0x01, 0x02, 0x03, 1)\n' > "$d/declare"
+  printf '// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.\nlet c = RVBA(0x01, 0x02, 0x03, 1)\n' > "$d/declare"
+  printf '// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.\nlet t = \\.kanbanAg\n' > "$d/propre"
   printf '// Écrit à la main.\nlet c = RVBA(0x01, 0x02, 0x03, 1)\n' > "$d/nu"
   printf '// Écrit à la main.\nlet n = 1\n' > "$d/sans"
-  [ -z "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/declare")" ] || ok=1
-  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/nu")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/declare")" ] || ok=1
+  [ -z "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/propre")" ] || ok=1
   [ -n "$(refus_couleur CoproFirst/Fonctions/M/Genere/T.swift "$d/sans")" ] || ok=1
-  [ -n "$(refus_couleur CoproFirst/Fonctions/M/Vue.swift "$d/declare")" ] || ok=1
   [ -n "$(refus_couleur CoproFirst/Fonctions/M/Vue.swift "$d/nu")" ] || ok=1
+  [ -z "$(refus_couleur CoproFirst/Fonctions/M/Vue.swift "$d/sans")" ] || ok=1
   [ -z "$(refus_couleur CoproFirst/Charte/Palette+Seine.swift "$d/nu")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Charte/Palette+Seine.swift "$d/sans")" ] || ok=1
+  [ -n "$(refus_couleur CoproFirst/Charte/PaletteKanban.swift "$d/nu")" ] || ok=1
   rm -rf "${d:?}"
   return $ok
 }
@@ -125,6 +140,54 @@ while IFS= read -r f; do
   motif=$(refus_couleur "$f" "$f")
   [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+
+# Une génération lit coprofirst à une version PUBLIÉE, et par `_source.py` seul (#34) :
+# aucun autre script de génération n'ouvre un clone, une branche ou l'arbre de travail.
+LECTURE_DIRECTE='COPROFIRST_RACINE|/Volumes/|subprocess|urllib|git (show|archive|-C)|rev-parse|\bHEAD\b|raw\.githubusercontent|refs/heads'
+GENERATION='^scripts/(generer[^/]*|concordance[^/]*|generateurs/[^/]+)$'
+SOURCE_UNIQUE='scripts/generateurs/_source.py'
+# $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_lecture() {
+  local trouve
+  [[ "$1" =~ $GENERATION ]] || return
+  if [ "$1" = "$SOURCE_UNIQUE" ]; then
+    # La source elle-même : une version publiée, jamais une branche ni l'arbre d'un clone.
+    trouve=$(grep -noE '\bHEAD\b|refs/heads|git |COPROFIRST_RACINE|/Volumes/' "$2" | head -1)
+    [ -z "$trouve" ] || echo "la source lit autre chose qu'une version publiée ($trouve)"
+    grep -q 'refs/tags/' "$2" || echo "la source ne lit plus l'archive d'une étiquette (refs/tags/)"
+    return
+  fi
+  trouve=$(grep -noE "$LECTURE_DIRECTE" "$2" | head -1)
+  [ -z "$trouve" ] || echo "lit coprofirst en direct ($trouve) — passer par ctx (generateurs/_source.py)"
+}
+autotest_lecture() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf 'x = subprocess.run(["git", "-C", f, "rev-parse", "HEAD"])\n' > "$d/tete"
+  printf 'texte = ctx.lire("front/src/lib/pages.ts")\n' > "$d/propre"
+  printf 'URL = "https://codeload.github.com/d/tar.gz/refs/tags/v1"\n' > "$d/source"
+  printf 'URL = "https://codeload.github.com/d/tar.gz/refs/heads/main"\n' > "$d/branche"
+  [ -n "$(refus_lecture scripts/generateurs/x.py "$d/tete")" ] || ok=1
+  [ -n "$(refus_lecture scripts/generer.py "$d/tete")" ] || ok=1
+  [ -z "$(refus_lecture scripts/generateurs/x.py "$d/propre")" ] || ok=1
+  [ -z "$(refus_lecture scripts/verifier-logo.sh "$d/tete")" ] || ok=1
+  [ -z "$(refus_lecture "$SOURCE_UNIQUE" "$d/source")" ] || ok=1
+  [ -n "$(refus_lecture "$SOURCE_UNIQUE" "$d/branche")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofirst en échec"
+grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  motif=$(refus_lecture "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+done < <(grep -E "$GENERATION" <<< "$FICHIERS")
+
+# Les réponses de l'API simulée contre le schéma du serveur : l'autotest d'abord, puis
+# le juge. INCONNU (sortie 2) est un échec, jamais un succès.
+python3 -I scripts/verifier-fixtures.py --autotest >/dev/null || echec "verifier-fixtures.py : autotest en échec"
+FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec "API simulée hors du schéma du serveur"; }
 
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
 # et charge, NSAttributedString(.html) passe par WebKit et charge des ressources
@@ -167,4 +230,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun moteur web, aucun worktree suivi ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

@@ -56,19 +56,26 @@ Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 
 ## Charte
 
-Les couleurs, la table des natures du fil et l'ordre par défaut des pages sont
-**générés** depuis les sources de CoproFirst, jamais recopiés :
-`python3 scripts/generer-charte.py` écrit `CoproFirst/Charte/Palette*.swift` (la
-charte et les palettes d'une résidence, claires et sombres), `NaturesDuFil.swift`,
-`CoproFirst/Navigation/PagesParDefaut.swift` et la liste des onglets du site
-(`Parite/ONGLETS-DU-SITE.md`). Le contrôle du dépôt refuse une couleur écrite à
-la main dans l'app.
+Le contrat d'API, les couleurs, les natures du fil, l'ordre des pages, les onglets
+et les tables des menus sont **générés** depuis CoproFirst, jamais recopiés :
+`python3 scripts/generer.py --version vX.Y.Z` (ou `--derniere`) écrit
+`openapi.json`, `CoproFirst/Charte/Palette*.swift` (la charte et les palettes d'une
+résidence, claires et sombres, teintes du Kanban comprises), `NaturesDuFil.swift`,
+`CoproFirst/Navigation/PagesParDefaut.swift`, les `Fonctions/<Menu>/Genere/` et la
+liste des onglets du site (`Parite/ONGLETS-DU-SITE.md`). Le contrôle du dépôt
+refuse une couleur écrite à la main dans l'app.
 
-Les générateurs lisent un clone de CoproFirst : `$COPROFIRST_RACINE` (par défaut
-`/Volumes/Data/Dev/5hostachy`), ou le chemin passé en argument. Il y en a un par
-domaine dans `scripts/generateurs/` (palettes, charte, onglets…), que
-`generer-charte.py` découvre et lance tous ; `--sources` liste les fichiers de
-CoproFirst qu'ils lisent.
+Une seule règle de provenance : les générateurs lisent une **version publiée** de
+CoproFirst (l'archive de son étiquette et les pièces jointes de sa release), nommée
+dans l'en-tête « GÉNÉRÉ » de chaque fichier — jamais un clone ni une branche. Il y
+en a un par domaine dans `scripts/generateurs/`, que `generer.py` découvre et lance
+tous ; `--sources` liste les fichiers de CoproFirst qu'ils lisent.
+
+**Concordance** : la CI régénère tout à la version déclarée et compare à l'octet
+(`python3 scripts/concordance.py --declaree`) ; chaque jour, le workflow
+« Concordance avec CoproFirst » compare à la dernière release et juge les réponses
+de l'API simulée contre son contrat (`scripts/verifier-fixtures.py`). Un écart ou
+une version illisible ouvre un ticket `concordance`.
 
 ## Contrat d'API
 
