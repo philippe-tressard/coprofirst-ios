@@ -19,19 +19,22 @@ enum LibellesAcces {
     static func typeAcces(_ code: String) -> String {
         TablesAcces.typesAcces.first { $0.code == code }?.libelle ?? code
     }
-
-    /// Un nom tel que l'API le sert, prénom puis nom ; « — » s'il n'y en a pas.
-    static func nom(_ prenom: String?, _ nom: String?) -> String {
-        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        return morceaux.isEmpty ? FormatsDuSite.tiret : morceaux.joined(separator: " ")
-    }
 }
 
 extension LotDuCompte {
-    /// Le type tel que l'API le sert (« appartement T3 ») — `lotTypeLabel` n'est pas
-    /// recopié (coprofirst#2507).
+    /// Le type du lot : le libellé que l'API calcule (`libelle_type_complet`, contrat
+    /// 1.5.0 — « Appartement – T3 »), sinon la donnée brute (« appartement T3 ») ;
+    /// `lotTypeLabel` n'est jamais recopié.
     var typeLu: String {
+        if let servi = libelleTypeComplet, !servi.isEmpty { return servi }
         let morceaux = [type, typeAppartement].compactMap { $0 }.filter { !$0.isEmpty }
         return morceaux.isEmpty ? FormatsDuSite.tiret : morceaux.joined(separator: " ")
+    }
+
+    /// L'étage : le libellé que l'API calcule (`etage_libelle` — « 2ème », « RDC »),
+    /// sinon le nombre brut ; `etageLabel` n'est jamais recopié.
+    var etageLu: String? {
+        if let servi = etageLibelle, !servi.isEmpty { return servi }
+        return etage.map(String.init)
     }
 }

@@ -24,8 +24,7 @@ struct CaracteristiquesDuLot: View {
     private var lignes: [(String, String)] {
         var lignes = avant
         if lot.type != nil { lignes.append(("Type", lot.typeLu)) }
-        // L'étage tel que l'API le sert (« -1 », « 2 ») : `etageLabel` n'est pas recopié.
-        if let etage = lot.etage { lignes.append(("Étage", String(etage))) }
+        if let etage = lot.etageLu { lignes.append(("Étage", etage)) }
         // ⚠️ Le site écrit ici la valeur brute (« 64.5 m² ») et `fmtNombre` dans la vue
         // du bailleur (« 64,5 m² ») : l'app suit `fmtNombre` partout — écart signalé
         // dans le coprofirst#2507.

@@ -31,7 +31,7 @@ struct PrestatairesView: View {
         let conseil = droits.conseil
         return ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                BarreOngletsAcces(
+                BarreOnglets(
                     onglets: OngletsDuSite.ouverts(page: "prestataires", droits: droits.onglet), actif: $onglet)
                 if let descriptif = TablesPrestataires.descriptifs[onglet] {
                     Text(TexteDuSite.apercu(descriptif)).font(.subheadline).foregroundStyle(palette.textMuted)

@@ -3,7 +3,7 @@
 //
 // GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/lib/pages.ts (PAGES).
+// Source : coprofirst@3c08a6aeb, front/src/lib/pages.ts (PAGES) et pages-roles.ts (PAGES_ROLES).
 
 /// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.
 enum PagesParDefaut {
@@ -16,5 +16,8 @@ enum PagesParDefaut {
         PageDeNavigation(id: "prestataires", route: "/prestataires", libelle: "Prestataires", titre: "Prestataires", icone: "hard-hat"),
         PageDeNavigation(id: "communaute", route: "/sondages", libelle: "Communauté", titre: "Communauté", icone: "users-round"),
         PageDeNavigation(id: "faq", route: "/faq", libelle: "FAQ", titre: "FAQ", icone: "help-circle"),
+        PageDeNavigation(id: "espace-cs", route: "/espace-cs", libelle: "Espace CS", titre: "Espace Conseil Syndical (CS)", icone: "shield-half"),
+        PageDeNavigation(id: "admin", route: "/admin", libelle: "Admin", titre: "Paramétrage", icone: "sliders-horizontal"),
+        PageDeNavigation(id: "delegations", route: "/delegations", libelle: "Délégations", titre: "Délégations aidant", icone: "heart-handshake"),
     ]
 }

@@ -48,7 +48,8 @@ enum RegistreDesMenus {
 
         "notifications": NotificationsView.self,
 
-        // #15 — "espace-cs"
+        "espace-cs": EspaceCSView.self,
+
         "delegations": DelegationsView.self,
 
         // #16 — "admin"

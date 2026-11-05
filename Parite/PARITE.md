@@ -104,11 +104,11 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `espace-cs` | `validations` | prévu | #15 |  |
-| `espace-cs` | `badges` | prévu | #15 |  |
+| `espace-cs` | `validations` | fait | #15 | Approuver (« Nouvel Arrivant ») ou rejeter un compte, accepter (codes remis) ou rejeter une demande d'accès ; l'annonce détaillée de la validation (lots trouvés…) attend le serveur |
+| `espace-cs` | `badges` | fait | #15 | Consultation : recherche, type, porteur, lot, accès, état ; enregistrer, corriger, exporter et retirer un accès restent au site |
 | `espace-cs` | `reporting` | prévu | #15 |  |
 | `espace-cs` | `annonces-hall` | prévu | #15 |  |
-| `espace-cs` | `annuaire` | prévu | #15 |  |
+| `espace-cs` | `annuaire` | fait | #15 | Conseil (AG, WhatsApp, président) et syndic (cabinet, interlocuteur principal, ordre), fiches à ajouter, corriger, retirer ; les consignes de la fiche arrivant et le rapprochement par le nom restent au site |
 | `espace-cs` | `courriels` | prévu | #15 |  |
 | `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis et réponses typées : coprofirst#2525 |
 

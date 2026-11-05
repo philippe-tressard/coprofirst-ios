@@ -17,6 +17,28 @@ enum TextesNotifications {
     static let confirmerTitre = "Supprimer définitivement"
     static let confirmerMessage = "Cette notification\n\nCette action est irréversible."
     static let supprimer = "Supprimer"
+    static let modifier = "Modifier"
+    static let terminer = "OK"
+    static let toutSelectionner = "Tout sélectionner"
+    static let toutDeselectionner = "Tout désélectionner"
+    static let selectionnerLues = "Sélectionner les lues"
+
+    /// « Supprimer », puis « Supprimer (3) » dès qu'une sélection existe.
+    static func supprimerSelection(_ nombre: Int) -> String {
+        nombre == 0 ? supprimer : "\(supprimer) (\(nombre))"
+    }
+
+    /// Le message de la confirmation d'une suppression groupée.
+    static func confirmerLot(_ nombre: Int) -> String {
+        (nombre > 1 ? "Ces \(nombre) notifications" : "Cette notification") + "\n\nCette action est irréversible."
+    }
+
+    /// Ce qu'une suppression groupée n'a pas pu faire.
+    static func nonSupprimees(_ nombre: Int) -> String {
+        nombre > 1
+            ? "\(nombre) notifications n'ont pas pu être supprimées."
+            : "Une notification n'a pas pu être supprimée."
+    }
 
     /// « 1 non lue », « 3 non lues ».
     static func nonLues(_ nombre: Int) -> String {
@@ -38,6 +60,8 @@ final class EtatNotifications {
     private(set) var liste: [NotificationRecue] = []
     /// Un geste qui a échoué : une phrase, et la liste revient à l'état d'avant.
     var echec: ErreurService?
+    /// Après une suppression groupée : combien le serveur en a refusé (elles reviennent).
+    var nonSupprimees = 0
 
     var nonLues: Int { liste.filter { !$0.lue }.count }
 
@@ -91,6 +115,55 @@ final class EtatNotifications {
         }
     }
 
+    /// Plusieurs à la fois — une requête DELETE par notification, aucune route ne
+    /// supprimant en lot ; quatre en vol au plus. Les lignes partent tout de suite ;
+    /// celles que le serveur refuse reviennent, et une phrase dit combien.
+    func supprimer(
+        _ ids: Set<Int>, dans installation: Installation, avec service: any ServiceNotifications
+    ) async {
+        guard !ids.isEmpty else { return }
+        let avant = liste
+        echec = nil
+        nonSupprimees = 0
+        withAnimation(.snappy) { liste.removeAll { ids.contains($0.id) } }
+        let refusees: [Int: ErreurService] = await withTaskGroup(of: (Int, ErreurService?).self) { groupe in
+            var file = Array(ids).sorted()[...]
+            var refus: [Int: ErreurService] = [:]
+            for _ in 0..<min(Self.enVolMaximum, file.count) {
+                guard let id = file.popFirst() else { break }
+                groupe.addTask { await Self.essayerDeSupprimer(id, installation, service) }
+            }
+            while let (id, erreur) = await groupe.next() {
+                if let erreur { refus[id] = erreur }
+                if let suivant = file.popFirst() {
+                    groupe.addTask { await Self.essayerDeSupprimer(suivant, installation, service) }
+                }
+            }
+            return refus
+        }
+        if !refusees.isEmpty {
+            withAnimation(.snappy) {
+                liste = avant.filter { !ids.contains($0.id) || refusees[$0.id] != nil }
+                nonSupprimees = refusees.count
+                echec = refusees.values.first
+            }
+        }
+        CompteurNonLues.partage.noter(nonLues, pour: installation)
+    }
+
+    private static let enVolMaximum = 4
+
+    private nonisolated static func essayerDeSupprimer(
+        _ id: Int, _ installation: Installation, _ service: any ServiceNotifications
+    ) async -> (Int, ErreurService?) {
+        do {
+            try await service.supprimerNotification(id, dans: installation)
+            return (id, nil)
+        } catch {
+            return (id, ErreurService.depuis(error))
+        }
+    }
+
     /// Le geste se voit tout de suite ; s'il échoue, la liste revient et une phrase le dit.
     private func tenter(
         _ installation: Installation, _ local: (inout [NotificationRecue]) -> Void,
@@ -98,6 +171,7 @@ final class EtatNotifications {
     ) async {
         let avant = liste
         echec = nil
+        nonSupprimees = 0
         withAnimation(.snappy) { local(&liste) }
         do {
             try await appel()
