@@ -3,7 +3,9 @@
 """Les PAGES et leurs ONGLETS, lus dans `PAGES` (`front/src/lib/pages.ts`) et
 `PAGES_ROLES` (`pages-roles.ts`) :
 
-- l'ordre par défaut des pages, que `pages_order` de GET /config réordonne
+- l'ordre par défaut des pages, que `pages_order` de GET /config réordonne — celles de
+  `PAGES`, puis celles de `PAGES_ROLES` (Espace CS, Admin, Délégations), comme `PAGES`
+  les étale : `PagesOuvertes` (Navigation/) décide ensuite qui les voit (#15)
   → `CoproFirst/Navigation/PagesParDefaut.swift` ;
 - chaque onglet, une ligne, que la table de parité doit classer
   → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py) ;
@@ -74,6 +76,17 @@ def _libelle(lib: pathlib.Path, label) -> str:
     return re.sub(r"^[^\w«(]+", "", label or "").strip().replace('"', '\\"')
 
 
+def _admin_seul(auth: str) -> tuple[list[str], list[str]]:
+    """`isAdminOnly` de `stores/auth.ts` : les rôles qu'il exige (`aRole`), puis ceux qui
+    l'annulent (`!aRole`, réunis) — « le compte technique de l'installation »."""
+    bloc = _bloc(auth, "export const isAdminOnly = derived(")
+    exiges = re.findall(r"(?<!!)aRole\(\$u,([^)]*)\)", bloc)
+    annules = re.findall(r"!aRole\(\$u,([^)]*)\)", bloc)
+    if len(exiges) != 1 or not annules:
+        raise SystemExit("❌ isAdminOnly : forme inattendue dans stores/auth.ts — l'app doit l'apprendre")
+    return re.findall(r"'([^']+)'", exiges[0]), [r for a in annules for r in re.findall(r"'([^']+)'", a)]
+
+
 def _ensemble(valeurs: list[str]) -> str:
     return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
 
@@ -114,6 +127,10 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
     corps += f"    static let rolesOperateur: Set<String> = {_ensemble(_roles(auth, 'isOperateur'))}\n"
     corps += f"    static let rolesProprioOuCS: Set<String> = {_ensemble(_roles(auth, 'isProprioOuCS'))}\n"
     corps += f"    static let rolesCS: Set<String> = {_ensemble(_roles(auth, 'isCS'))}\n"
+    exiges, annules = _admin_seul(auth)
+    corps += "    /// `isAdminOnly` : un de ces rôles, et aucun des suivants (le compte technique).\n"
+    corps += f"    static let rolesAdminSeul: Set<String> = {_ensemble(exiges)}\n"
+    corps += f"    static let rolesSansAdminSeul: Set<String> = {_ensemble(annules)}\n"
     corps += f"    static let statutsLocataire: Set<String> = {_ensemble(_statuts(roles_ts, 'estLocataire'))}\n"
     corps += f"    static let statutsGestionnaire: Set<String> = {_ensemble(_statuts(roles_ts, 'estGestionnaire'))}\n"
     corps += "}\n"
@@ -122,14 +139,15 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
 
 def pages(ctx) -> int:
     lignes = []
-    for p in tables_des_pages(ctx.front)[0]:
+    table, roles = tables_des_pages(ctx.front)
+    for p in table + roles:
         if p.get("href") is None:
             continue  # sans entrée de navigation : ni ordonnée, ni dans la barre
         lignes.append(
             f'        PageDeNavigation(id: "{p["id"]}", route: "{p["href"]}", '
             f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}"),\n'
         )
-    corps = ctx.entete("front/src/lib/pages.ts (PAGES)")
+    corps = ctx.entete("front/src/lib/pages.ts (PAGES) et pages-roles.ts (PAGES_ROLES)")
     corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"
     corps += "enum PagesParDefaut {\n    static let toutes: [PageDeNavigation] = [\n" + "".join(lignes) + "    ]\n}\n"
     ctx.ecrire(NAVIGATION / "PagesParDefaut.swift", corps)

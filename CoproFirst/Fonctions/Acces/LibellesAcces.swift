@@ -19,12 +19,6 @@ enum LibellesAcces {
     static func typeAcces(_ code: String) -> String {
         TablesAcces.typesAcces.first { $0.code == code }?.libelle ?? code
     }
-
-    /// Un nom tel que l'API le sert, prénom puis nom ; « — » s'il n'y en a pas.
-    static func nom(_ prenom: String?, _ nom: String?) -> String {
-        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
-        return morceaux.isEmpty ? FormatsDuSite.tiret : morceaux.joined(separator: " ")
-    }
 }
 
 extension LotDuCompte {

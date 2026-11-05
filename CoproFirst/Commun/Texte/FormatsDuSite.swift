@@ -92,6 +92,15 @@ enum FormatsDuSite {
         return formateur.date(from: texte)
     }
 
+    // MARK: Personnes
+
+    /// Un nom tel que l'API le sert, prénom puis nom ; « — » s'il n'y en a pas.
+    /// `nomAffiche` du site (nom en capitales) n'est pas recopié : coprofirst#2507.
+    static func nom(_ prenom: String?, _ nom: String?) -> String {
+        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        return morceaux.isEmpty ? tiret : morceaux.joined(separator: " ")
+    }
+
     // MARK: Nombres
 
     /// `fmtNombre` : `Intl.NumberFormat('fr-FR')` — espace fine insécable entre les

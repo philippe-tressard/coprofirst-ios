@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/pages.ts (PAGES).
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/pages.ts (PAGES) et pages-roles.ts (PAGES_ROLES).
 
 /// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.
 enum PagesParDefaut {
@@ -16,5 +16,8 @@ enum PagesParDefaut {
         PageDeNavigation(id: "prestataires", route: "/prestataires", libelle: "Prestataires", titre: "Prestataires", icone: "hard-hat"),
         PageDeNavigation(id: "communaute", route: "/sondages", libelle: "Communauté", titre: "Communauté", icone: "users-round"),
         PageDeNavigation(id: "faq", route: "/faq", libelle: "FAQ", titre: "FAQ", icone: "help-circle"),
+        PageDeNavigation(id: "espace-cs", route: "/espace-cs", libelle: "Espace CS", titre: "Espace Conseil Syndical (CS)", icone: "shield-half"),
+        PageDeNavigation(id: "admin", route: "/admin", libelle: "Admin", titre: "Paramétrage", icone: "sliders-horizontal"),
+        PageDeNavigation(id: "delegations", route: "/delegations", libelle: "Délégations", titre: "Délégations aidant", icone: "heart-handshake"),
     ]
 }

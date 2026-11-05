@@ -78,7 +78,6 @@ enum TextesAcces {
     static let accesEnregistre = "Accès enregistré"
     static let accesEnregistreImport = "Accès enregistré (import mis à jour)"
     static let annuler = "Annuler"
-    static let enregistrer = "Enregistrer"
     static func lot(_ numero: String) -> String { "Lot \(numero)" }
 
     // Gestion locative

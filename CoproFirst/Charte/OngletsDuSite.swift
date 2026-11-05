@@ -78,6 +78,9 @@ enum OngletsDuSite {
     static let rolesOperateur: Set<String> = ["operateur"]
     static let rolesProprioOuCS: Set<String> = ["propriétaire", "conseil_syndical", "admin"]
     static let rolesCS: Set<String> = ["conseil_syndical", "admin"]
+    /// `isAdminOnly` : un de ces rôles, et aucun des suivants (le compte technique).
+    static let rolesAdminSeul: Set<String> = ["admin"]
+    static let rolesSansAdminSeul: Set<String> = ["propriétaire", "résident", "conseil_syndical"]
     static let statutsLocataire: Set<String> = ["locataire"]
     static let statutsGestionnaire: Set<String> = ["syndic", "mandataire"]
 }

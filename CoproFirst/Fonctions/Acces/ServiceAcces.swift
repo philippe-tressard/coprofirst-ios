@@ -115,7 +115,7 @@ struct Bail: Hashable, Sendable, Identifiable {
     /// `bailEnCours`, `front/src/lib/bail.ts`.
     var enCours: Bool { statut == "actif" || statut == "en_cours_sortie" }
     var termine: Bool { statut == "termine" }
-    var nomLocataire: String { LibellesAcces.nom(locatairePrenom, locataireNom) }
+    var nomLocataire: String { FormatsDuSite.nom(locatairePrenom, locataireNom) }
     /// Le regroupement du site : un même locataire, ou ce bail seul (`ext_<id>`).
     var cleLocataire: String { locataireId.map { "\($0)" } ?? "ext_\(id)" }
 }
