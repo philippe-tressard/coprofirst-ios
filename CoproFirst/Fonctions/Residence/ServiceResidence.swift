@@ -83,7 +83,7 @@ extension ServiceAPI: ServiceResidence {
 
     func rapport(_ id: Int, nom: String, dans installation: Installation) async throws -> URL {
         let client = client(installation.adresse)
-        return try await fichierServi(nom: nom, defaut: "rapport-\(id)") {
+        return try await Self.fichierServi(nom: nom, defaut: "rapport-\(id)") {
             let sortie = try await client.getDiagnosticsRapportsRapportIdTélécharger(
                 path: .init(rapportId: id))
             if case .undocumented(let statut, _) = sortie { throw ErreurService.depuisLecture(statut) }
@@ -150,31 +150,5 @@ extension ServiceAPI: ServiceResidence {
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
-    }
-
-    /// Une route qui sert un FICHIER (`FileResponse`) que le contrat déclare en JSON :
-    /// le client généré le refuse, et l'erreur porte le corps — lu sur un 200 seulement.
-    ///
-    /// ⚠️ Même geste que `ServiceAPI.document` (Session/) : écrit ici, sous une forme
-    /// générique, parce que ce lot ne touche pas aux fichiers partagés. Signalé à la
-    /// coordination : `document` peut s'y ramener dans un lot de `Session/`.
-    func fichierServi(nom: String, defaut: String, appel: () async throws -> Void) async throws -> URL {
-        let donnees: Data
-        do {
-            try await appel()
-            throw ErreurService.inattendue(200)
-        } catch let erreur as ErreurService {
-            throw erreur
-        } catch {
-            guard let fichier = try await ClientCoproFirst.fichierServi(error) else {
-                throw ErreurService.depuis(ClientCoproFirst.cause(error))
-            }
-            donnees = fichier
-        }
-        let dossier = FileManager.default.temporaryDirectory.appending(path: "documents", directoryHint: .isDirectory)
-        try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
-        let fichier = dossier.appending(path: Fichiers.nomSur(nom, defaut: defaut))
-        try donnees.write(to: fichier, options: [.atomic, .completeFileProtection])
-        return fichier
     }
 }
