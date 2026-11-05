@@ -197,6 +197,16 @@ final class CompteurNonLues {
 
     func nombre(_ installation: Installation) -> Int { parHote[installation.hote] ?? 0 }
 
+    /// Le nombre que la pastille de la cloche montre : figé tant que la liste est ouverte
+    /// (`figer`, `liberer`), le vrai sinon.
+    private(set) var figes: [String: Int] = [:]
+
+    func nombreAffiche(_ installation: Installation) -> Int { figes[installation.hote] ?? nombre(installation) }
+
+    func figer(_ installation: Installation) { figes[installation.hote] = nombre(installation) }
+
+    func liberer(_ installation: Installation) { figes[installation.hote] = nil }
+
     func noter(_ nombre: Int, pour installation: Installation) {
         parHote[installation.hote] = nombre
         lues[installation.hote] = .now

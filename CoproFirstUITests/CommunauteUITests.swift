@@ -167,6 +167,8 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(
             lu(app, "cloche", contient: "12"),
             "la cloche dit 12 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
+        Thread.sleep(forTimeInterval: 3)  // la pastille de la barre apparaît en fondu
+        capture("7b-cloche")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
         XCTAssertTrue(tout.waitForExistence(timeout: 8))
