@@ -138,6 +138,8 @@ final class CommunauteUITests: XCTestCase {
         capture("7-donner-mon-avis")
     }
 
+    /// La cloche du Fil : « Tout marquer lu » et « Modifier » doivent SE VOIR, en haut —
+    /// un bouton présent mais caché (sous la barre d'onglets) ne compte pas (`isHittable`).
     @MainActor
     func testLaClocheOuvreLesNotificationsEtToutSeMarqueLu() throws {
         let app = lancer()
@@ -145,15 +147,46 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(cloche.waitForExistence(timeout: 8))
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
-            lu(app, "cloche", contient: "2"), "la cloche dit 2 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
+            lu(app, "cloche", contient: "12"),
+            "la cloche dit 12 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
         XCTAssertTrue(tout.waitForExistence(timeout: 8))
+        XCTAssertTrue(tout.isHittable, "« Tout marquer lu » se voit et se touche, en haut")
+        XCTAssertTrue(el(app, "notifications.modifier").isHittable, "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
         tout.tap()
         XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
         el(app, "notifications.ok").tap()
-        XCTAssertFalse(lu(app, "cloche", contient: "2", delai: 3), "la cloche n'a plus de pastille")
+        XCTAssertFalse(lu(app, "cloche", contient: "12", delai: 3), "la cloche n'a plus de pastille")
+    }
+
+    /// La cloche d'un menu de « Plus » : « Modifier », trois alertes choisies, supprimées
+    /// après confirmation — une requête par alerte.
+    @MainActor
+    func testPlusieursNotificationsSeSuppriment() throws {
+        let app = lancer()
+        ouvrirDansPlus(app, "Communauté")
+        XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
+        el(app, "cloche").tap()
+        let modifier = el(app, "notifications.modifier")
+        XCTAssertTrue(modifier.waitForExistence(timeout: 8))
+        XCTAssertTrue(modifier.isHittable, "« Modifier » se voit et se touche, en haut")
+        modifier.tap()
+        for id in [5, 4, 3] { el(app, "notification.\(id)").tap() }
+        let supprimer = el(app, "notifications.supprimerSelection")
+        XCTAssertTrue(supprimer.waitForExistence(timeout: 5))
+        XCTAssertTrue(supprimer.isHittable, "la suppression se voit, au bas de la liste")
+        XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(3)"), "trois alertes choisies")
+        capture("8b-notifications-modifier")
+        supprimer.tap()
+        let confirmer = el(app, "notifications.confirmerSuppression")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        confirmer.tap()
+        XCTAssertTrue(el(app, "notification.5").waitForNonExistence(timeout: 8), "les trois alertes sont parties")
+        XCTAssertFalse(el(app, "notification.4").exists)
+        XCTAssertFalse(el(app, "notification.3").exists)
+        XCTAssertTrue(el(app, "notification.2").exists, "les autres restent")
     }
 
     @MainActor
