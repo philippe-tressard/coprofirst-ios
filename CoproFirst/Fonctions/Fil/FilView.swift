@@ -14,6 +14,11 @@ struct FilView: View {
     @State private var phase = Phase.chargement
     @State private var resume: ElementDuFil?
     @Namespace private var zoom
+    @Environment(\.dynamicTypeSize) private var taille
+
+    /// Le logement va dans la barre, sauf aux tailles d'accessibilité : iOS y coincerait
+    /// le titre entre les deux côtés (`PastilleLogement`).
+    private var logementDansLaBarre: Bool { !taille.isAccessibilitySize }
 
     private enum Phase: Equatable {
         case chargement, pret
@@ -23,7 +28,9 @@ struct FilView: View {
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
-                LigneLot(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
+                if !logementDansLaBarre {
+                    PastilleLogement.Ligne(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
+                }
                 if phase == .chargement {
                     Section {
                         squelette
@@ -58,7 +65,16 @@ struct FilView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
+        .toolbar {
+            // Le logement à gauche, en face de la résidence : une ligne de gagnée sous le titre.
+            if logementDansLaBarre {
+                PastilleLogement.Barre(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
+            }
+            PastilleOuSuisJe(
+                installation: installation, cloche: true,
+                largeurNom: PastilleLogement.largeurNom(
+                    parcours.ouverteAJour?.profil, dansLaBarre: logementDansLaBarre))
+        }
         .safeAreaInset(edge: .top, spacing: 0) {
             if !reseau.enLigne { BandeauHorsLigne() }
         }
