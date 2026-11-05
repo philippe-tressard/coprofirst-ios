@@ -145,7 +145,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `Medaillon`, `Logo` | le logo de CoproFirst, qui suit Dynamic Type — jamais modifié (sa licence) | idem |
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
-| `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** | idem |
+| `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** ; `largeurNom` réduit le nom quand un élément occupe la gauche de la barre (le logement du fil) : sans quoi iOS replie la pastille et la cloche dans « … » | idem |
 | `.sourceZoom` / `.destinationZoom` | la transition zoom d'iOS 18 (repli iOS 17) | `Commun/Composants/TransitionZoom.swift` |
 | `Chargement` | charger puis montrer : squelette, erreur + « Réessayer », contenu — **jamais un écran blanc** | `Commun/Detail/` |
 | `DetailAffaireView`, `SondageView`, `DocumentView` | le détail d'une affaire, d'un sondage, d'un document (QuickLook) | idem |
