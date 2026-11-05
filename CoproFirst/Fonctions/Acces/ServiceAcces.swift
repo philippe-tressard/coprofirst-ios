@@ -44,7 +44,7 @@ enum TypeAcces: String, CaseIterable, Sendable, Identifiable {
 }
 
 /// Un lot du compte (`LotRead`, lu dans `/lots/mes-lots`).
-struct LotDuCompte: Codable, Hashable, Sendable, Identifiable {
+struct LotDuCompte: Hashable, Sendable, Identifiable {
     let id: Int
     let numero: String
     var type: String?
@@ -58,6 +58,9 @@ struct LotDuCompte: Codable, Hashable, Sendable, Identifiable {
     var numeroUsage: String?
     var perimetres: [PerimetreDuLot]?
     var alertes: [ConstatDuLot]?
+    /// « Appartement – T3 », « 2ème » : les libellés que l'API calcule (#2507).
+    var libelleTypeComplet: String?
+    var etageLibelle: String?
 
     var loue: Bool { typeLien == "locataire" }
     /// « Bât. A / 12 » — l'en-tête de la carte d'un lot sur le site.
@@ -69,23 +72,25 @@ struct LotDuCompte: Codable, Hashable, Sendable, Identifiable {
     }
 }
 
-struct PerimetreDuLot: Codable, Hashable, Sendable {
+struct PerimetreDuLot: Hashable, Sendable {
     let libelle: String
     let relation: String
 }
 
-/// Ce que le propriétaire doit savoir de son lot (`ConstatPatrimoine`).
-struct ConstatDuLot: Codable, Hashable, Sendable {
+/// Ce que le propriétaire doit savoir de son lot (`Constat`).
+struct ConstatDuLot: Hashable, Sendable {
     let code: String
     let gravite: String
     let message: String
 }
 
-/// Un badge ou une télécommande (`AccesOut`).
-struct AccesDetenu: Codable, Hashable, Sendable, Identifiable {
+/// Un badge ou une télécommande (`AccesPorteur` ou `AccesOut`).
+struct AccesDetenu: Hashable, Sendable, Identifiable {
     let id: Int
     let code: String
     var statut: String
+    /// `vigik` ou `telecommande` — celui de la route qui l'a servi (`AccesPorteur` ne le
+    /// porte pas), ou celui de `AccesOut`.
     var type: String
     var chezLocataire: Bool?
     var bailId: Int?
