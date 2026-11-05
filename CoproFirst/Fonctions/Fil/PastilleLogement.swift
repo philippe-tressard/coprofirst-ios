@@ -31,6 +31,21 @@ enum PastilleLogement {
         return logement
     }
 
+    /// La largeur du libellé dans la barre : celle du texte, au plus `largeurTexte`.
+    ///
+    /// ⚠️ MESURÉE et posée en dur (`frame(width:)`), jamais négociée : la barre ne
+    /// propose à un élément que son minimum (le libellé tombait à « B… »), et un
+    /// `fixedSize` dans un élément de barre relançait la mise en page sans fin pendant
+    /// la présentation d'une feuille sous iOS 26.5 (la confirmation de déconnexion ne
+    /// s'ouvrait plus, CI de #46).
+    static func largeurLibelle(_ texte: String, taille: DynamicTypeSize) -> CGFloat {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(taille))
+        let base = UIFont.preferredFont(forTextStyle: .subheadline, compatibleWith: traits)
+        let police = UIFont.systemFont(ofSize: base.pointSize, weight: .semibold)
+        let largeur = (texte as NSString).size(withAttributes: [.font: police]).width.rounded(.up)
+        return min(largeur, largeurTexte)
+    }
+
     /// La place laissée au nom de la résidence : moindre quand le logement est en face.
     static func largeurNom(_ profil: ProfilResidence?, dansLaBarre: Bool) -> CGFloat {
         libelle(profil) != nil && dansLaBarre ? largeurNomResidence : 150
@@ -44,7 +59,7 @@ enum PastilleLogement {
         var body: some ToolbarContent {
             if let logement = PastilleLogement.libelle(profil) {
                 ToolbarItem(placement: .topBarLeading) {
-                    Bouton(logement: logement, largeur: PastilleLogement.largeurTexte, ouvrir: ouvrir)
+                    Bouton(logement: logement, dansLaBarre: true, ouvrir: ouvrir)
                 }
             }
         }
@@ -58,7 +73,7 @@ enum PastilleLogement {
 
         var body: some View {
             if let logement = PastilleLogement.libelle(profil) {
-                Bouton(logement: logement, largeur: nil, ouvrir: ouvrir)
+                Bouton(logement: logement, dansLaBarre: false, ouvrir: ouvrir)
                     .frame(minHeight: Mise.cible, alignment: .leading)
                     .padding(.horizontal, Mise.marge)
             }
@@ -68,10 +83,15 @@ enum PastilleLogement {
     /// Le bouton, dans la barre ou sous le titre : pictogramme et libellé tronqué.
     private struct Bouton: View {
         let logement: String
-        /// La largeur du libellé ; `nil` : toute la place.
-        let largeur: CGFloat?
+        /// Dans la barre : une largeur mesurée et bornée ; sous le titre : toute la place.
+        let dansLaBarre: Bool
         let ouvrir: () -> Void
         @Environment(\.palette) private var palette
+        @Environment(\.dynamicTypeSize) private var taille
+
+        private var largeur: CGFloat? {
+            dansLaBarre ? PastilleLogement.largeurLibelle(logement, taille: taille) : nil
+        }
 
         var body: some View {
             Button(action: ouvrir) {
@@ -82,13 +102,10 @@ enum PastilleLogement {
                     Text(logement)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(maxWidth: largeur, alignment: .leading)
+                        .frame(width: largeur, alignment: .leading)
                 }
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(palette.text)
-                // Dans la barre, sa taille idéale (libellé borné à `largeur`) : la barre ne
-                // lui proposerait que son minimum, et le libellé se réduirait à « B… ».
-                .fixedSize(horizontal: largeur != nil, vertical: false)
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)
