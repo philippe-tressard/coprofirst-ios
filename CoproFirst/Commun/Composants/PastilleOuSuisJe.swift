@@ -9,16 +9,20 @@ import SwiftUI
 struct PastilleOuSuisJe: ToolbarContent {
     let installation: Installation?
     var cloche = false
+    /// La largeur du nom : 150 pt seule dans la barre ; moins quand un élément occupe
+    /// la gauche (le logement du fil), sans quoi iOS replierait la pastille dans « … ».
+    var largeurNom: CGFloat = 150
 
     var body: some ToolbarContent {
         ToolbarItem(placement: .topBarTrailing) {
-            Pastille(installation: installation)
+            Pastille(installation: installation, largeurNom: largeurNom)
         }
         if cloche, let installation { ClocheNotifications(installation: installation) }
     }
 
     private struct Pastille: View {
         let installation: Installation?
+        let largeurNom: CGFloat
         @Environment(Parcours.self) private var parcours
         @Environment(\.palette) private var palette
 
@@ -31,7 +35,7 @@ struct PastilleOuSuisJe: ToolbarContent {
                     Text(installation?.nom ?? ContenuVitrine.nom)
                         .font(.subheadline.weight(.semibold))
                         .lineLimit(1)
-                        .frame(maxWidth: 150, alignment: .leading)
+                        .frame(maxWidth: largeurNom, alignment: .leading)
                 }
                 .foregroundStyle(palette.text)
             }
