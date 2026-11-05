@@ -9,25 +9,16 @@ import SwiftUI
 /// GET /notifications — aucune route ne le sert seule.
 struct ClocheNotifications: ToolbarContent {
     let installation: Installation
-    @Environment(\.dynamicTypeSize) private var taille
 
     var body: some ToolbarContent {
-        if #available(iOS 26, *), !taille.isAccessibilitySize {
-            // La barre d'iOS 26 redessine ses boutons : la pastille est la sienne.
-            // La barre ne relit la pastille qu'à la création de l'élément : une identité
-            // par nombre la recrée quand il change. Le nombre est figé tant que la liste
-            // est ouverte — recréer le bouton refermerait la feuille qu'il présente.
-            let nombre = CompteurNonLues.partage.nombreAffiche(installation)
-            ToolbarItem(placement: .topBarTrailing) {
-                BoutonCloche(installation: installation, point: .pastille).badge(nombre).id(nombre)
-            }
-        } else if #available(iOS 26, *) {
-            // Aux tailles d'accessibilité, la pastille de la barre suit le texte du système
-            // et déborde : le point du symbole, de taille fixe, la remplace ; le nombre
-            // reste dit par VoiceOver et sous le titre des Notifications.
-            ToolbarItem(placement: .topBarTrailing) {
-                BoutonCloche(installation: installation, point: .symbole)
-            }
+        if #available(iOS 26, *) {
+            // La pastille de la barre d'iOS 26 ne convient pas : elle suit la taille du
+            // système et débordait de la barre en très grand texte, et elle n'est relue
+            // qu'à la création de l'élément — sur le Fil, le compte arrive après, et elle
+            // ne venait jamais ; recréer l'élément dérangeait la navigation (CI, iOS 26.5).
+            // Le point de `bell.badge`, de taille fixe, dit qu'une alerte attend ; le
+            // nombre est dit par VoiceOver et sous le titre des Notifications.
+            ToolbarItem(placement: .topBarTrailing) { BoutonCloche(installation: installation, point: .symbole) }
         } else {
             ToolbarItem(placement: .topBarTrailing) { BoutonCloche(installation: installation, point: .dessine) }
         }
@@ -38,9 +29,7 @@ private struct BoutonCloche: View {
     let installation: Installation
     /// Comment le bouton montre qu'une alerte attend, quand la pastille de la barre ne le fait pas.
     enum Point {
-        /// La pastille de la barre (iOS 26) suffit.
-        case pastille
-        /// `bell.badge` : le point fait partie du symbole (iOS 26, tailles d'accessibilité).
+        /// `bell.badge` : le point fait partie du symbole (iOS 26).
         case symbole
         /// Avant iOS 26 : un point dessiné sur la cloche.
         case dessine
@@ -55,7 +44,6 @@ private struct BoutonCloche: View {
     var body: some View {
         let nombre = CompteurNonLues.partage.nombre(installation)
         Button {
-            CompteurNonLues.partage.figer(installation)
             ouverte = true
         } label: {
             Image(systemName: point == .symbole && nombre > 0 ? "bell.badge" : "bell")
@@ -81,13 +69,11 @@ private struct BoutonCloche: View {
         .task(id: installation.hote) {
             await CompteurNonLues.partage.rafraichir(installation, avec: parcours.serviceNotifications)
         }
-        .sheet(
-            isPresented: $ouverte, onDismiss: { CompteurNonLues.partage.liberer(installation) },
-            content: {
-                NavigationStack {
-                    NotificationsView(installation: installation, enFeuille: true)
-                }
-                .presentationDragIndicator(.visible)
-            })
+        .sheet(isPresented: $ouverte) {
+            NavigationStack {
+                NotificationsView(installation: installation, enFeuille: true)
+            }
+            .presentationDragIndicator(.visible)
+        }
     }
 }

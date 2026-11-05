@@ -157,19 +157,3 @@ private struct SuppressionPartielle: ServiceNotifications {
     #expect(TextesNotifications.supprimerSelection(0) == "Supprimer")
     #expect(TextesNotifications.supprimerSelection(3) == "Supprimer (3)")
 }
-
-/// La pastille de la cloche reste figée tant que la liste est ouverte (la recréer
-/// refermerait la feuille), puis suit le vrai compte.
-@MainActor
-@Test func laPastilleResteFigeeTantQueLaListeEstOuverte() {
-    let residence = Installation(
-        adresse: URL(string: "https://figee.exemple.fr")!, nom: "Figée", aUnLogo: false)
-    let compteur = CompteurNonLues.partage
-    compteur.noter(12, pour: residence)
-    compteur.figer(residence)
-    compteur.noter(0, pour: residence)
-    #expect(compteur.nombre(residence) == 0, "le vrai compte suit les gestes")
-    #expect(compteur.nombreAffiche(residence) == 12, "la pastille attend la fermeture")
-    compteur.liberer(residence)
-    #expect(compteur.nombreAffiche(residence) == 0)
-}
