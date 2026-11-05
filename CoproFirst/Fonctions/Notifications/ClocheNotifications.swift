@@ -11,22 +11,31 @@ struct ClocheNotifications: ToolbarContent {
     let installation: Installation
 
     var body: some ToolbarContent {
-        let nombre = CompteurNonLues.partage.nombre(installation)
         if #available(iOS 26, *) {
-            // La barre d'iOS 26 redessine ses boutons : la pastille est la sienne.
-            ToolbarItem(placement: .topBarTrailing) {
-                BoutonCloche(installation: installation, point: false).badge(nombre)
-            }
+            // La pastille de la barre d'iOS 26 ne convient pas : elle suit la taille du
+            // système et débordait de la barre en très grand texte, et elle n'est relue
+            // qu'à la création de l'élément — sur le Fil, le compte arrive après, et elle
+            // ne venait jamais ; recréer l'élément dérangeait la navigation (CI, iOS 26.5).
+            // Le point de `bell.badge`, de taille fixe, dit qu'une alerte attend ; le
+            // nombre est dit par VoiceOver et sous le titre des Notifications.
+            ToolbarItem(placement: .topBarTrailing) { BoutonCloche(installation: installation, point: .symbole) }
         } else {
-            ToolbarItem(placement: .topBarTrailing) { BoutonCloche(installation: installation, point: true) }
+            ToolbarItem(placement: .topBarTrailing) { BoutonCloche(installation: installation, point: .dessine) }
         }
     }
 }
 
 private struct BoutonCloche: View {
     let installation: Installation
-    /// Avant iOS 26, le point se dessine sur la cloche.
-    let point: Bool
+    /// Comment le bouton montre qu'une alerte attend, quand la pastille de la barre ne le fait pas.
+    enum Point {
+        /// `bell.badge` : le point fait partie du symbole (iOS 26).
+        case symbole
+        /// Avant iOS 26 : un point dessiné sur la cloche.
+        case dessine
+    }
+
+    let point: Point
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -37,10 +46,12 @@ private struct BoutonCloche: View {
         Button {
             ouverte = true
         } label: {
-            Image(systemName: "bell")
+            Image(systemName: point == .symbole && nombre > 0 ? "bell.badge" : "bell")
+                .symbolRenderingMode(point == .symbole && nombre > 0 ? .palette : .monochrome)
+                .foregroundStyle(point == .symbole && nombre > 0 ? palette.danger : palette.primary, palette.primary)
                 .symbolEffect(.bounce, options: .nonRepeating, value: mouvementReduit ? 0 : nombre)
                 .overlay(alignment: .topTrailing) {
-                    if point, nombre > 0 {
+                    if point == .dessine, nombre > 0 {
                         Circle()
                             .fill(palette.danger)
                             .frame(width: 9, height: 9)
@@ -51,6 +62,7 @@ private struct BoutonCloche: View {
                 }
                 .animation(.snappy, value: nombre > 0)
         }
+        .accessibilityShowsLargeContentViewer()
         .accessibilityLabel(TextesNotifications.titre)
         .accessibilityValue(nombre > 0 ? TextesNotifications.nonLues(nombre) : "")
         .accessibilityIdentifier("cloche")

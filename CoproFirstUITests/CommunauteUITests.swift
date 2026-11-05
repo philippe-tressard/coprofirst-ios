@@ -90,6 +90,24 @@ final class CommunauteUITests: XCTestCase {
         onglet.tap()
     }
 
+    /// La partie d'un élément qui se voit, entre les barres du haut et du bas (une
+    /// marge de 140 pt chacune) ; `nil` s'il n'en montre pas assez pour un doigt.
+    private func visible(_ app: XCUIApplication, _ element: XCUIElement) -> CGRect? {
+        guard element.exists else { return nil }
+        let fenetre = app.windows.firstMatch.frame
+        let zone = fenetre.insetBy(dx: 0, dy: 140)
+        let partie = element.frame.intersection(zone)
+        return partie.height >= 44 ? partie : nil
+    }
+
+    /// Toucher au milieu de ce qui se voit : une ligne en très grand texte dépasse
+    /// l'écran, et son centre peut tomber sous une barre.
+    private func toucherLaPartieVisible(_ app: XCUIApplication, _ element: XCUIElement) {
+        guard let partie = visible(app, element) else { return XCTFail("\(element) ne se voit pas") }
+        let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
+        origine.withOffset(CGVector(dx: partie.midX, dy: partie.midY)).tap()
+    }
+
     private func ouvrirDansPlus(_ app: XCUIApplication, _ libelle: String) {
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.waitForExistence(timeout: 8))
@@ -138,6 +156,8 @@ final class CommunauteUITests: XCTestCase {
         capture("7-donner-mon-avis")
     }
 
+    /// La cloche du Fil : « Tout marquer lu » et « Modifier » doivent SE VOIR, en haut —
+    /// un bouton présent mais caché (sous la barre d'onglets) ne compte pas (`isHittable`).
     @MainActor
     func testLaClocheOuvreLesNotificationsEtToutSeMarqueLu() throws {
         let app = lancer()
@@ -145,15 +165,67 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(cloche.waitForExistence(timeout: 8))
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
-            lu(app, "cloche", contient: "2"), "la cloche dit 2 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
+            lu(app, "cloche", contient: "12"),
+            "la cloche dit 12 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
+        Thread.sleep(forTimeInterval: 3)  // la pastille de la barre apparaît en fondu
+        capture("7b-cloche")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
         XCTAssertTrue(tout.waitForExistence(timeout: 8))
+        XCTAssertTrue(tout.isHittable, "« Tout marquer lu » se voit et se touche, en haut")
+        XCTAssertTrue(el(app, "notifications.modifier").isHittable, "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
         tout.tap()
         XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
         el(app, "notifications.ok").tap()
-        XCTAssertFalse(lu(app, "cloche", contient: "2", delai: 3), "la cloche n'a plus de pastille")
+        XCTAssertFalse(lu(app, "cloche", contient: "12", delai: 3), "la cloche n'a plus de pastille")
+    }
+
+    /// La cloche d'un menu de « Plus » : « Modifier », trois alertes choisies, supprimées
+    /// après confirmation — une requête par alerte.
+    @MainActor
+    func testPlusieursNotificationsSeSuppriment() throws {
+        let app = lancer()
+        ouvrirDansPlus(app, "Communauté")
+        XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
+        el(app, "cloche").tap()
+        let modifier = el(app, "notifications.modifier")
+        XCTAssertTrue(modifier.waitForExistence(timeout: 8))
+        XCTAssertTrue(modifier.isHittable, "« Modifier » se voit et se touche, en haut")
+        modifier.tap()
+        for id in [5, 4, 3] {
+            // Un cran à la fois : en très grand texte, une ligne vaut un écran, et un
+            // balayage rapide sortirait la voisine de la liste.
+            let ligne = el(app, "notification.\(id)")
+            var crans = 0
+            while visible(app, ligne) == nil, crans < 6 {
+                app.swipeUp(velocity: .slow)
+                crans += 1
+            }
+            toucherLaPartieVisible(app, ligne)
+        }
+        let supprimer = el(app, "notifications.supprimerSelection")
+        XCTAssertTrue(supprimer.waitForExistence(timeout: 5))
+        XCTAssertTrue(supprimer.isHittable, "la suppression se voit, au bas de la liste")
+        XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(3)"), "trois alertes choisies")
+        capture("8b-notifications-modifier")
+        supprimer.tap()
+        let confirmer = el(app, "notifications.confirmerSuppression")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        confirmer.tap()
+        XCTAssertTrue(el(app, "notification.5").waitForNonExistence(timeout: 8), "les trois alertes sont parties")
+        XCTAssertFalse(el(app, "notification.4").exists)
+        XCTAssertFalse(el(app, "notification.3").exists)
+        // Deux non lues parties (5 et 4) : 12 → 10 ; et la voisine reste (au-dessus,
+        // après la suppression, en très grand texte).
+        XCTAssertTrue(texte(app, "10 non lues").waitForExistence(timeout: 5), "le compte suit")
+        let restante = el(app, "notification.2")
+        var crans = 0
+        while !restante.exists, crans < 6 {
+            app.swipeDown(velocity: .slow)
+            crans += 1
+        }
+        XCTAssertTrue(restante.exists, "les autres restent")
     }
 
     @MainActor
