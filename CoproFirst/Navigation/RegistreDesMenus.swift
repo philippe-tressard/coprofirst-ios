@@ -77,6 +77,7 @@ struct Bientot: View {
         )
         .background(palette.bg)
         .navigationTitle(page.titre)
+        .titreDeMenu()
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
     }
 }
