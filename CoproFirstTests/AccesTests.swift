@@ -54,10 +54,10 @@ import Testing
 }
 
 /// « Nouvel accès » n'est offert qu'à qui a un lot : la route exige qu'il soit le sien.
-@Test func nouvelAccesExigeUnLot() {
+@Test func nouvelAccesExigeUnLot() throws {
     let droits = DroitsAcces(nil)
     #expect(!droits.peutDemander(lots: []))
-    #expect(droits.peutDemander(lots: LotsSimules.lots))
+    #expect(droits.peutDemander(lots: try FixturesAcces.lots()))
 }
 
 @Test func uneDemandeHorsDeSesLotsEstRefusee() async {
@@ -95,22 +95,29 @@ import Testing
     #expect(LibellesAcces.typeAcces("badge_rfid") == "badge_rfid")
 }
 
-/// `lotTypeLabel`, `etageLabel`, `nomAffiche` ne sont pas recopiés : la donnée brute.
-@Test func leLotEtLesNomsSAffichentBruts() {
-    #expect(LotsSimules.lots[0].typeLu == "appartement T3")
-    #expect(LotsSimules.lots[1].typeLu == "cave")
+/// `lotTypeLabel`, `etageLabel`, `nomAffiche` ne sont pas recopiés : le libellé que
+/// l'API sert (contrat 1.5.0), sinon la donnée brute.
+@Test func leLotEtLesNomsSAffichentCommeLApiLesSert() throws {
+    let lots = try FixturesAcces.lots()
+    #expect(lots[0].typeLu == "Appartement – T3")
+    #expect(lots[0].etageLu == "2ème")
+    var sansLibelle = lots[1]
+    sansLibelle.libelleTypeComplet = nil
+    sansLibelle.etageLibelle = ""
+    #expect(sansLibelle.typeLu == "cave")
+    #expect(sansLibelle.etageLu == "-1")
     #expect(LibellesAcces.nom(" Marie ", "Durand") == "Marie Durand")
     #expect(LibellesAcces.nom(nil, "  ") == "—")
 }
 
-@Test func lesBauxSeGroupentParLocataire() {
-    let groupes = GroupesDeBaux.parLocataire(LotsSimules.baux)
+@Test func lesBauxSeGroupentParLocataire() throws {
+    let groupes = GroupesDeBaux.parLocataire(try FixturesAcces.bauxLus())
     // Le bail 4 n'a pas de locataire inscrit : il fait groupe seul.
     #expect(groupes.map(\.cle) == ["81", "ext_4", "80"])
 }
 
-@Test func laVueParLocataireRattacheLesObjetsConfies() {
-    let bail = LotsSimules.baux[0]
+@Test func laVueParLocataireRattacheLesObjetsConfies() throws {
+    let bail = try FixturesAcces.bauxLus()[0]
     let confie = AccesDetenu(id: 1, code: "X", statut: "actif", type: "vigik", chezLocataire: true, bailId: bail.id)
     let garde = AccesDetenu(id: 2, code: "Y", statut: "actif", type: "vigik", chezLocataire: false, bailId: bail.id)
     let groupes = GroupeAcces.grouper([bail], objets: [confie, garde])

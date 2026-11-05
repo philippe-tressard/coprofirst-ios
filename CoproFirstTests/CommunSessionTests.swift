@@ -22,9 +22,15 @@ import Testing
 }
 
 @Test func desOctetsSeRelisentCommeUneValeurDuClient() throws {
+    // `/lots/mes-lots` est typée depuis le contrat 1.5.0 : un modèle local en tient lieu.
+    struct Lot: Decodable {
+        let numero: String
+        let batimentNom: String?
+        let typeLien: String?
+    }
     let json = #"[{"numero": "12", "id": 4, "batiment_nom": "A", "type_lien": "locataire"}]"#
-    let lots = try Relecture.lire([LotDuCompte].self, json: Data(json.utf8))
-    #expect(lots.first?.batimentNom == "A" && lots.first?.loue == true)
+    let lots = try Relecture.lire([Lot].self, json: Data(json.utf8))
+    #expect(lots.first?.batimentNom == "A" && lots.first?.typeLien == "locataire")
 }
 
 // MARK: - Phrase du serveur
