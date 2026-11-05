@@ -9,16 +9,15 @@ import XCTest
 /// le titre reste en ligne et se lit en entier, et aucun libellé de « Plus » ne se
 /// coupe au milieu d'un mot. Toujours lancé en AX5 : c'est le garde-fou.
 /// `TEST_RUNNER_CAPTURES=<dossier>` y laisse une capture par écran ; `TEST_RUNNER_THEME`
-/// en change le thème.
+/// en change le thème (`LancementCaptures`).
 final class GrandTexteUITests: XCTestCase {
-    private let environnement = ProcessInfo.processInfo.environment
     private let ax5 = UITraitCollection(preferredContentSizeCategory: .accessibilityExtraExtraExtraLarge)
     /// Le bord gauche du premier libellé de « Plus » : les suivants s'y alignent.
     private var colonne: CGFloat?
 
     @MainActor
     func testEnAX5ChaqueTitreSeLitEtPlusNeCoupeAucunMot() throws {
-        let app = lancer(ax5: true)
+        let app = LancementCaptures.lancer(taille: .ax5)
         parcourir(app, ecran: { verifierTitre(app, ecran: $0) }, entree: verifierLibelleEntier)
     }
 
@@ -26,25 +25,16 @@ final class GrandTexteUITests: XCTestCase {
     /// des captures seulement, quand un dossier est demandé.
     @MainActor
     func testCapturesALaTailleParDefaut() throws {
-        guard environnement["CAPTURES"] != nil else { throw XCTSkip("captures seulement (TEST_RUNNER_CAPTURES)") }
-        let app = lancer(ax5: false)
+        guard ProcessInfo.processInfo.environment["CAPTURES"] != nil else {
+            throw XCTSkip("captures seulement (TEST_RUNNER_CAPTURES)")
+        }
+        let app = LancementCaptures.lancer(taille: .parDefaut)
         parcourir(
             app,
-            ecran: { [self] ecran in
+            ecran: { ecran in
                 XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 5))
-                capturer(ecran, taille: "defaut")
+                LancementCaptures.capturer(ecran + "-defaut")
             }, entree: { _ in })
-    }
-
-    @MainActor
-    private func lancer(ax5: Bool) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "fil", "-theme", environnement["THEME"] ?? "auto"]
-        // Toujours écrite : sinon, la taille réglée sur le simulateur l'emporte.
-        let taille = ax5 ? "UICTContentSizeCategoryAccessibilityXXXL" : "UICTContentSizeCategoryL"
-        app.launchArguments += ["-UIPreferredContentSizeCategoryName", taille]
-        app.launch()
-        return app
     }
 
     /// Chaque onglet, puis chaque entrée de « Plus » (le dernier onglet) : `entree` sur
@@ -98,7 +88,7 @@ final class GrandTexteUITests: XCTestCase {
         XCTAssertTrue(barre.waitForExistence(timeout: 5), "\(ecran) : une barre de navigation")
         let texte = barre.identifier
         let titre = barre.staticTexts[texte]
-        capturer(ecran, taille: "ax5")
+        LancementCaptures.capturer(ecran + "-ax5")
         guard titre.waitForExistence(timeout: 3) else {
             return XCTFail("\(ecran) : le titre « \(texte) » n'est pas dans la barre (chassé par ses boutons)")
         }
@@ -148,14 +138,6 @@ final class GrandTexteUITests: XCTestCase {
         return UIFont(descriptor: gras.withDesign(.serif) ?? gras, size: police.pointSize)
     }
 
-    /// Une capture, quand un dossier est demandé ; rien sinon.
-    @MainActor
-    private func capturer(_ nom: String, taille: String) {
-        guard let dossier = environnement["CAPTURES"] else { return }
-        let suffixe = [taille, environnement["THEME"]].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: "-")
-        let fichier = URL(fileURLWithPath: dossier).appendingPathComponent("\(nom)-\(suffixe).png")
-        try? XCUIScreen.main.screenshot().pngRepresentation.write(to: fichier)
-    }
 }
 
 extension XCUIElement {
