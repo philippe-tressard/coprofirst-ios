@@ -106,11 +106,11 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 |---|---|---|---|---|
 | `espace-cs` | `validations` | fait | #15 | Approuver (« Nouvel Arrivant ») ou rejeter un compte, accepter (codes remis) ou rejeter une demande d'accès ; l'annonce détaillée de la validation (lots trouvés…) attend le serveur |
 | `espace-cs` | `badges` | fait | #15 | Consultation : recherche, type, porteur, lot, accès, état ; enregistrer, corriger, exporter et retirer un accès restent au site |
-| `espace-cs` | `reporting` | prévu | #15 |  |
-| `espace-cs` | `annonces-hall` | prévu | #15 |  |
+| `espace-cs` | `reporting` | fait | #15 | Suivi des affaires et des entretiens périodiques (chiffres, répartitions croisées, affaires) ; relance du syndic, points CS / Syndic, résumés, fusion, PDF, Prestataires et Renouvellements (calculés au front : coprofirst#2525) restent au site |
+| `espace-cs` | `annonces-hall` | fait | #15 | Créer (titre, message, périmètre, format, Diffusion CS / syndic / copie), archives : renvoyer, archiver, restaurer, supprimer (administrateur) ; photos, assistant, aperçu, reprise du fil, WhatsApp et PDF restent au site |
 | `espace-cs` | `annuaire` | fait | #15 | Conseil (AG, WhatsApp, président) et syndic (cabinet, interlocuteur principal, ordre), fiches à ajouter, corriger, retirer ; les consignes de la fiche arrivant et le rapprochement par le nom restent au site |
-| `espace-cs` | `courriels` | prévu | #15 |  |
-| `delegations` | — | prévu | #15 |  |
+| `espace-cs` | `courriels` | fait | #15 | Le journal de la relève : verdict, motif, affaire rejointe |
+| `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis et réponses typées : coprofirst#2525 |
 
 ### #16 — Administration, en partie
 
