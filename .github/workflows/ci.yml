@@ -51,9 +51,13 @@ jobs:
         run: swift test --disable-automatic-resolution
       - name: Projet Xcode (XcodeGen)
         run: bash scripts/generer-projet.sh
-      - name: Build et tests (unitaires et interface) au simulateur
-        # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
-        # (skill publication-app-store). project.yml signe, le poste seul.
-        # Requêtes d'accessibilité expirées, mesure à l'échec et relance bornée,
-        # déclarée au résumé du run : scripts/tests-simulateur.sh (#50).
-        run: bash scripts/tests-simulateur.sh
+      - name: DIAGNOSTIC TEMPORAIRE (#48) — menu, feuille et avis sous iOS 26.5
+        run: |
+          DEST=$(bash scripts/destination-simulateur.sh)
+          xcodebuild test -project CoproFirst.xcodeproj -scheme CoproFirst -destination "$DEST" \
+            -derivedDataPath .build/DerivedData -skipPackagePluginValidation \
+            -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO \
+            -only-testing:CoproFirstUITests/DiagAvisMenuUITests \
+            -only-testing:CoproFirstUITests/AccesUITests/testSignalerPerduPuisDeclarer \
+            -test-iterations 4 2>&1 | tee diag.log | grep -E "DIAGMENU|error:|' (passed|failed)|^ +t = " || true
+          grep -A400 "ARBRE" diag.log | head -800 || true
