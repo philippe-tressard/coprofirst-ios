@@ -63,9 +63,9 @@ private struct PlusView: View {
                     NavigationLink {
                         RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
                     } label: {
-                        Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone))
-                            .foregroundStyle(palette.text)
+                        EntreeDePlus(libelle: page.libelle, symbole: Pictogrammes.symbole(page.icone))
                     }
+                    .accessibilityIdentifier("plus.\(page.id)")
                     .listRowBackground(palette.surface)
                 }
                 // Le profil n'a pas d'entrée de menu sur le site (pages.ts : href null) :
@@ -73,7 +73,7 @@ private struct PlusView: View {
                 NavigationLink {
                     ProfilView()
                 } label: {
-                    Label("Profil", systemImage: "person.crop.circle").foregroundStyle(palette.text)
+                    EntreeDePlus(libelle: "Profil", symbole: "person.crop.circle")
                 }
                 .accessibilityIdentifier("plus.profil")
                 .listRowBackground(palette.surface)
@@ -81,7 +81,33 @@ private struct PlusView: View {
             .scrollContentBackground(.hidden)
             .background(palette.bg)
             .navigationTitle("Plus")
+            .titreDeMenu()
             .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         }
+    }
+}
+
+/// Une entrée de « Plus » : pictogramme et libellé côte à côte. Aux tailles
+/// d'accessibilité, le pictogramme passe au-dessus et laisse toute la largeur au
+/// libellé, qui la prend sans couper un mot (`TexteSansCoupure`, #33).
+private struct EntreeDePlus: View {
+    let libelle: String
+    let symbole: String
+    @Environment(\.dynamicTypeSize) private var taille
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Group {
+            if taille.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: 4) {
+                    Image(systemName: symbole).accessibilityHidden(true)
+                    TexteSansCoupure(texte: libelle)
+                }
+                .accessibilityElement(children: .combine)
+            } else {
+                Label(libelle, systemImage: symbole)
+            }
+        }
+        .foregroundStyle(palette.text)
     }
 }
