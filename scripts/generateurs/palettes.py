@@ -5,6 +5,11 @@ chaque palette de `palettes.css`, au clair et au sombre, selon la cascade du sit
 jeton que la palette ne redéfinit pas garde celui de la charte
 → `CoproFirst/Charte/Palette.swift` et `Palette+<code>.swift`.
 
+Une propriété par jeton `--color-*`, `--fil-*`, `--kanban-*` (les teintes des
+colonnes du Kanban, #34), `--serie-*` et `--palier-*` (les tranches des répartitions du
+Reporting, #15) ; les autres jetons (`--teinte-*`…) ne servent qu'à résoudre
+un `var(--…)`.
+
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul : l'app,
 qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
 """
@@ -21,10 +26,13 @@ SOURCES = [
     "front/src/styles/palettes.css",
 ]
 
-JETON = re.compile(r"--((?:color|fil)-[a-z0-9-]+)\s*:\s*([^;]+);")
+# Tout jeton se lit (un `var(--teinte-6)` doit se résoudre) ; seuls ces préfixes deviennent
+# des propriétés de `Palette`.
+JETON = re.compile(r"--([a-z][a-z0-9-]*)\s*:\s*([^;]+);")
+EXPOSES = ("color-", "fil-", "kanban-", "serie-", "palier-")
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 RGBA = re.compile(r"^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$")
-VAR = re.compile(r"^var\(--((?:color|fil)-[a-z0-9-]+)\)$")
+VAR = re.compile(r"^var\(--([a-z][a-z0-9-]*)\)$")
 
 
 def bloc(texte: str, selecteur: str) -> str:
@@ -85,17 +93,18 @@ def generer(ctx) -> str:
 
     # Un jeton n'entre que s'il se résout partout : la structure est la même pour toutes.
     portables = [
-        j for j in sorted(socle)
-        if all(resoudre(j, t) is not None for paire in tables.values() for t in paire)
+        j for j in sorted(socle) if j.startswith(EXPOSES)
+        and all(resoudre(j, t) is not None for paire in tables.values() for t in paire)
     ]
-    ecartes = sorted(set(socle) - set(portables))
+    ecartes = sorted(j for j in set(socle) - set(portables) if j.startswith(EXPOSES))
 
     struct = ctx.entete("front/src/styles/socle.css")
     struct += "// Jetons non portés (color-mix, valeur non littérale) :\n"
     struct += "".join(f"//   --{e}: {socle[e]}\n" for e in ecartes)
     struct += "\nimport SwiftUI\n\n"
-    struct += "/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*` ou `--fil-*` chacune,\n"
-    struct += "/// claire et sombre. La charte est `seine` ; une résidence choisit la sienne (`site_palette`).\n"
+    struct += "/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*`, `--fil-*`, `--kanban-*`,\n"
+    struct += "/// `--serie-*` ou `--palier-*` chacune, claire et sombre. La charte est `seine` ; une\n"
+    struct += "/// résidence choisit la sienne (`site_palette`).\n"
     struct += "struct Palette: Sendable {\n    let code: String\n"
     struct += "".join(f"    /// `--{j}`\n    let {propriete(j)}: Color\n" for j in portables)
     struct += "}\n\nextension Palette {\n    /// Toutes les palettes, par code (`site_palette` de GET /config).\n"

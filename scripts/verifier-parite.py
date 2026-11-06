@@ -5,7 +5,7 @@
 
 Trois fichiers se confrontent (#10) :
 
-- `Parite/ONGLETS-DU-SITE.md`, GÉNÉRÉ depuis coprofirst (scripts/generer-charte.py) :
+- `Parite/ONGLETS-DU-SITE.md`, GÉNÉRÉ depuis coprofirst (scripts/generer.py) :
   chaque onglet de chaque page du site ;
 - `Parite/PARITE.md`, tenu à la main : l'état de chacun — « fait », « prévu »
   (avec son ticket) ou « site seulement » ;

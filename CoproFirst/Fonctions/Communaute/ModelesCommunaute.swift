@@ -175,7 +175,7 @@ struct EntreeStatut {
 }
 
 /// Les règles de la Communauté que le contrat ne sert pas — tables GÉNÉRÉES
-/// (`Genere/TablesCommunaute.swift`, `scripts/generer-communaute-profil.py`).
+/// (`Genere/TablesCommunaute.swift`, `scripts/generer.py`).
 enum RegleCommunaute {
     static let noteRemarque = TablesCommunaute.noteRemarque
     static let notePubliable = TablesCommunaute.notePubliable

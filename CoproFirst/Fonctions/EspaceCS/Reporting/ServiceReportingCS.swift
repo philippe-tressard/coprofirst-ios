@@ -78,15 +78,13 @@ struct AffaireSuivie: Hashable, Sendable, Identifiable {
     }
 }
 
-/// La couleur d'une tranche : un jeton fixe de la charte (`--serie-*`, `--palier-*`),
-/// ou un jeton de la palette de la résidence. Table : `TablesReporting.tranches`.
+/// La couleur d'une tranche : un jeton de la `Palette` (`--serie-*`, `--palier-*`,
+/// `--color-*`), nommé par son chemin — jamais une valeur (#34). Table : `TablesReporting.tranches`.
 enum CouleurDeTranche: Sendable {
-    case fixe(Color)
     case palette(KeyPath<Palette, Color> & Sendable)
 
     func couleur(_ palette: Palette) -> Color {
         switch self {
-        case .fixe(let couleur): couleur
         case .palette(let jeton): palette[keyPath: jeton]
         }
     }
