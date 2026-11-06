@@ -96,7 +96,7 @@ extension OngletComptesCS {
                 ValidationCompteFeuille(compte: compte) { accueil in
                     try await etat.valider(compte, accueil: accueil, service, contexte.installation)
                 } fait: {
-                    contexte.avis.wrappedValue = $0
+                    contexte.avis.dire($0)
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
@@ -144,7 +144,7 @@ extension OngletComptesCS {
             do {
                 let annonce = try await faire()
                 withAnimation(.snappy) { echec = nil }
-                contexte.avis.wrappedValue = annonce
+                contexte.avis.dire(annonce)
             } catch {
                 withAnimation(.snappy) { echec = ErreurService.depuis(error).phrase }
             }

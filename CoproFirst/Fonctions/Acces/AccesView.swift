@@ -60,7 +60,7 @@ struct AccesView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
-        .avisEphemere($etat.avis)
+        .avisEphemere(etat.avis)
         .task { await charger(service) }
         .onChange(of: etat.onglets.map(\.id)) { _, ids in
             // Un onglet masqué ne s'atteint pas (la redirection du site).

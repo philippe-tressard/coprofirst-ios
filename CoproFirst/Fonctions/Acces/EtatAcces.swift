@@ -21,8 +21,8 @@ final class EtatAcces {
     var bail: BailDuLocataire?
     var baux: [Bail] = []
     var droits = DroitsAcces(nil)
-    /// Une phrase brève après un geste (le « toast » du site).
-    var avis: String?
+    /// Une phrase brève après un geste (le « toast » du site) : seul l'avis la lit.
+    let avis = AvisDuGeste()
 
     var bauxActifs: [Bail] { baux.filter(\.enCours) }
     var bauxTermines: [Bail] { baux.filter(\.termine) }
@@ -53,5 +53,5 @@ final class EtatAcces {
         }
     }
 
-    func annoncer(_ texte: String) { avis = texte }
+    func annoncer(_ texte: String) { avis.dire(texte) }
 }

@@ -123,7 +123,7 @@ struct OngletAnnuaireCS: OngletEspaceCS {
 
     private func annoncer(_ annonce: String) {
         withAnimation(.snappy) { echec = nil }
-        contexte.avis.wrappedValue = annonce
+        contexte.avis.dire(annonce)
     }
 
     private func presente<T>(_ element: Binding<T?>) -> Binding<Bool> {
