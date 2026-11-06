@@ -21,9 +21,9 @@ enum PagesOuvertes {
         // « Les outils du conseil » : `$isCS` inclut l'administrateur, pas le compte
         // technique de l'installation (admin seul, sans lot ni conseil).
         case "prestataires", "espace-cs": droits.outilDuConseil
-        // À compléter par le lot Délégations (#15) : le site l'ouvre aussi à l'aidant
-        // (statut, ou `delegations_aidant` non vide de GET /auth/me).
-        case "delegations": droits.outilDuConseil
+        // Le site l'ouvre aussi à l'aidant : statut, ou `delegations_aidant` non vide de
+        // GET /auth/me (`DroitsOnglet.aidant`).
+        case "delegations": droits.outilDuConseil || droits.aidant
         // `$isAdminOuOperateur` : l'opérateur n'y ouvre que sa supervision (`ouverts`).
         case "admin": droits.administrateur || droits.operateur
         default: true

@@ -36,6 +36,8 @@ struct DroitsOnglet: Hashable, Sendable {
     /// Le compte technique de l'installation : administrateur, sans lot ni conseil
     /// (`$isAdminOnly` du site). Il n'a pas les outils du conseil (`PagesOuvertes`).
     var adminSeul = false
+    /// Un proche aidant (`ProfilResidence.estAidant`) : la page Délégations lui est ouverte.
+    var aidant = false
 
     init(
         administrateur: Bool = false, operateur: Bool = false, proprioOuCS: Bool = false,
@@ -101,5 +103,6 @@ extension DroitsOnglet {
     /// range le rôle principal dans `roles`, ce qu'il fait.
     init(profil: ProfilResidence?) {
         self.init(roles: profil?.roles ?? [], role: nil, statut: profil?.statut)
+        aidant = profil?.estAidant ?? false
     }
 }

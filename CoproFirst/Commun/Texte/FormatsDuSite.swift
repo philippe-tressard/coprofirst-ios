@@ -11,7 +11,9 @@ import Foundation
 /// | `dateCourte(_:)` | `fmtDateShort`, idem | « 02/04/2026 » |
 /// | `dateLongue(_:)` | `fmtDateLong`, idem | « 2 avril 2026 » |
 /// | `dateHeure(_:)` | `fmtDatetime`, idem | « 2 avr. 2026, 16:30 » |
+/// | `dateHeureCourte(_:)` | `fmtDatetimeShort`, idem | « 02/04/2026 16:30 » |
 /// | `heure(_:)` | `fmtTime`, idem | « 16:30 » |
+/// | `jourISO(_:)` | `jourIso`, idem | « 2026-04-02 » (envoyé) |
 /// | `nombre(_:)` | `fmtNombre`, `front/src/lib/utils.ts` | « 47 047 », « 64,5 » |
 /// | `montant(_:devise:decimales:)` | `fmtMontant`, idem | « 1 234,5 € » |
 ///
@@ -50,6 +52,13 @@ enum FormatsDuSite {
         return "\(date(valeur)), \(heure(valeur))"
     }
 
+    /// `fmtDatetimeShort` : « 10/04/2026 14:30 » — la date courte, une espace, l'heure
+    /// (#15, le journal des courriels).
+    static func dateHeureCourte(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return "\(dateCourte(valeur)) \(heure(valeur))"
+    }
+
     /// `fmtTime` : « 16:30 » — l'heure seule, sur 24 h à Paris (#41) : une
     /// notification du jour, une carte du fil.
     static func heure(_ valeur: Date?) -> String {
@@ -62,7 +71,16 @@ enum FormatsDuSite {
     static func dateCourte(_ iso: String?) -> String { dateCourte(lire(iso)) }
     static func dateLongue(_ iso: String?) -> String { dateLongue(lire(iso)) }
     static func dateHeure(_ iso: String?) -> String { dateHeure(lire(iso)) }
+    static func dateHeureCourte(_ iso: String?) -> String { dateHeureCourte(lire(iso)) }
     static func heure(_ iso: String?) -> String { heure(lire(iso)) }
+
+    /// `jourIso` : le JOUR de Paris d'un instant, « 2026-04-10 » — la valeur qu'un
+    /// formulaire envoie pour une date (#15, la fin d'une délégation). Jamais le jour
+    /// UTC : il est faux d'un jour entre minuit et deux heures.
+    static func jourISO(_ valeur: Date) -> String {
+        let jour = Calendar(identifier: .gregorian).dateComponents(in: paris, from: valeur)
+        return String(format: "%04d-%02d-%02d", jour.year ?? 0, jour.month ?? 0, jour.day ?? 0)
+    }
 
     private static var style: Date.FormatStyle {
         Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, timeZone: paris)
