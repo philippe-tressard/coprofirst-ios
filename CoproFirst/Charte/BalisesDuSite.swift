@@ -1,9 +1,9 @@
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/lib/sanitize.ts (ALLOWED_TAGS, ALLOWED_ATTR) et api/app/utils/html_sur.py.
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/sanitize.ts (ALLOWED_TAGS, ALLOWED_ATTR) et api/app/utils/html_sur.py.
 
 /// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).
 enum BalisesDuSite {

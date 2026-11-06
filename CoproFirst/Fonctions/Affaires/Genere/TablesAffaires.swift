@@ -1,12 +1,10 @@
-// GÉNÉRÉ par scripts/generer-affaires.py — NE PAS MODIFIER À LA MAIN.
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts.
 // swiftlint:disable line_length
-// Source : philippe-tressard/coprofirst v3.61.0 (commit 4239610fcf1658b53c84664087f7e5d0650fe834),
-//   front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts ;
-//   front/src/styles/socle.css et palette-sombre.css.
 
 import SwiftUI
 
@@ -33,18 +31,12 @@ enum TablesAffaires {
     ]
     /// Les colonnes du Kanban — ces colonnes SONT le workflow (`KANBAN_COLS`).
     static let colonnesKanban: [ColonneKanban] = [
-        ColonneKanban(id: "ag", libelle: "AG", libelleCourt: "AG",
-                      teinte: Color(clair: RVBA(0x72, 0x40, 0xDA, 1), sombre: RVBA(0xA4, 0x7F, 0xF8, 1))),
-        ColonneKanban(id: "cs", libelle: "CS (en cours)", libelleCourt: "CS",
-                      teinte: Color(clair: RVBA(0x15, 0x5C, 0xCE, 1), sombre: RVBA(0x58, 0x94, 0xF6, 1))),
-        ColonneKanban(id: "syndic", libelle: "Syndic (en cours)", libelleCourt: "Syndic",
-                      teinte: Color(clair: RVBA(0x7F, 0x5D, 0x05, 1), sombre: RVBA(0xF5, 0x9E, 0x0B, 1))),
-        ColonneKanban(id: "fournisseur", libelle: "Prestataire (en cours)", libelleCourt: "Prestataire",
-                      teinte: Color(clair: RVBA(0xA5, 0x46, 0x02, 1), sombre: RVBA(0xF9, 0x73, 0x16, 1))),
-        ColonneKanban(id: "termine", libelle: "Terminé", libelleCourt: "Terminé",
-                      teinte: Color(clair: RVBA(0x02, 0x72, 0x2F, 1), sombre: RVBA(0x22, 0xC5, 0x5E, 1))),
-        ColonneKanban(id: "annule", libelle: "Annulé", libelleCourt: "Annulé",
-                      teinte: Color(clair: RVBA(0x5E, 0x64, 0x6F, 1), sombre: RVBA(0x9C, 0xA3, 0xAF, 1))),
+        ColonneKanban(id: "ag", libelle: "AG", libelleCourt: "AG", teinte: \.kanbanAg),
+        ColonneKanban(id: "cs", libelle: "CS (en cours)", libelleCourt: "CS", teinte: \.kanbanCs),
+        ColonneKanban(id: "syndic", libelle: "Syndic (en cours)", libelleCourt: "Syndic", teinte: \.kanbanSyndic),
+        ColonneKanban(id: "fournisseur", libelle: "Prestataire (en cours)", libelleCourt: "Prestataire", teinte: \.kanbanFournisseur),
+        ColonneKanban(id: "termine", libelle: "Terminé", libelleCourt: "Terminé", teinte: \.kanbanTermine),
+        ColonneKanban(id: "annule", libelle: "Annulé", libelleCourt: "Annulé", teinte: \.kanbanAnnule),
     ]
     /// Statut d'une affaire → sa colonne ; un statut absent sort l'affaire du tableau.
     static let colonneParStatut: [String: String] = [

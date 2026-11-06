@@ -10,9 +10,9 @@ import Foundation
 ///
 /// 🔴 Pourquoi du JSON et non des modèles construits à la main (#13, bogue du
 /// 05/11/2026) : la simulation fournissait un champ `type` que `/acces/mes-vigiks` ne
-/// sert pas. Les tests passaient, l'iPhone affichait une erreur. `FixturesAccesTests`
-/// confronte chaque réponse ci-dessous au schéma de sa route dans `openapi.json` :
-/// aucun champ que le serveur ne sert, aucun champ requis qui manque.
+/// sert pas. Les tests passaient, l'iPhone affichait une erreur. `scripts/verifier-fixtures.py`
+/// confronte chaque réponse ci-dessous, déclarée dans `parSchema`, au schéma de sa route :
+/// aucun champ que le serveur ne sert, aucun champ requis qui manque (#20).
 ///
 /// Tout est inventé : aucun nom de personne, des numéros de la plage réservée à la
 /// fiction (01 99 00 …), des adresses `exemple.fr`.
@@ -107,7 +107,7 @@ enum FixturesAcces {
         let json: String
     }
 
-    /// Chaque réponse et le schéma de sa route, pour le test.
+    /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [
         Reponse(nom: "mesLots", schema: "LotRead", json: mesLots),
         Reponse(nom: "mesVigiks", schema: "AccesPorteur", json: mesVigiks),

@@ -12,7 +12,7 @@ included:
 excluded:
   - .build
   - Paquets/ClientAPI/.build
-  # GÉNÉRÉS par scripts/generer-charte.py : une ligne par jeton, sans retour.
+  # GÉNÉRÉS par scripts/generer.py : une ligne par jeton, sans retour.
   - CoproFirst/Charte/Palette.swift
   - CoproFirst/Charte/Palette+Seine.swift
   - CoproFirst/Charte/Palette+Bordeaux.swift

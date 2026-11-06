@@ -19,7 +19,7 @@ un onglet du site absent d'ici, une ligne qui n'existe plus sur le site, un éta
 inconnu, un « prévu » sans ticket — et une page dite `fait` que
 `CoproFirst/Navigation/RegistreDesMenus.swift` n'ouvre pas — font échouer la CI.
 La liste des onglets du site est **générée** : [ONGLETS-DU-SITE.md](ONGLETS-DU-SITE.md)
-(`scripts/generer-charte.py`). Quand le site ajoute un onglet, la régénération
+(`scripts/generer.py`). Quand le site ajoute un onglet, la régénération
 le fait apparaître, et la CI exige qu'on le classe ici.
 
 **Une session = une section.** Chaque lot ne touche que la sienne : il passe ses

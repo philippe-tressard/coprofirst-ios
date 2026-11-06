@@ -27,7 +27,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Concurrence | Swift 6, `SWIFT_STRICT_CONCURRENCY: complete` | `project.yml` |
 | Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte ni leur type — « Tests d'interface » ci-dessous | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
-| Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer-charte.py`) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
+| Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer.py`), teintes du Kanban comprises (`palette.kanbanAg`…, #34) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
 | Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant`, et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
@@ -71,8 +71,12 @@ suffit de régénérer le projet (`bash scripts/generer-projet.sh`).
 
 Un **fichier généré** depuis coprofirst (table, libellés, règle de données) : un module
 `scripts/generateurs/<domaine>.py` — `SOURCES` (les fichiers lus, pour la concordance
-de #20) et `generer(ctx)` —, découvert seul par `generer-charte.py`. Une session
-ajoute SON module ; elle n'édite ni `generer-charte.py` ni le module d'un autre.
+de #20) et `generer(ctx)` —, découvert seul par `scripts/generer.py`. Une session
+ajoute SON module ; elle n'édite ni `generer.py` ni le module d'un autre. Un module ne lit
+coprofirst que par `ctx` (`ctx.lire`, `ctx.front`) : `generateurs/_source.py` seul y touche,
+au **plancher** (`generateurs/_plancher.py`), jamais un clone ni l'arbre de travail —
+`verifier-depot.sh` refuse le reste. Une teinte est un jeton de la `Palette`, nommé par son
+chemin (`\.kanbanAg`) : aucune couleur dans `Genere/`.
 
 Les **onglets** d'une page et ce qu'un compte en ouvre : `OngletsDuSite.ouverts(page:
 droits:)` avec `DroitsOnglet(profil: parcours.ouverteAJour?.profil)` (#29). La table
@@ -119,12 +123,18 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   défaut est `code_par_defaut` côté serveur ; l'app ne le devine pas — « Non précisé »
   envoie un lieu vide, et le serveur pose son défaut — en attendant de le lire dans
   l'API (coprofirst#2514).
-- **Les tables que le contrat ne sert pas** (libellés, ordre, teintes du front du
-  site) se génèrent dans `Fonctions/<Menu>/Genere/`, par un script qui épingle le
-  commit de coprofirst lu et refuse un arbre modifié (`scripts/generer-affaires.py`).
-  La 1re ligne du fichier généré dit « GÉNÉRÉ par scripts/… — NE PAS MODIFIER » :
-  `verifier-depot.sh` n'y admet de couleur qu'à ce prix, et refuse un fichier de
-  `Genere/` sans cet en-tête.
+- **Les tables que le contrat ne sert pas** (libellés, ordre du front du site) se
+  génèrent dans `Fonctions/<Menu>/Genere/`, par un module de `scripts/generateurs/`
+  (`ecrire_table`). La 1re ligne dit « GÉNÉRÉ par scripts/generer.py — NE PAS
+  MODIFIER » et l'en-tête nomme la version publiée lue : `verifier-depot.sh` refuse un
+  fichier de `Genere/` sans elle, et toute couleur (une teinte = un jeton de `Palette`).
+  La CI et le workflow quotidien régénèrent tout depuis le plancher et comparent à
+  l'octet (#20). **Monter le plancher est une décision** : quand toutes les
+  installations connues ont dépassé la nouvelle version (ticket `a-monter`, qui dit
+  les champs devenus requis), on change `_plancher.py` et on régénère, dans la même PR.
+- **Une réponse de l'API simulée** s'écrit en JSON, à la forme de sa route, dans un
+  `Fixtures*.swift` qui la déclare (`Reponse(nom:schema:json:)`) : `scripts/verifier-fixtures.py`
+  la juge contre le schéma du serveur — un champ qu'il ne sert pas fait échouer (#13, #20).
 
 ### Les composants communs — à réutiliser, pas à modifier
 

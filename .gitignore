@@ -53,7 +53,7 @@ xcuserdata/
 .env.*
 *secret*
 *token*
-# Le cache de Python (scripts/lecture_ts.py, importé par generer-charte.py)
+# Le cache de Python (scripts/lecture_ts.py, importé par scripts/generer.py)
 __pycache__/
 # Réglages locaux de Claude Code (permissions du poste)
 .claude/settings.local.json
