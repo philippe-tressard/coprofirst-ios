@@ -113,11 +113,11 @@ extension ServiceAPI: ServiceProfil {
         }
     }
 
-    /// La réponse n'est pas typée dans le contrat : relue en miroir.
     func batiments(_ installation: Installation) async throws -> [BatimentResidence] {
         let sortie = try await appeler { try await client(installation.adresse).getAuthBatiments() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([BatimentResidence].self, depuis: try ok.body.json)
+        // Typée par le contrat 1.5.0 (`BatimentPublic`) : lue par son type généré.
+        case .ok(let ok): return try ok.body.json.map { BatimentResidence(id: $0.id, numero: $0.numero) }
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }

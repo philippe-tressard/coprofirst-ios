@@ -15,12 +15,17 @@ public enum ClientCoproFirst {
         installation.appending(path: "api", directoryHint: .isDirectory)
     }
 
-    /// Un client généré, branché sur l'installation donnée.
+    /// Un client généré, branché sur l'installation donnée — la SEULE configuration du
+    /// client : les dates par `TranscodeurDates` (ISO, sans fuseau = UTC), quel que soit
+    /// le transport (une session de l'app, un transport de test).
     public static func client(
         installation: URL,
         transport: any ClientTransport = URLSessionTransport()
     ) -> Client {
-        Client(serverURL: adresseAPI(installation: installation), transport: transport)
+        Client(
+            serverURL: adresseAPI(installation: installation),
+            configuration: Configuration(dateTranscoder: TranscodeurDates()),
+            transport: transport)
     }
 }
 
@@ -28,11 +33,7 @@ extension ClientCoproFirst {
     /// Un client sur une session URLSession donnée — une par installation, pour que
     /// les cookies de l'une ne partent jamais vers l'autre.
     public static func client(installation: URL, session: URLSession) -> Client {
-        Client(
-            serverURL: adresseAPI(installation: installation),
-            configuration: Configuration(dateTranscoder: TranscodeurDates()),
-            transport: URLSessionTransport(configuration: .init(session: session))
-        )
+        client(installation: installation, transport: URLSessionTransport(configuration: .init(session: session)))
     }
 
     /// La cause d'une erreur du client généré (réseau, décodage), sans son emballage.

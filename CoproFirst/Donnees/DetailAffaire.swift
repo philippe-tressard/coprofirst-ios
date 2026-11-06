@@ -58,9 +58,8 @@ enum DroitsAffaire {
     }
 }
 
-/// Un sondage, tel que GET /sondages/{id} le sert. Sa réponse n'est pas typée dans le
-/// contrat (construite à la main côté serveur, sans `response_model`) : ce miroir
-/// la lit par `Relecture` (besoin noté pour coprofirst#2460).
+/// Un sondage, tel que GET /sondages/{id} le sert — typé par le contrat 1.5.0
+/// (`SondageDetail`) et branché par `DetailSondage(_:)`.
 struct DetailSondage: Codable, Hashable, Sendable {
     let id: Int
     let question: String

@@ -5,8 +5,7 @@ import ClientAPI
 import Foundation
 
 /// L'annuaire de la résidence (GET /admin/annuaire) : le conseil syndical et le
-/// syndic. La réponse n'est pas typée dans le contrat (coprofirst#2505) : relue
-/// telle que le site l'attend (`#lib/api`), champ pour champ.
+/// syndic — typé par le contrat 1.5.0 (`AnnuaireLu`) et branché par `Annuaire(_:)`.
 struct Annuaire: Codable, Hashable, Sendable {
     var cs: ConseilSyndical
     var syndic: Syndic
@@ -92,7 +91,8 @@ extension ServiceAPI: ServiceAnnuaire {
     func annuaire(_ installation: Installation) async throws -> Annuaire {
         let sortie = try await appeler { try await client(installation.adresse).getAdminAnnuaire() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire(Annuaire.self, depuis: try ok.body.json)
+        // Typée par le contrat 1.5.0 (`AnnuaireLu`) : lue par son type généré.
+        case .ok(let ok): return Annuaire(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -142,5 +142,28 @@ extension Annuaire.Membre {
             id: id, genre: genre, prenom: prenom, nom: nom, batimentNom: batimentNom,
             estGestionnaireSite: estGestionnaireSite, estPresident: estPresident, photoUrl: nil, fonction: fonction,
             email: email, telephone: telephone, estPrincipal: estPrincipal)
+    }
+}
+
+extension Annuaire {
+    /// L'annuaire tel que le contrat le type (`AnnuaireLu`).
+    init(_ lu: Components.Schemas.AnnuaireLu) {
+        self.init(
+            cs: ConseilSyndical(
+                agAnnee: lu.cs.agAnnee, agDate: lu.cs.agDate,
+                membres: lu.cs.membres.map {
+                    Membre(
+                        id: $0.id, genre: $0.genre, prenom: $0.prenom, nom: $0.nom, batimentNom: $0.batimentNom,
+                        estGestionnaireSite: $0.estGestionnaireSite, estPresident: $0.estPresident,
+                        photoUrl: $0.photoUrl)
+                }),
+            syndic: Syndic(
+                nomSyndic: lu.syndic.nomSyndic, adresse: lu.syndic.adresse, siteWeb: lu.syndic.siteWeb,
+                membres: lu.syndic.membres.map {
+                    Membre(
+                        id: $0.id, genre: $0.genre, prenom: $0.prenom, nom: $0.nom, photoUrl: $0.photoUrl,
+                        fonction: $0.fonction, email: $0.email, telephone: $0.telephone, estPrincipal: $0.estPrincipal)
+                }),
+            whatsappUrl: lu.whatsappUrl)
     }
 }
