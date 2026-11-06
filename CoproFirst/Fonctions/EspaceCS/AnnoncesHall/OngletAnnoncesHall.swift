@@ -25,7 +25,7 @@ struct OngletAnnoncesHall: OngletEspaceCS {
                 switch vue {
                 case .nouvelle:
                     NouvelleAnnonceHall(service: service, installation: contexte.installation) { annonce in
-                        contexte.avis.wrappedValue = TextesAnnoncesHall.creee(annonce)
+                        contexte.avis.dire(TextesAnnoncesHall.creee(annonce))
                         withAnimation(.snappy) { vue = .archives }
                     }
                 case .archives:
@@ -116,7 +116,7 @@ private struct ArchivesAnnoncesHall: View {
                 try await service.archiverAnnonceHall(annonce.id, archivee: !annonce.archivee, dans: installation)
             case .supprimer: try await service.supprimerAnnonceHall(annonce.id, dans: installation)
             }
-            contexte.avis.wrappedValue = TextesAnnoncesHall.fait(geste, annonce)
+            contexte.avis.dire(TextesAnnoncesHall.fait(geste, annonce))
             gestes += 1
             recharger()
         } catch {
