@@ -22,7 +22,9 @@
 #   9. aucun chemin de .claude/worktrees/ suivi : les worktrees des sessions
 #      parallèles sont des dépôts, pas des fichiers du projet ;
 #  10. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
-#      et le registre des menus dit vrai (scripts/verifier-parite.py, #10).
+#      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
+#  11. la relance des tests au simulateur reste bornée et déclarée : autotests de
+#      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -159,6 +161,11 @@ fi
 python3 -I scripts/verifier-parite.py --autotest >/dev/null || echec "verifier-parite.py : autotest en échec"
 PARITE=$(python3 -I scripts/verifier-parite.py) || { echo "$PARITE"; echec "parité avec le site (Parite/PARITE.md)"; }
 
+# Les tests au simulateur : une relance au plus, déclarée, sur une cause déclarée
+# (#50). Les deux autotests prouvent que la décision refuse ce qu'elle doit refuser.
+python3 -I scripts/bilan_tests_ui.py --autotest >/dev/null || echec "bilan_tests_ui.py : autotest en échec"
+bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateur.sh : autotest en échec"
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -167,4 +174,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun moteur web, aucun worktree suivi ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, aucun moteur web, aucun worktree suivi, relance des tests bornée ; ${PARITE#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
