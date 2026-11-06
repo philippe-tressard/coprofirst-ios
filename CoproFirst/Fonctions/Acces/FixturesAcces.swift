@@ -132,10 +132,6 @@ enum FixturesAcces {
 
     /// Le décodage du client généré : clés du contrat, dates par `TranscodeurDates`.
     static func lire<T: Decodable>(_ type: T.Type, _ json: String) throws -> T {
-        let decodeur = JSONDecoder()
-        decodeur.dateDecodingStrategy = .custom { lecteur in
-            try TranscodeurDates().decode(lecteur.singleValueContainer().decode(String.self))
-        }
-        return try decodeur.decode(T.self, from: Data(json.utf8))
+        try Relecture.generee(type, json: json)
     }
 }

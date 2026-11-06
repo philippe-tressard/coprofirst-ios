@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -62,18 +63,25 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
 }
 
 @Test func leSondageServiSeLitAvecOuSansResultats() throws {
+    // Typé par le contrat 1.5.0 (`SondageDetail`) : décodé comme le client, branché par
+    // `DetailSondage(_:)` — le chemin du service réel.
+    func lire(_ json: String) throws -> DetailSondage {
+        DetailSondage(try Relecture.generee(Components.Schemas.SondageDetail.self, json: json))
+    }
     let visible = #"""
         {"id": 3, "question": "Q ?", "description": null, "cloture": false, "mon_vote": null,
+         "cree_le": "2026-11-01T10:00:00", "resultats_publics": true,
          "resultats_visibles": true, "options": [{"id": 1, "libelle": "A", "ordre": 0, "nb_votes": 2},
          {"id": 2, "libelle": "B", "ordre": 1, "nb_votes": 1}], "commentaires": []}
         """#
-    let lu = try Relecture.lire(DetailSondage.self, json: Data(visible.utf8))
+    let lu = try lire(visible)
     #expect(lu.totalVotes == 3 && lu.monVote == nil && lu.resultatsVisibles)
     let masque = #"""
         {"id": 3, "question": "Q ?", "cloture": true, "mon_vote": 2, "resultats_visibles": false,
-         "options": [{"id": 1, "libelle": "A"}]}
+         "cree_le": "2026-11-01T10:00:00", "resultats_publics": false,
+         "options": [{"id": 1, "libelle": "A", "ordre": 0}]}
         """#
-    let clos = try Relecture.lire(DetailSondage.self, json: Data(masque.utf8))
+    let clos = try lire(masque)
     #expect(clos.options.first?.nbVotes == nil, "masqué : absent, jamais 0")
     #expect(clos.monVote == 2)
 }

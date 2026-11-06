@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import Foundation
+import OpenAPIRuntime
 import Testing
 
 @testable import CoproFirst
@@ -11,14 +12,20 @@ import Testing
 
 // MARK: - Relecture
 
+/// Une réponse NON TYPÉE arrive en `OpenAPIValueContainer` : ses dates y sont des
+/// chaînes, que `Relecture` lit comme le client (sans fuseau = UTC). Une sortie TYPÉE ne
+/// compile pas dans `Relecture.lire(_:depuis:)` (bogue du 06/11/2026).
 @Test func uneReponseNonTypeeSeRelitAvecSesDatesSansFuseau() throws {
-    struct Brut: Encodable {
-        let id = 3, titre = "Idée", description = "<p>x</p>", statut = "ouverte"
-        let cree_le = "2026-11-04T08:30:00", nb_votes = 2, mon_vote = true  // swiftlint:disable:this identifier_name
+    struct Delegation: Decodable {
+        let id: Int
+        let creeLe: Date
+        let estActive: Bool
     }
-    let idee = try Relecture.lire(Idee.self, depuis: Brut())
-    #expect(idee.nbVotes == 2 && idee.monVote)
-    #expect(idee.creeLe == ISO8601DateFormatter().date(from: "2026-11-04T08:30:00Z"), "sans fuseau = UTC")
+    let json = #"{"id": 3, "cree_le": "2026-11-04T08:30:00", "est_active": true}"#
+    let brut = try JSONDecoder().decode(OpenAPIValueContainer.self, from: Data(json.utf8))
+    let lue = try Relecture.lire(Delegation.self, depuis: brut)
+    #expect(lue.id == 3 && lue.estActive)
+    #expect(lue.creeLe == ISO8601DateFormatter().date(from: "2026-11-04T08:30:00Z"), "sans fuseau = UTC")
 }
 
 @Test func desOctetsSeRelisentCommeUneValeurDuClient() throws {
