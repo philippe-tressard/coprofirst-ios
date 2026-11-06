@@ -24,3 +24,14 @@ import Testing
     etat.annoncer("Accès enregistré")
     #expect(etat.avis.texte == "Accès enregistré")
 }
+
+@MainActor @Test func lAvisDUneFeuilleAttendSaFermeture() {
+    let avis = AvisDuGeste()
+    avis.direApresFermeture("Accès enregistré")
+    #expect(avis.texte == nil, "rien derrière la feuille")
+    avis.feuilleFermee()
+    #expect(avis.texte == "Accès enregistré", "dit une fois la feuille fermée")
+    avis.retirer("Accès enregistré")
+    avis.feuilleFermee()
+    #expect(avis.texte == nil, "une feuille fermée sans geste ne redit rien")
+}

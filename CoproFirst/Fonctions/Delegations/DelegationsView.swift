@@ -74,14 +74,14 @@ struct DelegationsView: View {
         .avisEphemere(avis)
         .sensoryFeedback(.success, trigger: gestes)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
-        .sheet(isPresented: $creation) {
+        .sheet(isPresented: $creation, onDismiss: { avis.feuilleFermee() }, content: {
             NavigationStack {
                 NouvelleDelegation(service: service, installation: installation) {
                     gestes += 1
-                    avis.dire(TextesDelegations.creee)
+                    avis.direApresFermeture(TextesDelegations.creee)
                 }
             }
-        }
+        })
     }
 }
 

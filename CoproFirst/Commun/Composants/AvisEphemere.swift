@@ -14,11 +14,26 @@ import SwiftUI
 @MainActor @Observable
 final class AvisDuGeste {
     private(set) var texte: String?
+    /// La phrase d'une feuille qui se ferme, en attendant la fin de sa fermeture.
+    @ObservationIgnored private var enAttente: String?
 
     init(_ texte: String? = nil) { self.texte = texte }
 
     /// Dire la phrase ; elle remplace celle qui est à l'écran.
     func dire(_ texte: String) { self.texte = texte }
+
+    /// Dite par une FEUILLE qui va se fermer : la phrase attend la fin de la fermeture
+    /// (`.sheet(…, onDismiss: { avis.feuilleFermee() })`). Dite tout de suite, elle
+    /// passait l'essentiel de ses 4 s derrière la feuille — invisible, à l'écran comme
+    /// pour l'accessibilité (#43, #48).
+    func direApresFermeture(_ texte: String) { enAttente = texte }
+
+    /// La feuille est fermée : la phrase qu'elle a laissée se dit maintenant.
+    func feuilleFermee() {
+        guard let texte = enAttente else { return }
+        enAttente = nil
+        dire(texte)
+    }
 
     /// Retirer CETTE phrase — pas celle qui l'a remplacée entre-temps.
     func retirer(_ texte: String) {
