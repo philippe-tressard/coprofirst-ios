@@ -105,6 +105,12 @@ private let toutes = PagesParDefaut.toutes
     let _: any ServiceBadgesCS = ServiceSimule(delai: .zero)
     let _: any ServiceAnnuaireCS = ServiceAPI()
     let _: any ServiceAnnuaireCS = ServiceSimule(delai: .zero)
+    let _: any ServiceReportingCS = ServiceAPI()
+    let _: any ServiceReportingCS = ServiceSimule(delai: .zero)
+    let _: any ServiceAnnoncesHallCS = ServiceAPI()
+    let _: any ServiceAnnoncesHallCS = ServiceSimule(delai: .zero)
+    let _: any ServiceCourrielsCS = ServiceAPI()
+    let _: any ServiceCourrielsCS = ServiceSimule(delai: .zero)
 }
 
 // MARK: - Relectures des réponses non typées

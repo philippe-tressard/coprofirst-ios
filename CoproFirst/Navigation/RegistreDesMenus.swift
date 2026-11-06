@@ -50,7 +50,7 @@ enum RegistreDesMenus {
 
         "espace-cs": EspaceCSView.self,
 
-        // #15 — "delegations"
+        "delegations": DelegationsView.self,
 
         // #16 — "admin"
     ]

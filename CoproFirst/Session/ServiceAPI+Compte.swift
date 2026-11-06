@@ -15,7 +15,7 @@ extension ServiceAPI {
             // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
             return ProfilResidence(
                 statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
-                libelleLogement: moi.libelleLogement)
+                libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0)
         case .unprocessableContent:
             throw ErreurService.inattendue(422)
         case .undocumented(let statut, _):
