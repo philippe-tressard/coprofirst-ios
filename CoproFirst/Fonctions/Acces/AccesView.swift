@@ -55,12 +55,12 @@ struct AccesView: View {
                 ToolbarItem(placement: .topBarLeading) { menuGestes }
             }
         }
-        .sheet(item: $feuille) { quoi in
+        .sheet(item: $feuille, onDismiss: { etat.avis.feuilleFermee() }, content: { quoi in
             feuilleDe(quoi, service: service)
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
-        }
-        .avisEphemere($etat.avis)
+        })
+        .avisEphemere(etat.avis)
         .task { await charger(service) }
         .onChange(of: etat.onglets.map(\.id)) { _, ids in
             // Un onglet masqué ne s'atteint pas (la redirection du site).
@@ -118,11 +118,11 @@ struct AccesView: View {
         switch quoi {
         case .demander:
             DemanderAccesView(lots: etat.lots, installation: contexte.installation, service: service) {
-                etat.annoncer($0)
+                etat.avis.direApresFermeture($0)
             }
         case .declarer:
             DeclarerAccesView(installation: contexte.installation, service: service) {
-                etat.annoncer($0)
+                etat.avis.direApresFermeture($0)
                 versionAcces += 1
             }
         }

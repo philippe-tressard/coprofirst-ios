@@ -15,7 +15,7 @@ struct EspaceCSView: View {
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var choisi: String?
-    @State private var avis: String?
+    @State private var avis = AvisDuGeste()
     @State private var actualisation = 0
 
     init(contexte: ContexteDeMenu) { self.contexte = contexte }
@@ -68,12 +68,12 @@ struct EspaceCSView: View {
             .animation(.snappy(duration: 0.22), value: actif.id)
         }
         .refreshable { actualisation += 1 }
-        .avisEphemere($avis)
+        .avisEphemere(avis)
     }
 
     private var contexteOnglet: ContexteOngletCS {
         ContexteOngletCS(
-            installation: contexte.installation, service: parcours.service, droits: droits, avis: $avis,
+            installation: contexte.installation, service: parcours.service, droits: droits, avis: avis,
             actualisation: actualisation)
     }
 }

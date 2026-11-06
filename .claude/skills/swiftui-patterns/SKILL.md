@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Dossier | Contient | Qui y touche |
 |---|---|---|
 | `Fonctions/<Menu>/` | **un dossier par menu du site** : ses écrans, ses textes, ses états — `Fil` (`tableau-de-bord`), `Affaires` (`mes-demandes`), `Profil` ; à venir : `Residence`, `Annuaire`, `Acces` (`mon-lot`), `Prestataires`, `Communaute`, `FAQ`, `Notifications`, `EspaceCS`, `Delegations`, `Admin` | la session du menu, **seule** |
-| `Commun/` | ce que **deux fonctionnalités ou plus** utilisent (catalogue ci-dessous) ; `Commun/Session/` : les gestes communs du dialogue avec l'API (`Relecture`, `RefusDuServeur`) | personne en passant : un changement ici est un lot à part |
+| `Commun/` | ce que **deux fonctionnalités ou plus** utilisent (catalogue ci-dessous) ; `Commun/Session/` : les gestes communs du dialogue avec l'API (`Relecture`, `RefusDuServeur`, `FichierServi`) | personne en passant : un changement ici est un lot à part |
 | `Navigation/` | barre, « Plus », ordre des pages (`OrdrePages`), **registre des menus** | une ligne par menu au registre |
 | `Entree/` | ce qui précède la résidence ouverte : accueil, démo, vitrine, découverte (adresse, QR), connexion | — |
 | `Charte/`, `Session/`, `Donnees/` | couleurs générées, service et état, modèles | — |
@@ -154,7 +154,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
 | `BarreOnglets` | les onglets d'une page en pastilles qui défilent (`onglet.<id>` pour les tests) ; ses onglets viennent d'`OngletsDuSite.ouverts` | `Commun/Composants/BarreOnglets.swift` |
-| `.avisEphemere($avis)` | la phrase brève qui suit un geste (le « toast » du site) | `Commun/Composants/AvisEphemere.swift` |
+| `.avisEphemere(avis)`, `avis.dire(…)` | la phrase brève qui suit un geste (le « toast » du site), portée par un `AvisDuGeste` que **seul l'avis lit**. Jamais une `Binding<String?>` : une `Binding` lit sa valeur dès sa création, et l'écran qui la fabrique se recalcule à l'arrivée et au retrait de l'avis — ses menus de barre d'outils reconstruits sous le doigt perdaient un toucher (#48). Même règle pour tout état éphémère qui change seul (minuterie) : un objet observable lu là où il s'affiche. Une **feuille** qui annonce dit `avis.direApresFermeture(…)`, et sa présentation porte `.sheet(…, onDismiss: { avis.feuilleFermee() })` : dite avant la fermeture, la phrase passait ses 4 s derrière la feuille (#43, #48) | `Commun/Composants/AvisEphemere.swift` (tests : `AvisEphemereTests`) |
 | `BoutonsFeuille` | « Annuler » / « Enregistrer » d'une feuille, « Enregistrement… » pendant l'envoi, `actif` | `Commun/Composants/BoutonsFeuille.swift` |
 | `ChampRecherche` + `Recherche.contientTousLesMots` | le champ de recherche d'une liste, dans la page ; la règle du site (tous les mots, sans accents ni casse) | `Commun/Composants/`, `Commun/Texte/Recherche.swift` |
 | `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** ; `largeurNom` réduit le nom quand un élément occupe la gauche de la barre (le logement du fil) : sans quoi iOS replie la pastille et la cloche dans « … » | idem |
@@ -172,6 +172,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 |---|---|---|
 | **Réponse non typée** | une route sans `response_model` côté serveur rend un `OpenAPIValueContainer` : il se relit par `Relecture.lire(T.self, depuis: valeur)` (`json:` pour des octets, dans un test) — clés `snake_case` → `camelCase`, dates comme le client généré (ISO, sans fuseau = UTC). Le modèle ne déclare **pas** de `CodingKeys` en `snake_case` (la conversion les rendrait muets). Jamais un `JSONDecoder` monté dans un service. Chaque usage est un besoin noté pour coprofirst (#2460, #2505, #2507) | `Commun/Session/Relecture.swift` |
 | **Phrase du serveur** | la réponse non documentée d'un **geste** (POST, PATCH, DELETE) passe par `throw await Self.refus(statut, reponse)` : `{"detail": "…"}` devient `ErreurService.refus(RefusDuServeur)`, dont la `phrase` est celle du serveur ; sans phrase, le cas que dit le statut. Une **lecture** refusée garde `ErreurService.depuisLecture(statut)` (« introuvable »). Un service simulé lève la même chose : `ErreurService.refus(.init(phrase: …))` | `Commun/Session/RefusDuServeur.swift` (tests : `CommunSessionTests`) |
+| **Fichier servi** | une route qui sert un `FileResponse` que le contrat déclare en JSON (document, rapport…) se lit par `try await Self.fichierServi(nom:defaut:) { … }` : la fermeture lance l'appel généré et lève `ErreurService.depuisLecture(statut)` sur un `.undocumented` ; le corps se lit dans l'erreur du client, sur un 200 seulement, et s'écrit sous `Fichiers.nomSur` dans `tmp/documents/`, en `.completeFileProtection`. **Aucune autre écriture de ce geste** : `grep -rn "ClientCoproFirst.fichierServi" CoproFirst` ne rend que `Commun/Session/` (#32). Besoin noté : coprofirst#2505 | `Commun/Session/FichierServi.swift` (tests : `FichierServiTests`) |
 | **Afficher un échec** | `ErreurService.depuis(error).phrase` ; un écran qui a sa propre phrase d'échec (celle du site, « Erreur lors de l'export. ») écrit `ErreurService.phrase(error, sinon: "…")` : la phrase du serveur passe devant. Un menu qui a ses erreurs (`ErreurAffaires`) range un refus en `.service(.refus(…))`, jamais une phrase fixe par statut | `Session/ErreurService.swift` |
 
 ## Tests d'interface — la CI tranche, pas le poste (#11, #12)
@@ -200,6 +201,12 @@ seule la CI le dit.
 3. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
    journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
    affecting … » donne le type réellement trouvé).
+4. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
+   peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
+   attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
+   joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
+   test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
+   « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
 
 ## À trancher quand le premier cas arrive
 

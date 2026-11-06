@@ -24,7 +24,22 @@ struct ConnexionView: View {
 
     private enum Champ { case email, motDePasse }
 
+    /// L'ancre du bouton « Se connecter », pour le garder au-dessus du clavier (#47).
+    private static let ancreValider = "connexion.valider"
+
     var body: some View {
+        ScrollViewReader { defilement in
+            formulaire
+                .onChange(of: champ) { _, nouveau in
+                    if nouveau == .motDePasse { montrerValider(defilement) }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+                    if champ == .motDePasse { montrerValider(defilement) }
+                }
+        }
+    }
+
+    private var formulaire: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 Text("Connectez-vous à votre espace")
@@ -75,6 +90,7 @@ struct ConnexionView: View {
                 .buttonStyle(.plein)
                 .disabled(parcours.reconnue == nil || email.isEmpty || motDePasse.isEmpty || enCours)
                 .accessibilityIdentifier("connexion.valider")
+                .id(Self.ancreValider)
                 HStack(spacing: 4) {
                     Text("Pas encore de compte ?").foregroundStyle(palette.textMuted)
                     Button("Demander l'accès") { ouvrirSurLeSite("auth/inscription") }
@@ -133,6 +149,12 @@ struct ConnexionView: View {
             }
             .accessibilityLabel(voirMotDePasse ? "Masquer le mot de passe" : "Afficher le mot de passe")
         }
+    }
+
+    /// Le clavier levé couvre le bas du formulaire : sans ceci, « Se connecter » est
+    /// SOUS le clavier, et le premier toucher tombe sur le clavier (#47).
+    private func montrerValider(_ defilement: ScrollViewProxy) {
+        withAnimation(.smooth(duration: 0.3)) { defilement.scrollTo(Self.ancreValider, anchor: .bottom) }
     }
 
     private func preremplir() {

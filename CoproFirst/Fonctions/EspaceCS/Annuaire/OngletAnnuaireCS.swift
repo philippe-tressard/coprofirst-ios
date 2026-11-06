@@ -33,11 +33,11 @@ struct OngletAnnuaireCS: OngletEspaceCS {
                     })
             }
             .task(id: contexte.actualisation) { await etat.charger(service, contexte.installation) }
-            .sheet(item: $feuille) { quoi in
+            .sheet(item: $feuille, onDismiss: { contexte.avis.feuilleFermee() }, content: { quoi in
                 feuilleDe(quoi, service)
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
-            }
+            })
             .confirmationDialog(
                 TextesAnnuaireCS.retirerTitre, isPresented: presente($aRetirer), titleVisibility: .visible,
                 presenting: aRetirer
@@ -63,7 +63,7 @@ struct OngletAnnuaireCS: OngletEspaceCS {
             if let conseil = etat.conseil.valeur {
                 FeuilleEnteteConseil(conseil: conseil) { nouveau in
                     try await etat.enregistrer(nouveau, service, installation)
-                    annoncer(TextesAnnuaireCS.conseilEnregistre)
+                    annoncerApresFermeture(TextesAnnuaireCS.conseilEnregistre)
                 }
             }
         case .membreConseil(let rang):
@@ -72,14 +72,14 @@ struct OngletAnnuaireCS: OngletEspaceCS {
                     var nouveau = conseil
                     if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
                     try await etat.enregistrer(nouveau, service, installation)
-                    annoncer(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                    annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
                 }
             }
         case .enteteSyndic:
             if let syndic = etat.syndic.valeur {
                 FeuilleEnteteSyndic(syndic: syndic) { nouveau in
                     try await etat.enregistrer(nouveau, service, installation)
-                    annoncer(TextesAnnuaireCS.syndicEnregistre)
+                    annoncerApresFermeture(TextesAnnuaireCS.syndicEnregistre)
                 }
             }
         case .membreSyndic(let rang):
@@ -88,7 +88,7 @@ struct OngletAnnuaireCS: OngletEspaceCS {
                     var nouveau = syndic
                     if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
                     try await etat.enregistrer(nouveau, service, installation)
-                    annoncer(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                    annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
                 }
             }
         }
@@ -123,7 +123,13 @@ struct OngletAnnuaireCS: OngletEspaceCS {
 
     private func annoncer(_ annonce: String) {
         withAnimation(.snappy) { echec = nil }
-        contexte.avis.wrappedValue = annonce
+        contexte.avis.dire(annonce)
+    }
+
+    /// Depuis une feuille : la phrase attend que la feuille soit fermée.
+    private func annoncerApresFermeture(_ annonce: String) {
+        withAnimation(.snappy) { echec = nil }
+        contexte.avis.direApresFermeture(annonce)
     }
 
     private func presente<T>(_ element: Binding<T?>) -> Binding<Bool> {

@@ -10,8 +10,9 @@ struct ContexteOngletCS {
     /// (`service as? any ServiceComptesCS`), déclaré dans son dossier.
     let service: any ServiceCoproFirst
     let droits: DroitsOnglet
-    /// La phrase brève qui suit un geste (`avisEphemere`, posé par le cadre).
-    let avis: Binding<String?>
+    /// La phrase brève qui suit un geste (`avisEphemere`, posé par le cadre) :
+    /// `avis.dire(…)`, jamais lue par l'onglet.
+    let avis: AvisDuGeste
     /// Augmente à chaque « tirer pour actualiser » : un onglet relit par `.task(id:)`.
     let actualisation: Int
 }

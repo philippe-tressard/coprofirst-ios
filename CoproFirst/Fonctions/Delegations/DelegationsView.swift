@@ -16,7 +16,7 @@ struct DelegationsView: View {
     @State private var creation = false
     /// Un geste réussi : la liste relue, un retour haptique et la phrase du site.
     @State private var gestes = 0
-    @State private var avis: String?
+    @State private var avis = AvisDuGeste()
 
     init(contexte: ContexteDeMenu) { self.contexte = contexte }
 
@@ -52,7 +52,7 @@ struct DelegationsView: View {
                             liste: liste, service: service, installation: installation,
                             reussi: { phrase in
                                 gestes += 1
-                                avis = phrase
+                                avis.dire(phrase)
                                 recharger()
                             })
                         .onChange(of: creation) { _, ouverte in if !ouverte { recharger() } }
@@ -71,17 +71,17 @@ struct DelegationsView: View {
             .frame(maxWidth: .infinity)
         }
         .background(palette.bg)
-        .avisEphemere($avis)
+        .avisEphemere(avis)
         .sensoryFeedback(.success, trigger: gestes)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
-        .sheet(isPresented: $creation) {
+        .sheet(isPresented: $creation, onDismiss: { avis.feuilleFermee() }, content: {
             NavigationStack {
                 NouvelleDelegation(service: service, installation: installation) {
                     gestes += 1
-                    avis = TextesDelegations.creee
+                    avis.direApresFermeture(TextesDelegations.creee)
                 }
             }
-        }
+        })
     }
 }
 

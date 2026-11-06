@@ -10,6 +10,12 @@
 #     vert : deux d'affilée sont la marche d'avant « Lost connection » (#50) ;
 #   - à l'échec, la mesure du runner (charge, mémoire, swap) et ce que le
 #     simulateur a journalisé de la fin de l'app (jetsam, terminaison) ;
+#   - le simulateur est démarré AVANT le build, et son démarrage attendu jusqu'au
+#     bout (`simctl bootstatus -b`) : démarré par xcodebuild juste avant les tests, il
+#     faisait encore ses tâches de premier démarrage pendant la première suite
+#     d'interface — AccesUITests, deux à cinq fois plus lente et rouge (#48). Un
+#     démarrage non confirmé arrête tout : INCONNU, jamais un test sur un simulateur
+#     dont on ne sait rien ;
 #   - UNE relance au plus, des seuls tests tombés, et seulement si chacun est un
 #     test d'interface tombé sur une cause déclarée — la liste et le plafond font
 #     foi dans scripts/bilan_tests_ui.py (CAUSES_RELANCE, PLAFOND_TESTS). La
@@ -34,6 +40,17 @@ fin_de_l_app() {
   "$XCRUN" simctl spawn "$udid" log show --last 45m --style compact --predicate \
     'eventMessage CONTAINS "fr.coprofirst.app" AND (eventMessage CONTAINS[c] "jetsam" OR eventMessage CONTAINS[c] "terminat" OR eventMessage CONTAINS[c] "exited")' \
     2>/dev/null | grep -v '^Timestamp' | tail -n 12
+}
+
+# Le simulateur démarré, attendu jusqu'à la fin de son démarrage, AVANT le build : ses
+# tâches de premier démarrage se font pendant la compilation, pas pendant les tests.
+demarrer_simulateur() {
+  local udid=${DESTINATION##*id=}
+  if ! "$XCRUN" simctl bootstatus "$udid" -b > /dev/null 2>&1; then
+    echo "❌ simulateur $udid : démarrage non confirmé (simctl bootstatus) — INCONNU, aucun test joué." >&2
+    return 1
+  fi
+  echo "Simulateur $udid démarré avant le build ($(date -u +%H:%M:%S) UTC)."
 }
 
 mesurer() {
@@ -61,6 +78,7 @@ passer() {
     DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1
   fi
   echo "Destination : $DESTINATION"
+  demarrer_simulateur || return 1
   local communs=(
     -project CoproFirst.xcodeproj -scheme CoproFirst -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
@@ -122,6 +140,7 @@ echo "$*" >> "$FAUX_DOSSIER/appels"
 case "$1" in
   test) cat "$FAUX_DOSSIER/journal"; exit "$(cat "$FAUX_DOSSIER/sortie-test")" ;;
   test-without-building) exit "$(cat "$FAUX_DOSSIER/sortie-relance")" ;;
+  simctl) [ -f "$FAUX_DOSSIER/demarrage-rate" ] && exit 1; exit 0 ;;
   xcresulttool)
     case "$*" in *relance.xcresult*) f=resume-relance.json ;; *) f=resume.json ;; esac
     [ -f "$FAUX_DOSSIER/$f" ] && cat "$FAUX_DOSSIER/$f" ;;
@@ -163,6 +182,17 @@ FAUX
   scenario "résumé de la relance illisible : rouge" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 1 oui
   scenario "une assertion : pas de relance" 65 '{"result":"Failed","failedTests":2,"testFailures":['"$acces,$assertion"']}' 0 65 non
   scenario "résumé illisible : INCONNU" 65 "" 0 65 non
+  # Le simulateur se démarre AVANT le build et les tests (#48) ; non confirmé, rien ne joue.
+  scenario "vert d'emblée, démarrage d'abord" 0 "" 0 0 non
+  if [ "$(head -n 1 "$d/appels")" != "simctl bootstatus X -b" ] || ! sed -n 2p "$d/appels" | grep -q '^test '; then
+    echo "❌ le simulateur n'est pas démarré avant le build et les tests"; rate=$((rate + 1))
+  fi
+  touch "$d/demarrage-rate"
+  scenario "démarrage non confirmé : INCONNU" 0 "" 0 1 non
+  if grep -q '^test' "$d/appels"; then
+    echo "❌ des tests joués sur un simulateur au démarrage non confirmé"; rate=$((rate + 1))
+  fi
+  rm -f "$d/demarrage-rate"
   rm -rf "${d:?}"
   [ "$rate" -eq 0 ] && echo "✅ tests-simulateur : autotest" && return 0
   return 1
