@@ -1,38 +1,56 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Ce que les générateurs partagent : le contexte d'une génération, et les lectures
-communes à plusieurs domaines."""
+et écritures communes à plusieurs domaines."""
 
 from __future__ import annotations
 
 import pathlib
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 
 import lecture_ts
+from generateurs._source import DEPOT, Version
 
 CHARTE = pathlib.Path("CoproFirst/Charte")
 NAVIGATION = pathlib.Path("CoproFirst/Navigation")
+FONCTIONS = pathlib.Path("CoproFirst/Fonctions")
+# La 1re ligne de tout fichier généré : `verifier-depot.sh` l'exige dans `Genere/`, et la
+# concordance (#20) reconnaît ainsi un fichier généré que plus aucun module n'écrit.
+SIGNATURE = "GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN."
+# Ce que l'en-tête dit de la source ; la concordance l'ignore face à une autre version.
+PROVENANCE = re.compile(r"philippe-tressard/coprofirst (v\d+\.\d+\.\d+) \(commit ([0-9a-f]{40})\)")
 
 
 @dataclass(frozen=True)
 class Contexte:
-    """Une génération : le `front/` de coprofirst lu, la racine de l'app écrite, le commit."""
+    """Une génération : l'arbre de coprofirst extrait de la version, la racine écrite."""
 
-    front: pathlib.Path
+    racine: pathlib.Path
     sortie: pathlib.Path
+    version: Version
     commit: str
+    ecrits: list[pathlib.Path] = field(default_factory=list)
+
+    @property
+    def front(self) -> pathlib.Path:
+        return self.racine / "front"
+
+    @property
+    def provenance(self) -> str:
+        return f"{DEPOT} {self.version.etiquette} (commit {self.commit})"
 
     # L'en-tête que le script ÉCRIT dans chaque fichier généré : une chaîne, pas la
     # déclaration de ce module — REUSE ne doit pas la lire.
     # REUSE-IgnoreStart
     def entete(self, source: str) -> str:
         return (
+            f"// {SIGNATURE}\n"
             "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
             "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
             "//\n"
-            "// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.\n"
             "// swift-format-ignore-file\n"
-            f"// Source : coprofirst@{self.commit}, {source}.\n"
+            f"// Source : {self.provenance}, {source}.\n"
         )
     # REUSE-IgnoreEnd
 
@@ -42,6 +60,53 @@ class Contexte:
         chemin.parent.mkdir(parents=True, exist_ok=True)
         with open(chemin, "w", encoding="utf-8", newline="\n") as f:
             f.write(texte)
+        self.ecrits.append(pathlib.Path(relatif))
+
+    def lire(self, relatif: str) -> str:
+        """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`)."""
+        return (self.racine / relatif).read_text(encoding="utf-8")
+
+
+def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, doc: str, corps: str,
+                 *, swiftui: bool = False) -> None:
+    """Une table d'un menu (`Fonctions/<Menu>/Genere/`) : un `enum` de constantes.
+
+    Une entrée par ligne, sans retour : si une ligne dépasse 120 colonnes, la longueur de
+    ligne de SwiftLint est suspendue pour le fichier — et seulement alors, car
+    `superfluous_disable_command` refuse une suspension qui ne sert à rien."""
+    lignes_longues = any(len(ligne) > 120 for ligne in corps.splitlines())
+    texte = ctx.entete(source)
+    if lignes_longues:
+        texte += "// swiftlint:disable line_length\n"
+    texte += "\n" + ("import SwiftUI\n\n" if swiftui else "")
+    texte += f"/// {doc}\nenum {nom} {{\n{corps}}}\n"
+    if lignes_longues:
+        texte += "// swiftlint:enable line_length\n"
+    ctx.ecrire(relatif, texte)
+
+
+def chaine(valeur) -> str:
+    """Un littéral de chaîne Swift."""
+    texte = str(valeur).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")
+    return f'"{texte}"'
+
+
+def booleen(valeur) -> str:
+    return "true" if valeur else "false"
+
+
+def sans_pictogramme(libelle: str) -> str:
+    """Un libellé du site sans l'émoji qui le précède."""
+    return re.sub(r"^[^\w«(]+", "", libelle).strip()
+
+
+def objet(texte: str, motif: str) -> dict:
+    """L'objet littéral `{ … }` qui suit la première occurrence de `motif` (une expression
+    régulière), lu par `lecture_ts` — mêmes règles que ses tables."""
+    m = re.search(motif, texte)
+    if not m:
+        raise SystemExit(f"❌ {motif} introuvable")
+    return lecture_ts._Lecteur(lecture_ts._jetons(texte[texte.index("{", m.end() - 1):])).objet()
 
 
 def camel(nom: str) -> str:
@@ -50,7 +115,7 @@ def camel(nom: str) -> str:
 
 
 def propriete(jeton: str) -> str:
-    """`color-primary` → `primary`, `fil-rouge-fond` → `filRougeFond`."""
+    """`color-primary` → `primary`, `fil-rouge-fond` → `filRougeFond`, `kanban-ag` → `kanbanAg`."""
     return camel(jeton[len("color-"):]) if jeton.startswith("color-") else camel(jeton)
 
 

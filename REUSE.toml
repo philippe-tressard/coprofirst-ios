@@ -34,8 +34,8 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
 SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"
 
-# Le contrat de l'API, produit depuis le code de coprofirst (même auteur, seul
-# titulaire des droits) par scripts/generer-openapi.sh — PROVENANCE-OPENAPI.md.
+# Le contrat de l'API, publié par coprofirst (même auteur, seul titulaire des
+# droits) avec chaque release, normalisé par scripts/generer.py — PROVENANCE-OPENAPI.md.
 [[annotations]]
 path = "Paquets/ClientAPI/Sources/ClientAPI/openapi.json"
 precedence = "override"

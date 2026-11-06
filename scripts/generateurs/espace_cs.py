@@ -14,33 +14,12 @@ from __future__ import annotations
 import pathlib
 import re
 
-from generateurs._commun import tables_des_pages
+from generateurs._commun import FONCTIONS, chaine, ecrire_table, tables_des_pages
 
 SOURCES = [
     "front/src/lib/pages-roles.ts",
     "front/src/lib/components/CarteMembre.svelte",
 ]
-
-SORTIE = pathlib.Path("CoproFirst/Fonctions/EspaceCS/Genere/TablesEspaceCS.swift")
-
-
-def _chaine(valeur: str) -> str:
-    return '"' + str(valeur).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n") + '"'
-
-
-# L'en-tête que le module ÉCRIT : une chaîne, pas sa déclaration — REUSE ne doit pas la lire.
-# « GÉNÉRÉ » en 1re ligne : `verifier-depot.sh` l'exige d'un fichier de `Fonctions/<Menu>/Genere/`.
-# REUSE-IgnoreStart
-def _entete(ctx) -> str:
-    return (
-        "// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.\n"
-        "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
-        "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
-        "//\n"
-        "// swift-format-ignore-file\n"
-        f"// Source : coprofirst@{ctx.commit}, front/src/lib/pages-roles.ts, components/CarteMembre.svelte.\n"
-    )
-# REUSE-IgnoreEnd
 
 
 def _civilites(front: pathlib.Path) -> list[str]:
@@ -58,16 +37,15 @@ def generer(ctx) -> str:
         raise SystemExit("❌ la page espace-cs a disparu de PAGES_ROLES")
     descriptifs = [(o["id"], o["descriptif"]) for o in page.get("onglets") or [] if o.get("descriptif")]
     civilites = _civilites(ctx.front)
-    corps = _entete(ctx)
-    corps += "// swiftlint:disable line_length\n\n"
-    corps += "/// Ce que le site écrit de l'Espace conseil syndical et que le contrat ne sert pas.\n"
-    corps += "enum TablesEspaceCS {\n"
-    corps += "    /// Le descriptif de chaque onglet de la page `espace-cs` (texte du site).\n"
-    corps += "    static let descriptifs: [String: String] = [\n"
-    corps += "".join(f"        {_chaine(i)}: {_chaine(d)},\n" for i, d in descriptifs)
-    corps += "    ]\n"
-    corps += "    /// Les civilités d'une fiche de l'annuaire, dans l'ordre du site (`CIVILITES`).\n"
-    corps += "    static let civilites: [String] = [" + ", ".join(_chaine(c) for c in civilites) + "]\n"
-    corps += "}\n// swiftlint:enable line_length\n"
-    ctx.ecrire(SORTIE, corps)
+    corps = (
+        "    /// Le descriptif de chaque onglet de la page `espace-cs` (texte du site).\n"
+        "    static let descriptifs: [String: String] = [\n"
+        + "".join(f"        {chaine(i)}: {chaine(d)},\n" for i, d in descriptifs)
+        + "    ]\n"
+        "    /// Les civilités d'une fiche de l'annuaire, dans l'ordre du site (`CIVILITES`).\n"
+        f"    static let civilites: [String] = [{', '.join(chaine(c) for c in civilites)}]\n"
+    )
+    ecrire_table(ctx, FONCTIONS / "EspaceCS" / "Genere" / "TablesEspaceCS.swift",
+                 "front/src/lib/pages-roles.ts, components/CarteMembre.svelte", "TablesEspaceCS",
+                 "Ce que le site écrit de l'Espace conseil syndical et que le contrat ne sert pas.", corps)
     return f"{len(descriptifs)} descriptifs d'onglets ; {len(civilites)} civilités"

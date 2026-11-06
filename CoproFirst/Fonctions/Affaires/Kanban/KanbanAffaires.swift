@@ -76,7 +76,7 @@ struct KanbanAffaires: View {
                             withAnimation(mouvementReduit ? nil : .smooth) { visible = colonne.id }
                         } label: {
                             HStack(spacing: 6) {
-                                Circle().fill(colonne.teinte).frame(width: 8, height: 8)
+                                Circle().fill(palette[keyPath: colonne.teinte]).frame(width: 8, height: 8)
                                 Text(colonne.libelleCourt)
                                 Text(etat.cartes(de: colonne).count, format: .number)
                                     .monospacedDigit()
@@ -198,7 +198,7 @@ private struct ColonneDuKanban: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
-            .overlay(alignment: .top) { colonne.teinte.frame(height: 3) }
+            .overlay(alignment: .top) { palette[keyPath: colonne.teinte].frame(height: 3) }
             .accessibilityElement(children: .combine)
             .accessibilityAddTraits(.isHeader)
             ScrollView {

@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 # Les onglets du site
 
-GÉNÉRÉ par `scripts/generer-charte.py` — NE PAS MODIFIER À LA MAIN.
-Source : coprofirst@3c08a6aeb, `front/src/lib/pages.ts` (`PAGES`) et `pages-roles.ts` (`PAGES_ROLES`).
+GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
+Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), `front/src/lib/pages.ts` (`PAGES`) et `pages-roles.ts` (`PAGES_ROLES`).
 
 Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.
 

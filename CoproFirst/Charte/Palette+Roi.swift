@@ -1,9 +1,9 @@
+// GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
-// GÉNÉRÉ par scripts/generer-charte.py — NE PAS MODIFIER À LA MAIN.
 // swift-format-ignore-file
-// Source : coprofirst@3c08a6aeb, front/src/styles/socle.css, palette-sombre.css, palettes.css.
+// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/styles/socle.css, palette-sombre.css, palettes.css.
 
 import SwiftUI
 
@@ -83,6 +83,24 @@ extension Palette {
         filVert: Color(clair: RVBA(0x15, 0x80, 0x3D, 1), sombre: RVBA(0x1E, 0xB5, 0x56, 1)),
         filVertFond: Color(clair: RVBA(0xF0, 0xFD, 0xF4, 1), sombre: RVBA(0x17, 0x3B, 0x3B, 1)),
         filViolet: Color(clair: RVBA(0x6D, 0x28, 0xD9, 1), sombre: RVBA(0xB2, 0x8E, 0xEB, 1)),
-        filVioletFond: Color(clair: RVBA(0xF5, 0xF3, 0xFF, 1), sombre: RVBA(0x31, 0x34, 0x55, 1))
+        filVioletFond: Color(clair: RVBA(0xF5, 0xF3, 0xFF, 1), sombre: RVBA(0x31, 0x34, 0x55, 1)),
+        kanbanAg: Color(clair: RVBA(0x72, 0x40, 0xDA, 1), sombre: RVBA(0xA4, 0x7F, 0xF8, 1)),
+        kanbanAnnule: Color(clair: RVBA(0x5E, 0x64, 0x6F, 1), sombre: RVBA(0x9C, 0xA3, 0xAF, 1)),
+        kanbanCs: Color(clair: RVBA(0x15, 0x5C, 0xCE, 1), sombre: RVBA(0x58, 0x94, 0xF6, 1)),
+        kanbanFournisseur: Color(clair: RVBA(0xA5, 0x46, 0x02, 1), sombre: RVBA(0xF9, 0x73, 0x16, 1)),
+        kanbanSyndic: Color(clair: RVBA(0x7F, 0x5D, 0x05, 1), sombre: RVBA(0xF5, 0x9E, 0x0B, 1)),
+        kanbanTermine: Color(clair: RVBA(0x02, 0x72, 0x2F, 1), sombre: RVBA(0x22, 0xC5, 0x5E, 1)),
+        palier1: Color(clair: RVBA(0x2D, 0x2D, 0x2B, 1), sombre: RVBA(0xD3, 0xD1, 0xC7, 1)),
+        palier2: Color(clair: RVBA(0x58, 0x57, 0x51, 1), sombre: RVBA(0xB4, 0xB2, 0xA9, 1)),
+        palier3: Color(clair: RVBA(0x70, 0x6E, 0x66, 1), sombre: RVBA(0x8F, 0x8D, 0x85, 1)),
+        palier4: Color(clair: RVBA(0x8B, 0x89, 0x80, 1), sombre: RVBA(0x75, 0x73, 0x6C, 1)),
+        serie1: Color(clair: RVBA(0x2A, 0x78, 0xD6, 1), sombre: RVBA(0x54, 0x94, 0xE3, 1)),
+        serie2: Color(clair: RVBA(0xE3, 0x61, 0x2C, 1), sombre: RVBA(0xDC, 0x6F, 0x3C, 1)),
+        serie3: Color(clair: RVBA(0x09, 0x9C, 0x6B, 1), sombre: RVBA(0x04, 0xAC, 0x7A, 1)),
+        serie4: Color(clair: RVBA(0xB9, 0x7D, 0x04, 1), sombre: RVBA(0xBB, 0x89, 0x08, 1)),
+        serie5: Color(clair: RVBA(0xD1, 0x66, 0x8F, 1), sombre: RVBA(0xCE, 0x6F, 0x95, 1)),
+        serie6: Color(clair: RVBA(0x00, 0x83, 0x00, 1), sombre: RVBA(0x39, 0xAD, 0x3A, 1)),
+        serie7: Color(clair: RVBA(0x4A, 0x3A, 0xA7, 1), sombre: RVBA(0x8E, 0x82, 0xE6, 1)),
+        serie8: Color(clair: RVBA(0xE3, 0x49, 0x48, 1), sombre: RVBA(0xE7, 0x60, 0x5F, 1))
     )
 }

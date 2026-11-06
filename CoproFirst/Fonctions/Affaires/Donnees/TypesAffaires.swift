@@ -3,7 +3,7 @@
 
 import SwiftUI
 
-/// Les formes que remplit `TablesAffaires` (généré par `scripts/generer-affaires.py`).
+/// Les formes que remplit `TablesAffaires` (généré par `scripts/generer.py`).
 
 /// Une catégorie d'affaire, comme le formulaire du site la propose.
 struct CategorieAffaire: Identifiable, Hashable, Sendable {
@@ -30,12 +30,13 @@ struct NatureAffaire: Identifiable, Hashable, Sendable {
     var id: String { code }
 }
 
-/// Une colonne du Kanban : une étape du workflow.
+/// Une colonne du Kanban : une étape du workflow. Sa teinte est un jeton `--kanban-*`
+/// de la `Palette` (claire et sombre, celle de la résidence) — `palette[keyPath: teinte]`.
 struct ColonneKanban: Identifiable, Sendable {
     let id: String
     let libelle: String
     let libelleCourt: String
-    let teinte: Color
+    let teinte: KeyPath<Palette, Color> & Sendable
 }
 
 /// Une option du filtre « Suivi » qui réunit plusieurs statuts.

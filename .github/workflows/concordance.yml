@@ -1,0 +1,117 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Concordance avec CoproFirst (#20 ; standards/09 §8, règle 2), chaque jour, deux
+# verdicts distincts (scripts/concordance.py) :
+#   1. ÉCART AU PLANCHER — ce qui est généré n'est plus ce que le plancher
+#      (scripts/generateurs/_plancher.py) régénère, ou l'API simulée sert un champ
+#      que le serveur ne sert pas : ROUGE, ticket « concordance » ouvert ou complété ;
+#   2. MONTÉE POSSIBLE — une version publiée au-dessus du plancher : information,
+#      jamais rouge, ticket « a-monter » ouvert une fois et tenu à jour (ce que la
+#      montée exigerait : champs devenus requis, fichiers qui changeraient).
+# Une version illisible : INCONNU, rouge, jamais vert. Les tickets se ferment à la
+# main, avec la preuve.
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: Concordance avec CoproFirst
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+    inputs:
+      simuler_ecart:
+        description: "Poser un écart exprès (le contrôle doit passer au rouge, sans ticket)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: concordance
+  cancel-in-progress: false
+
+jobs:
+  concordance:
+    name: Écart au plancher, montée possible
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Autotests (un écart posé exprès est vu, un cas zéro passe)
+        run: |
+          python3 -I scripts/concordance.py --autotest
+          python3 -I scripts/verifier-fixtures.py --autotest
+      - name: Écart au plancher
+        id: plancher
+        env:
+          SIMULER: ${{ inputs.simuler_ecart && '--simuler-ecart' || '' }}
+        run: |
+          set +e
+          # shellcheck disable=SC2086 # SIMULER est vide ou une seule option.
+          python3 -I scripts/concordance.py --plancher --rapport "$RUNNER_TEMP/plancher.md" $SIMULER
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Montée possible
+        id: montee
+        run: |
+          set +e
+          python3 -I scripts/concordance.py --montee --rapport "$RUNNER_TEMP/montee.md"
+          echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Tickets
+        if: ${{ !inputs.simuler_ecart }}
+        env:
+          PLANCHER: ${{ steps.plancher.outputs.code }}
+          MONTEE: ${{ steps.montee.outputs.code }}
+        run: |
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          ouvert() {
+            gh issue list --repo "$GITHUB_REPOSITORY" --label "$1" --state open --json number --jq '.[0].number // empty'
+          }
+          etiquette() {
+            gh label create "$1" --repo "$GITHUB_REPOSITORY" --color "$2" --description "$3" --force
+          }
+          # 1. Écart au plancher ou INCONNU : rouge, un ticket ouvert ou complété.
+          ROUGE=$(ouvert concordance)
+          if [ "$PLANCHER" != "0" ] || [ "$MONTEE" = "2" ]; then
+            CORPS="$RUNNER_TEMP/rouge.md"
+            { cat "$RUNNER_TEMP/plancher.md" 2>/dev/null || echo "❓ INCONNU — aucun rapport du plancher (code $PLANCHER)."
+              [ "$MONTEE" != "2" ] || cat "$RUNNER_TEMP/montee.md"
+              printf '\nExécution : %s\n' "$RUN"; } > "$CORPS"
+            if [ -n "$ROUGE" ]; then
+              gh issue comment "$ROUGE" --repo "$GITHUB_REPOSITORY" --body-file "$CORPS"
+            else
+              etiquette concordance D93F0B "Écart entre l'app et son plancher de coprofirst, ou version illisible (#20)"
+              gh issue create --repo "$GITHUB_REPOSITORY" --label concordance --body-file "$CORPS" \
+                --title "Concordance avec CoproFirst : écart au plancher ou version illisible"
+            fi
+          elif [ -n "$ROUGE" ]; then
+            gh issue comment "$ROUGE" --repo "$GITHUB_REPOSITORY" \
+              --body "✅ Plus d'écart au plancher ($RUN). À fermer à la main, avec la preuve."
+          fi
+          # 2. Montée possible : une information, un seul ticket, tenu à jour.
+          if [ "$MONTEE" = "3" ]; then
+            printf '\nMis à jour par %s\n' "$RUN" >> "$RUNNER_TEMP/montee.md"
+            A_MONTER=$(ouvert a-monter)
+            if [ -n "$A_MONTER" ]; then
+              gh issue edit "$A_MONTER" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/montee.md"
+            else
+              etiquette a-monter 0E8A16 "Une version de coprofirst publiée au-dessus du plancher de l'app (#20)"
+              gh issue create --repo "$GITHUB_REPOSITORY" --label a-monter --body-file "$RUNNER_TEMP/montee.md" \
+                --title "CoproFirst : une version publiée au-dessus du plancher de l'app"
+            fi
+          fi
+      - name: Verdict
+        env:
+          PLANCHER: ${{ steps.plancher.outputs.code }}
+          MONTEE: ${{ steps.montee.outputs.code }}
+        run: |
+          [ "$MONTEE" != "3" ] || echo "ℹ️ montée possible — ticket « a-monter » (information, pas un rouge)"
+          case "$PLANCHER/$MONTEE" in
+            0/0 | 0/3) echo "✅ aucun écart au plancher" ;;
+            1/*) echo "❌ écart au plancher — ticket « concordance »"; exit 1 ;;
+            *) echo "❓ INCONNU — rien n'a pu être comparé : ce n'est pas un vert"; exit 1 ;;
+          esac
