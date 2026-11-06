@@ -201,6 +201,12 @@ seule la CI le dit.
 3. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
    journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
    affecting … » donne le type réellement trouvé).
+4. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
+   peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
+   attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
+   joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
+   test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
+   « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
 
 ## À trancher quand le premier cas arrive
 
