@@ -118,6 +118,5 @@ def generer(ctx) -> str:
     corps = categories(ctx) + kanban(ctx) + statuts(ctx)
     ecrire_table(ctx, FONCTIONS / "Affaires" / "Genere" / "TablesAffaires.swift",
                  "front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts", "TablesAffaires",
-                 "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps,
-                 swiftui=True, lignes_longues=True)
+                 "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps, swiftui=True)
     return "catégories, natures, colonnes du Kanban et statuts des affaires"

@@ -47,6 +47,5 @@ def generer(ctx) -> str:
     )
     ecrire_table(ctx, FONCTIONS / "EspaceCS" / "Genere" / "TablesEspaceCS.swift",
                  "front/src/lib/pages-roles.ts, components/CarteMembre.svelte", "TablesEspaceCS",
-                 "Ce que le site écrit de l'Espace conseil syndical et que le contrat ne sert pas.", corps,
-                 lignes_longues=True)
+                 "Ce que le site écrit de l'Espace conseil syndical et que le contrat ne sert pas.", corps)
     return f"{len(descriptifs)} descriptifs d'onglets ; {len(civilites)} civilités"

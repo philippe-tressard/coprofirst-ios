@@ -10,9 +10,9 @@
 
 import SwiftUI
 
-/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*`, `--fil-*` ou `--kanban-*`
-/// chacune, claire et sombre. La charte est `seine` ; une résidence choisit la sienne
-/// (`site_palette`).
+/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*`, `--fil-*`, `--kanban-*`,
+/// `--serie-*` ou `--palier-*` chacune, claire et sombre. La charte est `seine` ; une
+/// résidence choisit la sienne (`site_palette`).
 struct Palette: Sendable {
     let code: String
     /// `--color-accent`
@@ -175,6 +175,30 @@ struct Palette: Sendable {
     let kanbanSyndic: Color
     /// `--kanban-termine`
     let kanbanTermine: Color
+    /// `--palier-1`
+    let palier1: Color
+    /// `--palier-2`
+    let palier2: Color
+    /// `--palier-3`
+    let palier3: Color
+    /// `--palier-4`
+    let palier4: Color
+    /// `--serie-1`
+    let serie1: Color
+    /// `--serie-2`
+    let serie2: Color
+    /// `--serie-3`
+    let serie3: Color
+    /// `--serie-4`
+    let serie4: Color
+    /// `--serie-5`
+    let serie5: Color
+    /// `--serie-6`
+    let serie6: Color
+    /// `--serie-7`
+    let serie7: Color
+    /// `--serie-8`
+    let serie8: Color
 }
 
 extension Palette {

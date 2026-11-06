@@ -68,12 +68,13 @@ class Contexte:
 
 
 def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, doc: str, corps: str,
-                 *, swiftui: bool = False, lignes_longues: bool = False) -> None:
+                 *, swiftui: bool = False) -> None:
     """Une table d'un menu (`Fonctions/<Menu>/Genere/`) : un `enum` de constantes.
 
-    `lignes_longues` suspend la longueur de ligne de SwiftLint pour le fichier (une
-    entrée par ligne, sans retour) ; ne l'ajouter que là où une ligne la dépasse —
-    `superfluous_disable_command` refuse sinon."""
+    Une entrée par ligne, sans retour : si une ligne dépasse 120 colonnes, la longueur de
+    ligne de SwiftLint est suspendue pour le fichier — et seulement alors, car
+    `superfluous_disable_command` refuse une suspension qui ne sert à rien."""
+    lignes_longues = any(len(ligne) > 120 for ligne in corps.splitlines())
     texte = ctx.entete(source)
     if lignes_longues:
         texte += "// swiftlint:disable line_length\n"
@@ -97,6 +98,15 @@ def booleen(valeur) -> str:
 def sans_pictogramme(libelle: str) -> str:
     """Un libellé du site sans l'émoji qui le précède."""
     return re.sub(r"^[^\w«(]+", "", libelle).strip()
+
+
+def objet(texte: str, motif: str) -> dict:
+    """L'objet littéral `{ … }` qui suit la première occurrence de `motif` (une expression
+    régulière), lu par `lecture_ts` — mêmes règles que ses tables."""
+    m = re.search(motif, texte)
+    if not m:
+        raise SystemExit(f"❌ {motif} introuvable")
+    return lecture_ts._Lecteur(lecture_ts._jetons(texte[texte.index("{", m.end() - 1):])).objet()
 
 
 def camel(nom: str) -> str:

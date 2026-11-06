@@ -17,10 +17,8 @@ Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
 
 from __future__ import annotations
 
-import re
-
 import lecture_ts
-from generateurs._commun import FONCTIONS, chaine, ecrire_table
+from generateurs._commun import FONCTIONS, chaine, ecrire_table, objet
 
 SOURCES = [
     "front/src/lib/pages.ts",
@@ -32,15 +30,6 @@ SOURCES = [
 
 def lire(ctx, nom: str) -> str:
     return ctx.lire(f"front/src/lib/{nom}")
-
-
-def objet_par_attribut(texte: str, nom: str) -> dict:
-    """L'objet littéral passé à `parAttribut({...})` dans `const <nom> = parAttribut(`."""
-    m = re.search(rf"\bconst {re.escape(nom)}\s*=\s*parAttribut\(", texte)
-    if not m:
-        raise SystemExit(f"❌ {nom} = parAttribut(...) introuvable")
-    # Le lecteur de littéraux de lecture_ts (tableaux et objets) : mêmes règles que `table`.
-    return lecture_ts._Lecteur(lecture_ts._jetons(texte[m.end():])).objet()
 
 
 def page(ctx, identifiant: str) -> dict:
@@ -69,7 +58,7 @@ def acces(ctx) -> str:
     statuts = [(s["val"], s["label"], s["badge"]) for s in lecture_ts.table(texte, "STATUTS_ACCES")]
     types = "".join(
         f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in lecture_ts.table(texte, "TYPES_ACCES"))
-    bail = objet_par_attribut(lire(ctx, "bail.ts"), "ETAT")
+    bail = objet(lire(ctx, "bail.ts"), r"\bconst ETAT\s*=\s*parAttribut\(")
     return (
         descriptifs(ctx, "mon-lot")
         + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
@@ -100,10 +89,8 @@ def prestataires(ctx) -> str:
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Acces" / "Genere" / "TablesAcces.swift",
                  "front/src/lib/pages.ts, types-acces.ts, bail.ts", "TablesAcces",
-                 "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx),
-                 lignes_longues=True)
+                 "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx))
     ecrire_table(ctx, FONCTIONS / "Prestataires" / "Genere" / "TablesPrestataires.swift",
                  "front/src/lib/pages.ts, prestataires.ts", "TablesPrestataires",
-                 "Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.", prestataires(ctx),
-                 lignes_longues=True)
+                 "Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.", prestataires(ctx))
     return "accès, baux et prestataires"
