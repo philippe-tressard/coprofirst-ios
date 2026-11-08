@@ -68,8 +68,11 @@ final class DelegationsCSUITests: XCTestCase {
         app.elementAcces("reporting.mode.entretien").tap()
         XCTAssertTrue(app.elementAcces("reporting.affaire.40").waitForExistence(timeout: 5), "les entretiens")
         // Renouvellements (#56) : le relevé servi, ses compteurs et ses échéances.
-        app.elementAcces("reporting.mode.renouvellements").tap()
-        XCTAssertTrue(app.elementAcces("renouvellements.compteurs").waitForExistence(timeout: 5), "les compteurs")
+        // Troisième pastille de la rangée : elle peut déborder à droite, la rangée défile.
+        let renouvellements = app.elementAcces("reporting.mode.renouvellements")
+        for _ in 0..<4 where !renouvellements.isHittable { app.elementAcces("reporting.mode.entretien").swipeLeft() }
+        renouvellements.tap()
+        XCTAssertTrue(app.elementAcces("renouvellements.preavis").waitForExistence(timeout: 5), "les compteurs")
         XCTAssertTrue(app.elementAcces("renouvellements.contrat.11").exists, "le contrat en préavis")
         LancementCaptures.capturer("cs-reporting-2-renouvellements")
 

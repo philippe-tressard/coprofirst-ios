@@ -13,9 +13,12 @@ struct VueRenouvellements: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             RangeeDeChiffres {
+                // L'identifiant sur un CHIFFRE (un élément d'accessibilité), jamais sur la
+                // rangée : une mise en page n'en est pas un, le test ne la trouverait pas.
                 Chiffre(
                     valeur: releve.contratsEnPreavis, libelle: TextesRenouvellements.contratsEnPreavis,
                     alerte: releve.contratsEnPreavis > 0)
+                .accessibilityIdentifier("renouvellements.preavis")
                 Chiffre(
                     valeur: releve.echeancesContratsAnnee,
                     libelle: TextesRenouvellements.echeancesAnnee(releve.annee))
@@ -23,7 +26,6 @@ struct VueRenouvellements: View {
                     valeur: releve.auditsAPlanifier, libelle: TextesRenouvellements.auditsAPlanifier,
                     alerte: releve.auditsAPlanifier > 0)
             }
-            .accessibilityIdentifier("renouvellements.compteurs")
             SectionContrats(releve: releve)
             SectionDiagnostics(releve: releve)
         }
