@@ -6,6 +6,7 @@ import SwiftUI
 /// Écran 1 — « le sceau » : le nom, une devise, deux portes.
 struct AccueilView: View {
     @Environment(Parcours.self) private var parcours
+    @Environment(Vitrine.self) private var vitrine
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
     @State private var apparu = false
@@ -24,6 +25,8 @@ struct AccueilView: View {
             // Une seule entrée, à la première ouverture : le sceau se pose.
             withAnimation(.smooth(duration: 0.5)) { apparu = true }
         }
+        // La porte de la vitrine : son contenu se relit ici, avant qu'on la passe (#51).
+        .task { await vitrine.actualiser() }
     }
 
     private var sceau: some View {

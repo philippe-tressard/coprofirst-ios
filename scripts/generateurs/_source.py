@@ -5,13 +5,16 @@
 Une règle pour tous les générateurs (#34, #20) : coprofirst se lit à une version
 taguée `vX.Y.Z` qui a sa release — jamais l'arbre de travail d'un clone, jamais une
 branche. La version et son commit sont nommés dans l'en-tête « GÉNÉRÉ » de chaque
-fichier. Ce module est le SEUL à toucher coprofirst : `verifier-depot.sh` refuse
-qu'un autre script de génération le fasse.
+fichier. Ce module est le SEUL à toucher coprofirst et coprofirst-site :
+`verifier-depot.sh` refuse qu'un autre script de génération le fasse.
 
 - les fichiers lus : l'archive du tag servie par GitHub, dont l'en-tête pax porte le
   commit ; seuls les fichiers DÉCLARÉS (`SOURCES` des modules) en sont extraits — un
   module qui lit un fichier non déclaré échoue, la concordance ne le manque donc pas ;
-- les pièces jointes de la release (`openapi.json`, le contrat publié).
+- les pièces jointes de la release (`openapi.json`, le contrat publié) ;
+- un fichier de coprofirst-site (le contenu de la vitrine, #51), lu à un COMMIT
+  nommé par le générateur qui le lit (`fichier_du_site`) : un commit est immuable,
+  comme une étiquette — jamais une branche.
 
 Aucun clone, aucun chemin du poste : le runner de la CI lit exactement comme lui.
 Toute lecture impossible lève `SourceIllisible`, que la concordance rend INCONNU.
@@ -29,6 +32,7 @@ import urllib.error
 import urllib.request
 
 DEPOT = os.environ.get("COPROFIRST_DEPOT", "philippe-tressard/coprofirst")
+DEPOT_SITE = os.environ.get("COPROFIRST_SITE_DEPOT", "philippe-tressard/coprofirst-site")
 VERSION = re.compile(r"^v\d+\.\d+\.\d+$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
@@ -99,3 +103,10 @@ class Version:
         if nom not in self._pieces:
             raise SourceIllisible(f"{self.etiquette} : la release ne joint pas {nom}")
         return _lire(self._pieces[nom])
+
+
+def fichier_du_site(commit: str, chemin: str) -> bytes:
+    """Un fichier de coprofirst-site (`site/contenu.json`) au commit `commit` (40 hexa)."""
+    if not COMMIT.match(commit):
+        raise SourceIllisible(f"coprofirst-site : « {commit} » n'est pas un commit (40 caractères hexadécimaux)")
+    return _lire(f"https://raw.githubusercontent.com/{DEPOT_SITE}/{commit}/{chemin}")

@@ -7,24 +7,26 @@ import SwiftUI
 /// ⚠️ Pas encore vu par Philippe.
 struct DemoView: View {
     @Environment(Parcours.self) private var parcours
+    @Environment(Vitrine.self) private var vitrine
     @Environment(\.palette) private var palette
     @State private var enCours: String?
     @State private var erreur: ErreurService?
     @Environment(\.dynamicTypeSize) private var tailleTexte
 
     var body: some View {
+        let page = vitrine.pages.demo
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(ContenuVitrine.titreDemo)
+                    Text(page.titre)
                         .font(.titre(.largeTitle))
                         .foregroundStyle(palette.text)
                         .accessibilityAddTraits(.isHeader)
-                    Text(ContenuVitrine.chapeauDemo)
+                    Text(page.chapeau)
                         .font(.body)
                         .foregroundStyle(palette.textMuted)
                 }
-                ForEach(ContenuVitrine.personnages) { personnage in
+                ForEach(page.personnages) { personnage in
                     Button {
                         Task { await entrer(personnage) }
                     } label: {
@@ -55,13 +57,13 @@ struct DemoView: View {
     /// « Effacée chaque nuit, rien n'est réellement envoyé » — collé en bas, ou dans
     /// la page quand le texte est si grand qu'un bandeau couvrirait l'écran.
     private var avertissement: some View {
-        Label(ContenuVitrine.avertissementDemo, systemImage: "flask.fill")
+        Label(vitrine.pages.demo.avertissement, systemImage: "flask.fill")
             .font(.footnote.weight(.medium))
             .foregroundStyle(palette.text)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func entrer(_ personnage: ContenuVitrine.Personnage) async {
+    private func entrer(_ personnage: PageDemo.Personnage) async {
         enCours = personnage.code
         defer { enCours = nil }
         do {
@@ -85,7 +87,7 @@ struct DemoView: View {
 }
 
 private struct CartePersonnage: View {
-    let personnage: ContenuVitrine.Personnage
+    let personnage: PageDemo.Personnage
     let enCours: Bool
     @Environment(\.palette) private var palette
     @Environment(\.dynamicTypeSize) private var tailleTexte

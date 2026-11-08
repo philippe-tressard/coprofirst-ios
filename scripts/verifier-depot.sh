@@ -25,9 +25,9 @@
 #      parallèles sont des dépôts, pas des fichiers du projet ;
 #  10. la table de parité avec le site (Parite/PARITE.md) classe chaque onglet,
 #      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
-#  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, par
-#      scripts/generateurs/_source.py seul : ni clone, ni arbre de travail, ni
-#      branche (#34, #20) ;
+#  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, et coprofirst-site
+#      qu'à un commit épinglé (#51), par scripts/generateurs/_source.py seul : ni
+#      clone, ni arbre de travail, ni branche (#34, #20) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. la relance des tests au simulateur reste bornée et déclarée : autotests de

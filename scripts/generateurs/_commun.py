@@ -10,7 +10,7 @@ import re
 from dataclasses import dataclass, field
 
 import lecture_ts
-from generateurs._source import DEPOT, Version
+from generateurs._source import DEPOT, DEPOT_SITE, Version, fichier_du_site
 
 CHARTE = pathlib.Path("CoproFirst/Charte")
 NAVIGATION = pathlib.Path("CoproFirst/Navigation")
@@ -43,14 +43,15 @@ class Contexte:
     # L'en-tête que le script ÉCRIT dans chaque fichier généré : une chaîne, pas la
     # déclaration de ce module — REUSE ne doit pas la lire.
     # REUSE-IgnoreStart
-    def entete(self, source: str) -> str:
+    def entete(self, source: str, provenance: str | None = None) -> str:
+        """`provenance` : une autre source que la version de coprofirst (`provenance_site`)."""
         return (
             f"// {SIGNATURE}\n"
             "// SPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
             "// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n"
             "//\n"
             "// swift-format-ignore-file\n"
-            f"// Source : {self.provenance}, {source}.\n"
+            f"// Source : {provenance or self.provenance}, {source}.\n"
         )
     # REUSE-IgnoreEnd
 
@@ -62,20 +63,29 @@ class Contexte:
             f.write(texte)
         self.ecrits.append(pathlib.Path(relatif))
 
+    @staticmethod
+    def provenance_site(commit: str) -> str:
+        return f"{DEPOT_SITE} (commit {commit})"
+
+    @staticmethod
+    def lire_site(commit: str, chemin: str) -> bytes:
+        """Un fichier de coprofirst-site, au commit que le générateur épingle (#51)."""
+        return fichier_du_site(commit, chemin)
+
     def lire(self, relatif: str) -> str:
         """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`)."""
         return (self.racine / relatif).read_text(encoding="utf-8")
 
 
 def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, doc: str, corps: str,
-                 *, swiftui: bool = False) -> None:
+                 *, swiftui: bool = False, provenance: str | None = None) -> None:
     """Une table d'un menu (`Fonctions/<Menu>/Genere/`) : un `enum` de constantes.
 
     Une entrée par ligne, sans retour : si une ligne dépasse 120 colonnes, la longueur de
     ligne de SwiftLint est suspendue pour le fichier — et seulement alors, car
     `superfluous_disable_command` refuse une suspension qui ne sert à rien."""
     lignes_longues = any(len(ligne) > 120 for ligne in corps.splitlines())
-    texte = ctx.entete(source)
+    texte = ctx.entete(source, provenance)
     if lignes_longues:
         texte += "// swiftlint:disable line_length\n"
     texte += "\n" + ("import SwiftUI\n\n" if swiftui else "")

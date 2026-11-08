@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Tout ce que l'app tire de coprofirst, GÉNÉRÉ — jamais recopié à la main
 (garde-fou de `projets.json`) : contrat d'API, charte, palettes, pages et onglets,
-tables des menus.
+tables des menus — et la copie embarquée du contenu de la vitrine, lue dans
+coprofirst-site à un commit épinglé (`generateurs/vitrine.py`, #51).
 
 Les générateurs vivent dans `scripts/generateurs/`, un module par domaine ; ce script
 les DÉCOUVRE et les lance tous, dans l'ordre de leur nom, sur UNE version publiée de
