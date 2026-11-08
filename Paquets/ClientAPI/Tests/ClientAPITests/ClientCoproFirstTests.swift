@@ -76,6 +76,8 @@ func lesDatesDeLAPISeLisent(texte: String) throws {
     let json = #"""
         {"id": 1, "numero": "A-1", "titre": "T", "description": "D", "categorie": "c",
          "statut": "ouvert", "priorite": "haute", "cree_le": "2026-11-02T09:30:00Z",
+         "urgente": true, "categorie_libelle": "C", "statut_libelle": "Ouvert", "close": false,
+         "colonne_kanban": null, "nouveau": false, "nom_proprietaire": "Alix Exemple",
          "me_concerne": true, "perimetre_cible": null, "auteur_nom": null}
         """#
     let decodeur = JSONDecoder()

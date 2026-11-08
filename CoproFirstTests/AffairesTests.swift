@@ -140,7 +140,8 @@ import Testing
     let affaires: any ServiceAffaires = service
     let duCarnet = try await residence.perimetres(ServiceSimule.residence)
     let deLAffaire = try await affaires.perimetres(ServiceSimule.residence)
-    #expect(duCarnet == deLAffaire && duCarnet == ServiceSimule.perimetres)
+    let arbre = try FixturesPerimetres.lus()
+    #expect(duCarnet == deLAffaire && duCarnet == arbre)
     let _: any ServicePerimetres = ServiceAPI()
 }
 
@@ -197,9 +198,10 @@ import Testing
 
 /// Le lieu présélectionné est celui que le serveur DÉSIGNE (`par_defaut`) : l'app ne
 /// refait pas le tri des racines ; sans désignation, aucun.
-@Test func lePerimetreParDefautEstCeluiQueLeServeurDesigne() {
-    #expect(Perimetre.codeParDefaut(ServiceSimule.perimetres) == "copropriete")
-    let sansDefaut = ServiceSimule.perimetres.map { Perimetre(code: $0.code, libelle: $0.libelle) }
+@Test func lePerimetreParDefautEstCeluiQueLeServeurDesigne() throws {
+    let arbre = try FixturesPerimetres.lus()
+    #expect(Perimetre.codeParDefaut(arbre) == "copropriete")
+    let sansDefaut = arbre.map { Perimetre(code: $0.code, libelle: $0.libelle) }
     #expect(Perimetre.codeParDefaut(sansDefaut) == nil)
     #expect(Perimetre.codeParDefaut([]) == nil, "un arbre vide n'a pas de défaut")
 }

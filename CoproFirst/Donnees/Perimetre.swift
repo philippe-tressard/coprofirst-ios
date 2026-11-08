@@ -37,6 +37,15 @@ struct Perimetre: Identifiable, Hashable, Sendable {
 
     /// Le code du périmètre que le serveur désigne par défaut, s'il en désigne un.
     static func codeParDefaut(_ perimetres: [Perimetre]) -> String? { perimetres.first(where: \.parDefaut)?.code }
+
+    /// Les libellés de `codes` (`perimetre_cible`), lus dans l'arbre servi : le périmètre
+    /// par défaut se TAIT (`BadgePerimetre` du site), et un code que l'arbre ne connaît pas
+    /// (nœud retiré, arbre pas encore lu) ne s'affiche jamais brut (« bat:2 »).
+    static func libelles(_ codes: [String], parmi perimetres: [Perimetre]) -> [String] {
+        codes.compactMap { code in
+            perimetres.first { $0.code == code }.flatMap { $0.parDefaut ? nil : $0.libelle }
+        }
+    }
 }
 
 /// GET /perimetres : les périmètres ACTIFS, dans l'ordre de l'arbre servi. Les menus
@@ -58,14 +67,5 @@ extension ServiceAPI: ServicePerimetres {
 }
 
 extension ServiceSimule: ServicePerimetres {
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] { Self.perimetres }
-
-    /// L'arbre inventé : une racine, quatre lieux ; le carnet filtre sur `bat_a`.
-    static let perimetres: [Perimetre] = [
-        Perimetre(code: "copropriete", libelle: "Toute la copropriété", parDefaut: true),
-        Perimetre(code: "bat_a", libelle: "Bâtiment A", profondeur: 1),
-        Perimetre(code: "bat_b", libelle: "Bâtiment B", profondeur: 1),
-        Perimetre(code: "parking", libelle: "Parking", profondeur: 1),
-        Perimetre(code: "jardin", libelle: "Jardin", profondeur: 1),
-    ]
+    func perimetres(_ installation: Installation) async throws -> [Perimetre] { try FixturesPerimetres.lus() }
 }

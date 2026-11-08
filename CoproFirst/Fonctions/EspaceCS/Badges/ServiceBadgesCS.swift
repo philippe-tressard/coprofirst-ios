@@ -7,8 +7,8 @@ import Foundation
 /// Ce que l'onglet « Badges & télécommandes » demande à une installation (#15) : le
 /// parc de la copropriété, badges Vigik et télécommandes confondus — un RÉFÉRENTIEL
 /// qu'on consulte (`pages-roles.ts`). Le serveur refuse ces routes à qui n'est pas du
-/// conseil.
-protocol ServiceBadgesCS: Sendable {
+/// conseil. Ce qu'un accès ouvre se dit par l'arbre des périmètres (`ServicePerimetres`).
+protocol ServiceBadgesCS: ServicePerimetres {
     /// GET /acces/admin/vigiks et /acces/admin/telecommandes.
     func parc(_ installation: Installation) async throws -> [AccesDuParc]
 }
@@ -29,7 +29,7 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     var porteurRang: Int
     var porteurId: Int?
     var lotLibelle: String?
-    /// Ce que l'accès ouvre, tel que le serveur le nomme.
+    /// Ce que l'accès ouvre : des CODES de périmètre — `Perimetre.libelles` les rend.
     var perimetreCible: [String]
     var statut: String
     var chezLocataire: Bool

@@ -221,6 +221,19 @@ private let toutes = PagesParDefaut.toutes
     #expect(parc.last?.porteurId == nil)
 }
 
+/// Ce qu'un accès ouvre se dit par le LIBELLÉ de l'arbre servi, le périmètre par défaut
+/// tu (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo, 08/11/2026, #64).
+@Test func ceQuUnAccesOuvreSeDitParSonLibelle() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let arbre = try await service.perimetres(ServiceSimule.residence)
+    let parc = try await service.parc(ServiceSimule.residence)
+    let premier = try #require(parc.first { $0.id == "vigik-1" })
+    #expect(premier.perimetreCible == ["copropriete", "bat_a"], "des codes, comme le serveur")
+    #expect(Perimetre.libelles(premier.perimetreCible, parmi: arbre) == ["Bâtiment A"])
+    #expect(Perimetre.libelles(["bat:2"], parmi: arbre).isEmpty, "un code inconnu ne s'affiche pas brut")
+    #expect(Perimetre.libelles(["bat_b"], parmi: []).isEmpty, "sans arbre, rien plutôt qu'un code")
+}
+
 // MARK: - Annuaire CS & Syndic
 
 @Test func unSeulPresidentUnSeulPrincipal() {

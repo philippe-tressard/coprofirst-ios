@@ -18,10 +18,10 @@ enum FixturesBadgesCS {
     static let vigiks = #"""
         [
           {"id": 1, "code": "4521", "porteur_id": 21, "porteur_nom": "Alix Exemple", "porteur_rang": 2,
-           "lot_id": 12, "lot_libelle": "Lot 12 — appartement", "perimetre_cible": ["Copropriété", "Bâtiment A"],
+           "lot_id": 12, "lot_libelle": "Lot 12 — appartement", "perimetre_cible": ["copropriete", "bat_a"],
            "statut": "actif", "chez_locataire": false, "cree_le": "2026-02-10T09:00:00"},
           {"id": 2, "code": "417D5927", "porteur_id": 22, "porteur_nom": "Basile Fictif", "porteur_rang": 1,
-           "lot_id": 21, "lot_libelle": "Lot 21 — appartement", "perimetre_cible": ["Copropriété", "Bâtiment B"],
+           "lot_id": 21, "lot_libelle": "Lot 21 — appartement", "perimetre_cible": ["copropriete", "bat_b"],
            "statut": "perdu", "chez_locataire": true, "cree_le": "2026-03-02T09:00:00"},
           {"id": 4, "code": "7731", "porteur_id": 23, "porteur_nom": "Céleste Inventé", "porteur_rang": 3,
            "lot_id": null, "lot_libelle": null, "perimetre_cible": [], "statut": "suspendu",
@@ -33,10 +33,10 @@ enum FixturesBadgesCS {
     static let telecommandes = #"""
         [
           {"id": 3, "code": "TC-0042", "porteur_id": 21, "porteur_nom": "Alix Exemple", "porteur_rang": 2,
-           "lot_id": 104, "lot_libelle": "Lot 104 — parking", "perimetre_cible": ["Portail du parking"],
+           "lot_id": 104, "lot_libelle": "Lot 104 — parking", "perimetre_cible": ["parking"],
            "statut": "actif", "chez_locataire": false, "cree_le": "2026-04-18T09:00:00"},
           {"id": 5, "code": "TC-0007", "porteur_id": null, "porteur_nom": "", "porteur_rang": 0,
-           "lot_id": 105, "lot_libelle": "Lot 105 — parking", "perimetre_cible": ["Portail du parking"],
+           "lot_id": 105, "lot_libelle": "Lot 105 — parking", "perimetre_cible": ["parking"],
            "statut": "actif", "chez_locataire": false, "cree_le": "2026-05-09T09:00:00"}
         ]
         """#
