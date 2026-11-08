@@ -4,10 +4,9 @@
 import SwiftUI
 
 /// Une délégation : qui est aidé, par qui, son état et sa période, son motif ; et les
-/// gestes que la délégation admet (`acceptable`, `revocable`).
+/// gestes que le serveur ouvre au compte qui lit (`peutAccepter`, `peutRevoquer`, #56).
 struct CarteDelegation: View {
     let delegation: Delegation
-    let acceptable: Bool
     let enCours: Bool
     let accepter: () -> Void
     let revoquer: () -> Void
@@ -27,7 +26,7 @@ struct CarteDelegation: View {
                         .font(.subheadline.italic())
                         .foregroundStyle(palette.textMuted)
                 }
-                if acceptable || delegation.revocable { gestes }
+                if delegation.peutAccepter || delegation.peutRevoquer { gestes }
             }
         }
         .accessibilityElement(children: .contain)
@@ -69,13 +68,13 @@ struct CarteDelegation: View {
 
     private var gestes: some View {
         HStack(spacing: 10) {
-            if acceptable {
+            if delegation.peutAccepter {
                 Button(TextesDelegations.accepter, action: accepter)
                     .buttonStyle(.borderedProminent)
                     .tint(palette.primaryPlein)
                     .accessibilityIdentifier("delegation.\(delegation.id).accepter")
             }
-            if delegation.revocable {
+            if delegation.peutRevoquer {
                 Button(TextesDelegations.revoquer, role: .destructive, action: revoquer)
                     .buttonStyle(.bordered)
                     .tint(palette.danger)

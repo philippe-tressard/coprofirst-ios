@@ -12,8 +12,7 @@ enum TextesReporting {
     /// Ce que l'app laisse au site, dit une fois sous le suivi.
     static let surLeSite =
         "La relance du syndic, les points CS / Syndic et leurs comptes rendus, les résumés de l’assistant, "
-        + "la fusion des affaires liées, l’export PDF, la synthèse des prestataires et les renouvellements "
-        + "se font sur le site."
+        + "la fusion des affaires liées, l’export PDF et la synthèse des prestataires se font sur le site."
 
     /// « 5 affaires non fermées », « 1 entretien non clos ».
     static func nonFermees(_ nombre: Int, entretien: Bool) -> String {

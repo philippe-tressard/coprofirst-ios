@@ -4,15 +4,15 @@
 import ClientAPI
 import Foundation
 
-/// Les Annonces Hall par le client GÉNÉRÉ. Leurs réponses ne sont pas typées dans le
-/// contrat : elles se relisent en miroir (`Relecture`) — besoin noté pour coprofirst#2525.
+/// Les Annonces Hall par le client GÉNÉRÉ : chaque réponse se lit par son type
+/// (`AnnonceHallRead`, contrat 1.8.0 — coprofirst#2525).
 extension ServiceAPI: ServiceAnnoncesHallCS {
     func annoncesHall(archivees: Bool, dans installation: Installation) async throws -> [AnnonceHall] {
         let sortie = try await appeler {
             try await client(installation.adresse).getAnnoncesHall(query: .init(archivees: archivees))
         }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([AnnonceHall].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(AnnonceHall.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -26,16 +26,15 @@ extension ServiceAPI: ServiceAnnoncesHallCS {
             titre: saisie.titre.trimmingCharacters(in: .whitespacesAndNewlines))
         let sortie = try await appeler { try await client(installation.adresse).postAnnoncesHall(body: .json(corps)) }
         switch sortie {
-        case .created(let cree): return try Relecture.lire(AnnonceHall.self, depuis: try cree.body.json)
+        case .created(let cree): return AnnonceHall(try cree.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
 
     func archiverAnnonceHall(_ id: Int, archivee: Bool, dans installation: Installation) async throws {
-        // Le contrat exige les deux champs (`AnnonceHallArchive`, coprofirst#2524) : archiver
-        // ou restaurer est une décision humaine, elle vaut pour l'un comme pour l'autre.
-        let corps = Components.Schemas.AnnonceHallArchive(archivee: archivee, archiveeManuellement: archivee)
+        // Archiver ou restaurer : le serveur note la décision humaine (`AnnonceHallArchive`).
+        let corps = Components.Schemas.AnnonceHallArchive(archivee: archivee)
         let sortie = try await appeler {
             try await client(installation.adresse).patchAnnoncesHallAnnonceId(
                 path: .init(annonceId: id), body: .json(corps))

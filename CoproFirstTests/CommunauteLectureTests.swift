@@ -3,8 +3,6 @@
 
 import ClientAPI
 import Foundation
-import HTTPTypes
-import OpenAPIRuntime
 import Testing
 
 @testable import CoproFirst
@@ -15,22 +13,6 @@ import Testing
 // décodage échouait. Les tests passaient : la simulation construisait ses `Idee` à la
 // main. Ici, la réponse du serveur traverse le client GÉNÉRÉ (son transcodeur de dates
 // compris) puis le branchement du service, sans réseau.
-
-/// Un transport qui sert un corps JSON fixe, quelle que soit la route.
-private struct TransportFixe: ClientTransport {
-    let corps: String
-
-    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
-        -> (HTTPResponse, HTTPBody?) {
-        var reponse = HTTPResponse(status: .ok)
-        reponse.headerFields[.contentType] = "application/json"
-        return (reponse, HTTPBody(corps))
-    }
-}
-
-private func client(servant corps: String) -> Client {
-    ClientCoproFirst.client(installation: URL(string: "https://demo.exemple")!, transport: TransportFixe(corps: corps))
-}
 
 private func date(_ texte: String) -> Date? { ISO8601DateFormatter().date(from: texte + "Z") }
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.66.0 (commit 14fec7b6ba683cd74161d874e48a47f2d007ff5f), front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
+// Source : philippe-tressard/coprofirst v3.73.0 (commit de78b44da68b31e8e256ff1ef80e4507ac49d24b), front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
 
 /// Ce que le site écrit de la Communauté et que le contrat ne sert pas.
 enum TablesCommunaute {

@@ -80,7 +80,7 @@ struct OngletBadgesCS: OngletEspaceCS {
             (type == nil || acces.type == type)
                 && Recherche.contientTousLesMots([acces.code, acces.porteurNom, acces.lotLibelle], recherche)
         }
-        .sorted { $0.porteurNom.localizedStandardCompare($1.porteurNom) == .orderedAscending }
+        .sorted(by: AccesDuParc.parPorteur)
     }
 
     private func charger(_ service: any ServiceBadgesCS) async {
@@ -132,7 +132,9 @@ private struct CarteAccesDuParc: View {
                     HStack(alignment: .firstTextBaseline) { entete }
                     VStack(alignment: .leading, spacing: 4) { entete }
                 }
-                Label(acces.porteurNom, systemImage: "person").font(.subheadline).foregroundStyle(palette.text)
+                if !acces.porteurNom.isEmpty {
+                    Label(acces.porteurNom, systemImage: "person").font(.subheadline).foregroundStyle(palette.text)
+                }
                 if let lot = acces.lotLibelle {
                     Label(lot, systemImage: "house").font(.subheadline).foregroundStyle(palette.textMuted)
                 }
@@ -177,6 +179,7 @@ enum TextesBadgesCS {
     }
 
     static let exempleSquelette = AccesDuParc(
-        type: .vigik, numero: 0, code: "0000", porteurNom: "Prénom Nom", lotLibelle: "Lot 00 — appartement",
+        type: .vigik, numero: 0, code: "0000", porteurNom: "Prénom Nom", porteurRang: 0, porteurId: nil,
+        lotLibelle: "Lot 00 — appartement",
         perimetreCible: ["Copropriété"], statut: "actif", chezLocataire: false)
 }

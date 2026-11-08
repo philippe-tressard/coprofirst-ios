@@ -11,7 +11,6 @@ enum GesteAnnonceHall: Hashable { case renvoyer, archiver, supprimer }
 /// passent par le menu « … » : renvoyer au CS, archiver ou restaurer, supprimer.
 struct CarteAnnonceHall: View {
     let annonce: AnnonceHall
-    let administrateur: Bool
     let geste: (GesteAnnonceHall) -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -105,13 +104,15 @@ struct CarteAnnonceHall: View {
     private var menu: some View {
         Menu {
             Button(TextesAnnoncesHall.renvoyer, systemImage: "envelope") { geste(.renvoyer) }
-            if annonce.archivable {
+            // Les gestes que le serveur ouvre (#56) : restaurer, seulement une affiche
+            // rangée à la main ; supprimer, l'administrateur.
+            if annonce.peutArchiver || annonce.peutRestaurer {
                 Button(
                     annonce.archivee ? TextesAnnoncesHall.restaurer : TextesAnnoncesHall.archiver,
                     systemImage: annonce.archivee ? "arrow.uturn.backward" : "archivebox"
                 ) { geste(.archiver) }
             }
-            if administrateur {
+            if annonce.peutSupprimer {
                 Button(TextesAnnoncesHall.supprimer, systemImage: "trash", role: .destructive) { geste(.supprimer) }
             }
         } label: {

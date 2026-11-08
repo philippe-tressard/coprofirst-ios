@@ -26,6 +26,11 @@ protocol ServiceNotifications: Sendable {
     func toutMarquerLu(_ installation: Installation) async throws
     /// DELETE /notifications/{id} — définitif, comme sur le site.
     func supprimerNotification(_ id: Int, dans installation: Installation) async throws
+    /// POST /notifications/supprimer-selection — celles choisies, en UNE requête (#53).
+    /// Un identifiant qui n'est pas une alerte du compte est ignoré par le serveur.
+    func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws
+    /// POST /notifications/supprimer-lues — toutes les lues du compte, en une requête.
+    func supprimerLues(_ installation: Installation) async throws
 }
 
 extension Parcours {
@@ -78,6 +83,27 @@ extension ServiceAPI: ServiceNotifications {
         }
         switch sortie {
         case .noContent: return
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws {
+        let corps = Components.Schemas.SuppressionNotifications(ids: ids.sorted())
+        let sortie = try await appeler {
+            try await client(installation.adresse).postNotificationsSupprimerSelection(body: .json(corps))
+        }
+        switch sortie {
+        case .ok: return
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    func supprimerLues(_ installation: Installation) async throws {
+        let sortie = try await appeler { try await client(installation.adresse).postNotificationsSupprimerLues() }
+        switch sortie {
+        case .ok: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

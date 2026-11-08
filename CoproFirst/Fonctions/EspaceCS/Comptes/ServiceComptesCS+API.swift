@@ -3,13 +3,9 @@
 
 import ClientAPI
 import Foundation
-import OpenAPIRuntime
 
-/// « Comptes & accès » par le client GÉNÉRÉ.
-///
-/// ⚠️ `/admin/commandes-acces` n'est pas typée dans le contrat (pas de
-/// `response_model`) : elle est relue en miroir (`Relecture`) en attendant que
-/// coprofirst la type. La route, elle, reste celle du client.
+/// « Comptes & accès » par le client GÉNÉRÉ : chaque réponse se lit par son type
+/// (contrat 1.12.0, coprofirst#2522).
 extension ServiceAPI: ServiceComptesCS {
     func comptesEnAttente(_ installation: Installation) async throws -> [CompteEnAttente] {
         let sortie = try await appeler { try await client(installation.adresse).getAdminComptesEnAttente() }
@@ -23,20 +19,20 @@ extension ServiceAPI: ServiceComptesCS {
     func commandesEnAttente(_ installation: Installation) async throws -> [CommandeEnAttente] {
         let sortie = try await appeler { try await client(installation.adresse).getAdminCommandesAcces() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([CommandeEnAttente].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(CommandeEnAttente.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
-    func traiterCompte(_ id: Int, valider: Bool, dans installation: Installation) async throws {
+    func traiterCompte(_ id: Int, valider: Bool, dans installation: Installation) async throws -> PhraseAvis? {
         let corps = Components.Schemas.CompteAction(action: valider ? "valider" : "refuser")
         let sortie = try await appeler {
             try await client(installation.adresse).postAdminComptesUserIdTraiter(
                 path: .init(userId: id), body: .json(corps))
         }
         switch sortie {
-        case .ok: return
+        case .ok(let ok): return try ok.body.json.annonce.map(PhraseAvis.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

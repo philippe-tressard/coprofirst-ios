@@ -7,8 +7,8 @@ import SwiftUI
 /// ouvre deux champs et déclenche l'accueil ; puis l'enregistrement.
 struct ValidationCompteFeuille: View {
     let compte: CompteEnAttente
-    let valider: (AccueilArrivant?) async throws -> String
-    let fait: (String) -> Void
+    let valider: (AccueilArrivant?) async throws -> PhraseAvis?
+    let fait: (PhraseAvis?) -> Void
     @State private var nouvelArrivant = false
     @State private var accueil = AccueilArrivant()
     @State private var envoi = false

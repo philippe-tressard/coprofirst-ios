@@ -14,31 +14,73 @@ import SwiftUI
 @MainActor @Observable
 final class AvisDuGeste {
     private(set) var texte: String?
+    /// Le ton de la phrase à l'écran : un succès, sauf quand le serveur en dit un autre.
+    private(set) var ton = TonAvis.success
     /// La phrase d'une feuille qui se ferme, en attendant la fin de sa fermeture.
-    @ObservationIgnored private var enAttente: String?
+    @ObservationIgnored private var enAttente: PhraseAvis?
 
     init(_ texte: String? = nil) { self.texte = texte }
 
     /// Dire la phrase ; elle remplace celle qui est à l'écran.
-    func dire(_ texte: String) { self.texte = texte }
+    func dire(_ texte: String, ton: TonAvis = .success) {
+        self.ton = ton
+        self.texte = texte
+    }
+
+    /// Dire une phrase servie avec son ton (l'`annonce` d'un geste, #55).
+    func dire(_ phrase: PhraseAvis) { dire(phrase.texte, ton: phrase.ton) }
 
     /// Dite par une FEUILLE qui va se fermer : la phrase attend la fin de la fermeture
     /// (`.sheet(…, onDismiss: { avis.feuilleFermee() })`). Dite tout de suite, elle
     /// passait l'essentiel de ses 4 s derrière la feuille — invisible, à l'écran comme
     /// pour l'accessibilité (#43, #48).
-    func direApresFermeture(_ texte: String) { enAttente = texte }
+    func direApresFermeture(_ texte: String, ton: TonAvis = .success) {
+        enAttente = PhraseAvis(texte: texte, ton: ton)
+    }
+
+    func direApresFermeture(_ phrase: PhraseAvis) { enAttente = phrase }
 
     /// La feuille est fermée : la phrase qu'elle a laissée se dit maintenant.
     func feuilleFermee() {
-        guard let texte = enAttente else { return }
+        guard let phrase = enAttente else { return }
         enAttente = nil
-        dire(texte)
+        dire(phrase)
     }
 
     /// Retirer CETTE phrase — pas celle qui l'a remplacée entre-temps.
     func retirer(_ texte: String) {
         if self.texte == texte { self.texte = nil }
     }
+}
+
+/// Le ton d'un avis, celui du site (`success | warning | error | info`) : l'`annonce`
+/// d'un geste le sert (validation d'un compte, #55) — un avertissement s'y lit comme tel.
+enum TonAvis: String, Hashable, Sendable {
+    case success, warning, error, info
+
+    var pictogramme: String {
+        switch self {
+        case .success: "checkmark.circle.fill"
+        case .warning: "exclamationmark.triangle.fill"
+        case .error: "xmark.octagon.fill"
+        case .info: "info.circle.fill"
+        }
+    }
+
+    var retour: SensoryFeedback {
+        switch self {
+        case .success: .success
+        case .warning: .warning
+        case .error: .error
+        case .info: .impact(weight: .light)
+        }
+    }
+}
+
+/// Une phrase et son ton.
+struct PhraseAvis: Hashable, Sendable {
+    var texte: String
+    var ton = TonAvis.success
 }
 
 /// L'avis : il monte du bas, reste le temps du site (`AvisDuSite.duree`, généré), et se
@@ -52,7 +94,7 @@ struct AvisEphemere: ViewModifier {
         content
             .overlay(alignment: .bottom) {
                 if let texte = avis.texte {
-                    Label(texte, systemImage: "checkmark.circle.fill")
+                    Label(texte, systemImage: avis.ton.pictogramme)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(palette.textInverse)
                         .padding(.horizontal, 16)
@@ -71,7 +113,7 @@ struct AvisEphemere: ViewModifier {
                 }
             }
             .animation(.snappy(duration: 0.25), value: avis.texte)
-            .sensoryFeedback(.success, trigger: avis.texte) { _, nouveau in nouveau != nil }
+            .sensoryFeedback(trigger: avis.texte) { _, nouveau in nouveau == nil ? nil : avis.ton.retour }
     }
 }
 

@@ -67,6 +67,11 @@ final class DelegationsCSUITests: XCTestCase {
         LancementCaptures.capturer("cs-reporting-1-suivi")
         app.elementAcces("reporting.mode.entretien").tap()
         XCTAssertTrue(app.elementAcces("reporting.affaire.40").waitForExistence(timeout: 5), "les entretiens")
+        // Renouvellements (#56) : le relevé servi, ses compteurs et ses échéances.
+        app.elementAcces("reporting.mode.renouvellements").tap()
+        XCTAssertTrue(app.elementAcces("renouvellements.compteurs").waitForExistence(timeout: 5), "les compteurs")
+        XCTAssertTrue(app.elementAcces("renouvellements.contrat.11").exists, "le contrat en préavis")
+        LancementCaptures.capturer("cs-reporting-2-renouvellements")
 
         // Annonces Hall : créer une affiche, qui rejoint les archives.
         app.elementAcces("onglet.annonces-hall").tap()

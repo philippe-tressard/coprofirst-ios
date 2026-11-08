@@ -21,6 +21,18 @@ extension ServiceAPI {
             if let flux = reponse.body { try? await Data(collecting: flux, upTo: 64 * 1024) } else { nil }
         return ErreurService.depuisRefus(statut, corps: corps)
     }
+
+    /// Un 422 que le contrat documente en erreur de validation (`HTTPValidationError`,
+    /// une LISTE) mais que le serveur sert avec SA phrase (`{"detail": "…"}`) — « un
+    /// interlocuteur sans téléphone », #55 : le client généré ne le décode pas, la phrase
+    /// se lit dans son erreur. Rien pour toute autre erreur.
+    static func refusSousValidation(_ erreur: any Error) async -> ErreurService? {
+        guard let erreur = erreur as? ClientError, erreur.response?.status.code == 422,
+            let flux = erreur.responseBody, let corps = try? await Data(collecting: flux, upTo: 64 * 1024),
+            let phrase = RefusDuServeur.detail(corps)
+        else { return nil }
+        return .refus(RefusDuServeur(phrase: phrase))
+    }
 }
 
 extension ErreurService {

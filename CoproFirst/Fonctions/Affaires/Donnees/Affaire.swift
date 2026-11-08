@@ -14,7 +14,11 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let creeLe: Date
     var misAJourLe: Date?
     var statut: String
+    /// Close, au sens du SERVEUR (`TicketRead.close`, `utils/etat_affaire`) : l'app ne
+    /// compare pas son statut à une liste d'états clos (#54).
+    var close: Bool
     let categorie: String
+    /// Urgente, au sens du serveur (`TicketRead.urgente`) : l'app ne la déduit pas de la priorité.
     let urgente: Bool
     /// `nil` : le serveur ne le sait pas — la portée « me concerne » la garde (`selonPortee`).
     let meConcerne: Bool?
@@ -33,7 +37,6 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let messages: Int?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
-    var close: Bool { TablesAffaires.statutsClos.contains(statut) }
     /// La date qui range une affaire aux Archives : sa dernière activité.
     var dateDActivite: Date { misAJourLe ?? creeLe }
     /// La colonne du Kanban, ou `nil` : un statut inconnu SORT l'affaire du tableau.

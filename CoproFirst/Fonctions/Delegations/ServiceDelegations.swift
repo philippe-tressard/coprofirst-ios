@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Ce que « Délégations aidant » demande à une installation (#15). Réalisé par
@@ -9,9 +10,9 @@ import Foundation
 /// ⚠️ Une délégation est en LECTURE SEULE depuis coprofirst#1534 : l'aidant lit ce que
 /// lit la personne aidée, sans agir en son nom. L'app n'a donc aucun « agir pour… ».
 protocol ServiceDelegations: Sendable {
-    /// GET /delegations : celles que le compte voit (le conseil : toutes ; sinon les siennes),
-    /// et qui il est — l'aidant d'une délégation en attente l'accepte.
-    func delegations(_ installation: Installation) async throws -> ListeDelegations
+    /// GET /delegations : celles que le compte voit (le conseil : toutes ; sinon les
+    /// siennes), chacune avec les gestes que le serveur lui ouvre.
+    func delegations(_ installation: Installation) async throws -> [Delegation]
     /// GET /admin/utilisateurs : les comptes qu'une délégation peut lier (conseil syndical).
     func residentsDelegables(_ installation: Installation) async throws -> [ResidentDelegable]
     /// POST /delegations (conseil syndical) : la délégation créée, en attente de l'aidant.
@@ -28,9 +29,8 @@ extension Parcours {
     var serviceDelegations: (any ServiceDelegations)? { service as? any ServiceDelegations }
 }
 
-/// Une délégation, telle que `routers/delegations.py` la sert (`_to_read`) — relue en
-/// miroir : la route n'a pas de `response_model` (coprofirst#2525).
-struct Delegation: Decodable, Hashable, Sendable, Identifiable {
+/// Une délégation, telle que le serveur la sert (`DelegationRead`, coprofirst#2525).
+struct Delegation: Hashable, Sendable, Identifiable {
     let id: Int
     var mandantId: Int
     /// « ? » quand le compte n'existe plus — le nom tel que le serveur le compose.
@@ -42,16 +42,25 @@ struct Delegation: Decodable, Hashable, Sendable, Identifiable {
     /// Jours ISO (`AAAA-MM-JJ`) ; `dateFin` absente : sans limite.
     var dateDebut: String?
     var dateFin: String?
+    /// Les gestes que le serveur ouvre au compte qui lit (#56) : l'app ne les déduit
+    /// ni du statut ni de qui est l'aidant. La réponse d'un geste porte ceux d'après.
+    var peutAccepter = false
+    var peutRevoquer = false
 }
 
-/// La liste servie, et l'identifiant du compte qui la lit.
-struct ListeDelegations: Hashable, Sendable {
-    var delegations: [Delegation]
-    var moi: Int
+extension Delegation {
+    init(_ lue: Components.Schemas.DelegationRead) {
+        self.init(
+            id: lue.id, mandantId: lue.mandantId, mandantNom: lue.mandantNom, aidantId: lue.aidantId,
+            aidantNom: lue.aidantNom, statut: lue.statut, motif: lue.motif, dateDebut: lue.dateDebut,
+            dateFin: lue.dateFin, peutAccepter: lue.peutAccepter ?? false, peutRevoquer: lue.peutRevoquer ?? false)
+    }
+
+    var libelleStatut: LibelleTeinte { TablesDelegations.statuts[statut] ?? .brut(statut) }
 }
 
-/// Un compte qu'une délégation peut lier (`UtilisateurAdmin` du site, champs lus).
-struct ResidentDelegable: Decodable, Hashable, Sendable, Identifiable {
+/// Un compte qu'une délégation peut lier (`UtilisateurAdminRead`, champs lus).
+struct ResidentDelegable: Hashable, Sendable, Identifiable {
     let id: Int
     var prenom: String?
     var nom: String?
@@ -74,14 +83,8 @@ struct SaisieDelegation: Hashable, Sendable {
     }
 }
 
-extension Delegation {
-    /// Le geste « Accepter » : l'aidant, sur une délégation en attente — la condition du
-    /// site, que le serveur vérifie (`exiger_aidant_de_la_delegation`). L'API ne la sert
-    /// pas encore (coprofirst#2525).
-    func acceptable(par moi: Int) -> Bool { statut == "en_attente" && aidantId == moi }
-
-    /// « Révoquer » : une délégation en attente ou active (le serveur refuse les autres).
-    var revocable: Bool { statut == "en_attente" || statut == "active" }
-
-    var libelleStatut: LibelleTeinte { TablesDelegations.statuts[statut] ?? .brut(statut) }
+extension ResidentDelegable {
+    init(_ lu: Components.Schemas.UtilisateurAdminRead) {
+        self.init(id: lu.id, prenom: lu.prenom, nom: lu.nom, email: lu.email, actif: lu.actif)
+    }
 }

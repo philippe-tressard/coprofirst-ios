@@ -89,7 +89,7 @@ extension DelegationsView: EcranDeMenu {}
 
 /// Les cartes, et la confirmation de « Révoquer ».
 private struct ListeDesDelegations: View {
-    let liste: ListeDelegations
+    let liste: [Delegation]
     let service: any ServiceDelegations
     let installation: Installation
     let reussi: (String) -> Void
@@ -101,14 +101,13 @@ private struct ListeDesDelegations: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let erreur { MessageErreur(texte: erreur.phrase).transition(.opacity) }
-            if liste.delegations.isEmpty {
+            if liste.isEmpty {
                 ContentUnavailableView(TextesDelegations.aucune, systemImage: "person.2")
                 .accessibilityIdentifier("delegations.vide")
             }
-            ForEach(liste.delegations) { delegation in
+            ForEach(liste) { delegation in
                 CarteDelegation(
-                    delegation: delegation, acceptable: delegation.acceptable(par: liste.moi),
-                    enCours: enCours == delegation.id,
+                    delegation: delegation, enCours: enCours == delegation.id,
                     accepter: {
                         Task {
                             await geste(delegation, TextesDelegations.acceptee) {
@@ -163,7 +162,7 @@ private struct SqueletteDelegations: View {
                         id: 0, mandantId: 0, mandantNom: "Une personne aidée", aidantId: 0,
                         aidantNom: "Son proche aidant", statut: "active", motif: "Le motif de la délégation",
                         dateDebut: nil, dateFin: nil),
-                    acceptable: false, enCours: false, accepter: {}, revoquer: {})
+                    enCours: false, accepter: {}, revoquer: {})
             }
         }
     }

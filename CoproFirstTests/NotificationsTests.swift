@@ -24,6 +24,10 @@ private struct Refus: ServiceNotifications {
     func supprimerNotification(_ id: Int, dans installation: Installation) async throws {
         throw ErreurService.inattendue(500)
     }
+    func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws {
+        throw ErreurService.inattendue(500)
+    }
+    func supprimerLues(_ installation: Installation) async throws { throw ErreurService.inattendue(500) }
 }
 
 private func alerte(_ id: Int, ilYA heures: Double, lue: Bool = false, maintenant: Date = .now) -> NotificationRecue {
@@ -115,32 +119,63 @@ private func alerte(_ id: Int, ilYA heures: Double, lue: Bool = false, maintenan
     #expect(ThemeChoisi.schema("inconnu") == nil, "une valeur inconnue = Automatique")
 }
 
-/// Un serveur qui refuse de supprimer certaines alertes.
-private struct SuppressionPartielle: ServiceNotifications {
+/// Un serveur qui note chaque requête de suppression (#53).
+private final class SuppressionsNotees: ServiceNotifications, @unchecked Sendable {
     let liste: [NotificationRecue]
-    let refusees: Set<Int>
+    private(set) var requetes: [String] = []
+    private let verrou = NSLock()
+
+    init(liste: [NotificationRecue]) { self.liste = liste }
+
+    private func noter(_ requete: String) { verrou.withLock { requetes.append(requete) } }
+
     func notifications(_ installation: Installation) async throws -> [NotificationRecue] { liste }
     func marquerLue(_ id: Int, dans installation: Installation) async throws {}
     func toutMarquerLu(_ installation: Installation) async throws {}
-    func supprimerNotification(_ id: Int, dans installation: Installation) async throws {
-        if refusees.contains(id) { throw ErreurService.inattendue(500) }
+    func supprimerNotification(_ id: Int, dans installation: Installation) async throws { noter("DELETE \(id)") }
+    func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws {
+        noter("selection \(ids.sorted())")
     }
+    func supprimerLues(_ installation: Installation) async throws { noter("lues") }
 }
 
 @MainActor
-@Test func plusieursAlertesSeSupprimentEtLesRefuseesReviennent() async {
+@Test func uneSelectionPartEnUneSeuleRequete() async {
     let residence = ServiceSimule.residence
     let liste = (1...10).map { alerte($0, ilYA: Double($0), lue: $0 > 3) }
-    let service = SuppressionPartielle(liste: liste, refusees: [2, 7])
+    let service = SuppressionsNotees(liste: liste)
     let etat = EtatNotifications()
     await etat.charger(residence, avec: service)
 
-    await etat.supprimer([1, 2, 3, 7, 9], dans: residence, avec: service)
-    #expect(etat.liste.map(\.id) == [2, 4, 5, 6, 7, 8, 10], "les refusées reviennent, à leur place")
-    #expect(etat.nonSupprimees == 2, "et une phrase dit combien")
-    #expect(TextesNotifications.nonSupprimees(2) == "2 notifications n'ont pas pu être supprimées.")
+    #expect(await etat.supprimer([1, 2, 7, 9], dans: residence, avec: service))
+    #expect(service.requetes == ["selection [1, 2, 7, 9]"], "une requête, jamais une par notification")
+    #expect(etat.liste.map(\.id) == [3, 4, 5, 6, 8, 10])
     #expect(etat.nonLues == 1)
     #expect(CompteurNonLues.partage.nombre(residence) == 1, "la cloche suit")
+}
+
+@MainActor
+@Test func toutesLesLuesPartentParSupprimerLues() async {
+    let residence = ServiceSimule.residence
+    let liste = (1...6).map { alerte($0, ilYA: Double($0), lue: $0 > 2) }
+    let service = SuppressionsNotees(liste: liste)
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: service)
+
+    #expect(await etat.supprimer([3, 4, 5, 6], dans: residence, avec: service))
+    #expect(service.requetes == ["lues"], "« Sélectionner les lues » puis Supprimer : la route dédiée")
+    #expect(etat.liste.map(\.id) == [1, 2])
+}
+
+@MainActor
+@Test func uneSuppressionGroupeeRefuseeRendToutesLesLignes() async {
+    let residence = ServiceSimule.residence
+    let liste = (1...4).map { alerte($0, ilYA: Double($0)) }
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: Refus(liste: liste))
+    #expect(!(await etat.supprimer([1, 3], dans: residence, avec: Refus(liste: liste))))
+    #expect(etat.liste.map(\.id) == [1, 2, 3, 4], "elles reviennent, à leur place")
+    #expect(etat.echec != nil, "et la phrase du serveur le dit")
 }
 
 @MainActor
@@ -150,8 +185,7 @@ private struct SuppressionPartielle: ServiceNotifications {
     let etat = EtatNotifications()
     await etat.charger(residence, avec: service)
     let lues = Set(etat.liste.filter(\.lue).map(\.id))
-    await etat.supprimer(lues, dans: residence, avec: service)
-    #expect(etat.nonSupprimees == 0)
+    #expect(await etat.supprimer(lues, dans: residence, avec: service))
     await etat.charger(residence, avec: service)
     #expect(etat.liste.count == 12 && etat.liste.allSatisfy { !$0.lue }, "il ne reste que les non lues")
     #expect(TextesNotifications.supprimerSelection(0) == "Supprimer")

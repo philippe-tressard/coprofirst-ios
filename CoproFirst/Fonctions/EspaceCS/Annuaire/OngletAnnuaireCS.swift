@@ -68,12 +68,15 @@ struct OngletAnnuaireCS: OngletEspaceCS {
             }
         case .membreConseil(let rang):
             if let conseil = etat.conseil.valeur {
-                FeuilleMembreConseil(membre: rang.map { conseil.membres[$0] } ?? MembreConseil()) { membre in
-                    var nouveau = conseil
-                    if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
-                    try await etat.enregistrer(nouveau, service, installation)
-                    annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
-                }
+                FeuilleMembreConseil(
+                    membre: rang.map { conseil.membres[$0] } ?? MembreConseil(),
+                    rapprocher: { try await service.rapprochement(nom: $0, localiser: true, dans: installation) },
+                    enregistrer: { membre in
+                        var nouveau = conseil
+                        if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
+                        try await etat.enregistrer(nouveau, service, installation)
+                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                    })
             }
         case .enteteSyndic:
             if let syndic = etat.syndic.valeur {
@@ -84,12 +87,15 @@ struct OngletAnnuaireCS: OngletEspaceCS {
             }
         case .membreSyndic(let rang):
             if let syndic = etat.syndic.valeur {
-                FeuilleMembreSyndic(membre: rang.map { syndic.membres[$0] } ?? MembreSyndic()) { membre in
-                    var nouveau = syndic
-                    if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
-                    try await etat.enregistrer(nouveau, service, installation)
-                    annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
-                }
+                FeuilleMembreSyndic(
+                    membre: rang.map { syndic.membres[$0] } ?? MembreSyndic(),
+                    rapprocher: { try await service.rapprochement(nom: $0, localiser: false, dans: installation) },
+                    enregistrer: { membre in
+                        var nouveau = syndic
+                        if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
+                        try await etat.enregistrer(nouveau, service, installation)
+                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                    })
             }
         }
     }

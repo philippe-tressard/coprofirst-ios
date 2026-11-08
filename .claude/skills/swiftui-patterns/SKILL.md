@@ -119,10 +119,12 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   dans `Donnees/Perimetre.swift` avec **sa** lecture, `ServicePerimetres` ; les deux
   protocoles de menu en **héritent** (`protocol ServiceAffaires: ServicePerimetres`)
   au lieu de redéclarer `perimetres(_:)` avec chacun son type de retour (#41).
-- **Une règle du serveur ne se recopie pas** (`standards/09` §8) : le périmètre par
-  défaut est `code_par_defaut` côté serveur ; l'app ne le devine pas — « Non précisé »
-  envoie un lieu vide, et le serveur pose son défaut — en attendant de le lire dans
-  l'API (coprofirst#2514).
+- **Une règle du serveur ne se recopie pas** (`standards/09` §8) : ce que le serveur
+  SERT se lit, jamais ne se recalcule — le périmètre par défaut (`par_defaut`,
+  `Perimetre.codeParDefaut`), l'affaire close et urgente (`TicketRead.close`, `.urgente`),
+  les gestes d'une délégation ou d'une affiche (`peut_accepter`, `peut_restaurer`…), le
+  rang d'un porteur, le rapprochement d'un nom, l'annonce d'une validation (#53-#56).
+  Un geste que le serveur n'ouvre pas ne s'affiche pas ; un champ absent vaut « non ».
 - **Les tables que le contrat ne sert pas** (libellés, ordre du front du site) se
   génèrent dans `Fonctions/<Menu>/Genere/`, par un module de `scripts/generateurs/`
   (`ecrire_table`). La 1re ligne dit « GÉNÉRÉ par scripts/generer.py — NE PAS
@@ -135,6 +137,10 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
 - **Une réponse de l'API simulée** s'écrit en JSON, à la forme de sa route, dans un
   `Fixtures*.swift` qui la déclare (`Reponse(nom:schema:json:)`) : `scripts/verifier-fixtures.py`
   la juge contre le schéma du serveur — un champ qu'il ne sert pas fait échouer (#13, #20).
+  Elle se lit par le type GÉNÉRÉ puis le MÊME branchement que le service réel
+  (`Relecture.generee` → `Modele(_:)`). Une liste que les gestes simulés changent se tient
+  par `modifierSimule(depuis: Fixtures….lues) { … }` (`EspaceCS/MagasinSimuleCS.swift`) :
+  lue des fixtures au premier usage, une par type et par service simulé.
 
 ### Les composants communs — à réutiliser, pas à modifier
 
@@ -154,7 +160,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
 | `BarreOnglets` | les onglets d'une page en pastilles qui défilent (`onglet.<id>` pour les tests) ; ses onglets viennent d'`OngletsDuSite.ouverts` | `Commun/Composants/BarreOnglets.swift` |
-| `.avisEphemere(avis)`, `avis.dire(…)` | la phrase brève qui suit un geste (le « toast » du site), portée par un `AvisDuGeste` que **seul l'avis lit**. Jamais une `Binding<String?>` : une `Binding` lit sa valeur dès sa création, et l'écran qui la fabrique se recalcule à l'arrivée et au retrait de l'avis — ses menus de barre d'outils reconstruits sous le doigt perdaient un toucher (#48). Même règle pour tout état éphémère qui change seul (minuterie) : un objet observable lu là où il s'affiche. Une **feuille** qui annonce dit `avis.direApresFermeture(…)`, et sa présentation porte `.sheet(…, onDismiss: { avis.feuilleFermee() })` : dite avant la fermeture, la phrase passait ses 4 s derrière la feuille (#43, #48) | `Commun/Composants/AvisEphemere.swift` (tests : `AvisEphemereTests`) |
+| `.avisEphemere(avis)`, `avis.dire(…)` | la phrase brève qui suit un geste (le « toast » du site), portée par un `AvisDuGeste` que **seul l'avis lit**. Jamais une `Binding<String?>` : une `Binding` lit sa valeur dès sa création, et l'écran qui la fabrique se recalcule à l'arrivée et au retrait de l'avis — ses menus de barre d'outils reconstruits sous le doigt perdaient un toucher (#48). Même règle pour tout état éphémère qui change seul (minuterie) : un objet observable lu là où il s'affiche. Une **feuille** qui annonce dit `avis.direApresFermeture(…)`, et sa présentation porte `.sheet(…, onDismiss: { avis.feuilleFermee() })` : dite avant la fermeture, la phrase passait ses 4 s derrière la feuille (#43, #48). Une phrase SERVIE garde son ton : `avis.dire(PhraseAvis(annonce))` — `TonAvis` (`success`, `warning`, `error`, `info`) choisit le pictogramme et le retour haptique (#55) | `Commun/Composants/AvisEphemere.swift` (tests : `AvisEphemereTests`) |
 | `BoutonsFeuille` | « Annuler » / « Enregistrer » d'une feuille, « Enregistrement… » pendant l'envoi, `actif` | `Commun/Composants/BoutonsFeuille.swift` |
 | `ChampRecherche` + `Recherche.contientTousLesMots` | le champ de recherche d'une liste, dans la page ; la règle du site (tous les mots, sans accents ni casse) | `Commun/Composants/`, `Commun/Texte/Recherche.swift` |
 | `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** ; `largeurNom` réduit le nom quand un élément occupe la gauche de la barre (le logement du fil) : sans quoi iOS replie la pastille et la cloche dans « … » | idem |
@@ -170,8 +176,8 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 
 | Geste | Règle | Où |
 |---|---|---|
-| **Réponse non typée** | une route sans `response_model` côté serveur rend un `OpenAPIValueContainer` : il se relit par `Relecture.lire(T.self, depuis: valeur)` (`json:` pour des octets, dans un test) — clés `snake_case` → `camelCase`, dates comme le client généré (ISO, sans fuseau = UTC). Le modèle ne déclare **pas** de `CodingKeys` en `snake_case` (la conversion les rendrait muets). Jamais un `JSONDecoder` monté dans un service. Chaque usage est un besoin noté pour coprofirst (#2460, #2505, #2507) | `Commun/Session/Relecture.swift` |
-| **Phrase du serveur** | la réponse non documentée d'un **geste** (POST, PATCH, DELETE) passe par `throw await Self.refus(statut, reponse)` : `{"detail": "…"}` devient `ErreurService.refus(RefusDuServeur)`, dont la `phrase` est celle du serveur ; sans phrase, le cas que dit le statut. Une **lecture** refusée garde `ErreurService.depuisLecture(statut)` (« introuvable »). Un service simulé lève la même chose : `ErreurService.refus(.init(phrase: …))` | `Commun/Session/RefusDuServeur.swift` (tests : `CommunSessionTests`) |
+| **Réponse non typée** | une route sans `response_model` côté serveur rend un `OpenAPIValueContainer` : il se relit par `Relecture.lire(T.self, depuis: valeur)` (`json:` pour des octets, dans un test) — clés `snake_case` → `camelCase`, dates comme le client généré (ISO, sans fuseau = UTC). Le modèle ne déclare **pas** de `CodingKeys` en `snake_case` (la conversion les rendrait muets). Jamais un `JSONDecoder` monté dans un service. Chaque usage est un besoin noté pour coprofirst (#2460, #2505, #2507). **Au contrat 1.12.0, plus aucun écran n'en use** : toute réponse lue est typée (#53-#56) | `Commun/Session/Relecture.swift` |
+| **Phrase du serveur** | la réponse non documentée d'un **geste** (POST, PATCH, DELETE) passe par `throw await Self.refus(statut, reponse)` : `{"detail": "…"}` devient `ErreurService.refus(RefusDuServeur)`, dont la `phrase` est celle du serveur ; sans phrase, le cas que dit le statut. Une **lecture** refusée garde `ErreurService.depuisLecture(statut)` (« introuvable »). Un service simulé lève la même chose : `ErreurService.refus(.init(phrase: …))`. Un **422** servi avec SA phrase alors que le contrat le documente en erreur de validation (une liste) ne se décode pas : `appeler` le lit quand même (`refusSousValidation`, #55) | `Commun/Session/RefusDuServeur.swift` (tests : `CommunSessionTests`) |
 | **Fichier servi** | une route qui sert un `FileResponse` que le contrat déclare en JSON (document, rapport…) se lit par `try await Self.fichierServi(nom:defaut:) { … }` : la fermeture lance l'appel généré et lève `ErreurService.depuisLecture(statut)` sur un `.undocumented` ; le corps se lit dans l'erreur du client, sur un 200 seulement, et s'écrit sous `Fichiers.nomSur` dans `tmp/documents/`, en `.completeFileProtection`. **Aucune autre écriture de ce geste** : `grep -rn "ClientCoproFirst.fichierServi" CoproFirst` ne rend que `Commun/Session/` (#32). Besoin noté : coprofirst#2505 | `Commun/Session/FichierServi.swift` (tests : `FichierServiTests`) |
 | **Afficher un échec** | `ErreurService.depuis(error).phrase` ; un écran qui a sa propre phrase d'échec (celle du site, « Erreur lors de l'export. ») écrit `ErreurService.phrase(error, sinon: "…")` : la phrase du serveur passe devant. Un menu qui a ses erreurs (`ErreurAffaires`) range un refus en `.service(.refus(…))`, jamais une phrase fixe par statut | `Session/ErreurService.swift` |
 

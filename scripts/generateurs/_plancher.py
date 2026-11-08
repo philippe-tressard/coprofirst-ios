@@ -15,8 +15,8 @@ ce qu'elle exigera (champs nouvellement requis, fichiers qui changent). On chang
 `VERSION` et `RAISON`, puis `python3 scripts/generer.py`, dans la même PR.
 """
 
-VERSION = "v3.66.0"
+VERSION = "v3.73.0"
 RAISON = (
-    "contrat 1.5.0 : la plus ancienne version servie par une installation connue — la "
-    "démonstration (demo.coprofirst.fr), le 05/11/2026 ; 5hostachy.fr sert 1.7.0"
+    "contrat 1.12.0 : la plus ancienne version servie par une installation connue — la "
+    "démonstration (demo.coprofirst.fr), le 08/11/2026 ; 5hostachy.fr sert 1.14.0"
 )

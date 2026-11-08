@@ -108,6 +108,7 @@ final class ServiceAPI: ServiceCoproFirst {
         do {
             return try await appel()
         } catch {
+            if let refus = await Self.refusSousValidation(error) { throw refus }
             throw ErreurService.depuis(ClientCoproFirst.cause(error))
         }
     }

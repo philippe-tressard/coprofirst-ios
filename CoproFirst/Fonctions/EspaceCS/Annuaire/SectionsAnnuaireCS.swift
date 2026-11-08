@@ -38,8 +38,11 @@ struct SectionConseilCS: View {
                         },
                     ]
                 ) {
-                    if let lieu = membre.batimentNom?.nulSiVide {
-                        Text(TextesAnnuaireCS.batiment(lieu)).font(.subheadline).foregroundStyle(palette.textMuted)
+                    // Le logement : le bâtiment, puis l'étage tel que le serveur le dit.
+                    let logement = [membre.batimentNom?.nulSiVide.map(TextesAnnuaireCS.batiment), membre.etageLibelle]
+                        .compactMap(\.self)
+                    if !logement.isEmpty {
+                        Text(logement.joined(separator: " · ")).font(.subheadline).foregroundStyle(palette.textMuted)
                     }
                     if membre.userId != nil {
                         Label(TextesAnnuaireCS.inscritLie, systemImage: "link").font(.footnote)

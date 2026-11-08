@@ -36,7 +36,10 @@ extension ServiceSimule: ServiceAffaires {
 
     func deplacer(_ affaire: Affaire, vers statut: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(250))
-        magasin.modifier(affaire.id) { $0.statut = statut }
+        magasin.modifier(affaire.id) {
+            $0.statut = statut
+            $0.close = MagasinAffairesSimule.close(statut)
+        }
     }
 
     func archiver(_ affaire: Affaire, dans installation: Installation) async throws -> Affaire {
@@ -56,7 +59,8 @@ extension ServiceSimule: ServiceAffaires {
         ) -> Affaire {
             Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: titre, apercu: apercu, creeLe: jours(cree),
-                misAJourLe: activite.map(jours), statut: statut, categorie: categorie, urgente: urgente,
+                misAJourLe: activite.map(jours), statut: statut, close: MagasinAffairesSimule.close(statut),
+                categorie: categorie, urgente: urgente,
                 meConcerne: meConcerne, archivee: archivee, suiviKanban: kanban,
                 natures: [categorie == "actualite" ? "actualite" : "activite"], prestataire: prestataire,
                 perimetres: [], lieu: lieu, messages: messages)
@@ -130,6 +134,9 @@ final class MagasinAffairesSimule: @unchecked Sendable {
         }
     }
 
+    /// Ce que le serveur simulé SERT comme `close` — lui seul la calcule, comme le vrai.
+    static func close(_ statut: String) -> Bool { TablesAffaires.statutsClos.contains(statut) }
+
     private var contenu = ServiceSimule.affaires
     private let verrou = NSLock()
 
@@ -141,7 +148,8 @@ final class MagasinAffairesSimule: @unchecked Sendable {
             let actualite = saisie.categorie == TablesAffaires.categorieActualite
             let neuve = Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: saisie.titre, apercu: saisie.descriptionHTML,
-                creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert", categorie: saisie.categorie,
+                creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert", close: false,
+                categorie: saisie.categorie,
                 urgente: saisie.urgente, meConcerne: true, archivee: false, suiviKanban: false,
                 natures: [actualite ? "actualite" : "activite"], prestataire: nil,
                 perimetres: saisie.perimetre.map { [$0] } ?? [], lieu: nil, messages: nil)

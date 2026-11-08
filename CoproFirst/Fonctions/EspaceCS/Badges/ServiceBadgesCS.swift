@@ -23,6 +23,11 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     let numero: Int
     var code: String
     var porteurNom: String
+    /// Le rang du porteur parmi tous les comptes, nom PUIS prénom, comparable entre
+    /// Vigik et télécommandes (#55) : le tri « par porteur » le lit, jamais `porteurNom`
+    /// (qui commence par le prénom). Sans porteur (`porteurId` nul) : en dernier.
+    var porteurRang: Int
+    var porteurId: Int?
     var lotLibelle: String?
     /// Ce que l'accès ouvre, tel que le serveur le nomme.
     var perimetreCible: [String]
@@ -30,6 +35,11 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     var chezLocataire: Bool
 
     var id: String { "\(type.rawValue)-\(numero)" }
+
+    /// L'ordre « par porteur » du site : le rang servi, les lignes sans porteur en dernier.
+    static func parPorteur(_ a: AccesDuParc, _ b: AccesDuParc) -> Bool {
+        ((a.porteurId == nil) ? 1 : 0, a.porteurRang) < ((b.porteurId == nil) ? 1 : 0, b.porteurRang)
+    }
 }
 
 extension ServiceAPI: ServiceBadgesCS {
@@ -65,7 +75,8 @@ extension AccesDuParc {
     init(_ type: TypeAcces, _ acces: Components.Schemas.AccesAdminOut) {
         self.init(
             type: type, numero: acces.id, code: acces.code, porteurNom: acces.porteurNom,
-            lotLibelle: acces.lotLibelle, perimetreCible: acces.perimetreCible ?? [], statut: acces.statut.rawValue,
+            porteurRang: acces.porteurRang, porteurId: acces.porteurId, lotLibelle: acces.lotLibelle,
+            perimetreCible: acces.perimetreCible ?? [], statut: acces.statut.rawValue,
             chezLocataire: acces.chezLocataire)
     }
 }
@@ -73,23 +84,6 @@ extension AccesDuParc {
 extension ServiceSimule: ServiceBadgesCS {
     func parc(_ installation: Installation) async throws -> [AccesDuParc] {
         try await Task.sleep(for: .milliseconds(350))
-        return Self.parcSimule
+        return try FixturesBadgesCS.parcLu()
     }
-
-    /// Un parc inventé : des porteurs qui n'appartiennent à personne.
-    static let parcSimule: [AccesDuParc] = [
-        AccesDuParc(
-            type: .vigik, numero: 1, code: "4521", porteurNom: "Alix Exemple", lotLibelle: "Lot 12 — appartement",
-            perimetreCible: ["Copropriété", "Bâtiment A"], statut: "actif", chezLocataire: false),
-        AccesDuParc(
-            type: .vigik, numero: 2, code: "417D5927", porteurNom: "Basile Fictif", lotLibelle: "Lot 21 — appartement",
-            perimetreCible: ["Copropriété", "Bâtiment B"], statut: "perdu", chezLocataire: true),
-        AccesDuParc(
-            type: .telecommande, numero: 3, code: "TC-0042", porteurNom: "Alix Exemple",
-            lotLibelle: "Lot 104 — parking", perimetreCible: ["Portail du parking"], statut: "actif",
-            chezLocataire: false),
-        AccesDuParc(
-            type: .vigik, numero: 4, code: "7731", porteurNom: "Céleste Inventé", lotLibelle: nil,
-            perimetreCible: [], statut: "suspendu", chezLocataire: false),
-    ]
 }

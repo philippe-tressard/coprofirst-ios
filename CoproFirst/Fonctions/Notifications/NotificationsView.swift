@@ -34,8 +34,7 @@ struct NotificationsView: View {
                     .redacted(reason: .placeholder)
             } else {
                 if let echec = etat.echec {
-                    let lot = etat.nonSupprimees > 0 ? TextesNotifications.nonSupprimees(etat.nonSupprimees) + " " : ""
-                    MessageErreur(texte: lot + echec.phrase).listRowBackground(Color.clear).listRowInsets(.init())
+                    MessageErreur(texte: echec.phrase).listRowBackground(Color.clear).listRowInsets(.init())
                 }
                 let sections = etat.sections()
                 section(TextesNotifications.aujourdhui, sections.aujourdhui)
@@ -207,8 +206,7 @@ struct NotificationsView: View {
     private func supprimerSelection() async {
         let choisies = selection
         selection = []
-        await etat.supprimer(choisies, dans: installation, avec: parcours.serviceNotifications)
-        if etat.nonSupprimees == 0 { supprimees += 1 }
+        if await etat.supprimer(choisies, dans: installation, avec: parcours.serviceNotifications) { supprimees += 1 }
         if etat.liste.isEmpty { modeEdition = .inactive }
     }
 

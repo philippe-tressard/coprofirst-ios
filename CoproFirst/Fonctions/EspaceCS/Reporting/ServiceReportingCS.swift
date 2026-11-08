@@ -9,6 +9,8 @@ import SwiftUI
 protocol ServiceReportingCS: Sendable {
     /// `affaires` (toutes les affaires non closes) ou `entretien` (les entretiens périodiques).
     func suiviAffaires(_ releve: ReleveSuivi, dans installation: Installation) async throws -> SuiviAffaires
+    /// GET /reporting/renouvellements : les échéances des contrats et des diagnostics (#56).
+    func renouvellements(_ installation: Installation) async throws -> Renouvellements
 }
 
 extension ContexteOngletCS {

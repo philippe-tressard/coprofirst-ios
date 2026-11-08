@@ -32,19 +32,21 @@ final class EtatComptesCS {
         }
     }
 
-    /// Valider, puis — case « Nouvel Arrivant » cochée — lancer l'accueil. Rend ce
-    /// qu'annonce le site (`validerCompte` de `#lib/comptes.ts`).
+    /// Valider, puis — case « Nouvel Arrivant » cochée — lancer l'accueil. Rend l'annonce
+    /// du SERVEUR, avec son ton (#55) : l'app ne compose plus « Compte activé. », et un
+    /// avertissement (« ⚠️ Aucun lot trouvé dans l'import ») reste un avertissement.
     func valider(
         _ compte: CompteEnAttente, accueil: AccueilArrivant?, _ service: any ServiceComptesCS,
         _ installation: Installation
-    ) async throws -> String {
+    ) async throws -> PhraseAvis? {
         enCours = compte.id
         defer { enCours = nil }
-        try await service.traiterCompte(compte.id, valider: true, dans: installation)
+        let annonce = try await service.traiterCompte(compte.id, valider: true, dans: installation)
         comptes.removeAll { $0.id == compte.id }
-        guard let accueil else { return TextesComptesCS.compteActive }
+        guard let accueil else { return annonce }
         try await service.accueillir(compte.id, accueil, dans: installation)
-        return TextesComptesCS.compteActive + " " + TextesComptesCS.accueilEnvoye
+        let phrases = [annonce?.texte, TextesComptesCS.accueilEnvoye].compactMap(\.self)
+        return PhraseAvis(texte: phrases.joined(separator: " "), ton: annonce?.ton ?? .success)
     }
 
     func rejeter(
@@ -52,7 +54,7 @@ final class EtatComptesCS {
     ) async throws -> String {
         enCours = compte.id
         defer { enCours = nil }
-        try await service.traiterCompte(compte.id, valider: false, dans: installation)
+        _ = try await service.traiterCompte(compte.id, valider: false, dans: installation)
         comptes.removeAll { $0.id == compte.id }
         return TextesComptesCS.compteRejete
     }
