@@ -7,9 +7,12 @@ import SwiftUI
 struct CoproFirstApp: App {
     @State private var parcours: Parcours
     @State private var reseau = Reseau()
+    @State private var vitrine: Vitrine
 
     init() {
-        _parcours = State(initialValue: Lancement.parcours(ProcessInfo.processInfo.arguments))
+        let arguments = ProcessInfo.processInfo.arguments
+        _parcours = State(initialValue: Lancement.parcours(arguments))
+        _vitrine = State(initialValue: Lancement.vitrine(arguments))
     }
 
     var body: some Scene {
@@ -17,6 +20,7 @@ struct CoproFirstApp: App {
             RacineView()
                 .environment(parcours)
                 .environment(reseau)
+                .environment(vitrine)
         }
     }
 }
@@ -27,8 +31,14 @@ struct CoproFirstApp: App {
 /// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
 /// une page que l'administration a renommée, `-logement-long` pour un libellé de
 /// logement qui ne tient pas dans la barre.
-/// Hors de ces arguments, l'app parle aux vraies installations.
+/// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
 enum Lancement {
+    /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
+    @MainActor
+    static func vitrine(_ arguments: [String]) -> Vitrine {
+        arguments.contains("-api-simulee") ? Vitrine(lecteur: nil, cache: nil) : .enLigne()
+    }
+
     @MainActor
     static func parcours(_ arguments: [String]) -> Parcours {
         guard arguments.contains("-api-simulee") else {

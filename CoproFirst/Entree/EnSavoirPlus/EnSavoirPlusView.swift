@@ -4,35 +4,38 @@
 import SwiftUI
 
 /// Écran 2 — la page de coprofirst.fr, raccourcie, d'un seul tenant ; les deux portes
-/// restent collées en bas.
+/// restent collées en bas. Ses textes sont ceux du site (`contenu.json`, #51).
 struct EnSavoirPlusView: View {
     @Environment(Parcours.self) private var parcours
+    @Environment(Vitrine.self) private var vitrine
     @Environment(\.palette) private var palette
 
     var body: some View {
+        let page = vitrine.pages.enSavoirPlus
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(ContenuVitrine.titre)
+                    Text(page.titre)
                         .font(.titre(.largeTitle))
                         .foregroundStyle(palette.text)
                         .accessibilityAddTraits(.isHeader)
-                    Text(ContenuVitrine.chapeau)
+                        .accessibilityIdentifier("vitrine.titre")
+                    Text(page.chapeau)
                         .font(.title3)
                         .foregroundStyle(palette.textMuted)
                 }
                 ApercuDuFil()
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(ContenuVitrine.sectionVraieVie)
+                    Text(page.section)
                         .font(.titre(.title2))
                         .foregroundStyle(palette.text)
                         .accessibilityAddTraits(.isHeader)
-                    Text(ContenuVitrine.sousTitreVraieVie)
+                    Text(page.sousTitre)
                         .font(.subheadline)
                         .foregroundStyle(palette.textMuted)
                 }
                 VStack(alignment: .leading, spacing: 20) {
-                    ForEach(ContenuVitrine.rangees) { rangee in
+                    ForEach(page.rangees) { rangee in
                         HStack(alignment: .firstTextBaseline, spacing: 14) {
                             Image(systemName: rangee.symbole)
                                 .font(.title3)
@@ -45,6 +48,7 @@ struct EnSavoirPlusView: View {
                             }
                         }
                         .accessibilityElement(children: .combine)
+                        .accessibilityIdentifier("vitrine.rangee.\(rangee.id)")
                     }
                 }
             }
