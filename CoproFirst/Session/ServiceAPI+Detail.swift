@@ -115,8 +115,9 @@ extension DetailAffaire {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, description: ticket.description,
             categorie: ticket.categorie, statut: ticket.statut,
-            // La règle du site : urgente = priorité haute (#lib/tickets.ts, ticketUrgent).
-            urgente: ticket.priorite == "haute", creeLe: ticket.creeLe,
+            // Urgente au sens du SERVEUR (`TicketRead.urgente`, contrat 1.8.0) : l'app ne la
+            // déduit pas de la priorité.
+            urgente: ticket.urgente, creeLe: ticket.creeLe,
             auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: nil,
             photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
             suites: suites, peutRepondre: peutRepondre)

@@ -56,8 +56,6 @@ private struct ArchivesAnnoncesHall: View {
     var body: some View {
         let service = service
         let installation = contexte.installation
-        // `$isAdmin` du site : la route de suppression exige l'administrateur (coprofirst#2525).
-        let administrateur = contexte.droits.administrateur
         Chargement(
             charger: {
                 async let actives = service.annoncesHall(archivees: false, dans: installation)
@@ -75,7 +73,7 @@ private struct ArchivesAnnoncesHall: View {
                     }
                     ForEach(annonces) { annonce in
                         CarteAnnonceHall(
-                            annonce: annonce, administrateur: administrateur,
+                            annonce: annonce,
                             geste: { geste in Task { await faire(geste, annonce, recharger) } })
                     }
                 }

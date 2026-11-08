@@ -104,13 +104,13 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `espace-cs` | `validations` | fait | #15 | Approuver (« Nouvel Arrivant ») ou rejeter un compte, accepter (codes remis) ou rejeter une demande d'accès ; l'annonce détaillée de la validation (lots trouvés…) attend le serveur |
-| `espace-cs` | `badges` | fait | #15 | Consultation : recherche, type, porteur, lot, accès, état ; enregistrer, corriger, exporter et retirer un accès restent au site |
-| `espace-cs` | `reporting` | fait | #15 | Suivi des affaires et des entretiens périodiques (chiffres, répartitions croisées, affaires) ; relance du syndic, points CS / Syndic, résumés, fusion, PDF, Prestataires et Renouvellements (calculés au front : coprofirst#2525) restent au site |
-| `espace-cs` | `annonces-hall` | fait | #15 | Créer (titre, message, périmètre, format, Diffusion CS / syndic / copie), archives : renvoyer, archiver, restaurer, supprimer (administrateur) ; photos, assistant, aperçu, reprise du fil, WhatsApp et PDF restent au site |
-| `espace-cs` | `annuaire` | fait | #15 | Conseil (AG, WhatsApp, président) et syndic (cabinet, interlocuteur principal, ordre), fiches à ajouter, corriger, retirer ; les consignes de la fiche arrivant et le rapprochement par le nom restent au site |
+| `espace-cs` | `validations` | fait | #15 | Approuver (« Nouvel Arrivant ») ou rejeter un compte, accepter (codes remis) ou rejeter une demande d'accès ; l'annonce de la validation est celle du serveur, avec son ton (#55) |
+| `espace-cs` | `badges` | fait | #15 | Consultation : recherche, type, porteur (rangé par le rang servi, #55), lot, accès, état ; enregistrer, corriger, exporter et retirer un accès restent au site |
+| `espace-cs` | `reporting` | fait | #15 | Suivi des affaires et des entretiens périodiques (chiffres, répartitions croisées, affaires) ; Renouvellements, le relevé servi (#56) ; relance du syndic, points CS / Syndic, résumés, fusion, PDF et Prestataires restent au site |
+| `espace-cs` | `annonces-hall` | fait | #15 | Créer (titre, message, périmètre, format, Diffusion CS / syndic / copie), archives : renvoyer, archiver, restaurer, supprimer — les gestes que le serveur ouvre (#56) ; photos, assistant, aperçu, reprise du fil, WhatsApp et PDF restent au site |
+| `espace-cs` | `annuaire` | fait | #15 | Conseil (AG, WhatsApp, président) et syndic (cabinet, interlocuteur principal, ordre), fiches à ajouter, corriger, retirer ; le rapprochement par le nom, servi à la frappe (#55) ; les consignes de la fiche arrivant restent au site |
 | `espace-cs` | `courriels` | fait | #15 | Le journal de la relève : verdict, motif, affaire rejointe |
-| `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis et réponses typées : coprofirst#2525 |
+| `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis (`peut_accepter`, `peut_revoquer`) et réponses typées (#56) |
 
 ### #16 — Administration, en partie
 

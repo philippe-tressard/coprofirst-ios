@@ -28,7 +28,6 @@ enum TextesComptesCS {
     static let batimentIndication = "Ex: Bât. A, Apt. 12…"
     static let ancienResident = "Ancien résident"
     static let ancienResidentIndication = "Nom de l'ancien occupant…"
-    static let compteActive = "Compte activé."
     static let accueilEnvoye = "Actions d'accueil envoyées (bienvenue, consignes, demandes syndic/CS)."
 
     // Rejeter

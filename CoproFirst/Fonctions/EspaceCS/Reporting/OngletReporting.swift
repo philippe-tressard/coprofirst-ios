@@ -5,13 +5,18 @@ import SwiftUI
 
 /// L'onglet « Reporting » de l'Espace CS (`OngletReporting.svelte`, #15) : le Suivi des
 /// affaires, en lecture — ses chiffres, ses deux répartitions croisées et ses affaires,
-/// la plus ancienne en tête. Deux modes : les affaires, ou les entretiens périodiques.
+/// la plus ancienne en tête. Deux modes : les affaires, ou les entretiens périodiques ;
+/// puis la vue Renouvellements (#56), le relevé servi des échéances.
 /// Ce que l'app laisse au site se dit sous la liste (`TextesReporting.surLeSite`).
 struct OngletReporting: OngletEspaceCS {
     let contexte: ContexteOngletCS
     @Environment(\.palette) private var palette
-    /// Les modes que l'app porte : la relance du syndic se compose sur le site.
-    private static let modes = TablesReporting.modes.filter { $0.code != "relance" }
+    /// Les modes que l'app porte : la relance du syndic se compose sur le site ; puis la
+    /// vue Renouvellements.
+    private static let modes =
+        TablesReporting.modes.filter { $0.code != "relance" }
+        + [(code: renouvellements, libelle: TextesRenouvellements.titre)]
+    private static let renouvellements = "renouvellements"
     @State private var mode = OngletReporting.modes.first?.code ?? "suivi"
 
     init(contexte: ContexteOngletCS) { self.contexte = contexte }
@@ -39,20 +44,35 @@ struct OngletReporting: OngletEspaceCS {
                 }
             }
             .sensoryFeedback(.selection, trigger: mode)
-            Chargement(
-                charger: { try await service.suiviAffaires(releve, dans: installation) },
-                contenu: { suivi, _ in
-                    SuiviView(suivi: suivi, entretien: releve == .entretien, installation: installation)
-                },
-                squelette: { SuiviView(suivi: Self.squelette, entretien: false, installation: installation) }
-            )
-            // Un autre mode, ou « tirer pour actualiser » : le relevé se relit.
-            .id("\(releve.rawValue)-\(contexte.actualisation)")
+            if mode == Self.renouvellements {
+                Chargement(
+                    charger: { try await service.renouvellements(installation) },
+                    contenu: { releve, _ in VueRenouvellements(releve: releve) },
+                    squelette: {
+                        VueRenouvellements(releve: Self.squeletteRenouvellements).redacted(reason: .placeholder)
+                    }
+                )
+                .id("renouvellements-\(contexte.actualisation)")
+            } else {
+                Chargement(
+                    charger: { try await service.suiviAffaires(releve, dans: installation) },
+                    contenu: { suivi, _ in
+                        SuiviView(suivi: suivi, entretien: releve == .entretien, installation: installation)
+                    },
+                    squelette: { SuiviView(suivi: Self.squelette, entretien: false, installation: installation) }
+                )
+                // Un autre mode, ou « tirer pour actualiser » : le relevé se relit.
+                .id("\(releve.rawValue)-\(contexte.actualisation)")
+            }
             Text(TextesReporting.surLeSite)
                 .font(.footnote)
                 .foregroundStyle(palette.textMuted)
         }
     }
+
+    private static let squeletteRenouvellements = Renouvellements(
+        annee: 2026, preavisMois: 3, contratsEnPreavis: 0, echeancesContratsAnnee: 0, auditsAPlanifier: 0,
+        contrats: [], diagnostics: [])
 
     private static let squelette = SuiviAffaires(
         total: 3, anciennes: 1, delaiJours: 90, fusionnees: 0, parCategorie: [], parBatiment: [],
@@ -71,7 +91,6 @@ private struct SuiviView: View {
     let entretien: Bool
     let installation: Installation
     @Environment(\.palette) private var palette
-    @Environment(\.dynamicTypeSize) private var taille
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -101,10 +120,7 @@ private struct SuiviView: View {
 
     /// Les trois chiffres du site, côte à côte — l'un sous l'autre aux grandes tailles.
     private var chiffres: some View {
-        let disposition =
-            taille.isAccessibilitySize
-            ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(alignment: .top, spacing: 8))
-        return disposition {
+        RangeeDeChiffres {
             Chiffre(valeur: suivi.total, libelle: TextesReporting.nonFermees(suivi.total, entretien: entretien))
                 .accessibilityIdentifier("reporting.total")
             Chiffre(
@@ -112,36 +128,5 @@ private struct SuiviView: View {
                 alerte: suivi.anciennes > 0)
             Chiffre(valeur: suivi.fusionnees, libelle: TextesReporting.fusionnees(suivi.fusionnees))
         }
-    }
-}
-
-/// Un chiffre du suivi (`kpi-card`) : la valeur, et ce qu'elle compte ; teinté s'il alerte.
-private struct Chiffre: View {
-    let valeur: Int
-    let libelle: String
-    var alerte = false
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(FormatsDuSite.nombre(valeur))
-                .font(.titre(.title))
-                .monospacedDigit()
-                .foregroundStyle(alerte ? palette.danger : palette.text)
-                .contentTransition(.numericText())
-            Text(libelle)
-                .font(.footnote)
-                .foregroundStyle(palette.textMuted)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
-        .background(
-            alerte ? palette.dangerFond : palette.surface, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                .strokeBorder(alerte ? palette.dangerBordure : palette.border, lineWidth: 1)
-        }
-        .accessibilityElement(children: .combine)
     }
 }

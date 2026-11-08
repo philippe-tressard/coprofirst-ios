@@ -27,6 +27,16 @@ extension ServiceSimule: ServiceNotifications {
         try await Task.sleep(for: .milliseconds(150))
         boite.modifier { $0.removeAll { $0.id == id } }
     }
+
+    func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(200))
+        boite.modifier { $0.removeAll { ids.contains($0.id) } }
+    }
+
+    func supprimerLues(_ installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(200))
+        boite.modifier { $0.removeAll(where: \.lue) }
+    }
 }
 
 /// Les notifications de départ. Chaque service simulé garde les siennes dans un

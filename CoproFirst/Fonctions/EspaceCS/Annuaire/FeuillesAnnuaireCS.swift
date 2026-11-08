@@ -66,10 +66,11 @@ struct FeuilleEnteteConseil: View {
     }
 }
 
-/// Un membre du conseil : sa civilité, son prénom, son nom. Son logement et l'inscrit
-/// auquel il est lié sont conservés tels que le serveur les a.
+/// Un membre du conseil : sa civilité, son prénom, son nom — et, dès la frappe du nom,
+/// l'inscrit et le logement que le SERVEUR y rapproche (#55), comme le site les montre.
 struct FeuilleMembreConseil: View {
     @State var membre: MembreConseil
+    let rapprocher: (String) async throws -> Rapprochement
     let enregistrer: (MembreConseil) async throws -> Void
 
     var body: some View {
@@ -79,7 +80,21 @@ struct FeuilleMembreConseil: View {
             envoyer: envoyer
         ) {
             ChampsIdentite(genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom)
+            RapprochementServi(lie: membre.userId != nil, batiment: membre.batimentNom)
         }
+        .rapprochement(du: membre.nom, avec: rapprocher, saisi: { membre.userId = nil }, appliquer: appliquer)
+    }
+
+    /// Ce que fait le site (`AnnuaireConseil.svelte`) : le logement trouvé remplace
+    /// l'ancien ; un lien déjà posé reste.
+    private func appliquer(_ trouve: Rapprochement) {
+        if trouve.batimentId != nil || trouve.etage != nil {
+            membre.batimentId = trouve.batimentId
+            membre.batimentNom = trouve.batimentNom
+            membre.etage = trouve.etage
+            membre.etageLibelle = nil
+        }
+        membre.userId = membre.userId ?? trouve.userId
     }
 
     private func envoyer() async throws { try await enregistrer(membre) }
@@ -142,6 +157,7 @@ struct FeuilleEnteteSyndic: View {
 /// un champ par numéro.
 struct FeuilleMembreSyndic: View {
     @State var membre: MembreSyndic
+    let rapprocher: (String) async throws -> Rapprochement
     let enregistrer: (MembreSyndic) async throws -> Void
     @State private var telephones: [String] = []
 
@@ -152,6 +168,7 @@ struct FeuilleMembreSyndic: View {
             envoyer: envoyer
         ) {
             ChampsIdentite(genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom)
+            RapprochementServi(lie: membre.userId != nil, batiment: nil)
             Section {
                 TextField(TextesAnnuaireCS.fonctionIndication, text: champ(\.fonction))
                     .accessibilityLabel(TextesAnnuaireCS.fonction)
@@ -173,7 +190,11 @@ struct FeuilleMembreSyndic: View {
                 }
             }
         }
-        .onAppear { telephones = AnnuaireCS.telephones(membre.telephone) }
+        .onAppear { telephones = AnnuaireCS.champsTelephone(membre.telephones) }
+        // Un interlocuteur se lie à un inscrit, sans logement (`localiser=false`).
+        .rapprochement(
+            du: membre.nom, avec: rapprocher, saisi: { membre.userId = nil },
+            appliquer: { membre.userId = membre.userId ?? $0.userId })
     }
 
     private func champ(_ chemin: WritableKeyPath<MembreSyndic, String?>) -> Binding<String> {
@@ -183,6 +204,67 @@ struct FeuilleMembreSyndic: View {
     private func envoyer() async throws {
         membre.telephone = AnnuaireCS.champTelephone(telephones)
         try await enregistrer(membre)
+    }
+}
+
+/// Ce que le serveur a rapproché du nom : l'inscrit lié, et le logement (conseil).
+private struct RapprochementServi: View {
+    let lie: Bool
+    let batiment: String?
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        if lie || batiment?.nulSiVide != nil {
+            Section {
+                if lie {
+                    Label(TextesAnnuaireCS.inscritLie, systemImage: "link")
+                        .accessibilityIdentifier("cs.feuille.inscrit-lie")
+                }
+                if let batiment = batiment?.nulSiVide {
+                    Label(TextesAnnuaireCS.batiment(batiment), systemImage: "building.2")
+                        .accessibilityIdentifier("cs.feuille.logement")
+                }
+            }
+            .font(.subheadline)
+            .foregroundStyle(palette.textMuted)
+            .transition(.opacity)
+        }
+    }
+}
+
+extension View {
+    /// Le rapprochement d'un nom SAISI (pas celui de l'ouverture) : le lien d'avant se
+    /// défait (`saisi`), puis, après une courte pause, la question au serveur — seule la
+    /// DERNIÈRE réponse compte, la question d'avant est annulée. Un échec se tait, comme
+    /// sur le site : le `PUT` refait le rapprochement, rien ne se perd.
+    fileprivate func rapprochement(
+        du nom: String?, avec rapprocher: @escaping (String) async throws -> Rapprochement,
+        saisi: @escaping () -> Void, appliquer: @escaping (Rapprochement) -> Void
+    ) -> some View {
+        modifier(RapprochementDuNom(nom: nom, rapprocher: rapprocher, saisi: saisi, appliquer: appliquer))
+    }
+}
+
+private struct RapprochementDuNom: ViewModifier {
+    let nom: String?
+    let rapprocher: (String) async throws -> Rapprochement
+    let saisi: () -> Void
+    let appliquer: (Rapprochement) -> Void
+    @State private var question: String?
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: nom) { _, nouveau in
+                saisi()
+                question = nouveau
+            }
+            .task(id: question) {
+                guard let question = question?.trimmingCharacters(in: .whitespaces), !question.isEmpty else { return }
+                guard (try? await Task.sleep(for: .milliseconds(350))) != nil,
+                    let trouve = try? await rapprocher(question), !Task.isCancelled
+                else { return }
+                withAnimation(.snappy) { appliquer(trouve) }
+            }
     }
 }
 

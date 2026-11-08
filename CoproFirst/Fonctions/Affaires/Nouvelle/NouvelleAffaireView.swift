@@ -124,8 +124,8 @@ struct NouvelleAffaireView: View {
                     .foregroundStyle(palette.textMuted)
             } else if !perimetres.isEmpty {
                 Picker("Lieu", selection: $saisie.perimetre) {
-                    // Sans lieu, le serveur pose son périmètre par défaut : l'app ne le
-                    // devine pas (coprofirst#2514).
+                    // Présélectionné : le défaut que le serveur DÉSIGNE (`par_defaut`, #54).
+                    // Sans lieu, le serveur pose ce même défaut.
                     Text("Non précisé").tag(String?.none)
                     ForEach(perimetres) { perimetre in
                         Text(String(repeating: "   ", count: perimetre.profondeur) + perimetre.libelle)
@@ -174,7 +174,10 @@ struct NouvelleAffaireView: View {
 
     private func chargerLesLieux() async {
         guard let service, let lus = try? await service.perimetres(installation) else { return }
-        withAnimation(.snappy) { perimetres = lus.filter(\.selectionnable) }
+        withAnimation(.snappy) {
+            perimetres = lus.filter(\.selectionnable)
+            if saisie.perimetre == nil { saisie.perimetre = Perimetre.codeParDefaut(perimetres) }
+        }
     }
 
     private func envoyer() async {

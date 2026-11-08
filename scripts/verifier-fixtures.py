@@ -16,6 +16,12 @@ les niveaux : un champ que le serveur ne sert pas, un champ requis absent, une v
 hors de son énumération, un type faux font échouer. Une réponse JSON qu'aucune
 `Reponse(…)` ne déclare échoue aussi : elle échapperait au juge.
 
+Le contrat dit qu'un `perimetre_cible` est une liste de chaînes ; le serveur y met des
+CODES de l'arbre (`GET /perimetres`). Bogue du 08/11/2026 (#64) : l'API simulée y
+mettait des libellés (« Copropriété »), et Badges affichait les codes bruts de la démo
+(« bat:2 ») sans qu'aucun test le voie. Chaque `perimetre_cible` simulé doit donc citer
+un `code` de l'arbre simulé (la réponse déclarée `PerimetreRead`).
+
 Usage :
   python3 scripts/verifier-fixtures.py [--contrat openapi.json]
       Défaut : le contrat du dépôt. La concordance (#20) passe celui de la dernière
@@ -133,7 +139,34 @@ def juger(juge: Juge, trouvees: list) -> tuple[list[str], list[str]]:
                 ecarts += [f"{fichier} : {e}" for e in juge.ecarts(element, schema, f"{nom}[{rang}]")]
         else:
             ecarts += [f"{fichier} : {e}" for e in juge.ecarts(reponse, schema, nom)]
+    codes, cites = set(), []
+    for fichier, nom, schema, reponse in trouvees:
+        if isinstance(reponse, (Illisible, NonDeclaree)):
+            continue
+        if schema == "PerimetreRead":
+            codes |= {n.get("code") for n in (reponse if isinstance(reponse, list) else [reponse])}
+        cites += [(fichier, nom, chemin, code) for chemin, code in perimetres_cites(reponse, nom)]
+    if cites and not codes:
+        illisibles.append("perimetre_cible : aucun arbre simulé (`PerimetreRead`) pour juger ses codes")
+    ecarts += [
+        f"{fichier} : {chemin} : « {code} » n'est pas un code de l'arbre simulé (PerimetreRead)"
+        for fichier, nom, chemin, code in cites
+        if codes and code not in codes
+    ]
     return ecarts, illisibles
+
+
+def perimetres_cites(valeur, chemin: str):
+    """(chemin, code) de chaque valeur d'un `perimetre_cible`, à tous les niveaux."""
+    if isinstance(valeur, dict):
+        for cle, sous in valeur.items():
+            if cle == "perimetre_cible" and isinstance(sous, list):
+                yield from ((f"{chemin}.{cle}[{i}]", code) for i, code in enumerate(sous))
+            else:
+                yield from perimetres_cites(sous, f"{chemin}.{cle}")
+    elif isinstance(valeur, list):
+        for i, sous in enumerate(valeur):
+            yield from perimetres_cites(sous, f"{chemin}[{i}]")
 
 
 def autotest() -> None:
@@ -168,7 +201,17 @@ def autotest() -> None:
         ecarts, illisibles = juger(juge, fixtures(pathlib.Path(dossier)))
     if illisibles or len(ecarts) != 1 or "b — aucune Reponse" not in ecarts[0]:
         raise SystemExit(f"❌ autotest : une réponse non déclarée doit être vue ({ecarts}, {illisibles})")
-    print("✅ autotest : champ de trop, requis absent, énumération, type, imbriqué, réponse non déclarée")
+    arbre = [("F", "arbre", "PerimetreRead", [{"code": "bat_a"}]),
+             ("F", "parc", "Objet", [{"perimetre_cible": ["bat_a", "Copropriété"]}])]
+    vide = Juge({"components": {"schemas": {"PerimetreRead": {}, "Objet": {}}}})
+    ecarts, illisibles = juger(vide, arbre)
+    if illisibles or ecarts != ["F : parc[0].perimetre_cible[1] : « Copropriété » n'est pas un code de l'arbre simulé (PerimetreRead)"]:
+        raise SystemExit(f"❌ autotest : un libellé à la place d'un code doit être vu ({ecarts}, {illisibles})")
+    _, illisibles = juger(vide, arbre[1:])
+    if not illisibles:
+        raise SystemExit("❌ autotest : sans arbre simulé, les codes cités sont INCONNU")
+    print("✅ autotest : champ de trop, requis absent, énumération, type, imbriqué, réponse non déclarée, "
+          "code de périmètre")
 
 
 def main() -> int:

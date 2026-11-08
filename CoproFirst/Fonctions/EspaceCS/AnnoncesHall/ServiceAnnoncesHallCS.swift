@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Ce que l'onglet « Annonces Hall » de l'Espace CS demande (#15) : les affiches déjà
@@ -24,9 +25,8 @@ extension ContexteOngletCS {
     var serviceAnnoncesHall: (any ServiceAnnoncesHallCS)? { service as? any ServiceAnnoncesHallCS }
 }
 
-/// Une affiche (`AnnonceHall` du site) — relue en miroir : la route n'a pas de
-/// `response_model` (coprofirst#2525).
-struct AnnonceHall: Decodable, Hashable, Sendable, Identifiable {
+/// Une affiche, telle que le serveur la sert (`AnnonceHallRead`, coprofirst#2525).
+struct AnnonceHall: Hashable, Sendable, Identifiable {
     let id: Int
     var titre: String
     /// Le texte de l'éditeur du site (HTML) : `TexteRiche(html:)`, jamais `Text(html)`.
@@ -39,18 +39,28 @@ struct AnnonceHall: Decodable, Hashable, Sendable, Identifiable {
     var images: [String]
     var destinataires: [String]
     var envoyeLe: Date?
-    /// L'état EFFECTIF : archivée à la main, ou par la règle du site (30 jours après l'envoi).
+    /// L'état EFFECTIF : archivée à la main, ou par le temps.
     var archivee: Bool
-    /// La décision HUMAINE seule : « Restaurer » n'a d'effet que sur elle.
-    var archiveeManuellement: Bool?
     /// L'actualité reprise, s'il y en a une.
     var ticketId: Int?
     var creeLe: Date
     var auteurNom: String
+    /// Les gestes que le serveur ouvre au compte qui lit (#56) : restaurer, seulement une
+    /// affiche rangée à la main (coprofirst#515) ; supprimer, l'administrateur.
+    var peutArchiver = false
+    var peutRestaurer = false
+    var peutSupprimer = false
+}
 
-    /// Le geste « Archiver / Restaurer » n'est offert que s'il a un effet (coprofirst#515) :
-    /// une affiche archivée par le TEMPS ne se restaure pas.
-    var archivable: Bool { !archivee || archiveeManuellement == true }
+extension AnnonceHall {
+    init(_ lue: Components.Schemas.AnnonceHallRead) {
+        self.init(
+            id: lue.id, titre: lue.titre, message: lue.message, assisteIa: lue.assisteIa, apercu: lue.apercu,
+            perimetreLabel: lue.perimetreLabel, formatLabel: lue.formatLabel, images: lue.images,
+            destinataires: lue.destinataires, envoyeLe: lue.envoyeLe, archivee: lue.archivee, ticketId: lue.ticketId,
+            creeLe: lue.creeLe, auteurNom: lue.auteurNom, peutArchiver: lue.peutArchiver,
+            peutRestaurer: lue.peutRestaurer, peutSupprimer: lue.peutSupprimer)
+    }
 }
 
 /// La saisie de « Nouvelle annonce » (`AnnonceHallCreate`), sans photo ni assistant —

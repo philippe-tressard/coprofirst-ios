@@ -101,10 +101,8 @@ extension Affaire {
     init(ticket: Components.Schemas.TicketRead) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
-            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut,
-            categorie: ticket.categorie,
-            // La règle du site : urgente = priorité haute (#lib/tickets.ts, ticketUrgent).
-            urgente: ticket.priorite == "haute",
+            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut, close: ticket.close,
+            categorie: ticket.categorie, urgente: ticket.urgente,
             meConcerne: ticket.meConcerne, archivee: ticket.archivee ?? false,
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],
             prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],

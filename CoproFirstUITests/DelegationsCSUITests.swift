@@ -67,6 +67,17 @@ final class DelegationsCSUITests: XCTestCase {
         LancementCaptures.capturer("cs-reporting-1-suivi")
         app.elementAcces("reporting.mode.entretien").tap()
         XCTAssertTrue(app.elementAcces("reporting.affaire.40").waitForExistence(timeout: 5), "les entretiens")
+        // Renouvellements (#56) : le relevé servi, ses compteurs et ses échéances.
+        // Troisième pastille de la rangée : sur un écran de 402 pt, elle déborde à droite et
+        // n'est touchable qu'en partie — sous iOS 26.5, le toucher s'y perdait (CI, #64).
+        // La rangée défile d'abord jusqu'au bout : la pastille est alors entière.
+        app.elementAcces("reporting.mode.entretien").swipeLeft()
+        app.elementAcces("reporting.mode.renouvellements").tap()
+        XCTAssertTrue(
+            app.elementAcces("renouvellements.preavis").waitForExistence(timeout: 5),
+            "les compteurs — arbre à l'échec :\n\(app.debugDescription)")
+        XCTAssertTrue(app.elementAcces("renouvellements.contrat.11").exists, "le contrat en préavis")
+        LancementCaptures.capturer("cs-reporting-2-renouvellements")
 
         // Annonces Hall : créer une affiche, qui rejoint les archives.
         app.elementAcces("onglet.annonces-hall").tap()

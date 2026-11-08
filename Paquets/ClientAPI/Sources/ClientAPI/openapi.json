@@ -1,6 +1,38 @@
 {
   "components": {
     "schemas": {
+      "AClasserRead": {
+        "description": "Le message en attente d'une ligne du journal (#2555).",
+        "properties": {
+          "apercu": {
+            "default": "",
+            "title": "Apercu",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          },
+          "suggestions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AffaireSuggeree"
+            },
+            "title": "Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "statut"
+        ],
+        "title": "AClasserRead",
+        "type": "object"
+      },
       "AbordeeRead": {
         "properties": {
           "affaire": {
@@ -132,6 +164,10 @@
             "title": "Porteur Nom",
             "type": "string"
           },
+          "porteur_rang": {
+            "title": "Porteur Rang",
+            "type": "integer"
+          },
           "statut": {
             "$ref": "#/components/schemas/StatutAcces"
           }
@@ -142,7 +178,8 @@
           "statut",
           "chez_locataire",
           "cree_le",
-          "porteur_nom"
+          "porteur_nom",
+          "porteur_rang"
         ],
         "title": "AccesAdminOut",
         "type": "object"
@@ -354,6 +391,47 @@
         "title": "AccueilArrivantBody",
         "type": "object"
       },
+      "AccueilArrivantResultat": {
+        "description": "Ce que l'accueil d'un arrivant a déclenché — typé le 05/11/2026 (#2522).",
+        "properties": {
+          "annonce_publiee": {
+            "title": "Annonce Publiee",
+            "type": "boolean"
+          },
+          "consignes_transmises": {
+            "title": "Consignes Transmises",
+            "type": "boolean"
+          },
+          "email_syndic": {
+            "title": "Email Syndic",
+            "type": "boolean"
+          },
+          "notifications_envoyees": {
+            "title": "Notifications Envoyees",
+            "type": "integer"
+          },
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "ticket_suivi": {
+            "title": "Ticket Suivi",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "notifications_envoyees",
+          "email_syndic",
+          "annonce_publiee",
+          "consignes_transmises"
+        ],
+        "title": "AccueilArrivantResultat",
+        "type": "object"
+      },
       "AdminUserUpdate": {
         "properties": {
           "actif": {
@@ -459,6 +537,10 @@
       "AffaireLieeLue": {
         "description": "Une affaire liée, telle qu'un lecteur la voit (#1342) : de quoi la\nreconnaître — numéro, titre, statut (le « suivi » de l'écran) et date de\ncréation (#2173). Rendue seulement si le lecteur peut la lire\n(`utils/affaires_liees`).",
         "properties": {
+          "close": {
+            "title": "Close",
+            "type": "boolean"
+          },
           "cree_le": {
             "format": "date-time",
             "title": "Cree Le",
@@ -491,6 +573,7 @@
           "numero",
           "titre",
           "statut",
+          "close",
           "cree_le"
         ],
         "title": "AffaireLieeLue",
@@ -729,6 +812,29 @@
         "title": "AffaireSeanceEntree",
         "type": "object"
       },
+      "AffaireSuggeree": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "numero": {
+            "title": "Numero",
+            "type": "string"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "numero",
+          "titre"
+        ],
+        "title": "AffaireSuggeree",
+        "type": "object"
+      },
       "AffaireVisee": {
         "description": "L'affaire où le transfert est désormais — l'écran y conduit.",
         "properties": {
@@ -774,6 +880,31 @@
           "grave"
         ],
         "title": "AlerteLue",
+        "type": "object"
+      },
+      "Annonce": {
+        "description": "Un message à afficher, et le ton sur lequel le dire.",
+        "properties": {
+          "texte": {
+            "title": "Texte",
+            "type": "string"
+          },
+          "ton": {
+            "enum": [
+              "success",
+              "warning",
+              "error",
+              "info"
+            ],
+            "title": "Ton",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ton",
+          "texte"
+        ],
+        "title": "Annonce",
         "type": "object"
       },
       "AnnonceCreate": {
@@ -840,19 +971,15 @@
         "type": "object"
       },
       "AnnonceHallArchive": {
+        "description": "« Archiver » ou « Restaurer » une affiche : la DÉCISION HUMAINE, et elle seule.\n\nEn LECTURE (`_to_read`), une affiche porte deux états : `archivee`, l'état\nEFFECTIF (archivée à la main, **ou** par la règle du site 30 jours après l'envoi,\n`utils/archivage`, #515), et `archivee_manuellement`, la décision humaine qui dit\nsi « Restaurer » a un effet. En ENTRÉE, le geste ne porte que la décision :\n`archivee_manuellement` avait été recopié ici, requis, et le site, qui n'envoie\nque `{ archivee }`, recevait 422 (#2524). Un client qui l'envoie encore est\naccepté : le champ en trop est ignoré. 🔒 test_annonce_hall_archiver.py",
         "properties": {
           "archivee": {
             "title": "Archivee",
             "type": "boolean"
-          },
-          "archivee_manuellement": {
-            "title": "Archivee Manuellement",
-            "type": "boolean"
           }
         },
         "required": [
-          "archivee",
-          "archivee_manuellement"
+          "archivee"
         ],
         "title": "AnnonceHallArchive",
         "type": "object"
@@ -918,6 +1045,147 @@
           "message"
         ],
         "title": "AnnonceHallCreate",
+        "type": "object"
+      },
+      "AnnonceHallRead": {
+        "description": "Une affiche de hall telle que l'Historique la montre, ses gestes compris (#2525).",
+        "properties": {
+          "apercu": {
+            "title": "Apercu",
+            "type": "string"
+          },
+          "archivee": {
+            "title": "Archivee",
+            "type": "boolean"
+          },
+          "archivee_manuellement": {
+            "title": "Archivee Manuellement",
+            "type": "boolean"
+          },
+          "assiste_ia": {
+            "default": false,
+            "title": "Assiste Ia",
+            "type": "boolean"
+          },
+          "auteur_nom": {
+            "title": "Auteur Nom",
+            "type": "string"
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "destinataires": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Destinataires",
+            "type": "array"
+          },
+          "envoye_le": {
+            "format": "date-time",
+            "title": "Envoye Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "format_demande": {
+            "title": "Format Demande",
+            "type": "string"
+          },
+          "format_effectif": {
+            "title": "Format Effectif",
+            "type": "string"
+          },
+          "format_label": {
+            "title": "Format Label",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "images": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "pdf_nom": {
+            "title": "Pdf Nom",
+            "type": "string"
+          },
+          "perimetre_cible": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Perimetre Cible",
+            "type": "array"
+          },
+          "perimetre_label": {
+            "title": "Perimetre Label",
+            "type": "string"
+          },
+          "peut_archiver": {
+            "title": "Peut Archiver",
+            "type": "boolean"
+          },
+          "peut_restaurer": {
+            "title": "Peut Restaurer",
+            "type": "boolean"
+          },
+          "peut_supprimer": {
+            "title": "Peut Supprimer",
+            "type": "boolean"
+          },
+          "taille_octets": {
+            "title": "Taille Octets",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titre",
+          "message",
+          "apercu",
+          "perimetre_cible",
+          "perimetre_label",
+          "format_demande",
+          "format_effectif",
+          "format_label",
+          "images",
+          "pdf_nom",
+          "destinataires",
+          "archivee",
+          "archivee_manuellement",
+          "cree_le",
+          "auteur_nom",
+          "peut_archiver",
+          "peut_restaurer",
+          "peut_supprimer"
+        ],
+        "title": "AnnonceHallRead",
         "type": "object"
       },
       "AnnonceRead": {
@@ -1469,6 +1737,30 @@
           "cree_le"
         ],
         "title": "ArchiveLue",
+        "type": "object"
+      },
+      "AutoMatchRelance": {
+        "description": "`POST /admin/utilisateurs/{id}/auto-match` : l'appariement rejoué, et sa phrase.",
+        "properties": {
+          "annonce": {
+            "$ref": "#/components/schemas/Annonce"
+          },
+          "auto_match": {
+            "additionalProperties": true,
+            "title": "Auto Match",
+            "type": "object"
+          },
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "auto_match",
+          "annonce"
+        ],
+        "title": "AutoMatchRelance",
         "type": "object"
       },
       "AvisCreate": {
@@ -2907,6 +3199,10 @@
       "CandidateFusion": {
         "description": "Une affaire liée proposée à la fusion — la forme d'une affaire nommée\n(date de création comprise, #2173) —, et ce qui l'en empêche le cas échéant\n(avec le plan pour l'autoriser quand c'est une fuite de lecture).",
         "properties": {
+          "close": {
+            "title": "Close",
+            "type": "boolean"
+          },
           "conciliation": {
             "$ref": "#/components/schemas/Conciliation"
           },
@@ -2953,6 +3249,7 @@
           "numero",
           "titre",
           "statut",
+          "close",
           "cree_le",
           "fusionnable"
         ],
@@ -3021,6 +3318,10 @@
           },
           "categorie": {
             "title": "Categorie",
+            "type": "string"
+          },
+          "categorie_libelle": {
+            "title": "Categorie Libelle",
             "type": "string"
           },
           "duree_totale": {
@@ -3092,7 +3393,8 @@
           "annulees",
           "relances",
           "reactions",
-          "categorie"
+          "categorie",
+          "categorie_libelle"
         ],
         "title": "CategorieBilan",
         "type": "object"
@@ -3113,6 +3415,54 @@
           "libelle"
         ],
         "title": "CategorieRead",
+        "type": "object"
+      },
+      "CategorieServie": {
+        "properties": {
+          "carnet": {
+            "title": "Carnet",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "emoji": {
+            "title": "Emoji",
+            "type": "string"
+          },
+          "en_tete": {
+            "title": "En Tete",
+            "type": "boolean"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "permise": {
+            "title": "Permise",
+            "type": "boolean"
+          },
+          "reservee": {
+            "title": "Reservee",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "libelle",
+          "emoji",
+          "description",
+          "carnet",
+          "reservee",
+          "permise",
+          "en_tete"
+        ],
+        "title": "CategorieServie",
         "type": "object"
       },
       "CategorieTicket": {
@@ -3214,6 +3564,27 @@
           "palette"
         ],
         "title": "ChoixPalette",
+        "type": "object"
+      },
+      "Classement": {
+        "description": "Ce que le geste a fait — le bilan, et l'affaire qui a reçu le message.",
+        "properties": {
+          "bilan": {
+            "title": "Bilan",
+            "type": "string"
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "bilan"
+        ],
+        "title": "Classement",
         "type": "object"
       },
       "Cle": {
@@ -3333,6 +3704,29 @@
         "title": "ColonneDeLot",
         "type": "object"
       },
+      "ColonneKanbanServie": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "libelle_court": {
+            "title": "Libelle Court",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "libelle",
+          "libelle_court"
+        ],
+        "title": "ColonneKanbanServie",
+        "type": "object"
+      },
       "CommandeAccesCreate": {
         "properties": {
           "lot_id": {
@@ -3361,6 +3755,96 @@
           "type"
         ],
         "title": "CommandeAccesCreate",
+        "type": "object"
+      },
+      "CommandeAccesEnAttente": {
+        "description": "Une commande de badge en attente : la ligne, plus ce qui la rend lisible.\n\nTypée le 05/11/2026 (#2522) : le contrat la déclarait `{}`, et l'app iOS la\nrelisait d'après le type du front (`types-administration.ts`).",
+        "properties": {
+          "batiment": {
+            "title": "Batiment",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "demandeur_nom": {
+            "title": "Demandeur Nom",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "lot": {
+            "title": "Lot",
+            "type": "string"
+          },
+          "lot_id": {
+            "title": "Lot Id",
+            "type": "integer"
+          },
+          "motif": {
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motif_refus": {
+            "title": "Motif Refus",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantite": {
+            "title": "Quantite",
+            "type": "integer"
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutCommande"
+          },
+          "traite_le": {
+            "format": "date-time",
+            "title": "Traite Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "traite_par_id": {
+            "title": "Traite Par Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "user_id",
+          "lot_id",
+          "type",
+          "quantite",
+          "statut",
+          "cree_le",
+          "demandeur_nom",
+          "lot"
+        ],
+        "title": "CommandeAccesEnAttente",
         "type": "object"
       },
       "CommandeAccesRead": {
@@ -3440,6 +3924,19 @@
           "action"
         ],
         "title": "CommandeAction",
+        "type": "object"
+      },
+      "CommandeTraitee": {
+        "description": "Ce que rend le traitement d'une commande : son nouvel état.",
+        "properties": {
+          "statut": {
+            "$ref": "#/components/schemas/StatutCommande"
+          }
+        },
+        "required": [
+          "statut"
+        ],
+        "title": "CommandeTraitee",
         "type": "object"
       },
       "CommentaireBody": {
@@ -3532,6 +4029,42 @@
           }
         },
         "title": "CompositionCSIn",
+        "type": "object"
+      },
+      "CompositionConseil": {
+        "description": "`GET /admin/annuaire/cs` : le conseil dans l'ordre fixé par l'administration.",
+        "properties": {
+          "ag_annee": {
+            "title": "Ag Annee",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ag_date": {
+            "title": "Ag Date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "membres": {
+            "items": {
+              "$ref": "#/components/schemas/MembreConseilAdmin"
+            },
+            "title": "Membres",
+            "type": "array"
+          },
+          "whatsapp_url": {
+            "title": "Whatsapp Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "membres",
+          "whatsapp_url"
+        ],
+        "title": "CompositionConseil",
         "type": "object"
       },
       "CompteAction": {
@@ -3628,6 +4161,9 @@
       "CompteTraiteResult": {
         "description": "Résultat de la validation / refus d'un compte.",
         "properties": {
+          "annonce": {
+            "$ref": "#/components/schemas/Annonce"
+          },
           "auto_match": {
             "additionalProperties": true,
             "default": {},
@@ -3741,6 +4277,29 @@
         "title": "CompteurConfigUpdate",
         "type": "object"
       },
+      "CompteursRenouvellements": {
+        "properties": {
+          "audits_a_planifier": {
+            "title": "Audits A Planifier",
+            "type": "integer"
+          },
+          "contrats_en_preavis": {
+            "title": "Contrats En Preavis",
+            "type": "integer"
+          },
+          "echeances_contrats_annee": {
+            "title": "Echeances Contrats Annee",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "contrats_en_preavis",
+          "echeances_contrats_annee",
+          "audits_a_planifier"
+        ],
+        "title": "CompteursRenouvellements",
+        "type": "object"
+      },
       "Conciliation": {
         "properties": {
           "ecarts": {
@@ -3824,6 +4383,46 @@
           }
         },
         "title": "ConfigSauvegardeUpdate",
+        "type": "object"
+      },
+      "ConseilEnregistre": {
+        "properties": {
+          "ag_annee": {
+            "title": "Ag Annee",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ag_date": {
+            "title": "Ag Date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "membres": {
+            "items": {
+              "$ref": "#/components/schemas/MembreConseilAdmin"
+            },
+            "title": "Membres",
+            "type": "array"
+          },
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "whatsapp_url": {
+            "title": "Whatsapp Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "membres",
+          "whatsapp_url"
+        ],
+        "title": "ConseilEnregistre",
         "type": "object"
       },
       "ConseilLu": {
@@ -4092,6 +4691,204 @@
           "mis_a_jour_le"
         ],
         "title": "ContactLu",
+        "type": "object"
+      },
+      "ContratARenouveler": {
+        "properties": {
+          "actif": {
+            "title": "Actif",
+            "type": "boolean"
+          },
+          "archivee": {
+            "default": false,
+            "title": "Archivee",
+            "type": "boolean"
+          },
+          "batiment_id": {
+            "title": "Batiment Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "copropriete_id": {
+            "title": "Copropriete Id",
+            "type": "integer"
+          },
+          "date_debut": {
+            "format": "date",
+            "title": "Date Debut",
+            "type": "string"
+          },
+          "date_fin": {
+            "format": "date",
+            "title": "Date Fin",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "date_preavis": {
+            "format": "date",
+            "title": "Date Preavis",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "document_id": {
+            "title": "Document Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "duree_initiale_unite": {
+            "title": "Duree Initiale Unite",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "duree_initiale_valeur": {
+            "title": "Duree Initiale Valeur",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "echeance_dans_l_annee": {
+            "title": "Echeance Dans L Annee",
+            "type": "boolean"
+          },
+          "echu": {
+            "default": false,
+            "title": "Echu",
+            "type": "boolean"
+          },
+          "en_retard": {
+            "default": false,
+            "title": "En Retard",
+            "type": "boolean"
+          },
+          "equipement_effectif": {
+            "default": "autre",
+            "title": "Equipement Effectif",
+            "type": "string"
+          },
+          "frequence_libelle": {
+            "default": "",
+            "title": "Frequence Libelle",
+            "type": "string"
+          },
+          "frequence_type": {
+            "title": "Frequence Type",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frequence_valeur": {
+            "title": "Frequence Valeur",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "nb_notations": {
+            "default": 0,
+            "title": "Nb Notations",
+            "type": "integer"
+          },
+          "note_moyenne": {
+            "title": "Note Moyenne",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "notes": {
+            "title": "Notes",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "numero_contrat": {
+            "title": "Numero Contrat",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "perimetre_cible": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Perimetre Cible",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "prestataire_id": {
+            "title": "Prestataire Id",
+            "type": "integer"
+          },
+          "prestataire_nom": {
+            "title": "Prestataire Nom",
+            "type": "string"
+          },
+          "prochaine_visite": {
+            "format": "date",
+            "title": "Prochaine Visite",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reconduit": {
+            "default": false,
+            "title": "Reconduit",
+            "type": "boolean"
+          },
+          "synthese_disponible": {
+            "default": false,
+            "title": "Synthese Disponible",
+            "type": "boolean"
+          },
+          "type_equipement": {
+            "title": "Type Equipement",
+            "type": "string"
+          },
+          "urgence_echeance": {
+            "title": "Urgence Echeance",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "copropriete_id",
+          "prestataire_id",
+          "type_equipement",
+          "libelle",
+          "date_debut",
+          "actif",
+          "prestataire_nom",
+          "echeance_dans_l_annee"
+        ],
+        "title": "ContratARenouveler",
         "type": "object"
       },
       "ContratAccepte": {
@@ -4967,6 +5764,9 @@
       "CourrielReleveRead": {
         "description": "Une ligne du journal des relèves — propre à cet écran, donc déclarée ici.",
         "properties": {
+          "a_classer": {
+            "$ref": "#/components/schemas/AClasserRead"
+          },
           "affaire": {
             "title": "Affaire",
             "type": [
@@ -5199,6 +5999,30 @@
         "title": "DeclarerBadgeBody",
         "type": "object"
       },
+      "DelegationAidant": {
+        "description": "Une délégation active vue par son aidant : qui il aide (`utils/lecture_utilisateur`).",
+        "properties": {
+          "delegation_id": {
+            "title": "Delegation Id",
+            "type": "integer"
+          },
+          "mandant_id": {
+            "title": "Mandant Id",
+            "type": "integer"
+          },
+          "mandant_nom": {
+            "title": "Mandant Nom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "delegation_id",
+          "mandant_id",
+          "mandant_nom"
+        ],
+        "title": "DelegationAidant",
+        "type": "object"
+      },
       "DelegationCreate": {
         "properties": {
           "aidant_id": {
@@ -5227,6 +6051,88 @@
           "aidant_id"
         ],
         "title": "DelegationCreate",
+        "type": "object"
+      },
+      "DelegationRead": {
+        "description": "Une délégation, et les deux gestes que CE lecteur peut y faire (#2525).\n\nTypée depuis #2525 : elle était déclarée ici sans servir, et les routes\nrendaient des `dict` que le contrat annonçait `{}`.",
+        "properties": {
+          "aidant_id": {
+            "title": "Aidant Id",
+            "type": "integer"
+          },
+          "aidant_nom": {
+            "title": "Aidant Nom",
+            "type": "string"
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "date_debut": {
+            "format": "date",
+            "title": "Date Debut",
+            "type": "string"
+          },
+          "date_fin": {
+            "format": "date",
+            "title": "Date Fin",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "mandant_id": {
+            "title": "Mandant Id",
+            "type": "integer"
+          },
+          "mandant_nom": {
+            "title": "Mandant Nom",
+            "type": "string"
+          },
+          "motif": {
+            "title": "Motif",
+            "type": "string"
+          },
+          "peut_accepter": {
+            "default": false,
+            "title": "Peut Accepter",
+            "type": "boolean"
+          },
+          "peut_revoquer": {
+            "default": false,
+            "title": "Peut Revoquer",
+            "type": "boolean"
+          },
+          "revoque_le": {
+            "format": "date-time",
+            "title": "Revoque Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "mandant_id",
+          "mandant_nom",
+          "aidant_id",
+          "aidant_nom",
+          "statut",
+          "motif",
+          "date_debut",
+          "cree_le"
+        ],
+        "title": "DelegationRead",
         "type": "object"
       },
       "DemandeDecision": {
@@ -5630,6 +6536,92 @@
           }
         },
         "title": "DerogationEntree",
+        "type": "object"
+      },
+      "DiagnosticAEcheance": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "dernier_rapport_le": {
+            "format": "date",
+            "title": "Dernier Rapport Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "frequence": {
+            "title": "Frequence",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "non_applicable": {
+            "default": false,
+            "title": "Non Applicable",
+            "type": "boolean"
+          },
+          "ordre": {
+            "title": "Ordre",
+            "type": "integer"
+          },
+          "permanent": {
+            "title": "Permanent",
+            "type": "boolean"
+          },
+          "prochaine_echeance": {
+            "format": "date",
+            "title": "Prochaine Echeance",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rapports": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/RapportRead"
+            },
+            "title": "Rapports",
+            "type": "array"
+          },
+          "texte_legislatif": {
+            "title": "Texte Legislatif",
+            "type": "string"
+          },
+          "urgence_echeance": {
+            "enum": [
+              "depasse",
+              "annee",
+              "futur"
+            ],
+            "title": "Urgence Echeance",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "nom",
+          "texte_legislatif",
+          "ordre",
+          "permanent"
+        ],
+        "title": "DiagnosticAEcheance",
         "type": "object"
       },
       "DiagnosticTypeNonApplicableUpdate": {
@@ -6600,6 +7592,35 @@
           "pvs"
         ],
         "title": "EtatTranscriptions",
+        "type": "object"
+      },
+      "EtiquettesCompte": {
+        "description": "Loti, TC, Vigik, Bail : `ok`, `manque` ou `sans_objet` (`utils/etiquettes_compte`).",
+        "properties": {
+          "bail": {
+            "title": "Bail",
+            "type": "string"
+          },
+          "loti": {
+            "title": "Loti",
+            "type": "string"
+          },
+          "tc": {
+            "title": "Tc",
+            "type": "string"
+          },
+          "vigik": {
+            "title": "Vigik",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loti",
+          "tc",
+          "vigik",
+          "bail"
+        ],
+        "title": "EtiquettesCompte",
         "type": "object"
       },
       "EvenementAudience": {
@@ -7669,6 +8690,50 @@
         "title": "Identite",
         "type": "object"
       },
+      "InfoSyndicAdmin": {
+        "description": "`GET /admin/annuaire/syndic` : le nom vient du CONTRAT quand il y en a un (#535).",
+        "properties": {
+          "adresse": {
+            "title": "Adresse",
+            "type": "string"
+          },
+          "membres": {
+            "items": {
+              "$ref": "#/components/schemas/MembreSyndicAdmin"
+            },
+            "title": "Membres",
+            "type": "array"
+          },
+          "nom_syndic": {
+            "title": "Nom Syndic",
+            "type": "string"
+          },
+          "nom_syndic_source": {
+            "enum": [
+              "contrat",
+              "saisie",
+              "aucune"
+            ],
+            "title": "Nom Syndic Source",
+            "type": "string"
+          },
+          "site_web": {
+            "title": "Site Web",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nom_syndic",
+          "nom_syndic_source",
+          "adresse",
+          "membres"
+        ],
+        "title": "InfoSyndicAdmin",
+        "type": "object"
+      },
       "JournalCourriels": {
         "properties": {
           "limite": {
@@ -8488,6 +9553,94 @@
         "title": "MembreCSIn",
         "type": "object"
       },
+      "MembreConseilAdmin": {
+        "properties": {
+          "batiment_id": {
+            "title": "Batiment Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "batiment_nom": {
+            "title": "Batiment Nom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "est_gestionnaire_site": {
+            "title": "Est Gestionnaire Site",
+            "type": "boolean"
+          },
+          "est_president": {
+            "title": "Est President",
+            "type": "boolean"
+          },
+          "etage": {
+            "title": "Etage",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "etage_libelle": {
+            "title": "Etage Libelle",
+            "type": "string"
+          },
+          "genre": {
+            "title": "Genre",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "nom_affiche": {
+            "title": "Nom Affiche",
+            "type": "string"
+          },
+          "ordre": {
+            "title": "Ordre",
+            "type": "integer"
+          },
+          "photo_url": {
+            "title": "Photo Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "genre",
+          "prenom",
+          "nom",
+          "nom_affiche",
+          "etage_libelle",
+          "est_gestionnaire_site",
+          "est_president",
+          "ordre"
+        ],
+        "title": "MembreConseilAdmin",
+        "type": "object"
+      },
       "MembreConseilLu": {
         "description": "Un membre du conseil syndical, tel que l'annuaire des résidents le montre.",
         "properties": {
@@ -8593,6 +9746,92 @@
           "nom"
         ],
         "title": "MembreRead",
+        "type": "object"
+      },
+      "MembreSyndicAdmin": {
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "est_principal": {
+            "title": "Est Principal",
+            "type": "boolean"
+          },
+          "fonction": {
+            "title": "Fonction",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "genre": {
+            "title": "Genre",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "nom_affiche": {
+            "title": "Nom Affiche",
+            "type": "string"
+          },
+          "ordre": {
+            "title": "Ordre",
+            "type": "integer"
+          },
+          "photo_url": {
+            "title": "Photo Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": "string"
+          },
+          "telephone": {
+            "title": "Telephone",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "telephones": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Telephones",
+            "type": "array"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "genre",
+          "prenom",
+          "nom",
+          "nom_affiche",
+          "telephones",
+          "est_principal",
+          "ordre"
+        ],
+        "title": "MembreSyndicAdmin",
         "type": "object"
       },
       "MembreSyndicIn": {
@@ -8845,6 +10084,24 @@
         "title": "MoyenRead",
         "type": "object"
       },
+      "NatureServie": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "libelle"
+        ],
+        "title": "NatureServie",
+        "type": "object"
+      },
       "NotationCreate": {
         "properties": {
           "commentaire": {
@@ -8983,6 +10240,20 @@
           "cree_le"
         ],
         "title": "NotificationRead",
+        "type": "object"
+      },
+      "NotificationsSupprimees": {
+        "description": "`POST /notifications/supprimer-lues` et `…/supprimer-selection` — combien ont été supprimées.",
+        "properties": {
+          "supprimees": {
+            "title": "Supprimees",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "supprimees"
+        ],
+        "title": "NotificationsSupprimees",
         "type": "object"
       },
       "ObjetCreate": {
@@ -9837,6 +11108,11 @@
             "title": "Ordre",
             "type": "integer"
           },
+          "par_defaut": {
+            "default": false,
+            "title": "Par Defaut",
+            "type": "boolean"
+          },
           "parent": {
             "title": "Parent",
             "type": [
@@ -10004,6 +11280,34 @@
           "nom"
         ],
         "title": "PersonneConcernee",
+        "type": "object"
+      },
+      "PieceJointeRecue": {
+        "description": "Ce que rend `POST /uploads/fichier` — typé dans le contrat (#2508).",
+        "properties": {
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "image",
+              "document"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "nom",
+          "type"
+        ],
+        "title": "PieceJointeRecue",
         "type": "object"
       },
       "PointCreate": {
@@ -10307,6 +11611,41 @@
           }
         },
         "title": "Posture",
+        "type": "object"
+      },
+      "PrefillAffiche": {
+        "description": "Les champs d'un élément du fil, prêts à garnir le formulaire d'affiche.",
+        "properties": {
+          "images": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Images",
+            "type": "array"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "perimetre_cible": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Perimetre Cible",
+            "type": "array"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "titre",
+          "message",
+          "perimetre_cible",
+          "images"
+        ],
+        "title": "PrefillAffiche",
         "type": "object"
       },
       "PresentEntree": {
@@ -11397,6 +12736,55 @@
         "title": "RapportUpdate",
         "type": "object"
       },
+      "Rapprochement": {
+        "description": "Ce qu'un nom saisi désigne (`utils/annuaire.rapprochement`).",
+        "properties": {
+          "batiment_id": {
+            "title": "Batiment Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "batiment_nom": {
+            "title": "Batiment Nom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "etage": {
+            "title": "Etage",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "Rapprochement",
+        "type": "object"
+      },
+      "Rattachement": {
+        "properties": {
+          "numero": {
+            "maxLength": 40,
+            "title": "Numero",
+            "type": "string"
+          }
+        },
+        "required": [
+          "numero"
+        ],
+        "title": "Rattachement",
+        "type": "object"
+      },
       "RattachementLocation": {
         "properties": {
           "lot_ids": {
@@ -11424,6 +12812,46 @@
           "modifies"
         ],
         "title": "Rederivation",
+        "type": "object"
+      },
+      "ReferentielsAffaires": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/CategorieServie"
+            },
+            "title": "Categories",
+            "type": "array"
+          },
+          "colonnes_kanban": {
+            "items": {
+              "$ref": "#/components/schemas/ColonneKanbanServie"
+            },
+            "title": "Colonnes Kanban",
+            "type": "array"
+          },
+          "natures": {
+            "items": {
+              "$ref": "#/components/schemas/NatureServie"
+            },
+            "title": "Natures",
+            "type": "array"
+          },
+          "statuts": {
+            "items": {
+              "$ref": "#/components/schemas/StatutServi"
+            },
+            "title": "Statuts",
+            "type": "array"
+          }
+        },
+        "required": [
+          "categories",
+          "statuts",
+          "colonnes_kanban",
+          "natures"
+        ],
+        "title": "ReferentielsAffaires",
         "type": "object"
       },
       "RegistreLu": {
@@ -11685,6 +13113,44 @@
           "cree_le"
         ],
         "title": "ReleveRead",
+        "type": "object"
+      },
+      "ReleveRenouvellements": {
+        "properties": {
+          "annee": {
+            "title": "Annee",
+            "type": "integer"
+          },
+          "compteurs": {
+            "$ref": "#/components/schemas/CompteursRenouvellements"
+          },
+          "contrats": {
+            "items": {
+              "$ref": "#/components/schemas/ContratARenouveler"
+            },
+            "title": "Contrats",
+            "type": "array"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/DiagnosticAEcheance"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "preavis_mois": {
+            "title": "Preavis Mois",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "annee",
+          "preavis_mois",
+          "compteurs",
+          "contrats",
+          "diagnostics"
+        ],
+        "title": "ReleveRenouvellements",
         "type": "object"
       },
       "ReleveUpdate": {
@@ -12818,6 +14284,51 @@
         "title": "SondageUpdate",
         "type": "object"
       },
+      "SourceReprenable": {
+        "description": "Un élément du fil qu'une affiche peut reprendre (`utils/sources_affiche`).",
+        "properties": {
+          "cle": {
+            "title": "Cle",
+            "type": "string"
+          },
+          "date": {
+            "format": "date-time",
+            "title": "Date",
+            "type": "string"
+          },
+          "epingle": {
+            "title": "Epingle",
+            "type": "boolean"
+          },
+          "famille": {
+            "title": "Famille",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cle",
+          "type",
+          "famille",
+          "id",
+          "titre",
+          "date",
+          "epingle"
+        ],
+        "title": "SourceReprenable",
+        "type": "object"
+      },
       "StatutAcces": {
         "enum": [
           "actif",
@@ -12848,6 +14359,15 @@
         "title": "StatutBail",
         "type": "string"
       },
+      "StatutCommande": {
+        "enum": [
+          "en_attente",
+          "acceptee",
+          "refusee"
+        ],
+        "title": "StatutCommande",
+        "type": "string"
+      },
       "StatutDemandeProfil": {
         "enum": [
           "en_attente",
@@ -12866,6 +14386,41 @@
         ],
         "title": "StatutObjet",
         "type": "string"
+      },
+      "StatutServi": {
+        "properties": {
+          "clos": {
+            "title": "Clos",
+            "type": "boolean"
+          },
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "colonne_kanban": {
+            "title": "Colonne Kanban",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "proposable": {
+            "title": "Proposable",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "code",
+          "libelle",
+          "clos",
+          "proposable"
+        ],
+        "title": "StatutServi",
+        "type": "object"
       },
       "StatutTicket": {
         "description": "Les quatre états du workflow d'un ticket — et il n'y en a pas d'autre.\n\n`fermé` a vécu ici jusqu'au 17/08/2026 sous la mention « conservé pour\ncompatibilité données existantes ». Il ne se distinguait de `résolu` par\nrien : même clôture, même sortie de la liste active, même exclusion des\nrelances. C'était un reliquat du modèle d'origine (`2792b76`), pas une étape\nde vie — et il était pourtant le seul état que le formulaire d'évolution de\nla fiche proposait en plus des trois évidents, pendant que `annulé` y était\nrefusé (#415). La migration 0149 a basculé les tickets concernés en `résolu`.\n\nC'est cette énumération qui fait foi, partout : les deux endpoints qui\nchangent l'état d'un ticket valident par elle (`TicketUpdate.statut`,\n`TicketEvolutionCreate.nouveau_statut`), et `#lib/tickets.ts` lui répond\ncôté écran. `api/tests/test_statuts_tickets.py` échoue si l'un des deux\ndérive.",
@@ -12973,6 +14528,73 @@
           "resumes_disponibles"
         ],
         "title": "SuiviAffairesRead",
+        "type": "object"
+      },
+      "SuppressionNotifications": {
+        "description": "`POST /notifications/supprimer-selection` — les notifications choisies (l'app iOS, #2535).\n\nUn identifiant qui n'est pas une notification du demandeur est ignoré.",
+        "properties": {
+          "ids": {
+            "items": {
+              "type": "integer"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Ids",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ids"
+        ],
+        "title": "SuppressionNotifications",
+        "type": "object"
+      },
+      "SyndicEnregistre": {
+        "properties": {
+          "adresse": {
+            "title": "Adresse",
+            "type": "string"
+          },
+          "membres": {
+            "items": {
+              "$ref": "#/components/schemas/MembreSyndicAdmin"
+            },
+            "title": "Membres",
+            "type": "array"
+          },
+          "nom_syndic": {
+            "title": "Nom Syndic",
+            "type": "string"
+          },
+          "nom_syndic_source": {
+            "enum": [
+              "contrat",
+              "saisie",
+              "aucune"
+            ],
+            "title": "Nom Syndic Source",
+            "type": "string"
+          },
+          "ok": {
+            "default": true,
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "site_web": {
+            "title": "Site Web",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nom_syndic",
+          "nom_syndic_source",
+          "adresse",
+          "membres"
+        ],
+        "title": "SyndicEnregistre",
         "type": "object"
       },
       "SyndicIn": {
@@ -14045,6 +15667,27 @@
             "title": "Categorie",
             "type": "string"
           },
+          "categorie_libelle": {
+            "description": "« Étude & travaux » — la valeur brute si elle est inconnue, jamais vide.",
+            "readOnly": true,
+            "title": "Categorie Libelle",
+            "type": "string"
+          },
+          "close": {
+            "description": "Résolue ou annulée (`etat_affaire.affaire_close`) — elle quitte le suivi.",
+            "readOnly": true,
+            "title": "Close",
+            "type": "boolean"
+          },
+          "colonne_kanban": {
+            "description": "La colonne du Kanban (`kanban_tickets.colonne_du_ticket`), `None` hors tableau.",
+            "readOnly": true,
+            "title": "Colonne Kanban",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "confidentiel": {
             "default": false,
             "title": "Confidentiel",
@@ -14184,6 +15827,18 @@
             "title": "Natures",
             "type": "array"
           },
+          "nom_proprietaire": {
+            "description": "Le nom AFFICHÉ : la personne « saisie pour », sinon le rédacteur (#1104).\n\n`proprietaire_nom` vient de `utils/saisi_pour.noms_derives` ; vide s'il n'y\na ni l'un ni l'autre (un compte supprimé), jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Proprietaire",
+            "type": "string"
+          },
+          "nouveau": {
+            "description": "Le badge NEW : créée depuis moins de 48 h (`nouveaute.est_nouveau`, #2506).",
+            "readOnly": true,
+            "title": "Nouveau",
+            "type": "boolean"
+          },
           "numero": {
             "title": "Numero",
             "type": "string"
@@ -14205,6 +15860,36 @@
               "array",
               "null"
             ]
+          },
+          "perimetre_libelle": {
+            "default": "",
+            "title": "Perimetre Libelle",
+            "type": "string"
+          },
+          "peut_archiver": {
+            "default": false,
+            "title": "Peut Archiver",
+            "type": "boolean"
+          },
+          "peut_changer_etat": {
+            "default": false,
+            "title": "Peut Changer Etat",
+            "type": "boolean"
+          },
+          "peut_deplacer_au_kanban": {
+            "default": false,
+            "title": "Peut Deplacer Au Kanban",
+            "type": "boolean"
+          },
+          "peut_modifier": {
+            "default": false,
+            "title": "Peut Modifier",
+            "type": "boolean"
+          },
+          "peut_repondre": {
+            "default": false,
+            "title": "Peut Repondre",
+            "type": "boolean"
           },
           "photos_urls": {
             "items": {
@@ -14293,6 +15978,12 @@
             "title": "Statut",
             "type": "string"
           },
+          "statut_libelle": {
+            "description": "« Chez le syndic » — la valeur brute si elle est inconnue, jamais vide.",
+            "readOnly": true,
+            "title": "Statut Libelle",
+            "type": "string"
+          },
           "suivi_actualite": {
             "title": "Suivi Actualite",
             "type": [
@@ -14313,6 +16004,12 @@
           "titre": {
             "title": "Titre",
             "type": "string"
+          },
+          "urgente": {
+            "description": "⚡ L'affaire presse : sa priorité le dit (`categories_ticket.ticket_urgent`).",
+            "readOnly": true,
+            "title": "Urgente",
+            "type": "boolean"
           }
         },
         "required": [
@@ -14323,7 +16020,14 @@
           "categorie",
           "statut",
           "priorite",
-          "cree_le"
+          "cree_le",
+          "urgente",
+          "categorie_libelle",
+          "statut_libelle",
+          "close",
+          "colonne_kanban",
+          "nouveau",
+          "nom_proprietaire"
         ],
         "title": "TicketRead",
         "type": "object"
@@ -14997,8 +16701,7 @@
           "delegations_aidant": {
             "default": [],
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/DelegationAidant"
             },
             "title": "Delegations Aidant",
             "type": "array"
@@ -15169,6 +16872,262 @@
           "cree_le"
         ],
         "title": "UserRead",
+        "type": "object"
+      },
+      "UtilisateurAdminRead": {
+        "description": "Un compte dans la liste de l'administration — et les menus mandant / aidant.\n\nTypé depuis #2525 : la route rendait des `dict`, que le contrat annonçait `{}`.",
+        "properties": {
+          "actif": {
+            "title": "Actif",
+            "type": "boolean"
+          },
+          "batiment_id": {
+            "title": "Batiment Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "batiment_nom": {
+            "title": "Batiment Nom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "communaute_ban_count": {
+            "default": 0,
+            "title": "Communaute Ban Count",
+            "type": "integer"
+          },
+          "communaute_ban_jusqu_au": {
+            "format": "date-time",
+            "title": "Communaute Ban Jusqu Au",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "communaute_interdit": {
+            "default": false,
+            "title": "Communaute Interdit",
+            "type": "boolean"
+          },
+          "communaute_motif_refus": {
+            "title": "Communaute Motif Refus",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "decor_fetes": {
+            "default": true,
+            "title": "Decor Fetes",
+            "type": "boolean"
+          },
+          "delegations_aidant": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/DelegationAidant"
+            },
+            "title": "Delegations Aidant",
+            "type": "array"
+          },
+          "demarche_arrivant": {
+            "title": "Demarche Arrivant",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "derniere_connexion": {
+            "format": "date-time",
+            "title": "Derniere Connexion",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "title": "Email",
+            "type": "string"
+          },
+          "email_verifie": {
+            "default": false,
+            "title": "Email Verifie",
+            "type": "boolean"
+          },
+          "etage": {
+            "title": "Etage",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "etiquettes": {
+            "$ref": "#/components/schemas/EtiquettesCompte"
+          },
+          "fonction": {
+            "title": "Fonction",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "has_bail": {
+            "title": "Has Bail",
+            "type": "boolean"
+          },
+          "has_lots": {
+            "title": "Has Lots",
+            "type": "boolean"
+          },
+          "has_tc": {
+            "title": "Has Tc",
+            "type": "boolean"
+          },
+          "has_vigik": {
+            "title": "Has Vigik",
+            "type": "boolean"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "last_seen_actualites": {
+            "format": "date-time",
+            "title": "Last Seen Actualites",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "libelle_logement": {
+            "title": "Libelle Logement",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "nom_aide": {
+            "title": "Nom Aide",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nom_proprietaire": {
+            "title": "Nom Proprietaire",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onboarding_complete": {
+            "title": "Onboarding Complete",
+            "type": "boolean"
+          },
+          "onboarding_etape": {
+            "title": "Onboarding Etape",
+            "type": "integer"
+          },
+          "opt_out_telemetrie": {
+            "default": false,
+            "title": "Opt Out Telemetrie",
+            "type": "boolean"
+          },
+          "photo_url": {
+            "title": "Photo Url",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "preferences_notifications": {
+            "title": "Preferences Notifications",
+            "type": "string"
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": "string"
+          },
+          "prenom_aide": {
+            "title": "Prenom Aide",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "purge_avertie_le": {
+            "format": "date-time",
+            "title": "Purge Avertie Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "restreindre_a_mes_batiments": {
+            "default": false,
+            "title": "Restreindre A Mes Batiments",
+            "type": "boolean"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleUtilisateur"
+          },
+          "roles": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          },
+          "societe": {
+            "title": "Societe",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutUtilisateur"
+          },
+          "telephone": {
+            "title": "Telephone",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "nom",
+          "prenom",
+          "email",
+          "statut",
+          "role",
+          "actif",
+          "onboarding_complete",
+          "onboarding_etape",
+          "preferences_notifications",
+          "cree_le",
+          "has_lots",
+          "has_tc",
+          "has_vigik",
+          "has_bail",
+          "etiquettes"
+        ],
+        "title": "UtilisateurAdminRead",
         "type": "object"
       },
       "VagueLue": {
@@ -15808,7 +17767,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "1.5.0"
+    "version": "1.12.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -16955,11 +18914,13 @@
         "responses": {
           "200": {
             "content": {
-              "application/json": {
-                "schema": {}
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
               }
             },
-            "description": "Successful Response"
+            "description": "Le fichier CSV, séparé par des points-virgules"
           },
           "422": {
             "content": {
@@ -17414,7 +19375,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CompositionConseil"
+                }
               }
             },
             "description": "Successful Response"
@@ -17451,7 +19414,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/ConseilEnregistre"
+                }
               }
             },
             "description": "Successful Response"
@@ -17473,6 +19438,59 @@
         ]
       }
     },
+    "/admin/annuaire/rapprochement": {
+      "get": {
+        "description": "Le nom qu'on saisit dans une fiche : l'inscrit qu'il désigne, et son logement.\n\nL'écran le montre dès la frappe ; le `PUT` applique la même règle à ce qu'il\nreçoit — l'app iOS n'a rien à rapprocher elle-même (#2522).",
+        "operationId": "get_admin_annuaire_rapprochement",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "nom",
+            "required": true,
+            "schema": {
+              "title": "Nom",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "localiser",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Localiser",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Rapprochement"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rapprocher Un Nom",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/admin/annuaire/syndic": {
       "get": {
         "operationId": "get_admin_annuaire_syndic",
@@ -17480,7 +19498,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/InfoSyndicAdmin"
+                }
               }
             },
             "description": "Successful Response"
@@ -17517,7 +19537,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SyndicEnregistre"
+                }
               }
             },
             "description": "Successful Response"
@@ -17637,7 +19659,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CommandeAccesEnAttente"
+                  },
+                  "title": "Response Get Admin Commandes Acces",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -17687,7 +19715,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/CommandeTraitee"
+                }
               }
             },
             "description": "Successful Response"
@@ -19216,7 +21246,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AccueilArrivantResultat"
+                }
               }
             },
             "description": "Successful Response"
@@ -19623,7 +21655,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/UtilisateurAdminRead"
+                  },
+                  "title": "Response Get Admin Utilisateurs",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -19761,7 +21799,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AccueilArrivantResultat"
+                }
               }
             },
             "description": "Successful Response"
@@ -19855,7 +21895,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AutoMatchRelance"
+                }
               }
             },
             "description": "Successful Response"
@@ -20102,7 +22144,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AnnonceHallRead"
+                  },
+                  "title": "Response Get Annonces Hall",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -20140,7 +22188,9 @@
           "201": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AnnonceHallRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -20232,7 +22282,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PrefillAffiche"
+                }
               }
             },
             "description": "Successful Response"
@@ -20302,7 +22354,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SourceReprenable"
+                  },
+                  "title": "Response Get Annonces Hall Sources",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -20386,7 +22444,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/AnnonceHallRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -24058,6 +26118,145 @@
         ]
       }
     },
+    "/courriels-affaires/a-classer/{item_id}/creer": {
+      "post": {
+        "description": "Une affaire neuve, décrite par le message — Étude & travaux, conseil seul.",
+        "operationId": "post_courriels_affaires_a_classer_item_id_creer",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Creer",
+        "tags": [
+          "courriels-affaires"
+        ]
+      }
+    },
+    "/courriels-affaires/a-classer/{item_id}/ecarter": {
+      "post": {
+        "description": "Rien n'est écrit : le message n'appelait pas de suite.",
+        "operationId": "post_courriels_affaires_a_classer_item_id_ecarter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ecarter",
+        "tags": [
+          "courriels-affaires"
+        ]
+      }
+    },
+    "/courriels-affaires/a-classer/{item_id}/rattacher": {
+      "post": {
+        "description": "Verse le message au fil d'une affaire OUVERTE, comme un transfert du conseil.",
+        "operationId": "post_courriels_affaires_a_classer_item_id_rattacher",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "item_id",
+            "required": true,
+            "schema": {
+              "title": "Item Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Rattachement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Classement"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Rattacher",
+        "tags": [
+          "courriels-affaires"
+        ]
+      }
+    },
     "/delegations": {
       "get": {
         "description": "Liste les délégations visibles par l'utilisateur.\n- CS/Admin : toutes\n- Aidant : ses délégations\n- Mandant : les délégations le concernant",
@@ -24068,8 +26267,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/DelegationRead"
                   },
                   "title": "Response Get Delegations",
                   "type": "array"
@@ -24111,7 +26309,9 @@
           "201": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -24152,7 +26352,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -24193,7 +26395,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DelegationRead"
+                }
               }
             },
             "description": "Successful Response"
@@ -27046,6 +29250,78 @@
           }
         },
         "summary": "List Notifications",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/supprimer-lues": {
+      "post": {
+        "operationId": "post_notifications_supprimer_lues",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsSupprimees"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Supprimer Lues",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/notifications/supprimer-selection": {
+      "post": {
+        "operationId": "post_notifications_supprimer_selection",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuppressionNotifications"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationsSupprimees"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Supprimer Selection",
         "tags": [
           "notifications"
         ]
@@ -30218,6 +32494,38 @@
         ]
       }
     },
+    "/reporting/renouvellements": {
+      "get": {
+        "description": "Les contrats et les diagnostics à renouveler, rangés et comptés (Reporting CS).",
+        "operationId": "get_reporting_renouvellements",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleveRenouvellements"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Releve Renouvellements",
+        "tags": [
+          "reporting"
+        ]
+      }
+    },
     "/signalements": {
       "get": {
         "description": "File de modération (CS/admin). statut = en_attente | traite | rejete | tous.",
@@ -31502,6 +33810,39 @@
         ]
       }
     },
+    "/tickets/referentiels": {
+      "get": {
+        "description": "Catégories (grille, carnet, réserve, permises à ce compte), états, colonnes, natures.",
+        "operationId": "get_tickets_referentiels",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReferentielsAffaires"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Referentiels",
+        "tags": [
+          "tickets",
+          "tickets"
+        ]
+      }
+    },
     "/tickets/relance-syndic": {
       "post": {
         "description": "Mail de relance groupé au syndic principal, en copie des membres du CS.\n\nChaque ticket relancé reçoit une évolution « relance », ce qui le date et le\nrend traçable.",
@@ -32683,7 +35024,7 @@
     },
     "/uploads/fichier": {
       "post": {
-        "description": "Upload une photo ou un document (PDF, Word, Excel) destiné à être joint\nà un commentaire d'actualité ou de ticket.\n- Images : redimensionnées à 1200px max, converties en JPEG\n- Documents : stockés tels quels, max 15 Mo\nRetourne { url, nom, type }",
+        "description": "Une photo ou un document, en `multipart/form-data` (champ `file`), AVANT la création : l'adresse rendue se passe dans `photos_urls` ou `fichiers_urls`.\n\n- image : .avif, .bmp, .gif, .heic, .heif, .jpg, .png, .tiff, .webp — 5 Mo au plus\n- document : .doc, .docx, .pdf, .txt, .xls, .xlsx — 15 Mo au plus\n\nLe contenu doit correspondre à son type (signature) ; refusé sinon (400).",
         "operationId": "post_uploads_fichier",
         "requestBody": {
           "content": {
@@ -32699,7 +35040,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/PieceJointeRecue"
+                }
               }
             },
             "description": "Successful Response"

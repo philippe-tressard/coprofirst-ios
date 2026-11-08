@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Ce que l'onglet « Comptes & accès » demande à une installation (#15) — la file de
@@ -10,10 +11,11 @@ import Foundation
 protocol ServiceComptesCS: Sendable {
     /// GET /admin/comptes-en-attente.
     func comptesEnAttente(_ installation: Installation) async throws -> [CompteEnAttente]
-    /// GET /admin/commandes-acces (réponse non typée : `Relecture`).
+    /// GET /admin/commandes-acces.
     func commandesEnAttente(_ installation: Installation) async throws -> [CommandeEnAttente]
-    /// POST /admin/comptes/{id}/traiter — `valider` ou `refuser`.
-    func traiterCompte(_ id: Int, valider: Bool, dans installation: Installation) async throws
+    /// POST /admin/comptes/{id}/traiter — `valider` ou `refuser`. Rend l'`annonce` du
+    /// serveur, avec son ton (« ⚠️ Aucun lot trouvé dans l'import »…) ; aucune sur un refus.
+    func traiterCompte(_ id: Int, valider: Bool, dans installation: Installation) async throws -> PhraseAvis?
     /// POST /admin/utilisateurs/{id}/accueil-arrivant : bienvenue, consignes, demandes
     /// au syndic et au conseil, pour un résident qui emménage.
     func accueillir(_ id: Int, _ accueil: AccueilArrivant, dans installation: Installation) async throws
@@ -40,8 +42,8 @@ struct CompteEnAttente: Hashable, Sendable, Identifiable {
     var creeLe: Date
 }
 
-/// Une demande de badge ou de télécommande en attente (`/admin/commandes-acces`).
-struct CommandeEnAttente: Decodable, Hashable, Sendable, Identifiable {
+/// Une demande de badge ou de télécommande en attente (`CommandeAccesEnAttente`).
+struct CommandeEnAttente: Hashable, Sendable, Identifiable {
     let id: Int
     var type: String
     var quantite: Int
@@ -50,6 +52,21 @@ struct CommandeEnAttente: Decodable, Hashable, Sendable, Identifiable {
     var lot: String
     var batiment: String?
     var creeLe: Date
+}
+
+extension CommandeEnAttente {
+    init(_ lue: Components.Schemas.CommandeAccesEnAttente) {
+        self.init(
+            id: lue.id, type: lue._type, quantite: lue.quantite, demandeurNom: lue.demandeurNom, lot: lue.lot,
+            batiment: lue.batiment, creeLe: lue.creeLe)
+    }
+}
+
+extension PhraseAvis {
+    /// L'`annonce` d'un geste servie par le serveur (`{ton, texte}`), affichée telle quelle.
+    init(_ annonce: Components.Schemas.Annonce) {
+        self.init(texte: annonce.texte, ton: TonAvis(rawValue: annonce.ton.rawValue) ?? .info)
+    }
 }
 
 /// Ce que la case « Nouvel Arrivant » envoie (`AccueilArrivantBody`).

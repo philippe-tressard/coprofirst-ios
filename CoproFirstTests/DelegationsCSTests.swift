@@ -31,36 +31,37 @@ import Testing
 
 // MARK: - Délégations
 
-/// Le JSON de `_to_read` (`routers/delegations.py`, v3.61.0) : la route n'a pas de
-/// `response_model`, l'app le relit en miroir.
-@Test func uneDelegationSeRelitTelleQueLeServeurLaSert() throws {
-    let json = #"""
-        [{"id": 12, "mandant_id": 3, "mandant_nom": "Lucie Exemple", "aidant_id": 7, "aidant_nom": "Camille Essai",
-          "statut": "en_attente", "motif": "", "date_debut": "2026-11-02", "date_fin": null,
-          "cree_le": "2026-11-02T09:00:00", "revoque_le": null}]
-        """#
-    let delegation = try #require(try Relecture.lire([Delegation].self, json: Data(json.utf8)).first)
-    #expect(delegation.mandantNom == "Lucie Exemple" && delegation.aidantId == 7)
-    #expect(delegation.dateFin == nil)
-    #expect(TextesDelegations.periode(delegation) == "Du 02/11/2026 — illimité")
+/// `GET /delegations` est typé (`DelegationRead`, contrat 1.8.0) : la réponse traverse le
+/// client GÉNÉRÉ — ses dates comprises — puis `Delegation(_:)` (#56).
+@Test func uneDelegationSeLitParSonTypeGenere() async throws {
+    let lues = try await client(servant: FixturesDelegations.delegations).getDelegations().ok.body.json
+        .map(Delegation.init)
+    let enAttente = try #require(lues.first)
+    #expect(enAttente.mandantNom == "Lucie Exemple" && enAttente.aidantId == 7)
+    #expect(TextesDelegations.periode(enAttente) == "Du 06/11/2026 au 04/02/2027")
+    let active = try #require(lues.first { $0.statut == "active" })
+    #expect(active.dateFin == nil && TextesDelegations.periode(active) == "Du 11/07/2026 — illimité")
+    // La simulation lit les mêmes octets par le même branchement.
+    #expect(try await ServiceSimule(delai: .zero).delegations(ServiceSimule.residence) == lues)
 }
 
-@Test func seulLAidantAccepteUneDelegationEnAttente() {
-    let enAttente = Delegation(
-        id: 1, mandantId: 3, mandantNom: "A", aidantId: 7, aidantNom: "B", statut: "en_attente", motif: "",
-        dateDebut: "2026-04-02", dateFin: "2026-06-30")
-    #expect(enAttente.acceptable(par: 7))
-    #expect(!enAttente.acceptable(par: 3), "la personne aidée n'accepte pas pour l'aidant")
-    var active = enAttente
-    active.statut = "active"
-    #expect(!active.acceptable(par: 7))
-    #expect(enAttente.revocable && active.revocable)
-    for fini in ["revoquee", "expiree"] {
-        var terminee = enAttente
-        terminee.statut = fini
-        #expect(!terminee.revocable)
-    }
-    #expect(TextesDelegations.periode(enAttente) == "Du 02/04/2026 au 30/06/2026")
+/// Les gestes sont SERVIS pour le compte qui lit (`peut_accepter`, `peut_revoquer`) :
+/// l'app ne les déduit ni du statut ni de qui est l'aidant (#56).
+@Test func lesGestesDUneDelegationSontCeuxQueLeServeurOuvre() async throws {
+    let lues = try FixturesDelegations.delegationsLues()
+    let enAttente = try #require(lues.first { $0.statut == "en_attente" })
+    #expect(enAttente.peutAccepter && enAttente.peutRevoquer)
+    let active = try #require(lues.first { $0.statut == "active" })
+    #expect(!active.peutAccepter && active.peutRevoquer)
+    let revoquee = try #require(lues.first { $0.statut == "revoquee" })
+    #expect(!revoquee.peutAccepter && !revoquee.peutRevoquer)
+    // Absents d'une réponse : aucun geste, jamais un geste deviné.
+    let json = #"""
+        [{"id": 1, "mandant_id": 1, "mandant_nom": "A", "aidant_id": 2, "aidant_nom": "B", "statut": "en_attente",
+          "motif": "", "date_debut": "2026-04-02", "cree_le": "2026-04-02T08:00:00"}]
+        """#
+    let sansGestes = try #require(try await client(servant: json).getDelegations().ok.body.json.first)
+    #expect(!Delegation(sansGestes).peutAccepter && !Delegation(sansGestes).peutRevoquer)
 }
 
 @Test func lEtatDUneDelegationEstCeluiDuSite() {
@@ -90,17 +91,19 @@ import Testing
     let service = ServiceSimule(delai: .zero)
     let residence = ServiceSimule.residence
     let avant = try await service.delegations(residence)
-    let enAttente = try #require(avant.delegations.first { $0.acceptable(par: avant.moi) })
-    #expect(try await service.accepterDelegation(enAttente.id, dans: residence).statut == "active")
+    let enAttente = try #require(avant.first { $0.peutAccepter })
+    let acceptee = try await service.accepterDelegation(enAttente.id, dans: residence)
+    #expect(acceptee.statut == "active" && !acceptee.peutAccepter, "la réponse porte les gestes d'après")
     await #expect(throws: ErreurService.self) { try await service.accepterDelegation(enAttente.id, dans: residence) }
-    #expect(try await service.revoquerDelegation(enAttente.id, dans: residence).statut == "revoquee")
+    let revoquee = try await service.revoquerDelegation(enAttente.id, dans: residence)
+    #expect(revoquee.statut == "revoquee" && !revoquee.peutRevoquer)
     var saisie = SaisieDelegation(mandant: 4, aidant: 7, motif: "Essai")
     saisie.dateFin = ISO8601DateFormatter().date(from: "2026-07-25T22:30:00Z")
     let creee = try await service.creerDelegation(saisie, dans: residence)
     #expect(creee.statut == "en_attente" && creee.dateFin == "2026-07-26", "le jour de Paris")
-    #expect(try await service.delegations(residence).delegations.first?.id == creee.id)
+    #expect(try await service.delegations(residence).first?.id == creee.id)
     // Un autre service simulé garde sa propre liste.
-    #expect(try await ServiceSimule(delai: .zero).delegations(residence).delegations.count == avant.delegations.count)
+    #expect(try await ServiceSimule(delai: .zero).delegations(residence).count == avant.count)
 }
 
 // MARK: - Formats du site ajoutés par #15
@@ -141,6 +144,25 @@ func leJourEtLaDateHeureCourteSontCeuxDuSite(iso: String, courte: String, jour: 
     #expect(TextesReporting.anciennes(suivi.delaiJours) == "de plus de 90 jours")
 }
 
+/// Reporting › Renouvellements (#56) : le relevé servi, lu par son type généré, rangé
+/// sans rien recalculer — l'ordre, l'année et l'état sont ceux du serveur.
+@Test func lesRenouvellementsSeLisentTelsQueServis() async throws {
+    let lu = Renouvellements(
+        try await client(servant: FixturesRenouvellements.releve).getReportingRenouvellements().ok.body.json)
+    #expect(lu.annee == 2026 && lu.preavisMois == 3 && lu.contratsEnPreavis == 1 && lu.auditsAPlanifier == 2)
+    #expect(lu.contratsDeLAnnee.map(\.id) == [11, 12], "dans l'ordre servi : la pire note d'abord")
+    #expect(lu.contratsFuturs.map(\.id) == [13])
+    #expect(lu.contratsSansDate.map(\.id) == [14])
+    #expect(lu.diagnosticsParAnnee.map(\.annee) == ["2026", "2032"])
+    #expect(lu.diagnosticsParAnnee.first?.diagnostics.map(\.urgence) == ["depasse", "annee"])
+    #expect(lu.diagnosticsPermanents.map(\.id) == [1])
+    let ascenseurs = try #require(lu.contrats.first)
+    #expect(TextesRenouvellements.periode(ascenseurs) == "1 déc. 2023 → 30 nov. 2026 · préavis dès 31 août 2026")
+    #expect(TextesRenouvellements.note(ascenseurs) == "★ 2,5 (4 avis)")
+    #expect(TextesRenouvellements.note(lu.contrats[3]) == nil, "sans note, rien")
+    #expect(try await ServiceSimule(delai: .zero).renouvellements(ServiceSimule.residence) == lu)
+}
+
 @Test func chaqueTeinteDeTrancheAUneCouleur() {
     for teinte in ["s1", "s8", "p1", "p4", "autre"] {
         #expect(TablesReporting.tranches[teinte]?.count == 1, "\(teinte) : un aplat")
@@ -150,22 +172,19 @@ func leJourEtLaDateHeureCourteSontCeuxDuSite(iso: String, courte: String, jour: 
 
 // MARK: - Annonces Hall
 
-@Test func uneAfficheSeRelitEtNeSeRestaureQueSiElleAEteArchiveeALaMain() throws {
-    let json = #"""
-        {"id": 7, "titre": "Coupure d'eau", "message": "<p>Jeudi</p>", "assiste_ia": false, "apercu": "Jeudi",
-         "perimetre_cible": ["bat_a"], "perimetre_label": "Bâtiment A", "format_demande": "auto",
-         "format_effectif": "a5", "format_label": "A5", "images": [], "pdf_nom": "x.pdf", "taille_octets": 1200,
-         "destinataires": [], "envoye_le": null, "archivee": true, "archivee_manuellement": false,
-         "ticket_id": null, "cree_le": "2026-09-01T10:00:00", "auteur_nom": "Camille Essai"}
-        """#
-    var affiche = try Relecture.lire(AnnonceHall.self, json: Data(json.utf8))
-    #expect(affiche.formatLabel == "A5" && affiche.envoyeLe == nil)
-    #expect(!affiche.archivable, "archivée par le temps : « Restaurer » n'aurait aucun effet")
-    affiche.archiveeManuellement = true
-    #expect(affiche.archivable)
-    affiche.archivee = false
-    affiche.archiveeManuellement = false
-    #expect(affiche.archivable, "une affiche en cours s'archive")
+/// `GET /annonces-hall` est typé (`AnnonceHallRead`) et sert ses gestes : « Restaurer »
+/// seulement pour une affiche rangée à la main, « Supprimer » à l'administrateur (#56).
+@Test func uneAfficheSeLitParSonTypeEtPorteSesGestes() async throws {
+    let lues = try await client(servant: FixturesAnnoncesHall.affiches).getAnnoncesHall(query: .init()).ok.body.json
+        .map(AnnonceHall.init)
+    let enCours = try #require(lues.first { $0.id == 7 })
+    #expect(enCours.formatLabel == "A5" && enCours.envoyeLe != nil)
+    #expect(enCours.peutArchiver && !enCours.peutRestaurer)
+    let rangeeALaMain = try #require(lues.first { $0.id == 4 })
+    #expect(rangeeALaMain.archivee && rangeeALaMain.peutRestaurer)
+    let rangeeParLeTemps = try #require(lues.first { $0.id == 3 })
+    #expect(rangeeParLeTemps.archivee && !rangeeParLeTemps.peutRestaurer && !rangeeParLeTemps.peutArchiver)
+    #expect(lues.allSatisfy { $0.peutSupprimer }, "servi à l'administrateur")
 }
 
 @Test func uneAfficheDemandeUnTitreEtUnMessage() {

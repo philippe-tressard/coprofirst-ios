@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -113,45 +114,37 @@ private let toutes = PagesParDefaut.toutes
     let _: any ServiceCourrielsCS = ServiceSimule(delai: .zero)
 }
 
-// MARK: - Relectures des réponses non typées
+// MARK: - Réponses typées depuis le contrat 1.12.0 (#55)
 
-@Test func uneCommandeEnAttenteSeRelit() throws {
-    let json = Data(
-        """
-        [{"id": 7, "user_id": 3, "lot_id": 12, "type": "vigik", "quantite": 2, "motif": null,
-          "statut": "en_attente", "traite_par_id": null, "motif_refus": null,
-          "cree_le": "2026-11-02T09:30:00", "traite_le": null,
-          "demandeur_nom": "Sacha Exemple", "lot": "Lot 12", "batiment": "Bât. A"}]
-        """.utf8)
-    let commandes = try Relecture.lire([CommandeEnAttente].self, json: json)
-    #expect(commandes.first?.demandeurNom == "Sacha Exemple")
-    #expect(commandes.first?.quantite == 2)
-    #expect(FormatsDuSite.dateCourte(commandes.first?.creeLe) == "02/11/2026")
+@Test func uneCommandeEnAttenteSeLitParSonType() async throws {
+    let commandes = try await client(servant: FixturesComptesCS.commandes).getAdminCommandesAcces().ok.body.json
+        .map(CommandeEnAttente.init)
+    #expect(commandes.first?.demandeurNom == "Sacha Exemple" && commandes.first?.quantite == 2)
+    #expect(FormatsDuSite.dateCourte(commandes.first?.creeLe) == "03/11/2026")
+    #expect(try await ServiceSimule(delai: .zero).commandesEnAttente(ServiceSimule.residence) == commandes)
 }
 
-@Test func leConseilEtLeSyndicSeRelisent() throws {
-    let conseil = try Relecture.lire(
-        ConseilCS.self,
-        json: Data(
-            """
-            {"ag_annee": 2026, "ag_date": "2026-06-12", "whatsapp_url": "",
-             "membres": [{"id": 1, "genre": "Mme", "prenom": "Alix", "nom": "Exemple", "batiment_id": 1,
-               "batiment_nom": "A", "etage": 2, "est_gestionnaire_site": true, "est_president": true,
-               "photo_url": null, "ordre": 0, "user_id": 4}]}
-            """.utf8))
-    #expect(conseil.membres.first?.estPresident == true)
-    #expect(conseil.membres.first?.userId == 4)
-    let syndic = try Relecture.lire(
-        SyndicCS.self,
-        json: Data(
-            """
-            {"nom_syndic": "Cabinet", "nom_syndic_source": "contrat", "adresse": "", "site_web": null,
-             "membres": [{"id": 2, "genre": "Mr", "prenom": "Eudes", "nom": "Fictif", "fonction": null,
-               "email": null, "telephone": "01 99 00 00 01, 06 99 00 00 02", "est_principal": false,
-               "photo_url": null, "ordre": 0, "user_id": null}]}
-            """.utf8))
+@Test func leConseilEtLeSyndicSeLisentParLeurType() async throws {
+    let conseil = ConseilCS(try await client(servant: FixturesAnnuaireCS.conseil).getAdminAnnuaireCs().ok.body.json)
+    #expect(conseil.membres.first?.estPresident == true && conseil.membres.first?.userId == 7)
+    #expect(conseil.membres.first?.etageLibelle == "2ᵉ étage", "l'étage tel que le serveur le dit")
+    #expect(conseil.membres[1].etageLibelle == nil, "un libellé vide se tait")
+    let syndic = SyndicCS(try await client(servant: FixturesAnnuaireCS.syndic).getAdminAnnuaireSyndic().ok.body.json)
     #expect(syndic.nomDuContrat)
-    #expect(AnnuaireCS.telephones(syndic.membres.first?.telephone) == ["01 99 00 00 01", "06 99 00 00 02"])
+    #expect(syndic.membres.first?.telephones == ["01 99 00 12 34", "06 99 00 12 34"], "servis un par un")
+    #expect(AnnuaireCS.champsTelephone(syndic.membres.first?.telephones ?? []) == ["01 99 00 12 34", "06 99 00 12 34"])
+}
+
+/// Le serveur refuse un interlocuteur sans téléphone en 422 avec SA phrase — pas la liste
+/// d'une erreur de validation : le client généré ne la décode pas, l'app la lit quand même.
+@Test func unRefusEn422DitLaPhraseDuServeur() async throws {
+    let refus = #"{"detail": "L'interlocuteur Eudes Fictif n'a pas de téléphone."}"#
+    let corps = Components.Schemas.SyndicIn(membres: [])
+    await #expect(throws: ErreurService.refus(.init(phrase: "L'interlocuteur Eudes Fictif n'a pas de téléphone."))) {
+        _ = try await ServiceAPI().appeler {
+            try await client(servant: refus, statut: .unprocessableContent).putAdminAnnuaireSyndic(body: .json(corps))
+        }
+    }
 }
 
 // MARK: - Comptes & accès
@@ -163,7 +156,8 @@ private let toutes = PagesParDefaut.toutes
     await etat.charger(service, ServiceSimule.residence)
     let premier = try #require(etat.comptes.first)
     let annonce = try await etat.valider(premier, accueil: AccueilArrivant(), service, ServiceSimule.residence)
-    #expect(annonce.contains(TextesComptesCS.accueilEnvoye), "la case « Nouvel Arrivant » lance l'accueil")
+    #expect(annonce?.texte.hasPrefix("Compte activé — 1 lot rattaché.") == true, "la phrase du serveur")
+    #expect(annonce?.texte.contains(TextesComptesCS.accueilEnvoye) == true, "« Nouvel Arrivant » lance l'accueil")
     #expect(!etat.comptes.contains(premier))
     let commande = try #require(etat.commandes.first)
     #expect(try await etat.traiter(commande, accepter: nil, service, ServiceSimule.residence) == "Commande rejetée")
@@ -179,10 +173,25 @@ private let toutes = PagesParDefaut.toutes
     let etat = EtatComptesCS()
     await etat.charger(service, ServiceSimule.residence)
     let compte = try #require(etat.comptes.first)
-    try await service.traiterCompte(compte.id, valider: true, dans: ServiceSimule.residence)
+    _ = try await service.traiterCompte(compte.id, valider: true, dans: ServiceSimule.residence)
     await #expect(throws: ErreurService.refus(.init(phrase: "Compte déjà traité"))) {
         _ = try await etat.rejeter(compte, service, ServiceSimule.residence)
     }
+}
+
+/// L'avertissement du serveur reste un avertissement : l'app ne compose plus « Compte
+/// activé. », elle montre l'`annonce` avec son ton (#55).
+@MainActor
+@Test func laValidationMontreLAnnonceDuServeurAvecSonTon() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let etat = EtatComptesCS()
+    await etat.charger(service, ServiceSimule.residence)
+    let sansLot = try #require(etat.comptes.first { $0.id == 502 })
+    let annonce = try await etat.valider(sansLot, accueil: nil, service, ServiceSimule.residence)
+    #expect(annonce == PhraseAvis(texte: "Compte activé. ⚠️ Aucun lot trouvé dans l'import.", ton: .warning))
+    let avis = AvisDuGeste()
+    if let annonce { avis.dire(annonce) }
+    #expect(avis.ton == .warning && avis.texte?.contains("Aucun lot") == true)
 }
 
 @Test func lesCodesSeDecoupentCommeSurLeSite() {
@@ -204,6 +213,27 @@ private let toutes = PagesParDefaut.toutes
     #expect(Set(parc.map(\.id)).count == parc.count, "un identifiant par type et par numéro")
 }
 
+/// « Par porteur » lit le rang SERVI (nom puis prénom), jamais `porteur_nom` qui commence
+/// par le prénom ; les accès sans porteur viennent en dernier (#55).
+@Test func leParcSeRangeParLeRangDuPorteur() async throws {
+    let parc = try await ServiceSimule(delai: .zero).parc(ServiceSimule.residence).sorted(by: AccesDuParc.parPorteur)
+    #expect(parc.map(\.porteurNom) == ["Basile Fictif", "Alix Exemple", "Alix Exemple", "Céleste Inventé", ""])
+    #expect(parc.last?.porteurId == nil)
+}
+
+/// Ce qu'un accès ouvre se dit par le LIBELLÉ de l'arbre servi, le périmètre par défaut
+/// tu (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo, 08/11/2026, #64).
+@Test func ceQuUnAccesOuvreSeDitParSonLibelle() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let arbre = try await service.perimetres(ServiceSimule.residence)
+    let parc = try await service.parc(ServiceSimule.residence)
+    let premier = try #require(parc.first { $0.id == "vigik-1" })
+    #expect(premier.perimetreCible == ["copropriete", "bat_a"], "des codes, comme le serveur")
+    #expect(Perimetre.libelles(premier.perimetreCible, parmi: arbre) == ["Bâtiment A"])
+    #expect(Perimetre.libelles(["bat:2"], parmi: arbre).isEmpty, "un code inconnu ne s'affiche pas brut")
+    #expect(Perimetre.libelles(["bat_b"], parmi: []).isEmpty, "sans arbre, rien plutôt qu'un code")
+}
+
 // MARK: - Annuaire CS & Syndic
 
 @Test func unSeulPresidentUnSeulPrincipal() {
@@ -217,7 +247,7 @@ private let toutes = PagesParDefaut.toutes
 }
 
 @Test func lesTelephonesFontLAllerRetour() {
-    #expect(AnnuaireCS.telephones(nil) == [""], "au moins un champ")
+    #expect(AnnuaireCS.champsTelephone([]) == [""], "au moins un champ")
     #expect(AnnuaireCS.champTelephone([" 01 99 00 00 01 ", "", "06 99 00 00 02"]) == "01 99 00 00 01,06 99 00 00 02")
     #expect(AnnuaireCS.champTelephone(["  "]) == nil)
 }
@@ -242,5 +272,18 @@ private let toutes = PagesParDefaut.toutes
     var syndic = try #require(etat.syndic.valeur)
     syndic.nomSyndic = "Saisi à la main"
     try await etat.enregistrer(syndic, service, ServiceSimule.residence)
-    #expect(etat.syndic.valeur?.nomSyndic == "Cabinet Exemple Gestion", "le contrat fait foi")
+    #expect(etat.syndic.valeur?.nomSyndic == "Cabinet Exemple Gestion", "ce que le serveur a retenu : le contrat")
+}
+
+/// Le nom saisi se rapproche d'un inscrit et d'un logement — le SERVEUR le dit (#55).
+@Test func unNomSaisiSeRapprocheParLeServeur() async throws {
+    let service = ServiceSimule(delai: .zero)
+    let trouve = try await service.rapprochement(nom: "Exemple", localiser: true, dans: ServiceSimule.residence)
+    #expect(trouve == Rapprochement(userId: 7, batimentId: 1, batimentNom: "A", etage: 2))
+    let sansLogement = try await service.rapprochement(nom: "Exemple", localiser: false, dans: ServiceSimule.residence)
+    #expect(sansLogement == Rapprochement(userId: 7), "un interlocuteur du syndic n'a pas de logement")
+    #expect(try await service.rapprochement(nom: "Inconnu", localiser: true, dans: ServiceSimule.residence) == .init())
+    let lu = try await client(servant: FixturesAnnuaireCS.rapprochementExemple)
+        .getAdminAnnuaireRapprochement(query: .init(nom: "Exemple")).ok.body.json
+    #expect(Rapprochement(lu) == trouve)
 }

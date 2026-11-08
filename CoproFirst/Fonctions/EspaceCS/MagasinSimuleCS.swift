@@ -41,3 +41,19 @@ private enum RegistreMagasinsCS {
         }
     }
 }
+
+extension ServiceSimule {
+    /// Un contenu simulé lu des FIXTURES au premier usage (le JSON de sa route, lu comme
+    /// le service réel le lit), puis changé par les gestes de CE service. Une fixture
+    /// illisible lève : elle ne vide pas la liste en silence. Un contenu par type.
+    @discardableResult
+    func modifierSimule<Contenu, R>(
+        depuis fixtures: () throws -> Contenu, _ geste: (inout Contenu) throws -> R
+    ) throws -> R {
+        try MagasinSimuleCS<Contenu?>.de(self) { nil }.modifier { contenu in
+            var lu = try contenu ?? fixtures()
+            defer { contenu = lu }
+            return try geste(&lu)
+        }
+    }
+}

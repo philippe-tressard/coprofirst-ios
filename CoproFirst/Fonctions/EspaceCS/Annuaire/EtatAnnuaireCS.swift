@@ -5,8 +5,9 @@ import Foundation
 import Observation
 
 /// L'état de « Annuaire CS & Syndic » : les deux fiches lues, et leurs gestes. Chaque
-/// geste réécrit la fiche ENTIÈRE (`PUT`), puis la relit — les fiches neuves y
-/// reçoivent leur numéro, et l'écran montre ce que le serveur a retenu.
+/// geste réécrit la fiche ENTIÈRE (`PUT`), qui rend la composition ENREGISTRÉE — les
+/// fiches neuves y reçoivent leur numéro, les noms leur rapprochement : l'écran montre
+/// ce que le serveur a retenu, pas ce qu'on lui a envoyé (#55).
 @MainActor
 @Observable
 final class EtatAnnuaireCS {
@@ -33,17 +34,13 @@ final class EtatAnnuaireCS {
     func enregistrer(
         _ nouveau: ConseilCS, _ service: any ServiceAnnuaireCS, _ installation: Installation
     ) async throws {
-        try await service.enregistrer(nouveau, dans: installation)
-        conseil = .pret(nouveau)
-        conseil = await Self.lire { try await service.conseil(installation) }
+        conseil = .pret(try await service.enregistrer(nouveau, dans: installation))
     }
 
     func enregistrer(
         _ nouveau: SyndicCS, _ service: any ServiceAnnuaireCS, _ installation: Installation
     ) async throws {
-        try await service.enregistrer(nouveau, dans: installation)
-        syndic = .pret(nouveau)
-        syndic = await Self.lire { try await service.syndic(installation) }
+        syndic = .pret(try await service.enregistrer(nouveau, dans: installation))
     }
 
     private static func lire<V: Equatable & Sendable>(_ lecture: () async throws -> V) async -> Lecture<V> {

@@ -4,23 +4,12 @@
 import ClientAPI
 import Foundation
 
-/// Les Délégations par le client GÉNÉRÉ. Aucune de leurs réponses n'est typée dans le
-/// contrat (`response_model=list[dict]`, ou rien) : elles se relisent en miroir
-/// (`Relecture`) — besoin noté pour coprofirst#2525.
+/// Les Délégations par le client GÉNÉRÉ : chaque réponse se lit par son type
+/// (`DelegationRead`, `UtilisateurAdminRead`, contrat 1.8.0 — coprofirst#2525).
 extension ServiceAPI: ServiceDelegations {
-    func delegations(_ installation: Installation) async throws -> ListeDelegations {
-        let client = client(installation.adresse)
-        async let liste = appeler { try await client.getDelegations() }
-        async let compte = appeler { try await client.getAuthMe() }
-        let delegations: [Delegation] =
-            switch try await liste {
-            case .ok(let ok):
-                try Relecture.lire([Delegation].self, depuis: try ok.body.json.map(\.additionalProperties))
-            case .unprocessableContent: throw ErreurService.inattendue(422)
-            case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-            }
-        switch try await compte {
-        case .ok(let ok): return ListeDelegations(delegations: delegations, moi: try ok.body.json.id)
+    func delegations(_ installation: Installation) async throws -> [Delegation] {
+        switch try await appeler({ try await client(installation.adresse).getDelegations() }) {
+        case .ok(let ok): return try ok.body.json.map(Delegation.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -28,7 +17,7 @@ extension ServiceAPI: ServiceDelegations {
 
     func residentsDelegables(_ installation: Installation) async throws -> [ResidentDelegable] {
         switch try await appeler({ try await client(installation.adresse).getAdminUtilisateurs() }) {
-        case .ok(let ok): return try Relecture.lire([ResidentDelegable].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(ResidentDelegable.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -41,7 +30,7 @@ extension ServiceAPI: ServiceDelegations {
             motif: saisie.motif.trimmingCharacters(in: .whitespacesAndNewlines))
         let sortie = try await appeler { try await client(installation.adresse).postDelegations(body: .json(corps)) }
         switch sortie {
-        case .created(let cree): return try Relecture.lire(Delegation.self, depuis: try cree.body.json)
+        case .created(let cree): return Delegation(try cree.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
@@ -52,7 +41,7 @@ extension ServiceAPI: ServiceDelegations {
             try await client(installation.adresse).postDelegationsDelegationIdAccepter(path: .init(delegationId: id))
         }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire(Delegation.self, depuis: try ok.body.json)
+        case .ok(let ok): return Delegation(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
@@ -63,7 +52,7 @@ extension ServiceAPI: ServiceDelegations {
             try await client(installation.adresse).postDelegationsDelegationIdRevoquer(path: .init(delegationId: id))
         }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire(Delegation.self, depuis: try ok.body.json)
+        case .ok(let ok): return Delegation(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

@@ -13,6 +13,8 @@ import SwiftUI
 struct OngletBadgesCS: OngletEspaceCS {
     let contexte: ContexteOngletCS
     @State private var parc: [AccesDuParc]?
+    /// L'arbre servi, pour dire ce qu'un accès ouvre ; sans lui, rien plutôt qu'un code.
+    @State private var perimetres: [Perimetre] = []
     @State private var erreur: String?
     @State private var recherche = ""
     @State private var type: TypeAcces?
@@ -41,7 +43,7 @@ struct OngletBadgesCS: OngletEspaceCS {
         } else {
             VStack(spacing: 12) {
                 ForEach(0..<3, id: \.self) { _ in
-                    CarteAccesDuParc(acces: TextesBadgesCS.exempleSquelette)
+                    CarteAccesDuParc(acces: TextesBadgesCS.exempleSquelette, perimetres: [])
                 }
             }
             .redacted(reason: .placeholder)
@@ -64,7 +66,7 @@ struct OngletBadgesCS: OngletEspaceCS {
                     Text(TextesBadgesCS.aucunResultat).font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 LazyVStack(spacing: 10) {
-                    ForEach(filtres) { CarteAccesDuParc(acces: $0) }
+                    ForEach(filtres) { CarteAccesDuParc(acces: $0, perimetres: perimetres) }
                 }
                 Text(TextesBadgesCS.compte(filtres.count, sur: parc.count))
                     .font(.footnote)
@@ -80,12 +82,14 @@ struct OngletBadgesCS: OngletEspaceCS {
             (type == nil || acces.type == type)
                 && Recherche.contientTousLesMots([acces.code, acces.porteurNom, acces.lotLibelle], recherche)
         }
-        .sorted { $0.porteurNom.localizedStandardCompare($1.porteurNom) == .orderedAscending }
+        .sorted(by: AccesDuParc.parPorteur)
     }
 
     private func charger(_ service: any ServiceBadgesCS) async {
         do {
-            parc = try await service.parc(contexte.installation)
+            async let lus = service.parc(contexte.installation)
+            async let arbre = try? service.perimetres(contexte.installation)
+            (parc, perimetres) = try await (lus, arbre ?? perimetres)
             erreur = nil
         } catch {
             if parc == nil { erreur = ErreurService.phrase(error, sinon: TextesBadgesCS.erreurTitre) }
@@ -123,21 +127,25 @@ private struct FiltreTypes: View {
 /// et ce qu'il ouvre.
 private struct CarteAccesDuParc: View {
     let acces: AccesDuParc
+    let perimetres: [Perimetre]
     @Environment(\.palette) private var palette
 
     var body: some View {
+        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)
         Carte {
             VStack(alignment: .leading, spacing: 6) {
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .firstTextBaseline) { entete }
                     VStack(alignment: .leading, spacing: 4) { entete }
                 }
-                Label(acces.porteurNom, systemImage: "person").font(.subheadline).foregroundStyle(palette.text)
+                if !acces.porteurNom.isEmpty {
+                    Label(acces.porteurNom, systemImage: "person").font(.subheadline).foregroundStyle(palette.text)
+                }
                 if let lot = acces.lotLibelle {
                     Label(lot, systemImage: "house").font(.subheadline).foregroundStyle(palette.textMuted)
                 }
-                if !acces.perimetreCible.isEmpty {
-                    Label(acces.perimetreCible.joined(separator: ", "), systemImage: "door.left.hand.open")
+                if !ouvre.isEmpty {
+                    Label(ouvre.joined(separator: ", "), systemImage: "door.left.hand.open")
                         .font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 if acces.chezLocataire {
@@ -177,6 +185,7 @@ enum TextesBadgesCS {
     }
 
     static let exempleSquelette = AccesDuParc(
-        type: .vigik, numero: 0, code: "0000", porteurNom: "Prénom Nom", lotLibelle: "Lot 00 — appartement",
-        perimetreCible: ["Copropriété"], statut: "actif", chezLocataire: false)
+        type: .vigik, numero: 0, code: "0000", porteurNom: "Prénom Nom", porteurRang: 0, porteurId: nil,
+        lotLibelle: "Lot 00 — appartement",
+        perimetreCible: [], statut: "actif", chezLocataire: false)
 }

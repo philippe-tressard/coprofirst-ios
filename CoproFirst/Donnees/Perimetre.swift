@@ -7,10 +7,8 @@ import Foundation
 /// Un périmètre de la copropriété (`PerimetreRead`, GET /perimetres) : le filtre du
 /// carnet (Ma résidence), le lieu d'une affaire (Mes affaires) — un seul modèle (#41).
 ///
-/// ⚠️ Le périmètre PAR DÉFAUT (« toute la copropriété ») n'est pas calculé ici : c'est
-/// une règle du serveur (`code_par_defaut`), que l'app attend de lire dans l'API
-/// (coprofirst#2514) au lieu de la recopier. En attendant, un formulaire n'en
-/// présélectionne aucun : un contenu sans lieu prend le défaut du serveur.
+/// Le périmètre PAR DÉFAUT (« toute la copropriété ») est celui que le serveur désigne
+/// (`par_defaut`, coprofirst#2514, #54) : l'app ne refait pas le tri des racines.
 struct Perimetre: Identifiable, Hashable, Sendable {
     let code: String
     var libelle: String
@@ -18,18 +16,35 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var profondeur: Int
     /// Proposable comme lieu d'un contenu (un nœud de regroupement ne l'est pas).
     var selectionnable: Bool
+    /// Le défaut du serveur : un seul nœud au plus, aucun sur un arbre vide.
+    var parDefaut: Bool
 
     var id: String { code }
 
-    init(code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true) {
+    init(code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false) {
         self.code = code
         self.libelle = libelle
         self.profondeur = profondeur
         self.selectionnable = selectionnable
+        self.parDefaut = parDefaut
     }
 
     init(lu: Components.Schemas.PerimetreRead) {
-        self.init(code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable)
+        self.init(
+            code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable,
+            parDefaut: lu.parDefaut ?? false)
+    }
+
+    /// Le code du périmètre que le serveur désigne par défaut, s'il en désigne un.
+    static func codeParDefaut(_ perimetres: [Perimetre]) -> String? { perimetres.first(where: \.parDefaut)?.code }
+
+    /// Les libellés de `codes` (`perimetre_cible`), lus dans l'arbre servi : le périmètre
+    /// par défaut se TAIT (`BadgePerimetre` du site), et un code que l'arbre ne connaît pas
+    /// (nœud retiré, arbre pas encore lu) ne s'affiche jamais brut (« bat:2 »).
+    static func libelles(_ codes: [String], parmi perimetres: [Perimetre]) -> [String] {
+        codes.compactMap { code in
+            perimetres.first { $0.code == code }.flatMap { $0.parDefaut ? nil : $0.libelle }
+        }
     }
 }
 
@@ -52,14 +67,5 @@ extension ServiceAPI: ServicePerimetres {
 }
 
 extension ServiceSimule: ServicePerimetres {
-    func perimetres(_ installation: Installation) async throws -> [Perimetre] { Self.perimetres }
-
-    /// L'arbre inventé : une racine, quatre lieux ; le carnet filtre sur `bat_a`.
-    static let perimetres: [Perimetre] = [
-        Perimetre(code: "copropriete", libelle: "Toute la copropriété"),
-        Perimetre(code: "bat_a", libelle: "Bâtiment A", profondeur: 1),
-        Perimetre(code: "bat_b", libelle: "Bâtiment B", profondeur: 1),
-        Perimetre(code: "parking", libelle: "Parking", profondeur: 1),
-        Perimetre(code: "jardin", libelle: "Jardin", profondeur: 1),
-    ]
+    func perimetres(_ installation: Installation) async throws -> [Perimetre] { try FixturesPerimetres.lus() }
 }

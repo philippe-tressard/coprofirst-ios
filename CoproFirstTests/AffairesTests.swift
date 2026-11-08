@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -64,8 +65,8 @@ import Testing
         let date = calendrier.date(from: DateComponents(year: annee, month: mois, day: 1)) ?? jour
         return Affaire(
             id: id, numero: "A-\(id)", titre: "", apercu: "", creeLe: date, misAJourLe: date, statut: "résolu",
-            categorie: "panne", urgente: false, meConcerne: false, archivee: true, suiviKanban: false, natures: [],
-            prestataire: nil, perimetres: [], lieu: nil, messages: nil)
+            close: true, categorie: "panne", urgente: false, meConcerne: false, archivee: true, suiviKanban: false,
+            natures: [], prestataire: nil, perimetres: [], lieu: nil, messages: nil)
     }
     let affaires = [archivee(1, 2025, 3), archivee(2, 2026, 2), archivee(3, 2026, 9), archivee(4, 2022, 1)]
     let groupes = affaires.archives(au: jour, calendrier: calendrier)
@@ -139,7 +140,8 @@ import Testing
     let affaires: any ServiceAffaires = service
     let duCarnet = try await residence.perimetres(ServiceSimule.residence)
     let deLAffaire = try await affaires.perimetres(ServiceSimule.residence)
-    #expect(duCarnet == deLAffaire && duCarnet == ServiceSimule.perimetres)
+    let arbre = try FixturesPerimetres.lus()
+    #expect(duCarnet == deLAffaire && duCarnet == arbre)
     let _: any ServicePerimetres = ServiceAPI()
 }
 
@@ -190,4 +192,32 @@ import Testing
     connues.retenir(residence)
     #expect(connues.liste.map(\.nom) == [residence.nom, "Autre"])
     #expect(InstallationsConnues(reglages: reglages).liste.count == 2, "relue au lancement suivant")
+}
+
+// MARK: - Ce que le serveur sert depuis le contrat 1.8.0 (#54)
+
+/// Le lieu présélectionné est celui que le serveur DÉSIGNE (`par_defaut`) : l'app ne
+/// refait pas le tri des racines ; sans désignation, aucun.
+@Test func lePerimetreParDefautEstCeluiQueLeServeurDesigne() throws {
+    let arbre = try FixturesPerimetres.lus()
+    #expect(Perimetre.codeParDefaut(arbre) == "copropriete")
+    let sansDefaut = arbre.map { Perimetre(code: $0.code, libelle: $0.libelle) }
+    #expect(Perimetre.codeParDefaut(sansDefaut) == nil)
+    #expect(Perimetre.codeParDefaut([]) == nil, "un arbre vide n'a pas de défaut")
+}
+
+/// « Close » et « urgente » se lisent dans `TicketRead` : l'app ne compare plus le statut
+/// à une liste d'états clos, ni la priorité à « haute ».
+@Test func closeEtUrgenteSontLusDansLAffaireServie() async throws {
+    // L'état historique `fermé` n'est PAS clos pour le serveur (#54) ; et une priorité
+    // « normale » peut être urgente : seul ce que le serveur sert compte.
+    let json = #"""
+        [{"id": 9, "numero": "TK-9", "titre": "Essai", "description": "", "categorie": "panne", "statut": "fermé",
+          "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": true, "categorie_libelle": "Panne",
+          "statut_libelle": "Fermé", "close": false, "colonne_kanban": null, "nouveau": false,
+          "nom_proprietaire": "Camille Essai"}]
+        """#
+    let lue = try #require(try await client(servant: json).getTickets().ok.body.json.first)
+    let affaire = Affaire(ticket: lue)
+    #expect(!affaire.close && affaire.urgente)
 }

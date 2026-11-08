@@ -95,8 +95,8 @@ extension OngletComptesCS {
             .sheet(item: $aValider, onDismiss: { contexte.avis.feuilleFermee() }, content: { compte in
                 ValidationCompteFeuille(compte: compte) { accueil in
                     try await etat.valider(compte, accueil: accueil, service, contexte.installation)
-                } fait: {
-                    contexte.avis.direApresFermeture($0)
+                } fait: { annonce in
+                    if let annonce { contexte.avis.direApresFermeture(annonce) }
                 }
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
