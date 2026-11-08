@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -107,17 +108,19 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
     #expect(TextesCarnet.visitesAttendues(3) == "3 visites attendues")
 }
 
-/// La réponse du carnet n'est pas typée dans le contrat : elle se relit telle que le
-/// serveur la sert — un champ inconnu ne la casse pas, un champ absent reste vide.
+/// Le carnet est typé par le contrat 1.5.0 (`CarnetLu`) : décodé comme le client,
+/// branché par `EntreeCarnet(_:)` — un champ inconnu ne le casse pas, un champ absent
+/// reste vide.
 @Test func leCarnetSeLitDepuisLeJSONDuServeur() throws {
     let json = """
-        {"total": 1, "entrees": [{"date": "2026-05-02", "libelle": "Ramonage", "origine": "intervention",
+        {"total": 1, "annees": ["2026"], "groupes": [], "entrees": [{"date": "2026-05-02", "libelle": "Ramonage",
+        "origine": "intervention", "categorie_libelle": "Entretien", "perimetre_libelle": "Bâtiment A",
         "detail": "", "perimetre": ["bat_a"], "lien": "/prestataires", "inconnu": 3}]}
         """
-    let carnet = try Relecture.lire(Carnet.self, json: Data(json.utf8))
-    #expect(carnet.entrees.first?.libelle == "Ramonage")
-    #expect(carnet.entrees.first?.equipement == nil)
-    #expect(carnet.entrees.first?.jour != nil)
+    let entrees = try Relecture.generee(Components.Schemas.CarnetLu.self, json: json).entrees.map(EntreeCarnet.init)
+    #expect(entrees.first?.libelle == "Ramonage")
+    #expect(entrees.first?.equipement == nil)
+    #expect(entrees.first?.jour != nil)
 }
 
 // MARK: - Règlement
@@ -143,14 +146,16 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 @Test func lAnnuaireSeLitDepuisLeJSONDuServeur() throws {
     let json = """
         {"cs": {"ag_annee": 2025, "ag_date": "2025-06-20", "membres": [
-          {"id": 1, "genre": "Mme", "prenom": "Alix", "nom": "Exemple", "batiment_nom": "A",
-           "est_gestionnaire_site": false, "est_president": true, "etage": 2}]},
+          {"id": 1, "genre": "Mme", "prenom": "Alix", "nom": "Exemple", "nom_affiche": "Alix EXEMPLE",
+           "batiment_nom": "A", "est_gestionnaire_site": false, "est_president": true, "etage": 2,
+           "etage_libelle": "2ᵉ étage"}]},
          "syndic": {"nom_syndic": "Cabinet", "nom_syndic_source": "contrat", "adresse": "",
-          "membres": [{"id": 9, "prenom": "Elsa", "nom": "Gestion", "telephone": "01 02, 01 02 , 06 07",
-           "est_principal": true}]},
+          "membres": [{"id": 9, "genre": "", "prenom": "Elsa", "nom": "Gestion", "nom_affiche": "Elsa GESTION",
+           "telephone": "01 02, 01 02 , 06 07", "telephones": ["01 02", "06 07"], "est_principal": true}]},
          "whatsapp_url": null}
         """
-    let annuaire = try Relecture.lire(Annuaire.self, json: Data(json.utf8))
+    // Typé par le contrat 1.5.0 (`AnnuaireLu`) : décodé comme le client, branché par `Annuaire(_:)`.
+    let annuaire = Annuaire(try Relecture.generee(Components.Schemas.AnnuaireLu.self, json: json))
     #expect(annuaire.cs.membres.first?.estPresident == true)
     #expect(annuaire.cs.membres.first?.nomComplet == "Mme Alix Exemple")
     #expect(annuaire.syndic.membres.first?.telephones == ["01 02", "06 07"], "un doublon ne s'affiche qu'une fois")

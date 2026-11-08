@@ -39,7 +39,8 @@ extension ServiceSimule: ServiceCommunaute {
         try await Task.sleep(for: .milliseconds(400))
         // Les votes donnés pendant la session : la liste relue les montre, comme le serveur.
         let basculees = votesBascules.valeur
-        return Self.ideesInitiales.map { idee in
+        // Le JSON de la route, lu comme le service réel le lit (`FixturesCommunaute`).
+        return try FixturesCommunaute.ideesLues().map { idee in
             guard basculees.contains(idee.id) else { return idee }
             var votee = idee
             votee.monVote.toggle()
@@ -47,23 +48,6 @@ extension ServiceSimule: ServiceCommunaute {
             return votee
         }
     }
-
-    private static let ideesInitiales: [Idee] = [
-        Idee(
-            id: 3, titre: "Un composteur partagé dans le jardin",
-            description: "<p>Pour réduire nos déchets et nourrir les massifs.</p>", auteurId: 7,
-            statut: "retenue", creeLe: ServiceSimule.dans(jours: -12), nbVotes: 18, monVote: true, archivee: false,
-            reponses: [ServiceSimule.reponse(1, "Excellente idée, je veux bien m'en occuper.", estCs: false)]),
-        Idee(
-            id: 5, titre: "Une boîte à livres dans le hall A",
-            description: "<p>Une étagère où chacun dépose et emprunte.</p>", auteurId: 4, statut: "ouverte",
-            creeLe: ServiceSimule.dans(jours: -1), nbVotes: 9, monVote: false, archivee: false,
-            reponses: [ServiceSimule.reponse(2, "Le conseil syndical en parlera jeudi.", estCs: true)]),
-        Idee(
-            id: 1, titre: "Repeindre la cage d'escalier", description: "<p>Elle en a bien besoin.</p>",
-            auteurId: 2, statut: "realisee", creeLe: ServiceSimule.dans(jours: -200), nbVotes: 31, monVote: false,
-            archivee: true, reponses: []),
-    ]
 
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
@@ -77,26 +61,7 @@ extension ServiceSimule: ServiceCommunaute {
 
     func annonces(_ installation: Installation) async throws -> [Annonce] {
         try await Task.sleep(for: .milliseconds(400))
-        return [
-            Annonce(
-                id: 21, titre: "Lave-linge presque neuf", description: """
-                    <p>Huit kilos, deux ans, factures à l'appui.</p>
-                    """,
-                typeAnnonce: "vente", categorie: "electromenager", prix: 180, negotiable: true, photos: [],
-                statut: "en_cours", auteurPrenom: "Voisine du 2ᵉ", auteurNom: nil, auteurEmail: "voisine@exemple.fr",
-                estAuteur: false, archivee: false, creeLe: Self.dans(jours: -2),
-                reponses: [Self.reponse(3, "Est-il encore disponible samedi ?", estCs: false)]),
-            Annonce(
-                id: 22, titre: "Plantes vertes à donner", description: "<p>Un ficus et deux monsteras.</p>",
-                typeAnnonce: "don", categorie: "divers", prix: nil, negotiable: false, photos: [], statut: "reserve",
-                auteurPrenom: "Moi", auteurNom: nil, auteurEmail: nil, estAuteur: true, archivee: false,
-                creeLe: Self.dans(jours: -6), reponses: []),
-            Annonce(
-                id: 23, titre: "Cherche place de parking", description: "<p>Au sous-sol, pour une citadine.</p>",
-                typeAnnonce: "recherche", categorie: "parking_cave", prix: nil, negotiable: false, photos: [],
-                statut: "en_cours", auteurPrenom: "Voisin du 5ᵉ", auteurNom: nil, auteurEmail: nil, estAuteur: false,
-                archivee: false, creeLe: Self.dans(jours: -15), reponses: []),
-        ]
+        return try FixturesCommunaute.annoncesLues()
     }
 
     func deposerAnnonce(_ saisie: SaisieAnnonce, dans installation: Installation) async throws {
@@ -157,11 +122,4 @@ extension ServiceSimule: ServiceCommunaute {
     }
 
     private static func dans(jours: Double) -> Date { Date.now.addingTimeInterval(jours * 86_400) }
-
-    private static func reponse(_ id: Int, _ contenu: String, estCs: Bool) -> ReponseCommunaute {
-        ReponseCommunaute(
-            id: id, auteurId: estCs ? 1 : 5, contenu: contenu, creeLe: dans(jours: -0.5),
-            auteurNom: estCs ? "Conseil syndical" : "Voisin du bât. A", auteurBatiment: "Bât. A",
-            auteurRole: estCs ? "Conseil syndical" : "Résident", estCs: estCs)
-    }
 }

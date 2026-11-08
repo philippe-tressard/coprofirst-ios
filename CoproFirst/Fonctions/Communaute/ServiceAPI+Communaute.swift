@@ -40,7 +40,7 @@ extension ServiceAPI: ServiceCommunaute {
     func idees(_ installation: Installation) async throws -> [Idee] {
         let sortie = try await appeler { try await client(installation.adresse).getIdees() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([Idee].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(Idee.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -60,8 +60,7 @@ extension ServiceAPI: ServiceCommunaute {
         }
         switch sortie {
         case .created(let cree):
-            struct Phrase: Decodable { let message: String? }
-            return (try? Relecture.lire(Phrase.self, depuis: try cree.body.json))?.message
+            return try? cree.body.json.message
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
@@ -70,7 +69,7 @@ extension ServiceAPI: ServiceCommunaute {
     func annonces(_ installation: Installation) async throws -> [Annonce] {
         let sortie = try await appeler { try await client(installation.adresse).getAnnonces() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire([Annonce].self, depuis: try ok.body.json)
+        case .ok(let ok): return try ok.body.json.map(Annonce.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -301,5 +300,37 @@ extension AvisResident {
             consentement: avis.consentementPublication, archivee: avis.archivee ?? false,
             restaurable: avis.restaurable ?? false, luDeTous: avis.luDeTous ?? true,
             retenu: avis.publicationValidee ?? false, creeLe: avis.creeLe)
+    }
+}
+
+// Le contrat 1.5.0 type les idées et les annonces (`IdeeRead`, `AnnonceRead`) : elles se
+// lisent par leurs types générés — le client a déjà décodé leurs dates. Les relire par
+// `Relecture` réencodait ces dates en nombre (bogue du 06/11/2026). L'API simulée passe
+// par ces mêmes branchements (`FixturesCommunaute`).
+extension ReponseCommunaute {
+    init(_ lue: Components.Schemas.ReponseCommunauteRead) {
+        self.init(
+            id: lue.id, auteurId: lue.auteurId, contenu: lue.contenu, creeLe: lue.creeLe, auteurNom: lue.auteurNom,
+            auteurBatiment: lue.auteurBatiment, auteurRole: lue.auteurRole, estCs: lue.estCs)
+    }
+}
+
+extension Idee {
+    init(_ lue: Components.Schemas.IdeeRead) {
+        self.init(
+            id: lue.id, titre: lue.titre, description: lue.description, auteurId: lue.auteurId, statut: lue.statut,
+            creeLe: lue.creeLe, nbVotes: lue.nbVotes ?? 0, monVote: lue.monVote ?? false, archivee: lue.archivee,
+            reponses: lue.reponses?.map(ReponseCommunaute.init))
+    }
+}
+
+extension Annonce {
+    init(_ lue: Components.Schemas.AnnonceRead) {
+        self.init(
+            id: lue.id, titre: lue.titre, description: lue.description, typeAnnonce: lue.typeAnnonce.rawValue,
+            categorie: lue.categorie.rawValue, prix: lue.prix, negotiable: lue.negotiable, photos: lue.photos,
+            statut: lue.statut.rawValue, auteurPrenom: lue.auteurPrenom, auteurNom: lue.auteurNom,
+            auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, archivee: lue.archivee, creeLe: lue.creeLe,
+            reponses: lue.reponses?.map(ReponseCommunaute.init))
     }
 }

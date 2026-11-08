@@ -62,7 +62,7 @@ struct ReponseCommunaute: Codable, Hashable, Sendable, Identifiable {
     let estCs: Bool?
 }
 
-/// Une idée (GET /idees — réponse non typée dans le contrat, relue ici).
+/// Une idée (GET /idees, `IdeeRead`).
 struct Idee: Codable, Hashable, Sendable, Identifiable {
     let id: Int
     let titre: String
@@ -76,7 +76,7 @@ struct Idee: Codable, Hashable, Sendable, Identifiable {
     var reponses: [ReponseCommunaute]?
 }
 
-/// Une petite annonce (GET /annonces — non typée dans le contrat, relue ici).
+/// Une petite annonce (GET /annonces, `AnnonceRead`).
 struct Annonce: Codable, Hashable, Sendable, Identifiable {
     let id: Int
     let titre: String

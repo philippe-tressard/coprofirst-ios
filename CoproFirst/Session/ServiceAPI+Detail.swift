@@ -51,8 +51,8 @@ extension ServiceAPI {
         }
         switch sortie {
         case .ok(let ok):
-            // La réponse n'est pas typée dans le contrat : relue en miroir.
-            return try Relecture.lire(DetailSondage.self, depuis: try ok.body.json)
+            // Typée par le contrat 1.5.0 (`SondageDetail`) : lue par son type généré.
+            return DetailSondage(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -130,5 +130,15 @@ extension SuiteAffaire {
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
             photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
+    }
+}
+
+extension DetailSondage {
+    /// Un sondage tel que le contrat le type (`SondageDetail`).
+    init(_ lu: Components.Schemas.SondageDetail) {
+        self.init(
+            id: lu.id, question: lu.question, description: lu.description,
+            options: (lu.options ?? []).map { OptionSondage(id: $0.id, libelle: $0.libelle, nbVotes: $0.nbVotes) },
+            monVote: lu.monVote, cloture: lu.cloture ?? false, resultatsVisibles: lu.resultatsVisibles ?? false)
     }
 }

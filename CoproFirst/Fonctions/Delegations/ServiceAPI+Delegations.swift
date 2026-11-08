@@ -14,7 +14,8 @@ extension ServiceAPI: ServiceDelegations {
         async let compte = appeler { try await client.getAuthMe() }
         let delegations: [Delegation] =
             switch try await liste {
-            case .ok(let ok): try Relecture.lire([Delegation].self, depuis: try ok.body.json)
+            case .ok(let ok):
+                try Relecture.lire([Delegation].self, depuis: try ok.body.json.map(\.additionalProperties))
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }

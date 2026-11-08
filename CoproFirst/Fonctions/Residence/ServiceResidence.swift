@@ -69,8 +69,8 @@ extension ServiceAPI: ServiceResidence {
             contenu.batiments = lus.map(Batiment.init(lu:))
         }
         if case .ok(let ok) = try? await regles, let lues = try? ok.body.json {
-            // La réponse n'est pas typée dans le contrat : relue en miroir.
-            contenu.regles = (try? Relecture.lire([RegleResidence].self, depuis: lues)) ?? []
+            // Typée par le contrat 1.5.0 (`RegleResidenceLue`) : lue par son type généré.
+            contenu.regles = lues.map { RegleResidence(id: $0.id, titre: $0.titre, contenu: $0.contenu) }
         }
         if case .ok(let ok) = try? await diagnostics, let lus = try? ok.body.json {
             contenu.diagnostics = lus.map(TypeDiagnostic.init(lu:))
@@ -102,9 +102,9 @@ extension ServiceAPI: ServiceResidence {
         }
         switch sortie {
         case .ok(let ok):
-            // Non typée dans le contrat (coprofirst#2505) : relue en miroir.
-            let carnet = try Relecture.lire(Carnet.self, depuis: try ok.body.json)
-            return ContenuCarnet(entrees: carnet.entrees, libellesEquipements: libelles)
+            // Typée par le contrat 1.5.0 (`CarnetLu`) : lue par son type généré.
+            let carnet = try ok.body.json
+            return ContenuCarnet(entrees: carnet.entrees.map(EntreeCarnet.init), libellesEquipements: libelles)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -150,5 +150,14 @@ extension ServiceAPI: ServiceResidence {
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
+    }
+}
+
+extension EntreeCarnet {
+    /// Une entrée du carnet telle que le contrat la type (`EntreeCarnetLue`).
+    init(_ lue: Components.Schemas.EntreeCarnetLue) {
+        self.init(
+            date: lue.date, libelle: lue.libelle, origine: lue.origine.rawValue, detail: lue.detail,
+            numero: lue.numero, equipement: lue.equipement, lien: lue.lien, alerte: lue.alerte, extrait: lue.extrait)
     }
 }

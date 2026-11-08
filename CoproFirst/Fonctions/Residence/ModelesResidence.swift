@@ -50,7 +50,7 @@ struct DocumentResidence: Hashable, Sendable, Identifiable {
     var rapport: Int?
 }
 
-/// Une règle ou recommandation (GET /regles-residence, réponse non typée).
+/// Une règle ou recommandation (GET /regles-residence, `RegleResidenceLue`).
 struct RegleResidence: Codable, Hashable, Sendable, Identifiable {
     let id: Int
     var titre: String
@@ -99,7 +99,7 @@ struct ContenuFiche: Sendable {
     }
 }
 
-/// Une entrée du carnet d'entretien (GET /carnet-entretien, réponse non typée).
+/// Une entrée du carnet d'entretien (GET /carnet-entretien, `EntreeCarnetLue`).
 struct EntreeCarnet: Codable, Hashable, Sendable, Identifiable {
     var date: String
     var libelle: String
@@ -116,11 +116,6 @@ struct EntreeCarnet: Codable, Hashable, Sendable, Identifiable {
 
     /// Le jour de l'entrée (le serveur sert une date ISO, `AAAA-MM-JJ`).
     var jour: Date? { FormatsDuSite.lire(date) }
-}
-
-/// Le carnet tel que le serveur le sert : les entrées, dans son ordre.
-struct Carnet: Codable, Hashable, Sendable {
-    var entrees: [EntreeCarnet]
 }
 
 /// Le carnet et les libellés des équipements qui rangent ses entrées.

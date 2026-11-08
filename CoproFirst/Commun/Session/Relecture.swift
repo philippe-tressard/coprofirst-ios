@@ -3,6 +3,7 @@
 
 import ClientAPI
 import Foundation
+import OpenAPIRuntime
 
 /// Une réponse que le contrat ne type pas (pas de `response_model` côté serveur),
 /// relue en miroir dans le modèle de l'écran (#41) : les clés en `snake_case`
@@ -13,9 +14,22 @@ import Foundation
 /// déclare pas de `CodingKeys` en `snake_case` (la conversion les rendrait muets).
 /// Chaque appel est un besoin noté pour coprofirst (#2460, #2505) : typer la réponse.
 enum Relecture {
-    /// Une valeur non typée du client généré (`OpenAPIValueContainer`, objet ou tableau).
-    static func lire<T: Decodable>(_ type: T.Type, depuis valeur: some Encodable) throws -> T {
+    /// Une valeur NON TYPÉE du client généré (`OpenAPIValueContainer`, objet ou tableau).
+    ///
+    /// 🔴 Ce paramètre n'accepte rien d'autre, exprès (bogue du 06/11/2026) : le contrat
+    /// 1.5.0 a typé `/idees` et `/annonces`, la Communauté relisait ces structures
+    /// GÉNÉRÉES par ici — réencodées sans le transcodeur du client, leurs dates partaient
+    /// en nombre, et « Impossible d'afficher les idées » s'affichait sur l'iPhone, l'API
+    /// simulée ne passant pas par ce chemin. Une sortie typée ne compile plus ici : elle
+    /// se lit par son type généré (`Idee(_:)`, `Annonce(_:)`…).
+    static func lire<T: Decodable>(_ type: T.Type, depuis valeur: OpenAPIValueContainer) throws -> T {
         try lire(type, json: JSONEncoder().encode(valeur))
+    }
+
+    /// Des objets libres (un tableau d'objets à `additionalProperties` seules) — même
+    /// garde : des conteneurs non typés, rien d'autre.
+    static func lire<T: Decodable>(_ type: T.Type, depuis objets: [OpenAPIObjectContainer]) throws -> T {
+        try lire(type, json: JSONEncoder().encode(objets))
     }
 
     /// Le même JSON, déjà en octets (une réponse servie hors contrat, un test).
@@ -26,5 +40,16 @@ enum Relecture {
             try TranscodeurDates().decode(lecteur.singleValueContainer().decode(String.self))
         }
         return try decodeur.decode(T.self, from: donnees)
+    }
+
+    /// Un type GÉNÉRÉ, décodé comme le client généré le décode (clés du contrat, dates
+    /// par `TranscodeurDates`) — l'API simulée sert ses réponses en JSON par ici, pour
+    /// passer par le MÊME branchement que le service réel (`Fixtures*.swift`).
+    static func generee<T: Decodable>(_ type: T.Type, json: String) throws -> T {
+        let decodeur = JSONDecoder()
+        decodeur.dateDecodingStrategy = .custom { lecteur in
+            try TranscodeurDates().decode(lecteur.singleValueContainer().decode(String.self))
+        }
+        return try decodeur.decode(T.self, from: Data(json.utf8))
     }
 }
