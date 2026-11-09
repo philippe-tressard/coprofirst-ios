@@ -31,7 +31,9 @@
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. la relance des tests au simulateur reste bornée et déclarée : autotests de
-#      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50).
+#      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50) ;
+#  14. les tickets de la concordance : un vert ferme, un rouge ou un INCONNU jamais —
+#      autotest de scripts/tickets_concordance.py (#67).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -229,6 +231,10 @@ PARITE=$(python3 -I scripts/verifier-parite.py) || { echo "$PARITE"; echec "pari
 python3 -I scripts/bilan_tests_ui.py --autotest >/dev/null || echec "bilan_tests_ui.py : autotest en échec"
 bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateur.sh : autotest en échec"
 
+# Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
+# ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
+python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -237,4 +243,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
