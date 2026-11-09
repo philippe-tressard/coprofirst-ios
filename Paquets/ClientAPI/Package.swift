@@ -14,8 +14,8 @@ let package = Package(
     ],
     dependencies: [
         // Versions exactes : une montée se décide, elle ne s'importe pas (DEPENDANCES.md).
-        .package(url: "https://github.com/apple/swift-openapi-generator", exact: "1.14.3"),
-        .package(url: "https://github.com/apple/swift-openapi-runtime", exact: "1.13.3"),
+        .package(url: "https://github.com/apple/swift-openapi-generator", exact: "1.14.4"),
+        .package(url: "https://github.com/apple/swift-openapi-runtime", exact: "1.13.4"),
         .package(url: "https://github.com/apple/swift-openapi-urlsession", exact: "1.4.0"),
     ],
     targets: [
