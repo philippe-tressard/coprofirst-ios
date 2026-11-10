@@ -78,7 +78,7 @@ private func lien(_ texte: String) throws -> Destination {
         Aiguillage.aiguiller(.page("admin"), pages: pages, visibles: 4) == .onglet(OrdrePages.idFil),
         "une page réservée que le compte ne voit pas")
     #expect(Aiguillage.aiguiller(.connexion, pages: pages, visibles: 4) == .onglet(OrdrePages.idFil))
-    #expect(Aiguillage.aiguiller(.notifications, pages: pages, visibles: 4) == .cloche, "la cloche, sur l'onglet affiché")
+    #expect(Aiguillage.aiguiller(.notifications, pages: pages, visibles: 4) == .cloche, "sur l'onglet affiché")
 }
 
 @Test func uneAffaireSOuvreDansSonOngletSinonEnFeuille() {
