@@ -32,7 +32,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtJourCourt` « mar. 17 nov. » (`jourCourt`, #75 : la vignette d'échéance du fil, l'année seulement si ce n'est pas la courante), `fmtNombre`, `fmtMontant`, `fmtOctets` (`octets`), `fmtMoisCourt` et `fmtMonthYear` (`moisCourt`, `moisAnnee`, #16), et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
-| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
+| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`). Un 401 se renouvelle à UNE porte, `Renouvellement` (intergiciel du client généré, #81) : un seul POST /auth/refresh à la fois par hôte, la requête rejouée une fois ; `reprendre` y passe aussi | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
 | Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; une page réservée à un rôle (Prestataires, Espace CS, Admin, Délégations) n'y paraît qu'à qui l'a — `PagesOuvertes`, le filtre de `Nav.svelte`, écrit une fois, sur les populations générées (#15) ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
 | Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
@@ -244,8 +244,3 @@ seule la CI le dit.
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
    test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
    « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
-
-## À trancher quand le premier cas arrive
-
-- Rafraîchissement automatique sur un 401 en cours de session (intergiciel du
-  client) : aujourd'hui, la session se reprend à l'ouverture seulement.
