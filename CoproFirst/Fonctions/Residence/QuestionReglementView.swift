@@ -18,6 +18,7 @@ struct QuestionReglementView: View {
                 PiedQuestion(question: question)
                 Text(mention).font(.footnote).italic().foregroundStyle(palette.textMuted)
                 riche(question.reponse)
+                renvoisSansExtrait
                 section("D'après le règlement", question.selonReglement)
                 Extraits(titre: "Extraits du règlement", extraits: question.extraitsReglement)
                 section("D'après les assemblées générales", question.selonAG)
@@ -46,6 +47,18 @@ struct QuestionReglementView: View {
         case (nil, nil): break
         }
         return texte
+    }
+
+    /// « Renvoi sans extrait — à vérifier : R3. », servi par l'API (`AvisReglement.svelte`) :
+    /// le site le dit sous les fondements de l'avis, donc quand il y a des extraits.
+    @ViewBuilder
+    private var renvoisSansExtrait: some View {
+        let renvois = question.renvoisSansExtrait
+        if !question.extraits.isEmpty, !renvois.isEmpty {
+            let pluriel = renvois.count > 1 ? "s" : ""
+            Text("Renvoi\(pluriel) sans extrait — à vérifier\u{00A0}: \(renvois.joined(separator: ", ")).")
+                .font(.footnote).foregroundStyle(palette.warningTexte)
+        }
     }
 
     private func riche(_ html: String) -> some View {

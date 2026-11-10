@@ -14,6 +14,9 @@ enum ErreurService: Error, Equatable, Sendable {
     case horsLigne
     /// L'adresse répond, mais ce n'est pas une installation de CoproFirst.
     case pasCoproFirst
+    /// Une installation de CoproFirst, mais qui sert un contrat plus ancien que le
+    /// plancher de l'app (`VersionContrat.plancher`) : ses réponses ne se liraient pas (#83).
+    case residenceAMettreAJour
     /// Adresse électronique ou mot de passe refusés.
     case identifiantsRefuses
     /// Trop d'essais : le serveur demande d'attendre.
@@ -37,6 +40,8 @@ enum ErreurService: Error, Equatable, Sendable {
             "Vous êtes hors ligne. Vérifiez votre connexion, puis réessayez."
         case .pasCoproFirst:
             "Cette adresse ne mène pas à une résidence CoproFirst."
+        case .residenceAMettreAJour:
+            "Cette résidence doit être mise à jour pour s'ouvrir dans l'app. Prévenez son administrateur."
         case .identifiantsRefuses:
             "Adresse électronique ou mot de passe incorrect."
         case .tropDEssais:

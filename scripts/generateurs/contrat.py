@@ -2,7 +2,15 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Le CONTRAT d'API : `openapi.json`, la pièce jointe de la release de coprofirst
 (coprofirst#2456), normalisée pour swift-openapi-generator
-→ `Paquets/ClientAPI/Sources/ClientAPI/openapi.json` et `PROVENANCE-OPENAPI.md`.
+→ `Paquets/ClientAPI/Sources/ClientAPI/openapi.json` et `PROVENANCE-OPENAPI.md` ;
+et la version de ce contrat → `CoproFirst/Session/ContratDuPlancher.swift`
+(`VersionContrat.plancher`) : sous elle, la découverte dit que la résidence doit être
+mise à jour (#83).
+
+La version se lit là où le serveur la tient : `version` de
+`api/app/contrat/reference.json`, celle que chaque installation sert en
+`version_contrat` (GET /config). `info.version` d'`openapi.json` doit la redire ; un
+écart arrête la génération (#86 : la provenance citait un `API_VERSION` disparu).
 
 Le client se génère depuis ce fichier à chaque build ; aucune route ne s'écrit à la
 main. Seule la copie de l'app est normalisée, jamais le contrat publié.
@@ -12,12 +20,16 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 
-SOURCES: list[str] = []
+REFERENCE = "api/app/contrat/reference.json"
+SOURCES: list[str] = [REFERENCE]
 PIECES_JOINTES = ["openapi.json"]
 
 CLIENT = pathlib.Path("Paquets/ClientAPI")
 CONTRAT = CLIENT / "Sources" / "ClientAPI" / "openapi.json"
+PLANCHER_SWIFT = pathlib.Path("CoproFirst/Session/ContratDuPlancher.swift")
+VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
 
 def nullable(noeud):
@@ -82,20 +94,47 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 |---|---|
 | Source | {ctx.provenance}, pièce jointe `openapi.json` de la release |
 | Commit | `{ctx.commit}` (`{ctx.version.etiquette}`) |
-| Version du contrat | `{contrat}` (`API_VERSION` de `api/app/main.py`) |
+| Version du contrat | `{contrat}` (`version` de `{REFERENCE}`, servie par chaque installation en `version_contrat` de `GET /config`) |
 | Préfixe servi | `/api` : les chemins du schéma s'entendent sous `https://<hôte>/api` |
 | Normalisation | `anyOf: [X, null]` réécrit en `type: [X, "null"]` (`$ref` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres `in: cookie` retirés — iOS envoie les cookies de session seul |
 """
 # REUSE-IgnoreEnd
 
 
+def plancher_swift(ctx, version: str) -> str:
+    majeure, mineure, correctif = VERSION.match(version).groups()
+    corps = ctx.entete(f"{REFERENCE} (version)")
+    corps += "\n/// Le contrat du PLANCHER : celui sur lequel l'app se génère (`scripts/generateurs/_plancher.py`).\n"
+    corps += "extension VersionContrat {\n"
+    corps += "    /// Une installation qui sert un contrat plus ancien ne se décode plus : la découverte\n"
+    corps += "    /// le dit (« cette résidence doit être mise à jour »), au lieu d'une erreur muette.\n"
+    corps += f"    static let plancher = VersionContrat({majeure}, {mineure}, {correctif})\n"
+    corps += "}\n"
+    return corps
+
+
+def version_du_contrat(ctx, schema: dict) -> str:
+    """`version` de `reference.json` — et `info.version` d'`openapi.json` qui la redit."""
+    try:
+        reference = json.loads(ctx.lire(REFERENCE))["version"]
+        publiee = schema["info"]["version"]
+    except (ValueError, KeyError, TypeError) as erreur:
+        raise SystemExit(f"❌ version du contrat de {ctx.version.etiquette} illisible : {erreur}") from erreur
+    if not isinstance(reference, str) or not VERSION.match(reference):
+        raise SystemExit(f"❌ {REFERENCE} de {ctx.version.etiquette} : version « {reference} » hors de X.Y.Z")
+    if reference != publiee:
+        raise SystemExit(f"❌ {ctx.version.etiquette} : {REFERENCE} dit {reference}, openapi.json dit {publiee}")
+    return reference
+
+
 def generer(ctx) -> str:
     try:
         schema = json.loads(ctx.version.piece_jointe("openapi.json"))
-        version = schema["info"]["version"]
-    except (ValueError, KeyError, TypeError) as erreur:
+    except ValueError as erreur:
         raise SystemExit(f"❌ openapi.json de {ctx.version.etiquette} illisible : {erreur}") from erreur
+    version = version_du_contrat(ctx, schema)
     schema = sans_cookies(nullable(schema))
     ctx.ecrire(CONTRAT, json.dumps(schema, ensure_ascii=False, indent=2, sort_keys=True) + "\n")
     ctx.ecrire(CLIENT / "PROVENANCE-OPENAPI.md", provenance(ctx, version))
+    ctx.ecrire(PLANCHER_SWIFT, plancher_swift(ctx, version))
     return f"contrat {version}, {len(schema.get('paths', {}))} chemins"

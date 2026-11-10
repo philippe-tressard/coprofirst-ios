@@ -52,6 +52,14 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// Le contrat servi, lu par ses nombres — `nil` s'il est absent ou illisible.
     var contrat: VersionContrat? { VersionContrat(versionContrat) }
 
+    /// À la découverte : une installation qui SERT un contrat plus ancien que le plancher
+    /// ne s'ouvre pas — ses réponses ne se décoderaient pas, et l'utilisateur lirait
+    /// « La résidence n'a pas pu répondre » à chaque écran (#83). Une version absente ou
+    /// illisible ne bloque pas : l'app ne devine pas une version (`VersionContrat`).
+    func exigerLePlancher() throws {
+        if let contrat, contrat < .plancher { throw ErreurService.residenceAMettreAJour }
+    }
+
     /// L'adresse du logo téléversé par la résidence pour ce fond — `nil` sans logo
     /// (l'app montre alors celui de CoproFirst, comme le site son logo neutre).
     ///
@@ -62,7 +70,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// clair dans ces deux cas : une version antérieure ignore le paramètre, et la
     /// 1.15.0 sans variante sert le logo téléversé (`utils/logo.logo_png`).
     ///
-    /// ⚠️ Le paramètre `variante` n'est pas dans le contrat du plancher (1.12.0) : le
+    /// ⚠️ Le paramètre `variante` (1.15.0) est au-dessus du plancher (`.plancher`) : le
     /// client généré ne peut pas l'écrire. L'adresse s'écrit donc ici, et ici seulement.
     func adresseLogo(sombre: Bool) -> URL? {
         guard aUnLogo else { return nil }
