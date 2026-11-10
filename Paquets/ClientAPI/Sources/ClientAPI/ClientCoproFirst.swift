@@ -17,7 +17,8 @@ public enum ClientCoproFirst {
 
     /// Un client généré, branché sur l'installation donnée — la SEULE configuration du
     /// client : les dates par `TranscodeurDates` (ISO, sans fuseau = UTC), quel que soit
-    /// le transport (une session de l'app, un transport de test).
+    /// le transport (une session de l'app, un transport de test) ; l'intercepteur qui
+    /// garde un corps servi à la demande (`CorpsServi.garder`).
     public static func client(
         installation: URL,
         transport: any ClientTransport = URLSessionTransport()
@@ -25,7 +26,8 @@ public enum ClientCoproFirst {
         Client(
             serverURL: adresseAPI(installation: installation),
             configuration: Configuration(dateTranscoder: TranscodeurDates()),
-            transport: transport)
+            transport: transport,
+            middlewares: [IntercepteurCorpsServi()])
     }
 }
 
