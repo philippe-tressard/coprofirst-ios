@@ -4,7 +4,8 @@
 import SwiftUI
 
 /// Un élément du fil : l'icône de sa nature dans sa teinte, le titre, une ligne.
-/// Une urgence porte le liseré rouge à gauche, comme une affaire urgente.
+/// Une urgence porte le liseré rouge à gauche, comme une affaire urgente ; une affaire
+/// datée, sa vignette d'échéance sous le classement (`VignetteEcheance`, #75).
 struct CarteDuFil: View {
     let element: ElementDuFil
     @Environment(\.palette) private var palette
@@ -33,6 +34,10 @@ struct CarteDuFil: View {
                     Text(FormatsDuSite.heure(element.date))
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(palette.textMuted)
+                }
+                // Une affaire datée dit quand elle a lieu, sous son classement (#75).
+                if let echeance = element.echeance {
+                    VignetteEcheance(echeance: echeance, teinte: palette[keyPath: nature.couleur])
                 }
                 Text(element.titre)
                     .font(.headline)
@@ -69,6 +74,7 @@ struct CarteDuFil: View {
     private func libelleVocal(_ nature: NatureDuFil) -> Text {
         var morceaux = [element.urgent ? "Urgent" : nature.libelle, element.titre]
         morceaux.append(FormatsDuSite.heure(element.date))
+        if let echeance = element.echeance { morceaux.append(echeance.enClair) }
         if let detail = element.detail { morceaux.append(TexteDuSite.apercu(detail)) }
         return Text(morceaux.joined(separator: ", "))
     }

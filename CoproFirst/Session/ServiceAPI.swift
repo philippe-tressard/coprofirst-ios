@@ -171,7 +171,8 @@ extension ElementDuFil {
                 meta: .init(
                     ticketId: entier("ticket_id"), sondageId: entier("sondage_id"), documentId: entier("document_id"),
                     fichierNom: meta["fichier_nom"] as? String),
-                lien: item.lien)
+                lien: item.lien),
+            echeance: EcheanceDuFil(meta: item.meta?.additionalProperties)
         )
     }
 }
