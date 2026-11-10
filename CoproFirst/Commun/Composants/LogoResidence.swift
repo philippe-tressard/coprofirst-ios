@@ -6,7 +6,7 @@ import SwiftUI
 /// Le logo de la RÉSIDENCE — celui qu'elle a téléversé, sinon celui de CoproFirst, comme
 /// le site montre son logo neutre (`LogoResidence.svelte`). Le seul composant qui le
 /// porte : pastille « où suis-je », feuille de la résidence, résidence reconnue à la
-/// connexion. Le logo de CoproFirst lui-même (la marque) est `Medaillon`.
+/// connexion, écran de retour (`RetourView`). Le logo de CoproFirst lui-même (la marque) est `Medaillon`.
 ///
 /// Au thème sombre, la variante du fond sombre quand l'installation la sert (#70, règle
 /// dans `Installation.adresseLogo(sombre:)`). Le logo suit le thème sans relancer

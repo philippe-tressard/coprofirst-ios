@@ -4,7 +4,9 @@
 import Foundation
 import Observation
 
-/// Les résidences déjà ouvertes sur cet appareil : l'adresse et le nom, rien d'autre.
+/// Les résidences déjà ouvertes sur cet appareil : l'adresse et le nom, et le courriel
+/// de la dernière connexion réussie, pour pré-remplir la suivante — sur l'appareil
+/// seul, jamais envoyé ailleurs, effacé par « Oublier toutes les résidences ».
 /// Pas d'annuaire : une résidence n'apparaît ici que si l'utilisateur l'a saisie.
 @MainActor @Observable
 final class InstallationsConnues {
@@ -34,6 +36,15 @@ final class InstallationsConnues {
         reglages.removeObject(forKey: "faceid-propose." + installation.hote)
     }
 
+    /// Le courriel de la dernière connexion réussie à cette résidence.
+    func identifiant(_ installation: Installation) -> String? {
+        reglages.string(forKey: "identifiant." + installation.hote)
+    }
+
+    func retenirIdentifiant(_ email: String, pour installation: Installation) {
+        reglages.set(email, forKey: "identifiant." + installation.hote)
+    }
+
     /// Le profil de l'utilisateur dans cette résidence, au dernier passage.
     func noter(_ profil: ProfilResidence, pour installation: Installation) {
         guard let rang = liste.firstIndex(where: { $0.adresse == installation.adresse }) else { return }
@@ -43,7 +54,10 @@ final class InstallationsConnues {
 
     /// « Oublier toutes les résidences » : comme une app neuve.
     func vider() {
-        for installation in liste { oublierFaceID(installation) }
+        for installation in liste {
+            oublierFaceID(installation)
+            reglages.removeObject(forKey: "identifiant." + installation.hote)
+        }
         liste = []
         enregistrer()
     }

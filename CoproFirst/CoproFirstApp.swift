@@ -27,7 +27,9 @@ struct CoproFirstApp: App {
 
 /// Les arguments de lancement des tests d'interface et des captures :
 /// `-api-simulee` (aucune requête ne part) et
-/// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`, et avec `fil`,
+/// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
+/// (`retour` : un habitué dont la session est gardée, `-faceid-refuse` pour un Face ID
+/// annulé ; `retour-mot-de-passe` : un habitué sans Face ID), et avec `fil`,
 /// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
 /// une page que l'administration a renommée, `-logement-long` pour un libellé de
 /// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
@@ -51,9 +53,6 @@ enum Lancement {
         let reglages = UserDefaults(suiteName: suite) ?? .standard
         reglages.removePersistentDomain(forName: suite)
         let simule = ServiceSimule()
-        if arguments.contains("-logement-long") {
-            simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
-        }
         compteSimule(arguments, simule)
         let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
         simule.residenceServie = residenceSimulee(arguments)
@@ -71,6 +70,8 @@ enum Lancement {
             parcours.ouvrir(residence, premiereConnexion: true)
         case "demo":
             parcours.chemin = [.demo]
+        case "retour", "retour-mot-de-passe":
+            retourSimule(parcours, simule, residence, faceID: ecran == "retour")
         case "fil":
             var residence = residence
             if arguments.contains("-page-renommee") {
@@ -93,6 +94,19 @@ enum Lancement {
         return parcours
     }
 
+    /// Un passage précédent : la résidence ouverte, son courriel retenu, Face ID déjà
+    /// proposé — et, avec `faceID`, la session gardée au Trousseau simulé.
+    @MainActor
+    private static func retourSimule(
+        _ parcours: Parcours, _ simule: ServiceSimule, _ residence: Installation, faceID: Bool
+    ) {
+        parcours.connues.retenir(residence)
+        parcours.connues.noterFaceIDProposee(residence)
+        parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: residence)
+        parcours.reconnue = residence
+        if faceID { simule.garder(residence) }
+    }
+
     /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
     /// variante sombre, servis à ce contrat (#70).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
@@ -110,8 +124,14 @@ enum Lancement {
     /// `-compte administrateur` : le compte du conseil, administrateur aussi ;
     /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
     /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire).
+    /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
+    /// Face ID annulé à chaque demande.
     @MainActor
     private static func compteSimule(_ arguments: [String], _ simule: ServiceSimule) {
+        if arguments.contains("-logement-long") {
+            simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
+        }
+        simule.refuserFaceID = arguments.contains("-faceid-refuse")
         let compte = arguments.firstIndex(of: "-compte").flatMap {
             arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
         }

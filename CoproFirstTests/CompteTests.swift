@@ -49,8 +49,8 @@ private func parcoursOuvert() throws -> Ouvert {
     await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(residence) }
     await #expect(throws: ErreurService.sessionExpiree) { try await service.reprendre(residence) }
     #expect(parcours.ouverte == nil)
-    #expect(
-        parcours.chemin == [.connexion(.init(installation: residence))], "retour à la connexion, adresse pré-remplie")
+    #expect(parcours.chemin.isEmpty, "le premier écran, sans pile")
+    #expect(parcours.connues.derniere == residence, "…qui est la connexion à cette résidence, pré-remplie")
     #expect(!parcours.connues.faceIDProposee(residence), "Face ID sera reproposé")
     #expect(parcours.connues.liste.contains(residence), "la résidence reste connue")
 }
@@ -60,8 +60,10 @@ private func parcoursOuvert() throws -> Ouvert {
     let ouvert = try parcoursOuvert()
     let (parcours, service) = (ouvert.parcours, ouvert.service)
     parcours.connues.retenir(ServiceSimule.demo)
+    parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: ServiceSimule.residence)
     await parcours.oublierTout()
     #expect(parcours.connues.liste.isEmpty)
+    #expect(parcours.connues.identifiant(ServiceSimule.residence) == nil, "le courriel retenu est effacé")
     #expect(parcours.ouverte == nil && parcours.reconnue == nil && parcours.chemin.isEmpty, "retour à l'accueil")
     await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(ServiceSimule.residence) }
 }
@@ -73,4 +75,24 @@ private func parcoursOuvert() throws -> Ouvert {
     parcours.connues.noter(profil, pour: ServiceSimule.residence)
     parcours.connues.retenir(ServiceSimule.residence)  // une découverte ne sert pas le profil
     #expect(parcours.ouverteAJour?.profil == profil)
+}
+
+/// Le retour d'un habitué : l'accueil n'est que pour un appareil neuf ; ensuite la
+/// dernière résidence, sa palette dès le lancement, et son courriel retenu.
+@MainActor
+@Test func auRetourLaDerniereResidenceEstReconnueEtSonCourrielRetenu() throws {
+    let suite = "tests.\(UUID().uuidString)"
+    let reglages = try #require(UserDefaults(suiteName: suite))
+    let neuf = Parcours(
+        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+    #expect(neuf.connues.derniere == nil && neuf.reconnue == nil, "appareil neuf : l'accueil")
+
+    neuf.connues.retenirIdentifiant("resident@exemple.fr", pour: ServiceSimule.residence)
+    neuf.ouvrir(ServiceSimule.residence)
+
+    let relance = Parcours(
+        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+    #expect(relance.reconnue == ServiceSimule.residence, "la palette de la résidence dès le 1er écran")
+    #expect(relance.connues.identifiant(ServiceSimule.residence) == "resident@exemple.fr")
+    #expect(relance.connues.identifiant(ServiceSimule.demo) == nil, "un courriel par résidence")
 }
