@@ -15,27 +15,49 @@ enum TextesNotifications {
     static let vide = "Aucune notification"
     static let videDetail = "Vous êtes à jour !"
     static let confirmerTitre = "Supprimer définitivement"
-    static let confirmerMessage = "Cette notification\n\nCette action est irréversible."
     static let supprimer = "Supprimer"
+    static let supprimerLues = "Supprimer les lues"
+    static let luesSupprimees = "Notifications lues supprimées"
     static let modifier = "Modifier"
     static let terminer = "OK"
     static let toutSelectionner = "Tout sélectionner"
     static let toutDeselectionner = "Tout désélectionner"
-    static let selectionnerLues = "Sélectionner les lues"
 
     /// « Supprimer », puis « Supprimer (3) » dès qu'une sélection existe.
     static func supprimerSelection(_ nombre: Int) -> String {
         nombre == 0 ? supprimer : "\(supprimer) (\(nombre))"
     }
 
-    /// Le message de la confirmation d'une suppression groupée.
-    static func confirmerLot(_ nombre: Int) -> String {
-        (nombre > 1 ? "Ces \(nombre) notifications" : "Cette notification") + "\n\nCette action est irréversible."
-    }
-
     /// « 1 non lue », « 3 non lues ».
     static func nonLues(_ nombre: Int) -> String {
         nombre > 1 ? "\(nombre) non lues" : "\(nombre) non lue"
+    }
+}
+
+/// Ce qu'une suppression s'apprête à retirer : la confirmation le nomme, puis le geste
+/// part par SA route — une notification, une sélection, ou toutes les lues (#53).
+enum SuppressionDemandee: Equatable {
+    case une(NotificationRecue)
+    case selection(Set<Int>)
+    /// Toutes les lues du compte ; le nombre est celui de la liste, pour la phrase.
+    case lues(Int)
+
+    /// « Cette notification », « Ces 3 notifications », « Les 138 notifications lues ».
+    var quoi: String {
+        switch self {
+        case .une: "Cette notification"
+        case .selection(let ids): ids.count > 1 ? "Ces \(ids.count) notifications" : "Cette notification"
+        case .lues(let nombre): nombre > 1 ? "Les \(nombre) notifications lues" : "La notification lue"
+        }
+    }
+
+    /// Le message du site (`SUPPRESSION(quoi)`) : ce qui part, puis l'avertissement.
+    var message: String { quoi + "\n\nCette action est irréversible." }
+
+    /// Le bouton qui confirme : « Supprimer », « Supprimer (3) » pour une sélection.
+    var libelle: String {
+        if case .selection(let ids) = self { return TextesNotifications.supprimerSelection(ids.count) }
+        return TextesNotifications.supprimer
     }
 }
 
@@ -55,6 +77,7 @@ final class EtatNotifications {
     var echec: ErreurService?
 
     var nonLues: Int { liste.filter { !$0.lue }.count }
+    var lues: Int { liste.count - nonLues }
 
     /// Les deux sections du site : « Aujourd'hui », ce sont les 24 DERNIÈRES HEURES
     /// (`notifications/+page.svelte`, fenêtre glissante), pas le jour du calendrier.
@@ -106,24 +129,34 @@ final class EtatNotifications {
         }
     }
 
-    /// Plusieurs à la fois, en UNE requête (#53) : « Supprimer les lues » quand la
-    /// sélection est exactement les lues de la liste, la sélection sinon. Les lignes partent
-    /// tout de suite ; si le serveur refuse, elles reviennent et sa phrase le dit. Rend
-    /// `true` quand la suppression est faite.
+    /// Une sélection, en UNE requête (#53) — celles choisies, et elles seules : même
+    /// quand ce sont toutes les lues de la liste, la route des lues reste à
+    /// `supprimerLues`, qui en retirerait d'autres (lues depuis, ailleurs). Les lignes
+    /// partent tout de suite ; si le serveur refuse, elles reviennent et sa phrase le dit.
+    /// Rend `true` quand la suppression est faite.
     @discardableResult
     func supprimer(
         _ ids: Set<Int>, dans installation: Installation, avec service: any ServiceNotifications
     ) async -> Bool {
         guard !ids.isEmpty else { return false }
-        let lues = Set(liste.filter(\.lue).map(\.id))
         return await tenter(installation) {
             $0.removeAll { ids.contains($0.id) }
         } appel: {
-            if ids == lues {
-                try await service.supprimerLues(installation)
-            } else {
-                try await service.supprimerNotifications(ids, dans: installation)
-            }
+            try await service.supprimerNotifications(ids, dans: installation)
+        }
+    }
+
+    /// « Supprimer les lues », le geste direct du site : TOUTES les lues du compte, en UNE
+    /// requête (POST /notifications/supprimer-lues) — la seule porte de cette route. La
+    /// liste ne garde que les non lues, ce que la route laisse en base ; refusée, tout
+    /// revient. Sans notification lue, aucune requête.
+    @discardableResult
+    func supprimerLues(_ installation: Installation, avec service: any ServiceNotifications) async -> Bool {
+        guard lues > 0 else { return false }
+        return await tenter(installation) {
+            $0.removeAll(where: \.lue)
+        } appel: {
+            try await service.supprimerLues(installation)
         }
     }
 

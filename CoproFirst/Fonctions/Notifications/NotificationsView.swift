@@ -8,9 +8,10 @@ import SwiftUI
 ///
 /// Les gestes se VOIENT (retour de Philippe, 05/11/2026 : 146 notifications, « pas la
 /// possibilité de les supprimer ou de tout marquer comme lu ») : « Tout marquer lu » en
-/// haut à gauche dès qu'une alerte attend ; « Modifier » en haut à droite, qui permet de
-/// choisir plusieurs alertes et de les supprimer. Le balayage reste un raccourci, et un
-/// toucher marque lu.
+/// haut à gauche dès qu'une alerte attend ; « Supprimer les lues » en tête de la liste
+/// dès qu'il y en a une (10/11/2026 : « il faut supprimer les lues », #53) ; « Modifier »
+/// en haut à droite, qui permet de choisir plusieurs alertes et de les supprimer. Le
+/// balayage reste un raccourci, et un toucher marque lu.
 struct NotificationsView: View {
     let installation: Installation
     /// Ouverte par la cloche : un bouton « OK » la referme.
@@ -19,11 +20,11 @@ struct NotificationsView: View {
     @Environment(\.palette) private var palette
     @Environment(\.dismiss) private var fermer
     @State private var etat = EtatNotifications()
-    @State private var aSupprimer: NotificationRecue?
+    @State private var aConfirmer: SuppressionDemandee?
     @State private var modeEdition = EditMode.inactive
     @State private var selection: Set<Int> = []
-    @State private var confirmerLot = false
     @State private var supprimees = 0
+    @State private var avis = AvisDuGeste()
 
     private var enEdition: Bool { modeEdition.isEditing }
 
@@ -36,6 +37,7 @@ struct NotificationsView: View {
                 if let echec = etat.echec {
                     MessageErreur(texte: echec.phrase).listRowBackground(Color.clear).listRowInsets(.init())
                 }
+                if etat.lues > 0 { gesteSurLesLues }
                 let sections = etat.sections()
                 section(TextesNotifications.aujourdhui, sections.aujourdhui)
                 section(TextesNotifications.anciennes, sections.anciennes)
@@ -49,6 +51,7 @@ struct NotificationsView: View {
         .titreDeMenu()
         .modifier(SousTitreNonLues(nombre: etat.nonLues))
         .toolbar { barre }
+        .avisEphemere(avis)
         .safeAreaInset(edge: .bottom, spacing: 0) { if enEdition { barreDeSuppression } }
         .animation(.snappy, value: enEdition)
         .refreshable { await etat.charger(installation, avec: parcours.serviceNotifications) }
@@ -57,25 +60,18 @@ struct NotificationsView: View {
         .sensoryFeedback(.success, trigger: etat.nonLues == 0 && etat.phase == .pret)
         .sensoryFeedback(.success, trigger: supprimees)
         .sensoryFeedback(.selection, trigger: selection)
+        // UNE confirmation pour les trois suppressions (une, la sélection, les lues) :
+        // la demande dit ce qui part. Posée sur la liste, jamais sur une rangée.
         .confirmationDialog(
-            TextesNotifications.confirmerTitre, isPresented: aSupprimerPresente, titleVisibility: .visible,
-            presenting: aSupprimer
-        ) { notification in
-            Button(TextesNotifications.supprimer, role: .destructive) {
-                Task { await etat.supprimer(notification, dans: installation, avec: parcours.serviceNotifications) }
-            }
-        } message: { _ in
-            Text(TextesNotifications.confirmerMessage)
-        }
-        .confirmationDialog(
-            TextesNotifications.confirmerTitre, isPresented: $confirmerLot, titleVisibility: .visible
-        ) {
-            Button(TextesNotifications.supprimerSelection(selection.count), role: .destructive) {
-                Task { await supprimerSelection() }
+            TextesNotifications.confirmerTitre, isPresented: confirmationPresentee, titleVisibility: .visible,
+            presenting: aConfirmer
+        ) { demande in
+            Button(demande.libelle, role: .destructive) {
+                Task { await supprimer(demande) }
             }
             .accessibilityIdentifier("notifications.confirmerSuppression")
-        } message: {
-            Text(TextesNotifications.confirmerLot(selection.count))
+        } message: { demande in
+            Text(demande.message)
         }
     }
 
@@ -98,7 +94,7 @@ struct NotificationsView: View {
                         }
                         .swipeActions(edge: .trailing) {
                             Button(role: .destructive) {
-                                aSupprimer = notification
+                                aConfirmer = .une(notification)
                             } label: {
                                 Label(TextesNotifications.supprimer, systemImage: "trash")
                             }
@@ -163,20 +159,46 @@ struct NotificationsView: View {
         }
     }
 
-    /// En édition : choisir les lues d'un toucher, puis supprimer la sélection. Posée au
-    /// bas du contenu (au-dessus de la barre d'onglets), jamais dans une barre d'outils
-    /// du bas que la barre d'onglets cacherait.
+    /// « Supprimer les lues », le geste direct du site (l'en-tête de sa page) : toutes les
+    /// lues du compte, après confirmation. En tête de la liste et non dans une barre : il
+    /// défile avec elle, grandit donc avec le texte sans rien lui prendre, et un geste
+    /// définitif ne se pose pas sous le pouce, à côté de « Modifier ». Absent sans
+    /// notification lue, comme sur le site ; pendant une sélection, il attend. Discret
+    /// comme le bouton du site (`btn-outline`, pas un aplat rouge) : la surface d'une
+    /// carte, le rouge dans le texte — et dans la confirmation.
+    private var gesteSurLesLues: some View {
+        Button {
+            aConfirmer = .lues(etat.lues)
+        } label: {
+            // Pas un `Label` : en très grand texte, sa seconde ligne repartait sous l'icône.
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "trash").accessibilityHidden(true)
+                Text(TextesNotifications.supprimerLues).multilineTextAlignment(.leading)
+            }
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(palette.danger)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .frame(minHeight: Mise.cible)
+            .background(palette.surface, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
+        }
+        .buttonStyle(StyleCarte())
+        .disabled(enEdition)
+        .opacity(enEdition ? 0.45 : 1)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .listRowBackground(Color.clear)
+        .listRowInsets(.init())
+        .listRowSeparator(.hidden)
+        .accessibilityIdentifier("notifications.supprimerLues")
+    }
+
+    /// En édition : supprimer la sélection. Posée au bas du contenu (au-dessus de la barre
+    /// d'onglets), jamais dans une barre d'outils du bas que la barre d'onglets cacherait.
     private var barreDeSuppression: some View {
         HStack(spacing: 12) {
-            Button(TextesNotifications.selectionnerLues) {
-                selection = Set(etat.liste.filter(\.lue).map(\.id))
-            }
-            .disabled(!etat.liste.contains(where: \.lue))
-            .accessibilityShowsLargeContentViewer()
-            .accessibilityIdentifier("notifications.selectionnerLues")
             Spacer(minLength: 8)
             Button(role: .destructive) {
-                confirmerLot = true
+                aConfirmer = .selection(selection)
             } label: {
                 Label(TextesNotifications.supprimerSelection(selection.count), systemImage: "trash")
                     .fontWeight(.semibold)
@@ -203,11 +225,18 @@ struct NotificationsView: View {
         await etat.marquerLue(notification, dans: installation, avec: parcours.serviceNotifications)
     }
 
-    private func supprimerSelection() async {
-        let choisies = selection
-        selection = []
-        if await etat.supprimer(choisies, dans: installation, avec: parcours.serviceNotifications) { supprimees += 1 }
-        if etat.liste.isEmpty { modeEdition = .inactive }
+    /// La demande confirmée part par SA route ; les lues parties, la phrase du site le dit.
+    private func supprimer(_ demande: SuppressionDemandee) async {
+        let service = parcours.serviceNotifications
+        switch demande {
+        case .une(let notification):
+            await etat.supprimer(notification, dans: installation, avec: service)
+        case .selection(let choisies):
+            selection = []
+            if await etat.supprimer(choisies, dans: installation, avec: service) { supprimees += 1 }
+        case .lues:
+            if await etat.supprimerLues(installation, avec: service) { avis.dire(TextesNotifications.luesSupprimees) }
+        }
     }
 
     @ViewBuilder
@@ -224,8 +253,8 @@ struct NotificationsView: View {
         }
     }
 
-    private var aSupprimerPresente: Binding<Bool> {
-        Binding(get: { aSupprimer != nil }, set: { if !$0 { aSupprimer = nil } })
+    private var confirmationPresentee: Binding<Bool> {
+        Binding(get: { aConfirmer != nil }, set: { if !$0 { aConfirmer = nil } })
     }
 
     private static let squelette = NotificationRecue(
