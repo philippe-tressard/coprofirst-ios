@@ -44,6 +44,24 @@ extension ServiceSimule: ServiceGestesAffaire {
         }
     }
 
+    func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(300))
+        let lieux = try FixturesPerimetres.lus()
+        try changerAffaireSimulee(affaire) { detail in
+            guard detail.droits.modifier else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
+            detail.titre = edition.titre ?? detail.titre
+            detail.description = edition.descriptionHTML ?? detail.description
+            detail.categorie = edition.categorie ?? detail.categorie
+            detail.urgente = edition.urgente ?? detail.urgente
+            if let codes = edition.perimetres {
+                // Sans lieu, le serveur pose le défaut qu'il désigne.
+                let code = codes.first ?? Perimetre.codeParDefaut(lieux)
+                detail.perimetres = code.map { [$0] } ?? []
+                detail.lieu = lieux.first { $0.code == code }?.libelle
+            }
+        }
+    }
+
     func regler(
         _ option: OptionAffaire, active: Bool, de affaire: Int, dans installation: Installation
     ) async throws {

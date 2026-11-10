@@ -61,6 +61,18 @@ enum TexteDuSite {
             .joined()
     }
 
+    /// Le texte à RÉÉCRIRE d'un HTML du site — seulement si le réenregistrer ne perd
+    /// rien : `html(saisi:)` doit en refaire exactement le même HTML. Une mise en forme
+    /// que l'app ne sait pas écrire (gras, liste, lien, espace insécable) rend `nil` :
+    /// l'écran la montre sans la toucher, plutôt que de l'effacer en silence.
+    /// Un texte sans balise (saisi avant l'éditeur) se réécrit tel quel.
+    static func saisi(html: String) -> String? {
+        let texte = String(assembler(RenduHTML(html, riche: false).blocs).characters)
+        if self.html(saisi: texte) == html.replacingOccurrences(of: "<br/>", with: "<br>") { return texte }
+        let brut = !html.contains("<") && !html.contains("&")
+        return brut && texte == html.trimmingCharacters(in: .whitespacesAndNewlines) ? texte : nil
+    }
+
     /// Un lien sûr : absolu, d'un schéma de la liste blanche, sans caractère de
     /// contrôle (`java\tscript:` ne passe pas) — sinon `nil`, et le texte reste inerte.
     static func lienSur(_ href: String) -> URL? {

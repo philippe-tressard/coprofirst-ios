@@ -31,19 +31,25 @@ struct BandeauAffaire: ViewModifier {
                 }
             }
             .sheet(item: $feuille, onDismiss: avis.feuilleFermee) { geste in
-                Group {
-                    if geste == .suite {
-                        SuiteFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
-                    } else {
-                        RepondreFeuille(affaire: affaire, installation: installation) {
-                            envoyee("Réponse envoyée")
-                        }
-                    }
-                }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                feuille(geste)
+                    .presentationDragIndicator(.visible)
             }
             .avisEphemere(avis)
+    }
+
+    @ViewBuilder
+    private func feuille(_ geste: GesteAffaire) -> some View {
+        switch geste {
+        case .suite:
+            SuiteFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
+                .presentationDetents([.medium, .large])
+        case .modifier:
+            // Tous les champs de l'affaire : la feuille s'ouvre en grand.
+            ModifierAffaireFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
+        default:
+            RepondreFeuille(affaire: affaire, installation: installation) { envoyee("Réponse envoyée") }
+                .presentationDetents([.medium, .large])
+        }
     }
 
     @ViewBuilder
@@ -72,7 +78,7 @@ struct BandeauAffaire: ViewModifier {
         case .archiver:
             Button { Task { await archiver() } } label: { icone }
                 .disabled(enCours)
-        case .repondre, .suite:
+        case .repondre, .suite, .modifier:
             Button { feuille = geste } label: { icone }
         }
     }
