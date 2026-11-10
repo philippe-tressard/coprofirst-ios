@@ -168,7 +168,7 @@ extension DetailAffaire {
                 repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
                 modifier: ticket.peutModifier ?? false, archiver: ticket.peutArchiver ?? false),
             epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
-            fusionnee: ticket.fusionnee ?? false)
+            fusionnee: ticket.fusionnee ?? false, perimetres: ticket.perimetreCible ?? [])
     }
 }
 
