@@ -27,6 +27,15 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
 SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"
 
+# Le pictogramme hors ligne (le toit sans onde) : dessin original, GÉNÉRÉ par
+# scripts/rendre-symbole-hors-ligne.swift. Le modèle de symbole se recrée à
+# l'identique ; l'en-tête se déclare ici plutôt que dans un fichier régénéré.
+[[annotations]]
+path = "CoproFirst/Ressources/Assets.xcassets/hors-ligne.symbolset/hors-ligne.svg"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"
+
 # Le JSON n'admet pas de commentaire : l'en-tête ne peut pas y vivre.
 [[annotations]]
 path = [".claude/settings.json", ".swift-format", "Paquets/ClientAPI/Package.resolved"]

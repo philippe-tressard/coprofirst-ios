@@ -69,9 +69,12 @@ struct MenuFiltresAffaires: View {
 
 /// Hors ligne : dit une fois, en haut, tant que ça dure.
 struct BandeauHorsLigne: View {
+    /// Le toit sans onde : symbole du catalogue, généré par
+    /// `scripts/rendre-symbole-hors-ligne.swift` ; il suit la taille du libellé.
+    static let pictogramme = "hors-ligne"
     @Environment(\.palette) private var palette
     var body: some View {
-        Label("Hors ligne — les affaires affichées peuvent dater.", systemImage: "wifi.slash")
+        Label("Hors ligne — les affaires affichées peuvent dater.", image: Self.pictogramme)
             .font(.footnote.weight(.medium))
             .foregroundStyle(palette.text)
             .frame(maxWidth: .infinity)
