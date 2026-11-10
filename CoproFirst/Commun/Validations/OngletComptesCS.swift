@@ -7,8 +7,11 @@ import SwiftUI
 /// compteurs, les comptes à valider, puis les demandes de badges et de télécommandes.
 /// Chaque ligne s'approuve ou se rejette ; l'approbation d'un compte demande s'il
 /// s'agit d'un nouvel arrivant (feuille), celle d'une commande les codes remis.
-struct OngletComptesCS: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+///
+/// La même file ouvre « À traiter » du Paramétrage (#16) : les routes sont celles du
+/// conseil ET de l'administration (`require_cs_or_admin`), d'où sa place dans `Commun/`.
+struct OngletComptesCS: OngletDePage {
+    let contexte: ContexteOnglet
     @State private var etat = EtatComptesCS()
     @State private var aValider: CompteEnAttente?
     @State private var aRejeter: CompteEnAttente?
@@ -18,7 +21,7 @@ struct OngletComptesCS: OngletEspaceCS {
     @State private var echec: String?
     @Environment(\.palette) private var palette
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceComptes {

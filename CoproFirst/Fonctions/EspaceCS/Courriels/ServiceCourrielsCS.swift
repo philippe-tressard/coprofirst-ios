@@ -12,7 +12,7 @@ protocol ServiceCourrielsCS: Sendable {
     func journalCourriels(_ installation: Installation) async throws -> JournalCourriels
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceCourriels: (any ServiceCourrielsCS)? { service as? any ServiceCourrielsCS }
 }
 

@@ -22,6 +22,15 @@ mettait des libellés (« Copropriété »), et Badges affichait les codes bruts
 (« bat:2 ») sans qu'aucun test le voie. Chaque `perimetre_cible` simulé doit donc citer
 un `code` de l'arbre simulé (la réponse déclarée `PerimetreRead`).
 
+Une route que le contrat ne TYPE pas (pas de `response_model` côté serveur, #16) n'a pas
+de schéma à opposer : sa réponse se déclare par sa route,
+
+    ReponseNonTypee(nom: "tableau", route: "GET /telemetry/dashboard", json: tableau),
+
+et le juge vérifie que la route existe et qu'elle n'est toujours pas typée. Le jour où le
+contrat la type, il échoue : la réponse se déclare alors par son schéma, et l'écran la lit
+par son type généré, jamais plus par `Relecture`.
+
 Usage :
   python3 scripts/verifier-fixtures.py [--contrat openapi.json]
       Défaut : le contrat du dépôt. La concordance (#20) passe celui de la dernière
@@ -44,6 +53,8 @@ RACINE = pathlib.Path(__file__).resolve().parents[1]
 CONTRAT = RACINE / "Paquets" / "ClientAPI" / "Sources" / "ClientAPI" / "openapi.json"
 JSON_BRUT = re.compile(r'static let (\w+) = #"""\n(.*?)\n\s*"""#', re.S)
 DECLAREE = re.compile(r'Reponse\(nom: "(\w+)", schema: "(\w+)", json: (\w+)\)')
+NON_TYPEE = re.compile(r'ReponseNonTypee\(nom: "(\w+)", route: "((?:GET|POST|PUT|PATCH|DELETE) /[^"]*)", json: (\w+)\)')
+ROUTE = "route:"
 TYPES = {
     "string": lambda v: isinstance(v, str),
     "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
@@ -66,13 +77,29 @@ class NonDeclaree(Exception):
 class Juge:
     def __init__(self, contrat: dict) -> None:
         self.schemas = contrat.get("components", {}).get("schemas", {})
+        self.chemins = contrat.get("paths", {})
         if not self.schemas:
             raise Illisible("le contrat ne déclare aucun schéma")
 
     def ecarts(self, valeur, nom: str, chemin: str) -> list[str]:
+        if nom.startswith(ROUTE):
+            return self.non_typee(nom[len(ROUTE):], chemin)
         if nom not in self.schemas:
             return [f"{chemin} : schéma {nom} absent du contrat"]
         return self._noeud(valeur, self.schemas[nom], chemin, nom)
+
+    def non_typee(self, route: str, chemin: str) -> list[str]:
+        """La route existe, et le contrat ne type toujours pas sa réponse 200."""
+        methode, adresse = route.split(" ", 1)
+        operation = self.chemins.get(adresse, {}).get(methode.lower())
+        if operation is None:
+            return [f"{chemin} : {route} absente du contrat"]
+        schema = (operation.get("responses", {}).get("200", {}).get("content", {})
+                  .get("application/json", {}).get("schema", {}))
+        if schema:
+            return [f"{chemin} : {route} est typée par le contrat ({json.dumps(schema)[:60]}) — "
+                    "déclarer la réponse par son schéma, la lire par son type généré"]
+        return []
 
     def _noeud(self, valeur, schema: dict, chemin: str, nom: str = "") -> list[str]:
         if "$ref" in schema:
@@ -114,6 +141,7 @@ def fixtures(racine: pathlib.Path) -> list[tuple[str, str, str, object]]:
         texte = fichier.read_text(encoding="utf-8")
         brutes = dict(JSON_BRUT.findall(texte))
         declarees = {variable: (nom, schema) for nom, schema, variable in DECLAREE.findall(texte)}
+        declarees |= {variable: (nom, ROUTE + route) for nom, route, variable in NON_TYPEE.findall(texte)}
         relatif = str(fichier.relative_to(racine))
         for variable in sorted(set(brutes) - set(declarees)):
             trouvees.append((relatif, variable, "", NonDeclaree("aucune Reponse(…) ne la déclare avec son schéma")))
@@ -134,7 +162,7 @@ def juger(juge: Juge, trouvees: list) -> tuple[list[str], list[str]]:
     for fichier, nom, schema, reponse in trouvees:
         if isinstance(reponse, (Illisible, NonDeclaree)):
             (illisibles if isinstance(reponse, Illisible) else ecarts).append(f"{fichier} : {nom} — {reponse}")
-        elif isinstance(reponse, list):
+        elif isinstance(reponse, list) and not schema.startswith(ROUTE):
             for rang, element in enumerate(reponse):
                 ecarts += [f"{fichier} : {e}" for e in juge.ecarts(element, schema, f"{nom}[{rang}]")]
         else:
@@ -201,6 +229,14 @@ def autotest() -> None:
         ecarts, illisibles = juger(juge, fixtures(pathlib.Path(dossier)))
     if illisibles or len(ecarts) != 1 or "b — aucune Reponse" not in ecarts[0]:
         raise SystemExit(f"❌ autotest : une réponse non déclarée doit être vue ({ecarts}, {illisibles})")
+    routes = Juge({"components": {"schemas": {"X": {}}}, "paths": {
+        "/libre": {"get": {"responses": {"200": {"content": {"application/json": {"schema": {}}}}}}},
+        "/typee": {"get": {"responses": {"200": {"content": {"application/json": {
+            "schema": {"$ref": "#/components/schemas/X"}}}}}}}}})
+    for route, attendu in [("GET /libre", 0), ("GET /typee", 1), ("POST /libre", 1), ("GET /absente", 1)]:
+        ecarts, _ = juger(routes, [("F", "r", ROUTE + route, [{"a": 1}, {"a": 2}])])
+        if len(ecarts) != attendu:
+            raise SystemExit(f"❌ autotest : réponse non typée {route} → {ecarts}")
     arbre = [("F", "arbre", "PerimetreRead", [{"code": "bat_a"}]),
              ("F", "parc", "Objet", [{"perimetre_cible": ["bat_a", "Copropriété"]}])]
     vide = Juge({"components": {"schemas": {"PerimetreRead": {}, "Objet": {}}}})
@@ -211,7 +247,7 @@ def autotest() -> None:
     if not illisibles:
         raise SystemExit("❌ autotest : sans arbre simulé, les codes cités sont INCONNU")
     print("✅ autotest : champ de trop, requis absent, énumération, type, imbriqué, réponse non déclarée, "
-          "code de périmètre")
+          "code de périmètre, route non typée")
 
 
 def main() -> int:

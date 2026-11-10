@@ -10,8 +10,8 @@ import SwiftUI
 ///
 /// Consultation seule dans l'app : enregistrer, corriger, exporter et retirer un accès
 /// se font sur le site (la note de `Parite/PARITE.md` le dit).
-struct OngletBadgesCS: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+struct OngletBadgesCS: OngletDePage {
+    let contexte: ContexteOnglet
     @State private var parc: [AccesDuParc]?
     /// L'arbre servi, pour dire ce qu'un accès ouvre ; sans lui, rien plutôt qu'un code.
     @State private var perimetres: [Perimetre] = []
@@ -20,7 +20,7 @@ struct OngletBadgesCS: OngletEspaceCS {
     @State private var type: TypeAcces?
     @Environment(\.palette) private var palette
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceBadges {

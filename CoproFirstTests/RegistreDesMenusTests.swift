@@ -23,10 +23,13 @@ import Testing
     }
 }
 
-/// Une page sans écran inscrit s'ouvre quand même : « Bientôt », jamais un vide.
+/// Une page sans écran inscrit s'ouvre quand même : « Bientôt », jamais un vide. Depuis
+/// le Paramétrage (#16), chaque page du site a son écran : le témoin est une page que le
+/// site ajouterait demain.
 @MainActor
 @Test func unePageNonInscriteDitBientot() {
-    // Les huit pages de la barre ont toutes un ticket (#11 à #14), les Délégations
-    // sont arrivées (#15) : la page témoin est l'administration, réservée à un rôle.
-    #expect(RegistreDesMenus.ecrans["admin"] == nil, "si l'administration arrive (#16), choisir une autre page")
+    #expect(RegistreDesMenus.ecrans["page-de-demain"] == nil)
+    for page in PagesParDefaut.toutes {
+        #expect(RegistreDesMenus.ecrans[page.id] != nil, "« \(page.id) » : aucun écran inscrit")
+    }
 }

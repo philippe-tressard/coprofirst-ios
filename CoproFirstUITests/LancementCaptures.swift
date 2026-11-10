@@ -18,9 +18,9 @@ enum LancementCaptures {
     }
 
     @MainActor
-    static func lancer(ecran: String = "fil", taille: Taille? = nil) -> XCUIApplication {
+    static func lancer(ecran: String = "fil", taille: Taille? = nil, arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", ecran]
+        app.launchArguments = ["-api-simulee", "-ecran", ecran] + arguments
         app.launchArguments += ["-theme", environnement["THEME"] ?? "auto"]
         if let taille = taille ?? (environnement["GRAND_TEXTE"] != nil ? .ax5 : nil) {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", taille.rawValue]

@@ -114,14 +114,14 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 
 ### #16 — Administration, en partie
 
-Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « site seulement » (arbitrage du 03/11/2026), et l'app le signale. Dossier : `Fonctions/Admin`.
+Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « site seulement » (arbitrage du 03/11/2026), et l'app le signale : la pastille « Sur le site » liste les onglets que le compte ouvre, chacun avec son lien. Dossier : `Fonctions/Admin`, cadre commun `Commun/Onglets/`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `admin` | `a_traiter` | prévu | #16 |  |
-| `admin` | `utilisateurs` | prévu | #16 |  |
+| `admin` | `a_traiter` | fait | #16 | La file des comptes et des commandes, la même que l'Espace CS ; les demandes de profil (approuver, rejeter avec motif) |
+| `admin` | `utilisateurs` | fait | #16 | Recherche, type, compte ; la fiche : communauté, auto-match, suppression. Modifier, les rôles et l'accueil d'un arrivant restent au site (coprofirst#2618) |
 | `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
-| `admin` | `telemetry` | prévu | #16 |  |
+| `admin` | `telemetry` | fait | #16 | Quatre vues, filtre gestionnaire, nombres clés, graphe, pages, utilisateurs actifs ; les six autres sections restent au site |
 | `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `copropriete` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `perimetres` | site seulement | #16 | Paramétrage : l'app renvoie au site |
@@ -137,5 +137,5 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | `admin` | `connexion` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `emails` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `installation` | site seulement | #16 | Paramétrage : l'app renvoie au site |
-| `admin` | `maintenance` | prévu | #16 |  |
+| `admin` | `maintenance` | fait | #16 | Santé des tâches (opérateur), dernier export (administration) ; lancer, vérifier, exporter restent au site |
 | `admin` | `installations` | site seulement | #16 | Paramétrage : l'app renvoie au site |
