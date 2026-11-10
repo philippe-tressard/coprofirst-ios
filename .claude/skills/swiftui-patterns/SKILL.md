@@ -180,7 +180,11 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `PastilleOuSuisJe` | « où suis-je » en barre d'outils (`cloche: true` dans l'espace ouvert) — **sur chaque écran de menu** ; `largeurNom` réduit le nom quand un élément occupe la gauche de la barre (le logement du fil) : sans quoi iOS replie la pastille et la cloche dans « … » | idem |
 | `.sourceZoom` / `.destinationZoom` | la transition zoom d'iOS 18 (repli iOS 17) | `Commun/Composants/TransitionZoom.swift` |
 | `Chargement` | charger puis montrer : squelette, erreur + « Réessayer », contenu — **jamais un écran blanc** | `Commun/Detail/` |
-| `DetailAffaireView`, `SondageView`, `DocumentView` | le détail d'une affaire, d'un sondage, d'un document (QuickLook) | idem |
+| `DetailAffaireView`, `DocumentView` | le détail d'une affaire, d'un document (QuickLook) | idem |
+| `SondageView` | la fiche d'un sondage, comme celle du site (#38) : vote (réponse à préciser, commentaire, charte ; « Voter » dit ce qui manque), résultats, fil des commentaires — avec SON service (`ServiceSondage`, API et simulé, `FixturesSondage`) | `Commun/Detail/Sondage/` |
+| `FilReponses`, `GestesReponses`, `RetraitDeReponse` + `.confirmationDeRetrait` | le fil des réponses d'une idée, d'une annonce, ou les commentaires d'un sondage (`Reponses.svelte`) : « Supprimer » suit `peut_supprimer` (servi), « Signaler » s'offre sur les réponses des autres ; l'écran passe ses gestes et pose la confirmation sur SA liste — posée sur une section ou une rangée de liste, elle n'entrait pas dans l'arbre d'accessibilité | `Commun/Reponses/` |
+| `.signalementAuConseil($cible)` + `ServiceSignalements` | « Signaler au conseil syndical », motif obligatoire (`signaler()` du site) ; POST /signalements, dont les protocoles de menu héritent | `Commun/Composants/SignalementAuConseil.swift`, `Donnees/Signalement.swift` |
+| `FlowEtiquettes` | des étiquettes côte à côte, qui passent à la ligne (grand texte) | `Commun/Composants/` |
 | `GaleriePhotos`, `RepondreFeuille`, `ResumeFeuille` | les photos protégées ; répondre ; le résumé d'un élément du fil | idem |
 | `CarteDuFil`, `CarteOuvrable`, `DestinationDuFil` | une carte du fil ; toucher → résumé ; la cible (`affaire`, `sondage`, `document`) → son détail | `Commun/Fil/` |
 | `FeuilleResidence`, `PastillesRoles`, `.confirmationDeSortie` | la feuille « où suis-je » ; les rôles ; se déconnecter / changer de résidence | `Commun/Compte/` |
@@ -218,10 +222,20 @@ seule la CI le dit.
        .matching(NSPredicate(format: "identifier == %@ AND isEnabled == false", "nouvelle.envoyer"))
        .firstMatch.exists
    ```
-3. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
+3. **Une présentation système** (alerte, confirmation posée sur une rangée de liste) ne fait
+   pas toujours descendre ses identifiants : l'alerte se trouve par son titre ; une
+   confirmation se pose sur la liste, pas sur sa section ni sa rangée (#38). **Un bouton de
+   balayage** glisse encore quand il apparaît, une liste défile encore après un balayage :
+   attendre que l'élément soit immobile avant de le toucher ; et fermer le clavier avant de
+   toucher un élément qu'il pourrait couvrir — XCTest le dit « touchable » (`SondageUITests`).
+   Même piège sous la barre d'onglets flottante : on touche le milieu de la partie VISIBLE
+   d'un élément, entre les barres. Un cadre se lit par `snapshot()` : une requête
+   d'accessibilité au lieu de deux (`exists` puis `frame`) — chacune coûte près d'une
+   seconde sur une longue liste.
+4. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
    journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
    affecting … » donne le type réellement trouvé).
-4. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
+5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même

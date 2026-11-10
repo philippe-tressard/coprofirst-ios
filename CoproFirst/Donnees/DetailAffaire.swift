@@ -57,24 +57,3 @@ enum DroitsAffaire {
         roles.contains("conseil_syndical") || auteur == moi || saisiPour == moi
     }
 }
-
-/// Un sondage, tel que GET /sondages/{id} le sert — typé par le contrat 1.5.0
-/// (`SondageDetail`) et branché par `DetailSondage(_:)`.
-struct DetailSondage: Codable, Hashable, Sendable {
-    let id: Int
-    let question: String
-    let description: String?
-    let options: [OptionSondage]
-    let monVote: Int?
-    let cloture: Bool
-    let resultatsVisibles: Bool
-
-    var totalVotes: Int { options.reduce(0) { $0 + ($1.nbVotes ?? 0) } }
-}
-
-struct OptionSondage: Codable, Hashable, Sendable, Identifiable {
-    let id: Int
-    let libelle: String
-    /// Absent quand les résultats sont masqués — jamais 0 : « personne n'a voté » serait faux.
-    let nbVotes: Int?
-}

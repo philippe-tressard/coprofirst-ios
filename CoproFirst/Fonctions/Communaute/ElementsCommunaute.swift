@@ -92,29 +92,6 @@ enum HTMLDeSaisie {
     }
 }
 
-/// « Signaler au conseil syndical » : un motif obligatoire, puis l'envoi.
-struct SignalementCommunaute: ViewModifier {
-    @Binding var cible: CibleCommunaute?
-    let envoyer: (CibleCommunaute, String) -> Void
-    @State private var motif = ""
-
-    func body(content: Content) -> some View {
-        content.alert(
-            "Signaler au conseil syndical", isPresented: Binding(get: { cible != nil }, set: { if !$0 { cible = nil } })
-        ) {
-            TextField("Pourquoi signalez-vous ce contenu ?", text: $motif, axis: .vertical)
-            Button("Annuler", role: .cancel) { motif = "" }
-            Button("Signaler") {
-                if let cible { envoyer(cible, motif.trimmingCharacters(in: .whitespacesAndNewlines)) }
-                motif = ""
-            }
-            .disabled(motif.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        } message: {
-            Text("Le motif sera transmis au conseil syndical, avec le contenu concerné.")
-        }
-    }
-}
-
 /// La phrase d'un geste, un instant en bas de l'écran ; elle s'efface seule.
 struct BandeauCommunaute: View {
     @Binding var bandeau: PhraseDuGeste?

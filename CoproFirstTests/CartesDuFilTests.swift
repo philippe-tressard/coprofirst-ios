@@ -64,9 +64,9 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
 
 @Test func leSondageServiSeLitAvecOuSansResultats() throws {
     // Typé par le contrat 1.5.0 (`SondageDetail`) : décodé comme le client, branché par
-    // `DetailSondage(_:)` — le chemin du service réel.
+    // `DetailSondage(_:moi:)` — le chemin du service réel.
     func lire(_ json: String) throws -> DetailSondage {
-        DetailSondage(try Relecture.generee(Components.Schemas.SondageDetail.self, json: json))
+        DetailSondage(try Relecture.generee(Components.Schemas.SondageDetail.self, json: json), moi: nil)
     }
     let visible = #"""
         {"id": 3, "question": "Q ?", "description": null, "cloture": false, "mon_vote": null,

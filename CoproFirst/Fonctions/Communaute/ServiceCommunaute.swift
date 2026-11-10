@@ -6,7 +6,8 @@ import Foundation
 /// Ce que l'écran Communauté demande à une installation (#14). Ce que le site
 /// réserve au conseil syndical ou à l'administration (créer un sondage, changer le
 /// statut d'une idée, modérer, répondre aux avis) reste au site, et l'écran le dit.
-protocol ServiceCommunaute: Sendable {
+/// Signaler au conseil syndical : la lecture commune (`ServiceSignalements`, Donnees/).
+protocol ServiceCommunaute: ServiceSignalements {
     /// GET /auth/me : statut, rôles, suspension.
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute
     /// GET /sondages.
@@ -24,8 +25,6 @@ protocol ServiceCommunaute: Sendable {
     func repondreCommunaute(_ texte: String, a cible: CibleCommunaute, dans installation: Installation) async throws
     func supprimerReponseCommunaute(_ id: Int, de cible: CibleCommunaute, dans installation: Installation)
         async throws
-    /// POST /signalements : au conseil syndical, avec un motif.
-    func signalerAuConseil(_ cible: CibleCommunaute, motif: String, dans installation: Installation) async throws
     /// GET /avis ; POST /avis ; PATCH /avis/{id} ; PATCH /avis/{id}/archivage.
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis
     func deposerAvis(_ saisie: SaisieAvis, dans installation: Installation) async throws

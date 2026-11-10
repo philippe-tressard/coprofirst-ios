@@ -26,9 +26,6 @@ protocol ServiceCoproFirst: Sendable {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire
     /// POST /tickets/{id}/evolutions : une suite écrite (type `commentaire`).
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws
-    /// GET /sondages/{id} ; POST /sondages/{id}/voter.
-    func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage
-    func voter(_ option: Int, au sondage: Int, dans installation: Installation) async throws
     /// GET /documents/{id}/télécharger : le fichier, écrit dans un dossier temporaire.
     func document(_ id: Int, nom: String?, dans installation: Installation) async throws -> URL
     /// Une photo protégée (`/uploads/…`), lue avec la session de l'installation.

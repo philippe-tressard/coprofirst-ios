@@ -50,18 +50,6 @@ struct SondageResume: Hashable, Sendable, Identifiable {
     let creeLe: Date
 }
 
-/// Une réponse du fil d'une idée ou d'une annonce. Texte brut, jamais du HTML.
-struct ReponseCommunaute: Codable, Hashable, Sendable, Identifiable {
-    let id: Int
-    let auteurId: Int?
-    let contenu: String
-    let creeLe: Date
-    let auteurNom: String?
-    let auteurBatiment: String?
-    let auteurRole: String?
-    let estCs: Bool?
-}
-
 /// Une idée (GET /idees, `IdeeRead`).
 struct Idee: Codable, Hashable, Sendable, Identifiable {
     let id: Int
@@ -151,12 +139,12 @@ enum CibleCommunaute: Hashable, Sendable {
     case annonce(Int)
     case reponse(Int)
 
-    /// `cible_type` de POST /signalements.
-    var typeSignalement: String {
+    /// Ce que POST /signalements reçoit (`ServiceSignalements`, commun).
+    var signalement: CibleSignalement {
         switch self {
-        case .idee: "idee"
-        case .annonce: "annonce"
-        case .reponse: "reponse"
+        case .idee(let id): CibleSignalement(type: "idee", id: id)
+        case .annonce(let id): CibleSignalement(type: "annonce", id: id)
+        case .reponse(let id): CibleSignalement(type: "reponse", id: id)
         }
     }
 

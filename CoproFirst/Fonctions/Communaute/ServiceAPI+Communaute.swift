@@ -154,14 +154,6 @@ extension ServiceAPI: ServiceCommunaute {
         }
     }
 
-    func signalerAuConseil(_ cible: CibleCommunaute, motif: String, dans installation: Installation) async throws {
-        let sortie = try await appeler {
-            try await client(installation.adresse).postSignalements(
-                body: .json(.init(cibleId: cible.id, cibleType: cible.typeSignalement, motif: motif)))
-        }
-        try await verifier(sortie.echec)
-    }
-
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis {
         let sortie = try await appeler { try await client(installation.adresse).getAvis() }
         switch sortie {
@@ -261,16 +253,6 @@ extension Operations.PostAnnoncesCibleIdReponses.Output {
     }
 }
 
-extension Operations.PostSignalements.Output {
-    fileprivate var echec: EchecDEcriture? {
-        switch self {
-        case .created: nil
-        case .unprocessableContent: .saisie
-        case .undocumented(let statut, let reponse): .refus(statut, reponse)
-        }
-    }
-}
-
 extension Operations.DeleteIdeesCibleIdReponsesRepId.Output {
     fileprivate var echec: EchecDEcriture? {
         switch self {
@@ -307,14 +289,6 @@ extension AvisResident {
 // lisent par leurs types générés — le client a déjà décodé leurs dates. Les relire par
 // `Relecture` réencodait ces dates en nombre (bogue du 06/11/2026). L'API simulée passe
 // par ces mêmes branchements (`FixturesCommunaute`).
-extension ReponseCommunaute {
-    init(_ lue: Components.Schemas.ReponseCommunauteRead) {
-        self.init(
-            id: lue.id, auteurId: lue.auteurId, contenu: lue.contenu, creeLe: lue.creeLe, auteurNom: lue.auteurNom,
-            auteurBatiment: lue.auteurBatiment, auteurRole: lue.auteurRole, estCs: lue.estCs)
-    }
-}
-
 extension Idee {
     init(_ lue: Components.Schemas.IdeeRead) {
         self.init(

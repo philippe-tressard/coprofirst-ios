@@ -15,9 +15,13 @@ struct DetailAnnonce: View {
     @Environment(\.dismiss) private var fermer
     @State private var signalee: CibleCommunaute?
     @State private var aSupprimer = false
+    @State private var retrait = RetraitDeReponse()
 
     var body: some View {
         if let annonce = etat.annonces.elements.first(where: { $0.id == id }) {
+            let gestes = etat.gestesReponses(
+                .annonce(annonce.id), onglet: .annonces, installation, avec: parcours.serviceCommunaute
+            ) { signalee = .reponse($0.id) }
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
@@ -40,8 +44,7 @@ struct DetailAnnonce: View {
                 .listRowBackground(palette.surface)
                 if annonce.estAuteur == true { suivi(annonce) }
                 FilReponses(
-                    reponses: annonce.reponses ?? [], cible: .annonce(annonce.id), etat: etat,
-                    installation: installation, onglet: .annonces, signalee: $signalee,
+                    reponses: annonce.reponses ?? [], moi: etat.moi?.id, gestes: gestes, retrait: retrait,
                     invite: "Une question sur cette annonce ?")
             }
             .scrollContentBackground(.hidden)
@@ -49,9 +52,10 @@ struct DetailAnnonce: View {
             .navigationTitle("Annonce")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { actions(annonce) }
-            .modifier(SignalementCommunaute(cible: $signalee) { cible, motif in
+            .confirmationDeRetrait(retrait, gestes: gestes)
+            .signalementAuConseil($signalee) { cible, motif in
                 Task { await etat.signaler(cible, motif: motif, installation, avec: parcours.serviceCommunaute) }
-            })
+            }
             .confirmationDialog(
                 "Supprimer définitivement", isPresented: $aSupprimer, titleVisibility: .visible
             ) {

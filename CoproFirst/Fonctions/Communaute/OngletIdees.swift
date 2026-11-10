@@ -143,10 +143,14 @@ struct DetailIdee: View {
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var signalee: CibleCommunaute?
+    @State private var retrait = RetraitDeReponse()
 
     var body: some View {
         let service = parcours.serviceCommunaute
         if let idee = etat.idees.elements.first(where: { $0.id == id }) {
+            let gestes = etat.gestesReponses(.idee(idee.id), onglet: .idees, installation, avec: service) {
+                signalee = .reponse($0.id)
+            }
             List {
                 Section {
                     HStack(alignment: .top, spacing: 14) {
@@ -167,9 +171,7 @@ struct DetailIdee: View {
                         .font(.body).foregroundStyle(palette.text).tint(palette.primary)
                 }
                 .listRowBackground(palette.surface)
-                FilReponses(
-                    reponses: idee.reponses ?? [], cible: .idee(idee.id), etat: etat, installation: installation,
-                    onglet: .idees, signalee: $signalee)
+                FilReponses(reponses: idee.reponses ?? [], moi: etat.moi?.id, gestes: gestes, retrait: retrait)
             }
             .scrollContentBackground(.hidden)
             .background(palette.bg)
@@ -190,9 +192,10 @@ struct DetailIdee: View {
                     }
                 }
             }
-            .modifier(SignalementCommunaute(cible: $signalee) { cible, motif in
+            .confirmationDeRetrait(retrait, gestes: gestes)
+            .signalementAuConseil($signalee) { cible, motif in
                 Task { await etat.signaler(cible, motif: motif, installation, avec: service) }
-            })
+            }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 @Bindable var etat = etat
                 BandeauCommunaute(bandeau: $etat.bandeau)
