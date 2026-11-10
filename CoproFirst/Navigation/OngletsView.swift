@@ -30,6 +30,7 @@ struct OngletsView: View {
             }
         }
         .tint(palette.primary)
+        .feuilleNotifications(installation, ouverte: $parcours.clocheOuverte)
         // La barre dépend des rôles : ils se relisent à l'ouverture de la résidence.
         .task { await parcours.rafraichirProfil() }
     }

@@ -16,6 +16,7 @@ struct NotificationsView: View {
     /// Ouverte par la cloche : un bouton « OK » la referme.
     var enFeuille = false
     @Environment(Parcours.self) private var parcours
+    @Environment(NotificationsPush.self) private var push
     @Environment(\.palette) private var palette
     @Environment(\.dismiss) private var fermer
     @State private var etat = EtatNotifications()
@@ -33,6 +34,7 @@ struct NotificationsView: View {
                 Section { ForEach(0..<4, id: \.self) { _ in LigneNotification(notification: Self.squelette) } }
                     .redacted(reason: .placeholder)
             } else {
+                if !enEdition { OffrePush() }
                 if let echec = etat.echec {
                     MessageErreur(texte: echec.phrase).listRowBackground(Color.clear).listRowInsets(.init())
                 }
@@ -51,6 +53,7 @@ struct NotificationsView: View {
         .toolbar { barre }
         .safeAreaInset(edge: .bottom, spacing: 0) { if enEdition { barreDeSuppression } }
         .animation(.snappy, value: enEdition)
+        .animation(.snappy, value: push.offreDue)
         .refreshable { await etat.charger(installation, avec: parcours.serviceNotifications) }
         .task { await etat.charger(installation, avec: parcours.serviceNotifications) }
         .onChange(of: etat.liste.isEmpty) { _, vide in if vide { modeEdition = .inactive } }

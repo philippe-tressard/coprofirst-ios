@@ -4,7 +4,9 @@
 import SwiftUI
 
 /// La cloche de la barre d'outils : le nombre d'alertes non lues en pastille, un
-/// toucher ouvre la liste en feuille. Le site n'a pas de cloche (la page n'a pas
+/// toucher ouvre la liste en feuille — une seule pour tout l'espace, posée par
+/// `OngletsView` sur `parcours.clocheOuverte`, que rouvre aussi une notification touchée
+/// (#17). Le site n'a pas de cloche (la page n'a pas
 /// d'entrée de menu) ; l'app en fait l'accès, et le nombre se compte sur
 /// GET /notifications — aucune route ne le sert seule.
 struct ClocheNotifications: ToolbarContent {
@@ -39,12 +41,11 @@ private struct BoutonCloche: View {
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
-    @State private var ouverte = false
 
     var body: some View {
         let nombre = CompteurNonLues.partage.nombre(installation)
         Button {
-            ouverte = true
+            parcours.clocheOuverte = true
         } label: {
             Image(systemName: point == .symbole && nombre > 0 ? "bell.badge" : "bell")
                 .symbolRenderingMode(point == .symbole && nombre > 0 ? .palette : .monochrome)
@@ -69,7 +70,13 @@ private struct BoutonCloche: View {
         .task(id: installation.hote) {
             await CompteurNonLues.partage.rafraichir(installation, avec: parcours.serviceNotifications)
         }
-        .sheet(isPresented: $ouverte) {
+    }
+}
+
+extension View {
+    /// La feuille des notifications de la résidence ouverte (la cloche, une notification touchée).
+    func feuilleNotifications(_ installation: Installation, ouverte: Binding<Bool>) -> some View {
+        sheet(isPresented: ouverte) {
             NavigationStack {
                 NotificationsView(installation: installation, enFeuille: true)
             }
