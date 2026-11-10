@@ -6,16 +6,19 @@ import SwiftUI
 /// La fiche d'un compte : ce que le serveur en sert, puis les gestes que l'app porte —
 /// chacun offert aux seuls rôles que sa route accepte : la communauté et la suppression
 /// à l'administration (`require_admin`), l'auto-match au conseil et à l'administration
-/// (`require_cs_or_admin`), pour un compte actif sans lot, comme le site.
+/// (`require_cs_or_admin`), pour un compte actif sans lot, comme le site ; les rôles,
+/// tels que le serveur les sert (`gestes_roles`, #89).
 struct FicheUtilisateurAdmin: View {
     let id: Int
     let etat: EtatUtilisateursAdmin
     let service: any ServiceUtilisateursAdmin
     let contexte: ContexteOnglet
     @State private var aSupprimer = false
+    @State private var roleAConfirmer: GesteDeRole?
     @State private var echec: String?
     @Environment(\.dismiss) private var fermer
     @Environment(\.palette) private var palette
+    @Environment(Parcours.self) private var parcours
 
     var body: some View {
         NavigationStack {
@@ -44,24 +47,7 @@ struct FicheUtilisateurAdmin: View {
             if let echec {
                 Section { MessageErreur(texte: echec).listRowInsets(EdgeInsets()) }
             }
-            Section(TextesUtilisateursAdmin.identite) {
-                PastillesCompte(compte: compte).padding(.vertical, 4)
-                ligne(TextesUtilisateursAdmin.email, compte.email)
-                ligne(TextesUtilisateursAdmin.statut, RolesUtilisateur.libelleStatut(compte.statut))
-                ligne(TextesUtilisateursAdmin.batiment, compte.batimentNom ?? "—")
-                if let bailleur = compte.nomProprietaire, compte.statut == "locataire" {
-                    Text(TextesUtilisateursAdmin.bailleur(bailleur)).foregroundStyle(palette.textMuted)
-                }
-                ligne(TextesUtilisateursAdmin.inscription, FormatsDuSite.date(compte.creeLe))
-                ligne(TextesUtilisateursAdmin.derniereConnexion, FormatsDuSite.dateHeure(compte.derniereConnexion))
-                if let averti = compte.purgeAvertieLe {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Label(TextesUtilisateursAdmin.purgeAvertie(FormatsDuSite.date(averti)), systemImage: "clock")
-                            .foregroundStyle(palette.warningTexte)
-                        Text(TextesUtilisateursAdmin.purgeAide).font(.footnote).foregroundStyle(palette.textMuted)
-                    }
-                }
-            }
+            identite(compte)
             Section(TextesUtilisateursAdmin.etiquettes) {
                 ForEach(TextesUtilisateursAdmin.etiquettesCompte, id: \.cle) { etiquette in
                     let valeur = compte.etiquettes[etiquette.cle] ?? "manque"
@@ -75,7 +61,9 @@ struct FicheUtilisateurAdmin: View {
             gestes(compte, nom)
             Section {
                 RenvoiAuSite(
-                    texte: TextesUtilisateursAdmin.surLeSite, onglet: "utilisateurs",
+                    texte: compte.gestesRoles == nil
+                        ? TextesUtilisateursAdmin.surLeSite : TextesUtilisateursAdmin.surLeSiteSansRoles,
+                    onglet: "utilisateurs",
                     adresse: contexte.installation.adresse)
             }
         }
@@ -87,6 +75,43 @@ struct FicheUtilisateurAdmin: View {
         ) {
             Button(TextesUtilisateursAdmin.supprimer, role: .destructive) {
                 geste { PhraseAvis(texte: try await etat.supprimer(compte, service, contexte.installation)) }
+            }
+        }
+        .confirmationDialog(
+            roleAConfirmer.map { TextesUtilisateursAdmin.confirmerRole($0, nom) } ?? "",
+            isPresented: Binding { roleAConfirmer != nil } set: { if !$0 { roleAConfirmer = nil } },
+            titleVisibility: .visible, presenting: roleAConfirmer
+        ) { offert in
+            Button(TextesUtilisateursAdmin.confirmer, role: offert.geste == .retirer ? .destructive : nil) {
+                geste {
+                    let annonce = try await etat.changerRole(compte, offert, service, contexte.installation)
+                    // Un rôle qu'on se retire à soi-même vaut aussitôt : le profil se relit.
+                    await parcours.rafraichirProfil()
+                    return PhraseAvis(texte: annonce)
+                }
+            }
+        } message: { _ in
+            Text(TextesUtilisateursAdmin.notifie)
+        }
+    }
+
+    private func identite(_ compte: UtilisateurAdmin) -> some View {
+        Section(TextesUtilisateursAdmin.identite) {
+            PastillesCompte(compte: compte).padding(.vertical, 4)
+            ligne(TextesUtilisateursAdmin.email, compte.email)
+            ligne(TextesUtilisateursAdmin.statut, RolesUtilisateur.libelleStatut(compte.statut))
+            ligne(TextesUtilisateursAdmin.batiment, compte.batimentNom ?? "—")
+            if let bailleur = compte.nomProprietaire, compte.statut == "locataire" {
+                Text(TextesUtilisateursAdmin.bailleur(bailleur)).foregroundStyle(palette.textMuted)
+            }
+            ligne(TextesUtilisateursAdmin.inscription, FormatsDuSite.date(compte.creeLe))
+            ligne(TextesUtilisateursAdmin.derniereConnexion, FormatsDuSite.dateHeure(compte.derniereConnexion))
+            if let averti = compte.purgeAvertieLe {
+                VStack(alignment: .leading, spacing: 4) {
+                    Label(TextesUtilisateursAdmin.purgeAvertie(FormatsDuSite.date(averti)), systemImage: "clock")
+                        .foregroundStyle(palette.warningTexte)
+                    Text(TextesUtilisateursAdmin.purgeAide).font(.footnote).foregroundStyle(palette.textMuted)
+                }
             }
         }
     }
@@ -110,6 +135,9 @@ struct FicheUtilisateurAdmin: View {
                 .tint(banni ? palette.successTexte : palette.warningTexte)
                 .accessibilityIdentifier("admin.fiche.communaute")
             }
+        }
+        if let roles = compte.gestesRoles, !roles.isEmpty {
+            GestesRolesCompte(gestes: roles) { roleAConfirmer = $0 }
         }
         if (droits.cs || droits.administrateur) && compte.actif && !compte.aDesLots {
             Section {
