@@ -20,6 +20,13 @@ extension ServiceAPI: ServiceGestesAffaire {
             .init(contenu: contenu, nouveauStatut: nouveau, _type: suite.type), a: affaire, dans: installation)
     }
 
+    func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws {
+        let corps = Components.Schemas.TicketUpdate(
+            categorie: edition.categorie, description: edition.descriptionHTML,
+            perimetreCible: edition.perimetres, titre: edition.titre, urgente: edition.urgente)
+        try await modifierAffaire(affaire, corps, dans: installation)
+    }
+
     func regler(
         _ option: OptionAffaire, active: Bool, de affaire: Int, dans installation: Installation
     ) async throws {
