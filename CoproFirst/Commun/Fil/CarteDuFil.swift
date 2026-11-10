@@ -9,7 +9,6 @@ import SwiftUI
 struct CarteDuFil: View {
     let element: ElementDuFil
     @Environment(\.palette) private var palette
-    @Environment(\.dynamicTypeSize) private var tailleTexte
     @ScaledMetric(relativeTo: .body) private var cote: CGFloat = 36
 
     var body: some View {
@@ -23,17 +22,11 @@ struct CarteDuFil: View {
                 .background(palette[keyPath: nature.fond], in: .rect(cornerRadius: 10, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
-                let enTete =
-                    tailleTexte.isAccessibilitySize
-                    ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
-                    : AnyLayout(HStackLayout(spacing: 6))
-                enTete {
-                    Text(element.urgent ? "Urgent" : nature.libelle)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(element.urgent ? palette.danger : palette[keyPath: nature.couleur])
-                    Text(FormatsDuSite.heure(element.date))
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(palette.textMuted)
+                // Rubrique, heure, puis nature : sur une ligne tant qu'elle tient, sinon l'une sous
+                // l'autre (très grand texte) — un libellé ne se coupe jamais (#57).
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 6) { enTete(nature) }.fixedSize(horizontal: true, vertical: false)
+                    VStack(alignment: .leading, spacing: 2) { enTete(nature) }
                 }
                 // Une affaire datée dit quand elle a lieu, sous son classement (#75).
                 if let echeance = element.echeance {
@@ -71,8 +64,20 @@ struct CarteDuFil: View {
         .accessibilityLabel(libelleVocal(nature))
     }
 
+    @ViewBuilder
+    private func enTete(_ nature: NatureDuFil) -> some View {
+        Text(element.urgent ? "Urgent" : nature.libelle)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(element.urgent ? palette.danger : palette[keyPath: nature.couleur])
+        Text(FormatsDuSite.heure(element.date))
+            .font(.caption.monospacedDigit())
+            .foregroundStyle(palette.textMuted)
+        if let classe = element.natureEnPastille { PastilleNature(nature: classe) }
+    }
+
     private func libelleVocal(_ nature: NatureDuFil) -> Text {
         var morceaux = [element.urgent ? "Urgent" : nature.libelle, element.titre]
+        if let classe = element.natureEnPastille { morceaux.append(classe.libelle) }
         morceaux.append(FormatsDuSite.heure(element.date))
         if let echeance = element.echeance { morceaux.append(echeance.enClair) }
         if let detail = element.detail { morceaux.append(TexteDuSite.apercu(detail)) }

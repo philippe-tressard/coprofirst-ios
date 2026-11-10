@@ -29,22 +29,20 @@ struct EcheanceDuFil: Hashable, Sendable {
     /// `meta` d'un élément du fil — un dictionnaire libre du contrat, donc relu
     /// (`Relecture`) ; `nil` s'il ne porte pas d'affaire datée.
     init?(meta: OpenAPIObjectContainer?) {
-        guard let meta else { return nil }
-        // `Relecture` relit une liste d'objets libres : un seul, ici.
-        guard let lu = (try? Relecture.lire([MetaServi].self, depuis: [meta]))?.first else { return nil }
+        guard let lu = MetaDuFil(meta: meta) else { return nil }
         self.init(lu: lu)
     }
 
     /// Le même `meta`, en JSON — l'API simulée le sert ainsi, à la forme du serveur, et
     /// il passe par le même décodeur que celui du service réel.
     init?(metaJSON: String) {
-        guard let lu = try? Relecture.lire(MetaServi.self, json: Data(metaJSON.utf8)) else { return nil }
+        guard let lu = MetaDuFil(json: metaJSON) else { return nil }
         self.init(lu: lu)
     }
 
     /// La règle de la vignette du site : rien sans échéance ni début ; la fin, seulement
     /// sur plusieurs jours.
-    private init?(lu: MetaServi) {
+    private init?(lu: MetaDuFil) {
         guard let affaire = lu.affaire, let echeance = affaire.echeance, let debut = affaire.debut,
             !debut.isEmpty
         else { return nil }
@@ -74,23 +72,5 @@ struct EcheanceDuFil: Hashable, Sendable {
         /// `SEPARATEUR.fleche` du site : une espace, la flèche, une espace insécable.
         static let fleche = " →\u{00A0}"
         static let prevu = "prévu"
-    }
-
-    // MARK: Relecture de `meta` (clés en snake_case, converties)
-
-    private struct MetaServi: Decodable {
-        let affaire: AffaireServie?
-    }
-
-    private struct AffaireServie: Decodable {
-        let debut: String?
-        let fin: String?
-        let echeance: EcheanceServie?
-    }
-
-    private struct EcheanceServie: Decodable {
-        let etat: String
-        let libelle: String?
-        let plusieursJours: Bool?
     }
 }

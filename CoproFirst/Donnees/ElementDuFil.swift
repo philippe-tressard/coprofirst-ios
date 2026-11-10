@@ -25,6 +25,9 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     /// Le délai et les dates d'une affaire datée (`meta.affaire`, coprofirst v3.79.0) ;
     /// `nil` sans date, ou servi par une installation plus ancienne (#75).
     var echeance: EcheanceDuFil?
+    /// Les natures de l'affaire que porte la carte (`meta.affaire.natures`, dérivées par
+    /// le serveur) ; vide pour une rubrique qui n'en a pas — `NatureDeLaCarte` (#78).
+    var natures: [String] = []
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 
