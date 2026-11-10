@@ -59,6 +59,8 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
 connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+« Nouvelle affaire » se compose selon la saisie réglée au Profil pour le compte,
+Essentielle ou Complète, comme sur le site.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -72,7 +74,8 @@ jugé en CI.
 Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
-(`-faceid-refuse` : Face ID annulé à chaque demande).
+(`-faceid-refuse` : Face ID annulé à chaque demande ; `-saisie complete` : la
+saisie Complète d'une affaire, au lieu d'Essentielle).
 
 ## Charte
 
