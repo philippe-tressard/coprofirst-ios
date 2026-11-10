@@ -40,10 +40,13 @@ final class Parcours {
     var avis: String?
     let service: any ServiceCoproFirst
     let connues: InstallationsConnues
+    /// Le seul chemin du mot de passe : la confirmation d'un hôte jamais vu (#82).
+    let garde: GardeHote
 
     init(service: any ServiceCoproFirst, connues: InstallationsConnues) {
         self.service = service
         self.connues = connues
+        garde = GardeHote(service: service, connues: { connues.liste })
         // Au retour, la palette de la dernière résidence s'applique dès le 1er écran.
         reconnue = connues.derniere
     }
