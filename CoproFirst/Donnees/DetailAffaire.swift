@@ -20,6 +20,8 @@ struct DetailAffaire: Hashable, Sendable {
     /// Les chemins des photos (`/uploads/…`), servis derrière la session.
     let photos: [String]
     var suites: [SuiteAffaire]
+    /// Le fil des messages (`TicketMessage`), sous l'Historique — vide sur une actualité.
+    var messages: [MessageAffaire] = []
     /// Les gestes que la route accepte de CE lecteur, servis avec l'affaire.
     var droits = DroitsServisAffaire()
     var epingle = false

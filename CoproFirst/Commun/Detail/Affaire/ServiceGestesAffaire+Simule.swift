@@ -5,8 +5,30 @@ import Foundation
 
 /// Les gestes du bandeau sur l'API simulée : les affaires inventées
 /// (`ServiceSimule.affaires(_:)`) changent comme le serveur les changerait, le temps
-/// de la session — une suite rejoint l'Historique, l'archivage retire 📦.
+/// de la session — une réponse rejoint le fil des messages, une suite l'Historique,
+/// l'archivage retire 📦.
 extension ServiceSimule: ServiceGestesAffaire {
+    /// « Répondre » (`ServiceCoproFirst`) : un message du compte simulé, que le serveur
+    /// double d'une suite « reponse » portant son texte (`add_message`, `messages.py`).
+    func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(300))
+        let contenu = TexteDuSite.html(saisi: texte)
+        try changerAffaireSimulee(affaire) { detail in
+            guard !detail.fusionnee else {
+                throw ErreurService.refus(
+                    .init(phrase: "Cette affaire a été fusionnée : son suivi se poursuit dans l'affaire principale"))
+            }
+            detail.messages.append(
+                MessageAffaire(
+                    id: (detail.messages.map(\.id).max() ?? 500) + 1, contenu: contenu, date: .now, deMoi: true,
+                    qualite: nil, interne: false, photos: []))
+            detail.suites.append(
+                SuiteAffaire(
+                    id: (detail.suites.map(\.id).max() ?? 0) + 1, type: "reponse", date: .now,
+                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil, photos: []))
+        }
+    }
+
     func ajouterSuite(_ suite: SaisieSuite, a affaire: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
         try changerAffaireSimulee(affaire) { detail in
@@ -50,7 +72,7 @@ extension ServiceSimule: ServiceGestesAffaire {
     ) throws -> DetailAffaire {
         let conseil = DroitsOnglet(profil: profilSimule).cs
         return try modifierSimule(depuis: Self.aucuneChangee) { affaires in
-            guard var detail = affaires[id] ?? Self.affaires(id, conseil: conseil) else {
+            guard var detail = try affaires[id] ?? Self.affaires(id, conseil: conseil) else {
                 throw ErreurService.introuvable
             }
             try geste(&detail)

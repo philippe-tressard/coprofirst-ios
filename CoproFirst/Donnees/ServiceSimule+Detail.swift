@@ -12,10 +12,6 @@ extension ServiceSimule {
         return try detailSimule(id)
     }
 
-    func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
-        try await Task.sleep(for: .milliseconds(300))
-    }
-
     func document(_ id: Int, nom: String?, dans installation: Installation) async throws -> URL {
         try await Task.sleep(for: .milliseconds(450))
         let fichier = FileManager.default.temporaryDirectory.appending(
@@ -46,8 +42,10 @@ extension ServiceSimule {
 
     /// Les droits sont ceux qu'un serveur servirait au compte simulé : tout au conseil
     /// syndical ; « Répondre » seul à un résident, sur les affaires qui le concernent.
-    static func affaires(_ id: Int, conseil: Bool) -> DetailAffaire? {
+    /// Le fil des messages vient des fixtures, notes internes au conseil seulement.
+    static func affaires(_ id: Int, conseil: Bool) throws -> DetailAffaire? {
         guard var detail = affaires(id) else { return nil }
+        if !detail.estActualite { detail.messages = try FixturesMessagesAffaire.lus(pour: id, conseil: conseil) }
         let repondre = detail.droits.repondre
         detail.droits =
             conseil

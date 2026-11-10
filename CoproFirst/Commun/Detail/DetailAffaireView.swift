@@ -4,8 +4,9 @@
 import SwiftUI
 
 /// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
-/// Actualité : en-tête, description, photos, Historique, et le bandeau de ses gestes
-/// (`BandeauAffaire`), selon ce que le serveur ouvre au lecteur.
+/// Actualité : en-tête, description, photos, Historique, le fil des messages (pas sur
+/// une actualité), et le bandeau de ses gestes (`BandeauAffaire`), selon ce que le
+/// serveur ouvre au lecteur.
 struct DetailAffaireView: View {
     let id: Int
     let installation: Installation
@@ -58,6 +59,10 @@ private struct ContenuAffaire: View {
                     GaleriePhotos(chemins: affaire.photos, installation: installation)
                 }
                 Historique(suites: affaire.suites)
+                // Pas de messages sur une actualité : elle informe, on n'y répond pas.
+                if !affaire.estActualite {
+                    FilMessagesAffaire(messages: affaire.messages, installation: installation)
+                }
             }
             .padding(Mise.marge)
         }
