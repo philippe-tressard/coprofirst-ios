@@ -79,6 +79,34 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
     }
 
+    /// ✏️ (#91) : la feuille part de l'affaire servie, n'enregistre qu'un changement, et
+    /// l'affaire relue le montre.
+    @MainActor
+    func testLeConseilModifieLAffaireDepuisLeBandeau() throws {
+        let app = lancer()
+        let carte = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        carte.tap()
+        let modifier = app.elementAcces("affaire.modifier")
+        XCTAssertTrue(modifier.waitForExistence(timeout: 5))
+        modifier.tap()
+
+        let titre = app.textFields["modifier.titre"]
+        XCTAssertTrue(titre.waitForExistence(timeout: 3))
+        let enregistrer = app.buttons["modifier.enregistrer"]
+        XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
+        XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
+        titre.tap()
+        titre.typeText(" nord")
+        enregistrer.tap()
+
+        let modifiee = app.descendants(matching: .any)
+            // Le toucher pose le curseur où il tombe : on cherche le mot, pas sa place.
+            .matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Fuite d'eau", "nord"))
+            .firstMatch
+        XCTAssertTrue(modifiee.waitForExistence(timeout: 5), "le nouveau titre, relu")
+    }
+
     @MainActor
     func testUnSondageUnDocumentEtUnResumeSOuvrent() throws {
         let app = lancer()

@@ -23,7 +23,8 @@ struct BandeauAffaireTests {
     private let tout = DroitsServisAffaire(repondre: true, changerEtat: true, modifier: true, archiver: true)
 
     @Test func leConseilSuitLAffaireSansRepondre() {
-        #expect(GesteAffaire.offerts(pour: affaire(tout), conseil: true) == [.lien, .suite, .options, .archiver])
+        #expect(
+            GesteAffaire.offerts(pour: affaire(tout), conseil: true) == [.lien, .suite, .modifier, .options, .archiver])
     }
 
     @Test func unResidentRepondQuandLaRouteLAccepte() {
