@@ -23,7 +23,7 @@ protocol ServiceAnnuaireCS: Sendable {
     func rapprochement(nom: String, localiser: Bool, dans installation: Installation) async throws -> Rapprochement
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceAnnuaire: (any ServiceAnnuaireCS)? { service as? any ServiceAnnuaireCS }
 }
 

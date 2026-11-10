@@ -13,7 +13,7 @@ protocol ServiceBadgesCS: ServicePerimetres {
     func parc(_ installation: Installation) async throws -> [AccesDuParc]
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceBadges: (any ServiceBadgesCS)? { service as? any ServiceBadgesCS }
 }
 

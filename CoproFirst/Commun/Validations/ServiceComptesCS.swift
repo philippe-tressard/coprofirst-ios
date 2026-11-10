@@ -24,7 +24,7 @@ protocol ServiceComptesCS: Sendable {
     func traiterCommande(_ id: Int, accepter codes: [String]?, dans installation: Installation) async throws
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceComptes: (any ServiceComptesCS)? { service as? any ServiceComptesCS }
 }
 
