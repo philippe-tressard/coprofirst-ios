@@ -57,14 +57,22 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
 
     /// Les sessions « gardées » après Face ID — la simulation du Trousseau.
     private var gardees: Set<String> = []
+    /// Face ID annulé à chaque demande (`-faceid-refuse`) : la session reste gardée,
+    /// rien ne s'ouvre — comme `Trousseau.lire` qui rend `nil`.
+    var refuserFaceID = false
+
+    /// Une session gardée d'un passage précédent (`-ecran retour`).
+    func garder(_ installation: Installation) {
+        verrou.withLock { _ = gardees.insert(installation.hote) }
+    }
 
     func reprendre(_ installation: Installation) async throws {
-        guard aUneSessionGardee(installation) else { throw ErreurService.sessionExpiree }
+        guard aUneSessionGardee(installation), !refuserFaceID else { throw ErreurService.sessionExpiree }
         _ = verrou.withLock { deconnectes.remove(installation.hote) }
     }
 
     func activerFaceID(_ installation: Installation) async -> Bool {
-        verrou.withLock { _ = gardees.insert(installation.hote) }
+        garder(installation)
         return true
     }
 

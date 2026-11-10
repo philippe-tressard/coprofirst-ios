@@ -157,10 +157,20 @@ struct ConnexionView: View {
         withAnimation(.smooth(duration: 0.3)) { defilement.scrollTo(Self.ancreValider, anchor: .bottom) }
     }
 
+    /// La résidence, puis le courriel de la dernière connexion réussie : il ne reste que
+    /// le mot de passe, où le curseur attend — avec la suggestion des mots de passe d'iOS.
     private func preremplir() {
         guard saisieResidence.isEmpty else { return }
-        saisieResidence = preremplissage.installation?.hote ?? parcours.reconnue?.hote ?? ""
-        email = preremplissage.email
+        let installation = preremplissage.installation ?? parcours.reconnue
+        saisieResidence = installation?.hote ?? ""
+        let retenu = installation.flatMap(parcours.connues.identifiant) ?? ""
+        email = preremplissage.email.isEmpty ? retenu : preremplissage.email
+        guard installation != nil, !email.isEmpty else { return }
+        Task {
+            // Le champ ne prend le focus qu'une fois l'écran posé (poussé ou racine).
+            try? await Task.sleep(for: .milliseconds(450))
+            if champ == nil { champ = .motDePasse }
+        }
     }
 
     /// L'adresse reconnue un instant après la frappe (GET /config), sans bouton.
@@ -169,7 +179,11 @@ struct ConnexionView: View {
             if parcours.reconnue != nil { withAnimation(.snappy) { parcours.reconnue = nil } }
             return
         }
-        if parcours.reconnue?.adresse == adresse { return await reprendreSiGardee() }
+        if parcours.reconnue?.adresse == adresse {
+            // Choisir le mot de passe, c'est refuser Face ID pour cette résidence-ci.
+            if !preremplissage.parMotDePasse { await reprendreSiGardee() }
+            return
+        }
         try? await Task.sleep(for: .milliseconds(600))
         guard !Task.isCancelled, reseau.enLigne else { return }
         let installation = await decouverte.decouvrir(adresse, avec: parcours.service)
@@ -199,6 +213,12 @@ struct ConnexionView: View {
             try await parcours.service.connecter(installation, email: email, motDePasse: motDePasse)
             reussite += 1
             motDePasse = ""
+            parcours.connues.retenirIdentifiant(email, pour: installation)
+            // Face ID déjà accepté ici (jeton périmé, visage changé) : la session neuve
+            // remplace l'ancienne au Trousseau, sans redemander.
+            if parcours.service.aUneSessionGardee(installation) {
+                _ = await parcours.service.activerFaceID(installation)
+            }
             parcours.ouvrir(installation, premiereConnexion: true)
         } catch {
             montrer(ErreurService.depuis(error))

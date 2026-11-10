@@ -20,6 +20,9 @@ final class Parcours {
         var installation: Installation?
         var email = ""
         var aide: String?
+        /// L'utilisateur a choisi le mot de passe (ou la session n'est plus gardée) :
+        /// la connexion ne redemande pas Face ID pour cette résidence.
+        var parMotDePasse = false
     }
 
     var chemin: [Etape] = []
@@ -41,6 +44,8 @@ final class Parcours {
     init(service: any ServiceCoproFirst, connues: InstallationsConnues) {
         self.service = service
         self.connues = connues
+        // Au retour, la palette de la dernière résidence s'applique dès le 1er écran.
+        reconnue = connues.derniere
     }
 
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.
@@ -79,14 +84,15 @@ final class Parcours {
         connues.noter(profil, pour: installation)
     }
 
-    /// Quitter CETTE résidence : retour à la connexion, adresse pré-remplie.
+    /// Quitter CETTE résidence : retour à la connexion, adresse et courriel pré-remplis —
+    /// le premier écran (`EntreeView`), puisqu'elle reste la dernière ouverte.
     func deconnecter(_ installation: Installation) async {
         let atteint = await service.deconnecter(installation)
         connues.oublierFaceID(installation)
         changerDeResidence = false
         ouverte = nil
         reconnue = installation
-        chemin = [.connexion(Preremplissage(installation: installation))]
+        chemin = []
         avis =
             atteint
             ? nil
