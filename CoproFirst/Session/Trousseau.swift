@@ -91,12 +91,14 @@ enum Trousseau {
         return resultat as? Data
     }
 
-    static func rangerCompte(_ donnees: Data, _ cle: String) {
+    /// Range la valeur ; `false` si le Trousseau l'a refusée.
+    @discardableResult
+    static func rangerCompte(_ donnees: Data, _ cle: String) -> Bool {
         effacerCompte(cle)
         var requete = base(cle, domaine: serviceCompte)
         requete[kSecValueData as String] = donnees
         requete[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        SecItemAdd(requete as CFDictionary, nil)
+        return SecItemAdd(requete as CFDictionary, nil) == errSecSuccess
     }
 
     static func effacerCompte(_ cle: String) {

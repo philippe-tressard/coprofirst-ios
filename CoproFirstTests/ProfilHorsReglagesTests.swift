@@ -34,6 +34,8 @@ private func contenu(_ suite: String) -> String {
     parcours.ouvrir(residence, premiereConnexion: true)
     await parcours.rafraichirProfil()
     let profil = try #require(parcours.ouverteAJour?.profil, "le profil est bien connu de l'app")
+    // Une réouverture réécrit la liste des résidences, profil connu compris.
+    parcours.ouvrir(residence)
 
     let ecrit = contenu(suite)
     #expect(ecrit.contains(residence.nom), "la résidence, elle, est retenue")
@@ -71,13 +73,36 @@ private func contenu(_ suite: String) -> String {
     #expect(ecrit.contains(ancienne.nom), "la résidence reste")
 }
 
+/// Un coffre qui refuse tout : rien de ce que les réglages gardaient ne se perd.
+private struct CoffreQuiRefuse: CoffreDuCompte {
+    func lire(_ cle: String) -> Data? { nil }
+    func ranger(_ donnees: Data, _ cle: String) -> Bool { false }
+    func effacer(_ cle: String) {}
+}
+
+@MainActor
+@Test func unCoffreQuiRefuseNeFaitRienPerdre() throws {
+    let suite = "tests.\(UUID().uuidString)"
+    let reglages = try #require(UserDefaults(suiteName: suite))
+    defer { reglages.removePersistentDomain(forName: suite) }
+    var ancienne = ServiceSimule.residence
+    ancienne.profil = ProfilResidence(statut: "locataire", roles: ["résident"], libelleLogement: nil)
+    reglages.set(try JSONEncoder().encode([ancienne]), forKey: "installations-connues")
+    reglages.set("ancien@exemple.fr", forKey: "identifiant." + ancienne.hote)
+
+    _ = InstallationsConnues(reglages: reglages, coffre: CoffreQuiRefuse())
+
+    #expect(reglages.string(forKey: "identifiant." + ancienne.hote) == "ancien@exemple.fr", "le courriel reste")
+    #expect(contenu(suite).contains("locataire"), "le profil reste, jusqu'à ce que le coffre l'accepte")
+}
+
 /// Le coffre de l'app est le Trousseau : une valeur rangée se relit, puis s'efface.
 @Test func leCoffreDuTrousseauRangeRelitEtEfface() {
     let coffre = CoffreTrousseau()
     let cle = "tests.\(UUID().uuidString)"
     defer { coffre.effacer(cle) }
-    coffre.ranger(Data("valeur".utf8), cle)
-    #expect(coffre.lire(cle) == Data("valeur".utf8))
+    #expect(coffre.ranger(Data("valeur".utf8), cle), "le Trousseau accepte l'écriture")
+    #expect(coffre.lire(cle) == Data("valeur".utf8), "…et la relit")
     coffre.effacer(cle)
     #expect(coffre.lire(cle) == nil)
 }

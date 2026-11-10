@@ -8,14 +8,15 @@ import Foundation
 /// réglages, que la sauvegarde de l'appareil emporte en clair (#84).
 protocol CoffreDuCompte {
     func lire(_ cle: String) -> Data?
-    func ranger(_ donnees: Data, _ cle: String)
+    /// `false` : le coffre a refusé — l'appelant ne doit rien effacer d'autre.
+    @discardableResult func ranger(_ donnees: Data, _ cle: String) -> Bool
     func effacer(_ cle: String)
 }
 
 /// Le coffre de l'app : le Trousseau de l'appareil, jamais synchronisé.
 struct CoffreTrousseau: CoffreDuCompte {
     func lire(_ cle: String) -> Data? { Trousseau.lireCompte(cle) }
-    func ranger(_ donnees: Data, _ cle: String) { Trousseau.rangerCompte(donnees, cle) }
+    func ranger(_ donnees: Data, _ cle: String) -> Bool { Trousseau.rangerCompte(donnees, cle) }
     func effacer(_ cle: String) { Trousseau.effacerCompte(cle) }
 }
 
@@ -25,6 +26,9 @@ final class CoffreEnMemoire: CoffreDuCompte {
     private var contenu: [String: Data] = [:]
 
     func lire(_ cle: String) -> Data? { contenu[cle] }
-    func ranger(_ donnees: Data, _ cle: String) { contenu[cle] = donnees }
+    func ranger(_ donnees: Data, _ cle: String) -> Bool {
+        contenu[cle] = donnees
+        return true
+    }
     func effacer(_ cle: String) { contenu[cle] = nil }
 }

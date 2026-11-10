@@ -34,24 +34,23 @@ final class InstallationsConnues {
     }
 
     /// Migration douce (#84) : un profil ou un courriel qu'une version antérieure a
-    /// écrit dans les réglages passe au coffre, puis s'efface des réglages.
+    /// écrit dans les réglages passe au coffre, puis s'efface des réglages — seulement
+    /// s'il y est rangé : un coffre qui refuse ne fait rien perdre.
     private func migrerVersLeCoffre() {
-        var reecrire = false
+        var toutRange = true
         for installation in liste {
-            guard let profil = installation.profil else { continue }
             let cle = Self.prefixeProfil + installation.hote
-            if coffre.lire(cle) == nil, let donnees = try? JSONEncoder().encode(profil) {
-                coffre.ranger(donnees, cle)
-            }
-            reecrire = true
+            guard let profil = installation.profil, coffre.lire(cle) == nil else { continue }
+            if let donnees = try? JSONEncoder().encode(profil), coffre.ranger(donnees, cle) { continue }
+            toutRange = false
         }
+        if toutRange, liste.contains(where: { $0.profil != nil }) { enregistrer() }
         for cle in reglages.dictionaryRepresentation().keys where cle.hasPrefix(Self.prefixeIdentifiant) {
-            if let email = reglages.string(forKey: cle), coffre.lire(cle) == nil {
-                coffre.ranger(Data(email.utf8), cle)
+            guard let email = reglages.string(forKey: cle) else { continue }
+            if coffre.lire(cle) != nil || coffre.ranger(Data(email.utf8), cle) {
+                reglages.removeObject(forKey: cle)
             }
-            reglages.removeObject(forKey: cle)
         }
-        if reecrire { enregistrer() }
     }
 
     /// La dernière résidence ouverte : celle que Face ID rouvre au retour.
