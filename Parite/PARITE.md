@@ -67,7 +67,7 @@ Session parallèle. Dossiers : `Fonctions/Residence`, `Fonctions/Annuaire`.
 |---|---|---|---|---|
 | `residence` | `fiche` | fait | #12 | En lecture : la fiche, les documents et les rapports se déposent et se corrigent sur le site |
 | `residence` | `carnet` | fait | #12 | Le bilan de l'exercice (conseil syndical) et le filtre par année restent sur le site, et l'app le dit |
-| `residence` | `reglement` | fait | #12 | Poser une question et lire les avis ; publier dans la FAQ et supprimer restent sur le site |
+| `residence` | `reglement` | fait | #12, #71 | Poser une question et lire les avis — à renvois (fondements qui mènent aux extraits, sections pliées) ou d'avant ; publier dans la FAQ et supprimer restent sur le site |
 | `annuaire` | — | fait | #12 |  |
 
 ### #13 — Mes lots & accès et Prestataires
