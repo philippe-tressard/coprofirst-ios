@@ -140,16 +140,33 @@ final class EtatCommunaute {
         _ cible: CibleCommunaute, motif: String, _ installation: Installation, avec service: any ServiceCommunaute
     ) async {
         _ = await agir("Signalement transmis au conseil syndical", recharger: nil, installation, avec: service) {
-            try await service.signalerAuConseil(cible, motif: motif, dans: installation)
+            try await service.signalerAuConseil(cible.signalement, motif: motif, dans: installation)
             return nil
         }
     }
+}
 
-    /// Le compte peut-il retirer cette réponse ? L'auteur, le conseil, l'administration
-    /// (`peutCommenter` du site, que le serveur applique à la suppression).
-    func peutRetirer(_ reponse: ReponseCommunaute) -> Bool {
-        guard let moi else { return false }
-        return reponse.auteurId == moi.id || moi.estConseil
+extension EtatCommunaute {
+    /// Les gestes du fil des réponses d'une idée ou d'une annonce : chacun dit sa phrase
+    /// et relit l'onglet ; signaler demande d'abord un motif (`signaler`, de l'écran).
+    func gestesReponses(
+        _ cible: CibleCommunaute, onglet: OngletCommunaute, _ installation: Installation,
+        avec service: any ServiceCommunaute, signaler: @escaping @MainActor (ReponseCommunaute) -> Void
+    ) -> GestesReponses {
+        GestesReponses(
+            publier: { contenu in
+                await self.agir("Réponse publiée", recharger: onglet, installation, avec: service) {
+                    try await service.repondreCommunaute(contenu, a: cible, dans: installation)
+                    return nil
+                }
+            },
+            retirer: { reponse in
+                _ = await self.agir("Réponse supprimée", recharger: onglet, installation, avec: service) {
+                    try await service.supprimerReponseCommunaute(reponse.id, de: cible, dans: installation)
+                    return nil
+                }
+            },
+            signaler: signaler)
     }
 }
 

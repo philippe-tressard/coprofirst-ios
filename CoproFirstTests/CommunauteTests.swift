@@ -37,7 +37,7 @@ private struct Factice: ServiceCommunaute {
     func repondreCommunaute(_ texte: String, a cible: CibleCommunaute, dans installation: Installation) async throws {}
     func supprimerReponseCommunaute(_ id: Int, de cible: CibleCommunaute, dans installation: Installation)
         async throws {}
-    func signalerAuConseil(_ cible: CibleCommunaute, motif: String, dans installation: Installation) async throws {}
+    func signalerAuConseil(_ cible: CibleSignalement, motif: String, dans installation: Installation) async throws {}
     func deposerAvis(_ saisie: SaisieAvis, dans installation: Installation) async throws {}
     func corrigerAvis(_ id: Int, _ saisie: SaisieAvis, dans installation: Installation) async throws {}
     func archiverAvis(_ id: Int, archive: Bool, dans installation: Installation) async throws {}

@@ -85,10 +85,6 @@ extension ServiceSimule: ServiceCommunaute {
         try await Task.sleep(for: .milliseconds(200))
     }
 
-    func signalerAuConseil(_ cible: CibleCommunaute, motif: String, dans installation: Installation) async throws {
-        try await Task.sleep(for: .milliseconds(250))
-    }
-
     func avisCommunaute(_ installation: Installation) async throws -> ListeAvis {
         try await Task.sleep(for: .milliseconds(400))
         return ListeAvis(

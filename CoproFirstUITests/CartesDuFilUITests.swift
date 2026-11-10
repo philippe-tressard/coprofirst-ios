@@ -38,7 +38,7 @@ final class CartesDuFilUITests: XCTestCase {
         let sondage = app.buttons["fil.sondage_ouvert:3"]
         XCTAssertTrue(sondage.waitForExistence(timeout: 5))
         sondage.tap()
-        XCTAssertTrue(app.staticTexts["Samedi 6 juin"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.elementAcces("sondage.option.1").waitForExistence(timeout: 5))
         app.navigationBars.buttons.firstMatch.tap()
 
         let document = app.buttons["fil.document:7"]

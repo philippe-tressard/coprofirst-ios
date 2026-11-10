@@ -4,7 +4,7 @@
 import ClientAPI
 import Foundation
 
-/// Les écrans de détail : affaire, sondage, document, photo — par le client généré.
+/// Les écrans de détail : affaire, document, photo (le sondage : `Commun/Detail/Sondage/`) — par le client généré.
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
@@ -37,31 +37,6 @@ extension ServiceAPI {
         let sortie = try await appeler {
             try await client(installation.adresse).postTicketsTicketIdEvolutions(
                 path: .init(ticketId: affaire), body: .json(.init(contenu: texte, _type: "commentaire")))
-        }
-        switch sortie {
-        case .created: return
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
-        }
-    }
-
-    func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage {
-        let sortie = try await appeler {
-            try await client(installation.adresse).getSondagesSondageId(path: .init(sondageId: id))
-        }
-        switch sortie {
-        case .ok(let ok):
-            // Typée par le contrat 1.5.0 (`SondageDetail`) : lue par son type généré.
-            return DetailSondage(try ok.body.json)
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-        }
-    }
-
-    func voter(_ option: Int, au sondage: Int, dans installation: Installation) async throws {
-        let sortie = try await appeler {
-            try await client(installation.adresse).postSondagesSondageIdVoter(
-                path: .init(sondageId: sondage), body: .json(.init(optionId: option)))
         }
         switch sortie {
         case .created: return
@@ -131,15 +106,5 @@ extension SuiteAffaire {
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
             photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
-    }
-}
-
-extension DetailSondage {
-    /// Un sondage tel que le contrat le type (`SondageDetail`).
-    init(_ lu: Components.Schemas.SondageDetail) {
-        self.init(
-            id: lu.id, question: lu.question, description: lu.description,
-            options: (lu.options ?? []).map { OptionSondage(id: $0.id, libelle: $0.libelle, nbVotes: $0.nbVotes) },
-            monVote: lu.monVote, cloture: lu.cloture ?? false, resultatsVisibles: lu.resultatsVisibles ?? false)
     }
 }

@@ -4,7 +4,7 @@
 import SwiftUI
 import UIKit
 
-/// Les détails inventés : affaires, actualité, sondage, document. Aucun nom de
+/// Les détails inventés : affaires, actualité, document (le sondage : `Commun/Detail/Sondage/`). Aucun nom de
 /// personne, aucune requête.
 extension ServiceSimule {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
@@ -14,23 +14,6 @@ extension ServiceSimule {
     }
 
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
-        try await Task.sleep(for: .milliseconds(300))
-    }
-
-    func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage {
-        try await Task.sleep(for: .milliseconds(450))
-        return DetailSondage(
-            id: id, question: "Quel jour pour la fête des voisins ?",
-            description: "Trois dates sont proposées. Les réponses sont ouvertes jusqu'à vendredi.",
-            options: [
-                OptionSondage(id: 1, libelle: "Samedi 6 juin", nbVotes: 14),
-                OptionSondage(id: 2, libelle: "Samedi 13 juin", nbVotes: 9),
-                OptionSondage(id: 3, libelle: "Dimanche 14 juin", nbVotes: 4),
-            ],
-            monVote: nil, cloture: false, resultatsVisibles: true)
-    }
-
-    func voter(_ option: Int, au sondage: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
     }
 
