@@ -13,7 +13,7 @@ protocol ServiceReportingCS: Sendable {
     func renouvellements(_ installation: Installation) async throws -> Renouvellements
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceReporting: (any ServiceReportingCS)? { service as? any ServiceReportingCS }
 }
 

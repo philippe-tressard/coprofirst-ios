@@ -14,8 +14,11 @@ import Foundation
 /// | `dateHeureCourte(_:)` | `fmtDatetimeShort`, idem | « 02/04/2026 16:30 » |
 /// | `heure(_:)` | `fmtTime`, idem | « 16:30 » |
 /// | `jourISO(_:)` | `jourIso`, idem | « 2026-04-02 » (envoyé) |
+/// | `moisAnnee(_:)` | `fmtMonthYear`, idem | « novembre 2026 » |
+/// | `moisCourt(_:)` | `fmtMoisCourt`, idem | « nov. » |
 /// | `nombre(_:)` | `fmtNombre`, `front/src/lib/utils.ts` | « 47 047 », « 64,5 » |
 /// | `montant(_:devise:decimales:)` | `fmtMontant`, idem | « 1 234,5 € » |
+/// | `octets(_:)` | `fmtOctets`, idem | « 512 Ko », « 3,4 Mo », « 1,25 Go » |
 ///
 /// Une valeur absente s'écrit « — », comme sur le site. Aucun écran n'écrit son
 /// propre format de date ou de nombre : il passe par ici.
@@ -82,6 +85,20 @@ enum FormatsDuSite {
         return String(format: "%04d-%02d-%02d", jour.year ?? 0, jour.month ?? 0, jour.day ?? 0)
     }
 
+    /// `fmtMonthYear` : « novembre 2026 » — un mois servi « 2026-11 » (#16, la
+    /// télémétrie sur douze mois), ou un instant.
+    static func moisAnnee(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.month(.wide).year())
+    }
+
+    static func moisAnnee(_ mois: String?) -> String { moisAnnee(lire(mois.map { "\($0)-15" })) }
+
+    /// `fmtMoisCourt` : « nov. » — le nom court d'un mois, de 1 à 12.
+    static func moisCourt(_ mois: Int) -> String {
+        lire(String(format: "2000-%02d-15", mois))?.formatted(style.month(.abbreviated)) ?? tiret
+    }
+
     private static var style: Date.FormatStyle {
         Date.FormatStyle(date: .omitted, time: .omitted, locale: locale, timeZone: paris)
     }
@@ -138,6 +155,25 @@ enum FormatsDuSite {
         return decimal(valeur).formatted(
             .currency(code: devise).locale(locale).precision(.fractionLength(0...decimales))
                 .rounded(rule: .toNearestOrAwayFromZero))
+    }
+
+    /// `fmtOctets` : une taille de fichier — octets, Ko arrondis, Mo à une décimale, Go à
+    /// deux ; les seuils sont ceux de l'arrondi (jamais « 1 024 Ko ») (#16).
+    static func octets(_ valeur: Int?) -> String {
+        guard let valeur else { return tiret }
+        let octets = Double(valeur)
+        if octets < 1024 { return "\(nombre(octets.rounded())) o" }
+        let ko = octets / 1024
+        if ko < 1023.5 { return "\(nombre(ko.rounded())) Ko" }
+        let mo = ko / 1024
+        if mo < 1023.95 { return "\(fixe(mo, decimales: 1)) Mo" }
+        return "\(fixe(mo / 1024, decimales: 2)) Go"
+    }
+
+    /// Un nombre à décimales FIXES (`minimumFractionDigits` = `maximumFractionDigits`).
+    private static func fixe(_ valeur: Double, decimales: Int) -> String {
+        decimal(valeur).formatted(
+            .number.locale(locale).precision(.fractionLength(decimales)).rounded(rule: .toNearestOrAwayFromZero))
     }
 
     /// Le nombre tel que JavaScript l'écrit (la plus courte écriture décimale) :

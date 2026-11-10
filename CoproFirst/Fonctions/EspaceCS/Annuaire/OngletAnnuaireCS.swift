@@ -7,14 +7,14 @@ import SwiftUI
 /// syndical puis le syndic, chacun avec son en-tête et ses fiches — à corriger, ajouter,
 /// retirer, et pour le syndic à ordonner. Les cartes sont celles de l'Annuaire des
 /// résidents (`CarteContact`) : un même objet, un même rendu.
-struct OngletAnnuaireCS: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+struct OngletAnnuaireCS: OngletDePage {
+    let contexte: ContexteOnglet
     @State private var etat = EtatAnnuaireCS()
     @State private var feuille: FeuilleAnnuaireCS?
     @State private var aRetirer: FeuilleAnnuaireCS?
     @State private var echec: String?
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceAnnuaire {

@@ -55,7 +55,8 @@ struct CarteCommande: View {
 
 /// La carte d'une ligne de la file : son contenu, puis « Approuver » et « Rejeter » —
 /// côte à côte, l'un sous l'autre aux tailles d'accessibilité.
-private struct CarteDeFile<Contenu: View>: View {
+/// Celle de toute file de travail : comptes, commandes, demandes de profil (#16).
+struct CarteDeFile<Contenu: View>: View {
     let enCours: Bool
     let approuver: () -> Void
     let rejeter: () -> Void

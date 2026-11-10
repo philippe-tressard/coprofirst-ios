@@ -6,10 +6,10 @@ import SwiftUI
 /// L'onglet « Courriels affaires » de l'Espace CS (`OngletCourriels.svelte`, #15) : ce
 /// que la relève a fait de chaque message reçu à l'adresse des affaires, et pourquoi —
 /// une pliure par message, du plus récent au plus ancien.
-struct OngletCourriels: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+struct OngletCourriels: OngletDePage {
+    let contexte: ContexteOnglet
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceCourriels {

@@ -8,8 +8,8 @@ import SwiftUI
 /// la plus ancienne en tête. Deux modes : les affaires, ou les entretiens périodiques ;
 /// puis la vue Renouvellements (#56), le relevé servi des échéances.
 /// Ce que l'app laisse au site se dit sous la liste (`TextesReporting.surLeSite`).
-struct OngletReporting: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+struct OngletReporting: OngletDePage {
+    let contexte: ContexteOnglet
     @Environment(\.palette) private var palette
     /// Les modes que l'app porte : la relance du syndic se compose sur le site ; puis la
     /// vue Renouvellements.
@@ -19,7 +19,7 @@ struct OngletReporting: OngletEspaceCS {
     private static let renouvellements = "renouvellements"
     @State private var mode = OngletReporting.modes.first?.code ?? "suivi"
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceReporting {

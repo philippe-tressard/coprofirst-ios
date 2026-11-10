@@ -5,14 +5,14 @@ import SwiftUI
 
 /// L'onglet « Annonces Hall » de l'Espace CS (`OngletAnnoncesHall.svelte`, #15) : la
 /// création d'une affiche, et les archives des affiches déjà produites, avec leurs gestes.
-struct OngletAnnoncesHall: OngletEspaceCS {
-    let contexte: ContexteOngletCS
+struct OngletAnnoncesHall: OngletDePage {
+    let contexte: ContexteOnglet
     @Environment(\.palette) private var palette
     @State private var vue = Vue.nouvelle
 
     enum Vue: Hashable { case nouvelle, archives }
 
-    init(contexte: ContexteOngletCS) { self.contexte = contexte }
+    init(contexte: ContexteOnglet) { self.contexte = contexte }
 
     var body: some View {
         if let service = contexte.serviceAnnoncesHall {
@@ -47,7 +47,7 @@ struct OngletAnnoncesHall: OngletEspaceCS {
 /// Les affiches en cours puis les archivées, chacune dépliable, et leurs gestes.
 private struct ArchivesAnnoncesHall: View {
     let service: any ServiceAnnoncesHallCS
-    let contexte: ContexteOngletCS
+    let contexte: ContexteOnglet
     @Environment(\.palette) private var palette
     @State private var aSupprimer: AnnonceHall?
     @State private var erreur: ErreurService?

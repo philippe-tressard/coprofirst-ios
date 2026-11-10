@@ -29,7 +29,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Tests | Swift Testing (`@Test`, `#expect`) pour l'unitaire ; XCTest pour l'interface, éléments trouvés par `accessibilityIdentifier` (`accueil.titre`), jamais par leur texte ni leur type — « Tests d'interface » ci-dessous | `CoproFirstTests/`, `CoproFirstUITests/` |
 | Réseau en test | un `ClientTransport` factice (`TransportEnregistreur`) : aucun test ne sort sur le réseau | `Paquets/ClientAPI/Tests` |
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer.py`), teintes du Kanban comprises (`palette.kanbanAg`…, #34) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
-| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant`, et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
+| Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtNombre`, `fmtMontant`, `fmtOctets` (`octets`), `fmtMoisCourt` et `fmtMonthYear` (`moisCourt`, `moisAnnee`, #16), et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
 | Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
@@ -44,7 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 | Dossier | Contient | Qui y touche |
 |---|---|---|
-| `Fonctions/<Menu>/` | **un dossier par menu du site** : ses écrans, ses textes, ses états — `Fil` (`tableau-de-bord`), `Affaires` (`mes-demandes`), `Profil` ; à venir : `Residence`, `Annuaire`, `Acces` (`mon-lot`), `Prestataires`, `Communaute`, `FAQ`, `Notifications`, `EspaceCS`, `Delegations`, `Admin` | la session du menu, **seule** |
+| `Fonctions/<Menu>/` | **un dossier par menu du site** : ses écrans, ses textes, ses états — `Fil` (`tableau-de-bord`), `Affaires` (`mes-demandes`), `Profil`, `Residence`, `Annuaire`, `Acces` (`mon-lot`), `Prestataires`, `Communaute`, `FAQ`, `Notifications`, `EspaceCS`, `Delegations`, `Admin` | la session du menu, **seule** |
 | `Commun/` | ce que **deux fonctionnalités ou plus** utilisent (catalogue ci-dessous) ; `Commun/Session/` : les gestes communs du dialogue avec l'API (`Relecture`, `RefusDuServeur`, `FichierServi`) | personne en passant : un changement ici est un lot à part |
 | `Navigation/` | barre, « Plus », ordre des pages (`OrdrePages`), **registre des menus** | une ligne par menu au registre |
 | `Entree/` | ce qui précède la résidence ouverte : accueil, démo, vitrine, découverte (adresse, QR), connexion | — |
@@ -88,13 +88,18 @@ est générée depuis `pages.ts` (réserves comprises), la règle est celle du s
 Un onglet du site (`liste`, `kanban`…) est une **section de l'écran du menu**
 (segment, picker), pas une entrée du registre : le registre ne connaît que les pages.
 
-**Une page à beaucoup d'onglets, que plusieurs sessions remplissent** (l'Espace CS, #15) :
-un CADRE (`EspaceCSView` : titre, `BarreOnglets` sur `OngletsDuSite.ouverts`, descriptif
-généré, défilement, `avisEphemere`) et une TABLE d'onglets (`OngletsEspaceCS.ecrans`,
-une ligne par onglet, séparée par une ligne vide), chaque onglet dans SON dossier
-(`Fonctions/EspaceCS/<Onglet>/`) avec son protocole de service. Ajouter un onglet :
-le dossier, la vue conforme à `OngletEspaceCS` (`init(contexte:)`), une ligne dans la
-table, sa ligne de parité — le cadre ne se touche pas.
+**Une page à beaucoup d'onglets** (l'Espace CS #15, le Paramétrage #16) : un CADRE écrit
+une fois, `CadreAOnglets` (`Commun/Onglets/` : titre, `BarreOnglets` sur
+`OngletsDuSite.ouverts`, descriptif généré, défilement, « tirer pour actualiser »,
+`avisEphemere`), que la page déclare par une `PageAOnglets` (id, table, descriptifs, phrase
+de réserve), et une TABLE d'onglets (`OngletsEspaceCS.ecrans`, `OngletsAdmin.ecrans`, une
+ligne par onglet, séparée par une ligne vide), chaque onglet dans SON dossier
+(`Fonctions/<Page>/<Onglet>/`) avec son protocole de service. Ajouter un onglet : le
+dossier, la vue conforme à `OngletDePage` (`init(contexte: ContexteOnglet)`), une ligne
+dans la table, sa ligne de parité — le cadre ne se touche pas. Une page que l'app ne porte
+qu'**en partie** passe ses `routes` (générées) : la barre n'offre que les onglets inscrits,
+puis « Sur le site » (`OngletSurLeSite`), qui liste les autres avec leur lien ; un écran
+qui laisse une part au site le dit par `RenvoiAuSite` (`Fonctions/Admin/`).
 
 ### Un service par menu, réalisé par extension (#11)
 
@@ -142,6 +147,11 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   (`Relecture.generee` → `Modele(_:)`). Une liste que les gestes simulés changent se tient
   par `modifierSimule(depuis: Fixtures….lues) { … }` (`EspaceCS/MagasinSimuleCS.swift`) :
   lue des fixtures au premier usage, une par type et par service simulé.
+- **Une route que le contrat ne type pas** (sans `response_model`) : le service la relit par
+  `Relecture.lire(_:depuis:)` — chaque usage est un ticket coprofirst —, et sa réponse
+  simulée se déclare par sa ROUTE, `ReponseNonTypee(nom:route:json:)`, lue par le même
+  `Relecture` (`.lire(_:)`). Le juge vérifie que la route existe et qu'elle n'est toujours pas
+  typée : le jour où le contrat la type, il échoue, et la lecture passe au type généré (#16).
 
 ### Les composants communs — à réutiliser, pas à modifier
 
@@ -161,6 +171,9 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
 | `BarreOnglets` | les onglets d'une page en pastilles qui défilent (`onglet.<id>` pour les tests) ; ses onglets viennent d'`OngletsDuSite.ouverts` | `Commun/Composants/BarreOnglets.swift` |
+| `CadreAOnglets`, `PageAOnglets`, `OngletDePage`, `OngletSurLeSite` | le cadre d'une page à onglets, ce qu'un onglet reçoit (`ContexteOnglet`), la pastille « Sur le site » | `Commun/Onglets/` |
+| `OngletComptesCS`, `CarteDeFile`, `ValidationCompteFeuille` | la file de travail des comptes et des commandes d'accès (`require_cs_or_admin`) : l'Espace CS et « À traiter » ; une ligne de file avec « Approuver » et « Rejeter » | `Commun/Validations/` |
+| `FlowCapsules` (`RangeesQuiPassent`) | des capsules qui passent à la ligne (spécialités d'un prestataire, pastilles d'un compte) | `Commun/Composants/RangeesQuiPassent.swift` |
 | `.avisEphemere(avis)`, `avis.dire(…)` | la phrase brève qui suit un geste (le « toast » du site), portée par un `AvisDuGeste` que **seul l'avis lit**. Jamais une `Binding<String?>` : une `Binding` lit sa valeur dès sa création, et l'écran qui la fabrique se recalcule à l'arrivée et au retrait de l'avis — ses menus de barre d'outils reconstruits sous le doigt perdaient un toucher (#48). Même règle pour tout état éphémère qui change seul (minuterie) : un objet observable lu là où il s'affiche. Une **feuille** qui annonce dit `avis.direApresFermeture(…)`, et sa présentation porte `.sheet(…, onDismiss: { avis.feuilleFermee() })` : dite avant la fermeture, la phrase passait ses 4 s derrière la feuille (#43, #48). Une phrase SERVIE garde son ton : `avis.dire(PhraseAvis(annonce))` — `TonAvis` (`success`, `warning`, `error`, `info`) choisit le pictogramme et le retour haptique (#55) | `Commun/Composants/AvisEphemere.swift` (tests : `AvisEphemereTests`) |
 | `BoutonsFeuille` | « Annuler » / « Enregistrer » d'une feuille, « Enregistrement… » pendant l'envoi, `actif` | `Commun/Composants/BoutonsFeuille.swift` |
 | `ChampRecherche` + `Recherche.contientTousLesMots` | le champ de recherche d'une liste, dans la page ; la règle du site (tous les mots, sans accents ni casse) | `Commun/Composants/`, `Commun/Texte/Recherche.swift` |

@@ -21,7 +21,7 @@ protocol ServiceAnnoncesHallCS: ServicePerimetres {
     func supprimerAnnonceHall(_ id: Int, dans installation: Installation) async throws
 }
 
-extension ContexteOngletCS {
+extension ContexteOnglet {
     var serviceAnnoncesHall: (any ServiceAnnoncesHallCS)? { service as? any ServiceAnnoncesHallCS }
 }
 
