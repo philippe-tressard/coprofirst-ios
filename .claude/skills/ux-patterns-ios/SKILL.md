@@ -41,5 +41,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 ## Divergences iOS déclarées
 
-*(aucune encore — chacune s'écrit ici avec sa date, sa raison et l'écran web qu'elle
-quitte)*
+Chacune s'écrit ici avec sa date, sa raison et l'écran web qu'elle quitte.
+
+| Date | Écran web quitté | Divergence iOS | Raison |
+|---|---|---|---|
+| 10/11/2026 | La rangée d'icônes d'une affaire (`ActionsTicket.svelte`) | Rendue en **barre d'outils du bas** (`BandeauAffaire`), la barre d'onglets masquée sur la fiche ; 💬 Répondre n'est offert **ni au conseil syndical ni à l'administration**, même si `peut_repondre` le permet — eux suivent l'affaire par 🔄 « Ajouter une suite » ; ✏️ Modifier absent tant que le choix de l'élément à modifier n'est pas tranché | Décision de l'utilisateur ; le bas de l'écran est l'endroit du pouce, et le matériau du système y laisse défiler le texte (`apple-design` §12) |
+| 10/11/2026 | 🔗 « Copier le lien » (`BoutonLien`) | Un toucher copie, comme le site ; l'appui long offre aussi « Partager… » | Le geste natif du partage, en second geste choisi — la copie reste à un toucher |
+| 10/11/2026 | La Suite d'une actualité (`etatsDeLaSuite`) | Commentaire seul : le suivi d'actualité (`SUIVI_ACTUALITE_OPTIONS`) reste au site | Ses états ne sont pas encore générés |

@@ -9,8 +9,7 @@ import UIKit
 extension ServiceSimule {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         try await Task.sleep(for: .milliseconds(500))
-        guard let detail = Self.affaires(id) else { throw ErreurService.introuvable }
-        return detail
+        return try detailSimule(id)
     }
 
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
@@ -45,7 +44,19 @@ extension ServiceSimule {
         return image.jpegData(compressionQuality: 0.8) ?? Data()
     }
 
-    static func affaires(_ id: Int) -> DetailAffaire? {
+    /// Les droits sont ceux qu'un serveur servirait au compte simulé : tout au conseil
+    /// syndical ; « Répondre » seul à un résident, sur les affaires qui le concernent.
+    static func affaires(_ id: Int, conseil: Bool) -> DetailAffaire? {
+        guard var detail = affaires(id) else { return nil }
+        let repondre = detail.droits.repondre
+        detail.droits =
+            conseil
+            ? DroitsServisAffaire(repondre: !detail.estActualite, changerEtat: true, modifier: true, archiver: true)
+            : DroitsServisAffaire(repondre: repondre)
+        return detail
+    }
+
+    private static func affaires(_ id: Int) -> DetailAffaire? {
         let maintenant = Date.now
         func ilYA(_ heures: Double) -> Date { maintenant.addingTimeInterval(-heures * 3600) }
         switch id {
@@ -74,14 +85,14 @@ extension ServiceSimule {
                         contenu: "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
                         ancienStatut: nil, nouveauStatut: nil, photos: []),
                 ],
-                peutRepondre: true)
+                droits: DroitsServisAffaire(repondre: true))
         case 12:
             return DetailAffaire(
                 id: 12, numero: "A-0012", titre: "Coupure d'eau jeudi de 9 h à 12 h",
                 description: "Le remplacement d'une vanne dans la cave du bâtiment A impose de couper l'eau froide "
                     + "et l'eau chaude jeudi matin, de 9 h à 12 h. Pensez à faire une réserve.",
                 categorie: "actualite", statut: "publie", urgente: false, creeLe: ilYA(6),
-                auteur: "Le conseil syndical", lieu: "Bâtiment A", photos: [], suites: [], peutRepondre: false)
+                auteur: "Le conseil syndical", lieu: "Bâtiment A", photos: [], suites: [])
         case 38, 31:
             return DetailAffaire(
                 id: id, numero: "A-00\(id)",
@@ -91,7 +102,8 @@ extension ServiceSimule {
                     : "La télécommande fonctionne de nouveau après le remplacement de la carte électronique.",
                 categorie: id == 38 ? "batiment" : "equipement", statut: id == 38 ? "en_ag" : "résolu",
                 urgente: false, creeLe: ilYA(id == 38 ? 52 : 100), auteur: "Le conseil syndical",
-                lieu: id == 38 ? "Façade nord" : "Garage", photos: [], suites: [], peutRepondre: id == 38)
+                lieu: id == 38 ? "Façade nord" : "Garage", photos: [], suites: [],
+                droits: DroitsServisAffaire(repondre: id == 38))
         default:
             return nil
         }

@@ -12,7 +12,6 @@ extension ServiceAPI {
         async let evolutions = appeler {
             try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
         }
-        async let moi = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -24,23 +23,44 @@ extension ServiceAPI {
         if case .ok(let ok) = try await evolutions {
             suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
         }
-        var peutRepondre = false
-        if case .ok(let ok) = try await moi, let utilisateur = try? ok.body.json {
-            let roles = (utilisateur.roles ?? []) + [utilisateur.role.rawValue]
-            peutRepondre = DroitsAffaire.peutRepondre(
-                moi: utilisateur.id, roles: roles, auteur: lu.auteurId, saisiPour: lu.saisiPourUserId)
-        }
-        return DetailAffaire(ticket: lu, suites: suites, peutRepondre: peutRepondre)
+        return DetailAffaire(ticket: lu, suites: suites)
     }
 
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
+        try await ajouterEvolution(
+            .init(contenu: TexteDuSite.html(saisi: texte), _type: "commentaire"), a: affaire, dans: installation)
+    }
+
+    /// POST /tickets/{id}/evolutions — LA porte des suites d'une affaire : la réponse,
+    /// la Suite du bandeau, le glissement au Kanban. `siInvalide` : ce qu'un 422 dit.
+    func ajouterEvolution(
+        _ corps: Components.Schemas.TicketEvolutionCreate, a affaire: Int, dans installation: Installation,
+        siInvalide: any Error = ErreurService.inattendue(422)
+    ) async throws {
         let sortie = try await appeler {
             try await client(installation.adresse).postTicketsTicketIdEvolutions(
-                path: .init(ticketId: affaire), body: .json(.init(contenu: texte, _type: "commentaire")))
+                path: .init(ticketId: affaire), body: .json(corps))
         }
         switch sortie {
         case .created: return
-        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .unprocessableContent: throw siInvalide
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    /// PATCH /tickets/{id} — LA porte des réglages d'une affaire : options, archivage.
+    @discardableResult
+    func modifierAffaire(
+        _ affaire: Int, _ corps: Components.Schemas.TicketUpdate, dans installation: Installation,
+        siInvalide: any Error = ErreurService.inattendue(422)
+    ) async throws -> Components.Schemas.TicketRead {
+        let sortie = try await appeler {
+            try await client(installation.adresse).patchTicketsTicketId(
+                path: .init(ticketId: affaire), body: .json(corps))
+        }
+        switch sortie {
+        case .ok(let ok): return try ok.body.json
+        case .unprocessableContent: throw siInvalide
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
@@ -86,7 +106,7 @@ extension ErreurService {
 }
 
 extension DetailAffaire {
-    init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire], peutRepondre: Bool) {
+    init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire]) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, description: ticket.description,
             categorie: ticket.categorie, statut: ticket.statut,
@@ -95,7 +115,12 @@ extension DetailAffaire {
             urgente: ticket.urgente, creeLe: ticket.creeLe,
             auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: nil,
             photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
-            suites: suites, peutRepondre: peutRepondre)
+            suites: suites,
+            droits: DroitsServisAffaire(
+                repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
+                modifier: ticket.peutModifier ?? false, archiver: ticket.peutArchiver ?? false),
+            epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
+            fusionnee: ticket.fusionnee ?? false)
     }
 }
 
