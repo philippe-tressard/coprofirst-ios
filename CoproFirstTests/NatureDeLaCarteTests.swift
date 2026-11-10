@@ -55,3 +55,26 @@ private func natures(_ codes: String) -> String { #"{"ticket_id": 38, "affaire":
     let element = try carte("ticket_ouvert", meta: natures(#""autre""#))
     #expect(element.natureDeLAffaire?.code == "activite")
 }
+
+// MARK: - La gouttière : le pictogramme qui classe la carte (`classeDuFlux`, 11/11/2026)
+
+@Test func uneAffaireMiseAJourMontreLePictogrammeDeSaNatureEtNonLaFlecheDeMiseAJour() throws {
+    // « Affaire mise à jour » est déjà écrit sur la carte : la gouttière dit ce qu'est l'affaire.
+    #expect(try carte("ticket_mis_a_jour", meta: natures(#""calendrier""#)).pictogramme == "calendar-days")
+    #expect(try carte("ticket_mis_a_jour", meta: natures(#""activite""#)).pictogramme == "wrench")
+    #expect(try carte("ticket_resolu", meta: natures(#""actualite""#)).pictogramme == "newspaper")
+}
+
+@Test func uneRubriqueSansNatureGardeLePictogrammeDeSaRubrique() throws {
+    #expect(try carte("document", meta: nil).pictogramme == "file-text")
+    // Une installation qui ne sert pas encore les natures : la rubrique, comme le site.
+    #expect(try carte("ticket_mis_a_jour", meta: nil).pictogramme == "refresh-cw")
+}
+
+@Test func chaquePictogrammeDeLaGouttiereEstUnTraceDuSiteEmbarque() {
+    // Le tracé Lucide généré (`Pictogrammes.xcassets`), jamais le repli SF Symbols.
+    let noms = Set(NaturesDuFil.parType.values.map(\.icone)).union(TablesAffaires.natures.map(\.icone))
+    for nom in noms.sorted() {
+        #expect(PictogrammeDuSite.image(nom) != nil, "\(nom) : pas de tracé embarqué")
+    }
+}
