@@ -39,6 +39,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | **Explication** : jamais un survol seul | pas de survol au doigt : `popover` ou texte visible |
 | **Charte** : tailles et couleurs par jeton | Dynamic Type (`.font(.body)`…) ; couleurs d'état **générées** depuis `socle.css` |
 
+## Patterns propres à iOS
+
+Ce que le site n'a pas, et qui se règle ici une fois.
+
+| Pattern | Règle | Où |
+|---|---|---|
+| **Permission du système** (notifications, et toute alerte d'autorisation à venir) | jamais au lancement ni au premier écran : une **offre** dans l'écran où l'usage se voit (les notifications : en tête de la cloche), qui dit ce que la personne y gagne et ce qui ne part pas ; l'alerte d'iOS ne s'ouvre qu'après « Activer » ; « Plus tard » tait l'offre quelques jours ; un refus ne se redemande pas — seuls les Réglages d'iOS le rendent. Aucun réglage « sur mon téléphone » dans le Profil (spec push de coprofirst, §10 décision 4) | `OffrePush` (#17) |
+
 ## Divergences iOS déclarées
 
 Chacune s'écrit ici avec sa date, sa raison et l'écran web qu'elle quitte.

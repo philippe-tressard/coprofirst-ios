@@ -75,6 +75,8 @@ extension Parcours {
         case .elementDuFil(let cle):
             aOuvrir = cle
             onglet = OrdrePages.idFil
+        case .cloche:
+            clocheOuverte = true
         }
     }
 }

@@ -34,7 +34,9 @@ parallèles ne se gênent pas.
 2. **Écrans des résidents, en quatre sessions parallèles** : #11, #12, #13, #14.
 3. **#15** — Espace conseil syndical et Délégations.
 4. **#16** — Administration, en partie.
-5. Bloqués côté serveur : **#17** notifications push (coprofirst#2458),
+5. **#17** notifications push : côté app livré (autorisation dans la cloche,
+   appareil enregistré et retiré, notification touchée → la cloche de sa résidence) ;
+   réception réelle en attente du relais (coprofirst#2494, clé `.p8`).
    **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
    porte de navigation codées, liste des domaines en attente de décision (#18).
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
@@ -97,7 +99,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
 | `profil` | — | fait | #14 | Sous « Plus » ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
-| `notifications` | — | fait | #14 | La cloche de chaque écran |
+| `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations
 

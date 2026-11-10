@@ -50,6 +50,11 @@ final class Parcours {
     var porte = EtatPorte()
     /// Ce que l'écran de connexion doit dire en arrivant (déconnexion hors ligne…).
     var avis: String?
+    /// La feuille des notifications (la cloche), une seule pour tout l'espace ouvert.
+    var clocheOuverte = false
+    /// Les notifications push (#17) : enregistrer l'appareil à l'ouverture d'une
+    /// résidence, le retirer à la déconnexion. Absentes des aperçus.
+    var push: NotificationsPush?
     let service: any ServiceCoproFirst
     let connues: InstallationsConnues
 
@@ -70,6 +75,8 @@ final class Parcours {
         onglet = OrdrePages.idFil
         avis = nil
         chemin = []
+        clocheOuverte = false
+        if let push { Task { await push.residenceOuverte(installation) } }
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
             proposerFaceID = true
@@ -100,6 +107,8 @@ final class Parcours {
     /// Quitter CETTE résidence : retour à la connexion, adresse et courriel pré-remplis —
     /// le premier écran (`EntreeView`), puisqu'elle reste la dernière ouverte.
     func deconnecter(_ installation: Installation) async {
+        // L'appareil d'abord : sa route demande la session que la déconnexion va fermer.
+        await push?.retirer(installation)
         let atteint = await service.deconnecter(installation)
         connues.oublierFaceID(installation)
         changerDeResidence = false
@@ -117,6 +126,7 @@ final class Parcours {
     func oublierTout() async {
         var injoignables = 0
         for installation in connues.liste {
+            await push?.retirer(installation)
             let atteint = await service.deconnecter(installation)
             injoignables += atteint ? 0 : 1
         }

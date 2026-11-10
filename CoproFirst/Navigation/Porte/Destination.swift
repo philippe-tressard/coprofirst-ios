@@ -22,6 +22,9 @@ struct Destination: Hashable, Sendable {
         /// Un élément du fil, par sa clé `type:id` (`ElementDuFil.id`, `cleFluxItem` du
         /// site) : il s'ouvre depuis le fil, comme au toucher de sa carte (#17).
         case element(String)
+        /// La cloche : la liste des alertes, lue par GET /notifications. Une notification
+        /// push ne dit rien de plus — ni quelle alerte, ni de quoi (spec push §5, #17).
+        case notifications
         /// L'écran de connexion de la résidence.
         case connexion
         /// Une page que l'app ne porte pas (lien à jeton : vérifier une adresse,

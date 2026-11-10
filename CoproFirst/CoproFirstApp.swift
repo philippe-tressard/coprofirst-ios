@@ -5,6 +5,7 @@ import SwiftUI
 
 @main
 struct CoproFirstApp: App {
+    @UIApplicationDelegateAdaptor(DelegueApp.self) private var delegue
     @State private var parcours: Parcours
     @State private var reseau = Reseau()
     @State private var vitrine: Vitrine
@@ -21,6 +22,11 @@ struct CoproFirstApp: App {
                 .environment(parcours)
                 .environment(reseau)
                 .environment(vitrine)
+                .environment(delegue.push)
+                .task {
+                    await delegue.push.attacher(parcours)
+                    Lancement.toucherSimule(ProcessInfo.processInfo.arguments, delegue.push)
+                }
         }
     }
 }
@@ -37,6 +43,8 @@ struct CoproFirstApp: App {
 /// `-logo-residence <contrat>` donne à la résidence un logo et sa variante sombre, et
 /// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70) ;
 /// `-lien <adresse>` : un lien universel reçu au lancement (#18).
+/// `-push non-demandee|refusee` : l'autorisation des notifications (accordée sinon),
+/// et `-push-touchee` : une notification de la résidence touchée au lancement (#17).
 /// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
 enum Lancement {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
