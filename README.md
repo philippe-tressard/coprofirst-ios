@@ -42,7 +42,10 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 
 Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
-connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires. La
+connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
+résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
+session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
 barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
 
@@ -52,7 +55,8 @@ jugé en CI.
 
 Pour les essayer sans réseau, l'app accepte des arguments de lancement :
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
-`-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`.
+`-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
+(`-faceid-refuse` : Face ID annulé à chaque demande).
 
 ## Charte
 
