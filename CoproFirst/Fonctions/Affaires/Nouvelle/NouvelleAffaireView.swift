@@ -175,7 +175,7 @@ struct NouvelleAffaireView: View {
     private func chargerLesLieux() async {
         guard let service, let lus = try? await service.perimetres(installation) else { return }
         withAnimation(.snappy) {
-            perimetres = lus.filter(\.selectionnable)
+            perimetres = Perimetre.aSaisir(lus)
             if saisie.perimetre == nil { saisie.perimetre = Perimetre.codeParDefaut(perimetres) }
         }
     }
