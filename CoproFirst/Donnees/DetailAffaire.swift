@@ -11,17 +11,23 @@ struct DetailAffaire: Hashable, Sendable {
     let titre: String
     let description: String
     let categorie: String
-    let statut: String
-    let urgente: Bool
+    var statut: String
+    var urgente: Bool
     let creeLe: Date
     let auteur: String?
     /// Le lieu lisible — absent tant que le contrat ne le sert pas (coprofirst#2460).
     let lieu: String?
     /// Les chemins des photos (`/uploads/…`), servis derrière la session.
     let photos: [String]
-    let suites: [SuiteAffaire]
-    /// « Répondre » n'apparaît que si la route l'accepte à coup sûr (`DroitsAffaire`).
-    let peutRepondre: Bool
+    var suites: [SuiteAffaire]
+    /// Le fil des messages (`TicketMessage`), sous l'Historique — vide sur une actualité.
+    var messages: [MessageAffaire] = []
+    /// Les gestes que la route accepte de CE lecteur, servis avec l'affaire.
+    var droits = DroitsServisAffaire()
+    var epingle = false
+    var archivee = false
+    /// Fusionnée dans une autre : on n'y répond plus (`gesteReponse` du site).
+    var fusionnee = false
 
     var estActualite: Bool { categorie == "actualite" }
     var statutLibelle: String { StatutsAffaire.parCode[statut]?.libelle ?? statut }
@@ -47,13 +53,12 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     }
 }
 
-/// Qui peut répondre — le sous-ensemble SÛR de `peut_commenter` (`auth/deps.py`) :
-/// le conseil syndical, l'auteur et celui pour qui l'affaire a été saisie. Les autres
-/// cas (administrateur, comptes externes, actualités) dépendent de règles que l'API
-/// ne sert pas encore : l'app n'offre pas un geste que la route pourrait refuser
-/// (besoin noté pour coprofirst#2460 : servir `peut_commenter` avec l'affaire).
-enum DroitsAffaire {
-    static func peutRepondre(moi: Int, roles: [String], auteur: Int?, saisiPour: Int?) -> Bool {
-        roles.contains("conseil_syndical") || auteur == moi || saisiPour == moi
-    }
+/// Ce que la route accepte de CE lecteur, tel que le serveur le sert avec l'affaire
+/// (`TicketRead.peut_*`, contrat 1.12.0) : lu, jamais recalculé ici (`standards/09` §8).
+/// Un champ absent vaut « non ».
+struct DroitsServisAffaire: Hashable, Sendable {
+    var repondre = false
+    var changerEtat = false
+    var modifier = false
+    var archiver = false
 }

@@ -12,7 +12,8 @@ extension ServiceAPI {
         async let evolutions = appeler {
             try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
         }
-        async let moi = appeler { try await client.getAuthMe() }
+        async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
+        async let compte = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -24,23 +25,70 @@ extension ServiceAPI {
         if case .ok(let ok) = try await evolutions {
             suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
         }
-        var peutRepondre = false
-        if case .ok(let ok) = try await moi, let utilisateur = try? ok.body.json {
-            let roles = (utilisateur.roles ?? []) + [utilisateur.role.rawValue]
-            peutRepondre = DroitsAffaire.peutRepondre(
-                moi: utilisateur.id, roles: roles, auteur: lu.auteurId, saisiPour: lu.saisiPourUserId)
+        var detail = DetailAffaire(ticket: lu, suites: suites)
+        // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
+        guard !detail.estActualite else { return detail }
+        // Le compte illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
+        var moi: Int?
+        if case .ok(let ok)? = try? await compte { moi = try? ok.body.json.id }
+        switch try await messages {
+        case .ok(let ok): detail.messages = try ok.body.json.map { MessageAffaire($0, moi: moi) }
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
-        return DetailAffaire(ticket: lu, suites: suites, peutRepondre: peutRepondre)
+        return detail
     }
 
+    /// POST /tickets/{id}/messages — la réponse du site (`sendMessage`) : un message du
+    /// fil, que le serveur double lui-même d'une suite « reponse » dans l'Historique.
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).postTicketsTicketIdEvolutions(
-                path: .init(ticketId: affaire), body: .json(.init(contenu: texte, _type: "commentaire")))
+            try await client(installation.adresse).postTicketsTicketIdMessages(
+                path: .init(ticketId: affaire), body: .json(Self.corpsReponse(texte)))
         }
         switch sortie {
         case .created: return
         case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    /// Le corps de « Répondre » : le texte saisi, écrit comme l'éditeur du site ; un
+    /// message public (`interne` : défaut du serveur), sans pièce jointe.
+    static func corpsReponse(_ texte: String) -> Components.Schemas.MessageCreate {
+        .init(contenu: TexteDuSite.html(saisi: texte))
+    }
+
+    /// POST /tickets/{id}/evolutions — LA porte des suites d'une affaire : la réponse,
+    /// la Suite du bandeau, le glissement au Kanban. `siInvalide` : ce qu'un 422 dit.
+    func ajouterEvolution(
+        _ corps: Components.Schemas.TicketEvolutionCreate, a affaire: Int, dans installation: Installation,
+        siInvalide: any Error = ErreurService.inattendue(422)
+    ) async throws {
+        let sortie = try await appeler {
+            try await client(installation.adresse).postTicketsTicketIdEvolutions(
+                path: .init(ticketId: affaire), body: .json(corps))
+        }
+        switch sortie {
+        case .created: return
+        case .unprocessableContent: throw siInvalide
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    /// PATCH /tickets/{id} — LA porte des réglages d'une affaire : options, archivage.
+    @discardableResult
+    func modifierAffaire(
+        _ affaire: Int, _ corps: Components.Schemas.TicketUpdate, dans installation: Installation,
+        siInvalide: any Error = ErreurService.inattendue(422)
+    ) async throws -> Components.Schemas.TicketRead {
+        let sortie = try await appeler {
+            try await client(installation.adresse).patchTicketsTicketId(
+                path: .init(ticketId: affaire), body: .json(corps))
+        }
+        switch sortie {
+        case .ok(let ok): return try ok.body.json
+        case .unprocessableContent: throw siInvalide
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
     }
@@ -98,7 +146,7 @@ extension ErreurService {
 }
 
 extension DetailAffaire {
-    init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire], peutRepondre: Bool) {
+    init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire]) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, description: ticket.description,
             categorie: ticket.categorie, statut: ticket.statut,
@@ -107,7 +155,12 @@ extension DetailAffaire {
             urgente: ticket.urgente, creeLe: ticket.creeLe,
             auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: nil,
             photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
-            suites: suites, peutRepondre: peutRepondre)
+            suites: suites,
+            droits: DroitsServisAffaire(
+                repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
+                modifier: ticket.peutModifier ?? false, archiver: ticket.peutArchiver ?? false),
+            epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
+            fusionnee: ticket.fusionnee ?? false)
     }
 }
 

@@ -46,6 +46,21 @@ enum TexteDuSite {
         return sortie
     }
 
+    /// Le sens inverse : un texte SAISI dans l'app, écrit comme l'éditeur du site l'écrit
+    /// — des paragraphes, des retours à la ligne, aucun caractère lu comme une balise.
+    /// Une description, une réponse, une suite : la même écriture partout.
+    static func html(saisi texte: String) -> String {
+        texte
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .map { "<p>\($0.replacingOccurrences(of: "\n", with: "<br>"))</p>" }
+            .joined()
+    }
+
     /// Un lien sûr : absolu, d'un schéma de la liste blanche, sans caractère de
     /// contrôle (`java\tscript:` ne passe pas) — sinon `nil`, et le texte reste inerte.
     static func lienSur(_ href: String) -> URL? {

@@ -38,22 +38,8 @@ struct SaisieAffaire: Hashable, Sendable {
     var urgente: Bool
     var perimetre: String?
 
-    /// La description saisie, en HTML de l'éditeur du site : des paragraphes, des
-    /// retours à la ligne, aucun caractère qui serait lu comme une balise.
-    var descriptionHTML: String {
-        let echappe =
-            description
-            .replacingOccurrences(of: "&", with: "&amp;")
-            .replacingOccurrences(of: "<", with: "&lt;")
-            .replacingOccurrences(of: ">", with: "&gt;")
-        return
-            echappe
-            .components(separatedBy: "\n\n")
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .map { "<p>\($0.replacingOccurrences(of: "\n", with: "<br>"))</p>" }
-            .joined()
-    }
+    /// La description saisie, en HTML de l'éditeur du site (`TexteDuSite.html(saisi:)`).
+    var descriptionHTML: String { TexteDuSite.html(saisi: description) }
 
     /// Prête à partir : un titre et une description (sections requises du site).
     var complete: Bool {

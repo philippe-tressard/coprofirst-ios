@@ -72,28 +72,15 @@ extension ServiceAPI: ServiceAffaires {
         guard let nouveau = Components.Schemas.StatutTicket(rawValue: statut) else {
             throw ErreurAffaires.saisieRefusee
         }
-        let corps = Components.Schemas.TicketEvolutionCreate(notifier: false, nouveauStatut: nouveau, _type: "etat")
-        let sortie = try await appeler {
-            try await client(installation.adresse).postTicketsTicketIdEvolutions(
-                path: .init(ticketId: affaire.id), body: .json(corps))
-        }
-        switch sortie {
-        case .created: return
-        case .unprocessableContent: throw ErreurAffaires.saisieRefusee
-        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
-        }
+        try await ajouterEvolution(
+            .init(notifier: false, nouveauStatut: nouveau, _type: "etat"), a: affaire.id, dans: installation,
+            siInvalide: ErreurAffaires.saisieRefusee)
     }
 
     func archiver(_ affaire: Affaire, dans installation: Installation) async throws -> Affaire {
-        let sortie = try await appeler {
-            try await client(installation.adresse).patchTicketsTicketId(
-                path: .init(ticketId: affaire.id), body: .json(.init(archiveManuel: true)))
-        }
-        switch sortie {
-        case .ok(let ok): return Affaire(ticket: try ok.body.json)
-        case .unprocessableContent: throw ErreurAffaires.saisieRefusee
-        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
-        }
+        Affaire(
+            ticket: try await modifierAffaire(
+                affaire.id, .init(archiveManuel: true), dans: installation, siInvalide: ErreurAffaires.saisieRefusee))
     }
 }
 

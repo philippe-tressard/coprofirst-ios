@@ -122,7 +122,8 @@ enum Lancement {
     }
 
     /// `-compte administrateur` : le compte du conseil, administrateur aussi ;
-    /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16).
+    /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
+    /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
     /// Face ID annulé à chaque demande.
     @MainActor
@@ -136,6 +137,7 @@ enum Lancement {
         }
         switch compte {
         case "administrateur": simule.profilSimule.roles.append("admin")
+        case "resident": simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
         case "operateur":
             simule.profilSimule.statut = "admin_technique"
             simule.profilSimule.roles = ["operateur"]
