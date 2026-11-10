@@ -27,7 +27,7 @@ extension Parcours {
         let connue = connues.liste.first { $0.adresse == destination.adresse }
         changer(pour: connue)
         if connue == nil {
-            chemin = [.connexion(Preremplissage(adresse: destination.adresse, depuisUnLien: true))]
+            chemin = [.connexion(Preremplissage(adresse: destination.adresse, origine: .lien))]
         }
         porte.enAttente = destination.ecran == .connexion ? nil : destination
     }

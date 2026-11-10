@@ -142,7 +142,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
     #expect(parcours.ouverte == nil)
     #expect(parcours.reconnue == nil, "aucune palette ni nom avant la découverte")
     #expect(
-        parcours.chemin == [.connexion(.init(adresse: destination.adresse, depuisUnLien: true))],
+        parcours.chemin == [.connexion(.init(adresse: destination.adresse, origine: .lien))],
         "l'hôte se confirme comme après un scan (#82)")
     #expect(parcours.connues.liste.contains { $0.adresse == destination.adresse } == false, "rien n'est retenu")
 }

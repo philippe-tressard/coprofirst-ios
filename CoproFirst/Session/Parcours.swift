@@ -26,9 +26,9 @@ final class Parcours {
         /// L'adresse d'une résidence jamais vue, venue d'un lien (#18) : pré-remplie,
         /// pas encore découverte.
         var adresse: URL?
-        /// Venue d'un lien (#18), comme d'un QR : l'hôte se confirme toujours avant le
-        /// premier mot de passe (#82).
-        var depuisUnLien = false
+        /// D'où vient `adresse` : `.lien` (#18) se confirme toujours avant le premier
+        /// mot de passe, comme un scan (`GardeHote`, #82).
+        var origine: OrigineAdresse = .saisie
     }
 
     var chemin: [Etape] = [] {
