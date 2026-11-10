@@ -5,8 +5,10 @@ import ClientAPI
 import Foundation
 
 /// L'arbre des périmètres que l'API simulée sert (`GET /perimetres`) — en JSON, lu par le
-/// type GÉNÉRÉ puis par `Perimetre(lu:)`, comme le service réel. Une racine désignée par
-/// défaut, quatre lieux ; le carnet filtre sur `bat_a`.
+/// type GÉNÉRÉ puis par `Perimetre(lu:)`, comme le service réel. La forme de l'arbre semé
+/// (`seed/patrimoine.py`) : une racine désignée par défaut, le regroupement « Bâtiments »
+/// (non ciblable) et ses bâtiments, deux espaces du bâtiment A, deux lieux racines ; le carnet
+/// filtre sur `bat_a`.
 ///
 /// 🔴 Ses CODES sont la référence de toute l'API simulée (#64) : `scripts/verifier-fixtures.py`
 /// refuse un `perimetre_cible` qui n'en cite pas un — un libellé (« Copropriété ») à la
@@ -22,20 +24,32 @@ enum FixturesPerimetres {
            "profondeur": 0, "ordre": 0, "actif": true, "portee_globale": true, "concerne_tous": true,
            "selectionnable": true, "privatif": false, "hors_copropriete": false, "utilise": true,
            "par_defaut": true},
-          {"id": 2, "code": "bat_a", "parent": "copropriete", "libelle": "Bâtiment A", "libelle_court": "Bât. A",
+          {"id": 6, "code": "batiments", "parent": null, "libelle": "Bâtiments", "libelle_court": "Bâtiments",
+           "description": "", "icone": null, "batiment_id": null, "profondeur": 0, "ordre": 10, "actif": true,
+           "portee_globale": false, "concerne_tous": false, "selectionnable": false, "privatif": false,
+           "hors_copropriete": false, "utilise": false, "par_defaut": false},
+          {"id": 2, "code": "bat_a", "parent": "batiments", "libelle": "Bâtiment A", "libelle_court": "Bât. A",
            "description": "", "icone": null, "batiment_id": 1, "profondeur": 1, "ordre": 1, "actif": true,
            "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
            "hors_copropriete": false, "utilise": true, "par_defaut": false},
-          {"id": 3, "code": "bat_b", "parent": "copropriete", "libelle": "Bâtiment B", "libelle_court": "Bât. B",
+          {"id": 7, "code": "bat_a/hall", "parent": "bat_a", "libelle": "Hall d'entrée", "libelle_court": "Hall",
+           "description": "", "icone": null, "batiment_id": 1, "profondeur": 2, "ordre": 1, "actif": true,
+           "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
+           "hors_copropriete": false, "utilise": false, "par_defaut": false},
+          {"id": 8, "code": "bat_a/toit", "parent": "bat_a", "libelle": "Toit", "libelle_court": "Toit",
+           "description": "", "icone": null, "batiment_id": 1, "profondeur": 2, "ordre": 2, "actif": true,
+           "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
+           "hors_copropriete": false, "utilise": false, "par_defaut": false},
+          {"id": 3, "code": "bat_b", "parent": "batiments", "libelle": "Bâtiment B", "libelle_court": "Bât. B",
            "description": "", "icone": null, "batiment_id": 2, "profondeur": 1, "ordre": 2, "actif": true,
            "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
            "hors_copropriete": false, "utilise": true, "par_defaut": false},
-          {"id": 4, "code": "parking", "parent": "copropriete", "libelle": "Parking", "libelle_court": "Parking",
-           "description": "", "icone": null, "batiment_id": null, "profondeur": 1, "ordre": 3, "actif": true,
+          {"id": 4, "code": "parking", "parent": null, "libelle": "Parking", "libelle_court": "Parking",
+           "description": "", "icone": null, "batiment_id": null, "profondeur": 0, "ordre": 3, "actif": true,
            "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
            "hors_copropriete": false, "utilise": true, "par_defaut": false},
-          {"id": 5, "code": "jardin", "parent": "copropriete", "libelle": "Jardin", "libelle_court": "Jardin",
-           "description": "", "icone": null, "batiment_id": null, "profondeur": 1, "ordre": 4, "actif": true,
+          {"id": 5, "code": "jardin", "parent": null, "libelle": "Jardin", "libelle_court": "Jardin",
+           "description": "", "icone": null, "batiment_id": null, "profondeur": 0, "ordre": 4, "actif": true,
            "portee_globale": false, "concerne_tous": false, "selectionnable": true, "privatif": false,
            "hors_copropriete": false, "utilise": true, "par_defaut": false}
         ]

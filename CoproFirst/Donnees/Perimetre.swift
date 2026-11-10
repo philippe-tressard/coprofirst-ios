@@ -18,21 +18,35 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var selectionnable: Bool
     /// Le défaut du serveur : un seul nœud au plus, aucun sur un arbre vide.
     var parDefaut: Bool
+    /// Le code du nœud parent ; `nil` pour une racine — la rangée de tête du choix
+    /// (`ArbreDesPerimetres`) en dépend.
+    var parent: String?
+    /// Le libellé abrégé (« Bât. 3 ») : celui du résumé d'une pastille, qui doit tenir.
+    var libelleCourt: String?
+    /// Ce que le nœud implique (« notifie l'ensemble du conseil syndical ») : l'aide du choix.
+    var description: String?
 
     var id: String { code }
 
-    init(code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false) {
+    init(
+        code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false,
+        parent: String? = nil, libelleCourt: String? = nil, description: String? = nil
+    ) {
         self.code = code
         self.libelle = libelle
         self.profondeur = profondeur
         self.selectionnable = selectionnable
         self.parDefaut = parDefaut
+        self.parent = parent
+        self.libelleCourt = libelleCourt
+        self.description = description
     }
 
     init(lu: Components.Schemas.PerimetreRead) {
         self.init(
             code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable,
-            parDefaut: lu.parDefaut ?? false)
+            parDefaut: lu.parDefaut ?? false, parent: lu.parent, libelleCourt: lu.libelleCourt,
+            description: lu.description)
     }
 
     /// Le code du périmètre que le serveur désigne par défaut, s'il en désigne un.

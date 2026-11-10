@@ -12,7 +12,7 @@ struct NouvelleAnnonceHall: View {
     let creee: (AnnonceHall) -> Void
     @Environment(\.palette) private var palette
     @State private var saisie = SaisieAnnonceHall()
-    @State private var perimetres: [Perimetre] = []
+    @State private var arbre = ArbreDesPerimetres([])
     @State private var envoi = false
     @State private var erreur: ErreurService?
 
@@ -28,7 +28,7 @@ struct NouvelleAnnonceHall: View {
                     .padding(.vertical, 12)
                     .accessibilityIdentifier("nouvelle-annonce-hall.message")
             }
-            if !perimetres.isEmpty { choixPerimetres }
+            if !arbre.noeuds.isEmpty { choixPerimetres }
             choixFormat
             diffusion
             if let erreur { MessageErreur(texte: erreur.phrase) }
@@ -41,27 +41,17 @@ struct NouvelleAnnonceHall: View {
         }
         .animation(.snappy, value: erreur)
         .task {
-            // Non bloquant : sans périmètres, l'affiche prend celui que le serveur pose.
-            perimetres = (try? await service.perimetres(installation))?.filter(\.selectionnable) ?? []
+            // Non bloquant : sans périmètres, l'affiche prend celui que le serveur pose. Les
+            // regroupements restent : ils font les têtes du choix (`ArbreDesPerimetres`).
+            arbre = ArbreDesPerimetres((try? await service.perimetres(installation)) ?? [])
+            if saisie.perimetres.codes.isEmpty { saisie.perimetres.choisirDefaut(arbre) }
         }
     }
 
     private var choixPerimetres: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(TextesAnnoncesHall.perimetre).styleLibelle()
-            Carte {
-                VStack(alignment: .leading, spacing: 0) {
-                    ForEach(perimetres) { perimetre in
-                        Toggle(isOn: coche(perimetre.code)) {
-                            Text(perimetre.libelle).font(.subheadline)
-                        }
-                        .padding(.leading, CGFloat(perimetre.profondeur) * 16)
-                        .frame(minHeight: Mise.cible)
-                        .tint(palette.primaryPlein)
-                        .accessibilityIdentifier("nouvelle-annonce-hall.perimetre.\(perimetre.code)")
-                    }
-                }
-            }
+            ChoixPerimetres(arbre: arbre, choix: $saisie.perimetres, identifiant: "nouvelle-annonce-hall.perimetre")
             Text(TextesAnnoncesHall.perimetreAide).font(.footnote).foregroundStyle(palette.textMuted)
         }
     }
@@ -103,12 +93,6 @@ struct NouvelleAnnonceHall: View {
         }
     }
 
-    private func coche(_ code: String) -> Binding<Bool> {
-        Binding(
-            get: { saisie.perimetres.contains(code) },
-            set: { if $0 { saisie.perimetres.insert(code) } else { saisie.perimetres.remove(code) } })
-    }
-
     private func creer() {
         envoi = true
         erreur = nil
@@ -117,6 +101,7 @@ struct NouvelleAnnonceHall: View {
             do {
                 let annonce = try await service.creerAnnonceHall(saisie, dans: installation)
                 self.saisie = SaisieAnnonceHall()
+                self.saisie.perimetres.choisirDefaut(arbre)
                 creee(annonce)
             } catch {
                 self.erreur = ErreurService.depuis(error)
