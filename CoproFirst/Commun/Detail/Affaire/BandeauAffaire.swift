@@ -36,7 +36,7 @@ struct BandeauAffaire: ViewModifier {
                         SuiteFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
                     } else {
                         RepondreFeuille(affaire: affaire, installation: installation) {
-                            envoyee("Commentaire ajouté")
+                            envoyee("Réponse envoyée")
                         }
                     }
                 }

@@ -29,12 +29,23 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("affaire.lien").exists)
         XCTAssertFalse(app.elementAcces("affaire.suite").exists)
         XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
+        // Le fil des messages, sous l'Historique : la note interne du conseil n'y est pas.
+        XCTAssertTrue(app.elementAcces("affaire.message.502").exists)
+        XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
         app.elementAcces("affaire.repondre").tap()
         let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.waitForExistence(timeout: 3))
         texte.typeText("Merci, je contourne la zone.")
         app.elementAcces("repondre.envoyer").tap()
         XCTAssertTrue(app.elementAcces("affaire.repondre").waitForExistence(timeout: 5), "la feuille se referme")
+        // La réponse est un MESSAGE (comme sur le site), pas une suite de l'Historique.
+        let message = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "affaire.message.",
+                    "Merci, je contourne la zone.")
+            ).firstMatch
+        XCTAssertTrue(message.waitForExistence(timeout: 5), "la réponse rejoint le fil des messages")
     }
 
     /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
@@ -49,6 +60,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(suite.waitForExistence(timeout: 5))
         XCTAssertTrue(app.elementAcces("affaire.options").exists)
         XCTAssertFalse(app.elementAcces("affaire.repondre").exists, "le conseil ne répond pas, il suit")
+        XCTAssertTrue(app.elementAcces("affaire.message.503").exists, "la note interne, au conseil")
 
         suite.tap()
         let texte = app.elementAcces("suite.texte")
