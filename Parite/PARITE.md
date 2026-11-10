@@ -37,7 +37,8 @@ parallèles ne se gênent pas.
 5. **#17** notifications push : côté app livré (autorisation dans la cloche,
    appareil enregistré et retiré, notification touchée → la cloche de sa résidence) ;
    réception réelle en attente du relais (coprofirst#2494, clé `.p8`).
-   **#18** liens universels (coprofirst#2459).
+   **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
+   porte de navigation codées, liste des domaines en attente de décision (#18).
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
    (charte, pages, onglets, contrat d'API) : un écart ouvre un ticket.
 

@@ -41,7 +41,8 @@ struct CoproFirstApp: App {
 /// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
 /// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul ;
 /// `-logo-residence <contrat>` donne à la résidence un logo et sa variante sombre, et
-/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70).
+/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70) ;
+/// `-lien <adresse>` : un lien universel reçu au lancement (#18).
 /// `-push non-demandee|refusee` : l'autorisation des notifications (accordée sinon),
 /// et `-push-touchee` : une notification de la résidence touchée au lancement (#17).
 /// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
@@ -65,9 +66,7 @@ enum Lancement {
         let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
         simule.residenceServie = residenceSimulee(arguments)
         let residence = simule.residenceServie
-        let ecran = arguments.firstIndex(of: "-ecran").flatMap {
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-        }
+        let ecran = valeur("-ecran", arguments)
         switch ecran {
         case "en-savoir-plus":
             parcours.chemin = [.enSavoirPlus]
@@ -89,9 +88,7 @@ enum Lancement {
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
             profilConnu(parcours, residence)
-            parcours.aOuvrir = arguments.firstIndex(of: "-ouvrir").flatMap {
-                arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-            }
+            parcours.aOuvrir = valeur("-ouvrir", arguments)
         case "affaires":
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
@@ -99,7 +96,22 @@ enum Lancement {
         default:
             break
         }
+        suivreLeLien(arguments, parcours)
         return parcours
+    }
+
+    /// `-lien <adresse>` : un lien universel reçu au lancement (#18), par la même porte.
+    @MainActor
+    private static func suivreLeLien(_ arguments: [String], _ parcours: Parcours) {
+        guard let lien = valeur("-lien", arguments).flatMap(URL.init(string:)),
+            let destination = LienUniversel.destination(lien)
+        else { return }
+        parcours.suivre(destination)
+    }
+
+    /// La valeur qui suit un argument (`-ecran fil` → `fil`), ou rien.
+    private static func valeur(_ cle: String, _ arguments: [String]) -> String? {
+        arguments.firstIndex(of: cle).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
 
     /// Un passage précédent : la résidence ouverte, son courriel retenu, Face ID déjà
@@ -119,9 +131,7 @@ enum Lancement {
     /// variante sombre, servis à ce contrat (#70).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
-        if let contrat = arguments.firstIndex(of: "-logo-residence").flatMap({
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-        }) {
+        if let contrat = valeur("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true
             residence.versionContrat = contrat
@@ -140,9 +150,7 @@ enum Lancement {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
-        let compte = arguments.firstIndex(of: "-compte").flatMap {
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-        }
+        let compte = valeur("-compte", arguments)
         switch compte {
         case "administrateur": simule.profilSimule.roles.append("admin")
         case "resident": simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }

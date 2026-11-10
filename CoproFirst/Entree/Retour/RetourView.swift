@@ -99,12 +99,14 @@ struct RetourView: View {
     }
 
     private func ouvrir() async {
-        guard !enCours else { return }
+        guard !enCours, parcours.ouvertureLibre(installation) else { return }
         enCours = true
         defer { enCours = false }
         withAnimation(.snappy) { erreur = nil }
         do {
             try await parcours.service.reprendre(installation)
+            // Un lien arrivé pendant Face ID (lancement par le lien) passe devant.
+            guard parcours.ouvertureLibre(installation) else { return }
             parcours.ouvrir(installation)
         } catch {
             if parcours.service.aUneSessionGardee(installation) {

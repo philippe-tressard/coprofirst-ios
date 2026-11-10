@@ -184,7 +184,7 @@ private func jusqua(_ condition: () -> Bool) async {
     #expect(push.abonnements.existant(pour: residence) == nil)
     // Une notification qui arriverait encore ne mène plus à rien.
     push.touchee(abonnement: abonnement)
-    #expect(parcours.enAttente == nil)
+    #expect(parcours.porte.enAttente == nil)
     #expect(!parcours.clocheOuverte)
 }
 
@@ -208,11 +208,11 @@ private func jusqua(_ condition: () -> Bool) async {
     parcours.ouvrir(ServiceSimule.residence)
     push.touchee(abonnement: push.abonnements.abonnement(pour: autre))
     #expect(parcours.ouverte == nil, "la résidence change : sa session d'abord")
-    #expect(parcours.enAttente?.adresse == autre.adresse)
+    #expect(parcours.porte.enAttente?.adresse == autre.adresse)
     #expect(!parcours.clocheOuverte)
     parcours.ouvrir(autre)
     #expect(parcours.clocheOuverte, "la cloche s'ouvre à l'arrivée")
-    #expect(parcours.enAttente == nil)
+    #expect(parcours.porte.enAttente == nil)
 }
 
 @MainActor
@@ -220,10 +220,10 @@ private func jusqua(_ condition: () -> Bool) async {
     let app = await AppOuverte(.accordee)
     let parcours = app.parcours
     let autre = autreResidence(parcours)
-    #expect(parcours.ouvrir(Ouverture(adresse: autre.adresse, cible: .notifications)))
+    #expect(parcours.suivre(Destination(adresse: autre.adresse, ecran: .notifications), decouvrir: false))
     parcours.ouvrir(ServiceSimule.residence)
     #expect(!parcours.clocheOuverte)
-    #expect(parcours.enAttente == nil)
+    #expect(parcours.porte.enAttente == nil)
 }
 
 @MainActor
@@ -231,9 +231,10 @@ private func jusqua(_ condition: () -> Bool) async {
     let app = await AppOuverte(.accordee)
     let parcours = app.parcours
     let ouverte = parcours.ouverte
-    #expect(!parcours.ouvrir(Ouverture(adresse: URL(string: "https://ailleurs.exemple.fr")!, cible: .notifications)))
+    let ailleurs = Destination(adresse: URL(string: "https://ailleurs.exemple.fr")!, ecran: .notifications)
+    #expect(!parcours.suivre(ailleurs, decouvrir: false))
     #expect(parcours.ouverte == ouverte)
-    #expect(parcours.enAttente == nil)
+    #expect(parcours.porte.enAttente == nil)
 }
 
 @MainActor

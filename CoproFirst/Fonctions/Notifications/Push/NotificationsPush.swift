@@ -136,7 +136,8 @@ final class NotificationsPush {
 
     // MARK: - La notification reçue, touchée
 
-    /// Une notification touchée : la cloche de SA résidence s'ouvre (`Ouverture`).
+    /// Une notification touchée : la cloche de SA résidence s'ouvre, par la porte commune
+    /// aux liens (`Parcours.suivre`, #18).
     /// Un abonnement inconnu (résidence quittée) n'ouvre rien.
     func touchee(abonnement: String?) {
         guard let abonnement else { return }
@@ -146,7 +147,7 @@ final class NotificationsPush {
         }
         guard let installation = installation(de: abonnement) else { return }
         relire(installation)
-        parcours.ouvrir(Ouverture(adresse: installation.adresse, cible: .notifications))
+        parcours.suivre(Destination(adresse: installation.adresse, ecran: .notifications), decouvrir: false)
     }
 
     /// Une notification arrivée app ouverte : pour la résidence à l'écran, la cloche se

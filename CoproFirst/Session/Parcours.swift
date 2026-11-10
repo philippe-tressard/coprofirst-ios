@@ -23,25 +23,35 @@ final class Parcours {
         /// L'utilisateur a choisi le mot de passe (ou la session n'est plus gardée) :
         /// la connexion ne redemande pas Face ID pour cette résidence.
         var parMotDePasse = false
+        /// L'adresse d'une résidence jamais vue, venue d'un lien (#18) : pré-remplie,
+        /// pas encore découverte.
+        var adresse: URL?
+        /// Venue d'un lien (#18), comme d'un QR : l'hôte se confirme toujours avant le
+        /// premier mot de passe (#82).
+        var depuisUnLien = false
     }
 
-    var chemin: [Etape] = []
+    var chemin: [Etape] = [] {
+        // Revenu de la connexion où l'a mené un lien : l'utilisateur l'abandonne.
+        didSet { if chemin.isEmpty, ouverte == nil { porte.enAttente = nil } }
+    }
     /// La résidence dont l'adresse vient d'être reconnue : sa palette colore l'écran.
     var reconnue: Installation?
     private(set) var ouverte: Installation?
     /// La feuille « Ouvrir avec Face ID ? », proposée une fois après la 1ʳᵉ connexion.
     var proposerFaceID = false
     var changerDeResidence = false
-    /// Un élément du fil à ouvrir dès l'arrivée (argument `-ouvrir` des captures).
+    /// Un élément du fil à ouvrir dès l'arrivée (argument `-ouvrir` des captures, ou la
+    /// porte d'une notification, `Destination.Ecran.element`).
     var aOuvrir: String?
     /// L'onglet affiché dans l'espace de la résidence (identifiant de page).
     var onglet = OrdrePages.idFil
+    /// Ce que la porte d'un lien ou d'une notification retient (`Parcours+Porte`).
+    var porte = EtatPorte()
     /// Ce que l'écran de connexion doit dire en arrivant (déconnexion hors ligne…).
     var avis: String?
     /// La feuille des notifications (la cloche), une seule pour tout l'espace ouvert.
     var clocheOuverte = false
-    /// Une sollicitation (notification touchée, lien) qui attend sa résidence (`Ouverture`).
-    var enAttente: Ouverture?
     /// Les notifications push (#17) : enregistrer l'appareil à l'ouverture d'une
     /// résidence, le retirer à la déconnexion. Absentes des aperçus.
     var push: NotificationsPush?
@@ -66,12 +76,12 @@ final class Parcours {
         avis = nil
         chemin = []
         clocheOuverte = false
-        appliquerEnAttente(installation)
         if let push { Task { await push.residenceOuverte(installation) } }
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
             proposerFaceID = true
         }
+        suivreLeLienEnAttente(installation)
     }
 
     /// Changer de résidence : retour à la connexion, adresse pré-remplie ou vide.

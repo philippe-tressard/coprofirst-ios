@@ -41,6 +41,13 @@ struct RacineView: View {
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
         }
+        // Un lien universel (#18) : une seule porte, celle des notifications (#17).
+        .onOpenURL { url in
+            if let destination = LienUniversel.destination(url) { parcours.suivre(destination) }
+        }
+        .sheet(item: $parcours.porte.pageWeb) { page in
+            PageWebView(url: page.url).ignoresSafeArea()
+        }
         .environment(\.palette, palette)
         .themeChoisi()
         .animation(.smooth(duration: 0.35), value: parcours.ouverte)
