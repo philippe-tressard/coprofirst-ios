@@ -89,12 +89,19 @@ extension Affaire {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
             creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut, close: ticket.close,
-            categorie: ticket.categorie, urgente: ticket.urgente,
+            categorie: ticket.categorie, categorieLibelle: ticket.categorieLibelle, urgente: ticket.urgente,
             meConcerne: ticket.meConcerne, archivee: ticket.archivee ?? false,
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],
             prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],
-            lieu: nil, messages: nil)
+            lieu: ticket.lieuServi, messages: nil, colonne: ticket.colonneKanban,
+            peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false)
     }
+}
+
+extension Components.Schemas.TicketRead {
+    /// Le lieu que le serveur SERT (`perimetre_libelle`) : vide pour le périmètre par
+    /// défaut, qu'il tait — l'app ne recompose pas l'arbre des périmètres.
+    var lieuServi: String? { perimetreLibelle.flatMap { $0.isEmpty ? nil : $0 } }
 }
 
 /// Ce qu'un geste du menu peut rencontrer, en une phrase.

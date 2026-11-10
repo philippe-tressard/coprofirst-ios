@@ -18,6 +18,8 @@ struct Affaire: Identifiable, Hashable, Sendable {
     /// compare pas son statut à une liste d'états clos (#54).
     var close: Bool
     let categorie: String
+    /// « Étude & travaux » : le libellé que le serveur SERT (`categorie_libelle`), jamais vide.
+    let categorieLibelle: String
     /// Urgente, au sens du serveur (`TicketRead.urgente`) : l'app ne la déduit pas de la priorité.
     let urgente: Bool
     /// `nil` : le serveur ne le sait pas — la portée « me concerne » la garde (`selonPortee`).
@@ -31,16 +33,22 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let prestataire: String?
     /// Les codes de périmètre visés (`perimetre_cible`).
     let perimetres: [String]
-    /// Le lieu lisible (« Bâtiment A ») — absent tant que le contrat ne le sert pas.
+    /// Le lieu lisible (« Bât. 2 › Toit ») que le serveur SERT (`perimetre_libelle`) ;
+    /// `nil` pour le périmètre par défaut, que le serveur tait.
     let lieu: String?
     /// Le nombre de messages du fil — absent tant que le contrat ne le sert pas.
     let messages: Int?
+    /// La colonne du Kanban que le serveur SERT (`colonne_kanban`) ; `nil` hors tableau.
+    var colonne: String?
+    /// Glisser la carte au Kanban : ce que la route accepte de CE lecteur
+    /// (`peut_deplacer_au_kanban`, le conseil seul) — servi, jamais déduit du profil.
+    var peutDeplacer: Bool
+    /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
+    var peutArchiver: Bool
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.
     var dateDActivite: Date { misAJourLe ?? creeLe }
-    /// La colonne du Kanban, ou `nil` : un statut inconnu SORT l'affaire du tableau.
-    var colonne: String? { TablesAffaires.colonneParStatut[statut] }
 }
 
 /// Une option du filtre « Suivi » : un statut, ou un groupe de statuts.
@@ -110,17 +118,16 @@ extension [Affaire] {
         return parAnnee.keys.sorted(by: >).map { ($0, parAnnee[$0] ?? []) }
     }
 
-    /// Le Kanban : les affaires suivies, non archivées, dont le statut a une colonne.
+    /// Le Kanban : les affaires suivies, non archivées, auxquelles le serveur sert une colonne.
     var auKanban: [Affaire] { filter { $0.suiviKanban && !$0.archivee && $0.colonne != nil } }
 }
 
 /// Qui peut quoi, ici — le même rôle que la route accepte.
 ///
 /// « Modérer » = conseil syndical ou administration : `est_moderateur` du serveur
-/// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il garde
-/// le glissement au Kanban, l'archivage (`archive_manuel`, 403 sinon) et les catégories
-/// réservées (`categorie_reservee`). Tant que l'API ne sert pas les droits eux-mêmes,
-/// l'app ne déduit rien de plus (philippe-tressard/coprofirst#2508).
+/// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il ne garde
+/// plus que les catégories réservées et un conseil de saisie : glisser au Kanban et archiver se lisent sur
+/// l'affaire (`peut_*`, #83) ; `permise` des référentiels le remplacera (#105, après #95).
 struct DroitsAffaires: Equatable, Sendable {
     /// La page du site que porte ce menu (`pages.ts`).
     static let page = "mes-demandes"

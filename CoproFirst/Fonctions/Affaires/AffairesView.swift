@@ -66,13 +66,11 @@ struct AffairesView: View {
     private func contenu(_ service: (any ServiceAffaires)?) -> some View {
         switch onglet {
         case "kanban":
-            KanbanAffaires(etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir)
+            KanbanAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir)
         case "archives":
             ArchivesAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir)
         default:
-            ListeAffaires(
-                etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir
-            ) {
+            ListeAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir) {
                 nouvelle = true
             }
         }

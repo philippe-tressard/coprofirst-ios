@@ -304,7 +304,8 @@ extension Annonce {
             id: lue.id, titre: lue.titre, description: lue.description, typeAnnonce: lue.typeAnnonce.rawValue,
             categorie: lue.categorie.rawValue, prix: lue.prix, negotiable: lue.negotiable, photos: lue.photos,
             statut: lue.statut.rawValue, auteurPrenom: lue.auteurPrenom, auteurNom: lue.auteurNom,
-            auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, archivee: lue.archivee, creeLe: lue.creeLe,
+            auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, peutSupprimer: lue.peutSupprimer ?? false,
+            archivee: lue.archivee, creeLe: lue.creeLe,
             reponses: lue.reponses?.map(ReponseCommunaute.init))
     }
 }

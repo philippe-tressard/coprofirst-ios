@@ -13,8 +13,6 @@ struct MoiCommunaute: Hashable, Sendable {
     /// reste ouvert) ou suspension (tout est fermé). L'app ne recalcule pas la règle.
     let motifRefus: String?
 
-    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }
-    var estAdmin: Bool { roles.contains("admin") }
     /// Ce que le compte est, pour juger des onglets — la règle GÉNÉRÉE du site.
     var droits: DroitsOnglet { DroitsOnglet(roles: roles, role: nil, statut: statut) }
 }
@@ -80,6 +78,9 @@ struct Annonce: Codable, Hashable, Sendable, Identifiable {
     /// Absent quand l'auteur masque ses coordonnées.
     let auteurEmail: String?
     let estAuteur: Bool?
+    /// Supprimer : ce que la route accepte de CE lecteur (`peut_supprimer`, l'auteur ou le
+    /// conseil) — servi, jamais déduit des rôles (#83).
+    let peutSupprimer: Bool
     let archivee: Bool?
     let creeLe: Date
     var reponses: [ReponseCommunaute]?

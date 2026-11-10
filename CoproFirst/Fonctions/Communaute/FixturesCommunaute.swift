@@ -52,7 +52,8 @@ enum FixturesCommunaute {
            "description": "<p>Huit kilos, deux ans, factures à l'appui.</p>",
            "type_annonce": "vente", "categorie": "electromenager", "prix": 180, "negotiable": true, "photos": [],
            "statut": "en_cours", "auteur_id": 12, "auteur_prenom": "Voisine du 2ᵉ",
-           "auteur_email": "voisine@exemple.fr", "est_auteur": false, "archivee": false,
+           "auteur_email": "voisine@exemple.fr", "est_auteur": false, "peut_modifier": false,
+           "peut_supprimer": true, "archivee": false,
            "cree_le": "2026-11-04T10:00:00", "nb_reponses": 1,
            "reponses": [
              {"id": 3, "auteur_id": 5, "contenu": "Est-il encore disponible samedi ?",
@@ -61,12 +62,14 @@ enum FixturesCommunaute {
            ]},
           {"id": 22, "titre": "Plantes vertes à donner", "description": "<p>Un ficus et deux monsteras.</p>",
            "type_annonce": "don", "categorie": "divers", "negotiable": false, "photos": [], "statut": "reserve",
-           "auteur_id": 7, "auteur_prenom": "Moi", "est_auteur": true, "archivee": false,
+           "auteur_id": 7, "auteur_prenom": "Moi", "est_auteur": true, "peut_modifier": true,
+           "peut_supprimer": true, "archivee": false,
            "cree_le": "2026-10-31T15:00:00", "nb_reponses": 0, "reponses": []},
           {"id": 23, "titre": "Cherche place de parking", "description": "<p>Au sous-sol, pour une citadine.</p>",
            "type_annonce": "recherche", "categorie": "parking_cave", "negotiable": false, "photos": [],
            "statut": "en_cours", "auteur_id": 14, "auteur_prenom": "Voisin du 5ᵉ", "est_auteur": false,
-           "archivee": false, "cree_le": "2026-10-22T11:00:00", "nb_reponses": 0, "reponses": []}
+           "peut_modifier": false, "peut_supprimer": true, "archivee": false, "cree_le": "2026-10-22T11:00:00",
+           "nb_reponses": 0, "reponses": []}
         ]
         """#
 

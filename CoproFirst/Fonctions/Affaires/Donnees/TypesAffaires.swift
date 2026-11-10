@@ -34,13 +34,16 @@ struct NatureAffaire: Identifiable, Hashable, Sendable {
     var id: String { code }
 }
 
-/// Une colonne du Kanban : une étape du workflow. Sa teinte est un jeton `--kanban-*`
-/// de la `Palette` (claire et sombre, celle de la résidence) — `palette[keyPath: teinte]`.
-struct ColonneKanban: Identifiable, Sendable {
+/// Une colonne du Kanban, telle que le serveur la SERT (`GET /tickets/referentiels`) :
+/// une étape du workflow. Sa teinte est un jeton `--kanban-*` de la `Palette` (claire et
+/// sombre, celle de la résidence), GÉNÉRÉ par code — `palette[keyPath: teinte]`.
+struct ColonneKanban: Identifiable, Hashable, Sendable {
     let id: String
     let libelle: String
     let libelleCourt: String
-    let teinte: KeyPath<Palette, Color> & Sendable
+
+    /// Une colonne que le site ne teinte pas encore garde un trait neutre, sans disparaître.
+    var teinte: KeyPath<Palette, Color> & Sendable { TablesAffaires.teintesKanban[id] ?? \.border }
 }
 
 /// Une option du filtre « Suivi » qui réunit plusieurs statuts.
@@ -48,14 +51,4 @@ struct GroupeDeSuivi: Hashable, Sendable {
     let code: String
     let libelle: String
     let statuts: [String]
-}
-
-extension TablesAffaires {
-    static let categorieParCode: [String: CategorieAffaire] = Dictionary(
-        uniqueKeysWithValues: categories.map { ($0.code, $0) })
-    static let colonneParId: [String: ColonneKanban] = Dictionary(
-        uniqueKeysWithValues: colonnesKanban.map { ($0.id, $0) })
-    /// La colonne → le statut qu'elle pose : l'inverse de `colonneParStatut`, dérivé.
-    static let statutParColonne: [String: String] = Dictionary(
-        colonneParStatut.map { ($0.value, $0.key) }, uniquingKeysWith: { premier, _ in premier })
 }

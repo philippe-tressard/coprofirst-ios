@@ -34,6 +34,8 @@
 #      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50) ;
 #  14. les tickets de la concordance : un vert ferme, un rouge ou un INCONNU jamais —
 #      autotest de scripts/tickets_concordance.py (#67).
+#  15. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -193,6 +195,11 @@ done < <(grep -E "$GENERATION" <<< "$FICHIERS")
 python3 -I scripts/verifier-fixtures.py --autotest >/dev/null || echec "verifier-fixtures.py : autotest en échec"
 FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec "API simulée hors du schéma du serveur"; }
 
+# Ce que le serveur SERT ne se recalcule plus (#83) : une table ou un prédicat retiré
+# qui revient échoue. L'autotest d'abord ; INCONNU (sortie 2) est un échec.
+python3 -I scripts/verifier-regles-servies.py --autotest >/dev/null || echec "verifier-regles-servies.py : autotest en échec"
+SERVIES=$(python3 -I scripts/verifier-regles-servies.py) || { echo "$SERVIES"; echec "une règle servie est recalculée dans l'app"; }
+
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
 # et charge, NSAttributedString(.html) passe par WebKit et charge des ressources
 # distantes. Ni l'un ni l'autre dans l'app.
@@ -243,4 +250,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
