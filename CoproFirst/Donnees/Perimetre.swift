@@ -61,12 +61,15 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     /// peut plus rien porter (`niveaux_libres` servi à 0) ne se propose pas. Le plafond
     /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Une installation
     /// antérieure au contrat 1.17.0 ne le sert pas : tout nœud sélectionnable, comme avant.
-    static func aSaisir(_ perimetres: [Perimetre]) -> [Perimetre] {
+    ///
+    /// `garder` : le lieu déjà enregistré d'un contenu qu'on modifie — proposé même trop
+    /// profond, pour que le modifier ne le perde pas en silence.
+    static func aSaisir(_ perimetres: [Perimetre], garder: String? = nil) -> [Perimetre] {
         let libres = Dictionary(
             perimetres.map { ($0.code, $0.niveauxLibres) }, uniquingKeysWith: { premier, _ in premier })
         return perimetres.filter { perimetre in
             let place = perimetre.parent.flatMap { libres[$0] ?? nil }
-            return perimetre.selectionnable && (place ?? 1) > 0
+            return perimetre.code == garder || (perimetre.selectionnable && (place ?? 1) > 0)
         }
     }
 

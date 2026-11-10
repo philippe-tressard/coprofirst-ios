@@ -66,8 +66,8 @@ extension ServiceSimule {
                     + "zone, et de ne pas déplacer le seau posé sous la fuite ;</p></li><li><p>photos jointes "
                     + "ci-dessous.</p></li></ol><p>Le contrat d'entretien : "
                     + "<a href=\"https://www.example.org/contrat\">consulter</a>.</p>",
-                categorie: "plomberie", statut: "en_cours", urgente: true, creeLe: ilYA(5),
-                auteur: "Un résident du bâtiment A", lieu: "Parking, niveau -1",
+                categorie: "sinistre", statut: "en_cours", urgente: true, creeLe: ilYA(5),
+                auteur: "Un résident du bâtiment A", lieu: "Parking",
                 photos: ["/uploads/tickets/41-1.jpg", "/uploads/tickets/41-2.jpg"],
                 suites: [
                     SuiteAffaire(
@@ -83,14 +83,14 @@ extension ServiceSimule {
                         contenu: "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
                         ancienStatut: nil, nouveauStatut: nil, photos: []),
                 ],
-                droits: DroitsServisAffaire(repondre: true))
+                droits: DroitsServisAffaire(repondre: true), perimetres: ["parking"])
         case 12:
             return DetailAffaire(
                 id: 12, numero: "A-0012", titre: "Coupure d'eau jeudi de 9 h à 12 h",
                 description: "Le remplacement d'une vanne dans la cave du bâtiment A impose de couper l'eau froide "
                     + "et l'eau chaude jeudi matin, de 9 h à 12 h. Pensez à faire une réserve.",
                 categorie: "actualite", statut: "publie", urgente: false, creeLe: ilYA(6),
-                auteur: "Le conseil syndical", lieu: "Bâtiment A", photos: [], suites: [])
+                auteur: "Le conseil syndical", lieu: "Bâtiment A", photos: [], suites: [], perimetres: ["bat_a"])
         case 38, 31:
             return DetailAffaire(
                 id: id, numero: "A-00\(id)",
@@ -98,10 +98,10 @@ extension ServiceSimule {
                 description: id == 38
                     ? "Le devis retenu en assemblée générale sera présenté au conseil syndical."
                     : "La télécommande fonctionne de nouveau après le remplacement de la carte électronique.",
-                categorie: id == 38 ? "batiment" : "equipement", statut: id == 38 ? "en_ag" : "résolu",
+                categorie: id == 38 ? "etude_travaux" : "panne", statut: id == 38 ? "en_ag" : "résolu",
                 urgente: false, creeLe: ilYA(id == 38 ? 52 : 100), auteur: "Le conseil syndical",
-                lieu: id == 38 ? "Façade nord" : "Garage", photos: [], suites: [],
-                droits: DroitsServisAffaire(repondre: id == 38))
+                lieu: id == 38 ? "Bâtiment A" : "Parking", photos: [], suites: [],
+                droits: DroitsServisAffaire(repondre: id == 38), perimetres: [id == 38 ? "bat_a" : "parking"])
         default:
             return nil
         }
@@ -116,8 +116,7 @@ extension ServiceSimule {
             description: id == 44
                 ? "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits."
                 : "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
-            categorie: "equipement", statut: "en_cours", urgente: false, creeLe: creeLe,
-            auteur: "Le conseil syndical", lieu: id == 44 ? "Bâtiment B" : "Ascenseur", photos: [],
-            suites: [])
+            categorie: "entretien", statut: "en_cours", urgente: false, creeLe: creeLe,
+            auteur: "Le conseil syndical", lieu: "Bâtiment B", photos: [], suites: [], perimetres: ["bat_b"])
     }
 }

@@ -124,6 +124,8 @@ private struct DemandesSansAnnonce: ServiceDemandesProfil {
     #expect(codes.contains("bat_a_terrasses"), "niveau 3")
     #expect(!codes.contains("bat_a_terrasse_nord"), "niveau 4, écrit avant le plafond")
     #expect(codes.first == "copropriete")
+    let modifiee = Perimetre.aSaisir(try FixturesPerimetres.lus(), garder: "bat_a_terrasse_nord").map(\.code)
+    #expect(modifiee.contains("bat_a_terrasse_nord"), "le lieu déjà enregistré d'une affaire modifiée reste proposé")
 }
 
 @Test func sansNiveauxServisToutNoeudSelectionnableSePropose() throws {
