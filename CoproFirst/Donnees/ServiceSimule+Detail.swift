@@ -48,6 +48,7 @@ extension ServiceSimule {
     static func affaires(_ id: Int) -> DetailAffaire? {
         let maintenant = Date.now
         func ilYA(_ heures: Double) -> Date { maintenant.addingTimeInterval(-heures * 3600) }
+        if id == 44 || id == 45 { return affaireDatee(id, creeLe: ilYA(id == 44 ? 9 : 20)) }
         switch id {
         case 41:
             return DetailAffaire(
@@ -95,5 +96,18 @@ extension ServiceSimule {
         default:
             return nil
         }
+    }
+
+    /// Deux affaires datées du fil (#75) : un ramonage le jour même, un contrôle passé.
+    private static func affaireDatee(_ id: Int, creeLe: Date) -> DetailAffaire {
+        DetailAffaire(
+            id: id, numero: "A-00\(id)",
+            titre: id == 44 ? "Ramonage des conduits de cheminée" : "Contrôle annuel de l'ascenseur",
+            description: id == 44
+                ? "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits."
+                : "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
+            categorie: "equipement", statut: "en_cours", urgente: false, creeLe: creeLe,
+            auteur: "Le conseil syndical", lieu: id == 44 ? "Bâtiment B" : "Ascenseur", photos: [],
+            suites: [], peutRepondre: false)
     }
 }

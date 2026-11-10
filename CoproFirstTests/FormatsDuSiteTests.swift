@@ -160,3 +160,28 @@ func lesTaillesSontCellesDuSite(octets: Int, attendu: String) {
     #expect(FormatsDuSite.moisAnnee(nil as String?) == "—")
     #expect(FormatsDuSite.octets(nil) == "—")
 }
+
+/// `fmtJourCourt` (#75) : la vignette d'échéance du fil. Chaque attendu est sa sortie sous
+/// Node (coprofirst v3.79.0, `front/src/lib/date.ts`, `TZ=Europe/Paris`), « maintenant »
+/// posé au 10 novembre 2026 : l'année ne s'écrit que si elle n'est pas celle-là.
+@Test(arguments: [
+    ("2026-11-17T08:00:00", "mar. 17 nov.", "17 nov."),  // sans fuseau : l'heure de Paris
+    ("2026-11-19T16:00:00", "jeu. 19 nov.", "19 nov."),
+    ("2026-11-01T09:00:00Z", "dim. 1 nov.", "1 nov."),  // le 1er, sans « er » ni zéro
+    ("2026-06-12", "ven. 12 juin", "12 juin"),  // un jour seul : minuit UTC
+    ("2026-02-03T10:00:00Z", "mar. 3 févr.", "3 févr."),
+    ("2026-09-06T10:00:00Z", "dim. 6 sept.", "6 sept."),
+    // Minuit à Paris n'est pas minuit UTC.
+    ("2026-07-25T21:59:00Z", "sam. 25 juil.", "25 juil."),
+    ("2026-07-25T22:00:00Z", "dim. 26 juil.", "26 juil."),
+    // Une autre année : écrite. Le 31 décembre à 23 h 30 UTC est déjà 2027 à Paris.
+    ("2027-01-15T09:00:00", "ven. 15 janv. 2027", "15 janv. 2027"),
+    ("2026-12-31T22:30:00Z", "jeu. 31 déc.", "31 déc."),
+    ("2026-12-31T23:30:00Z", "ven. 1 janv. 2027", "1 janv. 2027"),
+])
+func leJourCourtEstCeluiDuSite(iso: String, avecSemaine: String, sansSemaine: String) throws {
+    let maintenant = try #require(FormatsDuSite.lire("2026-11-10T12:00:00Z"))
+    #expect(FormatsDuSite.jourCourt(iso, maintenant: maintenant) == avecSemaine)
+    #expect(FormatsDuSite.jourCourt(iso, semaine: false, maintenant: maintenant) == sansSemaine)
+    #expect(FormatsDuSite.jourCourt(nil as String?) == "—")
+}

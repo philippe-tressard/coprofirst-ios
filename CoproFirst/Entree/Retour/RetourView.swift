@@ -128,8 +128,7 @@ private struct LogoRetour: View {
     @ScaledMetric(relativeTo: .title) private var cote: CGFloat = 96
 
     var body: some View {
-        Logo(installation: installation)
+        LogoResidence(installation: installation)
             .frame(width: min(cote, 160), height: min(cote, 160))
-            .accessibilityHidden(true)
     }
 }
