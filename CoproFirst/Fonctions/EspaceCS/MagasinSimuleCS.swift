@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Ce qu'un onglet de l'Espace CS garde en mémoire sur l'installation simulée : une
 /// boîte par service simulé ET par type de contenu — deux tests ne se marchent pas
 /// dessus, deux onglets non plus. Une extension de `ServiceSimule` ne peut pas ranger
@@ -57,3 +58,4 @@ extension ServiceSimule {
         }
     }
 }
+#endif

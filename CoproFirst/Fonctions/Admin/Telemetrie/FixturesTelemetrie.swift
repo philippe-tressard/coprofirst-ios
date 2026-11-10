@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Le tableau de bord que l'API simulée sert à « Télémétrie », une vue par réponse — en
 /// JSON, à la forme de la route, que le contrat ne type pas (`ReponseNonTypee`).
 ///
@@ -204,3 +205,4 @@ enum FixturesTelemetrie {
         return try reponse.lire(TableauTelemetrie.self)
     }
 }
+#endif

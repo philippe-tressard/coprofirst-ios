@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Des délégations inventées, pour les aperçus, les tests et les captures : des prénoms
 /// d'exemple, aucune personne réelle, aucune requête. La liste de départ est le JSON de
 /// la route (`FixturesDelegations`), lu comme le service réel le lit ; les gestes changent
@@ -68,3 +69,4 @@ extension ServiceSimule: ServiceDelegations {
         }
     }
 }
+#endif

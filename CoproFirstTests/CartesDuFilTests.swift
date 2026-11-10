@@ -34,12 +34,12 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
 }
 
 @Test func leFilSimuleCouvreToutesLesCibles() {
-    let cibles = ServiceSimule.fil.map(\.cible)
+    let cibles = Apercu.fil.map(\.cible)
     #expect(cibles.contains { if case .affaire = $0 { true } else { false } })
     #expect(cibles.contains { if case .sondage = $0 { true } else { false } })
     #expect(cibles.contains { if case .document = $0 { true } else { false } })
     #expect(cibles.contains { if case .resume = $0 { true } else { false } })
-    #expect(Set(ServiceSimule.fil.map(\.id)).count == ServiceSimule.fil.count, "identifiants type:id uniques")
+    #expect(Set(Apercu.fil.map(\.id)).count == Apercu.fil.count, "identifiants type:id uniques")
 }
 
 @Test func unNomDeFichierServiNeSortPasDuDossier() {

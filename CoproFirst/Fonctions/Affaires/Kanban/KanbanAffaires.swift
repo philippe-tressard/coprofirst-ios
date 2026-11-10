@@ -213,7 +213,7 @@ private struct ColonneDuKanban: View {
                         }
                     } else {
                         ForEach(0..<2, id: \.self) { _ in
-                            CarteKanban(affaire: ServiceSimule.affaires[4]).redacted(reason: .placeholder)
+                            CarteKanban(affaire: Apercu.affaires[4]).redacted(reason: .placeholder)
                         }
                         .accessibilityHidden(true)
                     }

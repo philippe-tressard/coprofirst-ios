@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Utilisateurs » simulé : les comptes inventés de `FixturesUtilisateursAdmin`, lus
 /// comme le service réel les lit ; les gestes changent la liste de CE service, comme le
 /// serveur — le premier bannissement est probatoire (un mois), le suivant définitif.
@@ -37,3 +38,4 @@ extension ServiceSimule: ServiceUtilisateursAdmin {
         try modifierSimule(depuis: FixturesUtilisateursAdmin.lus) { $0.removeAll { $0.id == id } }
     }
 }
+#endif

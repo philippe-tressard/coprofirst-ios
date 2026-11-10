@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les réponses que l'API simulée sert pour la Communauté — en JSON, telles que
 /// `/idees` et `/annonces` les renvoient, lues par les types GÉNÉRÉS puis par le MÊME
 /// branchement que le service réel (`Idee(_:)`, `Annonce(_:)`).
@@ -86,3 +87,4 @@ enum FixturesCommunaute {
         try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces).map(Annonce.init)
     }
 }
+#endif

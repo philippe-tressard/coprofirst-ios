@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Un journal inventé : des objets d'exemple, aucune adresse réelle.
 extension ServiceSimule: ServiceCourrielsCS {
     func journalCourriels(_ installation: Installation) async throws -> JournalCourriels {
@@ -31,3 +32,4 @@ extension ServiceSimule: ServiceCourrielsCS {
             ])
     }
 }
+#endif

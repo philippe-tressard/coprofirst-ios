@@ -51,12 +51,12 @@ private func page(_ id: String) -> PageDeNavigation {
 }
 
 @Test func leFilSeRangeJourParJourLePlusRecentEnTete() {
-    let jours = Chronologie.parJour(ServiceSimule.fil)
+    let jours = Chronologie.parJour(Apercu.fil)
     #expect(jours.map(\.jour) == jours.map(\.jour).sorted(by: >))
     for jour in jours {
         #expect(jour.elements.map(\.date) == jour.elements.map(\.date).sorted(by: >))
     }
-    #expect(jours.flatMap(\.elements).count == ServiceSimule.fil.count)
+    #expect(jours.flatMap(\.elements).count == Apercu.fil.count)
 }
 
 @Test func lUrgenceSuitLaRegleDuSite() {

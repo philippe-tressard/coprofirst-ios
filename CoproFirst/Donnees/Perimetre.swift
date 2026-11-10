@@ -66,6 +66,8 @@ extension ServiceAPI: ServicePerimetres {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] { try FixturesPerimetres.lus() }
 }
+#endif

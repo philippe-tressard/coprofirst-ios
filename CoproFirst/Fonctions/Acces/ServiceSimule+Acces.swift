@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Mes lots & accès » simulé : les réponses du serveur (`FixturesAcces`, en JSON,
 /// confrontées au contrat par `FixturesAccesTests`), lues par le même branchement que
 /// le service réel.
@@ -96,3 +97,4 @@ final class AccesSimules: @unchecked Sendable {
         }
     }
 }
+#endif

@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Le parc que l'API simulée sert à « Badges & télécommandes » — le JSON de
 /// `/acces/admin/vigiks` et `/acces/admin/telecommandes`, lu par le type GÉNÉRÉ puis par
 /// le MÊME branchement que le service réel, et jugé contre le contrat par
@@ -54,3 +55,4 @@ enum FixturesBadgesCS {
             + Relecture.generee(Parc.self, json: telecommandes).map { AccesDuParc(.telecommande, $0) }
     }
 }
+#endif

@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Demandes de profil » simulées : lues du JSON de leur route (`FixturesDemandesProfil`)
 /// par `Relecture`, comme le service réel. Un traitement retire la demande, comme le
 /// serveur ; une demande déjà traitée est refusée avec sa phrase.
@@ -24,3 +25,4 @@ extension ServiceSimule: ServiceDemandesProfil {
         }
     }
 }
+#endif

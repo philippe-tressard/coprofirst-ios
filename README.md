@@ -58,7 +58,8 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 
 Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
-connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
+verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -69,10 +70,16 @@ Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou rése
 au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
 jugé en CI.
 
-Pour les essayer sans réseau, l'app accepte des arguments de lancement :
+Pour les essayer sans réseau, un build **Debug** accepte des arguments de lancement :
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
-(`-faceid-refuse` : Face ID annulé à chaque demande).
+(`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
+la session gardée sans biométrie). Un build Release ne compile pas la simulation
+(`scripts/verifier-simule.py`, #84).
+
+Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
+dernière connexion — va au Trousseau de l'appareil ; les réglages ne gardent que la
+résidence (adresse, nom, présentation).
 
 ## Charte
 

@@ -34,6 +34,9 @@
 #      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50) ;
 #  14. les tickets de la concordance : un vert ferme, un rouge ou un INCONNU jamais —
 #      autotest de scripts/tickets_concordance.py (#67).
+#  15. la simulation ne part pas en production : `ServiceSimule`, ses jeux de
+#      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
+#      autotest d'abord, #84).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -235,6 +238,11 @@ bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateu
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
 python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
 
+# La simulation reste aux builds Debug (#84) : l'autotest prouve que le juge refuse
+# un symbole hors de `#if DEBUG`, puis le juge lit l'app. INCONNU (2) est un échec.
+python3 -I scripts/verifier-simule.py --autotest >/dev/null || echec "verifier-simule.py : autotest en échec"
+SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simulation hors de #if DEBUG"; }
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -243,4 +251,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

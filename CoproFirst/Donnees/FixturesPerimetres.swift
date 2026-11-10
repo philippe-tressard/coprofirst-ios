@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// L'arbre des périmètres que l'API simulée sert (`GET /perimetres`) — en JSON, lu par le
 /// type GÉNÉRÉ puis par `Perimetre(lu:)`, comme le service réel. Une racine désignée par
 /// défaut, quatre lieux ; le carnet filtre sur `bat_a`.
@@ -52,3 +53,4 @@ enum FixturesPerimetres {
             .map(Perimetre.init(lu:))
     }
 }
+#endif

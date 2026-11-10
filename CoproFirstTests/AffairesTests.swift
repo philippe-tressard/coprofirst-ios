@@ -10,7 +10,7 @@ import Testing
 // MARK: - Liste
 
 @Test func laListeNeMontreQueLesAffairesActives() {
-    let affaires = ServiceSimule.affaires
+    let affaires = Apercu.affaires
     let liste = affaires.liste(filtres: .init(), options: [], trouvees: nil, avecArchives: false)
     #expect(!liste.isEmpty)
     #expect(liste.allSatisfy { !$0.archivee }, "les archivées vivent dans leur onglet")
@@ -18,7 +18,7 @@ import Testing
 }
 
 @Test func leSuiviNOffreQueLesEtatsPresentsEtReunitLesGroupes() {
-    let actives = ServiceSimule.affaires.filter { !$0.archivee }
+    let actives = Apercu.affaires.filter { !$0.archivee }
     let options = OptionDeSuivi.presentes(dans: actives)
     // en_ag, en_cours et chez_prestataire se réunissent sous « En cours » (GROUPES_SUIVI).
     #expect(options.map(\.code) == ["ouvert", "en_cours", "résolu", "annulé"])
@@ -27,7 +27,7 @@ import Testing
 }
 
 @Test func leFiltreDeSuiviRetientLesStatutsDeSonOption() {
-    let affaires = ServiceSimule.affaires
+    let affaires = Apercu.affaires
     let options = OptionDeSuivi.presentes(dans: affaires.filter { !$0.archivee })
     var filtres = FiltresAffaires()
     filtres.suivi = "en_cours"
@@ -36,7 +36,7 @@ import Testing
 }
 
 @Test func laNatureEtLaPorteeFiltrentCommeLeSite() {
-    let affaires = ServiceSimule.affaires
+    let affaires = Apercu.affaires
     var filtres = FiltresAffaires(nature: "actualite")
     let actualites = affaires.liste(filtres: filtres, options: [], trouvees: nil, avecArchives: false)
     #expect(!actualites.isEmpty && actualites.allSatisfy { $0.estActualite })
@@ -48,7 +48,7 @@ import Testing
 }
 
 @Test func laRechercheGardeLOrdreDuServeurEtProposeLesArchives() {
-    let affaires = ServiceSimule.affaires
+    let affaires = Apercu.affaires
     let trouvees = [35, 22, 41]  // 22 est archivée
     let sans = affaires.liste(filtres: .init(), options: [], trouvees: trouvees, avecArchives: false)
     #expect(sans.map(\.id) == [35, 41], "l'ordre est la pertinence du serveur")
@@ -75,7 +75,7 @@ import Testing
 }
 
 @Test func leKanbanNePrendQueLesAffairesSuiviesActivesEtRangees() {
-    let kanban = ServiceSimule.affaires.auKanban
+    let kanban = Apercu.affaires.auKanban
     #expect(kanban.allSatisfy { $0.suiviKanban && !$0.archivee && $0.colonne != nil })
     #expect(!kanban.contains { $0.statut == "publie" }, "un statut sans colonne sort du tableau")
 }
@@ -185,13 +185,14 @@ import Testing
     let suite = "tests.\(UUID().uuidString)"
     let reglages = try #require(UserDefaults(suiteName: suite))
     defer { reglages.removePersistentDomain(forName: suite) }
-    let connues = InstallationsConnues(reglages: reglages)
+    let coffre = CoffreEnMemoire()
+    let connues = InstallationsConnues(reglages: reglages, coffre: coffre)
     let residence = ServiceSimule.residence
     connues.retenir(residence)
     connues.retenir(Installation(adresse: URL(string: "https://autre.exemple.fr")!, nom: "Autre", aUnLogo: false))
     connues.retenir(residence)
     #expect(connues.liste.map(\.nom) == [residence.nom, "Autre"])
-    #expect(InstallationsConnues(reglages: reglages).liste.count == 2, "relue au lancement suivant")
+    #expect(InstallationsConnues(reglages: reglages, coffre: coffre).liste.count == 2, "relue au lancement suivant")
 }
 
 // MARK: - Ce que le serveur sert depuis le contrat 1.8.0 (#54)

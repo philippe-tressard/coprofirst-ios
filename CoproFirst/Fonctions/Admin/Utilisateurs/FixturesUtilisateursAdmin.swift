@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les comptes que l'API simulée sert à « Utilisateurs » — en JSON, à la forme de leur
 /// route, lus par les types GÉNÉRÉS puis par le MÊME branchement que le service réel, et
 /// jugés contre le contrat par `scripts/verifier-fixtures.py`.
@@ -68,3 +69,4 @@ enum FixturesUtilisateursAdmin {
         PhraseAvis(try Relecture.generee(Components.Schemas.AutoMatchRelance.self, json: rapprochement).annonce)
     }
 }
+#endif

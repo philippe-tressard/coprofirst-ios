@@ -71,10 +71,10 @@ final class ServiceAPI: ServiceCoproFirst {
         }
     }
 
-    func activerFaceID(_ installation: Installation) async -> Bool {
-        guard let jeton = cookie("refresh_token", installation) else { return false }
-        Trousseau.enregistrer(jeton, pour: installation.hote)
-        return Trousseau.contient(pour: installation.hote)
+    func activerFaceID(_ installation: Installation) async -> ProtectionSession? {
+        guard let jeton = cookie("refresh_token", installation) else { return nil }
+        let protection = Trousseau.enregistrer(jeton, pour: installation.hote)
+        return Trousseau.contient(pour: installation.hote) ? protection : nil
     }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {
