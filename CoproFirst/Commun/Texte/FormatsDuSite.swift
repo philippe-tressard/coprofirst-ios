@@ -13,6 +13,7 @@ import Foundation
 /// | `dateHeure(_:)` | `fmtDatetime`, idem | « 2 avr. 2026, 16:30 » |
 /// | `dateHeureCourte(_:)` | `fmtDatetimeShort`, idem | « 02/04/2026 16:30 » |
 /// | `heure(_:)` | `fmtTime`, idem | « 16:30 » |
+/// | `jourCourt(_:semaine:)` | `fmtJourCourt`, idem (v3.79.0) | « mar. 17 nov. », « 19 nov. » |
 /// | `jourISO(_:)` | `jourIso`, idem | « 2026-04-02 » (envoyé) |
 /// | `moisAnnee(_:)` | `fmtMonthYear`, idem | « novembre 2026 » |
 /// | `moisCourt(_:)` | `fmtMoisCourt`, idem | « nov. » |
@@ -76,6 +77,27 @@ enum FormatsDuSite {
     static func dateHeure(_ iso: String?) -> String { dateHeure(lire(iso)) }
     static func dateHeureCourte(_ iso: String?) -> String { dateHeureCourte(lire(iso)) }
     static func heure(_ iso: String?) -> String { heure(lire(iso)) }
+
+    /// `fmtJourCourt` (coprofirst v3.79.0) : « mar. 17 nov. » — le jour d'un rendez-vous
+    /// en peu de place, la vignette d'échéance du fil (#75). L'année ne s'ajoute que si
+    /// elle n'est pas celle de `maintenant`, à Paris : « ven. 15 janv. 2027 ».
+    /// `semaine: false` retire le jour de la semaine (« 19 nov. ») : la fin d'une plage.
+    static func jourCourt(_ valeur: Date?, semaine: Bool = true, maintenant: Date = .now) -> String {
+        guard let valeur else { return tiret }
+        var format = style.day().month(.abbreviated)
+        if semaine { format = format.weekday(.abbreviated) }
+        if annee(valeur) != annee(maintenant) { format = format.year() }
+        return valeur.formatted(format)
+    }
+
+    static func jourCourt(_ iso: String?, semaine: Bool = true, maintenant: Date = .now) -> String {
+        jourCourt(lire(iso), semaine: semaine, maintenant: maintenant)
+    }
+
+    /// L'année d'un instant à Paris (le 31 décembre à 23 h 30 UTC est déjà l'an suivant).
+    private static func annee(_ valeur: Date) -> Int {
+        Calendar(identifier: .gregorian).dateComponents(in: paris, from: valeur).year ?? 0
+    }
 
     /// `jourIso` : le JOUR de Paris d'un instant, « 2026-04-10 » — la valeur qu'un
     /// formulaire envoie pour une date (#15, la fin d'une délégation). Jamais le jour
