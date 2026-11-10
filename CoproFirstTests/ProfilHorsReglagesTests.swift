@@ -96,8 +96,18 @@ private struct CoffreQuiRefuse: CoffreDuCompte {
     #expect(contenu(suite).contains("locataire"), "le profil reste, jusqu'à ce que le coffre l'accepte")
 }
 
+/// Le Trousseau accepte-t-il d'écrire ? Non dans un build sans signature
+/// (`CODE_SIGNING_ALLOWED=NO`, `tests-simulateur.sh` et la CI) : l'app n'y a pas de
+/// trousseau à elle. Le test se déclare alors désactivé — INCONNU, jamais vert.
+private let trousseauAccessible: Bool = {
+    let sonde = "tests.sonde.\(UUID().uuidString)"
+    defer { Trousseau.effacerCompte(sonde) }
+    return Trousseau.rangerCompte(Data([1]), sonde)
+}()
+
 /// Le coffre de l'app est le Trousseau : une valeur rangée se relit, puis s'efface.
-@Test func leCoffreDuTrousseauRangeRelitEtEfface() {
+@Test(.enabled(if: trousseauAccessible, "Trousseau inaccessible : build sans signature — INCONNU"))
+func leCoffreDuTrousseauRangeRelitEtEfface() {
     let coffre = CoffreTrousseau()
     let cle = "tests.\(UUID().uuidString)"
     defer { coffre.effacer(cle) }
