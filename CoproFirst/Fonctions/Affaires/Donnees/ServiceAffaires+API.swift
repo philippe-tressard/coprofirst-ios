@@ -38,6 +38,15 @@ extension ServiceAPI: ServiceAffaires {
         return !mes.batiments.isEmpty || !mes.desservis.isEmpty
     }
 
+    func sectionsEssentielles(_ installation: Installation) async throws -> SectionsEssentielles {
+        let sortie = try await appeler { try await client(installation.adresse).getTicketsReferentiels() }
+        switch sortie {
+        case .ok(let ok): return SectionsEssentielles(servies: try ok.body.json.categories)
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        }
+    }
+
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire {
         guard let categorie = Components.Schemas.CategorieTicket(rawValue: saisie.categorie) else {
             throw ErreurAffaires.categorieInconnue

@@ -35,7 +35,8 @@ struct CoproFirstApp: App {
 /// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
 /// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul ;
 /// `-logo-residence <contrat>` donne à la résidence un logo et sa variante sombre, et
-/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70).
+/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70) ;
+/// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle).
 /// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
 enum Lancement {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -132,6 +133,11 @@ enum Lancement {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
+        if let saisie = arguments.firstIndex(of: "-saisie").flatMap({
+            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
+        }) {
+            simule.profilSimule.saisieAffaire = saisie
+        }
         let compte = arguments.firstIndex(of: "-compte").flatMap {
             arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
         }

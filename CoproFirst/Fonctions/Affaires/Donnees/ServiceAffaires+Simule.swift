@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Le menu Affaires sur l'installation simulée : aucune requête. Les gestes
@@ -23,6 +24,14 @@ extension ServiceSimule: ServiceAffaires {
     }
 
     func offrirMeConcerne(_ installation: Installation) async -> Bool { true }
+
+    func sectionsEssentielles(_ installation: Installation) async throws -> SectionsEssentielles {
+        try await Task.sleep(for: .milliseconds(150))
+        // La réponse simulée est GÉNÉRÉE depuis la table du serveur, lue par le type généré.
+        return SectionsEssentielles(
+            servies: try Relecture.generee(
+                [Components.Schemas.CategorieServie].self, json: FixturesCategoriesServies.categories))
+    }
 
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire {
         try await Task.sleep(for: .milliseconds(450))

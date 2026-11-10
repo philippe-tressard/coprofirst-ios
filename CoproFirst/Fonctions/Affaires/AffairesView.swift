@@ -17,10 +17,19 @@ struct AffairesView: View {
     @State private var etat = EtatAffaires()
     @State private var onglet = "liste"
     @State private var nouvelle = false
+    /// Les sections essentielles de chaque catégorie, lues d'avance : « Nouvelle affaire »
+    /// s'ouvre composée, sans qu'une section change de place sous le pouce (#69).
+    @State private var essentielles: SectionsEssentielles?
 
     private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
     /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
     private var onglets: [OngletDuSite] { droits.onglets }
+    /// La saisie du compte, telle que le serveur la sert (`saisie_affaire_effective`).
+    private var forme: FormeDeSaisie? {
+        ModeSaisie(servi: parcours.ouverteAJour?.profil?.saisieAffaire).map {
+            FormeDeSaisie(mode: $0, essentielles: essentielles)
+        }
+    }
 
     var body: some View {
         let service = parcours.service.menuAffaires
@@ -42,7 +51,7 @@ struct AffairesView: View {
             ToolbarItem(placement: .topBarLeading) { boutonNouvelle }
         }
         .sheet(isPresented: $nouvelle) {
-            NouvelleAffaireView(installation: installation, droits: droits, service: service) { creee in
+            NouvelleAffaireView(installation: installation, droits: droits, service: service, forme: forme) { creee in
                 etat.ajouter(creee)
                 onglet = "liste"
             }
@@ -59,6 +68,11 @@ struct AffairesView: View {
         .task {
             await etat.charger(installation, avec: service)
             await parcours.rafraichirProfil()
+        }
+        .task(id: nouvelle) {
+            // Lues à l'arrivée ; relues à l'ouverture de la feuille si la première lecture a échoué.
+            guard essentielles == nil, let service else { return }
+            essentielles = try? await service.sectionsEssentielles(installation)
         }
     }
 

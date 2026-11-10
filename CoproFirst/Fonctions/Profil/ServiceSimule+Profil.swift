@@ -35,6 +35,16 @@ extension ServiceSimule: ServiceProfil {
         try await Task.sleep(for: .milliseconds(250))
     }
 
+    /// Comme le serveur (`choix_a_enregistrer`) : les deux modes s'enregistrent, tout autre
+    /// mot est refusé en 400 — « role » compris depuis coprofirst#2615.
+    func choisirSaisie(_ mode: String, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(250))
+        guard TablesSaisie.options.contains(where: { $0.code == mode }) else {
+            throw ErreurService.refus(.init(phrase: "Valeur invalide pour saisie_affaire"))
+        }
+        profilSimule.saisieAffaire = mode
+    }
+
     func refuserTelemetrie(_ refus: Bool, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(200))
     }
