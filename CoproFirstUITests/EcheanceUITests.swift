@@ -10,18 +10,25 @@ final class EcheanceUITests: XCTestCase {
     @MainActor
     func testLesAffairesDateesDisentQuandEllesOntLieu() throws {
         let app = LancementCaptures.lancer()
-        let jourJ = app.elementAcces("fil.ticket_mis_a_jour:44")
-        XCTAssertTrue(jourJ.waitForExistence(timeout: 8), "le fil est chargé")
-        XCTAssertTrue(jourJ.label.contains("Jour J, prévu le "), jourJ.label)
-        XCTAssertTrue(app.elementAcces("fil.publication:12").label.contains("J-2, prévu le "))
+        // Chaque carte est amenée à l'écran avant d'être lue : en très grand texte, le fil
+        // paresseux ne crée pas celles du dessous.
         let sansDate = app.elementAcces("fil.ticket_ouvert:41")
+        XCTAssertTrue(sansDate.waitForExistence(timeout: 8), "le fil est chargé")
         XCTAssertFalse(sansDate.label.contains("prévu"), "une affaire sans date n'a pas de vignette")
+        let aVenir = app.elementAcces("fil.publication:12")
+        defiler(app, jusqua: aVenir)
+        XCTAssertTrue(aVenir.label.contains("J-2, prévu le "), aVenir.label)
+        let jourJ = app.elementAcces("fil.ticket_mis_a_jour:44")
+        defiler(app, jusqua: jourJ)
+        XCTAssertTrue(jourJ.label.contains("Jour J, prévu le "), jourJ.label)
         LancementCaptures.capturer("fil-echeance-1-jour-j-a-venir-sans-date")
 
         let plage = app.elementAcces("fil.ticket_mis_a_jour:38")
         defiler(app, jusqua: plage)
         XCTAssertTrue(plage.label.contains("J-8, prévu du "), plage.label)
-        XCTAssertTrue(app.elementAcces("fil.ticket_mis_a_jour:45").label.contains("Passé, prévu le "))
+        let passee = app.elementAcces("fil.ticket_mis_a_jour:45")
+        defiler(app, jusqua: passee)
+        XCTAssertTrue(passee.label.contains("Passé, prévu le "), passee.label)
         LancementCaptures.capturer("fil-echeance-2-plusieurs-jours-passee")
 
         let close = app.elementAcces("fil.ticket_resolu:31")
@@ -37,7 +44,7 @@ final class EcheanceUITests: XCTestCase {
 
     @MainActor
     private func defiler(_ app: XCUIApplication, jusqua carte: XCUIElement) {
-        for _ in 0..<8 where !carte.exists || !carte.isHittable { app.swipeUp() }
+        for _ in 0..<16 where !carte.exists || !carte.isHittable { app.swipeUp() }
         XCTAssertTrue(carte.isHittable, "la carte est à l'écran")
     }
 }
