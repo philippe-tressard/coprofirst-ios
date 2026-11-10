@@ -22,6 +22,9 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     let meConcerne: Bool
     /// Ce qu'ouvre un toucher sur la carte.
     let cible: CibleDuFil
+    /// Le délai et les dates d'une affaire datée (`meta.affaire`, coprofirst v3.79.0) ;
+    /// `nil` sans date, ou servi par une installation plus ancienne (#75).
+    var echeance: EcheanceDuFil?
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 

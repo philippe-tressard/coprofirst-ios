@@ -22,16 +22,10 @@ final class ServiceAPI: ServiceCoproFirst {
         switch sortie {
         case .ok(let ok):
             let cles = try ok.body.json.additionalProperties
-            guard let nom = cles["site_nom"], !nom.isEmpty else { throw ErreurService.pasCoproFirst }
-            let prefixe = "page_config_"
-            let surcharges = cles.reduce(into: [String: SurchargePage]()) { surcharges, cle in
-                guard cle.key.hasPrefix(prefixe), let surcharge = SurchargePage(json: cle.value) else { return }
-                surcharges[String(cle.key.dropFirst(prefixe.count))] = surcharge
+            guard let installation = Installation(adresse: adresse, config: cles) else {
+                throw ErreurService.pasCoproFirst
             }
-            return Installation(
-                adresse: adresse, nom: nom, aUnLogo: !(cles["site_logo"] ?? "").isEmpty,
-                codePalette: cles["site_palette"], ordrePages: OrdrePages.lire(cles["pages_order"]),
-                surchargesPages: surcharges)
+            return installation
         case .undocumented(let statut, _):
             throw ErreurService.depuis(statut: statut)
         }
@@ -177,7 +171,8 @@ extension ElementDuFil {
                 meta: .init(
                     ticketId: entier("ticket_id"), sondageId: entier("sondage_id"), documentId: entier("document_id"),
                     fichierNom: meta["fichier_nom"] as? String),
-                lien: item.lien)
+                lien: item.lien),
+            echeance: EcheanceDuFil(meta: item.meta?.additionalProperties)
         )
     }
 }

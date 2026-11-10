@@ -31,7 +31,9 @@ struct CoproFirstApp: App {
 /// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
 /// une page que l'administration a renommée, `-logement-long` pour un libellé de
 /// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
-/// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul.
+/// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul ;
+/// `-logo-residence <contrat>` donne à la résidence un logo et sa variante sombre, et
+/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70).
 /// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
 enum Lancement {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -54,7 +56,8 @@ enum Lancement {
         }
         compteSimule(arguments, simule)
         let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
-        let residence = ServiceSimule.residence
+        simule.residenceServie = residenceSimulee(arguments)
+        let residence = simule.residenceServie
         let ecran = arguments.firstIndex(of: "-ecran").flatMap {
             arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
         }
@@ -88,6 +91,20 @@ enum Lancement {
             break
         }
         return parcours
+    }
+
+    /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
+    /// variante sombre, servis à ce contrat (#70).
+    private static func residenceSimulee(_ arguments: [String]) -> Installation {
+        var residence = ServiceSimule.residence
+        if let contrat = arguments.firstIndex(of: "-logo-residence").flatMap({
+            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
+        }) {
+            residence.aUnLogo = true
+            residence.aUnLogoSombre = true
+            residence.versionContrat = contrat
+        }
+        return residence
     }
 
     /// `-compte administrateur` : le compte du conseil, administrateur aussi ;

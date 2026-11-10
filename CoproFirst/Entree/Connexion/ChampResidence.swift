@@ -38,7 +38,7 @@ struct ChampResidence: View {
                 }, enErreur: erreur != nil)
             if let reconnue {
                 HStack(spacing: 8) {
-                    Logo(installation: reconnue).frame(width: 20, height: 20)
+                    LogoResidence(installation: reconnue).frame(width: 20, height: 20)
                     Text(reconnue.nom)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(palette.text)

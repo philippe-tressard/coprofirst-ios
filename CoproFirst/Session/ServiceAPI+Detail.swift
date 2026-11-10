@@ -108,8 +108,20 @@ extension ServiceAPI {
         guard let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteURL,
             adresse.host() == installation.adresse.host()
         else { throw ErreurService.inattendue(400) }
+        return try await lireFichier(adresse)
+    }
+
+    /// Le logo de la résidence, à l'adresse que donne `Installation.adresseLogo(sombre:)`
+    /// — une image servie par l'API, que le contrat déclare en JSON : la session de
+    /// l'hôte la lit, comme une photo.
+    func logo(_ adresse: URL) async throws -> Data {
+        try await lireFichier(adresse)
+    }
+
+    /// Un fichier de l'hôte (image, photo), lu par la session HTTP de son installation.
+    private func lireFichier(_ adresse: URL) async throws -> Data {
         do {
-            let (donnees, reponse) = try await sessions.session(pour: installation.adresse).data(from: adresse)
+            let (donnees, reponse) = try await sessions.session(pour: adresse).data(from: adresse)
             let statut = (reponse as? HTTPURLResponse)?.statusCode ?? 0
             guard statut == 200 else { throw ErreurService.depuisLecture(statut) }
             return donnees

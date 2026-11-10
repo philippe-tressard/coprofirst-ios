@@ -37,7 +37,7 @@ struct PastilleOuSuisJe: ToolbarContent {
                 parcours.changerDeResidence = true
             } label: {
                 HStack(spacing: 6) {
-                    Logo(installation: installation).frame(width: 22, height: 22)
+                    LogoResidence(installation: installation).frame(width: 22, height: 22)
                     if !logoSeul {
                         Text(nom)
                             .font(.subheadline.weight(.semibold))
@@ -52,34 +52,5 @@ struct PastilleOuSuisJe: ToolbarContent {
             .accessibilityHint("Changer de résidence")
             .accessibilityIdentifier("pastille.residence")
         }
-    }
-}
-
-/// Le logo téléversé par la résidence, sinon celui de CoproFirst — comme le site, qui
-/// montre le logo neutre tant que la résidence n'a pas téléversé le sien.
-struct Logo: View {
-    let installation: Installation?
-
-    var body: some View {
-        if let adresse = installation?.adresseLogo {
-            AsyncImage(url: adresse) { image in
-                image.resizable().scaledToFit()
-            } placeholder: {
-                MedaillonPlein()
-            }
-            .clipShape(.rect(cornerRadius: 5, style: .continuous))
-        } else {
-            MedaillonPlein()
-        }
-    }
-}
-
-/// Le logo de CoproFirst qui remplit son cadre (pastille, ligne de liste).
-private struct MedaillonPlein: View {
-    var body: some View {
-        Image("Logo")
-            .resizable()
-            .scaledToFit()
-            .accessibilityHidden(true)
     }
 }

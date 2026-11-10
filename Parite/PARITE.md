@@ -47,7 +47,7 @@ Le fil, écran d'accueil de la résidence ouverte.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `tableau-de-bord` | — | fait |  | Le fil (`Fonctions/Fil`) — parcours v2, #4 à #8 |
+| `tableau-de-bord` | — | fait | #75 | Le fil (`Fonctions/Fil`) — parcours v2, #4 à #8 ; l'échéance d'une affaire datée sous son classement (délai servi, dates), #75 |
 
 ### #11 — Mes affaires
 

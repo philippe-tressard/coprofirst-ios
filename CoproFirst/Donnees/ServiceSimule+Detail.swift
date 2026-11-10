@@ -44,7 +44,7 @@ extension ServiceSimule {
     /// syndical ; « Répondre » seul à un résident, sur les affaires qui le concernent.
     /// Le fil des messages vient des fixtures, notes internes au conseil seulement.
     static func affaires(_ id: Int, conseil: Bool) throws -> DetailAffaire? {
-        guard var detail = affaires(id) else { return nil }
+        guard var detail = [44, 45].contains(id) ? affaireDatee(id) : affaires(id) else { return nil }
         if !detail.estActualite { detail.messages = try FixturesMessagesAffaire.lus(pour: id, conseil: conseil) }
         let repondre = detail.droits.repondre
         detail.droits =
@@ -105,5 +105,19 @@ extension ServiceSimule {
         default:
             return nil
         }
+    }
+
+    /// Deux affaires datées du fil (#75) : un ramonage le jour même, un contrôle passé.
+    private static func affaireDatee(_ id: Int) -> DetailAffaire {
+        let creeLe = Date.now.addingTimeInterval(-(id == 44 ? 9 : 20) * 3600)
+        return DetailAffaire(
+            id: id, numero: "A-00\(id)",
+            titre: id == 44 ? "Ramonage des conduits de cheminée" : "Contrôle annuel de l'ascenseur",
+            description: id == 44
+                ? "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits."
+                : "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
+            categorie: "equipement", statut: "en_cours", urgente: false, creeLe: creeLe,
+            auteur: "Le conseil syndical", lieu: id == 44 ? "Bâtiment B" : "Ascenseur", photos: [],
+            suites: [])
     }
 }
