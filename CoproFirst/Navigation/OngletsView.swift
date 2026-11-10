@@ -11,11 +11,11 @@ struct OngletsView: View {
     @Environment(\.palette) private var palette
     @Environment(Parcours.self) private var parcours
 
-    private static let visibles = 4
+    /// Les onglets qui tiennent dans la barre ; au-delà, « Plus » (`Aiguillage.idPlus`).
+    static let visibles = 4
 
     var body: some View {
-        let profil = parcours.ouverteAJour?.profil ?? installation.profil
-        let pages = PagesOuvertes.filtrer(installation.pages, droits: DroitsOnglet(profil: profil))
+        let pages = parcours.pagesDeLaBarre(installation)
         @Bindable var parcours = parcours
         TabView(selection: $parcours.onglet) {
             ForEach(pages.prefix(Self.visibles)) { page in
@@ -26,10 +26,23 @@ struct OngletsView: View {
             if pages.count > Self.visibles {
                 PlusView(pages: Array(pages.dropFirst(Self.visibles)), installation: installation)
                     .tabItem { Label("Plus", systemImage: "ellipsis.circle") }
-                    .tag("plus")
+                    .tag(Aiguillage.idPlus)
             }
         }
         .tint(palette.primary)
+        // L'affaire d'un lien ou d'une notification, quand son onglet n'est pas dans la barre.
+        .sheet(item: $parcours.porte.affaireEnFeuille) { affaire in
+            NavigationStack {
+                DetailAffaireView(id: affaire.id, installation: installation)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Fermer") { parcours.porte.affaireEnFeuille = nil }
+                                .accessibilityIdentifier("porte.fermer")
+                        }
+                    }
+            }
+            .presentationDragIndicator(.visible)
+        }
         // La barre dépend des rôles : ils se relisent à l'ouverture de la résidence.
         .task { await parcours.rafraichirProfil() }
     }
