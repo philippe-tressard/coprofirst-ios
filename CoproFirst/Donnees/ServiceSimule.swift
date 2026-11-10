@@ -9,11 +9,15 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Une résidence inventée, à sa palette (bouteille), avec la barre par défaut du site.
     static let residence = Installation(
         adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
-        codePalette: "bouteille")
-    /// La démonstration, telle que la simule l'app (sans requête).
+        codePalette: "bouteille", versionContrat: "1.15.0")
+    /// La démonstration, telle que la simule l'app (sans requête) — au contrat qu'elle sert.
     static let demo = Installation(
-        adresse: URL(string: "https://demo.coprofirst.fr")!, nom: "Résidence Les Glycines", aUnLogo: false)
+        adresse: URL(string: "https://demo.coprofirst.fr")!, nom: "Résidence Les Glycines", aUnLogo: false,
+        versionContrat: "1.14.0")
 
+    /// La résidence que sert la découverte (GET /config simulé) : `residence`, ou celle
+    /// qu'un argument de lancement a changée (`-logo-residence`, #70).
+    var residenceServie = ServiceSimule.residence
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
     /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
@@ -35,7 +39,7 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         case "injoignable.exemple.fr": throw ErreurService.injoignable
         case "demo.coprofirst.fr": return Self.demo
         default:
-            var installation = Self.residence
+            var installation = residenceServie
             installation.adresse = adresse
             return installation
         }
