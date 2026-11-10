@@ -8,6 +8,8 @@ import Foundation
 protocol ServiceGestesAffaire: Sendable {
     /// POST /tickets/{id}/evolutions : une Suite — un commentaire, ou un nouvel état.
     func ajouterSuite(_ suite: SaisieSuite, a affaire: Int, dans installation: Installation) async throws
+    /// PATCH /tickets/{id} : « Modifier l'affaire » — les seuls champs changés.
+    func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws
     /// PATCH /tickets/{id} : une option de mise en avant, posée ou retirée.
     func regler(
         _ option: OptionAffaire, active: Bool, de affaire: Int, dans installation: Installation

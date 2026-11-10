@@ -6,10 +6,10 @@ import Foundation
 /// Une icône du bandeau d'une affaire. L'ORDRE est celui de la rangée du site
 /// (`ActionsTicket.svelte`, arbitré le 18/08/2026) : 🔗 · 💬 · 🔄 · ✏️ · options · 📦.
 ///
-/// ✏️ Modifier n'y est pas encore : comment choisir l'élément à modifier reste à
-/// décider (10/11/2026) — l'affaire elle-même, ou une suite de son Historique.
+/// ✏️ modifie l'AFFAIRE (décision du 10/11/2026, #91) ; corriger une suite de son
+/// Historique attend que le serveur en serve le droit (coprofirst#2646).
 enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
-    case lien, repondre, suite, options, archiver
+    case lien, repondre, suite, modifier, options, archiver
 
     var id: String { rawValue }
 
@@ -18,6 +18,8 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
         case .lien: "Copier le lien"
         case .repondre: "Répondre"
         case .suite: "Ajouter une suite"
+        // « Modifier » tout court, comme le site : on est sur l'affaire.
+        case .modifier: "Modifier"
         case .options: "Options"
         case .archiver: "Archiver"
         }
@@ -29,6 +31,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
         case .lien: "link"
         case .repondre: "text.bubble"
         case .suite: "arrow.triangle.2.circlepath"
+        case .modifier: "pencil"
         case .options: "ellipsis.circle"
         case .archiver: "archivebox"
         }
@@ -41,6 +44,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
     ///   l'administration — eux suivent l'affaire par 🔄 (décision du 10/11/2026,
     ///   divergence iOS déclarée) ; jamais sur une actualité ni une affaire fusionnée
     ///   (`gesteReponse` du site) ;
+    /// - ✏️ et les options au lecteur qui peut modifier l'affaire (`peut_modifier`) ;
     /// - 📦 tant que l'affaire n'est pas aux Archives.
     static func offerts(pour affaire: DetailAffaire, conseil: Bool) -> [GesteAffaire] {
         allCases.filter { geste in
@@ -48,7 +52,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
             case .lien: true
             case .repondre: affaire.droits.repondre && !conseil && !affaire.estActualite && !affaire.fusionnee
             case .suite: affaire.droits.changerEtat
-            case .options: affaire.droits.modifier
+            case .modifier, .options: affaire.droits.modifier
             case .archiver: affaire.droits.archiver && !affaire.archivee
             }
         }
