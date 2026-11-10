@@ -4,8 +4,9 @@
 import SwiftUI
 
 /// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
-/// Actualité : en-tête, description, photos, Historique, et « Répondre » si la
-/// route l'accepte.
+/// Actualité : en-tête, description, photos, Historique, le fil des messages (pas sur
+/// une actualité), et le bandeau de ses gestes (`BandeauAffaire`), selon ce que le
+/// serveur ouvre au lecteur.
 struct DetailAffaireView: View {
     let id: Int
     let installation: Installation
@@ -19,11 +20,15 @@ struct DetailAffaireView: View {
             charger: { [id] in try await service.affaire(id, dans: installation) },
             contenu: { affaire, recharger in
                 ContenuAffaire(affaire: affaire, installation: installation, recharger: recharger)
+                    .bandeauAffaire(affaire, installation: installation, recharger: recharger)
             },
             squelette: { ContenuAffaire(affaire: Self.squelette, installation: installation, recharger: {}) }
         )
         .background(palette.bg)
         .navigationBarTitleDisplayMode(.inline)
+        // Le bandeau occupe le bas : la barre d'onglets s'efface dès l'arrivée — squelette
+        // compris, pour ne pas sauter — et revient au retour, comme Photos ou Fichiers.
+        .toolbar(.hidden, for: .tabBar)
     }
 
     /// La forme d'une affaire, le temps qu'elle arrive.
@@ -31,7 +36,7 @@ struct DetailAffaireView: View {
         id: 0, numero: "A-0000", titre: "Une affaire de la résidence qui se charge",
         description: String(repeating: "Le détail de l'affaire arrive. ", count: 5), categorie: "",
         statut: "ouvert", urgente: false, creeLe: .now, auteur: "Le conseil syndical", lieu: "Bâtiment",
-        photos: [], suites: [], peutRepondre: false)
+        photos: [], suites: [])
 }
 
 private struct ContenuAffaire: View {
@@ -39,7 +44,6 @@ private struct ContenuAffaire: View {
     let installation: Installation
     let recharger: () -> Void
     @Environment(\.palette) private var palette
-    @State private var repondre = false
 
     var body: some View {
         ScrollView {
@@ -55,34 +59,16 @@ private struct ContenuAffaire: View {
                     GaleriePhotos(chemins: affaire.photos, installation: installation)
                 }
                 Historique(suites: affaire.suites)
+                // Pas de messages sur une actualité : elle informe, on n'y répond pas.
+                if !affaire.estActualite {
+                    FilMessagesAffaire(messages: affaire.messages, installation: installation)
+                }
             }
             .padding(Mise.marge)
         }
         .background(palette.bg)
         .navigationTitle(affaire.numero)
         .refreshable { recharger() }
-        .safeAreaInset(edge: .bottom) {
-            if affaire.peutRepondre {
-                Button {
-                    repondre = true
-                } label: {
-                    Label("Répondre", systemImage: "arrowshape.turn.up.left.fill")
-                }
-                .buttonStyle(.plein)
-                .accessibilityIdentifier("affaire.repondre")
-                .padding(.horizontal, Mise.marge)
-                .padding(.vertical, 10)
-                .background(.bar)
-            }
-        }
-        .sheet(isPresented: $repondre) {
-            RepondreFeuille(affaire: affaire, installation: installation) {
-                repondre = false
-                recharger()
-            }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-        }
     }
 }
 
@@ -100,6 +86,17 @@ private struct EnTeteAffaire: View {
                     Label("Urgente", systemImage: "exclamationmark.triangle.fill")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(palette.danger)
+                }
+                if affaire.epingle {
+                    Image(systemName: "pin.fill")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(palette.primary)
+                        .accessibilityLabel(OptionAffaire.toutes.first { $0.cle == "epingle" }?.etat ?? "")
+                }
+                if affaire.archivee {
+                    Label("Archivée", systemImage: "archivebox")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(palette.textMuted)
                 }
                 Spacer(minLength: 0)
                 PastilleStatut(statut: affaire.statut)

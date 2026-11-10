@@ -42,13 +42,6 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
     #expect(Set(ServiceSimule.fil.map(\.id)).count == ServiceSimule.fil.count, "identifiants type:id uniques")
 }
 
-@Test func repondreNEstOffertQueDansLesCasSurs() {
-    #expect(DroitsAffaire.peutRepondre(moi: 5, roles: ["conseil_syndical"], auteur: 9, saisiPour: nil))
-    #expect(DroitsAffaire.peutRepondre(moi: 5, roles: ["resident"], auteur: 5, saisiPour: nil))
-    #expect(DroitsAffaire.peutRepondre(moi: 5, roles: ["resident"], auteur: 9, saisiPour: 5))
-    #expect(!DroitsAffaire.peutRepondre(moi: 5, roles: ["resident"], auteur: 9, saisiPour: nil))
-}
-
 @Test func unNomDeFichierServiNeSortPasDuDossier() {
     #expect(Fichiers.nomSur("../../etc/passwd", defaut: "x") == "-..-etc-passwd")
     #expect(Fichiers.nomSur("pv:ag/2026.pdf", defaut: "x") == "pv-ag-2026.pdf")

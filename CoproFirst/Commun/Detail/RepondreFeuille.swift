@@ -3,7 +3,7 @@
 
 import SwiftUI
 
-/// « Répondre » : une suite écrite, ajoutée à l'Historique (POST …/evolutions).
+/// « Répondre » : un message du fil de l'affaire (POST …/messages), comme le site.
 struct RepondreFeuille: View {
     let affaire: DetailAffaire
     let installation: Installation

@@ -5,16 +5,17 @@ import XCTest
 
 /// Chaque carte du fil s'ouvre, contre l'API simulée.
 final class CartesDuFilUITests: XCTestCase {
-    private func lancer() -> XCUIApplication {
+    private func lancer(_ arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
+        app.launchArguments = ["-api-simulee", "-ecran", "fil"] + arguments
         app.launch()
         return app
     }
 
+    /// « Répondre » est le geste d'un résident : le conseil suit l'affaire par la Suite.
     @MainActor
     func testUneAffaireSOuvreEtSeRepond() throws {
-        let app = lancer()
+        let app = lancer(["-compte", "resident"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
@@ -24,12 +25,58 @@ final class CartesDuFilUITests: XCTestCase {
             .matching(NSPredicate(format: "label CONTAINS %@", "Ouvert → Chez le syndic")).firstMatch
         XCTAssertTrue(changement.exists)
 
-        app.buttons["affaire.repondre"].tap()
-        let texte = app.textViews["repondre.texte"]
+        // Le bandeau d'un résident : le lien et la réponse, rien de ce que fait le conseil.
+        XCTAssertTrue(app.elementAcces("affaire.lien").exists)
+        XCTAssertFalse(app.elementAcces("affaire.suite").exists)
+        XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
+        // Le fil des messages, sous l'Historique : la note interne du conseil n'y est pas.
+        XCTAssertTrue(app.elementAcces("affaire.message.502").exists)
+        XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
+        app.elementAcces("affaire.repondre").tap()
+        let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.waitForExistence(timeout: 3))
         texte.typeText("Merci, je contourne la zone.")
-        app.buttons["repondre.envoyer"].tap()
-        XCTAssertTrue(app.buttons["affaire.repondre"].waitForExistence(timeout: 5), "la feuille se referme")
+        app.elementAcces("repondre.envoyer").tap()
+        XCTAssertTrue(app.elementAcces("affaire.repondre").waitForExistence(timeout: 5), "la feuille se referme")
+        // La réponse est un MESSAGE (comme sur le site), pas une suite de l'Historique.
+        let message = app.descendants(matching: .any)
+            .matching(
+                NSPredicate(
+                    format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "affaire.message.",
+                    "Merci, je contourne la zone.")
+            ).firstMatch
+        XCTAssertTrue(message.waitForExistence(timeout: 5), "la réponse rejoint le fil des messages")
+    }
+
+    /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
+    /// change l'état rejoint l'Historique, l'archivage retire 📦.
+    @MainActor
+    func testLeConseilSuitEtArchiveDepuisLeBandeau() throws {
+        let app = lancer()
+        let carte = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        carte.tap()
+        let suite = app.elementAcces("affaire.suite")
+        XCTAssertTrue(suite.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.elementAcces("affaire.options").exists)
+        XCTAssertFalse(app.elementAcces("affaire.repondre").exists, "le conseil ne répond pas, il suit")
+        XCTAssertTrue(app.elementAcces("affaire.message.503").exists, "la note interne, au conseil")
+
+        suite.tap()
+        let texte = app.elementAcces("suite.texte")
+        XCTAssertTrue(texte.waitForExistence(timeout: 3))
+        texte.tap()
+        texte.typeText("Le plombier est passé.")
+        app.elementAcces("suite.enregistrer").tap()
+        let ajoutee = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label CONTAINS %@", "Le plombier est passé.")).firstMatch
+        XCTAssertTrue(ajoutee.waitForExistence(timeout: 5), "la suite rejoint l'Historique")
+
+        app.elementAcces("affaire.archiver").tap()
+        let archivee = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Affaire archivée")).firstMatch
+        XCTAssertTrue(archivee.waitForExistence(timeout: 5))
+        XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
     }
 
     @MainActor
