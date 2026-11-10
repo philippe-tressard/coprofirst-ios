@@ -3450,6 +3450,13 @@
           "reservee": {
             "title": "Reservee",
             "type": "boolean"
+          },
+          "sections_essentielles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Sections Essentielles",
+            "type": "array"
           }
         },
         "required": [
@@ -3460,7 +3467,8 @@
           "carnet",
           "reservee",
           "permise",
-          "en_tete"
+          "en_tete",
+          "sections_essentielles"
         ],
         "title": "CategorieServie",
         "type": "object"
@@ -7745,6 +7753,20 @@
             "title": "Reference",
             "type": "string"
           },
+          "renvoi": {
+            "title": "Renvoi",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rubrique": {
+            "title": "Rubrique",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "source": {
             "title": "Source",
             "type": [
@@ -9476,6 +9498,13 @@
             "title": "Restreindre A Mes Batiments",
             "type": [
               "boolean",
+              "null"
+            ]
+          },
+          "saisie_affaire": {
+            "title": "Saisie Affaire",
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -12368,8 +12397,23 @@
             "title": "Question",
             "type": "string"
           },
+          "renvois_sans_extrait": {
+            "description": "Les renvois que l'avis cite sans extrait derrière — l'écran le dit.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Renvois Sans Extrait",
+            "type": "array"
+          },
           "reponse": {
             "title": "Reponse",
+            "type": "string"
+          },
+          "reponse_sans_renvois": {
+            "description": "La synthèse sans ses « [R2] » — l'aperçu de la carte et la FAQ la lisent\nainsi (la règle est ici : le site et l'app iOS montrent la même).",
+            "readOnly": true,
+            "title": "Reponse Sans Renvois",
             "type": "string"
           },
           "reserves": {
@@ -12440,6 +12484,8 @@
           "texte_id",
           "texte_en_vigueur",
           "cree_le",
+          "reponse_sans_renvois",
+          "renvois_sans_extrait",
           "verdict_ton"
         ],
         "title": "QuestionReglementRead",
@@ -16840,6 +16886,18 @@
             "title": "Roles",
             "type": "array"
           },
+          "saisie_affaire": {
+            "title": "Saisie Affaire",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "saisie_affaire_effective": {
+            "default": "essentielle",
+            "title": "Saisie Affaire Effective",
+            "type": "string"
+          },
           "societe": {
             "title": "Societe",
             "type": [
@@ -17090,6 +17148,18 @@
             },
             "title": "Roles",
             "type": "array"
+          },
+          "saisie_affaire": {
+            "title": "Saisie Affaire",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "saisie_affaire_effective": {
+            "default": "essentielle",
+            "title": "Saisie Affaire Effective",
+            "type": "string"
           },
           "societe": {
             "title": "Societe",
@@ -17767,7 +17837,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "1.12.0"
+    "version": "1.14.0"
   },
   "openapi": "3.1.0",
   "paths": {

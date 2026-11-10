@@ -153,6 +153,8 @@ struct QuestionReglement: Hashable, Sendable, Identifiable {
     let id: Int
     var question: String
     var reponse: String
+    /// La réponse sans ses « [R2] », servie (contrat 1.14.0) : l'aperçu de la carte la lit.
+    var reponseSansRenvois: String
     var verdictLibelle: String
     var poseeLe: Date
     var texteEnVigueur: Bool
@@ -165,6 +167,8 @@ struct QuestionReglement: Hashable, Sendable, Identifiable {
     var auteur: String?
     var dansLaFAQ: Bool
     var extraits: [ExtraitReglement]
+    /// Les renvois que l'avis cite sans extrait derrière (contrat 1.14.0) : l'avis le dit.
+    var renvoisSansExtrait: [String] = []
 
     var extraitsReglement: [ExtraitReglement] { extraits.filter { $0.source != "ag" } }
     var extraitsAG: [ExtraitReglement] { extraits.filter { $0.source == "ag" } }

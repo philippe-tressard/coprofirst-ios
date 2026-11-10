@@ -4,11 +4,12 @@
 # Concordance avec CoproFirst (#20 ; standards/09 §8, règle 2), chaque jour, deux
 # verdicts distincts (scripts/concordance.py) :
 #   1. ÉCART AU PLANCHER — ce qui est généré n'est plus ce que le plancher
-#      (scripts/generateurs/_plancher.py) régénère, ou l'API simulée sert un champ
-#      que le serveur ne sert pas : ROUGE, ticket « concordance » ouvert ou complété ;
+#      (scripts/generateurs/_plancher.py) régénère, l'API simulée sert un champ
+#      que le serveur ne sert pas, ou une installation connue SERT un contrat sous
+#      le plancher — il se mesure, GET /config (#83) : ROUGE, ticket « concordance » ;
 #   2. MONTÉE POSSIBLE — une version publiée au-dessus du plancher : information,
 #      jamais rouge, ticket « a-monter » ouvert une fois et tenu à jour (ce que la
-#      montée exigerait : champs devenus requis, fichiers qui changeraient).
+#      montée exigerait, et jusqu'à quelle release le plancher mesuré permet de monter).
 # Une version illisible : INCONNU, rouge, jamais vert. La décision des tickets est
 # pure et testée (scripts/tickets_concordance.py, #67) : un vert ferme le ticket
 # « concordance » en citant le run ; un rouge ou un INCONNU ne ferme jamais rien ;

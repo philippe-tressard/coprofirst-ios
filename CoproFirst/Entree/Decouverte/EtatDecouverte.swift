@@ -4,7 +4,8 @@
 import Observation
 import SwiftUI
 
-/// La vérification d'une adresse (GET /config) : en cours, réussie, ou une phrase.
+/// La vérification d'une adresse (GET /config) : en cours, réussie, ou une phrase —
+/// celle d'une résidence sous le plancher comprise, pour les deux services (#83).
 @MainActor @Observable
 final class EtatDecouverte {
     private(set) var enCours = false
@@ -15,7 +16,9 @@ final class EtatDecouverte {
         erreur = nil
         defer { enCours = false }
         do {
-            return try await service.decouvrir(adresse)
+            let installation = try await service.decouvrir(adresse)
+            try installation.exigerLePlancher()
+            return installation
         } catch {
             withAnimation(.snappy) { self.erreur = ErreurService.depuis(error) }
             return nil
