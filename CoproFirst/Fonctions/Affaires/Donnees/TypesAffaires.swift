@@ -21,11 +21,15 @@ struct CategorieAffaire: Identifiable, Hashable, Sendable {
     var id: String { code }
 }
 
-/// Une nature d'affaire — que le serveur pose sur chacune (`natures`).
+/// Une nature d'affaire — que le serveur pose sur chacune (`natures`). `badge` est la classe
+/// `badge-*` de sa teinte (`PastilleTeinte`), lue dans `normes.css` du site (#78).
 struct NatureAffaire: Identifiable, Hashable, Sendable {
     let code: String
     let libelle: String
+    /// Le mot abrégé de la gouttière du site (« CAL. ») : l'app écrit le libellé entier.
+    let abrege: String
     let emoji: String
+    let badge: String
 
     var id: String { code }
 }

@@ -120,27 +120,29 @@ extension ServiceSimule {
         // swiftlint:disable:next function_parameter_count
         func element(
             _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
-            badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil, echeance: String? = nil
+            badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil, meta: String? = nil
         ) -> ElementDuFil {
             ElementDuFil(
                 id: "\(type):\(id)", type: type, date: date, titre: titre, detail: detail, badges: badges,
                 publicationUrgente: false, statut: nil, meConcerne: meConcerne, cible: cible,
-                echeance: echeance.flatMap(EcheanceDuFil.init(metaJSON:)))
+                echeance: meta.flatMap(EcheanceDuFil.init(metaJSON:)),
+                natures: meta.flatMap(MetaDuFil.init(json:))?.affaire?.natures ?? [])
         }
         return [
             element(
                 "41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
                 "<p>Niveau -1, place 12. Le plombier passe dans la <em>matinée</em>.</p>", badges: ["urgent"],
                 meConcerne: true,
-                cible: .affaire(id: 41)),
+                cible: .affaire(id: 41), meta: #"{"affaire": {"natures": ["activite"]}}"#),
             element(
                 "12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
                 "Remplacement d'une vanne dans la cave du bâtiment A.", cible: .affaire(id: 12),
-                echeance: metaAffaire(dans: 2, etat: "a_venir", libelle: "J-2")),
+                meta: metaAffaire(
+                    dans: 2, etat: "a_venir", libelle: "J-2", natures: ["actualite", "calendrier"])),
             element(
                 "44", "ticket_mis_a_jour", le(0, 7), "Ramonage des conduits de cheminée",
                 "Le ramoneur passe dans les caves du bâtiment B.", cible: .affaire(id: 44),
-                echeance: metaAffaire(dans: 0, etat: "jour_j", libelle: "Jour J")),
+                meta: metaAffaire(dans: 0, etat: "jour_j", libelle: "Jour J")),
             element(
                 "3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
                 "Trois dates proposées, réponses jusqu'à vendredi.", cible: .sondage(id: 3)),
@@ -153,22 +155,25 @@ extension ServiceSimule {
             element(
                 "38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
                 "Le devis retenu sera présenté au conseil syndical.", meConcerne: true, cible: .affaire(id: 38),
-                echeance: metaAffaire(dans: 8, jusquA: 10, etat: "a_venir", libelle: "J-8")),
+                meta: metaAffaire(dans: 8, jusquA: 10, etat: "a_venir", libelle: "J-8")),
             element(
                 "45", "ticket_mis_a_jour", le(3, 16), "Contrôle annuel de l'ascenseur",
                 "Le rapport du contrôleur est attendu.", cible: .affaire(id: 45),
-                echeance: metaAffaire(dans: -3, etat: "passee", libelle: "Passé")),
+                meta: metaAffaire(dans: -3, etat: "passee", libelle: "Passé")),
             element(
                 "31", "ticket_resolu", le(4, 15), "Portail du garage remis en service",
                 "La carte électronique a été remplacée.", cible: .affaire(id: 31),
-                echeance: metaAffaire(dans: -4, etat: "close", libelle: nil)),
+                meta: metaAffaire(dans: -4, etat: "close", libelle: nil)),
         ]
     }()
 
     /// `meta` d'une affaire datée, à la forme que sert coprofirst v3.79.0 (`meta.affaire`,
     /// `flux/commun.pastilles_affaire`) : début à 9 h, à `dans` jours d'aujourd'hui, et
-    /// fin le jour `jusquA`. Le délai est celui du serveur simulé, écrit comme lui.
-    private static func metaAffaire(dans: Int, jusquA: Int? = nil, etat: String, libelle: String?) -> String {
+    /// fin le jour `jusquA`. Le délai est celui du serveur simulé, écrit comme lui ; les natures,
+    /// celles que `utils/nature_affaire` dérive (une actualité datée en porte deux).
+    private static func metaAffaire(
+        dans: Int, jusquA: Int? = nil, etat: String, libelle: String?, natures: [String] = ["calendrier"]
+    ) -> String {
         let calendrier = Chronologie.calendrier
         func iso(_ jours: Int, heure: Int) -> String {
             let jour = calendrier.date(byAdding: .day, value: jours, to: calendrier.startOfDay(for: .now)) ?? .now
@@ -183,7 +188,8 @@ extension ServiceSimule {
         return #"""
             {"affaire": {"debut": "\#(iso(dans, heure: 9))",
              "fin": \#(fin), "echeance": {"etat": "\#(etat)", "jours": \#(dans), "libelle": \#(delai),
-             "plusieurs_jours": \#(jusquA != nil)}}}
+             "plusieurs_jours": \#(jusquA != nil)},
+             "natures": [\#(natures.map { "\"\($0)\"" }.joined(separator: ", "))]}}
             """#
     }
 }

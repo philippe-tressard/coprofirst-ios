@@ -6,7 +6,8 @@ Le contrat d'API ne sert que des CODES (`CategorieTicket`, `StatutTicket`) : les
 libellés et l'ordre vivent dans le front du site :
 
 - les CATÉGORIES d'une affaire (`CATEGORIES_TICKET`, `tickets-categories.ts`) et
-  ses NATURES (`NATURES`, même fichier) ;
+  ses NATURES (`NATURES`, même fichier), avec leur teinte (`[data-nature=…]` de
+  `normes.css`, rendue en classe `badge-*` de la `PastilleTeinte`, #78) ;
 - les COLONNES du Kanban et la colonne de chaque statut (`KANBAN_COLS`,
   `COLONNE_PAR_STATUT_TICKET`, `MOT_COLONNE_VIDE` de `kanban.ts`) ; la teinte d'une
   colonne est un jeton `--kanban-*` de la `Palette` (#34), nommé ici par son chemin ;
@@ -26,9 +27,19 @@ SOURCES = [
     "front/src/lib/tickets-categories.ts",
     "front/src/lib/kanban.ts",
     "front/src/lib/tickets.ts",
+    "front/src/styles/normes.css",
 ]
 
 VAR_KANBAN = re.compile(r"^var\(--(kanban-[a-z0-9-]+)\)$")
+NATURE_FORT = re.compile(r"\[data-nature='([a-z]+)'\]\s*\{\s*--nature-fort:\s*var\(--color-([a-z-]+)\);\s*\}")
+#: La couleur d'état du site → la classe `badge-*` qui la porte (`PastilleTeinte.teintes`).
+BADGE_PAR_COULEUR = {
+    "info": "badge-blue",
+    "violet": "badge-purple",
+    "orange": "badge-orange",
+    "success": "badge-green",
+    "danger": "badge-red",
+}
 
 
 def table_simple(texte: str, nom: str) -> dict[str, str]:
@@ -47,6 +58,14 @@ def constante(texte: str, nom: str) -> str:
     return m.group(1)
 
 
+def badge_de_nature(code: str, teintes: dict[str, str]) -> str:
+    """La classe `badge-*` de la teinte que `normes.css` donne à une nature."""
+    couleur = teintes.get(code)
+    if couleur not in BADGE_PAR_COULEUR:
+        raise SystemExit(f"❌ NATURES : la teinte de « {code} » ({couleur}) n'a pas de classe badge-* connue")
+    return BADGE_PAR_COULEUR[couleur]
+
+
 def categories(ctx) -> str:
     texte = ctx.lire(SOURCES[0])
     lignes = [
@@ -56,9 +75,11 @@ def categories(ctx) -> str:
         f"enTete: {booleen(c.get('enTete'))}),\n"
         for c in lecture_ts.table(texte, "CATEGORIES_TICKET")
     ]
+    teintes = {code: couleur for code, couleur in NATURE_FORT.findall(ctx.lire(SOURCES[3]))}
     natures = [
         f"        NatureAffaire(code: {chaine(n['val'])}, libelle: {chaine(n['libelle'])}, "
-        f"emoji: {chaine(n['emoji'])}),\n"
+        f"abrege: {chaine(n['abrege'])}, emoji: {chaine(n['emoji'])}, "
+        f"badge: {chaine(badge_de_nature(n['val'], teintes))}),\n"
         for n in lecture_ts.table(texte, "NATURES")
     ]
     return (
@@ -117,6 +138,6 @@ def statuts(ctx) -> str:
 def generer(ctx) -> str:
     corps = categories(ctx) + kanban(ctx) + statuts(ctx)
     ecrire_table(ctx, FONCTIONS / "Affaires" / "Genere" / "TablesAffaires.swift",
-                 "front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts", "TablesAffaires",
+                 "front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css", "TablesAffaires",
                  "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps, swiftui=True)
     return "catégories, natures, colonnes du Kanban et statuts des affaires"
