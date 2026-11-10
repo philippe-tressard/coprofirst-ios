@@ -203,7 +203,7 @@ private struct CarteQuestion: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.footnote.weight(.semibold)).foregroundStyle(palette.textMuted)
             }
-            Text(TexteDuSite.apercu(question.reponse)).font(.subheadline).lineLimit(3)
+            Text(TexteDuSite.apercu(question.reponseSansRenvois)).font(.subheadline).lineLimit(3)
                 .foregroundStyle(palette.textMuted)
             PiedQuestion(question: question)
         }
