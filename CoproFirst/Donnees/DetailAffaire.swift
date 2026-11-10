@@ -8,15 +8,15 @@ import Foundation
 struct DetailAffaire: Hashable, Sendable {
     let id: Int
     let numero: String
-    let titre: String
-    let description: String
-    let categorie: String
+    var titre: String
+    var description: String
+    var categorie: String
     var statut: String
     var urgente: Bool
     let creeLe: Date
     let auteur: String?
     /// Le lieu lisible — absent tant que le contrat ne le sert pas (coprofirst#2460).
-    let lieu: String?
+    var lieu: String?
     /// Les chemins des photos (`/uploads/…`), servis derrière la session.
     let photos: [String]
     var suites: [SuiteAffaire]
@@ -28,6 +28,8 @@ struct DetailAffaire: Hashable, Sendable {
     var archivee = false
     /// Fusionnée dans une autre : on n'y répond plus (`gesteReponse` du site).
     var fusionnee = false
+    /// Les codes de ses lieux (`perimetre_cible`) — ce que « Modifier l'affaire » part de.
+    var perimetres: [String] = []
 
     var estActualite: Bool { categorie == "actualite" }
     var statutLibelle: String { StatutsAffaire.parCode[statut]?.libelle ?? statut }
