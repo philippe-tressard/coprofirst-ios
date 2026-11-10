@@ -37,6 +37,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         switch adresse.host() {
         case "inconnue.exemple.fr": throw ErreurService.hoteInconnu
         case "injoignable.exemple.fr": throw ErreurService.injoignable
+        case "ancienne.exemple.fr":
+            // Une installation sous le plancher (#83) : la découverte doit le dire.
+            var ancienne = residenceServie
+            (ancienne.adresse, ancienne.versionContrat) = (adresse, "1.12.0")
+            return ancienne
         case "demo.coprofirst.fr": return Self.demo
         default:
             var installation = residenceServie

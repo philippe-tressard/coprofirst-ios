@@ -12,9 +12,25 @@ fonctionnalités de l'application web, par étapes.
 
 ## État
 
-**Amorce** (novembre 2026) : un écran d'accueil et le client d'API généré. L'app
-n'est distribuée nulle part. Elle se signe au poste (signature automatique, équipe
-Apple `GUX8KASNTG`) ; la CI construit et teste sans signer.
+Ce que l'app sait faire : « Écrans livrés » ci-dessous et
+[`Parite/PARITE.md`](Parite/PARITE.md) ; ce qui manque : les issues ouvertes.
+L'app n'est distribuée nulle part (« Sortir une version »).
+
+## Sortir une version
+
+Aujourd'hui, une version ne sort que sur l'iPhone de Philippe :
+
+1. la version se lit dans `project.yml` (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) ;
+   l'app n'a ni étiquette ni release ;
+2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; Philippe fusionne sur `main` ;
+3. au poste : `bash scripts/generer-projet.sh`, puis Xcode signe (signature automatique,
+   équipe `GUX8KASNTG`) et installe l'app sur l'iPhone branché.
+
+Manquent pour TestFlight : l'app créée dans App Store Connect, un numéro de build qui
+monte à chaque envoi, une archive envoyée (au poste, ou par la CI avec une clé d'API
+rangée par Philippe), et un runner macOS épinglé plutôt que `macos-latest`. Ce qui
+est un geste de Philippe, et ce qui précède la première soumission : skill
+[`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 
 ## Construire
 

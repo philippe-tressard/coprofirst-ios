@@ -167,3 +167,19 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
     #expect(groupes.map(\.batiment) == ["A", "B", nil])
     #expect(groupes.first?.membres.count == 2)
 }
+
+/// Contrat 1.14.0 : l'aperçu de la carte lit la réponse SANS ses renvois, et l'avis dit
+/// les renvois sans extrait — servis par l'API, jamais recalculés par l'app (#60).
+@Test func uneQuestionAuReglementLitSesRenvoisServis() throws {
+    let json = """
+        {"id": 7, "texte_id": 1, "question": "Q ?", "reponse": "<p>Oui [R1], sauf [R2].</p>",
+        "reponse_sans_renvois": "<p>Oui, sauf.</p>", "renvois_sans_extrait": ["R2"], "verdict": "oui",
+        "verdict_libelle": "Oui", "verdict_ton": "succes", "texte_en_vigueur": true,
+        "cree_le": "2026-11-10T08:00:00", "extraits": [{"citation": "C", "verifie": true, "renvoi": "R1"}]}
+        """
+    let lue = try Relecture.generee(Components.Schemas.QuestionReglementRead.self, json: json)
+    let question = QuestionReglement(lue: lue)
+    #expect(question.reponseSansRenvois == "<p>Oui, sauf.</p>")
+    #expect(question.renvoisSansExtrait == ["R2"])
+    #expect(question.extraits.count == 1)
+}

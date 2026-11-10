@@ -9,12 +9,16 @@ dérive du serveur se surveille chaque jour). Deux verdicts, jamais confondus :
    menus) est régénéré depuis le plancher (`generateurs/_plancher.py`) dans un dossier
    jetable et comparé au dépôt, à l'octet ; les réponses de l'API simulée sont jugées
    contre le contrat du plancher. Un écart est ROUGE (sortie 1) : un fichier retouché
-   à la main, un générateur modifié sans régénérer, un champ que le serveur ne sert pas.
+   à la main, un générateur modifié sans régénérer, un champ que le serveur ne sert pas
+   — ou une installation connue qui SERT un contrat sous celui du plancher (#83) : le
+   plancher se MESURE (`version_contrat` de GET /config de `_plancher.INSTALLATIONS`),
+   il ne se croit pas sur parole ; l'app n'ouvrirait plus cette installation.
 2. `--montee` — une NOUVELLE VERSION publiée au-dessus du plancher : une information,
    jamais un rouge (sortie 3). Le rapport dit ce que monter le plancher exigerait :
    champs devenus requis, propriétés et routes retirées, fichiers générés qui
-   changeraient, réponses simulées que le nouveau contrat refuserait. Sortie 0 si la
-   dernière version EST le plancher.
+   changeraient, réponses simulées que le nouveau contrat refuserait — et le plancher
+   MESURÉ : jusqu'à quelle release il peut monter, d'après le plus ancien contrat servi.
+   Sortie 0 si la dernière version EST le plancher.
 
 Une version, une archive ou une table illisible : INCONNU (sortie 2), jamais vert.
 
@@ -39,7 +43,7 @@ sys.path.insert(0, str(RACINE / "scripts"))
 import generer  # noqa: E402
 from generateurs import _plancher  # noqa: E402
 from generateurs._commun import PROVENANCE, SIGNATURE  # noqa: E402
-from generateurs._source import SourceIllisible, derniere_version  # noqa: E402
+from generateurs._source import SourceIllisible, Version, contrat_servi, derniere_version, versions_publiees  # noqa: E402
 from generateurs.contrat import CONTRAT  # noqa: E402
 
 LIGNES_DE_DIFF = 40
@@ -125,6 +129,55 @@ def exigences(ancien: dict, nouveau: dict) -> list[str]:
     return lignes
 
 
+def nombres(contrat: str) -> tuple[int, ...]:
+    """« 1.9.0 » < « 1.15.0 » : une version se compare par ses nombres, jamais en chaîne."""
+    return tuple(int(n) for n in contrat.split("."))
+
+
+def mesurer() -> dict[str, str]:
+    """Le contrat que sert chaque installation connue ; une seule illisible : INCONNU."""
+    if not _plancher.INSTALLATIONS:
+        raise SourceIllisible("aucune installation connue à mesurer (_plancher.INSTALLATIONS)")
+    return {hote: contrat_servi(hote) for hote in _plancher.INSTALLATIONS}
+
+
+def sous_le_plancher(servis: dict[str, str], plancher_contrat: str) -> list[str]:
+    """Les installations qui servent un contrat plus ancien que le plancher : des écarts."""
+    return [f"installation `{hote}` : sert le contrat {servi}, sous le plancher ({plancher_contrat}) — "
+            "l'app ne s'y ouvre plus (« cette résidence doit être mise à jour ») : redescendre le plancher"
+            for hote, servi in sorted(servis.items()) if nombres(servi) < nombres(plancher_contrat)]
+
+
+def mesure_lue(servis: dict[str, str]) -> str:
+    return ", ".join(f"`{hote}` {servi}" for hote, servi in sorted(servis.items()))
+
+
+def cible(contrats: list[tuple[str, str]], minimum: str) -> str | None:
+    """La release la plus récente dont le contrat ne dépasse pas `minimum`.
+
+    `contrats` : (étiquette, contrat), de la plus récente à la plus ancienne."""
+    return next((etiquette for etiquette, contrat in contrats if nombres(contrat) <= nombres(minimum)), None)
+
+
+def plancher_mesure(servis: dict[str, str], plancher_contrat: str) -> list[str]:
+    """Ce que la mesure dit d'une montée : attendre, ou jusqu'à quelle release monter."""
+    minimum = min(servis.values(), key=nombres)
+    lignes = [f"installations connues : {mesure_lue(servis)} ; contrat du plancher : {plancher_contrat}"]
+    if nombres(minimum) <= nombres(plancher_contrat):
+        retiennent = [h for h, v in sorted(servis.items()) if v == minimum]
+        return lignes + [f"le plancher mesuré est {minimum} : la montée attend {', '.join(f'`{h}`' for h in retiennent)}"]
+    contrats = []
+    for etiquette in versions_publiees():
+        contrats.append((etiquette, Version(etiquette).contrat()))
+        if nombres(contrats[-1][1]) <= nombres(minimum):
+            break
+    vers = cible(contrats, minimum)
+    if vers is None:
+        raise SourceIllisible(f"aucune des cent dernières releases ne porte un contrat ≤ {minimum}")
+    return lignes + [f"toutes servent au moins {minimum} : le plancher peut monter à **{vers}** "
+                     f"(la release la plus récente au contrat ≤ {minimum})"]
+
+
 def generer_dans(etiquette: str, sortie: pathlib.Path, simuler: bool = False) -> list[str]:
     ctx, _ = generer.executer(etiquette, sortie)
     ecrits = [str(p) for p in ctx.ecrits]
@@ -143,16 +196,24 @@ def juger_fixtures(contrat: pathlib.Path) -> list[str]:
     return hors_schema
 
 
+def contrat_de(dossier: pathlib.Path) -> str:
+    return json.loads((dossier / CONTRAT).read_text(encoding="utf-8"))["info"]["version"]
+
+
 def plancher(simuler: bool) -> tuple[int, str]:
     titre = f"Écart au plancher ({_plancher.VERSION})"
+    servis = mesurer()
     with tempfile.TemporaryDirectory(prefix="concordance-") as dossier:
         sortie = pathlib.Path(dossier)
         ecrits = generer_dans(_plancher.VERSION, sortie, simuler)
         ecarts = comparer(RACINE, sortie, ecrits, generes_du_depot(RACINE))
         ecarts += [f"API simulée : {e}" for e in juger_fixtures(sortie / CONTRAT)]
+        ecarts += sous_le_plancher(servis, contrat_de(sortie))
+    mesure = f"Contrat servi par les installations connues : {mesure_lue(servis)}.\n"
     if not ecarts:
-        return 0, f"## {titre} : aucun\n\nLe dépôt est ce que le plancher génère ; l'API simulée a sa forme.\n"
-    corps = f"## {titre} : ❌ {len(ecarts)}\n\n" + "".join(f"- {e}\n" for e in ecarts)
+        return 0, (f"## {titre} : aucun\n\nLe dépôt est ce que le plancher génère ; l'API simulée a sa forme.\n"
+                   + mesure)
+    corps = f"## {titre} : ❌ {len(ecarts)}\n\n" + "".join(f"- {e}\n" for e in ecarts) + "\n" + mesure
     return 1, corps + f"\nRégénérer : `{REGENERER}`, relire le diff, puis `xcodebuild test`.\n"
 
 
@@ -167,11 +228,12 @@ def montee() -> tuple[int, str]:
         contrat = exigences(json.loads((bas / CONTRAT).read_text(encoding="utf-8")),
                             json.loads((haut / CONTRAT).read_text(encoding="utf-8")))
         refusees = juger_fixtures(haut / CONTRAT)
+        mesure = plancher_mesure(mesurer(), contrat_de(bas))
     corps = (f"## Montée possible : {derniere} est publiée, le plancher est {_plancher.VERSION}\n\n"
              f"Une information, pas un écart. Le plancher ({_plancher.RAISON}) ne monte que sur "
              "décision, quand toutes les installations connues ont dépassé la nouvelle version : "
              "`scripts/generateurs/_plancher.py`, puis `python3 scripts/generer.py`.\n\n")
-    sections = [("Ce que le contrat exigerait", contrat),
+    sections = [("Plancher mesuré (#83)", mesure), ("Ce que le contrat exigerait", contrat),
                 ("Réponses simulées que le nouveau contrat refuserait", refusees),
                 ("Fichiers générés qui changeraient", changeraient)]
     for titre, lignes in sections:
@@ -225,7 +287,23 @@ def autotest() -> None:
                "`T` : champ(s) devenu(s) requis — `neuf`", "`T` : propriété(s) retirée(s) — `vieux`"]
     if exigences(ancien, nouveau) != attendu or exigences(ancien, ancien):
         raise SystemExit(f"❌ autotest : exigences d'une montée ({exigences(ancien, nouveau)})")
-    print("✅ autotest : cas zéro, version seule, écart posé exprès, orphelin, exigences d'une montée")
+    _autotest_mesure()
+    print("✅ autotest : cas zéro, version seule, écart posé exprès, orphelin, exigences d'une montée, "
+          "plancher mesuré")
+
+
+def _autotest_mesure() -> None:
+    """Le plancher MESURÉ (#83) : une installation sous le plancher est vue, par ses nombres."""
+    if sous_le_plancher({"a.fr": "1.14.0", "b.fr": "1.18.0"}, "1.14.0"):
+        raise SystemExit("❌ autotest : au plancher et au-dessus, aucun écart")
+    fautif = sous_le_plancher({"a.fr": "1.12.0", "b.fr": "1.18.0"}, "1.14.0")
+    if len(fautif) != 1 or "`a.fr`" not in fautif[0]:
+        raise SystemExit(f"❌ autotest : une installation sous le plancher doit être vue ({fautif})")
+    if len(sous_le_plancher({"a.fr": "1.9.0"}, "1.15.0")) != 1:
+        raise SystemExit("❌ autotest : 1.9.0 < 1.15.0 — une version se compare par ses nombres")
+    contrats = [("v4", "1.18.0"), ("v3", "1.15.0"), ("v2", "1.14.0"), ("v1", "1.14.0")]
+    if cible(contrats, "1.14.0") != "v2" or cible(contrats, "1.16.0") != "v3" or cible(contrats, "1.0.0"):
+        raise SystemExit("❌ autotest : la cible d'une montée est la release la plus récente au contrat ≤ mesuré")
 
 
 def main() -> int:

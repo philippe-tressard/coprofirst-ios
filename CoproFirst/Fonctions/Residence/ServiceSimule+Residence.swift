@@ -37,8 +37,9 @@ extension ServiceSimule: ServiceResidence {
         let modele = Self.question
         var reponse = QuestionReglement(
             id: Int.random(in: 1_000...9_999), question: question, reponse: modele.reponse,
+            reponseSansRenvois: modele.reponseSansRenvois,
             verdictLibelle: modele.verdictLibelle, poseeLe: .now, texteEnVigueur: true, dansLaFAQ: false,
-            extraits: modele.extraits)
+            extraits: modele.extraits, renvoisSansExtrait: modele.renvoisSansExtrait)
         reponse.selonReglement = modele.selonReglement
         reponse.reserves = modele.reserves
         reponse.provenance = modele.provenance
@@ -144,7 +145,9 @@ extension ServiceSimule {
     static let question = QuestionReglement(
         id: 1, question: "Puis-je installer une climatisation sur mon balcon ?",
         reponse: "<p>Oui, <strong>sous conditions</strong> : l'unité extérieure modifie l'aspect de la façade, "
-            + "ce qui demande une autorisation de l'assemblée générale.</p>",
+            + "ce qui demande une autorisation de l'assemblée générale [R1]. Le bruit reste encadré [R3].</p>",
+        reponseSansRenvois: "<p>Oui, <strong>sous conditions</strong> : l'unité extérieure modifie l'aspect "
+            + "de la façade, ce qui demande une autorisation de l'assemblée générale. Le bruit reste encadré.</p>",
         verdictLibelle: "Sous conditions", poseeLe: FormatsDuSite.lire("2026-10-20T08:05:00") ?? .now,
         texteEnVigueur: true,
         selonReglement: "<p>L'article 9 interdit de modifier l'aspect extérieur sans accord de l'AG.</p>",
@@ -159,5 +162,5 @@ extension ServiceSimule {
             ExtraitReglement(
                 citation: "Les balcons restent à l'usage exclusif du lot.", verifie: false, reference: "Art. 4",
                 apport: nil, acte: nil, page: nil, source: "reglement"),
-        ])
+        ], renvoisSansExtrait: ["R3"])
 }
