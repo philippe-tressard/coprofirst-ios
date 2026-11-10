@@ -141,3 +141,22 @@ func lesMontantsSontCeuxDuSite(valeur: Double, attendu: String) {
     #expect(texteRouge == \Palette.danger && fondRouge == \Palette.dangerFond)
     #expect(LibelleTeinte.brut("inconnu") == LibelleTeinte("inconnu", "badge-gray"))
 }
+
+/// `fmtOctets` (#16, le dernier export) — sortie de Node (coprofirst v3.73.0) : les
+/// seuils sont ceux de l'arrondi.
+@Test(arguments: [
+    (0, "0 o"), (512, "512 o"), (1_023, "1\u{202F}023 o"), (1_024, "1 Ko"), (1_048_000, "1\u{202F}023 Ko"),
+    (1_048_500, "1,0 Mo"), (48_234_496, "46,0 Mo"), (1_342_177_280, "1,25 Go"),
+])
+func lesTaillesSontCellesDuSite(octets: Int, attendu: String) {
+    #expect(FormatsDuSite.octets(octets) == attendu)
+}
+
+/// `fmtMoisCourt` et `fmtMonthYear` (#16, la télémétrie) — sortie de Node.
+@Test func lesMoisSontCeuxDuSite() {
+    #expect([1, 6, 7, 11, 12].map(FormatsDuSite.moisCourt) == ["janv.", "juin", "juil.", "nov.", "déc."])
+    #expect(FormatsDuSite.moisAnnee("2026-11") == "novembre 2026")
+    #expect(FormatsDuSite.moisAnnee("2026-01") == "janvier 2026")
+    #expect(FormatsDuSite.moisAnnee(nil as String?) == "—")
+    #expect(FormatsDuSite.octets(nil) == "—")
+}

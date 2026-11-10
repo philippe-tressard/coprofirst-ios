@@ -30,7 +30,8 @@ struct CoproFirstApp: App {
 /// `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires`, et avec `fil`,
 /// `-ouvrir <type:id>` pour ouvrir d'emblée un élément du fil, `-page-renommee` pour
 /// une page que l'administration a renommée, `-logement-long` pour un libellé de
-/// logement qui ne tient pas dans la barre.
+/// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
+/// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul.
 /// Hors de ces arguments, l'app parle aux vraies installations, et lit coprofirst.fr.
 enum Lancement {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -51,6 +52,7 @@ enum Lancement {
         if arguments.contains("-logement-long") {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
+        compteSimule(arguments, simule)
         let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
         let residence = ServiceSimule.residence
         let ecran = arguments.firstIndex(of: "-ecran").flatMap {
@@ -86,6 +88,22 @@ enum Lancement {
             break
         }
         return parcours
+    }
+
+    /// `-compte administrateur` : le compte du conseil, administrateur aussi ;
+    /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16).
+    @MainActor
+    private static func compteSimule(_ arguments: [String], _ simule: ServiceSimule) {
+        let compte = arguments.firstIndex(of: "-compte").flatMap {
+            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
+        }
+        switch compte {
+        case "administrateur": simule.profilSimule.roles.append("admin")
+        case "operateur":
+            simule.profilSimule.statut = "admin_technique"
+            simule.profilSimule.roles = ["operateur"]
+        default: break
+        }
     }
 
     /// Le profil d'un passage précédent, comme une résidence déjà connue le garde : la

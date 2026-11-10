@@ -52,7 +52,7 @@ enum RegistreDesMenus {
 
         "delegations": DelegationsView.self,
 
-        // #16 — "admin"
+        "admin": AdminView.self,
     ]
 
     /// L'écran natif de la page, ou « Bientôt » tant qu'aucun n'est inscrit.
