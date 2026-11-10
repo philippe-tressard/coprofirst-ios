@@ -9,6 +9,9 @@ import Foundation
 protocol ServiceCoproFirst: Sendable {
     /// GET /config : l'adresse mène-t-elle à une résidence ? Son nom, son logo.
     func decouvrir(_ adresse: URL) async throws -> Installation
+    /// GET /config/logo.png : les octets du logo à cette adresse
+    /// (`Installation.adresseLogo(sombre:)`) — une route publique.
+    func logo(_ adresse: URL) async throws -> Data
     /// POST /auth/login : ouvre la session de cette installation (cookies).
     func connecter(_ installation: Installation, email: String, motDePasse: String) async throws
     /// Une session gardée au Trousseau pour cette installation ?

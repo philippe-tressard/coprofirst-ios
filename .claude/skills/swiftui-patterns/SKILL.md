@@ -167,7 +167,9 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `Carte` | la surface d'une carte : sans ombre, le filet de la charte la détache | idem |
 | `Pastille`, `PastilleStatut` | une pastille de filtre (compte sur la retenue) ; le statut d'une affaire (`StatutsAffaire`, généré) | idem |
 | `PastilleTeinte`, `LibelleTeinte` | une pastille teintée par la classe `badge-*` du site (`compacte` pour une ligne dense) ; `PastilleStatut` en est le cas des affaires ; une valeur inconnue d'une table s'affiche brute, en gris (`LibelleTeinte.brut`) (#37) | idem |
-| `Medaillon`, `Logo` | le logo de CoproFirst, qui suit Dynamic Type — jamais modifié (sa licence) | idem |
+| `Medaillon`, `MedaillonPlein` | le logo de CoproFirst (la marque), qui suit Dynamic Type — jamais modifié (sa licence) | idem |
+| `LogoResidence` | **le seul** composant du logo de la résidence (pastille, feuille, connexion) : le logo téléversé, sinon celui de CoproFirst. Au sombre, la variante `sombre` quand l'installation la sert (`Installation.adresseLogo(sombre:)` : contrat ≥ 1.15.0 et `site_logo_sombre`) ; il suit le thème sans relancer, en fondu, sans repasser par la marque. Cache `LogosEnMemoire`, une entrée par adresse donc par variante (#70) | `Commun/Composants/LogoResidence.swift` (tests : `LogoResidenceTests`) |
+| `VersionContrat` | **la seule** comparaison de versions du contrat (`version_contrat` de GET /config), par ses nombres : un geste réservé à une version s'écrit `installation.contrat >= .logoSombre`, jamais sur la chaîne | `Session/VersionContrat.swift` |
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `LigneResidence` | une résidence connue : pictogramme, nom, adresse, chevron | idem |
 | `BarreOnglets` | les onglets d'une page en pastilles qui défilent (`onglet.<id>` pour les tests) ; ses onglets viennent d'`OngletsDuSite.ouverts` | `Commun/Composants/BarreOnglets.swift` |
