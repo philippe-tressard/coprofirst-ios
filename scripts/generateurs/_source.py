@@ -14,7 +14,10 @@ fichier. Ce module est le SEUL à toucher coprofirst et coprofirst-site :
 - les pièces jointes de la release (`openapi.json`, le contrat publié) ;
 - un fichier de coprofirst-site (le contenu de la vitrine, #51), lu à un COMMIT
   nommé par le générateur qui le lit (`fichier_du_site`) : un commit est immuable,
-  comme une étiquette — jamais une branche.
+  comme une étiquette — jamais une branche ;
+- pour la concordance seule, le contrat que SERT une installation connue
+  (`contrat_servi`, `version_contrat` de GET /config, #83) : il mesure le plancher, il
+  ne génère rien.
 
 Aucun clone, aucun chemin du poste : le runner de la CI lit exactement comme lui.
 Toute lecture impossible lève `SourceIllisible`, que la concordance rend INCONNU.
@@ -34,6 +37,7 @@ import urllib.request
 DEPOT = os.environ.get("COPROFIRST_DEPOT", "philippe-tressard/coprofirst")
 DEPOT_SITE = os.environ.get("COPROFIRST_SITE_DEPOT", "philippe-tressard/coprofirst-site")
 VERSION = re.compile(r"^v\d+\.\d+\.\d+$")
+CONTRAT = re.compile(r"^\d+\.\d+\.\d+$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -42,11 +46,13 @@ class SourceIllisible(Exception):
 
 
 def _lire(url: str) -> bytes:
-    entetes = {"User-Agent": "coprofirst-ios-generateurs", "Accept": "application/vnd.github+json"}
+    entetes = {"User-Agent": "coprofirst-ios-generateurs"}
     jeton = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
-    # Le jeton ne part que vers l'API de GitHub (limite de requêtes), jamais ailleurs.
-    if jeton and url.startswith("https://api.github.com/"):
-        entetes["Authorization"] = f"Bearer {jeton}"
+    if url.startswith("https://api.github.com/"):
+        entetes["Accept"] = "application/vnd.github+json"
+        # Le jeton ne part que vers l'API de GitHub (limite de requêtes), jamais ailleurs.
+        if jeton:
+            entetes["Authorization"] = f"Bearer {jeton}"
     try:
         with urllib.request.urlopen(urllib.request.Request(url, headers=entetes), timeout=120) as reponse:
             return reponse.read()
@@ -67,6 +73,33 @@ def _release(chemin: str) -> dict:
 def derniere_version() -> str:
     """L'étiquette de la dernière release publiée de coprofirst."""
     return _release("latest")["tag_name"]
+
+
+def versions_publiees() -> list[str]:
+    """Les étiquettes des cent dernières releases publiées, de la plus récente à la plus ancienne."""
+    try:
+        releases = json.loads(_lire(f"https://api.github.com/repos/{DEPOT}/releases?per_page=100"))
+    except json.JSONDecodeError as erreur:
+        raise SourceIllisible("liste des releases : réponse illisible") from erreur
+    if not isinstance(releases, list):
+        raise SourceIllisible("liste des releases : réponse illisible")
+    return [r["tag_name"] for r in releases
+            if isinstance(r, dict) and not r.get("draft") and VERSION.match(str(r.get("tag_name", "")))]
+
+
+def _version_contrat(valeur, origine: str) -> str:
+    if not isinstance(valeur, str) or not CONTRAT.match(valeur):
+        raise SourceIllisible(f"{origine} : version du contrat illisible ({valeur!r})")
+    return valeur
+
+
+def contrat_servi(hote: str) -> str:
+    """`version_contrat` de GET https://<hôte>/api/config : le contrat qu'une installation SERT."""
+    try:
+        config = json.loads(_lire(f"https://{hote}/api/config"))
+    except json.JSONDecodeError as erreur:
+        raise SourceIllisible(f"{hote} : GET /api/config illisible") from erreur
+    return _version_contrat(config.get("version_contrat") if isinstance(config, dict) else None, hote)
 
 
 class Version:
@@ -103,6 +136,14 @@ class Version:
         if nom not in self._pieces:
             raise SourceIllisible(f"{self.etiquette} : la release ne joint pas {nom}")
         return _lire(self._pieces[nom])
+
+    def contrat(self) -> str:
+        """La version du contrat publié (`info.version` de la pièce jointe `openapi.json`)."""
+        try:
+            version = json.loads(self.piece_jointe("openapi.json"))["info"]["version"]
+        except (ValueError, KeyError, TypeError) as erreur:
+            raise SourceIllisible(f"{self.etiquette} : openapi.json illisible") from erreur
+        return _version_contrat(version, self.etiquette)
 
 
 def fichier_du_site(commit: str, chemin: str) -> bytes:
