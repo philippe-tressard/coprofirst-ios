@@ -169,7 +169,7 @@ enum Lancement {
     }
 
     /// La valeur qui suit un argument (`-compte resident` → `resident`), nil sans elle.
-    private static func valeur(de argument: String, dans arguments: [String]) -> String? {
+    static func valeur(de argument: String, dans arguments: [String]) -> String? {
         arguments.firstIndex(of: argument).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
 }

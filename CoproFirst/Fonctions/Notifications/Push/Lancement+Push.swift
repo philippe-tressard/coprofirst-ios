@@ -11,7 +11,7 @@ extension Lancement {
     static func push(_ arguments: [String]) -> NotificationsPush {
         guard arguments.contains("-api-simulee") else { return NotificationsPush(centre: CentreSysteme()) }
         let etat: AutorisationPush =
-            switch arguments.firstIndex(of: "-push").flatMap({ arguments.dropFirst($0 + 1).first }) {
+            switch valeur(de: "-push", dans: arguments) {
             case "non-demandee": .nonDemandee
             case "refusee": .refusee
             default: .accordee
