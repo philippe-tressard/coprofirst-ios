@@ -88,7 +88,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 }
 
 @Test func lesAnnexesSeRangentSousLeurFiche() {
-    let contenu = ServiceSimule.contenuFiche
+    let contenu = Apercu.contenuFiche
     #expect(contenu.annexes(deRegle: 1).map(\.id) == [40])
     #expect(contenu.annexes(deDocument: 11).map(\.id) == [41])
     #expect(contenu.annexes(deRapport: 5).isEmpty)
@@ -100,7 +100,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 // MARK: - Carnet
 
 @Test func leCarnetSeRangeParEquipementDansLOrdreDuServeur() {
-    let carnet = ContenuCarnet(entrees: ServiceSimule.carnet, libellesEquipements: ["chaufferie": "Chaufferie"])
+    let carnet = ContenuCarnet(entrees: Apercu.carnet, libellesEquipements: ["chaufferie": "Chaufferie"])
     #expect(carnet.groupes.map(\.titre) == ["Chaufferie", "ascenseur", "toiture", TextesCarnet.sansEquipement])
     #expect(carnet.groupes.first?.entrees.count == 2)
     #expect(carnet.enAlerte.map(\.libelle) == ["Contrat d'entretien de l'ascenseur"])
@@ -126,7 +126,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 // MARK: - Règlement
 
 @Test func lesExtraitsSeLisentAvecCeQueLeCodeAVerifie() {
-    let question = ServiceSimule.question
+    let question = Apercu.question
     #expect(question.verifies == 1)
     #expect(question.extraitsReglement.count == 2 && question.extraitsAG.isEmpty)
     #expect(question.extraits.first?.origine == "Règlement de copropriété — 14")
@@ -163,7 +163,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 }
 
 @Test func leConseilSeGroupeParBatimentSansBatimentEnDernier() {
-    let groupes = ServiceSimule.annuaire.groupesCS
+    let groupes = Apercu.annuaire.groupesCS
     #expect(groupes.map(\.batiment) == ["A", "B", nil])
     #expect(groupes.first?.membres.count == 2)
 }

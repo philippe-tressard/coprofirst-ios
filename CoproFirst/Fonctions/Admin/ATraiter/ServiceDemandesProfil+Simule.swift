@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Demandes de profil » simulées : lues du JSON de leur route (`FixturesDemandesProfil`)
 /// par `Relecture`, comme le service réel. Un traitement retire la demande, comme le
 /// serveur, et rend son annonce (`FixturesDemandesProfil.traitee`) ; une demande déjà
@@ -26,3 +27,4 @@ extension ServiceSimule: ServiceDemandesProfil {
         return try FixturesDemandesProfil.annonce(approuver: approuver)
     }
 }
+#endif

@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// L'arbre des périmètres que l'API simulée sert (`GET /perimetres`) — en JSON, lu par le
 /// type GÉNÉRÉ puis par `Perimetre.lus`, comme le service réel. La forme de l'arbre semé
 /// (`seed/patrimoine.py`) : une racine désignée par défaut, le regroupement « Bâtiments »
@@ -88,3 +89,4 @@ enum FixturesPerimetres {
             try Relecture.generee([Components.Schemas.PerimetreRead].self, json: arbre), corps: Data(arbre.utf8))
     }
 }
+#endif

@@ -100,7 +100,7 @@ struct CarteAffaire: View {
 /// La même carte, en squelette, pendant le chargement.
 struct CarteAffaireSquelette: View {
     var body: some View {
-        CarteAffaire(affaire: ServiceSimule.affaires[4])
+        CarteAffaire(affaire: Apercu.affaires[4])
             .redacted(reason: .placeholder)
             .accessibilityHidden(true)
     }

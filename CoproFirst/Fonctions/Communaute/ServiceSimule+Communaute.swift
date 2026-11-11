@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Une Communauté inventée, pour les aperçus, les tests et les captures : aucune
 /// personne réelle (des prénoms d'exemple), aucune requête. Les écritures réussissent
 /// sans rien garder : l'écran relit la liste, comme après un vrai envoi.
@@ -119,3 +120,4 @@ extension ServiceSimule: ServiceCommunaute {
 
     private static func dans(jours: Double) -> Date { Date.now.addingTimeInterval(jours * 86_400) }
 }
+#endif
