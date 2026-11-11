@@ -142,7 +142,7 @@ final class CommunauteUITests: XCTestCase {
     func testLaClocheOuvreLesNotificationsEtToutSeMarqueLu() throws {
         let app = lancer()
         let cloche = el(app, "cloche")
-        XCTAssertTrue(cloche.waitForExistence(timeout: 8))
+        XCTAssertTrue(cloche.waitForExistence(timeout: Attente.plafond))
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
             lu(app, "cloche", contient: "12"),
@@ -151,9 +151,12 @@ final class CommunauteUITests: XCTestCase {
         capture("7b-cloche")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
-        XCTAssertTrue(tout.waitForExistence(timeout: 8))
-        XCTAssertTrue(tout.isHittable, "« Tout marquer lu » se voit et se touche, en haut")
-        XCTAssertTrue(el(app, "notifications.modifier").isHittable, "« Modifier » se voit et se touche, en haut")
+        // La feuille monte en glissant : « se touche » s'attend comme un état, pas une
+        // lecture unique (main 865eed4 rouge sur un runner lent, #123).
+        XCTAssertTrue(tout.waitForExistence(timeout: Attente.plafond))
+        XCTAssertTrue(tout.attendre("isHittable == true"), "« Tout marquer lu » se voit et se touche, en haut")
+        let modifier = el(app, "notifications.modifier")
+        XCTAssertTrue(modifier.attendre("isHittable == true"), "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
         tout.tap()
         XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
