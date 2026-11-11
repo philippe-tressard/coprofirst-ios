@@ -42,6 +42,28 @@ enum Relecture {
         return try decodeur.decode(T.self, from: donnees)
     }
 
+    /// Ce qu'une réponse TYPÉE sert au-dessus du plancher (#89) : des champs que le
+    /// contrat du plancher ne déclare pas, que le type généré ignore, relus dans le corps
+    /// servi (`CorpsServi.garder`). Le modèle relu n'a que des champs facultatifs.
+    ///
+    /// Une installation antérieure ne les sert pas : `nil`, et l'écran garde son geste
+    /// d'avant. Un corps illisible vaut aussi `nil` — défaut FERMÉ : l'écran n'offre
+    /// jamais un geste que le serveur n'a pas annoncé, et la lecture typée, elle, a déjà
+    /// réussi.
+    static func auDessusDuPlancher<T: Decodable>(_ type: T.Type, corps: Data?) -> T? {
+        guard let corps else { return nil }
+        return try? lire(type, json: corps)
+    }
+
+    /// La même relecture sur une LISTE typée, rangée par identifiant — l'écran retrouve
+    /// chaque ligne du type généré par le sien.
+    static func auDessusDuPlancher<T: Decodable & Identifiable>(
+        parLigne type: T.Type, corps: Data?
+    ) -> [T.ID: T] {
+        let lus = auDessusDuPlancher([T].self, corps: corps) ?? []
+        return Dictionary(lus.map { ($0.id, $0) }, uniquingKeysWith: { premier, _ in premier })
+    }
+
     /// Un type GÉNÉRÉ, décodé comme le client généré le décode (clés du contrat, dates
     /// par `TranscodeurDates`) — l'API simulée sert ses réponses en JSON par ici, pour
     /// passer par le MÊME branchement que le service réel (`Fixtures*.swift`).

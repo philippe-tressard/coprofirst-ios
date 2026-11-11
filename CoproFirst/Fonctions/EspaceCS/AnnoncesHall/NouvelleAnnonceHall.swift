@@ -42,7 +42,7 @@ struct NouvelleAnnonceHall: View {
         .animation(.snappy, value: erreur)
         .task {
             // Non bloquant : sans périmètres, l'affiche prend celui que le serveur pose.
-            perimetres = (try? await service.perimetres(installation))?.filter(\.selectionnable) ?? []
+            perimetres = Perimetre.aSaisir((try? await service.perimetres(installation)) ?? [])
         }
     }
 

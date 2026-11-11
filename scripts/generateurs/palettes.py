@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import re
 
-from generateurs._commun import CHARTE, propriete
+from generateurs._commun import CHARTE, bloc_css, jetons_css, jetons_du_socle, propriete
 
 SOURCES = [
     "front/src/styles/socle.css",
@@ -28,31 +28,10 @@ SOURCES = [
 
 # Tout jeton se lit (un `var(--teinte-6)` doit se résoudre) ; seuls ces préfixes deviennent
 # des propriétés de `Palette`.
-JETON = re.compile(r"--([a-z][a-z0-9-]*)\s*:\s*([^;]+);")
 EXPOSES = ("color-", "fil-", "kanban-", "serie-", "palier-")
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 RGBA = re.compile(r"^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$")
 VAR = re.compile(r"^var\(--([a-z][a-z0-9-]*)\)$")
-
-
-def bloc(texte: str, selecteur: str) -> str:
-    """Le corps du premier bloc dont l'en-tête contient `selecteur`, accolades équilibrées."""
-    debut = texte.index(selecteur)
-    ouverture = texte.index("{", debut)
-    profondeur = 0
-    for i in range(ouverture, len(texte)):
-        if texte[i] == "{":
-            profondeur += 1
-        elif texte[i] == "}":
-            profondeur -= 1
-            if profondeur == 0:
-                return texte[ouverture + 1 : i]
-    raise ValueError(f"bloc non fermé : {selecteur}")
-
-
-def jetons(corps: str) -> dict[str, str]:
-    sans = re.sub(r"/\*.*?\*/", "", corps, flags=re.S)
-    return {nom: valeur.strip() for nom, valeur in JETON.findall(sans)}
 
 
 def resoudre(nom: str, table: dict[str, str], vus=()) -> tuple | None:
@@ -76,8 +55,8 @@ def litteral(c: tuple) -> str:
 
 
 def generer(ctx) -> str:
-    socle = jetons(bloc((ctx.front / "src" / "styles" / "socle.css").read_text(encoding="utf-8"), ":root,"))
-    sombre = jetons(bloc((ctx.front / "src" / "styles" / "palette-sombre.css").read_text(encoding="utf-8"), ":root[data-theme='dark']"))
+    socle = jetons_du_socle(ctx)
+    sombre = jetons_css(bloc_css((ctx.front / "src" / "styles" / "palette-sombre.css").read_text(encoding="utf-8"), ":root[data-theme='dark']"))
     texte = (ctx.front / "src" / "styles" / "palettes.css").read_text(encoding="utf-8")
     codes = ["seine"] + sorted(set(re.findall(r":root\[data-palette='([a-z]+)'\]", texte)))
 
@@ -87,8 +66,8 @@ def generer(ctx) -> str:
     for code in codes:
         clair_p = sombre_p = {}
         if code != "seine":
-            clair_p = jetons(bloc(texte, f":root[data-palette='{code}'],"))
-            sombre_p = jetons(bloc(texte, f":root[data-palette='{code}'][data-theme='dark']"))
+            clair_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'],"))
+            sombre_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'][data-theme='dark']"))
         tables[code] = ({**socle, **clair_p}, {**socle, **clair_p, **sombre, **sombre_p})
 
     # Un jeton n'entre que s'il se résout partout : la structure est la même pour toutes.

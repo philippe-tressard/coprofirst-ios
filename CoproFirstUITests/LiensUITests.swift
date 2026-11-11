@@ -10,8 +10,7 @@ final class LiensUITests: XCTestCase {
     @MainActor
     func testUnLienOuvreLAffaireDansSonOnglet() throws {
         let app = LancementCaptures.lancer(arguments: ["-lien", "https://tilleuls.exemple.fr/tickets/41#msg-502"])
-        XCTAssertTrue(app.navigationBars["A-0041"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.elementAcces("affaire.lien").exists)
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         LancementCaptures.capturer("lien-1-affaire")
         // Le retour mène à la liste des affaires : l'affaire est dans SON onglet.
         app.navigationBars["A-0041"].buttons.firstMatch.tap()

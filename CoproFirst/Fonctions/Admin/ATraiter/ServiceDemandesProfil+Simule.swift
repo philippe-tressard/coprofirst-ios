@@ -5,7 +5,8 @@ import Foundation
 
 /// « Demandes de profil » simulées : lues du JSON de leur route (`FixturesDemandesProfil`)
 /// par `Relecture`, comme le service réel. Un traitement retire la demande, comme le
-/// serveur ; une demande déjà traitée est refusée avec sa phrase.
+/// serveur, et rend son annonce (`FixturesDemandesProfil.traitee`) ; une demande déjà
+/// traitée est refusée avec sa phrase.
 extension ServiceSimule: ServiceDemandesProfil {
     func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil] {
         try await Task.sleep(for: .milliseconds(300))
@@ -14,7 +15,7 @@ extension ServiceSimule: ServiceDemandesProfil {
 
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws {
+    ) async throws -> PhraseAvis? {
         try await Task.sleep(for: .milliseconds(350))
         try modifierSimule(depuis: FixturesDemandesProfil.lues) { demandes in
             guard demandes.contains(where: { $0.id == id }) else {
@@ -22,5 +23,6 @@ extension ServiceSimule: ServiceDemandesProfil {
             }
             demandes.removeAll { $0.id == id }
         }
+        return try FixturesDemandesProfil.annonce(approuver: approuver)
     }
 }
