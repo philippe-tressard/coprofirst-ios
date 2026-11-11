@@ -61,8 +61,8 @@ Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
 connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
-« Nouvelle affaire » se compose selon la saisie réglée au Profil pour le compte,
-Essentielle ou Complète, comme sur le site.
+« Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
+Profil pour le compte, Essentielle ou Complète, comme sur le site.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

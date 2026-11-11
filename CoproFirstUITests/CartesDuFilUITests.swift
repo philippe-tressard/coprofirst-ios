@@ -109,6 +109,44 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(modifiee.apparait(), "le nouveau titre, relu")
     }
 
+    /// ✏️ selon la saisie du compte (#110), comme la Création : A-0041 est un sinistre urgent
+    /// (l'urgence y est essentielle). Passée en question, son urgence se range dans « Plus de
+    /// détails », qui s'ouvre d'office puisqu'elle porte une valeur ; en Complète, tout reste
+    /// à son rang.
+    @MainActor
+    func testLaModificationSuitLaSaisieDuCompte() throws {
+        for (arguments, essentielle) in [([String](), true), (["-saisie", "complete"], false)] {
+            let app = lancer(arguments)
+            let carte = app.buttons["fil.ticket_ouvert:41"]
+            XCTAssertTrue(carte.apparait())
+            carte.tap()
+            XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
+            app.elementAcces("affaire.modifier").tap()
+
+            let mode = app.elementAcces("modifier.modeSaisie")
+            XCTAssertTrue(mode.apparait(), "la phrase dit la saisie")
+            XCTAssertTrue(mode.label.contains(essentielle ? "Saisie essentielle" : "Saisie complète"), mode.label)
+            XCTAssertFalse(app.elementAcces("modifier.plusDeDetails").exists, "l'urgence d'un sinistre est à son rang")
+
+            let question = app.elementAcces("nouvelle.categorie.question")
+            XCTAssertTrue(question.apparait())
+            // Les vignettes en grille : « Question » peut être sous le pli.
+            for _ in 0..<6 where !question.isHittable { app.swipeUp() }
+            question.tap()
+            let groupe = app.elementAcces("modifier.plusDeDetails")
+            if essentielle {
+                XCTAssertTrue(groupe.apparait(), "l'urgence d'une question se range")
+                let urgente = app.elementAcces("modifier.urgente")
+                for _ in 0..<6 where !(urgente.exists && urgente.isHittable) { app.swipeUp() }
+                XCTAssertTrue(urgente.exists, "le groupe s'ouvre d'office : l'urgence porte une valeur")
+                LancementCaptures.capturer("modifier-essentielle-plus-de-details")
+            } else {
+                XCTAssertFalse(groupe.exists, "en Complète, rien ne se range")
+            }
+            app.terminate()
+        }
+    }
+
     /// #98 : un détail servi en 8 s — bien plus que les 5 s qu'attendaient ces tests — se lit
     /// quand même, bandeau compris : on attend le détail chargé, jamais une durée.
     @MainActor

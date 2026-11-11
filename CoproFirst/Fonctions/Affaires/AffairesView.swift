@@ -25,9 +25,8 @@ struct AffairesView: View {
     /// les sections essentielles des référentiels lus à l'arrivée : « Nouvelle affaire »
     /// s'ouvre composée, sans qu'une section change de place sous le pouce (#69).
     private var forme: FormeDeSaisie? {
-        ModeSaisie(servi: parcours.ouverteAJour?.profil?.saisieAffaire).map {
-            FormeDeSaisie(mode: $0, essentielles: etat.referentiels?.essentielles)
-        }
+        FormeDeSaisie(
+            servi: parcours.ouverteAJour?.profil?.saisieAffaire, essentielles: etat.referentiels?.essentielles)
     }
 
     var body: some View {
