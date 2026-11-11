@@ -15,7 +15,9 @@ struct ChoixDePerimetresTests {
     @Test func lesTetesSontLesBatimentsEtLesLieuxPasLeRegroupementNiLeDefaut() {
         #expect(arbre.defaut?.code == "copropriete")
         #expect(arbre.tetes.map(\.code) == ["bat_a", "bat_b", "parking", "jardin"])
-        #expect(arbre.espaces(de: "bat_a").map(\.code) == ["bat_a/hall", "bat_a/toit"])
+        #expect(arbre.espaces(de: "bat_a").map(\.code) == ["bat_a/hall", "bat_a/toit", "bat_a_terrasses"])
+        // Les terrasses, au niveau 3, n'ouvrent pas un niveau de plus (#88).
+        #expect(arbre.espaces(de: "bat_a_terrasses").isEmpty)
         #expect(arbre.tete(de: "bat_a/toit") == "bat_a")
     }
 

@@ -97,7 +97,7 @@ final class AffairesUITests: XCTestCase {
         let carte = element("affaires.carte.A-0041", dans: app)
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
-        XCTAssertTrue(app.navigationBars["A-0041"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
     }
 
     @MainActor

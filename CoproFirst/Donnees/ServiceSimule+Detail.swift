@@ -8,7 +8,7 @@ import UIKit
 /// personne, aucune requête.
 extension ServiceSimule {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
-        try await Task.sleep(for: .milliseconds(500))
+        try await Task.sleep(for: delaiDetail)
         return try detailSimule(id)
     }
 

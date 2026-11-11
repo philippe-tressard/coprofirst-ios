@@ -13,10 +13,14 @@ struct ArbreDesPerimetres: Sendable {
     /// Les nœuds actifs, regroupements compris : sans eux, pas de têtes.
     let noeuds: [Perimetre]
     private let parCode: [String: Perimetre]
+    /// Ce qui se PROPOSE : les nœuds sélectionnables jusqu'au niveau que le serveur admet
+    /// (`Perimetre.aSaisir`, #88) — l'arbre entier, lui, reste pour trouver les têtes.
+    private let proposables: Set<String>
 
     init(_ noeuds: [Perimetre]) {
         self.noeuds = noeuds
         parCode = Dictionary(noeuds.map { ($0.code, $0) }, uniquingKeysWith: { premier, _ in premier })
+        proposables = Set(Perimetre.aSaisir(noeuds).map(\.code))
     }
 
     var defaut: Perimetre? { noeuds.first(where: \.parDefaut) }
@@ -30,13 +34,14 @@ struct ArbreDesPerimetres: Sendable {
     /// Les têtes, hors le défaut (il a sa propre pastille).
     var tetes: [Perimetre] {
         noeuds.filter { noeud in
-            noeud.selectionnable && !noeud.parDefaut && (noeud.parent == nil || estRegroupement(noeud.parent))
+            proposables.contains(noeud.code) && !noeud.parDefaut
+                && (noeud.parent == nil || estRegroupement(noeud.parent))
         }
     }
 
     /// Les espaces ciblables d'une tête : ses enfants directs, comme le site.
     func espaces(de tete: String) -> [Perimetre] {
-        noeuds.filter { $0.parent == tete && $0.selectionnable }
+        noeuds.filter { $0.parent == tete && proposables.contains($0.code) }
     }
 
     /// La tête dont dépend `code` (elle-même si c'en est une), s'il y en a une.

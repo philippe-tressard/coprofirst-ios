@@ -8,8 +8,9 @@ import Testing
 
 @testable import ClientAPI
 
-/// Un transport qui n'atteint aucun réseau : il note la requête et rend une réponse fixe.
-private final class TransportEnregistreur: ClientTransport, @unchecked Sendable {
+/// Un transport qui n’atteint aucun réseau : il note la requête et rend une réponse fixe
+/// (partagé par les tests du paquet).
+final class TransportEnregistreur: ClientTransport, @unchecked Sendable {
     private(set) var requetes: [(HTTPRequest, URL)] = []
     let statut: HTTPResponse.Status
     let corps: String

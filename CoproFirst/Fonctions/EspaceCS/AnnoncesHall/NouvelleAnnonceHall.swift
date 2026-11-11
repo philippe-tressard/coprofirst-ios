@@ -42,7 +42,8 @@ struct NouvelleAnnonceHall: View {
         .animation(.snappy, value: erreur)
         .task {
             // Non bloquant : sans périmètres, l'affiche prend celui que le serveur pose. Les
-            // regroupements restent : ils font les têtes du choix (`ArbreDesPerimetres`).
+            // regroupements restent : ils font les têtes du choix (`ArbreDesPerimetres`),
+            // qui ne propose que ce que `Perimetre.aSaisir` admet (#88).
             arbre = ArbreDesPerimetres((try? await service.perimetres(installation)) ?? [])
             if saisie.perimetres.codes.isEmpty { saisie.perimetres.choisirDefaut(arbre) }
         }
