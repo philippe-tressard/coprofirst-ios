@@ -54,12 +54,15 @@ final class EtatDemandesProfil {
     func traiter(
         _ demande: DemandeProfil, approuver: Bool, motif: String?, _ service: any ServiceDemandesProfil,
         _ installation: Installation
-    ) async throws -> String {
+    ) async throws -> PhraseAvis {
         enCours = demande.id
         defer { enCours = nil }
-        try await service.traiterDemandeProfil(demande.id, approuver: approuver, motif: motif, dans: installation)
+        let servie = try await service.traiterDemandeProfil(
+            demande.id, approuver: approuver, motif: motif, dans: installation)
         demandes.removeAll { $0.id == demande.id }
-        return approuver ? TextesATraiter.approuvee : TextesATraiter.rejetee
+        // L'annonce du serveur (contrat ≥ 1.16.0) ; d'une installation antérieure, la
+        // phrase d'avant.
+        return servie ?? PhraseAvis(texte: approuver ? TextesATraiter.approuvee : TextesATraiter.rejetee)
     }
 }
 
@@ -147,7 +150,7 @@ private struct FileDemandesProfil: View {
     }
 
     /// Un geste : son annonce en cas de succès, la phrase du serveur sinon.
-    private func geste(_ faire: @escaping () async throws -> String) {
+    private func geste(_ faire: @escaping () async throws -> PhraseAvis) {
         Task {
             do {
                 let annonce = try await faire()

@@ -4,8 +4,9 @@
 import ClientAPI
 import Foundation
 
-/// « Demandes de profil » par le client GÉNÉRÉ. La liste n'est pas typée par le contrat
-/// (pas de `response_model`) : elle se relit par `Relecture`, le seul usage admis.
+/// « Demandes de profil » par le client GÉNÉRÉ. La liste et le traitement ne sont pas
+/// typés par le contrat du plancher (pas de `response_model` avant 1.16.0) : ils se
+/// relisent par `Relecture`, le seul usage admis.
 extension ServiceAPI: ServiceDemandesProfil {
     func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil] {
         let sortie = try await appeler { try await client(installation.adresse).getAdminDemandesProfil() }
@@ -18,7 +19,7 @@ extension ServiceAPI: ServiceDemandesProfil {
 
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws {
+    ) async throws -> PhraseAvis? {
         let corps = Components.Schemas.DemandeProfilAction(
             action: approuver ? "approuver" : "rejeter", motifRefus: approuver ? nil : motif?.nulSiVide)
         let sortie = try await appeler {
@@ -26,7 +27,7 @@ extension ServiceAPI: ServiceDemandesProfil {
                 path: .init(demandeId: id), body: .json(corps))
         }
         switch sortie {
-        case .ok: return
+        case .ok(let ok): return try Relecture.lire(DemandeProfilTraitee.self, depuis: try ok.body.json).phrase
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
