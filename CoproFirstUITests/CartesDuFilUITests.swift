@@ -19,7 +19,7 @@ final class CartesDuFilUITests: XCTestCase {
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
-        XCTAssertTrue(app.navigationBars["A-0041"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         // La carte de l'Historique se lit d'un bloc (VoiceOver) : on cherche dans son libellé.
         let changement = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Ouvert → Chez le syndic")).firstMatch
@@ -56,8 +56,9 @@ final class CartesDuFilUITests: XCTestCase {
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let suite = app.elementAcces("affaire.suite")
-        XCTAssertTrue(suite.waitForExistence(timeout: 5))
+        XCTAssertTrue(suite.exists)
         XCTAssertTrue(app.elementAcces("affaire.options").exists)
         XCTAssertFalse(app.elementAcces("affaire.repondre").exists, "le conseil ne répond pas, il suit")
         XCTAssertTrue(app.elementAcces("affaire.message.503").exists, "la note interne, au conseil")
@@ -87,8 +88,9 @@ final class CartesDuFilUITests: XCTestCase {
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let modifier = app.elementAcces("affaire.modifier")
-        XCTAssertTrue(modifier.waitForExistence(timeout: 5))
+        XCTAssertTrue(modifier.exists)
         modifier.tap()
 
         let titre = app.textFields["modifier.titre"]
@@ -105,6 +107,19 @@ final class CartesDuFilUITests: XCTestCase {
             .matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Fuite d'eau", "nord"))
             .firstMatch
         XCTAssertTrue(modifiee.waitForExistence(timeout: 5), "le nouveau titre, relu")
+    }
+
+    /// #98 : un détail servi en 8 s — bien plus que les 5 s qu'attendaient ces tests — se lit
+    /// quand même, bandeau compris : on attend le détail chargé, jamais une durée.
+    @MainActor
+    func testUnDetailLentSAttendJusquASonBandeau() throws {
+        let app = lancer(["-delai-detail", "8000"])
+        let carte = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        carte.tap()
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
+        XCTAssertTrue(app.elementAcces("affaire.suite").exists)
+        XCTAssertTrue(app.elementAcces("affaire.message.503").exists)
     }
 
     @MainActor
