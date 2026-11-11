@@ -43,6 +43,15 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, la règle GÉNÉRÉE du site (`DroitsOnglet.cs`)"),
+    # #127 : le crayon d'une affaire est `peut_corriger`, comme le site — `peut_modifier`
+    # ne dit plus que le droit sur le CONTENU (`DetailAffaire.contenuFige`).
+    (re.compile(r"\.modifier, \.options:\s*affaire\.droits\.modifier\b"),
+     "le crayon servi (`DroitsServisAffaire.corriger`, `peut_corriger`)"),
+    # #127 : l'état d'une affaire en clair est SERVI (`statut_libelle`, `nouveau_statut_libelle`,
+    # `suivi_actualite_libelle`) ; la table du site n'est qu'un repli, écrit une fois, dans
+    # `StatutsAffaire.libelle(_:servi:)` (`PastilleStatut.swift`).
+    (re.compile(r"\bStatutsAffaire\.parCode\[[^\]]*\]\?\.libelle\b"),
+     "l'état en clair servi (`StatutsAffaire.libelle(_:servi:)`)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -85,11 +94,16 @@ def autotest() -> int:
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
+        "            case .modifier, .options: affaire.droits.modifier",
+        "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        "            case .modifier, .options: affaire.droits.corriger",
+        "        morceaux.append(StatutsAffaire.libelle(affaire.statut, servi: affaire.statutLibelle))",
+        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.parCode[statut]?.pastille ?? "badge-gray")',
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
