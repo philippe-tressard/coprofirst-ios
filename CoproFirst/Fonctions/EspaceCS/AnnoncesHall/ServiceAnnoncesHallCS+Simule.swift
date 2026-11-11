@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Des affiches inventées, pour les aperçus, les tests et les captures : aucune personne
 /// réelle, aucune requête. La liste de départ est le JSON de la route
 /// (`FixturesAnnoncesHall`), lu comme le service réel le lit ; les gestes changent la liste
@@ -47,3 +48,4 @@ extension ServiceSimule: ServiceAnnoncesHallCS {
         try modifierSimule(depuis: FixturesAnnoncesHall.affichesLues) { $0.removeAll { $0.id == id } }
     }
 }
+#endif

@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Le relevé que l'API simulée sert à Reporting › Renouvellements — le JSON de
 /// `GET /reporting/renouvellements`, lu par le type GÉNÉRÉ puis par le MÊME branchement
 /// que le service réel, et jugé contre le contrat par `scripts/verifier-fixtures.py`.
@@ -63,3 +64,4 @@ enum FixturesRenouvellements {
         Renouvellements(try Relecture.generee(Components.Schemas.ReleveRenouvellements.self, json: releve))
     }
 }
+#endif

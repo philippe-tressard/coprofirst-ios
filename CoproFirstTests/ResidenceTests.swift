@@ -88,7 +88,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 }
 
 @Test func lesAnnexesSeRangentSousLeurFiche() {
-    let contenu = ServiceSimule.contenuFiche
+    let contenu = Apercu.contenuFiche
     #expect(contenu.annexes(deRegle: 1).map(\.id) == [40])
     #expect(contenu.annexes(deDocument: 11).map(\.id) == [41])
     #expect(contenu.annexes(deRapport: 5).isEmpty)
@@ -100,7 +100,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 // MARK: - Carnet
 
 @Test func leCarnetSeRangeParEquipementDansLOrdreDuServeur() {
-    let carnet = ContenuCarnet(entrees: ServiceSimule.carnet, libellesEquipements: ["chaufferie": "Chaufferie"])
+    let carnet = ContenuCarnet(entrees: Apercu.carnet, libellesEquipements: ["chaufferie": "Chaufferie"])
     #expect(carnet.groupes.map(\.titre) == ["Chaufferie", "ascenseur", "toiture", TextesCarnet.sansEquipement])
     #expect(carnet.groupes.first?.entrees.count == 2)
     #expect(carnet.enAlerte.map(\.libelle) == ["Contrat d'entretien de l'ascenseur"])
@@ -126,7 +126,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 // MARK: - Règlement
 
 @Test func lesExtraitsSeLisentAvecCeQueLeCodeAVerifie() {
-    let question = ServiceSimule.question
+    let question = Apercu.question
     #expect(question.verifies == 2)
     #expect(question.extraitsReglement.count == 2 && question.extraitsAG.count == 1)
     // L'acte, la rubrique et la page, joints par le séparateur du site : insécable après le tiret.
@@ -137,12 +137,12 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 /// Un avis à renvois se lit par ses fondements — le règlement, puis les AG —, un avis
 /// d'avant section après section ; le ton du verdict est servi, sa teinte générée.
 @Test func unAvisARenvoisSeLitParSesFondements() {
-    let question = ServiceSimule.question
+    let question = Apercu.question
     #expect(question.avecRenvois)
     #expect(question.fondements.compactMap(\.renvoi) == ["R1", "R2", "AG1"])
-    #expect(!ServiceSimule.questionAvant.avecRenvois)
+    #expect(!Apercu.questionAvant.avecRenvois)
     #expect(question.badgeDuVerdict == "badge-orange")
-    #expect(ServiceSimule.questionAvant.badgeDuVerdict == "badge-red")
+    #expect(Apercu.questionAvant.badgeDuVerdict == "badge-red")
     var inconnu = question
     inconnu.verdictTon = "incertain"
     #expect(inconnu.badgeDuVerdict == TablesReglement.badgeDuVerdictInconnu, "un ton inconnu se lit incertain")
@@ -180,7 +180,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 }
 
 @Test func leConseilSeGroupeParBatimentSansBatimentEnDernier() {
-    let groupes = ServiceSimule.annuaire.groupesCS
+    let groupes = Apercu.annuaire.groupesCS
     #expect(groupes.map(\.batiment) == ["A", "B", nil])
     #expect(groupes.first?.membres.count == 2)
 }

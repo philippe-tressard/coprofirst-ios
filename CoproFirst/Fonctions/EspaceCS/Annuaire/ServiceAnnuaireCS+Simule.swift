@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// L'annuaire du conseil simulé, lu du JSON de ses routes (`FixturesAnnuaireCS`) comme
 /// le service réel le lit. Un enregistrement numérote les fiches neuves et rend la
 /// composition retenue, comme le serveur.
@@ -76,3 +77,4 @@ struct AnnuaireCSSimule: Sendable {
         return dernierId
     }
 }
+#endif

@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Comptes & accès » simulé : des comptes et des demandes inventés, aucun nom de
 /// personne réelle, lus du JSON de leurs routes (`FixturesComptesCS`) comme le service réel
 /// les lit. Les gestes retirent l'élément de la file, comme le serveur.
@@ -38,3 +39,4 @@ extension ServiceSimule: ServiceComptesCS {
         try modifierSimule(depuis: FixturesComptesCS.commandesLues) { $0.removeAll { $0.id == id } }
     }
 }
+#endif

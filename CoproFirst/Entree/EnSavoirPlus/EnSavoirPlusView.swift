@@ -78,7 +78,7 @@ private struct ApercuDuFil: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(ServiceSimule.fil.prefix(3)) { element in
+            ForEach(Apercu.fil.prefix(3)) { element in
                 CarteDuFil(element: element)
             }
         }

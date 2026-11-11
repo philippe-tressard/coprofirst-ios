@@ -8,16 +8,49 @@ import Observation
 /// de la dernière connexion réussie, pour pré-remplir la suivante — sur l'appareil
 /// seul, jamais envoyé ailleurs, effacé par « Oublier toutes les résidences ».
 /// Pas d'annuaire : une résidence n'apparaît ici que si l'utilisateur l'a saisie.
+///
+/// Les réglages (`UserDefaults`) ne gardent que la résidence — son adresse, son nom, sa
+/// présentation. Ce qui dit QUI est l'utilisateur (profil, courriel) va au coffre du
+/// compte, le Trousseau (#84).
 @MainActor @Observable
 final class InstallationsConnues {
     private(set) var liste: [Installation]
     private let reglages: UserDefaults
+    private let coffre: any CoffreDuCompte
     private static let cle = "installations-connues"
+    private static let prefixeIdentifiant = "identifiant."
+    private static let prefixeProfil = "profil."
 
-    init(reglages: UserDefaults = .standard) {
+    init(reglages: UserDefaults = .standard, coffre: any CoffreDuCompte = CoffreTrousseau()) {
         self.reglages = reglages
+        self.coffre = coffre
         let donnees = reglages.data(forKey: Self.cle) ?? Data()
         liste = (try? JSONDecoder().decode([Installation].self, from: donnees)) ?? []
+        migrerVersLeCoffre()
+        for rang in liste.indices {
+            liste[rang].profil = (coffre.lire(Self.prefixeProfil + liste[rang].hote))
+                .flatMap { try? JSONDecoder().decode(ProfilResidence.self, from: $0) }
+        }
+    }
+
+    /// Migration douce (#84) : un profil ou un courriel qu'une version antérieure a
+    /// écrit dans les réglages passe au coffre, puis s'efface des réglages — seulement
+    /// s'il y est rangé : un coffre qui refuse ne fait rien perdre.
+    private func migrerVersLeCoffre() {
+        var toutRange = true
+        for installation in liste {
+            let cle = Self.prefixeProfil + installation.hote
+            guard let profil = installation.profil, coffre.lire(cle) == nil else { continue }
+            if let donnees = try? JSONEncoder().encode(profil), coffre.ranger(donnees, cle) { continue }
+            toutRange = false
+        }
+        if toutRange, liste.contains(where: { $0.profil != nil }) { enregistrer() }
+        for cle in reglages.dictionaryRepresentation().keys where cle.hasPrefix(Self.prefixeIdentifiant) {
+            guard let email = reglages.string(forKey: cle) else { continue }
+            if coffre.lire(cle) != nil || coffre.ranger(Data(email.utf8), cle) {
+                reglages.removeObject(forKey: cle)
+            }
+        }
     }
 
     /// La dernière résidence ouverte : celle que Face ID rouvre au retour.
@@ -38,25 +71,28 @@ final class InstallationsConnues {
 
     /// Le courriel de la dernière connexion réussie à cette résidence.
     func identifiant(_ installation: Installation) -> String? {
-        reglages.string(forKey: "identifiant." + installation.hote)
+        coffre.lire(Self.prefixeIdentifiant + installation.hote).flatMap { String(data: $0, encoding: .utf8) }
     }
 
     func retenirIdentifiant(_ email: String, pour installation: Installation) {
-        reglages.set(email, forKey: "identifiant." + installation.hote)
+        coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)
     }
 
     /// Le profil de l'utilisateur dans cette résidence, au dernier passage.
     func noter(_ profil: ProfilResidence, pour installation: Installation) {
         guard let rang = liste.firstIndex(where: { $0.adresse == installation.adresse }) else { return }
         liste[rang].profil = profil
-        enregistrer()
+        if let donnees = try? JSONEncoder().encode(profil) {
+            coffre.ranger(donnees, Self.prefixeProfil + installation.hote)
+        }
     }
 
     /// « Oublier toutes les résidences » : comme une app neuve.
     func vider() {
         for installation in liste {
             oublierFaceID(installation)
-            reglages.removeObject(forKey: "identifiant." + installation.hote)
+            coffre.effacer(Self.prefixeIdentifiant + installation.hote)
+            coffre.effacer(Self.prefixeProfil + installation.hote)
         }
         liste = []
         enregistrer()
@@ -72,7 +108,13 @@ final class InstallationsConnues {
         enregistrer()
     }
 
+    /// Les résidences, sans le profil : il est au coffre.
     private func enregistrer() {
-        reglages.set(try? JSONEncoder().encode(liste), forKey: Self.cle)
+        let residences = liste.map { installation -> Installation in
+            var installation = installation
+            installation.profil = nil
+            return installation
+        }
+        reglages.set(try? JSONEncoder().encode(residences), forKey: Self.cle)
     }
 }

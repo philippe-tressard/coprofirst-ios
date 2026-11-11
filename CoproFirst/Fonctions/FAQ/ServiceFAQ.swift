@@ -62,6 +62,7 @@ extension ServiceAPI: ServiceFAQ {
     }
 }
 
+#if DEBUG
 /// Des questions inventées, pour les aperçus, les tests et les captures.
 extension ServiceSimule: ServiceFAQ {
     func questionsFAQ(_ installation: Installation) async throws -> [QuestionFAQ] {
@@ -91,3 +92,4 @@ extension ServiceSimule: ServiceFAQ {
         ]
     }
 }
+#endif
