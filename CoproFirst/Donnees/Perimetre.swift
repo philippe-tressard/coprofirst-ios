@@ -83,15 +83,6 @@ struct Perimetre: Identifiable, Hashable, Sendable {
 
     /// Le code du périmètre que le serveur désigne par défaut, s'il en désigne un.
     static func codeParDefaut(_ perimetres: [Perimetre]) -> String? { perimetres.first(where: \.parDefaut)?.code }
-
-    /// Les libellés de `codes` (`perimetre_cible`), lus dans l'arbre servi : le périmètre
-    /// par défaut se TAIT (`BadgePerimetre` du site), et un code que l'arbre ne connaît pas
-    /// (nœud retiré, arbre pas encore lu) ne s'affiche jamais brut (« bat:2 »).
-    static func libelles(_ codes: [String], parmi perimetres: [Perimetre]) -> [String] {
-        codes.compactMap { code in
-            perimetres.first { $0.code == code }.flatMap { $0.parDefaut ? nil : $0.libelle }
-        }
-    }
 }
 
 /// Ce que GET /perimetres sert au-dessus du plancher (contrat 1.17.0, #88), relu par

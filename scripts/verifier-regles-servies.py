@@ -43,12 +43,19 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, la règle GÉNÉRÉE du site (`DroitsOnglet.cs`)"),
+    #  #130 : le lieu d'un contenu se LIT (`perimetre_libelle`, contrat 1.24.0) ; nommer
+    #  des codes par l'arbre recopie la règle du serveur (`utils/perimetres/libelles.py`).
+    (re.compile(r"\blibelles\([^)]*parmi:"),
+     "le lieu servi (`perimetre_libelle`) par `LieuServi.lieu` — le repli au plancher n'a qu'un endroit"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
 DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
+    "CoproFirst/Donnees/LieuServi.swift":
+        "le SEUL repli au plancher (#130) : une installation antérieure au contrat 1.24.0 ne sert pas le lieu "
+        "d'un accès ; il se retire quand le plancher atteint 1.24.0",
 }
 
 
@@ -85,11 +92,14 @@ def autotest() -> int:
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
+        "        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        "        let ouvre = acces.lieu(arbre: perimetres)",
+        "            lieu: LieuServi.lieu(servi?.perimetreLibelle?.valeur))",
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
