@@ -17,15 +17,21 @@ final class LiensUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("affaires.carte.A-0041").waitForExistence(timeout: 5))
     }
 
-    /// Une résidence jamais vue : la connexion, son adresse pré-remplie — rien d'autre.
+    /// Une résidence jamais vue : la connexion, son adresse pré-remplie — et le mot de passe
+    /// ne part qu'après la confirmation de l'hôte, toujours demandée pour un lien (#82).
     @MainActor
-    func testUnHoteJamaisVuOuvreLaConnexionPreRemplie() throws {
-        let app = LancementCaptures.lancer(arguments: ["-lien", "https://inconnue.exemple.org/tickets/3"])
+    func testUnHoteJamaisVuOuvreLaConnexionPuisLaConfirmation() throws {
+        let app = LancementCaptures.lancer(arguments: ["-lien", "https://imitation.exemple.fr/tickets/3"])
         let prerempli = NSPredicate(
-            format: "identifier == %@ AND value == %@", "connexion.residence", "inconnue.exemple.org")
+            format: "identifier == %@ AND value == %@", "connexion.residence", "imitation.exemple.fr")
         let champ = app.descendants(matching: .any).matching(prerempli).firstMatch
         XCTAssertTrue(champ.waitForExistence(timeout: 5))
         XCTAssertFalse(app.navigationBars["A-0003"].exists)
         LancementCaptures.capturer("lien-2-hote-inconnu")
+        ConfirmationHoteUITests.saisirIdentifiants(app)
+        let hote = app.elementAcces("confirmationHote.hote")
+        XCTAssertTrue(hote.waitForExistence(timeout: 5), "un lien ne dispense pas de la confirmation")
+        XCTAssertEqual(hote.label, "imitation.exemple.fr")
+        XCTAssertFalse(app.buttons["faceid.plusTard"].exists, "rien n'est parti")
     }
 }

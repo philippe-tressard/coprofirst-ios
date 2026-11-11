@@ -38,7 +38,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`). Un 401 se renouvelle à UNE porte, `Renouvellement` (intergiciel du client généré, #81) : un seul POST /auth/refresh à la fois par hôte, la requête rejouée une fois ; `reprendre` y passe aussi | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
 | Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; une page réservée à un rôle (Prestataires, Espace CS, Admin, Délégations) n'y paraît qu'à qui l'a — `PagesOuvertes`, le filtre de `Nav.svelte`, écrit une fois, sur les populations générées (#15) ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
-| Porte (liens, notifications) | un lien universel (#18) ou le toucher d'une notification (#17) devient une `Destination` (résidence par son adresse + écran) ; **seul** `parcours.suivre(_:decouvrir:)` l'ouvre (une notification passe `decouvrir: false` : une adresse inconnue n'ouvre rien, aucun annuaire) : résidence ouverte → l'écran (`Aiguillage` : onglet, « Plus », ou feuille), connue → sa connexion (ou l'entrée, si elle la montre déjà) puis l'écran (`porte.enAttente`), jamais vue → connexion pré-remplie `depuisUnLien` (confirmation d'hôte, #82). Un chemin d'un lien se lit par la route générée (`PagesParDefaut`), jamais une liste écrite ; une page que l'app ne porte pas → Safari intégré (`PageWebView`), jamais `openURL` (le lien reviendrait à l'app). Au simulateur : `-lien <adresse>` ; `Destination.Ecran.notifications` (#17) ouvre la cloche, UNE feuille posée par `OngletsView` sur `parcours.clocheOuverte`, que tout autre écran demandé referme | `Navigation/Porte/` (tests : `PorteTests`, `LiensUITests`) |
+| Porte (liens, notifications) | un lien universel (#18) ou le toucher d'une notification (#17) devient une `Destination` (résidence par son adresse + écran) ; **seul** `parcours.suivre(_:decouvrir:)` l'ouvre (une notification passe `decouvrir: false` : une adresse inconnue n'ouvre rien, aucun annuaire) : résidence ouverte → l'écran (`Aiguillage` : onglet, « Plus », ou feuille), connue → sa connexion (ou l'entrée, si elle la montre déjà) puis l'écran (`porte.enAttente`), jamais vue → connexion pré-remplie, `origine: .lien` (`OrigineAdresse` : confirmation d'hôte toujours, comme un scan, #82). Un chemin d'un lien se lit par la route générée (`PagesParDefaut`), jamais une liste écrite ; une page que l'app ne porte pas → Safari intégré (`PageWebView`), jamais `openURL` (le lien reviendrait à l'app). Au simulateur : `-lien <adresse>` ; `Destination.Ecran.notifications` (#17) ouvre la cloche, UNE feuille posée par `OngletsView` sur `parcours.clocheOuverte`, que tout autre écran demandé referme | `Navigation/Porte/` (tests : `PorteTests`, `LiensUITests`) |
 | Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
 | Mouvement | `.snappy` pour un état, `.smooth` pour un changement de palette, `accessibilityReduceMotion` lu ; retours haptiques sur résidence reconnue, connexion, Face ID, filtre | — |
 | Grandes tailles | `@ScaledMetric` ou `.dynamicTypeSize(...xxxLarge)` pour un pictogramme ; une rangée passe en colonne si `dynamicTypeSize.isAccessibilitySize` ; un écran fixe défile ; **le titre d'un écran de menu** : `.titreDeMenu()` après `.navigationTitle(…)` (grand titre, en ligne aux tailles d'accessibilité — #41), jamais un `navigationBarTitleDisplayMode` calculé dans l'écran | `CarteDuFil`, `AccueilView`, `Commun/Composants/TitreDeMenu.swift` |
@@ -253,10 +253,22 @@ seule la CI le dit.
    avant de lire le reste par `.exists` — pour le détail d'une affaire,
    `attendreDetailAffaire` (titre ET bandeau, qui arrive après le titre sur le runner :
    jusqu'à 12 s, #98) ; jamais un `.exists` juste après un toucher. Un écran lent se
-   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`).
+   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`). Le plafond de ces
+   attentes est commun, et large (`Attente.plafond`, `CoproFirstUITests/Attente.swift`) :
+   l'attente rend la main dès que l'état est là, un délai court ne fait gagner du temps
+   qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
+   onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
+   attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
    test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
    « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
+6. **Un seul passage au simulateur à la fois sur le poste**, et ce n'est pas une
+   consigne : `scripts/tests-simulateur.sh` prend lui-même le verrou que partagent les
+   worktrees, attend son tour et dit qui le tient (#108) — on le lance nu, sans lanceur.
+   Un passage s'arrête par le pid de la fiche du verrou (l'en-tête du script donne la
+   commande), jamais par son nom. Un passage filtré donne **un filtre par argument** :
+   s'il ne joue aucun test il sort INCONNU, pas vert (#96). Sans `DESTINATION`, le
+   simulateur est choisi et nommé par `scripts/destination-simulateur.sh` (#112).

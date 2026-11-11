@@ -19,6 +19,11 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// `GET /auth/me`) : elles lui ouvrent la page Délégations (`Nav.svelte`, #15).
     /// Facultatif : un profil gardé avant #15 se relit sans lui.
     var delegationsAidant: Int?
+    /// La saisie d'une affaire qui s'applique au compte, `essentielle` ou `complete`
+    /// (`saisie_affaire_effective`, contrat ≥ 1.14.0, #69) : le choix du Profil, sinon le
+    /// défaut — calculé par le SERVEUR, l'app le lit. Facultatif : un profil gardé avant
+    /// #69 se relit sans lui.
+    var saisieAffaire: String?
 
     /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
     /// délégation active — la condition de `Nav.svelte` pour la page Délégations.

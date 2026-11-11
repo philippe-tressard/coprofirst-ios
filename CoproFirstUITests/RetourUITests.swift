@@ -48,8 +48,7 @@ final class RetourUITests: XCTestCase {
 
         let motDePasse = element(app, "connexion.motDePasse")
         // Le curseur attend dans le mot de passe : on tape sans toucher le champ.
-        expectation(for: NSPredicate(format: "hasKeyboardFocus == true"), evaluatedWith: motDePasse)
-        waitForExpectations(timeout: 3)
+        XCTAssertTrue(motDePasse.attendre("hasKeyboardFocus == true"), "le curseur attend dans le mot de passe")
         motDePasse.typeText("secret\n")
         XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5), "le fil")
     }

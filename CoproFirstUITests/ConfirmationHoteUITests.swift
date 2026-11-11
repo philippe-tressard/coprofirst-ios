@@ -9,7 +9,7 @@ final class ConfirmationHoteUITests: XCTestCase {
     @MainActor
     func testUnHoteJamaisVuSeConfirmeAvantLeMotDePasse() throws {
         let app = LancementCaptures.lancer(ecran: "connexion")
-        saisirIdentifiants(app)
+        Self.saisirIdentifiants(app)
 
         let hote = app.elementAcces("confirmationHote.hote")
         XCTAssertTrue(hote.waitForExistence(timeout: 5), "l'écran de confirmation s'ouvre")
@@ -32,7 +32,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         residence.tap()
         residence.typeText("imitation.exemple.fr")
         XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].waitForExistence(timeout: 5), "l'imitation répond")
-        saisirIdentifiants(app)
+        Self.saisirIdentifiants(app)
 
         XCTAssertTrue(
             app.elementAcces("confirmationHote.avertissement").waitForExistence(timeout: 5), "l'avertissement en clair")
@@ -51,7 +51,7 @@ final class ConfirmationHoteUITests: XCTestCase {
     @MainActor
     func testAnnulerNEnvoieRien() throws {
         let app = LancementCaptures.lancer(ecran: "connexion")
-        saisirIdentifiants(app)
+        Self.saisirIdentifiants(app)
         let annuler = app.elementAcces("confirmationHote.annuler")
         XCTAssertTrue(annuler.waitForExistence(timeout: 5))
         annuler.tap()
@@ -78,8 +78,9 @@ final class ConfirmationHoteUITests: XCTestCase {
         return inactif.waitForNonExistence(timeout: 5)
     }
 
+    /// Le courriel et le mot de passe, validés — aussi pour un lien (`LiensUITests`, #18).
     @MainActor
-    private func saisirIdentifiants(_ app: XCUIApplication) {
+    static func saisirIdentifiants(_ app: XCUIApplication) {
         let email = app.elementAcces("connexion.email")
         XCTAssertTrue(email.waitForExistence(timeout: 5))
         email.tap()
