@@ -118,4 +118,9 @@ enum AdresseInstallation {
         propre.port = composants.port
         return propre.url
     }
+
+    /// L'adresse telle qu'on la saisirait : l'hôte, et son port s'il en a un.
+    static func enSaisie(_ adresse: URL) -> String {
+        (adresse.host() ?? "") + (adresse.port.map { ":\($0)" } ?? "")
+    }
 }

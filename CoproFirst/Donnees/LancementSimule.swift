@@ -14,7 +14,8 @@ import Foundation
 /// logement qui ne tient pas dans la barre, `-compte administrateur|operateur` pour le
 /// Paramétrage (#16) : administrateur et conseil, ou opérateur de la plateforme seul ;
 /// `-logo-residence <contrat>` donne à la résidence un logo et sa variante sombre, et
-/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70).
+/// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70) ;
+/// `-lien <adresse>` : un lien universel reçu au lancement (#18).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -65,7 +66,17 @@ enum LancementSimule {
         default:
             break
         }
+        suivreLeLien(arguments, parcours)
         return parcours
+    }
+
+    /// `-lien <adresse>` : un lien universel reçu au lancement (#18), par la même porte.
+    @MainActor
+    private static func suivreLeLien(_ arguments: [String], _ parcours: Parcours) {
+        guard let lien = argument("-lien", arguments).flatMap(URL.init(string:)),
+            let destination = LienUniversel.destination(lien)
+        else { return }
+        parcours.suivre(destination)
     }
 
     /// Un passage précédent : la résidence ouverte, son courriel retenu, Face ID déjà
