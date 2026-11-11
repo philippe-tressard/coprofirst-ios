@@ -154,8 +154,31 @@ private final class SuppressionsNotees: ServiceNotifications, @unchecked Sendabl
     #expect(CompteurNonLues.partage.nombre(residence) == 1, "la cloche suit")
 }
 
+/// « Supprimer les lues », le geste direct du site (#53) : sa route, UNE requête, et il
+/// ne reste que les non lues. Sans notification lue, rien ne part.
 @MainActor
-@Test func toutesLesLuesPartentParSupprimerLues() async {
+@Test func supprimerLesLuesPartParSaRouteEnUneRequete() async {
+    let residence = ServiceSimule.residence
+    let liste = (1...6).map { alerte($0, ilYA: Double($0), lue: $0 > 2) }
+    let service = SuppressionsNotees(liste: liste)
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: service)
+    #expect(etat.lues == 4)
+
+    #expect(await etat.supprimerLues(residence, avec: service))
+    #expect(service.requetes == ["lues"], "la route des lues, une fois — ni sélection, ni un DELETE par alerte")
+    #expect(etat.liste.map(\.id) == [1, 2], "il ne reste que les non lues")
+    #expect(etat.lues == 0 && etat.nonLues == 2)
+    #expect(CompteurNonLues.partage.nombre(residence) == 2, "la cloche ne bouge pas")
+
+    #expect(!(await etat.supprimerLues(residence, avec: service)), "plus aucune lue : rien à faire")
+    #expect(service.requetes == ["lues"], "et aucune requête de plus")
+}
+
+/// Une seule porte vers la route des lues : une sélection, même quand ce sont toutes les
+/// lues de la liste, part comme une sélection — celles choisies, et elles seules.
+@MainActor
+@Test func uneSelectionEgaleAuxLuesResteUneSelection() async {
     let residence = ServiceSimule.residence
     let liste = (1...6).map { alerte($0, ilYA: Double($0), lue: $0 > 2) }
     let service = SuppressionsNotees(liste: liste)
@@ -163,8 +186,44 @@ private final class SuppressionsNotees: ServiceNotifications, @unchecked Sendabl
     await etat.charger(residence, avec: service)
 
     #expect(await etat.supprimer([3, 4, 5, 6], dans: residence, avec: service))
-    #expect(service.requetes == ["lues"], "« Sélectionner les lues » puis Supprimer : la route dédiée")
+    #expect(service.requetes == ["selection [3, 4, 5, 6]"])
     #expect(etat.liste.map(\.id) == [1, 2])
+}
+
+@MainActor
+@Test func supprimerLesLuesRefuseRendLaListe() async {
+    let residence = ServiceSimule.residence
+    let liste = [alerte(1, ilYA: 1), alerte(2, ilYA: 2, lue: true), alerte(3, ilYA: 3, lue: true)]
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: Refus(liste: liste))
+    #expect(!(await etat.supprimerLues(residence, avec: Refus(liste: liste))))
+    #expect(etat.liste.map(\.id) == [1, 2, 3], "les lues reviennent, à leur place")
+    #expect(etat.lues == 2)
+    #expect(etat.echec != nil, "et la phrase du serveur le dit")
+}
+
+@MainActor
+@Test func supprimerLesLuesDansLApiSimuleeSeRelit() async {
+    let residence = ServiceSimule.residence
+    let service = ServiceSimule(delai: .zero)
+    let etat = EtatNotifications()
+    await etat.charger(residence, avec: service)
+    #expect(etat.lues == 138)
+    #expect(await etat.supprimerLues(residence, avec: service))
+    await etat.charger(residence, avec: service)
+    #expect(etat.liste.count == 12 && etat.lues == 0, "le serveur n'a gardé que les non lues")
+}
+
+/// La confirmation nomme ce qui part, avec les mots du site (`SUPPRESSION(quoi)`).
+@Test func laConfirmationDitCeQuiPart() {
+    #expect(TextesNotifications.supprimerLues == "Supprimer les lues")
+    #expect(SuppressionDemandee.lues(138).quoi == "Les 138 notifications lues")
+    #expect(SuppressionDemandee.lues(1).quoi == "La notification lue")
+    #expect(SuppressionDemandee.lues(2).message == "Les 2 notifications lues\n\nCette action est irréversible.")
+    #expect(SuppressionDemandee.lues(2).libelle == "Supprimer")
+    #expect(SuppressionDemandee.selection([1, 2, 3]).quoi == "Ces 3 notifications")
+    #expect(SuppressionDemandee.selection([1, 2, 3]).libelle == "Supprimer (3)")
+    #expect(SuppressionDemandee.une(alerte(1, ilYA: 1)).quoi == "Cette notification")
 }
 
 @MainActor
