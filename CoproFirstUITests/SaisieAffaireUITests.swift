@@ -27,7 +27,7 @@ final class SaisieAffaireUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifiant).firstMatch
     }
 
-    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur), d'ici 8 s ?
+    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur) ?
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String) -> Bool {
         let predicat = NSPredicate(
             format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
