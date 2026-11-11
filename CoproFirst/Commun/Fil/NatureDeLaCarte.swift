@@ -20,6 +20,11 @@ extension ElementDuFil {
         return table.first { natures.contains($0.code) } ?? table.last
     }
 
+    /// Le pictogramme de la gouttière (`classeDuFlux` du site) : celui de la NATURE pour une
+    /// affaire, celui de la rubrique sinon. « Affaire mise à jour » est déjà écrit sur la
+    /// carte ; la flèche de mise à jour le répétait, à la place de ce qu'est l'affaire.
+    var pictogramme: String { natureDeLAffaire?.icone ?? nature.icone }
+
     /// La nature à montrer en pastille : celle de `natureDeLAffaire`, sauf si la rubrique de
     /// la carte la dit déjà (« Affaire », « Affaire mise à jour » pour une nature « Affaire » ;
     /// « Actualité » pour une actualité) — la même chose ne s'écrit pas deux fois sur la ligne.

@@ -69,8 +69,8 @@ struct SaisieAnnonceHall: Hashable, Sendable {
     var titre = ""
     /// Du texte simple, envoyé en paragraphes (`HTMLDeSaisie`).
     var message = ""
-    /// Aucun lieu choisi : le serveur pose le sien (coprofirst#2514).
-    var perimetres: Set<String> = []
+    /// Les lieux retenus (`ChoixPerimetres`) ; aucun : le serveur pose le défaut (coprofirst#2514).
+    var perimetres = ChoixDePerimetres()
     var format = TablesAnnoncesHall.formats.first?.code ?? "auto"
     /// La Diffusion : la valeur par défaut d'un envoi est « ne pas envoyer ».
     var envoyerCS = false
