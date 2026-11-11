@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import plistlib
 import re
 import subprocess
@@ -402,7 +403,9 @@ def autotest() -> bool:
 def sources_du_paquet(epingle: dict) -> dict[str, str] | None:
     """Les sources du paquet, s'il est extrait ICI à la révision épinglée ; sinon `None`."""
     dossier = RACINE / CONSTRUIT / "checkouts" / epingle["location"].rstrip("/").removesuffix(".git").rsplit("/", 1)[-1]
-    tete = subprocess.run(["git", "-C", str(dossier), "rev-parse", "HEAD"], capture_output=True, text=True)
+    # Sans les GIT_* d'un hook : sous pre-commit, ils désignent CE dépôt, pas celui du paquet.
+    propre = {c: v for c, v in os.environ.items() if not c.startswith("GIT_")}
+    tete = subprocess.run(["git", "-C", str(dossier), "rev-parse", "HEAD"], capture_output=True, text=True, env=propre)
     if not (dossier / "Sources").is_dir() or tete.stdout.strip() != epingle["state"]["revision"]:
         return None
     return {
