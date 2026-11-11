@@ -87,10 +87,11 @@ struct SaisieSuite: Hashable, Sendable {
         statut = affaire.statut
     }
 
-    /// Les états proposés : le cycle d'une affaire (`etatsDeLaSuite` du site). Une
-    /// actualité n'en a pas ici — son suivi (`SUIVI_ACTUALITE_OPTIONS`) reste au site.
-    static func etats(pour affaire: DetailAffaire) -> [String] {
-        affaire.estActualite ? [] : TablesAffaires.ordreDesStatuts
+    /// Les états proposés : le cycle d'une affaire, tel que le serveur le sert avec elle
+    /// (`proposable`, #105 — `etatsDeLaSuite` du site). Une actualité n'en a pas ici — son
+    /// suivi (`SUIVI_ACTUALITE_OPTIONS`) reste au site.
+    static func etats(pour affaire: DetailAffaire) -> [ReferentielsAffaires.Statut] {
+        affaire.estActualite ? [] : affaire.referentiels.proposables
     }
 
     var changeEtat: Bool { statut != statutActuel }

@@ -43,6 +43,12 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, la règle GÉNÉRÉE du site (`DroitsOnglet.cs`)"),
+    # #105 : les catégories offertes, les états d'une Suite et leurs libellés sont servis.
+    (re.compile(r"\bTablesAffaires\.(categories|ordreDesStatuts)\b|\bstatic let (ordreDesStatuts|categories: \[CategorieAffaire\])"),
+     "les catégories permises et les états proposables servis (`ReferentielsAffaires.permises`, `.proposables`)"),
+    (re.compile(r"\.reserveCS\b"), "`permise` des référentiels (`categorie_permise` du serveur)"),
+    (re.compile(r"\bStatutsAffaire\.parCode\b|\(libelle: String, pastille: String\)"),
+     "le libellé servi (`statut_libelle`, `libelle_statut`, `ReferentielsAffaires.libelle(statut:)`)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -85,11 +91,18 @@ def autotest() -> int:
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
+        "        affaire.estActualite ? [] : TablesAffaires.ordreDesStatuts",
+        "        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }",
+        "    static let ordreDesStatuts: [String] = [\"ouvert\", \"en_ag\"]",
+        "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.pastilles[statut] ?? "badge-gray")',
+        '            "carnet": bool(c.get("carnet")), "reservee": bool(c.get("reserveCS")),',
+        "        affaire.estActualite ? [] : affaire.referentiels.proposables",
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
@@ -111,7 +124,7 @@ def main() -> int:
         print(f"❌ {r}")
     if refus:
         return 1
-    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83)")
+    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83, #105)")
     return 0
 
 

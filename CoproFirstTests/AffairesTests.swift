@@ -17,18 +17,19 @@ import Testing
     #expect(liste.count == affaires.filter { !$0.archivee }.count)
 }
 
-@Test func leSuiviNOffreQueLesEtatsPresentsEtReunitLesGroupes() {
+@Test func leSuiviNOffreQueLesEtatsPresentsEtReunitLesGroupes() throws {
     let actives = Apercu.affaires.filter { !$0.archivee }
-    let options = OptionDeSuivi.presentes(dans: actives)
+    let options = OptionDeSuivi.presentes(dans: actives, servis: try FixturesReferentielsAffaires.lus().statuts)
     // en_ag, en_cours et chez_prestataire se réunissent sous « En cours » (GROUPES_SUIVI).
     #expect(options.map(\.code) == ["ouvert", "en_cours", "résolu", "annulé"])
     #expect(options.first { $0.code == "en_cours" }?.statuts == ["en_ag", "en_cours", "chez_prestataire"])
     #expect(!options.contains { $0.code == "publie" }, "une actualité n'a pas d'état de suivi")
 }
 
-@Test func leFiltreDeSuiviRetientLesStatutsDeSonOption() {
+@Test func leFiltreDeSuiviRetientLesStatutsDeSonOption() throws {
     let affaires = Apercu.affaires
-    let options = OptionDeSuivi.presentes(dans: affaires.filter { !$0.archivee })
+    let options = OptionDeSuivi.presentes(
+        dans: affaires.filter { !$0.archivee }, servis: try FixturesReferentielsAffaires.lus().statuts)
     var filtres = FiltresAffaires()
     filtres.suivi = "en_cours"
     let retenues = affaires.liste(filtres: filtres, options: options, trouvees: nil, avecArchives: false)
@@ -65,7 +66,8 @@ import Testing
         let date = calendrier.date(from: DateComponents(year: annee, month: mois, day: 1)) ?? jour
         return Affaire(
             id: id, numero: "A-\(id)", titre: "", apercu: "", creeLe: date, misAJourLe: date, statut: "résolu",
-            close: true, categorie: "panne", categorieLibelle: "Panne", urgente: false, meConcerne: false,
+            statutLibelle: "Résolu", close: true, categorie: "panne", categorieLibelle: "Panne", urgente: false,
+            meConcerne: false,
             archivee: true, suiviKanban: false, natures: [], prestataire: nil, perimetres: [], lieu: nil,
             messages: nil, colonne: "termine", peutDeplacer: false, peutArchiver: false)
     }
@@ -108,6 +110,7 @@ import Testing
         #expect(affaire.colonne == statut.colonne, "A-\(affaire.id) : colonne")
         #expect(affaire.close == statut.clos, "A-\(affaire.id) : clôture")
         #expect(affaire.categorieLibelle == servis.categorie(affaire.categorie)?.libelle, "A-\(affaire.id) : libellé")
+        #expect(affaire.statutLibelle == statut.libelle, "A-\(affaire.id) : libellé de l'état servi (#105)")
     }
 }
 
@@ -161,12 +164,24 @@ import Testing
     #expect(inconnu == ["liste", "archives"], "profil non lu : l'onglet réservé reste caché")
 }
 
-@Test func lesCategoriesReserveesNeSontOffertesQuAuConseil() {
-    let resident = DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"]))
-    let conseil = DroitsAffaires(profil: .init(statut: nil, roles: ["conseil_syndical"]))
-    #expect(!resident.categories.contains { $0.reserveCS })
-    #expect(conseil.categories.count == TablesAffaires.categories.count)
-    #expect(conseil.categories.first?.code == "actualite", "« Actualité » en tête")
+/// Les catégories offertes se LISENT (`permise`, #105) : plus de règle « réservée au conseil »
+/// recalculée ici. Les référentiels simulés servent un résident comme le vrai serveur.
+@Test func lesCategoriesOffertesSontCellesQueLeServeurPermet() throws {
+    let conseil = try FixturesReferentielsAffaires.lus(moderateur: true)
+    let resident = try FixturesReferentielsAffaires.lus(moderateur: false)
+    #expect(conseil.permises.count == conseil.categories.count, "le conseil peut tout poser")
+    #expect(conseil.permises.first?.code == "actualite", "« Actualité » en tête (`en_tete`)")
+    let reservees = Set(resident.categories.filter { !$0.permise }.map(\.code))
+    #expect(!reservees.isEmpty)
+    #expect(
+        resident.permises.allSatisfy { !reservees.contains($0.code) }, "une catégorie non permise n'est pas offerte")
+}
+
+@Test func lesEtatsEtLeursLibellesSontServis() throws {
+    let servis = try FixturesReferentielsAffaires.lus()
+    #expect(servis.proposables.map(\.code) == ["ouvert", "en_ag", "en_cours", "chez_prestataire", "résolu", "annulé"])
+    #expect(servis.libelle(statut: "en_cours") == "Chez le syndic")
+    #expect(servis.libelle(statut: "inconnu") == "inconnu", "un code inconnu se montre tel quel, jamais vide")
 }
 
 // MARK: - Création

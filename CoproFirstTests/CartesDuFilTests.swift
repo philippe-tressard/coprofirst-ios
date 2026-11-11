@@ -79,9 +79,15 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
     #expect(clos.monVote == 2)
 }
 
-@Test func unChangementDEtatSeDitAvecLesLibellesDuSite() {
+@Test func unChangementDEtatSeDitAvecLesLibellesServis() throws {
     let suite = SuiteAffaire(
         id: 1, type: "etat", date: .now, auteur: nil, contenu: nil, ancienStatut: "ouvert",
         nouveauStatut: "en_cours", photos: [])
-    #expect(suite.changementDEtat == "Ouvert → Chez le syndic")
+    #expect(suite.changementDEtat(try FixturesReferentielsAffaires.lus()) == "Ouvert → Chez le syndic")
+    // Un serveur qui renomme un état est suivi (#105) ; un code inconnu se montre tel quel.
+    let renomme = ReferentielsAffaires(
+        colonnes: [],
+        statuts: [.init(code: "en_cours", libelle: "Chez le syndic (relancé)", clos: false, colonne: nil)],
+        categories: [])
+    #expect(suite.changementDEtat(renomme) == "ouvert → Chez le syndic (relancé)")
 }

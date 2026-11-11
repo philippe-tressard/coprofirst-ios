@@ -10,6 +10,11 @@ import SwiftUI
 struct NouvelleAffaireView: View {
     let installation: Installation
     let droits: DroitsAffaires
+    /// Les catégories que le serveur PERMET à ce compte (`ReferentielsAffaires.permises`,
+    /// #105) — `nil` tant que les référentiels ne sont pas lus.
+    let categories: [CategorieAffaire]?
+    /// Pourquoi elles n'ont pas pu être lues : la feuille le dit au lieu d'offrir une grille vide.
+    var erreurCategories: ErreurAffaires?
     let service: (any ServiceAffaires)?
     var forme: FormeDeSaisie?
     let creee: (Affaire) -> Void
@@ -31,9 +36,19 @@ struct NouvelleAffaireView: View {
                     Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
                         .listRowBackground(Color.clear)
                 }
-                ChampsAffaire(
-                    saisie: $saisie, categories: droits.categories, installation: installation, service: service,
-                    prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                if let categories {
+                    ChampsAffaire(
+                        saisie: $saisie, categories: categories, installation: installation, service: service,
+                        prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                } else if let erreurCategories {
+                    Section { MessageErreur(texte: erreurCategories.phrase).listRowInsets(EdgeInsets()) }
+                        .listRowBackground(Color.clear)
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                        .accessibilityLabel("Chargement des catégories")
+                }
                 Section {
                     Label {
                         Text(aPoserSurLeSite)

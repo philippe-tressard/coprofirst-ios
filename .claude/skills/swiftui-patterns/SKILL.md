@@ -174,7 +174,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `StyleBouton` (`.plein`, `.contour`, `.clair`) | tout bouton d'action | `Commun/Composants/Boutons.swift` |
 | `ChampSaisie` | un champ de la charte : libellé en capitales, contour à 3:1, état `enErreur` | `Commun/Composants/` |
 | `Carte` | la surface d'une carte : sans ombre, le filet de la charte la détache | idem |
-| `Pastille`, `PastilleStatut` | une pastille de filtre (compte sur la retenue) ; le statut d'une affaire (`StatutsAffaire`, généré) | idem |
+| `Pastille`, `PastilleStatut` | une pastille de filtre (compte sur la retenue) ; le statut d'une affaire — son libellé SERVI (`statut_libelle`, #105), sa teinte générée (`StatutsAffaire`) | idem |
 | `PastilleTeinte`, `LibelleTeinte` | une pastille teintée par la classe `badge-*` du site (`compacte` pour une ligne dense) ; `PastilleStatut` en est le cas des affaires ; une valeur inconnue d'une table s'affiche brute, en gris (`LibelleTeinte.brut`) (#37) | idem |
 | `Medaillon`, `MedaillonPlein` | le logo de CoproFirst (la marque), qui suit Dynamic Type — jamais modifié (sa licence) | idem |
 | `LogoResidence` | **le seul** composant du logo de la résidence (pastille, feuille, connexion) : le logo téléversé, sinon celui de CoproFirst. Au sombre, la variante `sombre` quand l'installation la sert (`Installation.adresseLogo(sombre:)` : contrat ≥ 1.15.0 et `site_logo_sombre`) ; il suit le thème sans relancer, en fondu, sans repasser par la marque. Cache `LogosEnMemoire`, une entrée par adresse donc par variante (#70) | `Commun/Composants/LogoResidence.swift` (tests : `LogoResidenceTests`) |

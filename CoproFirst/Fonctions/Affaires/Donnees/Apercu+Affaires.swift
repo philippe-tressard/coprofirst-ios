@@ -10,6 +10,14 @@ extension Apercu {
     /// `colonne_kanban`, `close`, `peut_*`) : écrits ici en données, comme une réponse —
     /// jamais déduits d'une table (#83). Le lecteur est du conseil : il glisse les cartes
     /// suivies et archive. `lApercuEstServiCommeLesReferentielsSimules` les confronte aux référentiels simulés.
+    /// Les libellés d'état tels que le serveur les sert (`statut_libelle`) — des données,
+    /// comme le reste de la réponse ; `lApercuEstServiCommeLesReferentielsSimules` les confronte.
+    private static let statutsServis = [
+        "ouvert": "Ouvert", "en_ag": "À l’AG", "en_cours": "Chez le syndic",
+        "chez_prestataire": "Chez le prestataire", "résolu": "Résolu", "annulé": "Annulé", "fermé": "Fermé",
+        "publie": "Publiée",
+    ]
+
     static let affaires: [Affaire] = {
         let maintenant = Date.now
         func jours(_ n: Double) -> Date { maintenant.addingTimeInterval(-n * 86_400) }
@@ -22,7 +30,8 @@ extension Apercu {
         ) -> Affaire {
             Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: titre, apercu: apercu, creeLe: jours(cree),
-                misAJourLe: activite.map(jours), statut: statut, close: close,
+                misAJourLe: activite.map(jours), statut: statut, statutLibelle: statutsServis[statut] ?? statut,
+                close: close,
                 categorie: categorie, categorieLibelle: libelle, urgente: urgente,
                 meConcerne: meConcerne, archivee: archivee, suiviKanban: kanban,
                 natures: [categorie == "actualite" ? "actualite" : "activite"], prestataire: prestataire,

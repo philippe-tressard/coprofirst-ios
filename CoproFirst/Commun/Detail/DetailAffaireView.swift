@@ -36,7 +36,7 @@ struct DetailAffaireView: View {
         id: 0, numero: "A-0000", titre: "Une affaire de la résidence qui se charge",
         description: String(repeating: "Le détail de l'affaire arrive. ", count: 5), categorie: "",
         statut: "ouvert", urgente: false, creeLe: .now, auteur: "Le conseil syndical", lieu: "Bâtiment",
-        photos: [], suites: [])
+        photos: [], suites: [], statutServi: "Ouvert")
 }
 
 private struct ContenuAffaire: View {
@@ -58,7 +58,7 @@ private struct ContenuAffaire: View {
                 if !affaire.photos.isEmpty {
                     GaleriePhotos(chemins: affaire.photos, installation: installation)
                 }
-                Historique(suites: affaire.suites)
+                Historique(suites: affaire.suites, referentiels: affaire.referentiels)
                 // Pas de messages sur une actualité : elle informe, on n'y répond pas.
                 if !affaire.estActualite {
                     FilMessagesAffaire(messages: affaire.messages, installation: installation)
@@ -99,7 +99,7 @@ private struct EnTeteAffaire: View {
                         .foregroundStyle(palette.textMuted)
                 }
                 Spacer(minLength: 0)
-                PastilleStatut(statut: affaire.statut)
+                PastilleStatut(statut: affaire.statut, libelle: affaire.statutLibelle)
             }
             Text(affaire.titre)
                 .font(.titre(.title))
@@ -131,6 +131,8 @@ private struct EnTeteAffaire: View {
 /// L'Historique, dans l'ordre : ce qui a été écrit, et ce qui a changé d'état.
 private struct Historique: View {
     let suites: [SuiteAffaire]
+    /// Les libellés des états, servis avec l'affaire (#105).
+    let referentiels: ReferentielsAffaires
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -155,7 +157,7 @@ private struct Historique: View {
                                 .font(.caption)
                                 .foregroundStyle(palette.textMuted)
                         }
-                        if let changement = suite.changementDEtat {
+                        if let changement = suite.changementDEtat(referentiels) {
                             Label(changement, systemImage: "arrow.triangle.2.circlepath")
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(palette.primary)

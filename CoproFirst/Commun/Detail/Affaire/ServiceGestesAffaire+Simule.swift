@@ -95,6 +95,9 @@ extension ServiceSimule: ServiceGestesAffaire {
                 throw ErreurService.introuvable
             }
             try geste(&detail)
+            // Servis à CE compte, comme le vrai serveur : une Suite qui change l'état relit son libellé.
+            detail.referentiels = try FixturesReferentielsAffaires.lus(moderateur: conseil)
+            detail.statutServi = nil
             affaires[id] = detail
             return detail
         }
