@@ -32,6 +32,18 @@ enum TextesNotifications {
     static func nonLues(_ nombre: Int) -> String {
         nombre > 1 ? "\(nombre) non lues" : "\(nombre) non lue"
     }
+
+    /// Une sélection interrompue en route (#118) : ce qui est parti, ce qui demeure —
+    /// « 500 notifications sur 1200 ont été supprimées ; les 700 autres sont toujours là. »
+    static func suppressionInterrompue(_ parties: Int, sur total: Int) -> String {
+        let reste = total - parties
+        let fait =
+            parties > 1
+            ? "\(parties) notifications sur \(total) ont été supprimées"
+            : "\(parties) notification sur \(total) a été supprimée"
+        let demeure = reste > 1 ? "les \(reste) autres sont toujours là" : "la dernière est toujours là"
+        return "\(fait) ; \(demeure)."
+    }
 }
 
 /// Ce qu'une suppression s'apprête à retirer : la confirmation le nomme, puis le geste
@@ -61,6 +73,22 @@ enum SuppressionDemandee: Equatable {
     }
 }
 
+/// Une sélection partie en plusieurs requêtes (#118), dont l'une a échoué APRÈS que le
+/// serveur en a supprimé d'autres : ce qui est parti ne revient pas, et la phrase dit
+/// combien, puis pourquoi le reste demeure.
+struct SuppressionInterrompue: Error, Equatable {
+    /// Les identifiants que le serveur a déjà supprimés.
+    let parties: Set<Int>
+    /// Le nombre de notifications choisies.
+    let demandees: Int
+    /// Ce qui a arrêté la requête suivante.
+    let cause: ErreurService
+
+    var phrase: String {
+        TextesNotifications.suppressionInterrompue(parties.count, sur: demandees) + " " + cause.phrase
+    }
+}
+
 /// Les notifications d'une résidence : chargement, liste, gestes — et le compte des
 /// non lues que la cloche affiche.
 @MainActor @Observable
@@ -75,6 +103,12 @@ final class EtatNotifications {
     private(set) var liste: [NotificationRecue] = []
     /// Un geste qui a échoué : une phrase, et la liste revient à l'état d'avant.
     var echec: ErreurService?
+    /// L'échec d'une sélection dont une partie est déjà supprimée (#118) : la liste ne
+    /// revient alors qu'en partie, et `phraseEchec` le dit.
+    private(set) var interrompue: SuppressionInterrompue?
+
+    /// Ce que l'écran dit d'un geste qui a échoué.
+    var phraseEchec: String? { interrompue?.phrase ?? echec?.phrase }
 
     var nonLues: Int { liste.filter { !$0.lue }.count }
     var lues: Int { liste.count - nonLues }
@@ -129,11 +163,16 @@ final class EtatNotifications {
         }
     }
 
-    /// Une sélection, en UNE requête (#53) — celles choisies, et elles seules : même
-    /// quand ce sont toutes les lues de la liste, la route des lues reste à
-    /// `supprimerLues`, qui en retirerait d'autres (lues depuis, ailleurs). Les lignes
-    /// partent tout de suite ; si le serveur refuse, elles reviennent et sa phrase le dit.
-    /// Rend `true` quand la suppression est faite.
+    /// Une sélection — celles choisies, et elles seules : même quand ce sont toutes les
+    /// lues de la liste, la route des lues reste à `supprimerLues`, qui en retirerait
+    /// d'autres (lues depuis, ailleurs). Les lignes partent tout de suite ; si le serveur
+    /// refuse, elles reviennent et sa phrase le dit. Rend `true` quand TOUT est supprimé.
+    ///
+    /// UNE requête (#53) tant que le contrat l'accepte ; au-delà de sa borne
+    /// (`LimitesNotifications.selectionParRequete`), des requêtes successives (#118) — le
+    /// site n'a pas de sélection, et sa route des lues n'a pas de borne : ici non plus, le
+    /// nombre choisi ne fait pas échouer. Si l'une échoue, les suivantes ne partent pas :
+    /// ce que le serveur a déjà supprimé ne revient pas, le reste si (`SuppressionInterrompue`).
     @discardableResult
     func supprimer(
         _ ids: Set<Int>, dans installation: Installation, avec service: any ServiceNotifications
@@ -142,7 +181,27 @@ final class EtatNotifications {
         return await tenter(installation) {
             $0.removeAll { ids.contains($0.id) }
         } appel: {
-            try await service.supprimerNotifications(ids, dans: installation)
+            var parties: Set<Int> = []
+            for lot in Self.lots(ids) {
+                do {
+                    try await service.supprimerNotifications(lot, dans: installation)
+                } catch where !parties.isEmpty {
+                    throw SuppressionInterrompue(
+                        parties: parties, demandees: ids.count, cause: ErreurService.depuis(error))
+                }
+                parties.formUnion(lot)
+            }
+        }
+    }
+
+    /// Une sélection en lots d'au plus `taille` identifiants, dans l'ordre des
+    /// identifiants : chacun dans UN lot, et un seul. La taille est la borne du contrat.
+    nonisolated static func lots(
+        _ ids: Set<Int>, de taille: Int = LimitesNotifications.selectionParRequete
+    ) -> [Set<Int>] {
+        let (ranges, taille) = (ids.sorted(), max(taille, 1))
+        return stride(from: 0, to: ranges.count, by: taille).map {
+            Set(ranges[$0..<min($0 + taille, ranges.count)])
         }
     }
 
@@ -161,6 +220,8 @@ final class EtatNotifications {
     }
 
     /// Le geste se voit tout de suite ; s'il échoue, la liste revient et une phrase le dit.
+    /// Un geste interrompu après un premier succès (`SuppressionInterrompue`) ne rend que
+    /// ce que le serveur n'a pas supprimé.
     @discardableResult
     private func tenter(
         _ installation: Installation, _ local: (inout [NotificationRecue]) -> Void,
@@ -168,15 +229,18 @@ final class EtatNotifications {
     ) async -> Bool {
         let avant = liste
         echec = nil
+        interrompue = nil
         withAnimation(.snappy) { local(&liste) }
         defer { CompteurNonLues.partage.noter(nonLues, pour: installation) }
         do {
             try await appel()
             return true
         } catch {
+            let partielle = error as? SuppressionInterrompue
             withAnimation(.snappy) {
-                liste = avant
-                echec = ErreurService.depuis(error)
+                liste = avant.filter { !(partielle?.parties.contains($0.id) ?? false) }
+                echec = partielle?.cause ?? ErreurService.depuis(error)
+                interrompue = partielle
             }
             return false
         }

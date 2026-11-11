@@ -233,6 +233,66 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(lues.waitForNonExistence(timeout: 5), "plus aucune lue : le geste n'est plus offert")
     }
 
+    /// « Modifier », « Tout sélectionner », « Supprimer (n) », confirmé — dans une cloche de
+    /// 520 alertes, plus qu'UNE requête n'en supprime (la borne du contrat, que l'API
+    /// simulée applique comme le serveur ; `NotificationsTests` la lit du contrat).
+    @MainActor
+    private func supprimerToutesLesNotifications(
+        _ app: XCUIApplication, nombre: String? = nil, capture nom: String? = nil
+    ) {
+        let modifier = el(app, "notifications.modifier")
+        XCTAssertTrue(modifier.waitForExistence(timeout: 8))
+        modifier.tap()
+        let toutes = el(app, "notifications.toutSelectionner")
+        XCTAssertTrue(toutes.waitForExistence(timeout: 5))
+        toutes.tap()
+        let supprimer = el(app, "notifications.supprimerSelection")
+        XCTAssertTrue(supprimer.waitForExistence(timeout: 5))
+        if let nombre {
+            XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(\(nombre))"), "toutes sont choisies")
+        }
+        if let nom { capture(nom) }
+        supprimer.tap()
+        let confirmer = el(app, "notifications.confirmerSuppression")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        confirmer.tap()
+    }
+
+    /// Plus de notifications choisies qu'une requête n'en accepte (#118) : tout part, sans
+    /// erreur — le serveur répondait 422, et l'écran une phrase générique.
+    @MainActor
+    func testUneGrandeSelectionSeSupprimeEntiere() throws {
+        let app = LancementCaptures.lancer(arguments: ["-notifications", "520"])
+        XCTAssertTrue(el(app, "cloche").waitForExistence(timeout: 8))
+        el(app, "cloche").tap()
+        supprimerToutesLesNotifications(app, nombre: "520", capture: "8f-notifications-grande-selection")
+        XCTAssertTrue(texte(app, "Aucune notification").waitForExistence(timeout: 10), "les 520 sont parties")
+        XCTAssertFalse(el(app, "notifications.echec").exists, "et aucune erreur ne s'affiche")
+        capture("8g-notifications-grande-selection-supprimee")
+    }
+
+    /// Le réseau tombe à la deuxième requête (#118) : ce qui est supprimé a disparu, le
+    /// reste demeure, la phrase dit combien — et le second essai finit le travail.
+    @MainActor
+    func testUneGrandeSuppressionInterrompueLeDit() throws {
+        let app = LancementCaptures.lancer(arguments: ["-notifications", "520", "-panne-suppression", "2"])
+        XCTAssertTrue(el(app, "cloche").waitForExistence(timeout: 8))
+        el(app, "cloche").tap()
+        supprimerToutesLesNotifications(app, nombre: "520")
+        XCTAssertTrue(
+            lu(app, "notifications.echec", contient: "sur 520 ont été supprimées", delai: 10),
+            "la phrase dit ce qui est parti")
+        XCTAssertTrue(lu(app, "notifications.echec", contient: "sont toujours là"), "et ce qui reste")
+        XCTAssertTrue(lu(app, "notifications.echec", contient: "hors ligne"), "puis pourquoi")
+        XCTAssertTrue(el(app, "notifications.modifier").exists, "le reste demeure dans la liste")
+        XCTAssertFalse(el(app, "notification.5").exists, "ce qui est supprimé a disparu")
+        capture("8h-notifications-suppression-interrompue")
+
+        supprimerToutesLesNotifications(app)
+        XCTAssertTrue(texte(app, "Aucune notification").waitForExistence(timeout: 10), "le second essai finit")
+        XCTAssertFalse(el(app, "notifications.echec").exists, "et la phrase s'efface")
+    }
+
     @MainActor
     func testLaFAQEtLeProfilSOuvrent() throws {
         let app = lancer()
