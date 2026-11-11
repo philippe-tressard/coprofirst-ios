@@ -118,7 +118,7 @@ struct LotsDuLocataire: View {
         let lot = LotDuCompte(
             id: bail.id, numero: bail.lotNumero ?? FormatsDuSite.tiret, type: bail.lotType,
             typeAppartement: bail.lotTypeAppartement, etage: bail.lotEtage, superficie: bail.lotSuperficie,
-            batimentNom: bail.lotBatimentNom)
+            batimentNom: bail.lotBatimentNom, etageLibelle: bail.lotEtageLibelle)
         var apres = [("Entrée", FormatsDuSite.dateCourte(bail.dateEntree))]
         if bail.dateSortiePrevue != nil {
             apres.append(("Sortie prévue", FormatsDuSite.dateCourte(bail.dateSortiePrevue)))

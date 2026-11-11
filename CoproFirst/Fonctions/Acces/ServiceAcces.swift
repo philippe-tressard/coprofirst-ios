@@ -148,6 +148,15 @@ struct BailDuLocataire: Hashable, Sendable {
     var bailleurNom: String
     var bailleurEmail: String?
     var bailleurTelephone: String?
+    /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure : le nombre, comme avant.
+    var lotEtageLibelle: String?
+}
+
+/// Ce que GET /bailleur/mon-bail sert au-dessus du plancher, relu par
+/// `Relecture.auDessusDuPlancher`.
+struct BailAuDessusDuPlancher: Decodable {
+    var lotEtageLibelle: String?
 }
 
 /// Une demande d'accès (`CommandeAccesCreate`).

@@ -101,6 +101,19 @@ enum FixturesAcces {
         ]
         """#
 
+    /// GET /bailleur/mon-bail (`-compte locataire`) → `BailLocataireOut`, à la forme du
+    /// serveur v3.88.1 : l'étage du lot en clair (`lot_etage_libelle`, contrat 1.21.0, #127).
+    static let monBail = #"""
+        {"id": 3, "lot_id": 15, "statut": "actif", "lot_batiment_nom": "Bât. A", "lot_numero": "15",
+         "lot_type": "appartement", "lot_type_appartement": "T3", "lot_etage": 2, "lot_etage_libelle": "2ème",
+         "lot_superficie": 64.5, "date_entree": "2025-09-01", "date_sortie_prevue": null,
+         "bailleur_prenom": "Sacha", "bailleur_nom": "Exemple", "bailleur_email": "bailleur@exemple.fr",
+         "bailleur_telephone": "01 99 00 00 70", "acces": []}
+        """#
+
+    static let auDessus = AuDessusDuPlancher(
+        schema: "BailLocataireOut", champs: ["lot_etage_libelle"], contrat: "1.21.0")
+
     /// Une réponse simulée et le schéma de sa route (`components/schemas`).
     struct Reponse: Sendable {
         let nom: String
@@ -114,6 +127,7 @@ enum FixturesAcces {
         Reponse(nom: "mesVigiks", schema: "AccesPorteur", json: mesVigiks),
         Reponse(nom: "mesTelecommandes", schema: "AccesPorteur", json: mesTelecommandes),
         Reponse(nom: "baux", schema: "BailOut", json: baux),
+        Reponse(nom: "monBail", schema: "BailLocataireOut", json: monBail),
     ]
 
     // MARK: - Lues comme le client généré les lit
@@ -129,6 +143,10 @@ enum FixturesAcces {
 
     static func bauxLus() throws -> [Bail] {
         try lire([Components.Schemas.BailOut].self, baux).map(Bail.init)
+    }
+
+    static func monBailLu() throws -> BailDuLocataire {
+        BailDuLocataire.lu(try lire(Components.Schemas.BailLocataireOut.self, monBail), corps: Data(monBail.utf8))
     }
 
     /// Le décodage du client généré : clés du contrat, dates par `TranscodeurDates`.

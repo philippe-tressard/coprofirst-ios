@@ -92,7 +92,8 @@ struct FeuilleMembreConseil: View {
             membre.batimentId = trouve.batimentId
             membre.batimentNom = trouve.batimentNom
             membre.etage = trouve.etage
-            membre.etageLibelle = nil
+            // L'étage en clair tel que le serveur le sert ; à défaut, rien jusqu'à la relecture.
+            membre.etageLibelle = trouve.etageLibelle
         }
         membre.userId = membre.userId ?? trouve.userId
     }
