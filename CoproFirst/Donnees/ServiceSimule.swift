@@ -119,7 +119,12 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     }
 
     private func exigerSession(_ installation: Installation) throws {
-        if verrou.withLock({ deconnectes.contains(installation.hote) }) { throw ErreurService.sessionExpiree }
+        if !aUneSessionOuverte(installation) { throw ErreurService.sessionExpiree }
+    }
+
+    /// La session de cet hôte est-elle ouverte (pas de déconnexion depuis) ?
+    func aUneSessionOuverte(_ installation: Installation) -> Bool {
+        !verrou.withLock { deconnectes.contains(installation.hote) }
     }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {

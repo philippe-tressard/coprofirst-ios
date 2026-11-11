@@ -214,4 +214,10 @@ final class CompteurNonLues {
         guard let liste else { return }
         noter(liste.filter { !$0.lue }.count, pour: installation)
     }
+
+    /// Une notification push vient d'arriver : la lecture repart, même récente (#17).
+    func relire(_ installation: Installation, avec service: any ServiceNotifications) async {
+        lues[installation.hote] = nil
+        await rafraichir(installation, avec: service)
+    }
 }

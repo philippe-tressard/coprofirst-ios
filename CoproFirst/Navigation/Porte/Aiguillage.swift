@@ -11,6 +11,8 @@ enum Aiguillage: Equatable {
     case affaireEnFeuille(id: Int)
     /// Le fil, puis l'élément de cette clé, dès le fil chargé (`Parcours.aOuvrir`).
     case elementDuFil(String)
+    /// La feuille des notifications, par-dessus l'onglet en cours (#17).
+    case cloche
 
     /// L'identifiant de l'onglet « Plus » de `OngletsView`.
     static let idPlus = "plus"
@@ -34,6 +36,8 @@ enum Aiguillage: Equatable {
             return .affaireEnFeuille(id: id)
         case .element(let cle):
             return .elementDuFil(cle)
+        case .notifications:
+            return .cloche
         case .accueil, .connexion, .navigateur:
             return .onglet(OrdrePages.idFil)
         }
