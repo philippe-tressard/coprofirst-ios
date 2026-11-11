@@ -45,6 +45,8 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutDeplacer: Bool
     /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
     var peutArchiver: Bool
+    /// L'état en clair que le serveur SERT (`statut_libelle`, #127) ; `nil` : la table du site.
+    var statutLibelle: String?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.
@@ -70,7 +72,7 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
                     options.append(.init(code: groupe.code, libelle: groupe.libelle, statuts: Set(groupe.statuts)))
                 }
             } else {
-                let libelle = StatutsAffaire.parCode[statut]?.libelle ?? statut
+                let libelle = StatutsAffaire.libelle(statut, servi: nil)
                 options.append(.init(code: statut, libelle: libelle, statuts: [statut]))
             }
         }

@@ -35,7 +35,7 @@ struct SuiteFeuille: View {
                     Section {
                         Picker("État", selection: $saisie.statut) {
                             ForEach(etats, id: \.self) { code in
-                                Text(StatutsAffaire.parCode[code]?.libelle ?? code).tag(code)
+                                Text(StatutsAffaire.libelle(code, servi: nil)).tag(code)
                             }
                         }
                         .accessibilityIdentifier("suite.etat")

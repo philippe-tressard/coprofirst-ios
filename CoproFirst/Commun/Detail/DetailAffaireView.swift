@@ -99,7 +99,7 @@ private struct EnTeteAffaire: View {
                         .foregroundStyle(palette.textMuted)
                 }
                 Spacer(minLength: 0)
-                PastilleStatut(statut: affaire.statut)
+                if let etat = affaire.etat { PastilleStatut(etat) }
             }
             Text(affaire.titre)
                 .font(.titre(.title))
@@ -116,6 +116,11 @@ private struct EnTeteAffaire: View {
                 }
                 if let auteur = affaire.auteur {
                     Label(auteur, systemImage: "person")
+                }
+                if let intervenant = affaire.intervenant {
+                    Label(intervenant, systemImage: "wrench.and.screwdriver")
+                        .accessibilityLabel("Intervenant : \(intervenant)")
+                        .accessibilityIdentifier("affaire.intervenant")
                 }
             }
             .font(.subheadline)

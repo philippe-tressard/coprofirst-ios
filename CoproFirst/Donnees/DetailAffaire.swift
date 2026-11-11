@@ -31,9 +31,37 @@ struct DetailAffaire: Hashable, Sendable {
     var fusionnee = false
     /// Les codes de ses lieux (`perimetre_cible`) — ce que « Modifier l'affaire » part de.
     var perimetres: [String] = []
+    /// L'état en clair, tel que le serveur le sert (`statut_libelle`) ; `nil` quand l'app
+    /// ne le tient pas du serveur (un geste simulé) : la table du site le dit alors.
+    var statutLibelle: String?
+    /// Le suivi d'une actualité (`suivi_actualite`, un code) et son libellé servi
+    /// (`suivi_actualite_libelle`, contrat 1.21.0, #127) — vide sans suivi ; `nil` d'une
+    /// installation antérieure, qui ne le sert pas.
+    var suiviActualite: String?
+    var suiviActualiteLibelle: String?
+    /// L'intervenant, tel que la fiche du site l'écrit (`intervenantAffiche`) : le
+    /// prestataire, puis le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125).
+    var intervenant: String?
 
     var estActualite: Bool { categorie == "actualite" }
-    var statutLibelle: String { StatutsAffaire.parCode[statut]?.libelle ?? statut }
+
+    /// L'état que la fiche montre (`etatAffiche` du site) : le statut d'une affaire, le
+    /// suivi d'une actualité — aucun pour une actualité sans suivi. D'une installation
+    /// antérieure au contrat 1.21.0 (pas de `suivi_actualite_libelle`), le statut, comme avant.
+    var etat: EtatServi? {
+        guard estActualite, let libelle = suiviActualiteLibelle else {
+            return EtatServi(code: statut, libelle: statutLibelle)
+        }
+        guard let suivi = suiviActualite, !libelle.isEmpty else { return nil }
+        return EtatServi(code: suivi, libelle: libelle)
+    }
+}
+
+/// Un état d'affaire : son CODE, qui choisit la teinte, et son libellé SERVI — `nil`
+/// quand le serveur ne l'a pas dit, et la table du site le dit (`PastilleStatut`).
+struct EtatServi: Hashable, Sendable {
+    let code: String
+    let libelle: String?
 }
 
 /// Une entrée de l'Historique : une suite écrite, ou un changement d'état.
@@ -46,13 +74,18 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let ancienStatut: String?
     let nouveauStatut: String?
     let photos: [String]
+    /// L'état que l'entrée donne, en clair, tel que le serveur le sert
+    /// (`nouveau_statut_libelle`, contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    var nouveauStatutLibelle: String?
 
-    /// « Ouvert → Chez le syndic », pour une entrée qui change l'état.
+    /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
+    /// lit tel que servi ; l'ancien, que le serveur ne met pas en clair, par la table du
+    /// site, comme sa `RubriqueHistorique`.
     var changementDEtat: String? {
         guard let nouveauStatut else { return nil }
-        let nouveau = StatutsAffaire.parCode[nouveauStatut]?.libelle ?? nouveauStatut
+        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle)
         guard let ancienStatut else { return nouveau }
-        return "\(StatutsAffaire.parCode[ancienStatut]?.libelle ?? ancienStatut) → \(nouveau)"
+        return "\(StatutsAffaire.libelle(ancienStatut, servi: nil)) → \(nouveau)"
     }
 }
 
@@ -62,6 +95,12 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
 struct DroitsServisAffaire: Hashable, Sendable {
     var repondre = false
     var changerEtat = false
+    /// Corriger le CONTENU — titre, description, catégorie, lieu (`peut_modifier`) :
+    /// l'auteur le perd quand l'affaire est engagée, l'administration jamais.
     var modifier = false
     var archiver = false
+    /// ✏️ Le crayon : ouvrir la correction (`peut_corriger`, contrat 1.21.0, #127), plus
+    /// large que `modifier` — l'auteur d'une affaire engagée le garde (l'urgence, les
+    /// options passent encore). D'une installation antérieure : `modifier`, comme avant.
+    var corriger = false
 }

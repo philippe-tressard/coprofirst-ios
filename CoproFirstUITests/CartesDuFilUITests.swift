@@ -48,6 +48,22 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(message.waitForExistence(timeout: 5), "la réponse rejoint le fil des messages")
     }
 
+    /// L'auteur d'une affaire engagée garde le crayon (`peut_corriger`, #127), comme sur le
+    /// site : la feuille s'ouvre, son contenu se montre sans se modifier.
+    @MainActor
+    func testLAuteurDUneAffaireEngageeGardeLeCrayon() throws {
+        let app = lancer(["-compte", "resident"])
+        let carte = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        carte.tap()
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
+        app.elementAcces("affaire.modifier").tap()
+        XCTAssertTrue(app.elementAcces("modifier.contenuFige").waitForExistence(timeout: 3))
+        let titreFige = NSPredicate(format: "identifier == %@ AND isEnabled == false", "modifier.titre")
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(titreFige).firstMatch.exists, "le titre ne se modifie plus")
+    }
+
     /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
     /// change l'état rejoint l'Historique, l'archivage retire 📦.
     @MainActor
