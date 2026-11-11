@@ -32,7 +32,7 @@ final class GrandTexteUITests: XCTestCase {
         parcourir(
             app,
             ecran: { ecran in
-                XCTAssertTrue(app.navigationBars.firstMatch.waitForExistence(timeout: 5))
+                XCTAssertTrue(app.navigationBars.firstMatch.apparait())
                 LancementCaptures.capturer(ecran + "-defaut")
             }, entree: { _ in })
     }
@@ -42,7 +42,7 @@ final class GrandTexteUITests: XCTestCase {
     @MainActor
     private func parcourir(_ app: XCUIApplication, ecran: (String) -> Void, entree: (XCUIElement) -> Void) {
         let barre = app.tabBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.apparait())
         let onglets = barre.buttons.count
         XCTAssertGreaterThan(onglets, 1)
         for rang in 0..<onglets {
@@ -58,7 +58,7 @@ final class GrandTexteUITests: XCTestCase {
             ligne.tap()
             ecran(identifiant)
             barre.buttons.element(boundBy: onglets - 1).tap()  // revient à la racine de « Plus »
-            XCTAssertTrue(app.buttons[identifiant].waitForExistence(timeout: 5))
+            XCTAssertTrue(app.buttons[identifiant].apparait())
         }
     }
 
@@ -67,7 +67,7 @@ final class GrandTexteUITests: XCTestCase {
     @MainActor
     private func entreesDePlus(_ app: XCUIApplication) -> [String] {
         let entrees = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'plus.'"))
-        XCTAssertTrue(entrees.firstMatch.waitForExistence(timeout: 5), "la liste « Plus » est là")
+        XCTAssertTrue(entrees.firstMatch.apparait(), "la liste « Plus » est là")
         var vus: [String] = []
         for _ in 0..<8 {
             let nouveaux = entrees.allElementsBoundByIndex.map(\.identifier).filter { !vus.contains($0) }
@@ -85,11 +85,11 @@ final class GrandTexteUITests: XCTestCase {
     @MainActor
     private func verifierTitre(_ app: XCUIApplication, ecran: String) {
         let barre = app.navigationBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5), "\(ecran) : une barre de navigation")
+        XCTAssertTrue(barre.apparait(), "\(ecran) : une barre de navigation")
         let texte = barre.identifier
         let titre = barre.staticTexts[texte]
         LancementCaptures.capturer(ecran + "-ax5")
-        guard titre.waitForExistence(timeout: 3) else {
+        guard titre.apparait() else {
             return XCTFail("\(ecran) : le titre « \(texte) » n'est pas dans la barre (chassé par ses boutons)")
         }
         let police = UIFont.preferredFont(forTextStyle: .headline, compatibleWith: plafondDesBarres)

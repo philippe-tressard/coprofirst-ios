@@ -43,9 +43,9 @@
 #      autotest d'abord, #84) ;
 #  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
 #      retiré ne revient (scripts/verifier-regles-servies.py, #83) ;
-#  17. dans les tests d'interface, une attente par prédicat passe par le point
-#      d'attente commun (CoproFirstUITests/Attente.swift) et son plafond : aucune
-#      n'est écrite sur place avec son propre délai (#123) ;
+#  17. dans les tests d'interface, toute attente passe par le point d'attente
+#      commun (CoproFirstUITests/Attente.swift) et son plafond : ni prédicat (#123),
+#      ni existence, ni délai écrits sur place, et une sonde ne s'affirme pas (#147) ;
 #  18. la confidentialité déclarée est celle du code : manifeste embarqué, fiche de
 #      l'App Store et code concordent sur ce qui se mesure — API à raison requise,
 #      envois, modules, droits, paquets (scripts/verifier-confidentialite.py, #19) ;
@@ -282,7 +282,14 @@ python3 -I scripts/destination_simulateur.py --autotest >/dev/null || echec "des
 # Une attente par prédicat (le focus du clavier, un onglet retenu) passe par le point
 # d'attente commun et son plafond (#123) : écrite sur place, chacune portait son délai,
 # et 3 s ne tiennent pas sur un runner qui met 2 s par requête d'accessibilité.
+# Une attente d'EXISTENCE aussi (#147) : `apparait()`, `disparait()`, `sonde()` — 200
+# délais étaient écrits sur place, et les 8 s de la feuille des notifications ont rendu
+# `main` rouge (865eed4) sans que l'app ait tort. Aucun délai chiffré ne revient.
 ATTENTE_SUR_PLACE='expectation\(for:|waitForExpectations|XCTNSPredicateExpectation|XCTWaiter|[^.[:alnum:]]wait\(for:'
+EXISTENCE_SUR_PLACE='waitFor(Non)?Existence\(|(timeout|delai): *[0-9]|TimeInterval *= *[0-9]'
+# Une sonde se LIT (boucle, chemin facultatif, absence) : affirmée, elle refait d'un
+# délai court un verdict sur l'app.
+SONDE_AFFIRMEE='XCTAssertTrue\(.*(\.sonde\(\)|sonde: true)'
 POINT_ATTENTE=CoproFirstUITests/Attente.swift
 # $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
 refus_attente() {
@@ -290,7 +297,11 @@ refus_attente() {
   [ "$1" != "$POINT_ATTENTE" ] || return 0
   # Le code seul : un commentaire qui explique l'interdit a le droit de le nommer.
   trouve=$(grep -nE "$ATTENTE_SUR_PLACE" "$2" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
-  [ -z "$trouve" ] || echo "attente par prédicat écrite sur place (ligne ${trouve%%:*}) — element.attendre(\"…\"), $POINT_ATTENTE"
+  [ -z "$trouve" ] || { echo "attente par prédicat écrite sur place (ligne ${trouve%%:*}) — element.attendre(\"…\"), $POINT_ATTENTE"; return; }
+  trouve=$(grep -nE "$EXISTENCE_SUR_PLACE" "$2" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
+  [ -z "$trouve" ] || { echo "attente ou délai écrits sur place (ligne ${trouve%%:*}) — element.apparait(), .disparait() ou .sonde(), $POINT_ATTENTE"; return; }
+  trouve=$(grep -nE "$SONDE_AFFIRMEE" "$2" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
+  [ -z "$trouve" ] || echo "sonde affirmée par XCTAssertTrue (ligne ${trouve%%:*}) — une présence s'affirme par element.apparait(), $POINT_ATTENTE"
 }
 autotest_attente() {
   local d ok=0
@@ -298,6 +309,17 @@ autotest_attente() {
   printf '        expectation(for: NSPredicate(format: "hasKeyboardFocus == true"), evaluatedWith: champ)\n        waitForExpectations(timeout: 3)\n' > "$d/focus"
   printf '        wait(for: [visible], timeout: 3)\n' > "$d/visible"
   printf '        XCTAssertTrue(champ.attendre("hasKeyboardFocus == true"))\n        // jamais waitForExpectations(timeout: 3)\n' > "$d/commun"
+  printf '        XCTAssertTrue(tout.waitForExistence(timeout: 8))\n' > "$d/existence"
+  printf '        XCTAssertTrue(tout.waitForNonExistence(timeout: Attente.plafond))\n' > "$d/disparition"
+  printf '    private func lu(_ app: XCUIApplication, delai: TimeInterval = 8) -> Bool {\n' > "$d/delai"
+  printf '        XCTAssertTrue(feuilleOuverte(app, delai: 10))\n' > "$d/appel"
+  printf '        XCTAssertTrue(carte.sonde(), "la carte est là")\n' > "$d/sonde"
+  printf '        XCTAssertTrue(tout.apparait())\n        for _ in 0..<8 where !carte.sonde() { app.swipeUp() }\n        XCTAssertFalse(lu(app, sonde: true))\n        // jamais waitForExistence(timeout: 8)\n' > "$d/verbes"
+  for cas in existence disparition delai appel sonde; do
+    [ -n "$(refus_attente CoproFirstUITests/CommunauteUITests.swift "$d/$cas")" ] || ok=1
+  done
+  [ -z "$(refus_attente CoproFirstUITests/CommunauteUITests.swift "$d/verbes")" ] || ok=1
+  [ -z "$(refus_attente "$POINT_ATTENTE" "$d/existence")" ] || ok=1
   [ -n "$(refus_attente CoproFirstUITests/RetourUITests.swift "$d/focus")" ] || ok=1
   [ -n "$(refus_attente CoproFirstUITests/ConnexionUITests.swift "$d/visible")" ] || ok=1
   [ -z "$(refus_attente CoproFirstUITests/RetourUITests.swift "$d/commun")" ] || ok=1
@@ -312,7 +334,7 @@ while IFS= read -r f; do
   [ -f "$f" ] || continue
   motif=$(refus_attente "$f" "$f")
   [ -z "$motif" ] || echec "$f : $motif"
-  [ "$f" = "$POINT_ATTENTE" ] || ! grep -q '\.attendre("' "$f" || ATTENTES=$((ATTENTES + 1))
+  [ "$f" = "$POINT_ATTENTE" ] || ! grep -qE '\.(attendre\("|apparait\(\)|disparait\(\))' "$f" || ATTENTES=$((ATTENTES + 1))
 done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"

@@ -14,7 +14,7 @@ final class ConnexionUITests: XCTestCase {
         app.launch()
 
         let email = app.textFields["connexion.email"]
-        XCTAssertTrue(email.waitForExistence(timeout: 5))
+        XCTAssertTrue(email.apparait())
         email.tap()
         email.typeText("resident@exemple.fr")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
@@ -34,7 +34,7 @@ final class ConnexionUITests: XCTestCase {
         ConfirmationHoteUITests.confirmer(app)
 
         XCTAssertTrue(
-            app.buttons["faceid.plusTard"].waitForExistence(timeout: 5),
+            app.buttons["faceid.plusTard"].apparait(),
             "la résidence s'ouvre dès la réponse du serveur, sans second toucher")
         XCTAssertFalse(valider.exists, "l'écran de connexion n'est plus affiché")
     }

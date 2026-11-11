@@ -12,14 +12,14 @@ final class ConfirmationHoteUITests: XCTestCase {
         Self.saisirIdentifiants(app)
 
         let hote = app.elementAcces("confirmationHote.hote")
-        XCTAssertTrue(hote.waitForExistence(timeout: 5), "l'écran de confirmation s'ouvre")
+        XCTAssertTrue(hote.apparait(), "l'écran de confirmation s'ouvre")
         XCTAssertEqual(hote.label, "tilleuls.exemple.fr", "l'hôte en entier")
         XCTAssertFalse(app.buttons["faceid.plusTard"].exists, "rien ne s'est ouvert : le mot de passe attend")
-        XCTAssertTrue(app.elementAcces("confirmationHote.reconnue").waitForExistence(timeout: 5), "la preuve lue")
+        XCTAssertTrue(app.elementAcces("confirmationHote.reconnue").apparait(), "la preuve lue")
         LancementCaptures.capturer("confirmation-hote-1-reconnue")
 
         Self.confirmer(app)
-        XCTAssertTrue(app.buttons["faceid.plusTard"].waitForExistence(timeout: 5), "la connexion part après l'accord")
+        XCTAssertTrue(app.buttons["faceid.plusTard"].apparait(), "la connexion part après l'accord")
     }
 
     @MainActor
@@ -28,14 +28,14 @@ final class ConfirmationHoteUITests: XCTestCase {
         let app = LancementCaptures.lancer(ecran: "accueil")
         app.elementAcces("accueil.entrer").tap()
         let residence = app.elementAcces("connexion.residence")
-        XCTAssertTrue(residence.waitForExistence(timeout: 5))
+        XCTAssertTrue(residence.apparait())
         residence.tap()
         residence.typeText("imitation.exemple.fr")
-        XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].waitForExistence(timeout: 5), "l'imitation répond")
+        XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].apparait(), "l'imitation répond")
         Self.saisirIdentifiants(app)
 
         XCTAssertTrue(
-            app.elementAcces("confirmationHote.avertissement").waitForExistence(timeout: 5), "l'avertissement en clair")
+            app.elementAcces("confirmationHote.avertissement").apparait(), "l'avertissement en clair")
         XCTAssertEqual(app.elementAcces("confirmationHote.hote").label, "imitation.exemple.fr")
         XCTAssertTrue(Self.etat(app, "confirmationHote.confirmer", actif: false), "un seul accord ne suffit pas")
         LancementCaptures.capturer("confirmation-hote-2-avertissement")
@@ -45,7 +45,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         XCTAssertTrue(Self.etat(app, "confirmationHote.confirmer", actif: true), "le second accord ouvre la connexion")
         LancementCaptures.capturer("confirmation-hote-3-second-accord")
         app.elementAcces("confirmationHote.confirmer").tap()
-        XCTAssertTrue(app.buttons["faceid.plusTard"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["faceid.plusTard"].apparait())
     }
 
     @MainActor
@@ -53,10 +53,10 @@ final class ConfirmationHoteUITests: XCTestCase {
         let app = LancementCaptures.lancer(ecran: "connexion")
         Self.saisirIdentifiants(app)
         let annuler = app.elementAcces("confirmationHote.annuler")
-        XCTAssertTrue(annuler.waitForExistence(timeout: 5))
+        XCTAssertTrue(annuler.apparait())
         annuler.tap()
-        XCTAssertTrue(app.elementAcces("connexion.valider").waitForExistence(timeout: 3), "retour à la connexion")
-        XCTAssertFalse(app.buttons["faceid.plusTard"].waitForExistence(timeout: 2), "rien ne s'est ouvert")
+        XCTAssertTrue(app.elementAcces("connexion.valider").apparait(), "retour à la connexion")
+        XCTAssertFalse(app.buttons["faceid.plusTard"].sonde(), "rien ne s'est ouvert")
     }
 
     /// « Me connecter à cette adresse », une fois la preuve lue — pour les tests qui
@@ -73,16 +73,16 @@ final class ConfirmationHoteUITests: XCTestCase {
     static func etat(_ app: XCUIApplication, _ identifiant: String, actif: Bool) -> Bool {
         let inactif = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)).firstMatch
-        guard actif else { return inactif.waitForExistence(timeout: 5) }
-        XCTAssertTrue(app.elementAcces(identifiant).waitForExistence(timeout: 5))
-        return inactif.waitForNonExistence(timeout: 5)
+        guard actif else { return inactif.apparait() }
+        XCTAssertTrue(app.elementAcces(identifiant).apparait())
+        return inactif.disparait()
     }
 
     /// Le courriel et le mot de passe, validés — aussi pour un lien (`LiensUITests`, #18).
     @MainActor
     static func saisirIdentifiants(_ app: XCUIApplication) {
         let email = app.elementAcces("connexion.email")
-        XCTAssertTrue(email.waitForExistence(timeout: 5))
+        XCTAssertTrue(email.apparait())
         email.tap()
         email.typeText("resident@exemple.fr\n")
         app.elementAcces("connexion.motDePasse").typeText("secret\n")

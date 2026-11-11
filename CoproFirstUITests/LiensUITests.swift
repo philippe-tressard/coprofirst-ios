@@ -14,7 +14,7 @@ final class LiensUITests: XCTestCase {
         LancementCaptures.capturer("lien-1-affaire")
         // Le retour mène à la liste des affaires : l'affaire est dans SON onglet.
         app.navigationBars["A-0041"].buttons.firstMatch.tap()
-        XCTAssertTrue(app.elementAcces("affaires.carte.A-0041").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.elementAcces("affaires.carte.A-0041").apparait())
     }
 
     /// Une résidence jamais vue : la connexion, son adresse pré-remplie — et le mot de passe
@@ -25,12 +25,12 @@ final class LiensUITests: XCTestCase {
         let prerempli = NSPredicate(
             format: "identifier == %@ AND value == %@", "connexion.residence", "imitation.exemple.fr")
         let champ = app.descendants(matching: .any).matching(prerempli).firstMatch
-        XCTAssertTrue(champ.waitForExistence(timeout: 5))
+        XCTAssertTrue(champ.apparait())
         XCTAssertFalse(app.navigationBars["A-0003"].exists)
         LancementCaptures.capturer("lien-2-hote-inconnu")
         ConfirmationHoteUITests.saisirIdentifiants(app)
         let hote = app.elementAcces("confirmationHote.hote")
-        XCTAssertTrue(hote.waitForExistence(timeout: 5), "un lien ne dispense pas de la confirmation")
+        XCTAssertTrue(hote.apparait(), "un lien ne dispense pas de la confirmation")
         XCTAssertEqual(hote.label, "imitation.exemple.fr")
         XCTAssertFalse(app.buttons["faceid.plusTard"].exists, "rien n'est parti")
     }
