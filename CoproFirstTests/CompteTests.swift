@@ -29,7 +29,8 @@ private func parcoursOuvert() throws -> Ouvert {
     let suite = "tests.\(UUID().uuidString)"
     let reglages = try #require(UserDefaults(suiteName: suite))
     let service = ServiceSimule(delai: .milliseconds(1))
-    let parcours = Parcours(service: service, connues: InstallationsConnues(reglages: reglages))
+    let parcours = Parcours(
+        service: service, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
     parcours.ouvrir(ServiceSimule.residence, premiereConnexion: true)
     return Ouvert(parcours: parcours, service: service)
 }
@@ -39,7 +40,7 @@ private func parcoursOuvert() throws -> Ouvert {
     let ouvert = try parcoursOuvert()
     let (parcours, service) = (ouvert.parcours, ouvert.service)
     let residence = ServiceSimule.residence
-    #expect(await service.activerFaceID(residence))
+    #expect(await service.activerFaceID(residence) == .biometrie("Face ID"))
     #expect(service.aUneSessionGardee(residence))
     _ = try await service.fil(residence)
 
@@ -83,15 +84,18 @@ private func parcoursOuvert() throws -> Ouvert {
 @Test func auRetourLaDerniereResidenceEstReconnueEtSonCourrielRetenu() throws {
     let suite = "tests.\(UUID().uuidString)"
     let reglages = try #require(UserDefaults(suiteName: suite))
+    let coffre = CoffreEnMemoire()
     let neuf = Parcours(
-        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+        service: ServiceSimule(delai: .milliseconds(1)),
+        connues: InstallationsConnues(reglages: reglages, coffre: coffre))
     #expect(neuf.connues.derniere == nil && neuf.reconnue == nil, "appareil neuf : l'accueil")
 
     neuf.connues.retenirIdentifiant("resident@exemple.fr", pour: ServiceSimule.residence)
     neuf.ouvrir(ServiceSimule.residence)
 
     let relance = Parcours(
-        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+        service: ServiceSimule(delai: .milliseconds(1)),
+        connues: InstallationsConnues(reglages: reglages, coffre: coffre))
     #expect(relance.reconnue == ServiceSimule.residence, "la palette de la résidence dès le 1er écran")
     #expect(relance.connues.identifiant(ServiceSimule.residence) == "resident@exemple.fr")
     #expect(relance.connues.identifiant(ServiceSimule.demo) == nil, "un courriel par résidence")

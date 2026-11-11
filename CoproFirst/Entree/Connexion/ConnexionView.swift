@@ -20,6 +20,8 @@ struct ConnexionView: View {
     @State private var erreur: ErreurService?
     @State private var reussite = 0
     @State private var scanner = false
+    /// L'adresse lue dans un QR : elle se confirme toujours avant le mot de passe (#82).
+    @State private var adresseScannee: URL?
     @FocusState private var champ: Champ?
 
     private enum Champ { case email, motDePasse }
@@ -110,10 +112,15 @@ struct ConnexionView: View {
         .sheet(isPresented: $scanner) {
             ScannerQRView { texte in
                 scanner = false
+                adresseScannee = AdresseInstallation.normaliser(texte)
                 saisieResidence = texte
             }
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(item: hoteAConfirmer) { installation in
+            ConfirmationHoteFeuille(installation: installation) { Task { await seConnecter() } }
+                .presentationDragIndicator(.visible)
         }
         .sensoryFeedback(.success, trigger: reussite)
         .sensoryFeedback(.success, trigger: parcours.reconnue?.id) { _, nouvelle in nouvelle != nil }
@@ -162,7 +169,7 @@ struct ConnexionView: View {
     private func preremplir() {
         guard saisieResidence.isEmpty else { return }
         let installation = preremplissage.installation ?? parcours.reconnue
-        saisieResidence = installation?.hote ?? ""
+        saisieResidence = installation?.hote ?? preremplissage.adresse.map(AdresseInstallation.enSaisie) ?? ""
         let retenu = installation.flatMap(parcours.connues.identifiant) ?? ""
         email = preremplissage.email.isEmpty ? retenu : preremplissage.email
         guard installation != nil, !email.isEmpty else { return }
@@ -203,6 +210,11 @@ struct ConnexionView: View {
         }
     }
 
+    /// L'écran de confirmation, ouvert par la garde ; le balayer, c'est renoncer.
+    private var hoteAConfirmer: Binding<Installation?> {
+        Binding(get: { parcours.garde.aConfirmer }, set: { if $0 == nil { parcours.garde.renoncer() } })
+    }
+
     private func seConnecter() async {
         guard let installation = parcours.reconnue else { return }
         guard reseau.enLigne else { return montrer(.horsLigne) }
@@ -210,7 +222,12 @@ struct ConnexionView: View {
         enCours = true
         defer { enCours = false }
         do {
-            try await parcours.service.connecter(installation, email: email, motDePasse: motDePasse)
+            let origine: OrigineAdresse = adresseScannee == installation.adresse ? .scan : .saisie
+            // Un hôte jamais vu : rien ne part, la garde ouvre l'écran de confirmation.
+            guard
+                try await parcours.garde.connecter(
+                    installation, origine: origine, email: email, motDePasse: motDePasse)
+            else { return }
             reussite += 1
             motDePasse = ""
             parcours.connues.retenirIdentifiant(email, pour: installation)

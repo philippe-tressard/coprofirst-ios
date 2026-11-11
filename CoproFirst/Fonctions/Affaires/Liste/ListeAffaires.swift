@@ -8,7 +8,6 @@ import SwiftUI
 struct ListeAffaires: View {
     @Bindable var etat: EtatAffaires
     let installation: Installation
-    let droits: DroitsAffaires
     let service: (any ServiceAffaires)?
     let ouvrir: (Affaire) -> Void
     let nouvelle: () -> Void
@@ -119,8 +118,8 @@ struct ListeAffaires: View {
 
     @ViewBuilder
     private func actionArchiver(_ affaire: Affaire) -> some View {
-        // Le conseil seul archive (`archive_manuel`, 403 sinon) ; archiver, jamais supprimer.
-        if droits.moderateur, !affaire.archivee {
+        // Ce que le serveur permet à CE lecteur (`peut_archiver`) ; archiver, jamais supprimer.
+        if affaire.peutArchiver, !affaire.archivee {
             Button {
                 Task { await etat.archiver(affaire, dans: installation, avec: service) }
             } label: {

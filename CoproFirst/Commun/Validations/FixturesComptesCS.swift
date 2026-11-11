@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// La file de travail que l'API simulée sert à « Comptes & accès » — en JSON, à la forme
 /// de ses routes, lue par les types GÉNÉRÉS puis par le MÊME branchement que le service
 /// réel, et jugée contre le contrat par `scripts/verifier-fixtures.py`. La validation du
@@ -86,3 +87,4 @@ enum FixturesComptesCS {
             .map(PhraseAvis.init)
     }
 }
+#endif

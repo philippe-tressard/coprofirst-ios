@@ -57,7 +57,7 @@ struct AnnuaireView: View {
                             }
                         }
                     },
-                    squelette: { ScrollView { contenu(ServiceSimule.annuaire).padding(Mise.marge) } }
+                    squelette: { ScrollView { contenu(Apercu.annuaire).padding(Mise.marge) } }
                 )
             }
         }

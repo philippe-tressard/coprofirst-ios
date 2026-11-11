@@ -18,8 +18,13 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var selectionnable: Bool
     /// Le défaut du serveur : un seul nœud au plus, aucun sur un arbre vide.
     var parDefaut: Bool
-    /// Le code du parent ; `nil` pour une racine.
+    /// Le code du nœud parent ; `nil` pour une racine — la rangée de tête du choix
+    /// (`ArbreDesPerimetres`) en dépend.
     var parent: String?
+    /// Le libellé abrégé (« Bât. 3 ») : celui du résumé d'une pastille, qui doit tenir.
+    var libelleCourt: String?
+    /// Ce que le nœud implique (« notifie l'ensemble du conseil syndical ») : l'aide du choix.
+    var description: String?
     /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, contrat
     /// 1.17.0, #88) ; `nil` d'une installation antérieure, qui ne le sert pas.
     var niveauxLibres: Int?
@@ -28,7 +33,7 @@ struct Perimetre: Identifiable, Hashable, Sendable {
 
     init(
         code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false,
-        parent: String? = nil, niveauxLibres: Int? = nil
+        parent: String? = nil, libelleCourt: String? = nil, description: String? = nil, niveauxLibres: Int? = nil
     ) {
         self.code = code
         self.libelle = libelle
@@ -36,13 +41,16 @@ struct Perimetre: Identifiable, Hashable, Sendable {
         self.selectionnable = selectionnable
         self.parDefaut = parDefaut
         self.parent = parent
+        self.libelleCourt = libelleCourt
+        self.description = description
         self.niveauxLibres = niveauxLibres
     }
 
     init(lu: Components.Schemas.PerimetreRead) {
         self.init(
             code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable,
-            parDefaut: lu.parDefaut ?? false, parent: lu.parent)
+            parDefaut: lu.parDefaut ?? false, parent: lu.parent, libelleCourt: lu.libelleCourt,
+            description: lu.description)
     }
 
     /// L'arbre servi, ACTIFS seulement : le type généré, puis ce que le corps sert
@@ -114,6 +122,8 @@ extension ServiceAPI: ServicePerimetres {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] { try FixturesPerimetres.lus() }
 }
+#endif

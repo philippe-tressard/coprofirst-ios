@@ -22,7 +22,7 @@ extension ServiceAPI: ServiceAnnoncesHallCS {
         let corps = Components.Schemas.AnnonceHallCreate(
             envoyerAuteur: saisie.envoyerAuteur, envoyerCs: saisie.envoyerCS, envoyerSyndic: saisie.envoyerSyndic,
             formatDemande: saisie.format, images: [], message: HTMLDeSaisie.depuis(saisie.message),
-            partagerWhatsapp: false, perimetreCible: saisie.perimetres.sorted(),
+            partagerWhatsapp: false, perimetreCible: saisie.perimetres.codes.sorted(),
             titre: saisie.titre.trimmingCharacters(in: .whitespacesAndNewlines))
         let sortie = try await appeler { try await client(installation.adresse).postAnnoncesHall(body: .json(corps)) }
         switch sortie {

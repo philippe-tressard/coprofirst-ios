@@ -40,9 +40,9 @@ final class ServiceAPI: ServiceCoproFirst {
         }
     }
 
-    func connecter(_ installation: Installation, email: String, motDePasse: String) async throws {
+    func connecter(_ hote: HoteConfirme, email: String, motDePasse: String) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).postAuthLogin(
+            try await client(hote.installation.adresse).postAuthLogin(
                 body: .json(.init(email: email, password: motDePasse)))
         }
         switch sortie {
@@ -74,10 +74,10 @@ final class ServiceAPI: ServiceCoproFirst {
         }
     }
 
-    func activerFaceID(_ installation: Installation) async -> Bool {
-        guard let jeton = cookie("refresh_token", installation.adresse) else { return false }
-        Trousseau.enregistrer(jeton, pour: installation.hote)
-        return Trousseau.contient(pour: installation.hote)
+    func activerFaceID(_ installation: Installation) async -> ProtectionSession? {
+        guard let jeton = cookie("refresh_token", installation.adresse) else { return nil }
+        let protection = Trousseau.enregistrer(jeton, pour: installation.hote)
+        return Trousseau.contient(pour: installation.hote) ? protection : nil
     }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {

@@ -9,12 +9,12 @@ import Foundation
 protocol ServiceAffaires: ServicePerimetres {
     /// GET /tickets : les affaires lisibles par l'utilisateur connecté.
     func affaires(_ installation: Installation) async throws -> [Affaire]
+    /// GET /tickets/referentiels : colonnes du Kanban, états, catégories — servis (#83).
+    func referentiels(_ installation: Installation) async throws -> ReferentielsAffaires
     /// GET /tickets/recherche : les identifiants trouvés, dans l'ordre de pertinence.
     func rechercher(_ terme: String, dans installation: Installation) async throws -> [Int]
     /// GET /lots/mes-perimetres : y a-t-il de quoi filtrer « ce qui me concerne » ?
     func offrirMeConcerne(_ installation: Installation) async -> Bool
-    /// GET /tickets/referentiels : les sections que la saisie Essentielle montre, par catégorie.
-    func sectionsEssentielles(_ installation: Installation) async throws -> SectionsEssentielles
     /// POST /tickets.
     func creer(_ saisie: SaisieAffaire, dans installation: Installation) async throws -> Affaire
     /// GET /tickets/{id}/fusion : combien d'affaires pourraient y être fusionnées.

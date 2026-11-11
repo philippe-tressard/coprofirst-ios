@@ -161,7 +161,7 @@ extension DetailAffaire {
             // Urgente au sens du SERVEUR (`TicketRead.urgente`, contrat 1.8.0) : l'app ne la
             // déduit pas de la priorité.
             urgente: ticket.urgente, creeLe: ticket.creeLe,
-            auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: nil,
+            auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: ticket.lieuServi,
             photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
             suites: suites,
             droits: DroitsServisAffaire(

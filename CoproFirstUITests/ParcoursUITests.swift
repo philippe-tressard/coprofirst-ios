@@ -38,6 +38,8 @@ final class ParcoursUITests: XCTestCase {
         email.typeText("resident@exemple.fr\n")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
         motDePasse.typeText("refuse\n")
+        // Saisie à la main, jamais vue : l'adresse se confirme avant le mot de passe (#82).
+        ConfirmationHoteUITests.confirmer(app)
         XCTAssertTrue(app.staticTexts["Adresse électronique ou mot de passe incorrect."].waitForExistence(timeout: 5))
 
         email.tap()
@@ -71,7 +73,7 @@ final class ParcoursUITests: XCTestCase {
         app.launch()
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.waitForExistence(timeout: 5))
-        for libelle in ["Fil", "Résidence", "Affaires", "Accès", "Plus"] {
+        for libelle in ["Fil d'activité", "Résidence", "Affaires", "Accès", "Plus"] {
             XCTAssertTrue(barre.buttons[libelle].exists, "« \(libelle) » dans la barre")
         }
         XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)

@@ -59,7 +59,7 @@ struct CarnetView: View {
             },
             squelette: {
                 ScrollView {
-                    contenu(ContenuCarnet(entrees: ServiceSimule.carnet, libellesEquipements: [:])).padding(Mise.marge)
+                    contenu(ContenuCarnet(entrees: Apercu.carnet, libellesEquipements: [:])).padding(Mise.marge)
                 }
             }
         )

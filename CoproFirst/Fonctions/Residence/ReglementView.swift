@@ -62,7 +62,7 @@ struct ReglementView: View {
             },
             squelette: {
                 let etat = EtatReglement(disponible: true, texteDisponible: true)
-                contenu(etat: etat, questions: [ServiceSimule.question])
+                contenu(etat: etat, questions: [Apercu.question])
                     .padding(Mise.marge)
             }
         )
@@ -228,9 +228,8 @@ struct PiedQuestion: View {
 
     @ViewBuilder
     private var capsules: some View {
-        // La couleur du verdict (oui, non, sous conditions…) se décide dans le front du
-        // site (`BadgeVerdict`) : l'app la montre neutre en attendant l'API (coprofirst#2505).
-        PastilleTeinte.neutre(question.verdictLibelle)
+        // Le ton du verdict est servi (`verdict_ton`, #2505) ; sa teinte, celle de `BadgeVerdict`.
+        PastilleTeinte(libelle: question.verdictLibelle, badge: question.badgeDuVerdict, compacte: true)
         if !question.extraits.isEmpty {
             let n = question.extraits.count
             Text("\(question.verifies)/\(n) extrait\(n > 1 ? "s" : "") vérifié\(question.verifies > 1 ? "s" : "")")

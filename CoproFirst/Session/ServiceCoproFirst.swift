@@ -12,14 +12,18 @@ protocol ServiceCoproFirst: Sendable {
     /// GET /config/logo.png : les octets du logo à cette adresse
     /// (`Installation.adresseLogo(sombre:)`) — une route publique.
     func logo(_ adresse: URL) async throws -> Data
-    /// POST /auth/login : ouvre la session de cette installation (cookies).
-    func connecter(_ installation: Installation, email: String, motDePasse: String) async throws
+    /// POST /auth/login : ouvre la session de cette installation (cookies). Le mot de
+    /// passe ne part qu'à un hôte passé par `GardeHote` (#82).
+    func connecter(_ hote: HoteConfirme, email: String, motDePasse: String) async throws
+    /// `/.well-known/apple-app-site-association` déclare-t-il l'app (`PreuveAASA`) ?
+    func preuve(_ adresse: URL) async -> PreuveHote
     /// Une session gardée au Trousseau pour cette installation ?
     func aUneSessionGardee(_ installation: Installation) -> Bool
     /// Reprend la session gardée, après Face ID (POST /auth/refresh).
     func reprendre(_ installation: Installation) async throws
-    /// Après la première connexion : garder la session au Trousseau, sous Face ID.
-    func activerFaceID(_ installation: Installation) async -> Bool
+    /// Après la première connexion : garder la session au Trousseau, sous Face ID —
+    /// et dire ce qui la protège vraiment (`nil` : elle n'a pas pu être gardée, #84).
+    func activerFaceID(_ installation: Installation) async -> ProtectionSession?
     /// GET /flux : le fil de la résidence, celui du tableau de bord du site.
     func fil(_ installation: Installation) async throws -> [ElementDuFil]
     /// Entrer dans la démo sous un personnage, d'un toucher — ou `nil` quand aucune

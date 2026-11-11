@@ -40,6 +40,14 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | **Explication** : jamais un survol seul | pas de survol au doigt : `popover` ou texte visible |
 | **Charte** : tailles et couleurs par jeton | Dynamic Type (`.font(.body)`…) ; couleurs d'état **générées** depuis `socle.css` |
 
+## Patterns propres à iOS
+
+Ce que le site n'a pas, et qui se règle ici une fois.
+
+| Pattern | Règle | Où |
+|---|---|---|
+| **Permission du système** (notifications, et toute alerte d'autorisation à venir) | jamais au lancement ni au premier écran : une **offre** dans l'écran où l'usage se voit (les notifications : en tête de la cloche), qui dit ce que la personne y gagne et ce qui ne part pas ; l'alerte d'iOS ne s'ouvre qu'après « Activer » ; « Plus tard » tait l'offre quelques jours ; un refus ne se redemande pas — seuls les Réglages d'iOS le rendent. Aucun réglage « sur mon téléphone » dans le Profil (spec push de coprofirst, §10 décision 4) | `OffrePush` (#17) |
+
 ## Divergences iOS déclarées
 
 Chacune s'écrit ici avec sa date, sa raison et l'écran web qu'elle quitte.
@@ -51,3 +59,4 @@ Chacune s'écrit ici avec sa date, sa raison et l'écran web qu'elle quitte.
 | 10/11/2026 | ✏️ « Modifier » d'une affaire (`FormulaireTicket` en édition) | Modifie l'**affaire** (#91) : catégorie, titre, description, lieu, urgence — les champs de la Création (`ChampsAffaire`), et seuls les champs changés partent. Une description mise en forme (gras, liste, lien) se montre sans se modifier ; plusieurs lieux aussi. Titre de feuille « Modifier » ; corriger une **suite** de l'Historique attend que le serveur en serve le droit (coprofirst#2646) | Rien ne se réenregistre en perdant ce que l'app ne sait pas écrire ; un droit non servi ne s'affiche pas |
 | 10/11/2026 | La Suite d'une actualité (`etatsDeLaSuite`) | Commentaire seul : le suivi d'actualité (`SUIVI_ACTUALITE_OPTIONS`) reste au site | Ses états ne sont pas encore générés |
 | 10/11/2026 | Le fil des messages d'une affaire (`FilMessagesTicket.svelte`) | Intitulé « Messages » sous l'Historique (le site n'en met pas) ; la bulle dit « Vous » pour le compte, la qualité servie (`auteur_qualite`) sinon — le site lit un `auteur` que `MessageRead` ne sert pas et n'affiche aucun nom (`FilMessagesAffaire`) | Deux fils sur un même écran : l'intitulé les distingue ; un nom d'auteur dans le contrat est un besoin côté coprofirst |
+| 10/11/2026 | « Supprimer les lues », dans l'en-tête de la page des notifications à côté de « Tout marquer lu » (`notifications/+page.svelte`) | En **tête de la liste**, sous le titre — « Tout marquer lu » reste dans la barre ; même libellé, même confirmation (`SUPPRESSION`), même phrase ensuite ; absent sans notification lue. « Modifier » → sélection → « Supprimer (n) », que le site n'a pas, reste pour un choix à la main | La barre du haut est pleine (« Tout marquer lu », « Modifier », « OK ») ; un geste définitif ne se pose pas à côté d'eux, et en tête de liste il grandit avec le texte au lieu d'une barre plafonnée (#53) |

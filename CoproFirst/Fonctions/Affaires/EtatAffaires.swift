@@ -21,6 +21,10 @@ final class EtatAffaires {
 
     private(set) var phase = Phase.chargement
     private(set) var affaires: [Affaire] = []
+    /// Les colonnes, états et catégories que la résidence SERT — `nil` tant qu'ils ne
+    /// sont pas lus. Le Kanban en dépend seul : leur échec ne vide pas la liste.
+    private(set) var referentiels: ReferentielsAffaires?
+    private(set) var erreurReferentiels: ErreurAffaires?
     var filtres = FiltresAffaires()
     var recherche = ""
     var avecArchives = false
@@ -59,6 +63,7 @@ final class EtatAffaires {
         }
         if affaires.isEmpty { phase = .chargement }
         async let offrir = service.offrirMeConcerne(installation)
+        async let servis = service.referentiels(installation)
         do {
             let lues = try await service.affaires(installation)
             withAnimation(.snappy) {
@@ -67,6 +72,15 @@ final class EtatAffaires {
             }
         } catch {
             withAnimation(.snappy) { phase = .erreur(ErreurAffaires.depuis(error)) }
+        }
+        do {
+            let lus = try await servis
+            withAnimation(.snappy) {
+                referentiels = lus
+                erreurReferentiels = nil
+            }
+        } catch {
+            erreurReferentiels = ErreurAffaires.depuis(error)
         }
         offrirMeConcerne = await offrir
         retomberSurUneOptionPresente()
@@ -114,18 +128,23 @@ final class EtatAffaires {
     }
 
     /// Déplacer une carte au Kanban : une Suite d'état, sans texte, qui n'avertit personne.
+    /// La carte rejoint aussitôt la colonne visée ; l'état qu'elle pose est celui que les
+    /// référentiels SERVIS rangent dans cette colonne.
     func deplacer(
-        _ affaire: Affaire, vers statut: String, dans installation: Installation,
+        _ affaire: Affaire, vers statut: ReferentielsAffaires.Statut, dans installation: Installation,
         avec service: (any ServiceAffaires)?
     ) async {
-        guard statut != affaire.statut else { return }
+        guard statut.code != affaire.statut else { return }
         guard let service else {
             avis = ErreurAffaires.serviceAbsent.phrase
             return
         }
-        remplacer(affaire.id) { $0.statut = statut }
+        remplacer(affaire.id) {
+            $0.statut = statut.code
+            $0.colonne = statut.colonne
+        }
         do {
-            try await service.deplacer(affaire, vers: statut, dans: installation)
+            try await service.deplacer(affaire, vers: statut.code, dans: installation)
         } catch {
             remplacer(affaire.id) { $0 = affaire }
             avis = ErreurAffaires.depuis(error).phrase

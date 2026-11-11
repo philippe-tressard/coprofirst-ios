@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Le fil des messages que l'API simulée sert — en JSON, tel que GET
 /// /tickets/{id}/messages le renvoie (`MessageRead` des tickets), lu par le type GÉNÉRÉ
 /// puis par le MÊME branchement que le service réel (`MessageAffaire(_:moi:)`).
@@ -45,3 +46,4 @@ enum FixturesMessagesAffaire {
             .map { MessageAffaire($0, moi: moi) }
     }
 }
+#endif

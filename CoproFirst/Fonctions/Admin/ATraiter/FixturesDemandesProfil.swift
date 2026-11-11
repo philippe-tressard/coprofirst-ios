@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Les demandes de profil que l'API simulée sert à « À traiter » — en JSON, à la forme
 /// de la route, que le contrat ne type pas (`ReponseNonTypee`).
 ///
@@ -48,3 +49,4 @@ enum FixturesDemandesProfil {
         try reponse.lire([DemandeProfil].self)
     }
 }
+#endif

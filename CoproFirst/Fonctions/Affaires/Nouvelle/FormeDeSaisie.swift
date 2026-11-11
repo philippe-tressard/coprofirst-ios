@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
-import ClientAPI
 import Foundation
 
 // La saisie d'une affaire, Essentielle ou Complète (#69, coprofirst#2595) : le même
@@ -53,7 +52,7 @@ enum SectionAffaire: String, CaseIterable, Sendable {
 }
 
 /// Les sections que la saisie Essentielle montre, catégorie par catégorie — servies par
-/// `GET /tickets/referentiels`.
+/// `GET /tickets/referentiels`, lues avec le reste des référentiels (`ReferentielsAffaires`).
 struct SectionsEssentielles: Equatable, Sendable {
     let parCategorie: [String: Set<String>]
 
@@ -61,10 +60,11 @@ struct SectionsEssentielles: Equatable, Sendable {
         self.parCategorie = parCategorie.mapValues(Set.init)
     }
 
-    /// Les catégories servies, lues par leur type GÉNÉRÉ.
-    init(servies: [Components.Schemas.CategorieServie]) {
+    /// Celles des catégories servies.
+    init(categories: [ReferentielsAffaires.Categorie]) {
         self.init(
-            Dictionary(servies.map { ($0.code, $0.sectionsEssentielles) }, uniquingKeysWith: { premier, _ in premier }))
+            Dictionary(
+                categories.map { ($0.code, $0.sectionsEssentielles) }, uniquingKeysWith: { premier, _ in premier }))
     }
 
     /// Celles d'une catégorie. Sans catégorie choisie : ce que TOUTES partagent — la base
@@ -73,6 +73,11 @@ struct SectionsEssentielles: Equatable, Sendable {
         if let servies = parCategorie[categorie] { return servies }
         return parCategorie.values.dropFirst().reduce(parCategorie.values.first ?? []) { $0.intersection($1) }
     }
+}
+
+extension ReferentielsAffaires {
+    /// Les sections essentielles de chaque catégorie servie.
+    var essentielles: SectionsEssentielles { SectionsEssentielles(categories: categories) }
 }
 
 /// Comment « Nouvelle affaire » se compose pour ce compte.

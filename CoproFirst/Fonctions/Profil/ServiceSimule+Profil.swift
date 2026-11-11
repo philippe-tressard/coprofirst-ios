@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Un compte inventé, pour les aperçus, les tests et les captures : aucun nom de
 /// personne, aucune requête. Les écritures réussissent ; « refuse » comme mot de
 /// passe actuel est refusé, comme le ferait le serveur.
@@ -79,3 +80,4 @@ extension ServiceSimule: ServiceProfil {
         return [BatimentResidence(id: 1, numero: "A"), BatimentResidence(id: 2, numero: "B")]
     }
 }
+#endif

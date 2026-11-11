@@ -69,7 +69,8 @@ struct ModifierAffaireTests {
     @Test(arguments: [41, 12, 38, 31, 44, 45])
     func uneAffaireSimuleePorteUneCategorieDuSite(id: Int) throws {
         let detail = try #require(try ServiceSimule.affaires(id, conseil: true))
-        #expect(TablesAffaires.categorieParCode[detail.categorie] != nil, "« \(detail.categorie) » : inconnue du site")
+        let servies = try FixturesReferentielsAffaires.lus()
+        #expect(servies.categorie(detail.categorie) != nil, "« \(detail.categorie) » : inconnue de la résidence")
     }
 
     @Test func laModificationSimuleeChangeLAffaire() async throws {

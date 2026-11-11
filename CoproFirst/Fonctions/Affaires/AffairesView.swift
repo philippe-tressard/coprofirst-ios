@@ -17,17 +17,16 @@ struct AffairesView: View {
     @State private var etat = EtatAffaires()
     @State private var onglet = "liste"
     @State private var nouvelle = false
-    /// Les sections essentielles de chaque catégorie, lues d'avance : « Nouvelle affaire »
-    /// s'ouvre composée, sans qu'une section change de place sous le pouce (#69).
-    @State private var essentielles: SectionsEssentielles?
 
     private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
     /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
     private var onglets: [OngletDuSite] { droits.onglets }
-    /// La saisie du compte, telle que le serveur la sert (`saisie_affaire_effective`).
+    /// La saisie du compte, telle que le serveur la sert (`saisie_affaire_effective`), et
+    /// les sections essentielles des référentiels lus à l'arrivée : « Nouvelle affaire »
+    /// s'ouvre composée, sans qu'une section change de place sous le pouce (#69).
     private var forme: FormeDeSaisie? {
         ModeSaisie(servi: parcours.ouverteAJour?.profil?.saisieAffaire).map {
-            FormeDeSaisie(mode: $0, essentielles: essentielles)
+            FormeDeSaisie(mode: $0, essentielles: etat.referentiels?.essentielles)
         }
     }
 
@@ -65,14 +64,11 @@ struct AffairesView: View {
         .onChange(of: onglets) { _, ouverts in
             if !ouverts.contains(where: { $0.id == onglet }) { onglet = "liste" }
         }
+        // L'affaire d'un lien ou d'une notification (#18, #17) : la porte a choisi cet onglet.
+        .onChange(of: parcours.porte.affaireDansLOnglet, initial: true) { ouvrirDemandee() }
         .task {
             await etat.charger(installation, avec: service)
             await parcours.rafraichirProfil()
-        }
-        .task(id: nouvelle) {
-            // Lues à l'arrivée ; relues à l'ouverture de la feuille si la première lecture a échoué.
-            guard essentielles == nil, let service else { return }
-            essentielles = try? await service.sectionsEssentielles(installation)
         }
     }
 
@@ -80,19 +76,23 @@ struct AffairesView: View {
     private func contenu(_ service: (any ServiceAffaires)?) -> some View {
         switch onglet {
         case "kanban":
-            KanbanAffaires(etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir)
+            KanbanAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir)
         case "archives":
             ArchivesAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir)
         default:
-            ListeAffaires(
-                etat: etat, installation: installation, droits: droits, service: service, ouvrir: ouvrir
-            ) {
+            ListeAffaires(etat: etat, installation: installation, service: service, ouvrir: ouvrir) {
                 nouvelle = true
             }
         }
     }
 
     private func ouvrir(_ affaire: Affaire) { chemin.append(AffaireAOuvrir(id: affaire.id)) }
+
+    private func ouvrirDemandee() {
+        guard let id = parcours.porte.affaireDansLOnglet else { return }
+        parcours.porte.affaireDansLOnglet = nil
+        chemin.append(AffaireAOuvrir(id: id))
+    }
 
     /// Le choix de l'onglet, sur la matière de la barre : le contenu défile dessous.
     private var enTete: some View {

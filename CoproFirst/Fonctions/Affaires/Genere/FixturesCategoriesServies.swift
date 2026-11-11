@@ -6,8 +6,10 @@
 // Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; front/src/lib/tickets-categories.ts (CATEGORIES_TICKET).
 // swiftlint:disable line_length
 
-/// Les catégories que l'API simulée sert (`GET /tickets/referentiels` → `categories`) :
-/// leurs sections essentielles CALCULÉES par le générateur depuis la table du serveur.
+#if DEBUG
+/// Les catégories que l'API simulée sert (`GET /tickets/referentiels` → `categories`,
+/// lues par `FixturesReferentielsAffaires`) : leurs sections essentielles CALCULÉES par
+/// le générateur depuis la table du serveur. Debug seul (#84).
 enum FixturesCategoriesServies {
     typealias Reponse = FixturesAcces.Reponse
 
@@ -32,4 +34,5 @@ enum FixturesCategoriesServies {
         Reponse(nom: "categories", schema: "CategorieServie", json: categories)
     ]
 }
+#endif
 // swiftlint:enable line_length

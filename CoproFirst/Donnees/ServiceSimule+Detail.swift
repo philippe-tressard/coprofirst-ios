@@ -4,6 +4,7 @@
 import SwiftUI
 import UIKit
 
+#if DEBUG
 /// Les détails inventés : affaires, actualité, document (le sondage : `Commun/Detail/Sondage/`). Aucun nom de
 /// personne, aucune requête.
 extension ServiceSimule {
@@ -120,3 +121,4 @@ extension ServiceSimule {
             auteur: "Le conseil syndical", lieu: "Bâtiment B", photos: [], suites: [], perimetres: ["bat_b"])
     }
 }
+#endif

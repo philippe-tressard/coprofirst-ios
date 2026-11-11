@@ -129,8 +129,10 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
         ctx.entete("api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; "
                    "front/src/lib/tickets-categories.ts (CATEGORIES_TICKET)")
         + "// swiftlint:disable line_length\n\n"
-        "/// Les catégories que l'API simulée sert (`GET /tickets/referentiels` → `categories`) :\n"
-        "/// leurs sections essentielles CALCULÉES par le générateur depuis la table du serveur.\n"
+        "#if DEBUG\n"
+        "/// Les catégories que l'API simulée sert (`GET /tickets/referentiels` → `categories`,\n"
+        "/// lues par `FixturesReferentielsAffaires`) : leurs sections essentielles CALCULÉES par\n"
+        "/// le générateur depuis la table du serveur. Debug seul (#84).\n"
         "enum FixturesCategoriesServies {\n"
         "    typealias Reponse = FixturesAcces.Reponse\n\n"
         "    /// GET /tickets/referentiels → `categories`, `[CategorieServie]`.\n"
@@ -144,6 +146,7 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
         "        Reponse(nom: \"categories\", schema: \"CategorieServie\", json: categories)\n"
         "    ]\n"
         "}\n"
+        "#endif\n"
         "// swiftlint:enable line_length\n"
     )
     ctx.ecrire(GENERE / "FixturesCategoriesServies.swift", texte)

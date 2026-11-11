@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Des alertes inventées, pour les aperçus, les tests et les captures : aucune
 /// personne, aucune requête. Leur état (lue, supprimée) vit le temps du service.
 extension ServiceSimule: ServiceNotifications {
@@ -86,3 +87,4 @@ private enum BoiteSimulee {
         }
     }
 }
+#endif

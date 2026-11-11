@@ -11,12 +11,12 @@ import Testing
 // sections viennent du serveur ; l'app ne fait que les ranger.
 
 /// La réponse de `GET /tickets/referentiels`, ses catégories simulées (générées depuis la
-/// table du serveur), lue par le client GÉNÉRÉ puis par le service.
+/// table du serveur), lue par le client GÉNÉRÉ puis par `ReferentielsAffaires`, la seule porte.
 private func essentiellesServies() async throws -> SectionsEssentielles {
     let categories = FixturesCategoriesServies.categories
     let corps = #"{"categories": \#(categories), "statuts": [], "colonnes_kanban": [], "natures": []}"#
-    let servies = try await client(servant: corps).getTicketsReferentiels().ok.body.json.categories
-    return SectionsEssentielles(servies: servies)
+    let lu = try await client(servant: corps).getTicketsReferentiels().ok.body.json
+    return ReferentielsAffaires(lu: lu).essentielles
 }
 
 @Test func lesSectionsDeLaFeuilleSontCellesDuCadreDuSite() {
@@ -81,8 +81,10 @@ private func essentiellesServies() async throws -> SectionsEssentielles {
     #expect(simule.profilSimule.saisieAffaire == "essentielle")
     try await simule.choisirSaisie("complete", dans: residence)
     #expect(simule.profilSimule.saisieAffaire == "complete")
-    let lues = try await simule.sectionsEssentielles(residence)
+    let lues = try await simule.referentiels(residence).essentielles
     #expect(lues.pour("panne").contains("mise_en_avant"))
+    // Les référentiels simulés servent les sections calculées, pas la seule base.
+    #expect(try FixturesReferentielsAffaires.lus().essentielles == lues)
 }
 
 @Test func unProfilGardeAvantLaSaisieSeRelit() throws {
