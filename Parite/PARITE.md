@@ -35,7 +35,8 @@ parallèles ne se gênent pas.
 3. **#15** — Espace conseil syndical et Délégations.
 4. **#16** — Administration, en partie.
 5. Bloqués côté serveur : **#17** notifications push (coprofirst#2458),
-   **#18** liens universels (coprofirst#2459).
+   **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
+   porte de navigation codées, liste des domaines en attente de décision (#18).
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
    (charte, pages, onglets, contrat d'API) : un écart ouvre un ticket.
 

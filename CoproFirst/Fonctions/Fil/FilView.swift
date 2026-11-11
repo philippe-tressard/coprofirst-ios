@@ -78,6 +78,8 @@ struct FilView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             if !reseau.enLigne { BandeauHorsLigne() }
         }
+        // Demandé fil déjà chargé : une notification touchée, l'app ouverte (#17).
+        .onChange(of: parcours.aOuvrir) { if phase == .pret { ouvrirDemande() } }
         .task {
             await charger()
             ouvrirDemande()
