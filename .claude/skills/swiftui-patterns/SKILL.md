@@ -238,7 +238,12 @@ seule la CI le dit.
    seconde sur une longue liste.
 4. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
    journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
-   affecting … » donne le type réellement trouvé).
+   affecting … » donne le type réellement trouvé). On attend un **état**, jamais une
+   durée : un écran chargé a son point d'attente commun, que tous ses tests emploient
+   avant de lire le reste par `.exists` — pour le détail d'une affaire,
+   `attendreDetailAffaire` (titre ET bandeau, qui arrive après le titre sur le runner :
+   jusqu'à 12 s, #98) ; jamais un `.exists` juste après un toucher. Un écran lent se
+   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`).
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
