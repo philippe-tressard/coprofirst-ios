@@ -31,6 +31,9 @@ struct DetailAffaire: Hashable, Sendable {
     var fusionnee = false
     /// Les codes de ses lieux (`perimetre_cible`) — ce que « Modifier l'affaire » part de.
     var perimetres: [String] = []
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == "actualite" }
     var statutLibelle: String { StatutsAffaire.parCode[statut]?.libelle ?? statut }
@@ -46,6 +49,10 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let ancienStatut: String?
     let nouveauStatut: String?
     let photos: [String]
+    /// « Périmètre précisé : 🔹 Bât. 2 » — le lieu que la Suite déclare, tel que servi
+    /// (`perimetre_precise_libelle`, contrat 1.24.0, #130), même par défaut ; `nil` quand
+    /// elle n'en déclare pas, ou d'une installation antérieure.
+    var perimetrePrecise: String?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état.
     var changementDEtat: String? {

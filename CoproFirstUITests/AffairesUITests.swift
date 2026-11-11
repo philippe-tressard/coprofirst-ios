@@ -98,6 +98,8 @@ final class AffairesUITests: XCTestCase {
         XCTAssertTrue(carte.waitForExistence(timeout: 5))
         carte.tap()
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
+        // Qui la lit, telle que servie (#129) : dans l'en-tête, chargée avec le détail.
+        XCTAssertTrue(element("lecture.detail", dans: app).exists, "la phrase de la pastille servie")
     }
 
     @MainActor

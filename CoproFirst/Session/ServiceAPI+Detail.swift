@@ -8,24 +8,33 @@ import Foundation
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
-        async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        // Les corps servis sont gardés : `lecture` et le lieu d'une Suite sont au-dessus du
+        // plancher (#129, #130).
+        async let ticket = appeler {
+            try await CorpsServi.garder { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        }
         async let evolutions = appeler {
-            try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
+            try await CorpsServi.garder { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let compte = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
-        switch try await ticket {
+        let (sortieTicket, corpsTicket) = try await ticket
+        switch sortieTicket {
         case .ok(let ok): lu = try ok.body.json
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
         var suites: [SuiteAffaire] = []
-        if case .ok(let ok) = try await evolutions {
-            suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
+        let (sortieSuites, corpsSuites) = try await evolutions
+        if case .ok(let ok) = sortieSuites {
+            let servies = ServiAuDessusDuPlancher.parLigne(corpsSuites)
+            suites = try ok.body.json.map { SuiteAffaire(evolution: $0, servie: servies[$0.id]) }
+                .sorted { $0.date < $1.date }
         }
         var detail = DetailAffaire(ticket: lu, suites: suites)
+        detail.lecture = ServiAuDessusDuPlancher.un(corpsTicket)?.lecture?.valeur
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         // Le compte illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
@@ -173,11 +182,13 @@ extension DetailAffaire {
 }
 
 extension SuiteAffaire {
-    init(evolution: Components.Schemas.TicketEvolutionRead) {
+    /// `servie` : ce que le corps sert au-dessus du plancher — le lieu précisé (#130).
+    init(evolution: Components.Schemas.TicketEvolutionRead, servie: ServiAuDessusDuPlancher? = nil) {
         self.init(
             id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
-            photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
+            photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage),
+            perimetrePrecise: LieuServi.lieu(servie?.perimetrePreciseLibelle?.valeur))
     }
 }

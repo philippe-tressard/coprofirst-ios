@@ -45,6 +45,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutDeplacer: Bool
     /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
     var peutArchiver: Bool
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure : aucune pastille.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.
