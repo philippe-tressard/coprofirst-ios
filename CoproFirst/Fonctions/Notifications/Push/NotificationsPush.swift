@@ -147,7 +147,8 @@ final class NotificationsPush {
         }
         guard let installation = installation(de: abonnement) else { return }
         relire(installation)
-        parcours.suivre(Destination(adresse: installation.adresse, ecran: .notifications))
+        // Jamais de découverte sur une sollicitation : l'abonnement nomme une résidence connue.
+        parcours.suivre(Destination(adresse: installation.adresse, ecran: .notifications), decouvrir: false)
     }
 
     /// Une notification arrivée app ouverte : pour la résidence à l'écran, la cloche se

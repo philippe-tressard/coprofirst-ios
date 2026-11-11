@@ -227,6 +227,30 @@ private func jusqua(_ condition: () -> Bool) async {
     #expect(parcours.porte.enAttente == nil)
 }
 
+@MainActor
+@Test func uneResidenceInconnueNOuvreRien() async {
+    let app = await AppOuverte(.accordee)
+    let parcours = app.parcours
+    let ouverte = parcours.ouverte
+    let ailleurs = URL(string: "https://ailleurs.exemple.fr") ?? ServiceSimule.residence.adresse
+    #expect(!parcours.suivre(Destination(adresse: ailleurs, ecran: .notifications), decouvrir: false))
+    #expect(parcours.ouverte == ouverte)
+    #expect(parcours.porte.enAttente == nil)
+    #expect(!parcours.clocheOuverte)
+}
+
+@MainActor
+@Test func unAutreEcranDemandeRefermeLaCloche() async {
+    let app = await AppOuverte(.accordee)
+    let parcours = app.parcours
+    let residence = ServiceSimule.residence.adresse
+    parcours.suivre(Destination(adresse: residence, ecran: .notifications), decouvrir: false)
+    #expect(parcours.clocheOuverte)
+    parcours.suivre(Destination(adresse: residence, ecran: .element("ticket_ouvert:41")))
+    #expect(!parcours.clocheOuverte, "la feuille ne cache pas l'élément demandé")
+    #expect(parcours.aOuvrir == "ticket_ouvert:41")
+}
+
 /// La porte des liens (#18) pose la cloche par-dessus l'onglet en cours, quel qu'il soit.
 @Test func laPorteAiguilleLesNotificationsVersLaCloche() {
     #expect(Aiguillage.aiguiller(.notifications, pages: ["tableau-de-bord"], visibles: 4) == .cloche)
