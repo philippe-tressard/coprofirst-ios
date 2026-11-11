@@ -16,18 +16,32 @@ Entrées : les codes de sortie de `scripts/concordance.py` (`--plancher`, `--mon
 - « a-monter » (montée 3) garde sa logique propre : ouvert une fois, puis mis à jour,
   jamais rouge, jamais fermé ici — il se ferme quand on monte le plancher.
 
+Le ticket d'une étiquette se reconnaît à son étiquette ET à son TITRE (`TITRES`, le seul
+endroit où ils s'écrivent) : le 11/11/2026, un ticket fonctionnel étiqueté « a-monter »
+par erreur (#93) a été pris pour celui de la concordance, et son corps réécrit.
+
 Usage : python3 scripts/tickets_concordance.py --autotest
         python3 scripts/tickets_concordance.py decider PLANCHER MONTEE N_CONCORDANCE N_A_MONTER
         (un numéro vide : aucun ticket ouvert ; sortie `cle=valeur`, pour $GITHUB_OUTPUT)
+        gh issue list --label E --state open --json number,title | … choisir E
+        (le numéro du ticket de la concordance sous l'étiquette E, ou rien)
+        python3 scripts/tickets_concordance.py titre E   (le titre du ticket à ouvrir)
 """
 
 from __future__ import annotations
 
+import json
 import sys
 from dataclasses import dataclass
 
 VERT, ROUGE, INCONNU = "vert", "rouge", "inconnu"
 OUVRIR, COMPLETER, FERMER, METTRE_A_JOUR, RIEN = "ouvrir", "completer", "fermer", "mettre-a-jour", "rien"
+
+#: étiquette → le titre du ticket que la concordance ouvre, et auquel elle le reconnaît.
+TITRES = {
+    "concordance": "Concordance avec CoproFirst : écart au plancher ou version illisible",
+    "a-monter": "CoproFirst : une version publiée au-dessus du plancher de l'app",
+}
 
 
 @dataclass(frozen=True)
@@ -54,6 +68,14 @@ def decider(plancher: str, montee: str, concordance_ouvert: bool, a_monter_ouver
         concordance = COMPLETER if concordance_ouvert else OUVRIR
     a_monter = (METTRE_A_JOUR if a_monter_ouvert else OUVRIR) if montee == "3" else RIEN
     return Decision(juge, concordance, a_monter)
+
+
+def choisir(etiquette: str, tickets: list[dict]) -> str:
+    """Le numéro du ticket de la concordance parmi les tickets ouverts sous `etiquette`
+    (`gh issue list --json number,title`) : celui qui porte SON titre, jamais un ticket
+    qu'on a seulement étiqueté. Aucun : chaîne vide — la concordance ouvrira le sien."""
+    titre = TITRES[etiquette]
+    return next((str(t["number"]) for t in tickets if t.get("title") == titre), "")
 
 
 def rejouer(runs: list[tuple[str, str]]) -> list[tuple[str, bool, bool]]:
@@ -94,6 +116,20 @@ def autotest() -> int:
     if decider("0", "3", False, True).a_monter != METTRE_A_JOUR:
         print("❌ a-monter déjà ouvert : mis à jour, pas rouvert")
         rate += 1
+    # Le ticket se choisit au titre (#93) : un ticket étranger sous l'étiquette n'est pas
+    # celui de la concordance, même listé le premier ; seul, il laisse la place vide.
+    etranger = {"number": 93, "title": "Historique : lire peut_modifier / peut_supprimer d'une entrée"}
+    le_sien = {"number": 60, "title": TITRES["a-monter"]}
+    choix = [
+        ("un ticket étranger étiqueté a-monter n'est pas choisi", choisir("a-monter", [etranger, le_sien]), "60"),
+        ("seul sous l'étiquette, le ticket étranger laisse la place vide", choisir("a-monter", [etranger]), ""),
+        ("aucun ticket ouvert : rien", choisir("concordance", []), ""),
+        ("le titre d'une étiquette ne vaut pas pour l'autre", choisir("concordance", [le_sien]), ""),
+    ]
+    for nom, obtenu, attendu in choix:
+        if obtenu != attendu:
+            print(f"❌ {nom} : « {obtenu} »")
+            rate += 1
     print("✅ tickets_concordance : autotest" if rate == 0 else f"── {rate} cas en échec")
     return 0 if rate == 0 else 1
 
@@ -115,8 +151,18 @@ def main(argv: list[str]) -> int:
             return 2
         print(f"verdict={d.verdict}\nconcordance={d.concordance}\na_monter={d.a_monter}")
         return 0
-    print("usage : tickets_concordance.py --autotest | decider PLANCHER MONTEE N_CONCORDANCE N_A_MONTER",
-          file=sys.stderr)
+    if len(argv) == 3 and argv[1] in ("choisir", "titre") and argv[2] in TITRES:
+        if argv[1] == "titre":
+            print(TITRES[argv[2]])
+            return 0
+        try:
+            print(choisir(argv[2], json.load(sys.stdin)))
+        except (ValueError, TypeError, KeyError, AttributeError) as erreur:
+            print(f"INCONNU : liste des tickets illisible ({erreur})", file=sys.stderr)
+            return 2
+        return 0
+    print("usage : tickets_concordance.py --autotest | decider PLANCHER MONTEE N_CONCORDANCE N_A_MONTER"
+          " | choisir ETIQUETTE < tickets.json | titre ETIQUETTE", file=sys.stderr)
     return 2
 
 
