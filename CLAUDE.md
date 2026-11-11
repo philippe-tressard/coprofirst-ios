@@ -41,7 +41,15 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
 - **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint,
   swift-format) ; Homebrew sur le poste, binaires vérifiés par empreinte en CI.
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
-  fusionne : champ `fusion` du registre — `utilisateur` : je m'arrête à la PR.
+  fusionne : champ `fusion` du registre. **Décision du 11/11/2026** (Philippe :
+  « tu es plus à même de fusionner et de voir les conséquences ») : je fusionne
+  mes PR moi-même — branche à jour de `main` (la protection l'exige), contrôles
+  rejoués au poste, puis fusion automatique `--squash` une fois la CI verte. Je
+  suis ensuite `main` : sa CI après la fusion, et les PR ouvertes qu'elle oblige
+  à rebaser. **Contrepartie** : un compte rendu après chaque fusion (ce qui est
+  entré, l'état de la CI de `main`). Philippe oriente par la **priorité** des
+  tickets, pas par la fusion. Fusionner n'est pas soumettre : TestFlight externe
+  et App Store restent suspendus à la validation du rendu.
   Les commits portent l'adresse *noreply* de GitHub, réglée dans la configuration
   **locale** du clone (l'adresse globale du poste est personnelle).
 
