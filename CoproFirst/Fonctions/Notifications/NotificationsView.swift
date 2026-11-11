@@ -36,8 +36,9 @@ struct NotificationsView: View {
                     .redacted(reason: .placeholder)
             } else {
                 if !enEdition { OffrePush() }
-                if let echec = etat.echec {
-                    MessageErreur(texte: echec.phrase).listRowBackground(Color.clear).listRowInsets(.init())
+                if let phrase = etat.phraseEchec {
+                    MessageErreur(texte: phrase).listRowBackground(Color.clear).listRowInsets(.init())
+                        .accessibilityIdentifier("notifications.echec")
                 }
                 if etat.lues > 0 { gesteSurLesLues }
                 let sections = etat.sections()

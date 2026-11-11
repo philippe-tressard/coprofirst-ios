@@ -27,7 +27,9 @@ protocol ServiceNotifications: Sendable {
     /// DELETE /notifications/{id} — définitif, comme sur le site.
     func supprimerNotification(_ id: Int, dans installation: Installation) async throws
     /// POST /notifications/supprimer-selection — celles choisies, en UNE requête (#53).
-    /// Un identifiant qui n'est pas une alerte du compte est ignoré par le serveur.
+    /// Un identifiant qui n'est pas une alerte du compte est ignoré par le serveur. Le
+    /// contrat borne la requête à `LimitesNotifications.selectionParRequete` identifiants
+    /// (422 au-delà) : `EtatNotifications.supprimer` découpe une sélection plus grande (#118).
     func supprimerNotifications(_ ids: Set<Int>, dans installation: Installation) async throws
     /// POST /notifications/supprimer-lues — toutes les lues du compte, en une requête.
     func supprimerLues(_ installation: Installation) async throws

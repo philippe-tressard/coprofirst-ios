@@ -161,6 +161,12 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   sert à la forme du serveur, et le `Fixtures*.swift` le déclare,
   `AuDessusDuPlancher(schema:champs:contrat:)` ; le juge le tolère dans ce schéma seulement,
   et échoue le jour où le contrat le déclare, ou quand plus aucune réponse ne le sert.
+- **Une borne que le contrat pose sur un corps** (`maxItems`) et que le client généré
+  n'expose pas : elle se GÉNÈRE du contrat (`generateurs/notifications.py` →
+  `LimitesNotifications`), jamais un nombre écrit dans un écran ; l'API simulée refuse
+  comme le serveur ce qui la dépasse (422), et le geste se découpe à sa taille — ce qui
+  est déjà fait ne revient pas si une requête échoue en route, et la phrase dit combien
+  (`EtatNotifications.supprimer`, `SuppressionInterrompue`, #118).
 
 ### Les composants communs — à réutiliser, pas à modifier
 

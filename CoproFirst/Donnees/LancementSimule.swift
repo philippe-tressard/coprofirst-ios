@@ -19,6 +19,8 @@ import Foundation
 /// `-push non-demandee|refusee` : l'autorisation des notifications (accordée sinon),
 /// et `-push-touchee` : une notification de la résidence touchée au lancement (#17) ;
 /// `-avis-durable` : l'avis qui suit un geste ne se retire pas de lui-même (#123) ;
+/// `-notifications <nombre>` : le volume de la cloche, et `-panne-suppression <rang>` : la
+/// suppression groupée de ce rang perd le réseau (#118) ;
 /// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
@@ -127,6 +129,9 @@ enum LancementSimule {
         if let ms = argument("-delai-detail", arguments).flatMap(Int.init) {
             simule.delaiDetail = .milliseconds(ms)
         }
+        simule.reglerNotifications(
+            nombre: argument("-notifications", arguments).flatMap(Int.init),
+            suppressionEnPanne: argument("-panne-suppression", arguments).flatMap(Int.init))
         switch argument("-protection", arguments) {
         case "appareil": simule.protectionSimulee = .codeAppareil
         case "aucune": simule.protectionSimulee = .aucune
