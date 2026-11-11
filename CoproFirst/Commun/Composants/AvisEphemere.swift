@@ -106,6 +106,11 @@ struct AvisEphemere: ViewModifier {
                         .accessibilityAddTraits(.updatesFrequently)
                         .task(id: texte) {
                             AccessibilityNotification.Announcement(texte).post()
+                            #if DEBUG
+                            // Sous les tests d'interface, l'avis reste jusqu'au suivant : en 4 s, il
+                            // repartait avant d'être lu par un runner qui met 30 s à une requête.
+                            if LancementSimule.avisDurable(ProcessInfo.processInfo.arguments) { return }
+                            #endif
                             // Remplacée avant la fin : la tâche est annulée, l'avis suivant reste.
                             guard (try? await Task.sleep(for: AvisDuSite.duree)) != nil else { return }
                             avis.retirer(texte)

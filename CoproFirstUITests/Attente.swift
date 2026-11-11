@@ -15,6 +15,10 @@ enum Attente {
 }
 
 extension XCUIElement {
+    /// L'élément est à l'écran, au plus tard au plafond commun.
+    @MainActor
+    func attendre() -> Bool { waitForExistence(timeout: Attente.plafond) }
+
     /// L'élément est dans l'état `condition` — un format de `NSPredicate`, par exemple
     /// « hasKeyboardFocus == true » — au plus tard au plafond commun. La seule attente
     /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont

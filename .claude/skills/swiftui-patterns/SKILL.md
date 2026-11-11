@@ -259,6 +259,10 @@ seule la CI le dit.
    qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
    onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
    attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
+   Un état **passager** ne s'attend pas contre la montre, même avec un long délai :
+   l'avis qui suit un geste dure 4 s, et il est reparti avant d'être lu par un runner
+   qui met 30 s à une requête. Le test le rend durable (`-avis-durable`, lu par
+   `AvisEphemere` en Debug) et prouve le geste par l'état qui reste (la liste relue).
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test

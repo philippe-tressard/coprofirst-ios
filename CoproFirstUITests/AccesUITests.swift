@@ -10,6 +10,14 @@ import XCTest
 /// ⚠️ Un élément se cherche par son IDENTIFIANT ou son libellé, jamais par son type
 /// (`app.buttons`, `app.links`…) : le type d'accessibilité diffère d'une version
 /// d'iOS à l'autre (poste en iOS 27, CI en iOS 26 — leçon de #12).
+///
+/// ⚠️ Aucune attente n'a son propre délai : toutes rendent la main dès que l'état est
+/// là, au plus tard au plafond commun (`Attente.plafond`, #123). Et l'avis qui suit un
+/// geste (« Accès enregistré ») dure 4 s dans l'app : il se lit sous `-avis-durable`,
+/// qui le garde à l'écran — sur le runner, deux requêtes d'accessibilité expirées
+/// d'affilée (57,8 s) l'ont laissé repartir avant d'être lu (run 43060065387). La
+/// preuve du geste reste l'état durable qui le suit : l'accès perdu ne se signale
+/// plus, le code déclaré est dans la liste relue.
 final class AccesUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -18,39 +26,39 @@ final class AccesUITests: XCTestCase {
     @MainActor
     private func ouvrirAcces() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
+        app.launchArguments = ["-api-simulee", "-ecran", "fil", "-avis-durable"]
         app.launch()
         let barre = app.tabBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.attendre())
         barre.buttons["Accès"].tap()
-        XCTAssertTrue(app.navigationBars["Mes lots & accès"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Mes lots & accès"].attendre())
         return app
     }
 
     @MainActor
     func testLesQuatreOngletsSOuvrent() throws {
         let app = ouvrirAcces()
-        XCTAssertTrue(app.libelleAcces("Caractéristiques").waitForExistence(timeout: 5), "la carte du lot")
+        XCTAssertTrue(app.libelleAcces("Caractéristiques").attendre(), "la carte du lot")
         app.capturerAcces("acces-1-mes-lots", dans: self)
 
         app.elementAcces("acces.lot.417").tap()
-        XCTAssertTrue(app.libelleAcces("Sous-sol A").waitForExistence(timeout: 3), "le lot choisi s'affiche")
+        XCTAssertTrue(app.libelleAcces("Sous-sol A").attendre(), "le lot choisi s'affiche")
 
         app.elementAcces("onglet.badges").tap()
-        XCTAssertTrue(app.libelleAcces("A4F21C07").waitForExistence(timeout: 5), "les badges détenus")
+        XCTAssertTrue(app.libelleAcces("A4F21C07").attendre(), "les badges détenus")
         app.capturerAcces("acces-2-badges", dans: self)
 
         app.elementAcces("onglet.telecommandes").tap()
-        XCTAssertTrue(app.libelleAcces("TC-2048").waitForExistence(timeout: 5), "les télécommandes détenues")
+        XCTAssertTrue(app.libelleAcces("TC-2048").attendre(), "les télécommandes détenues")
         app.capturerAcces("acces-3-telecommandes", dans: self)
 
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
         app.elementAcces("onglet.telecommandes").swipeLeft()
         app.elementAcces("onglet.location").tap()
-        XCTAssertTrue(app.libelleAcces("Locataire du lot 31").waitForExistence(timeout: 5), "un bail actif")
+        XCTAssertTrue(app.libelleAcces("Locataire du lot 31").attendre(), "un bail actif")
         app.capturerAcces("acces-4-gestion-locative", dans: self)
         app.libelleAcces("📁 Archives").tap()
-        XCTAssertTrue(app.libelleAcces("Ancien locataire du lot 31").waitForExistence(timeout: 3), "les archives")
+        XCTAssertTrue(app.libelleAcces("Ancien locataire du lot 31").attendre(), "les archives")
     }
 
     @MainActor
@@ -58,22 +66,22 @@ final class AccesUITests: XCTestCase {
         let app = ouvrirAcces()
         app.elementAcces("onglet.badges").tap()
         let perdu = app.elementAcces("acces.perdu.12")
-        XCTAssertTrue(perdu.waitForExistence(timeout: 5))
+        XCTAssertTrue(perdu.attendre())
         perdu.tap()
         app.elementAcces("acces.perdu.confirmer").tap()
-        XCTAssertTrue(app.libelleAcces("Signalement enregistré").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.libelleAcces("Signalement enregistré").attendre())
         XCTAssertFalse(app.elementAcces("acces.perdu.12").exists, "un accès perdu ne se signale plus")
 
         app.elementAcces("acces.gestes").tap()
         app.elementAcces("acces.geste.declarer").tap()
         let code = app.elementAcces("acces.declarer.code")
-        XCTAssertTrue(code.waitForExistence(timeout: 3))
+        XCTAssertTrue(code.attendre())
         code.typeText("TC-7777")
         app.capturerAcces("acces-5-declarer", dans: self)
         app.elementAcces("acces.feuille.enregistrer").tap()
-        XCTAssertTrue(app.libelleAcces("Accès enregistré").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.libelleAcces("Accès enregistré").attendre())
         app.elementAcces("onglet.telecommandes").tap()
-        XCTAssertTrue(app.libelleAcces("TC-7777").waitForExistence(timeout: 5), "la liste est relue")
+        XCTAssertTrue(app.libelleAcces("TC-7777").attendre(), "la liste est relue")
     }
 
     @MainActor
@@ -82,16 +90,20 @@ final class AccesUITests: XCTestCase {
         app.elementAcces("onglet.badges").tap()
         app.elementAcces("acces.gestes").tap()
         app.elementAcces("acces.geste.demander").tap()
-        XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].waitForExistence(timeout: Attente.plafond))
+        XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].attendre())
         app.elementAcces("acces.feuille.enregistrer").tap()
-        XCTAssertTrue(app.libelleAcces("Sélectionnez un lot").waitForExistence(timeout: 3), "un lot est exigé")
+        XCTAssertTrue(app.libelleAcces("Sélectionnez un lot").attendre(), "un lot est exigé")
         app.elementAcces("acces.demande.lot").tap()
-        XCTAssertTrue(app.libelleAcces("Lot 15").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.libelleAcces("Lot 15").attendre())
         XCTAssertTrue(app.libelleAcces("Lot 450").exists)
         app.libelleAcces("Lot 15").tap()
         app.capturerAcces("acces-6-nouvel-acces", dans: self)
         app.elementAcces("acces.feuille.enregistrer").tap()
-        XCTAssertTrue(app.libelleAcces("Demande envoyée au conseil syndical").waitForExistence(timeout: 5))
+        let avis = app.libelleAcces("Demande envoyée au conseil syndical")
+        XCTAssertTrue(avis.attendre())
+        // Le garde-fou de `-avis-durable` : passé les 4 s de l'app, l'avis est toujours là.
+        // Sans lui, les avis de ces tests se liraient de nouveau contre la montre.
+        XCTAssertFalse(avis.waitForNonExistence(timeout: 6), "sous -avis-durable, l'avis ne se retire pas")
     }
 }
 
