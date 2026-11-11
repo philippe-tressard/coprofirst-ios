@@ -2,21 +2,15 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# destination-simulateur.sh — imprime la destination xcodebuild du premier iPhone
-# disponible (`platform=iOS Simulator,id=<udid>`). Les noms d'appareils changent
-# d'une image de runner à l'autre : on ne les écrit pas en dur.
-# Aucun iPhone → sortie non nulle : un test qui ne peut pas tourner n'est pas vert.
-set -euo pipefail
-UDID=$(xcrun simctl list devices available -j | python3 -c '
-import json, sys
-appareils = json.load(sys.stdin)["devices"]
-for runtime in sorted(appareils, reverse=True):
-    if ".iOS-" not in runtime:
-        continue
-    for a in appareils[runtime]:
-        if a["name"].startswith("iPhone"):
-            print(a["udid"])
-            sys.exit(0)
-sys.exit(1)
-') || { echo "❌ aucun simulateur iPhone disponible (xcodebuild -downloadPlatform iOS)" >&2; exit 1; }
+# destination-simulateur.sh — imprime la destination xcodebuild du simulateur des
+# tests (`platform=iOS Simulator,id=<udid>`), et dit lequel sur la sortie d'erreur.
+# Le choix — un iPhone de série du runtime iOS standard le plus récent, le même d'un
+# passage à l'autre — et son autotest vivent dans scripts/destination_simulateur.py.
+# Un choix impossible, ou une liste qui ne se lit pas : INCONNU (sortie 2), jamais un
+# appareil au hasard — un test qui ne peut pas tourner n'est pas vert (#112).
+set -uo pipefail
+cd "$(dirname "$0")/.."
+LISTE=$(xcrun simctl list devices available -j) \
+  || { echo "❓ INCONNU : simctl ne liste pas les simulateurs" >&2; exit 2; }
+UDID=$(python3 -I scripts/destination_simulateur.py <<< "$LISTE") || exit $?
 echo "platform=iOS Simulator,id=$UDID"
