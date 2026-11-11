@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import Testing
 
 @testable import ClientAPI
@@ -33,4 +35,42 @@ private func client(_ corps: String) -> Client {
     let (un, deux) = try await (premier.corps, second.corps)
     #expect(un == Data(#"{"status":"un"}"#.utf8))
     #expect(deux == Data(#"{"status":"deux"}"#.utf8))
+}
+
+/// Deux réponses à la suite : la première, puis la réponse rejouée.
+private final class TransportSuccessif: ClientTransport, @unchecked Sendable {
+    private let verrou = NSLock()
+    private var corps: [String]
+
+    init(_ corps: [String]) { self.corps = corps }
+
+    func send(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        let suivant = verrou.withLock { corps.removeFirst() }
+        var reponse = HTTPResponse(status: .ok)
+        reponse.headerFields[.contentType] = "application/json"
+        return (reponse, HTTPBody(suivant))
+    }
+}
+
+/// Un intercepteur de l'app qui rejoue la requête (le renouvellement sur 401, #81).
+private struct Rejouer: ClientMiddleware {
+    func intercept(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String,
+        next: @Sendable (HTTPRequest, HTTPBody?, URL) async throws -> (HTTPResponse, HTTPBody?)
+    ) async throws -> (HTTPResponse, HTTPBody?) {
+        _ = try await next(request, body, baseURL)
+        return try await next(request, body, baseURL)
+    }
+}
+
+/// Après un rejeu par un intercepteur de l'app, le corps gardé est celui de la réponse
+/// FINALE — jamais la première.
+@Test func garderRendLeCorpsDeLaReponseRejouee() async throws {
+    let rejoue = ClientCoproFirst.client(
+        installation: URL(string: "https://demo.coprofirst.fr")!,
+        transport: TransportSuccessif([#"{"status":"refus"}"#, #"{"status":"rejoue"}"#]), middlewares: [Rejouer()])
+    let (_, corps) = try await CorpsServi.garder { try await rejoue.getHealth() }
+    #expect(corps == Data(#"{"status":"rejoue"}"#.utf8))
 }

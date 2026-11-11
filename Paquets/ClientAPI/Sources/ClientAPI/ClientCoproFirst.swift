@@ -17,25 +17,31 @@ public enum ClientCoproFirst {
 
     /// Un client généré, branché sur l'installation donnée — la SEULE configuration du
     /// client : les dates par `TranscodeurDates` (ISO, sans fuseau = UTC), quel que soit
-    /// le transport (une session de l'app, un transport de test) ; l'intercepteur qui
-    /// garde un corps servi à la demande (`CorpsServi.garder`).
+    /// le transport (une session de l'app, un transport de test). `middlewares` : ce que
+    /// l'app glisse entre le client et le transport (le renouvellement de session, #81),
+    /// APRÈS l'intercepteur qui garde un corps servi à la demande (`CorpsServi.garder`) :
+    /// le plus extérieur, il garde le corps de la réponse finale, renouvellement compris.
     public static func client(
         installation: URL,
-        transport: any ClientTransport = URLSessionTransport()
+        transport: any ClientTransport = URLSessionTransport(),
+        middlewares: [any ClientMiddleware] = []
     ) -> Client {
         Client(
             serverURL: adresseAPI(installation: installation),
             configuration: Configuration(dateTranscoder: TranscodeurDates()),
-            transport: transport,
-            middlewares: [IntercepteurCorpsServi()])
+            transport: transport, middlewares: [IntercepteurCorpsServi()] + middlewares)
     }
 }
 
 extension ClientCoproFirst {
     /// Un client sur une session URLSession donnée — une par installation, pour que
     /// les cookies de l'une ne partent jamais vers l'autre.
-    public static func client(installation: URL, session: URLSession) -> Client {
-        client(installation: installation, transport: URLSessionTransport(configuration: .init(session: session)))
+    public static func client(
+        installation: URL, session: URLSession, middlewares: [any ClientMiddleware] = []
+    ) -> Client {
+        client(
+            installation: installation, transport: URLSessionTransport(configuration: .init(session: session)),
+            middlewares: middlewares)
     }
 
     /// La cause d'une erreur du client généré (réseau, décodage), sans son emballage.
