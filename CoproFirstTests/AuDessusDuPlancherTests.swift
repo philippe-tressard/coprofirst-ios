@@ -132,7 +132,10 @@ private struct DemandesSansAnnonce: ServiceDemandesProfil {
     let anciens = try FixturesPerimetres.lus().map {
         Perimetre(code: $0.code, libelle: $0.libelle, selectionnable: $0.selectionnable, parent: $0.parent)
     }
-    #expect(Perimetre.aSaisir(anciens).count == anciens.count, "installation antérieure au contrat 1.17.0")
+    // Le regroupement « Bâtiments » ne se cible jamais ; tout le reste se propose.
+    #expect(
+        Perimetre.aSaisir(anciens).count == anciens.filter(\.selectionnable).count,
+        "installation antérieure au contrat 1.17.0")
     let regroupement = [Perimetre(code: "batiments", libelle: "Bâtiments", selectionnable: false)]
     #expect(Perimetre.aSaisir(regroupement).isEmpty)
 }

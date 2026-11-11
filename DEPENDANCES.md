@@ -15,6 +15,11 @@ Inventaire figé (`standards/14` §6.3) : relu à chaque ajout. Versions exactes
 | apple/swift-openapi-runtime | 1.13.3 | Apache-2.0 | types du client généré |
 | apple/swift-openapi-urlsession | 1.4.0 | Apache-2.0 | transport HTTP (URLSession) |
 | apple/swift-http-types | transitive | Apache-2.0 | requêtes et réponses HTTP |
+| Lucide (tracés, via `icones-svg.json` de coprofirst) | celle du plancher | ISC, MIT (part issue de Feather) | pictogrammes de la gouttière du fil (`Pictogrammes.xcassets`, généré) |
+
+ISC et MIT n'exigent que l'avis de copyright et de licence avec chaque copie : leurs
+textes sont dans `LICENSES/` et dans l'écran « À propos » (Plus › À propos ›
+Composants tiers).
 
 Apache-2.0 est compatible avec l'AGPL v3 et n'impose aucune restriction qui gêne la
 distribution par l'App Store. Son texte et ses avis (NOTICE) devront figurer dans

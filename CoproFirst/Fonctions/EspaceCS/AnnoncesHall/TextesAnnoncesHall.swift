@@ -21,7 +21,7 @@ enum TextesAnnoncesHall {
     static let message = "Message"
     static let messageExemple = "Le texte de l'affiche…"
     static let perimetre = "Périmètre"
-    static let perimetreAide = "Sans choix, l'affiche vaut pour le périmètre par défaut de la résidence."
+    static let perimetreAide = "Imprimé sur l'affiche : il dit où elle doit être posée."
     static let format = "Format"
     static let formatAide = "Auto : le serveur choisit le plus grand format où le texte tient."
     static let diffusion = "Diffusion"

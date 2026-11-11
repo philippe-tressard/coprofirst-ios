@@ -15,12 +15,7 @@ struct ResumeFeuille: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(spacing: 10) {
-                    Image(systemName: Pictogrammes.symbole(nature.icone))
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(palette[keyPath: nature.couleur])
-                        .frame(width: 36, height: 36)
-                        .background(palette[keyPath: nature.fond], in: .rect(cornerRadius: 10, style: .continuous))
-                        .accessibilityHidden(true)
+                    VignetteDeNature(element: element)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(nature.libelle).font(.caption.weight(.bold)).foregroundStyle(
                             palette[keyPath: nature.couleur])

@@ -25,9 +25,9 @@ enum TablesAffaires {
     ]
     /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.
     static let natures: [NatureAffaire] = [
-        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", badge: "badge-blue"),
-        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", badge: "badge-purple"),
-        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", badge: "badge-orange"),
+        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", icone: "newspaper", badge: "badge-blue"),
+        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", icone: "calendar-days", badge: "badge-purple"),
+        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", icone: "wrench", badge: "badge-orange"),
     ]
     /// Les colonnes du Kanban — ces colonnes SONT le workflow (`KANBAN_COLS`).
     static let colonnesKanban: [ColonneKanban] = [
