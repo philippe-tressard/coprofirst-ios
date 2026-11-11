@@ -128,7 +128,7 @@ struct AffaireServieTests {
     @Test func lEtageDuBailSeLitTelQueServi() throws {
         let bail = try FixturesAcces.monBailLu()
         #expect(bail.lotEtageLibelle == "2ème")
-        let json = FixturesAcces.monBail.replacingOccurrences(of: #""lot_etage_libelle": "2ème", "#, with: "")
+        let json = FixturesAcces.monBail.replacingOccurrences(of: #", "lot_etage_libelle": "2ème""#, with: "")
         let anterieur = BailDuLocataire.lu(
             try Relecture.generee(Components.Schemas.BailLocataireOut.self, json: json), corps: Data(json.utf8))
         #expect(anterieur.lotEtageLibelle == nil && anterieur.lotEtage == 2, "non servi : le nombre, comme avant")
