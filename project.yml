@@ -66,8 +66,9 @@ targets:
         # Le niveau « time-sensitive » des seuls avis URGENTS (fuite, ascenseur bloqué),
         # décidé le 03/11/2026 (spec push de coprofirst, §10 décision 2) : le relais le pose
         # dans la charge, ce droit le laisse traverser le mode Concentration. Sans lui, iOS
-        # le rend au niveau normal. Capacité « Time Sensitive Notifications » : la signature
-        # automatique l'enregistre au compte Apple à la prochaine compilation signée (#17).
+        # le rend au niveau normal. Capacité « Time Sensitive Notifications » acceptée par
+        # Philippe le 11/11/2026 (#17) : la signature automatique l'enregistre au compte Apple
+        # à la prochaine compilation signée au poste.
         com.apple.developer.usernotifications.time-sensitive: true
         # Les installations connues qui servent l'AASA de l'app. Liste à arrêter au
         # lot #18 : une installation hors de cette liste n'ouvre pas l'app par un lien.
