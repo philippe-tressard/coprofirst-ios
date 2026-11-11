@@ -25,7 +25,9 @@ struct SectionSaisieAffaire: View {
     var body: some View {
         if let coche {
             Section {
-                Picker("Saisie d'une affaire", selection: Binding(get: { coche }, set: choisir)) {
+                // Une fermeture, pas la référence `set: choisir` : Swift 6.3.3 (Xcode 26.6, la
+                // CI) plantait en IRGen sur le thunk `@isolated(any) @Sendable` qu'elle exige.
+                Picker("Saisie d'une affaire", selection: Binding(get: { coche }, set: { choisir($0) })) {
                     ForEach(TablesSaisie.options, id: \.code) { option in
                         Text(option.libelle).tag(option.code).accessibilityHint(option.detail)
                     }
