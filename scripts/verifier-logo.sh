@@ -2,13 +2,16 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# verifier-logo.sh [branche] — la licence du logo et son dessin sont IDENTIQUES à
-# ceux de coprofirst (branche dev par défaut, lue sur GitHub) : une copie de licence
-# est obligatoire, sa divergence ne l'est pas. L'icône est carrée, 1024 px, opaque.
-# Sans réseau : INCONNU (sortie 2), jamais OK.
+# verifier-logo.sh [ref] — la licence du logo et son dessin sont IDENTIQUES à ceux
+# de coprofirst, lus sur GitHub à l'étiquette du PLANCHER par défaut
+# (scripts/plancher.sh) : une version publiée, jamais une branche — `dev` y est
+# supprimée à chaque mise en production, et la CI rougissait au hasard (#133).
+# Une copie de licence est obligatoire, sa divergence ne l'est pas. L'icône est
+# carrée, 1024 px, opaque. Sans réseau ou référence introuvable : INCONNU (sortie 2),
+# jamais OK.
 set -uo pipefail
 cd "$(dirname "$0")/.."
-REF=${1:-dev}
+REF=${1:-$(bash scripts/plancher.sh)} || exit 2
 BRUT="https://raw.githubusercontent.com/philippe-tressard/coprofirst/$REF"
 ICONE=CoproFirst/Ressources/Assets.xcassets/AppIcon.appiconset/icone-1024.png
 ECHECS=0
