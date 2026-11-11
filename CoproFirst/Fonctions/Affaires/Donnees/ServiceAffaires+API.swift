@@ -88,7 +88,8 @@ extension Affaire {
     init(ticket: Components.Schemas.TicketRead) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
-            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut, close: ticket.close,
+            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut,
+            statutLibelle: ticket.statutLibelle, close: ticket.close,
             categorie: ticket.categorie, categorieLibelle: ticket.categorieLibelle, urgente: ticket.urgente,
             meConcerne: ticket.meConcerne, archivee: ticket.archivee ?? false,
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],

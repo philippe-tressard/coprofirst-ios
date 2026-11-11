@@ -14,6 +14,7 @@ extension ServiceAPI {
         }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let compte = appeler { try await client.getAuthMe() }
+        async let servis = referentiels(installation)
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -26,6 +27,7 @@ extension ServiceAPI {
             suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
         }
         var detail = DetailAffaire(ticket: lu, suites: suites)
+        detail.referentiels = try await servis
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         // Le compte illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
@@ -168,7 +170,8 @@ extension DetailAffaire {
                 repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
                 modifier: ticket.peutModifier ?? false, archiver: ticket.peutArchiver ?? false),
             epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
-            fusionnee: ticket.fusionnee ?? false, perimetres: ticket.perimetreCible ?? [])
+            fusionnee: ticket.fusionnee ?? false, perimetres: ticket.perimetreCible ?? [],
+            statutServi: ticket.statutLibelle)
     }
 }
 

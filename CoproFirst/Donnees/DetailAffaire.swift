@@ -31,9 +31,15 @@ struct DetailAffaire: Hashable, Sendable {
     var fusionnee = false
     /// Les codes de ses lieux (`perimetre_cible`) — ce que « Modifier l'affaire » part de.
     var perimetres: [String] = []
+    /// « Chez le syndic » : le libellé que le serveur sert avec elle (`statut_libelle`).
+    var statutServi: String?
+    /// Les référentiels lus avec elle (`GET /tickets/referentiels`, #105) : les libellés des
+    /// états de son Historique, les états qu'une Suite propose, les catégories que
+    /// « Modifier » permet et les sections de sa saisie — servis, jamais recalculés ici.
+    var referentiels = ReferentielsAffaires.vides
 
     var estActualite: Bool { categorie == "actualite" }
-    var statutLibelle: String { StatutsAffaire.parCode[statut]?.libelle ?? statut }
+    var statutLibelle: String { statutServi ?? referentiels.libelle(statut: statut) }
 }
 
 /// Une entrée de l'Historique : une suite écrite, ou un changement d'état.
@@ -47,12 +53,12 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let nouveauStatut: String?
     let photos: [String]
 
-    /// « Ouvert → Chez le syndic », pour une entrée qui change l'état.
-    var changementDEtat: String? {
+    /// « Ouvert → Chez le syndic », pour une entrée qui change l'état — les libellés servis.
+    func changementDEtat(_ servis: ReferentielsAffaires) -> String? {
         guard let nouveauStatut else { return nil }
-        let nouveau = StatutsAffaire.parCode[nouveauStatut]?.libelle ?? nouveauStatut
+        let nouveau = servis.libelle(statut: nouveauStatut)
         guard let ancienStatut else { return nouveau }
-        return "\(StatutsAffaire.parCode[ancienStatut]?.libelle ?? ancienStatut) → \(nouveau)"
+        return "\(servis.libelle(statut: ancienStatut)) → \(nouveau)"
     }
 }
 

@@ -14,6 +14,8 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let creeLe: Date
     var misAJourLe: Date?
     var statut: String
+    /// « Chez le syndic » : le libellé que le serveur SERT (`statut_libelle`), jamais vide (#105).
+    var statutLibelle: String
     /// Close, au sens du SERVEUR (`TicketRead.close`, `utils/etat_affaire`) : l'app ne
     /// compare pas son statut à une liste d'états clos (#54).
     var close: Bool
@@ -59,18 +61,20 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
 
     var id: String { code }
 
-    /// Les options offertes : celles des statuts PRÉSENTS parmi les affaires actives,
-    /// dans l'ordre du cycle, les statuts d'un groupe réunis — `statutsPresents` du site.
-    static func presentes(dans affaires: [Affaire]) -> [OptionDeSuivi] {
+    /// Les options offertes : celles des statuts PRÉSENTS parmi les affaires actives — les
+    /// états du cycle, dans l'ordre SERVI (`statuts` des référentiels, `proposable` : ni
+    /// `publie` d'une actualité ni `fermé`), les statuts d'un groupe réunis — `statutsPresents`
+    /// du site. Le libellé d'un statut seul est celui que l'affaire sert (#105).
+    static func presentes(dans affaires: [Affaire], servis: [ReferentielsAffaires.Statut]) -> [OptionDeSuivi] {
         let presents = Set(affaires.map(\.statut))
         var options: [OptionDeSuivi] = []
-        for statut in TablesAffaires.ordreDesStatuts where presents.contains(statut) {
+        for statut in servis.filter(\.proposable).map(\.code) where presents.contains(statut) {
             if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut) }) {
                 if !options.contains(where: { $0.code == groupe.code }) {
                     options.append(.init(code: groupe.code, libelle: groupe.libelle, statuts: Set(groupe.statuts)))
                 }
             } else {
-                let libelle = StatutsAffaire.parCode[statut]?.libelle ?? statut
+                let libelle = affaires.first { $0.statut == statut }?.statutLibelle ?? statut
                 options.append(.init(code: statut, libelle: libelle, statuts: [statut]))
             }
         }
@@ -126,8 +130,8 @@ extension [Affaire] {
 ///
 /// « Modérer » = conseil syndical ou administration : `est_moderateur` du serveur
 /// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il ne garde
-/// plus que les catégories réservées et un conseil de saisie : glisser au Kanban et archiver se lisent sur
-/// l'affaire (`peut_*`, #83) ; `permise` des référentiels le remplacera (#105, après #95).
+/// plus qu'un conseil de saisie : glisser au Kanban et archiver se lisent sur l'affaire (`peut_*`,
+/// #83), les catégories offertes dans les référentiels (`permise`, #105).
 struct DroitsAffaires: Equatable, Sendable {
     /// La page du site que porte ce menu (`pages.ts`).
     static let page = "mes-demandes"
@@ -144,11 +148,5 @@ struct DroitsAffaires: Equatable, Sendable {
             profil == nil
             ? (OngletsDuSite.parPage[Self.page] ?? []).filter { $0.reserve == nil }
             : OngletsDuSite.ouverts(page: Self.page, droits: droits)
-    }
-
-    /// Les catégories qu'il peut poser, dans l'ordre du site, « Actualité » en tête.
-    var categories: [CategorieAffaire] {
-        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }
-        return permises.filter(\.enTete) + permises.filter { !$0.enTete }
     }
 }

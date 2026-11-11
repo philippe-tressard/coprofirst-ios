@@ -133,7 +133,7 @@ func lesMontantsSontCeuxDuSite(valeur: Double, attendu: String) {
         "badge-orange": (\.orangeTexte, \.orangeFond), "badge-yellow": (\.jauneTexte, \.jauneFond),
         "badge-green": (\.successTexte, \.successFond), "badge-gray": (\.textMuted, \.neutreFond),
     ]
-    for (_, pastille) in StatutsAffaire.parCode.values.map({ $0 }) {
+    for pastille in StatutsAffaire.pastilles.values {
         let (texte, fond) = PastilleTeinte.teintes(pastille)
         #expect(attendues[pastille]?.0 == texte && attendues[pastille]?.1 == fond, "\(pastille)")
     }
