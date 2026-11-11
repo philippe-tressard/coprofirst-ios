@@ -5,11 +5,13 @@ import SwiftUI
 
 /// « Nouvelle affaire » : la Création du cadre, en feuille — catégorie, titre,
 /// description, lieu, urgence. Ce que l'app ne sait pas encore poser est dit,
-/// jamais caché : les pièces jointes, et les sections que le conseil remplit.
+/// jamais caché : les pièces jointes, et les sections que le conseil remplit. Elle se
+/// compose selon la saisie du compte (`forme`, #69), comme le site.
 struct NouvelleAffaireView: View {
     let installation: Installation
     let droits: DroitsAffaires
     let service: (any ServiceAffaires)?
+    var forme: FormeDeSaisie?
     let creee: (Affaire) -> Void
     @Environment(\.dismiss) private var fermer
     @Environment(\.palette) private var palette
@@ -31,7 +33,7 @@ struct NouvelleAffaireView: View {
                 }
                 ChampsAffaire(
                     saisie: $saisie, categories: droits.categories, installation: installation, service: service,
-                    prefixe: "nouvelle", poserLeDefaut: true)
+                    prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
                 Section {
                     Label {
                         Text(aPoserSurLeSite)

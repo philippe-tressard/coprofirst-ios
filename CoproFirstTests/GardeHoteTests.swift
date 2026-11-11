@@ -101,6 +101,13 @@ struct GardeHoteTests {
         #expect(service.adressesAyantRecuUnMotDePasse.isEmpty)
     }
 
+    @Test func apresUnLienLaConfirmationEstToujoursDemandee() async throws {
+        let connue = try installation("tilleuls.exemple.fr")
+        connues.retenir(connue)
+        #expect(try await connecter(connue, .lien) == false, "même une résidence connue (#18)")
+        #expect(service.adressesAyantRecuUnMotDePasse.isEmpty)
+    }
+
     @Test func laDemonstrationEcriteDansLAppNeSeConfirmePas() throws {
         let demo = try adresse(ContenuVitrine.adresseDemo)
         #expect(garde.exigeConfirmation(demo, origine: .saisie) == false)

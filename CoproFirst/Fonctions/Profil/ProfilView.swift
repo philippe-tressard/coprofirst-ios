@@ -4,7 +4,7 @@
 import SwiftUI
 
 /// Plus › Profil, dans l'ordre du site : la résidence et le statut, les informations
-/// personnelles, la sécurité, l'apparence, ce que j'affiche, les droits RGPD — puis
+/// personnelles, la sécurité, la saisie d'une affaire, l'apparence, ce que j'affiche, les droits RGPD — puis
 /// tout en bas les gestes de sortie, « Se déconnecter » en rouge.
 struct ProfilView: View {
     @Environment(Parcours.self) private var parcours
@@ -28,6 +28,7 @@ struct ProfilView: View {
                 if let compte {
                     sectionIdentite(compte)
                     sectionSecurite(ouverte)
+                    SectionSaisieAffaire(installation: ouverte)
                 }
                 sectionApparence
                 if let compte {

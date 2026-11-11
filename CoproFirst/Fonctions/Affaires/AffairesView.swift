@@ -21,6 +21,14 @@ struct AffairesView: View {
     private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
     /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
     private var onglets: [OngletDuSite] { droits.onglets }
+    /// La saisie du compte, telle que le serveur la sert (`saisie_affaire_effective`), et
+    /// les sections essentielles des référentiels lus à l'arrivée : « Nouvelle affaire »
+    /// s'ouvre composée, sans qu'une section change de place sous le pouce (#69).
+    private var forme: FormeDeSaisie? {
+        ModeSaisie(servi: parcours.ouverteAJour?.profil?.saisieAffaire).map {
+            FormeDeSaisie(mode: $0, essentielles: etat.referentiels?.essentielles)
+        }
+    }
 
     var body: some View {
         let service = parcours.service.menuAffaires
@@ -42,7 +50,7 @@ struct AffairesView: View {
             ToolbarItem(placement: .topBarLeading) { boutonNouvelle }
         }
         .sheet(isPresented: $nouvelle) {
-            NouvelleAffaireView(installation: installation, droits: droits, service: service) { creee in
+            NouvelleAffaireView(installation: installation, droits: droits, service: service, forme: forme) { creee in
                 etat.ajouter(creee)
                 onglet = "liste"
             }

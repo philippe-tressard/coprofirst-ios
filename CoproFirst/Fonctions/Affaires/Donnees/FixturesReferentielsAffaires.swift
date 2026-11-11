@@ -9,52 +9,15 @@ import Foundation
 /// le type GÉNÉRÉ puis par `ReferentielsAffaires(lu:)`, comme le service réel. Les valeurs
 /// sont celles du serveur à la version du plancher (`routers/tickets/referentiels.py`) ;
 /// le serveur simulé y lit aussi la colonne et la clôture qu'il SERT sur chaque affaire.
+/// Les catégories n'y sont pas écrites : elles viennent de `FixturesCategoriesServies`,
+/// GÉNÉRÉE avec les sections essentielles que le serveur calcule (#69) — une seule liste.
 enum FixturesReferentielsAffaires {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /tickets/referentiels → `ReferentielsAffaires`, pour le compte du conseil de la démo.
+    /// GET /tickets/referentiels → `ReferentielsAffaires`, pour le compte du conseil de la démo,
+    /// hors des catégories (`lus()` les y pose).
     static let referentiels = #"""
-        {"categories": [
-           {"code": "panne", "libelle": "Panne", "emoji": "🛠️",
-            "description": "Ascenseur, chauffage, éclairage, fuite, porte — à réparer",
-            "carnet": true, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "nuisance", "libelle": "Nuisance & propreté", "emoji": "📢",
-            "description": "Bruit, odeurs, stationnement…",
-            "carnet": false, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "acces_accueil", "libelle": "Accès & accueil", "emoji": "🔑",
-            "description": "Interphone, boîte aux lettres, emménagement",
-            "carnet": false, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "espaces_verts", "libelle": "Espaces verts", "emoji": "🌳",
-            "description": "Élagage, haies, arrosage, allées…",
-            "carnet": true, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "sinistre", "libelle": "Sinistre", "emoji": "💧",
-            "description": "Dégât constaté : eau, incendie, vandalisme…",
-            "carnet": true, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "etude_travaux", "libelle": "Étude & travaux", "emoji": "🏗️",
-            "description": "Diagnostic, sondage, devis, chantier suivi par le conseil",
-            "carnet": true, "reservee": true, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "entretien", "libelle": "Entretien", "emoji": "🧰",
-            "description": "Visite ou maintenance d’un prestataire, récurrente ou non",
-            "carnet": true, "reservee": true, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "question", "libelle": "Question", "emoji": "❓",
-            "description": "Information, procédure…",
-            "carnet": false, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "bug", "libelle": "Bug", "emoji": "🐛",
-            "description": "Pb technique sur le site",
-            "carnet": false, "reservee": false, "permise": true, "en_tete": false,
-            "sections_essentielles": ["titre", "description"]},
-           {"code": "actualite", "libelle": "Actualité", "emoji": "📰",
-            "description": "Information — suivi optionnel",
-            "carnet": false, "reservee": true, "permise": true, "en_tete": true,
-            "sections_essentielles": ["titre", "description"]}],
+        {"categories": [],
          "statuts": [
            {"code": "ouvert", "libelle": "Ouvert", "clos": false, "colonne_kanban": "cs",
             "proposable": true},
@@ -91,7 +54,9 @@ enum FixturesReferentielsAffaires {
 
     /// Lus comme le client généré les lit, branchés comme le service réel.
     static func lus() throws -> ReferentielsAffaires {
-        let lu = try Relecture.generee(Components.Schemas.ReferentielsAffaires.self, json: referentiels)
+        var lu = try Relecture.generee(Components.Schemas.ReferentielsAffaires.self, json: referentiels)
+        lu.categories = try Relecture.generee(
+            [Components.Schemas.CategorieServie].self, json: FixturesCategoriesServies.categories)
         return ReferentielsAffaires(lu: lu)
     }
 }

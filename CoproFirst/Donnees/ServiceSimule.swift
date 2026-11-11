@@ -27,10 +27,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
     private var deconnectes: Set<String> = []
     private let verrou = NSLock()
-    /// Le profil servi par la résidence inventée (un compte du conseil syndical).
+    /// Le profil servi par la résidence inventée (un compte du conseil syndical). Sa saisie
+    /// d'une affaire est le défaut du serveur sans choix — Essentielle pour tous (#2615).
     var profilSimule = ProfilResidence(
         statut: "copropriétaire_résident", roles: ["résident", "propriétaire", "conseil_syndical"],
-        libelleLogement: "Bât. A, T3, 2ème")
+        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle")
 
     init(delai: Duration = .milliseconds(450)) {
         self.delai = delai
