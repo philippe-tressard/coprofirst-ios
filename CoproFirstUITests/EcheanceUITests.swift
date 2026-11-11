@@ -13,7 +13,7 @@ final class EcheanceUITests: XCTestCase {
         // Chaque carte est amenée à l'écran avant d'être lue : en très grand texte, le fil
         // paresseux ne crée pas celles du dessous.
         let sansDate = app.elementAcces("fil.ticket_ouvert:41")
-        XCTAssertTrue(sansDate.waitForExistence(timeout: 8), "le fil est chargé")
+        XCTAssertTrue(sansDate.apparait(), "le fil est chargé")
         XCTAssertFalse(sansDate.label.contains("prévu"), "une affaire sans date n'a pas de vignette")
         let aVenir = app.elementAcces("fil.publication:12")
         defiler(app, jusqua: aVenir)

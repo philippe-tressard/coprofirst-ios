@@ -265,6 +265,11 @@ seule la CI le dit.
    qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
    onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
    attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
+   La présence elle-même s'attend par `element.apparait()` (et `disparait()`), jamais
+   par `waitForExistence(timeout: 8)` : aucun délai chiffré dans un test, le même
+   contrôle le refuse (#147). Ce qui peut légitimement manquer — une boucle qui fait
+   défiler, un chemin facultatif, une absence à prouver une fois l'écran posé — se
+   LIT par `element.sonde()` (`Attente.sonde`), et ne s'affirme pas par `XCTAssertTrue`.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test

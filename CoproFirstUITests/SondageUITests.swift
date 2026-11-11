@@ -13,19 +13,19 @@ final class SondageUITests: XCTestCase {
     private func ouvrirLeSondage() -> XCUIApplication {
         let app = LancementCaptures.lancer()
         // Le fil se charge, puis la carte peut être sous l'écran (très grand texte).
-        XCTAssertTrue(app.elementAcces("fil.ticket_ouvert:41").waitForExistence(timeout: 8), "le fil est chargé")
+        XCTAssertTrue(app.elementAcces("fil.ticket_ouvert:41").apparait(), "le fil est chargé")
         toucher(app.elementAcces("fil.sondage_ouvert:3"), dans: app)
-        XCTAssertTrue(app.elementAcces("sondage.question").waitForExistence(timeout: 8))
+        XCTAssertTrue(app.elementAcces("sondage.question").apparait())
         return app
     }
 
     /// Le libellé ou la valeur d'un élément de cet identifiant contient-il `texte` ? Par
     /// prédicat sur TOUS les éléments de l'identifiant : un conteneur peut le porter aussi.
     @MainActor
-    private func dit(_ app: XCUIApplication, _ identifiant: String, _ texte: String, delai: TimeInterval = 8) -> Bool {
+    private func dit(_ app: XCUIApplication, _ identifiant: String, _ texte: String) -> Bool {
         let predicat = NSPredicate(
             format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: delai)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
     }
 
     /// `dit`, après avoir ramené l'élément à l'écran : une liste ne garde que ses rangées visibles.
@@ -38,7 +38,7 @@ final class SondageUITests: XCTestCase {
     @MainActor
     private func inactif(_ app: XCUIApplication, _ identifiant: String) -> Bool {
         let predicat = NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 3)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
     }
 
     /// Le cadre de l'élément en UNE requête d'accessibilité (`nil` s'il n'existe pas) :
@@ -115,7 +115,7 @@ final class SondageUITests: XCTestCase {
     /// tombe sur la rangée, qui se referme.
     @MainActor
     private func toucherApresBalayage(_ bouton: XCUIElement) {
-        XCTAssertTrue(bouton.waitForExistence(timeout: 3), "\(bouton) après le balayage")
+        XCTAssertTrue(bouton.apparait(), "\(bouton) après le balayage")
         immobile(bouton)
         bouton.tap()
     }
@@ -135,9 +135,9 @@ final class SondageUITests: XCTestCase {
     @MainActor
     private func fermerLeClavier(_ app: XCUIApplication) {
         let ok = app.elementAcces("clavier.ok")
-        guard ok.waitForExistence(timeout: 2) else { return }
+        guard ok.sonde() else { return }
         ok.tap()
-        XCTAssertTrue(ok.waitForNonExistence(timeout: 5), "plus aucun champ actif")
+        XCTAssertTrue(ok.disparait(), "plus aucun champ actif")
     }
 
     @MainActor
@@ -156,7 +156,7 @@ final class SondageUITests: XCTestCase {
         saisir("Avec plaisir", dans: "sondage.commentaire", app)
         XCTAssertTrue(vu(app, "sondage.manque", "Vous devez accepter la charte de respect"))
         toucher(app.elementAcces("sondage.charte"), dans: app)
-        XCTAssertTrue(app.elementAcces("sondage.manque").waitForNonExistence(timeout: 5), "plus rien ne manque")
+        XCTAssertTrue(app.elementAcces("sondage.manque").disparait(), "plus rien ne manque")
         LancementCaptures.capturer("2-sondage-pret")
 
         toucher(app.elementAcces("sondage.voter"), dans: app)
@@ -185,9 +185,9 @@ final class SondageUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("reponse.33.signaler").exists, "on ne signale pas son propre commentaire")
         toucherApresBalayage(app.elementAcces("reponse.33.supprimer"))
         let confirmer = app.elementAcces("reponses.confirmerSuppression")
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme")
+        XCTAssertTrue(confirmer.apparait(), "la suppression se confirme")
         confirmer.tap()
-        XCTAssertTrue(app.elementAcces("reponse.33").waitForNonExistence(timeout: 8))
+        XCTAssertTrue(app.elementAcces("reponse.33").disparait())
 
         // Le commentaire d'un voisin : le signaler, motif obligatoire.
         let voisin = app.elementAcces("reponse.32")
@@ -198,11 +198,11 @@ final class SondageUITests: XCTestCase {
         // Une alerte système : ses identifiants ne descendent pas dans l'arbre d'accessibilité ;
         // on la trouve par son titre, et son champ a déjà le clavier.
         let alerte = app.elementAcces("Signaler au conseil syndical")
-        XCTAssertTrue(alerte.waitForExistence(timeout: 5), "le motif est demandé")
+        XCTAssertTrue(alerte.apparait(), "le motif est demandé")
         LancementCaptures.capturer("5-sondage-signaler")
         app.typeText("Hors sujet")
         app.alerts.firstMatch.descendants(matching: .any)["Signaler"].tap()
-        XCTAssertTrue(alerte.waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.elementAcces("Signalement transmis au conseil syndical").waitForExistence(timeout: 5))
+        XCTAssertTrue(alerte.disparait())
+        XCTAssertTrue(app.elementAcces("Signalement transmis au conseil syndical").apparait())
     }
 }
