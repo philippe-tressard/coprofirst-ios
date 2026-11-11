@@ -29,6 +29,8 @@ struct NatureAffaire: Identifiable, Hashable, Sendable {
     /// Le mot abrégé de la gouttière du site (« CAL. ») : l'app écrit le libellé entier.
     let abrege: String
     let emoji: String
+    /// Le pictogramme au trait de la gouttière du site (Lucide) : celui de la carte du fil.
+    let icone: String
     let badge: String
 
     var id: String { code }

@@ -71,7 +71,7 @@ final class ParcoursUITests: XCTestCase {
         app.launch()
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.waitForExistence(timeout: 5))
-        for libelle in ["Fil", "Résidence", "Affaires", "Accès", "Plus"] {
+        for libelle in ["Fil d'activité", "Résidence", "Affaires", "Accès", "Plus"] {
             XCTAssertTrue(barre.buttons[libelle].exists, "« \(libelle) » dans la barre")
         }
         XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)
