@@ -46,6 +46,10 @@ extension ServiceAPI: ServiceProfil {
             .init(preferencesNotifications: json, restreindreAMesBatiments: restreindre), installation)
     }
 
+    func choisirSaisie(_ mode: String, dans installation: Installation) async throws {
+        try await modifier(.init(saisieAffaire: mode), installation)
+    }
+
     func refuserTelemetrie(_ refus: Bool, dans installation: Installation) async throws {
         let sortie = try await appeler {
             try await client(installation.adresse).patchAuthMeOptOutTelemetrie(

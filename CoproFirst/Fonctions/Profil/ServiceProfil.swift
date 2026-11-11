@@ -64,6 +64,8 @@ protocol ServiceProfil: Sendable {
     func changerMotDePasse(actuel: String, nouveau: String, dans installation: Installation) async throws
     /// PATCH /auth/me : les préférences de notification et la restriction aux bâtiments.
     func enregistrerPreferences(_ json: String, restreindre: Bool, dans installation: Installation) async throws
+    /// PATCH /auth/me `saisie_affaire` : `essentielle` ou `complete`, pour le COMPTE (#69).
+    func choisirSaisie(_ mode: String, dans installation: Installation) async throws
     /// PATCH /auth/me/opt-out-telemetrie ; GET (export) et DELETE /auth/me/telemetrie.
     func refuserTelemetrie(_ refus: Bool, dans installation: Installation) async throws
     func exporterTelemetrie(_ installation: Installation) async throws -> URL

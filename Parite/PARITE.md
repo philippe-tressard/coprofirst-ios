@@ -58,7 +58,7 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site) |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69) |
 | `mes-demandes` | `kanban` | fait | #11 | Fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
@@ -98,7 +98,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
-| `profil` | — | fait | #14 | Sous « Plus » ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
+| `profil` | — | fait | #14 | Sous « Plus », saisie d'une affaire comprise (#69) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
 | `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations

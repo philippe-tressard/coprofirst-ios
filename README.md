@@ -60,6 +60,8 @@ Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
 connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+« Nouvelle affaire » se compose selon la saisie réglée au Profil pour le compte,
+Essentielle ou Complète, comme sur le site.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -74,7 +76,8 @@ Pour les essayer sans réseau, un build **Debug** accepte des arguments de lance
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
 (`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
-la session gardée sans biométrie). Un build Release ne compile pas la simulation
+la session gardée sans biométrie ; `-saisie complete` : la saisie Complète d'une
+affaire, au lieu d'Essentielle). Un build Release ne compile pas la simulation
 (`scripts/verifier-simule.py`, #84).
 
 Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
