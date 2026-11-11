@@ -11,8 +11,6 @@ enum OrigineAdresse: Sendable {
     case saisie
     /// Lue dans un QR code.
     case scan
-    /// Venue d'un lien (#18) : n'importe quelle page peut en tendre un.
-    case lien
 }
 
 /// Un hôte auquel un mot de passe peut partir : seule `GardeHote` en fabrique un
@@ -31,6 +29,9 @@ struct HoteConfirme: Sendable {
 /// preuve qu'il sert (`PreuveHote`). Toujours après un scan ; pour une saisie, quand
 /// l'hôte n'est pas celui d'une résidence connue (une connexion y a déjà réussi) ni la
 /// démonstration de CoproFirst. Sans preuve, il faut un second accord.
+///
+/// Le renouvellement d'une session (POST /auth/refresh, `Renouvellement`) n'y passe pas :
+/// il n'envoie que le jeton que CET hôte a émis après une connexion passée par la garde.
 ///
 /// Une garde par lancement (`Parcours.garde`) : une confirmation vit en mémoire, et
 /// l'hôte devient une résidence connue à la première connexion réussie.
@@ -55,8 +56,7 @@ final class GardeHote {
     /// Faut-il l'écran de confirmation avant d'envoyer un mot de passe à cette adresse ?
     func exigeConfirmation(_ adresse: URL, origine: OrigineAdresse) -> Bool {
         if confirmes.contains(adresse) { return false }
-        // Un QR ou un lien : l'adresse n'a pas été écrite par l'utilisateur.
-        if origine != .saisie { return true }
+        if origine == .scan { return true }
         return !Self.integrees.contains(adresse) && !connues().contains { $0.adresse == adresse }
     }
 

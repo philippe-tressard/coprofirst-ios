@@ -3,6 +3,7 @@
 
 import ClientAPI
 import Foundation
+import OpenAPIRuntime
 
 /// Le service réel : le client GÉNÉRÉ depuis le contrat, une session HTTP par
 /// installation. Les jetons voyagent en cookies (HttpOnly, posés par le serveur) ;
@@ -10,6 +11,14 @@ import Foundation
 /// recopié au Trousseau pour la prochaine ouverture (coprofirst#2457).
 final class ServiceAPI: ServiceCoproFirst {
     let sessions = SessionsParHote()
+    /// LA porte du renouvellement de session, partagée par toutes les requêtes (#81).
+    let renouvellement = Renouvellement()
+    /// Le transport d'un test (un serveur simulé) ; `nil` : la session HTTP de chaque hôte.
+    private let transport: (@Sendable (URL) -> any ClientTransport)?
+
+    init(transport: (@Sendable (URL) -> any ClientTransport)? = nil) {
+        self.transport = transport
+    }
 
     func decouvrir(_ adresse: URL) async throws -> Installation {
         // L'entrée : ici, et ici seulement, une réponse illisible veut dire « pas CoproFirst ».
@@ -58,23 +67,17 @@ final class ServiceAPI: ServiceCoproFirst {
                 pour: installation.hote, raison: "Ouvrir votre espace à \(installation.nom)")
         else { throw ErreurService.sessionExpiree }
         poserCookie("refresh_token", valeur: jeton, installation)
-        let sortie = try await appeler { try await client(installation.adresse).postAuthRefresh() }
-        switch sortie {
-        case .ok:
-            // Le serveur fait tourner le jeton : la nouvelle valeur remplace l'ancienne.
-            if let neuf = cookie("refresh_token", installation) {
-                Trousseau.enregistrer(neuf, pour: installation.hote)
-            }
-        case .undocumented, .unprocessableContent:
+        // La porte du 401 (`Renouvellement`) : le jeton neuf y remplace l'ancien au Trousseau.
+        guard try await appeler({ try await renouveler(installation.adresse) }) else {
             Trousseau.supprimer(pour: installation.hote)
             throw ErreurService.sessionExpiree
         }
     }
 
-    func activerFaceID(_ installation: Installation) async -> Bool {
-        guard let jeton = cookie("refresh_token", installation) else { return false }
-        Trousseau.enregistrer(jeton, pour: installation.hote)
-        return Trousseau.contient(pour: installation.hote)
+    func activerFaceID(_ installation: Installation) async -> ProtectionSession? {
+        guard let jeton = cookie("refresh_token", installation.adresse) else { return nil }
+        let protection = Trousseau.enregistrer(jeton, pour: installation.hote)
+        return Trousseau.contient(pour: installation.hote) ? protection : nil
     }
 
     func fil(_ installation: Installation) async throws -> [ElementDuFil] {
@@ -94,8 +97,15 @@ final class ServiceAPI: ServiceCoproFirst {
 
     // MARK: - Session HTTP de chaque installation
 
+    /// Le client généré de l'installation à cette adresse — un 401 s'y renouvelle (#81).
     func client(_ adresse: URL) -> Client {
-        ClientCoproFirst.client(installation: adresse, session: sessions.session(pour: adresse))
+        let renouveler = [renouvelerSurRefus(adresse)]
+        if let transport {
+            return ClientCoproFirst.client(
+                installation: adresse, transport: transport(adresse), middlewares: renouveler)
+        }
+        return ClientCoproFirst.client(
+            installation: adresse, session: sessions.session(pour: adresse), middlewares: renouveler)
     }
 
     func appeler<T>(_ appel: () async throws -> T) async throws -> T {
@@ -107,8 +117,8 @@ final class ServiceAPI: ServiceCoproFirst {
         }
     }
 
-    private func cookie(_ nom: String, _ installation: Installation) -> String? {
-        sessions.cookies(installation.adresse).first { $0.name == nom }?.value
+    func cookie(_ nom: String, _ adresse: URL) -> String? {
+        sessions.cookies(adresse).first { $0.name == nom }?.value
     }
 
     private func poserCookie(_ nom: String, valeur: String, _ installation: Installation) {
@@ -126,9 +136,12 @@ final class SessionsParHote: @unchecked Sendable {
     private var parHote: [String: URLSession] = [:]
     private let verrou = NSLock()
 
+    /// La clé d'un hôte : sa session HTTP, son renouvellement.
+    static func cle(_ adresse: URL) -> String { adresse.host() ?? adresse.absoluteString }
+
     func session(pour adresse: URL) -> URLSession {
         verrou.withLock {
-            let hote = adresse.host() ?? adresse.absoluteString
+            let hote = Self.cle(adresse)
             if let existante = parHote[hote] { return existante }
             let configuration = URLSessionConfiguration.ephemeral
             configuration.timeoutIntervalForRequest = 15
@@ -141,7 +154,7 @@ final class SessionsParHote: @unchecked Sendable {
 
     /// Retire la session de cet hôte ; la prochaine requête en ouvre une neuve, vide.
     func retirer(_ adresse: URL) -> URLSession? {
-        verrou.withLock { parHote.removeValue(forKey: adresse.host() ?? adresse.absoluteString) }
+        verrou.withLock { parHote.removeValue(forKey: Self.cle(adresse)) }
     }
 
     func cookies(_ adresse: URL) -> [HTTPCookie] {

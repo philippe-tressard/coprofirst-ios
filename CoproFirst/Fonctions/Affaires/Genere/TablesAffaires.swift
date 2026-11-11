@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.73.0 (commit de78b44da68b31e8e256ff1ef80e4507ac49d24b), front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css.
+// Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css.
 // swiftlint:disable line_length
 
 import SwiftUI
@@ -25,34 +25,24 @@ enum TablesAffaires {
     ]
     /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.
     static let natures: [NatureAffaire] = [
-        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", badge: "badge-blue"),
-        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", badge: "badge-purple"),
-        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", badge: "badge-orange"),
+        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", icone: "newspaper", badge: "badge-blue"),
+        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", icone: "calendar-days", badge: "badge-purple"),
+        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", icone: "wrench", badge: "badge-orange"),
     ]
-    /// Les colonnes du Kanban — ces colonnes SONT le workflow (`KANBAN_COLS`).
-    static let colonnesKanban: [ColonneKanban] = [
-        ColonneKanban(id: "ag", libelle: "AG", libelleCourt: "AG", teinte: \.kanbanAg),
-        ColonneKanban(id: "cs", libelle: "CS (en cours)", libelleCourt: "CS", teinte: \.kanbanCs),
-        ColonneKanban(id: "syndic", libelle: "Syndic (en cours)", libelleCourt: "Syndic", teinte: \.kanbanSyndic),
-        ColonneKanban(id: "fournisseur", libelle: "Prestataire (en cours)", libelleCourt: "Prestataire", teinte: \.kanbanFournisseur),
-        ColonneKanban(id: "termine", libelle: "Terminé", libelleCourt: "Terminé", teinte: \.kanbanTermine),
-        ColonneKanban(id: "annule", libelle: "Annulé", libelleCourt: "Annulé", teinte: \.kanbanAnnule),
-    ]
-    /// Statut d'une affaire → sa colonne ; un statut absent sort l'affaire du tableau.
-    static let colonneParStatut: [String: String] = [
-        "ouvert": "cs",
-        "en_ag": "ag",
-        "en_cours": "syndic",
-        "chez_prestataire": "fournisseur",
-        "résolu": "termine",
-        "annulé": "annule",
+    /// La teinte de chaque colonne du Kanban, par son code (`KANBAN_COLS`) — les colonnes
+    /// elles-mêmes sont SERVIES (`GET /tickets/referentiels`).
+    static let teintesKanban: [String: KeyPath<Palette, Color> & Sendable] = [
+        "ag": \.kanbanAg,
+        "cs": \.kanbanCs,
+        "syndic": \.kanbanSyndic,
+        "fournisseur": \.kanbanFournisseur,
+        "termine": \.kanbanTermine,
+        "annule": \.kanbanAnnule,
     ]
     /// Ce qu'une colonne vide affiche (`MOT_COLONNE_VIDE`).
     static let colonneVide = "Aucune affaire"
     /// Les statuts du cycle d'une affaire, dans l'ordre du site (`STATUTS_TICKET`).
     static let ordreDesStatuts: [String] = ["ouvert", "en_ag", "en_cours", "chez_prestataire", "résolu", "annulé"]
-    /// Une affaire close ne demande plus de suivi (`STATUTS_TICKET_CLOS`).
-    static let statutsClos: Set<String> = ["résolu", "annulé", "fermé"]
     /// Des statuts que le filtre « Suivi » réunit sous une option (`GROUPES_SUIVI`).
     static let groupesDeSuivi: [GroupeDeSuivi] = [
         GroupeDeSuivi(code: "en_cours", libelle: "En cours", statuts: ["en_ag", "en_cours", "chez_prestataire"]),

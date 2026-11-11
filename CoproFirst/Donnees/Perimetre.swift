@@ -18,21 +18,67 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var selectionnable: Bool
     /// Le défaut du serveur : un seul nœud au plus, aucun sur un arbre vide.
     var parDefaut: Bool
+    /// Le code du nœud parent ; `nil` pour une racine — la rangée de tête du choix
+    /// (`ArbreDesPerimetres`) en dépend.
+    var parent: String?
+    /// Le libellé abrégé (« Bât. 3 ») : celui du résumé d'une pastille, qui doit tenir.
+    var libelleCourt: String?
+    /// Ce que le nœud implique (« notifie l'ensemble du conseil syndical ») : l'aide du choix.
+    var description: String?
+    /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, contrat
+    /// 1.17.0, #88) ; `nil` d'une installation antérieure, qui ne le sert pas.
+    var niveauxLibres: Int?
 
     var id: String { code }
 
-    init(code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false) {
+    init(
+        code: String, libelle: String, profondeur: Int = 0, selectionnable: Bool = true, parDefaut: Bool = false,
+        parent: String? = nil, libelleCourt: String? = nil, description: String? = nil, niveauxLibres: Int? = nil
+    ) {
         self.code = code
         self.libelle = libelle
         self.profondeur = profondeur
         self.selectionnable = selectionnable
         self.parDefaut = parDefaut
+        self.parent = parent
+        self.libelleCourt = libelleCourt
+        self.description = description
+        self.niveauxLibres = niveauxLibres
     }
 
     init(lu: Components.Schemas.PerimetreRead) {
         self.init(
             code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable,
-            parDefaut: lu.parDefaut ?? false)
+            parDefaut: lu.parDefaut ?? false, parent: lu.parent, libelleCourt: lu.libelleCourt,
+            description: lu.description)
+    }
+
+    /// L'arbre servi, ACTIFS seulement : le type généré, puis ce que le corps sert
+    /// au-dessus du plancher — le MÊME branchement pour le service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.PerimetreRead], corps: Data?) -> [Perimetre] {
+        let auDessus = Relecture.auDessusDuPlancher(parLigne: PerimetreAuDessusDuPlancher.self, corps: corps)
+        return generes.filter(\.actif).map { lu in
+            var perimetre = Perimetre(lu: lu)
+            perimetre.niveauxLibres = auDessus[lu.code]?.niveauxLibres
+            return perimetre
+        }
+    }
+
+    /// Les lieux qu'un sélecteur propose (#88) : les nœuds sélectionnables, jusqu'au
+    /// niveau 3 et jamais plus bas — un nœud écrit avant la règle sous un parent qui ne
+    /// peut plus rien porter (`niveaux_libres` servi à 0) ne se propose pas. Le plafond
+    /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Une installation
+    /// antérieure au contrat 1.17.0 ne le sert pas : tout nœud sélectionnable, comme avant.
+    ///
+    /// `garder` : le lieu déjà enregistré d'un contenu qu'on modifie — proposé même trop
+    /// profond, pour que le modifier ne le perde pas en silence.
+    static func aSaisir(_ perimetres: [Perimetre], garder: String? = nil) -> [Perimetre] {
+        let libres = Dictionary(
+            perimetres.map { ($0.code, $0.niveauxLibres) }, uniquingKeysWith: { premier, _ in premier })
+        return perimetres.filter { perimetre in
+            let place = perimetre.parent.flatMap { libres[$0] ?? nil }
+            return perimetre.code == garder || (perimetre.selectionnable && (place ?? 1) > 0)
+        }
     }
 
     /// Le code du périmètre que le serveur désigne par défaut, s'il en désigne un.
@@ -48,6 +94,14 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     }
 }
 
+/// Ce que GET /perimetres sert au-dessus du plancher (contrat 1.17.0, #88), relu par
+/// `Relecture.auDessusDuPlancher` : `niveau` et `hauteur` ne servent pas à l'app.
+struct PerimetreAuDessusDuPlancher: Decodable, Identifiable {
+    let code: String
+    var niveauxLibres: Int?
+    var id: String { code }
+}
+
 /// GET /perimetres : les périmètres ACTIFS, dans l'ordre de l'arbre servi. Les menus
 /// qui en ont besoin en héritent (`ServiceResidence`, `ServiceAffaires`) : une seule
 /// lecture, un seul type de retour.
@@ -57,15 +111,19 @@ protocol ServicePerimetres: Sendable {
 
 extension ServiceAPI: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getPerimetres() }
+        }
         switch sortie {
-        case .ok(let ok): return try ok.body.json.filter(\.actif).map(Perimetre.init(lu:))
+        case .ok(let ok): return Perimetre.lus(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] { try FixturesPerimetres.lus() }
 }
+#endif

@@ -12,9 +12,25 @@ fonctionnalités de l'application web, par étapes.
 
 ## État
 
-**Amorce** (novembre 2026) : un écran d'accueil et le client d'API généré. L'app
-n'est distribuée nulle part. Elle se signe au poste (signature automatique, équipe
-Apple `GUX8KASNTG`) ; la CI construit et teste sans signer.
+Ce que l'app sait faire : « Écrans livrés » ci-dessous et
+[`Parite/PARITE.md`](Parite/PARITE.md) ; ce qui manque : les issues ouvertes.
+L'app n'est distribuée nulle part (« Sortir une version »).
+
+## Sortir une version
+
+Aujourd'hui, une version ne sort que sur l'iPhone de Philippe :
+
+1. la version se lit dans `project.yml` (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) ;
+   l'app n'a ni étiquette ni release ;
+2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; Philippe fusionne sur `main` ;
+3. au poste : `bash scripts/generer-projet.sh`, puis Xcode signe (signature automatique,
+   équipe `GUX8KASNTG`) et installe l'app sur l'iPhone branché.
+
+Manquent pour TestFlight : l'app créée dans App Store Connect, un numéro de build qui
+monte à chaque envoi, une archive envoyée (au poste, ou par la CI avec une clé d'API
+rangée par Philippe), et un runner macOS épinglé plutôt que `macos-latest`. Ce qui
+est un geste de Philippe, et ce qui précède la première soumission : skill
+[`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 
 ## Construire
 
@@ -42,7 +58,8 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 
 Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
-connexion, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
+verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -53,10 +70,16 @@ Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou rése
 au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
 jugé en CI.
 
-Pour les essayer sans réseau, l'app accepte des arguments de lancement :
+Pour les essayer sans réseau, un build **Debug** accepte des arguments de lancement :
 `-api-simulee` (une résidence inventée, aucune requête ne part) et
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
-(`-faceid-refuse` : Face ID annulé à chaque demande).
+(`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
+la session gardée sans biométrie). Un build Release ne compile pas la simulation
+(`scripts/verifier-simule.py`, #84).
+
+Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
+dernière connexion — va au Trousseau de l'appareil ; les réglages ne gardent que la
+résidence (adresse, nom, présentation).
 
 ## Charte
 
@@ -83,6 +106,11 @@ pas. **Monter le plancher est une décision**, prise quand toutes les installati
 connues ont dépassé la nouvelle version : on change `_plancher.py` et on régénère
 (`python3 scripts/generer.py`) dans la même PR. `--version vX.Y.Z` ou `--derniere`
 permettent de voir ce qu'une montée changerait.
+
+Un champ qu'une installation plus récente sert déjà, au-dessus du plancher, se lit en
+tolérant son absence — l'écran garde alors son geste d'avant — et l'API simulée le
+déclare au juge (`AuDessusDuPlancher`) ; la méthode est dans la skill
+`swiftui-patterns`.
 
 **Concordance** (`scripts/concordance.py`) — deux verdicts, jamais confondus :
 

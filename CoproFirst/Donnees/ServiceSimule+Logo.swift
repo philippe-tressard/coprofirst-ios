@@ -3,6 +3,7 @@
 
 import SwiftUI
 
+#if DEBUG
 /// Le logo d'une résidence simulée (#70) : un dessin inventé, rendu à la demande — aucun
 /// fichier, aucune marque réelle. Ses deux variantes se distinguent à l'œil, pour que
 /// les captures disent laquelle s'affiche : au clair, une feuille sur une tuile claire
@@ -36,3 +37,4 @@ extension ServiceSimule {
         return image.pngData() ?? Data()
     }
 }
+#endif

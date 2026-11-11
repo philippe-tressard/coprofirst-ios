@@ -90,7 +90,7 @@ private let maintenant = FormatsDuSite.lire("2026-11-10T12:00:00Z") ?? .now
 }
 
 @Test func leFilSimuleMontreChaqueCasDeLaVignette() {
-    let affaires = ServiceSimule.fil.filter { if case .affaire = $0.cible { true } else { false } }
+    let affaires = Apercu.fil.filter { if case .affaire = $0.cible { true } else { false } }
     let libelles = affaires.compactMap(\.echeance).map { $0.libelle ?? "close" }
     #expect(Set(libelles).isSuperset(of: ["Jour J", "Passé", "close"]))
     #expect(libelles.contains { $0.hasPrefix("J-") }, "une affaire à venir")

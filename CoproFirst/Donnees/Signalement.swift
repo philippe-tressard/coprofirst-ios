@@ -31,8 +31,10 @@ extension ServiceAPI: ServiceSignalements {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServiceSignalements {
     func signalerAuConseil(_ cible: CibleSignalement, motif: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(250))
     }
 }
+#endif

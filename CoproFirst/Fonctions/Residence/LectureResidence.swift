@@ -52,14 +52,15 @@ extension TypeDiagnostic {
 extension QuestionReglement {
     init(lue q: Components.Schemas.QuestionReglementRead) {
         self.init(
-            id: q.id, question: q.question, reponse: q.reponse, verdictLibelle: q.verdictLibelle, poseeLe: q.creeLe,
+            id: q.id, question: q.question, reponse: q.reponse, reponseSansRenvois: q.reponseSansRenvois,
+            verdictLibelle: q.verdictLibelle, verdictTon: q.verdictTon.rawValue, poseeLe: q.creeLe,
             texteEnVigueur: q.texteEnVigueur, selonReglement: q.selonReglement, selonAG: q.selonAg,
             synthese: q.synthese, reserves: q.reserves, provenance: q.provenance, modele: q.modele,
             auteur: q.auteurNom, dansLaFAQ: q.faqItemId != nil,
             extraits: q.extraits.map {
                 ExtraitReglement(
                     citation: $0.citation, verifie: $0.verifie, reference: $0.reference, apport: $0.apport,
-                    acte: $0.acte, page: $0.page, source: $0.source)
-            })
+                    acte: $0.acte, rubrique: $0.rubrique, page: $0.page, source: $0.source, renvoi: $0.renvoi)
+            }, renvoisSansExtrait: q.renvoisSansExtrait)
     }
 }

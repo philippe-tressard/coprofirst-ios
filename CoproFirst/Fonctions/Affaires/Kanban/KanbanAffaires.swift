@@ -4,20 +4,22 @@
 import SwiftUI
 
 /// L'onglet Kanban : les affaires suivies, non archivées, par état — une colonne par
-/// étape du workflow (`KANBAN_COLS`), qui défilent de côté et s'alignent.
+/// étape du workflow, qui défilent de côté et s'alignent. Les colonnes, la colonne de
+/// chaque carte et l'état qu'une colonne pose sont SERVIS (`GET /tickets/referentiels`,
+/// `colonne_kanban`, #83) : l'app ne range rien elle-même.
 ///
-/// Le conseil seul déplace une carte (`isCS` du site) : glisser-déposer, ou « Déplacer
-/// vers… » dans le menu de la carte — le geste d'iOS que VoiceOver atteint aussi.
-/// Un déplacement est une Suite d'état sans texte, qui n'avertit personne.
+/// Une carte se déplace si le serveur le permet à CE lecteur (`peut_deplacer_au_kanban`,
+/// le conseil seul) : glisser-déposer, ou « Déplacer vers… » dans le menu de la carte —
+/// le geste d'iOS que VoiceOver atteint aussi. Un déplacement est une Suite d'état sans
+/// texte, qui n'avertit personne.
 struct KanbanAffaires: View {
     @Bindable var etat: EtatAffaires
     let installation: Installation
-    let droits: DroitsAffaires
     let service: (any ServiceAffaires)?
     let ouvrir: (Affaire) -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
-    @State private var visible: String? = TablesAffaires.colonnesKanban.first?.id
+    @State private var visible: String?
     @State private var cible: String?
     @State private var aClore: Cloture?
     @State private var deplacees = 0
@@ -25,14 +27,14 @@ struct KanbanAffaires: View {
     /// Une clôture qui pourrait absorber des affaires liées : on demande d'abord.
     private struct Cloture: Identifiable {
         let affaire: Affaire
-        let statut: String
+        let statut: ReferentielsAffaires.Statut
         let candidates: Int
         var id: Int { affaire.id }
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if case .erreur(let erreur) = etat.phase {
+            if let erreur = erreurAffichee {
                 ContentUnavailableView {
                     Label("Impossible d'afficher le Kanban", systemImage: "exclamationmark.triangle")
                 } description: {
@@ -48,6 +50,9 @@ struct KanbanAffaires: View {
             }
         }
         .sensoryFeedback(.success, trigger: deplacees)
+        .onChange(of: etat.referentiels?.colonnes.first?.id, initial: true) { _, premiere in
+            if visible == nil { visible = premiere }
+        }
         .confirmationDialog(
             "Clore cette affaire ?", isPresented: Binding(get: { aClore != nil }, set: { if !$0 { aClore = nil } }),
             titleVisibility: .visible, presenting: aClore
@@ -61,6 +66,19 @@ struct KanbanAffaires: View {
         }
     }
 
+    /// L'échec de la liste, ou celui des référentiels tant qu'aucun n'est lu : sans
+    /// colonnes servies, il n'y a pas de tableau à montrer.
+    private var erreurAffichee: ErreurAffaires? {
+        if case .erreur(let erreur) = etat.phase { return erreur }
+        return etat.referentiels == nil ? etat.erreurReferentiels : nil
+    }
+
+    /// Les colonnes servies ; deux colonnes muettes tant qu'elles ne sont pas lues.
+    private var colonnesServies: [ColonneKanban] {
+        etat.referentiels?.colonnes
+            ?? (0..<2).map { ColonneKanban(id: "attente.\($0)", libelle: " ", libelleCourt: " ") }
+    }
+
     /// Le compte, puis une pastille par colonne : un toucher y mène.
     private var sauts: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -71,7 +89,7 @@ struct KanbanAffaires: View {
                 .accessibilityIdentifier("kanban.compte")
             ScrollView(.horizontal) {
                 HStack(spacing: 8) {
-                    ForEach(TablesAffaires.colonnesKanban) { colonne in
+                    ForEach(etat.referentiels?.colonnes ?? []) { colonne in
                         Button {
                             withAnimation(mouvementReduit ? nil : .smooth) { visible = colonne.id }
                         } label: {
@@ -109,17 +127,19 @@ struct KanbanAffaires: View {
     private var colonnes: some View {
         ScrollView(.horizontal) {
             LazyHStack(alignment: .top, spacing: 12) {
-                ForEach(TablesAffaires.colonnesKanban) { colonne in
+                ForEach(colonnesServies) { colonne in
                     ColonneDuKanban(
-                        colonne: colonne, cartes: etat.phase == .chargement ? nil : etat.cartes(de: colonne),
-                        cible: cible == colonne.id, peutDeplacer: droits.moderateur, ouvrir: ouvrir,
+                        colonne: colonne,
+                        cartes: etat.phase == .chargement || etat.referentiels == nil ? nil : etat.cartes(de: colonne),
+                        cible: cible == colonne.id, ouvrir: ouvrir,
+                        emoji: { etat.referentiels?.categorie($0.categorie)?.emoji },
                         destinations: { affaire in destinations(de: affaire) },
                         deplacer: { affaire, vers in demander(affaire, vers: vers) }
                     )
                     .containerRelativeFrame(.horizontal) { largeur, _ in largeur * 0.86 }
                     .dropDestination(for: String.self) { ids, _ in
-                        guard droits.moderateur, let id = ids.first.flatMap(Int.init),
-                            let affaire = etat.affaires.first(where: { $0.id == id })
+                        guard let id = ids.first.flatMap(Int.init),
+                            let affaire = etat.affaires.first(where: { $0.id == id }), affaire.peutDeplacer
                         else { return false }
                         demander(affaire, vers: colonne)
                         return true
@@ -140,17 +160,23 @@ struct KanbanAffaires: View {
         .refreshable { await etat.charger(installation, avec: service) }
     }
 
-    /// Les colonnes où la carte peut aller : toutes, sauf la sienne.
+    /// Les colonnes où la carte peut aller : celles où un état servi mène, sauf la sienne.
     private func destinations(de affaire: Affaire) -> [ColonneKanban] {
-        TablesAffaires.colonnesKanban.filter { $0.id != affaire.colonne }
+        guard let referentiels = etat.referentiels else { return [] }
+        return referentiels.colonnes.filter {
+            $0.id != affaire.colonne && referentiels.statut(pourColonne: $0.id) != nil
+        }
     }
 
     /// Clore demande d'abord si des affaires liées pourraient y être fusionnées
-    /// (`demanderFusion` du site) : l'app ne fusionne pas, elle le dit.
+    /// (`demanderFusion` du site) : l'app ne fusionne pas, elle le dit. « Clore », c'est
+    /// l'état servi comme clos (`clos` des référentiels), jamais une liste écrite ici.
     private func demander(_ affaire: Affaire, vers colonne: ColonneKanban) {
-        guard let statut = TablesAffaires.statutParColonne[colonne.id], statut != affaire.statut else { return }
+        guard affaire.peutDeplacer, let statut = etat.referentiels?.statut(pourColonne: colonne.id),
+            statut.code != affaire.statut
+        else { return }
         Task {
-            if TablesAffaires.statutsClos.contains(statut), !affaire.close, let service,
+            if statut.clos, !affaire.close, let service,
                 let candidates = try? await service.candidatesALaFusion(affaire, dans: installation), candidates > 0
             {
                 aClore = Cloture(affaire: affaire, statut: statut, candidates: candidates)
@@ -160,11 +186,11 @@ struct KanbanAffaires: View {
         }
     }
 
-    private func deplacer(_ affaire: Affaire, vers statut: String) async {
+    private func deplacer(_ affaire: Affaire, vers statut: ReferentielsAffaires.Statut) async {
         await etat.deplacer(affaire, vers: statut, dans: installation, avec: service)
         if etat.avis == nil {
             deplacees += 1
-            if let colonne = TablesAffaires.colonneParStatut[statut] {
+            if let colonne = statut.colonne {
                 withAnimation(mouvementReduit ? nil : .smooth) { visible = colonne }
             }
         }
@@ -177,8 +203,9 @@ private struct ColonneDuKanban: View {
     /// `nil` pendant le chargement : le squelette, jamais « Aucune affaire ».
     let cartes: [Affaire]?
     let cible: Bool
-    let peutDeplacer: Bool
     let ouvrir: (Affaire) -> Void
+    /// Le pictogramme servi de la catégorie d'une carte.
+    let emoji: (Affaire) -> String?
     let destinations: (Affaire) -> [ColonneKanban]
     let deplacer: (Affaire, ColonneKanban) -> Void
     @Environment(\.palette) private var palette
@@ -213,7 +240,7 @@ private struct ColonneDuKanban: View {
                         }
                     } else {
                         ForEach(0..<2, id: \.self) { _ in
-                            CarteKanban(affaire: ServiceSimule.affaires[4]).redacted(reason: .placeholder)
+                            CarteKanban(affaire: Apercu.affaires[4], emoji: nil).redacted(reason: .placeholder)
                         }
                         .accessibilityHidden(true)
                     }
@@ -239,11 +266,11 @@ private struct ColonneDuKanban: View {
         Button {
             ouvrir(affaire)
         } label: {
-            CarteKanban(affaire: affaire)
+            CarteKanban(affaire: affaire, emoji: emoji(affaire))
         }
         .buttonStyle(StyleCarte())
         .contextMenu {
-            if peutDeplacer {
+            if affaire.peutDeplacer {
                 Menu {
                     ForEach(destinations(affaire)) { vers in
                         Button(vers.libelle) { deplacer(affaire, vers) }
@@ -253,9 +280,9 @@ private struct ColonneDuKanban: View {
                 }
             }
         }
-        .modifier(Saisissable(actif: peutDeplacer, id: affaire.id))
+        .modifier(Saisissable(actif: affaire.peutDeplacer, id: affaire.id))
         .accessibilityActions {
-            if peutDeplacer {
+            if affaire.peutDeplacer {
                 ForEach(destinations(affaire)) { vers in
                     Button("Déplacer vers \(vers.libelle)") { deplacer(affaire, vers) }
                 }
@@ -265,7 +292,7 @@ private struct ColonneDuKanban: View {
     }
 }
 
-/// Une carte qui se saisit pour glisser — au conseil seul ; ailleurs, rien ne bouge.
+/// Une carte qui se saisit pour glisser — si le serveur le permet ; ailleurs, rien ne bouge.
 private struct Saisissable: ViewModifier {
     let actif: Bool
     let id: Int

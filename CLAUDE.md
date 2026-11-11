@@ -27,19 +27,29 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   **plancher** (`scripts/generateurs/_plancher.py`, une version publiée), jamais un
   clone (#34) : un module par domaine dans `scripts/generateurs/`, `_source.py` seul
   lit coprofirst. Le plancher est la plus ancienne version servie par une
-  installation connue (l'app parle à plusieurs versions) ; il ne monte que sur
+  installation connue (l'app parle à plusieurs versions) — **mesurée** chaque jour
+  (`version_contrat` de `_plancher.INSTALLATIONS`, #83) ; il ne monte que sur
   décision, quand toutes l'ont dépassé. La CI et le workflow quotidien « Concordance
-  avec CoproFirst » rendent rouge un écart au plancher (API simulée comprise) ; une
-  version au-dessus est une information, ticket `a-monter`
-  (`scripts/concordance.py`, `scripts/verifier-fixtures.py`, #20).
-- **État au 01/11/2026** : amorce — écran d'accueil seul. Compte Apple Developer
-  ouvert (particulier, équipe `GUX8KASNTG`) : signature automatique **au poste**,
-  jamais en CI ; identifiant `fr.coprofirst.app` **figé** (contrat : liens
-  universels, APNs). Pas encore de TestFlight (skill `publication-app-store`).
+  avec CoproFirst » rendent rouge un écart au plancher (API simulée et installation
+  sous le plancher comprises) ; une version au-dessus est une information, ticket
+  `a-monter` (`scripts/concordance.py`, `scripts/verifier-fixtures.py`, #20).
+- **État** : il ne se recopie pas ici — il se lit dans `README.md` (« Écrans
+  livrés », « Sortir une version »), `Parite/PARITE.md` (jugé en CI) et les
+  issues ouvertes. Signature **au poste** seulement, jamais en CI ; identifiant
+  `fr.coprofirst.app` **figé** (contrat : liens universels, APNs) ; compte Apple
+  et TestFlight : skill `publication-app-store`.
 - **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint,
   swift-format) ; Homebrew sur le poste, binaires vérifiés par empreinte en CI.
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
-  fusionne : champ `fusion` du registre — `utilisateur` : je m'arrête à la PR.
+  fusionne : champ `fusion` du registre. **Décision du 11/11/2026** (Philippe :
+  « tu es plus à même de fusionner et de voir les conséquences ») : je fusionne
+  mes PR moi-même — branche à jour de `main` (la protection l'exige), contrôles
+  rejoués au poste, puis fusion automatique `--squash` une fois la CI verte. Je
+  suis ensuite `main` : sa CI après la fusion, et les PR ouvertes qu'elle oblige
+  à rebaser. **Contrepartie** : un compte rendu après chaque fusion (ce qui est
+  entré, l'état de la CI de `main`). Philippe oriente par la **priorité** des
+  tickets, pas par la fusion. Fusionner n'est pas soumettre : TestFlight externe
+  et App Store restent suspendus à la validation du rendu.
   Les commits portent l'adresse *noreply* de GitHub, réglée dans la configuration
   **locale** du clone (l'adresse globale du poste est personnelle).
 

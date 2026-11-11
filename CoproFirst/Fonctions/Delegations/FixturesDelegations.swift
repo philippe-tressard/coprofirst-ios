@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les réponses que l'API simulée sert pour les Délégations — en JSON, à la forme de
 /// leurs routes, lues par les types GÉNÉRÉS puis par le MÊME branchement que le service
 /// réel (`Delegation(_:)`, `ResidentDelegable(_:)`). `scripts/verifier-fixtures.py` les
@@ -74,3 +75,4 @@ enum FixturesDelegations {
             .map(ResidentDelegable.init)
     }
 }
+#endif

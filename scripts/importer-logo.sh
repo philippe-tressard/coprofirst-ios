@@ -2,10 +2,11 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# importer-logo.sh [branche] — le logo de CoproFirst et sa licence, recopiés À
-# L'IDENTIQUE depuis coprofirst (branche dev par défaut, lue sur GitHub : le clone
-# local d'une autre session peut être en retard, et on n'en change pas la branche),
-# puis l'icône de l'app rendue depuis le dessin.
+# importer-logo.sh [ref] — le logo de CoproFirst et sa licence, recopiés À
+# L'IDENTIQUE depuis coprofirst, lus sur GitHub à l'étiquette du PLANCHER par défaut
+# (scripts/plancher.sh, #133 ; le clone local d'une autre session peut être en
+# retard, et on n'en change pas la branche), puis l'icône de l'app rendue depuis le
+# dessin. Un logo plus récent que le plancher s'importe sur décision : `[ref]`.
 #
 # Le logo n'est pas sous l'AGPL : LicenseRef-CoproFirst-Logo (MARQUE.md de
 # coprofirst, PR coprofirst#2474) couvre l'app iOS publiée par son auteur.
@@ -13,7 +14,7 @@
 # changer le dessin ou ses couleurs en est une. verifier-logo.sh tient l'identité.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-REF=${1:-dev}
+REF=${1:-$(bash scripts/plancher.sh)}
 BRUT="https://raw.githubusercontent.com/philippe-tressard/coprofirst/$REF"
 ASSETS=CoproFirst/Ressources/Assets.xcassets
 

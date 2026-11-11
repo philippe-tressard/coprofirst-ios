@@ -18,7 +18,7 @@ private func page(_ id: String) -> PageDeNavigation {
         surcharges: ["residence": SurchargePage(navLabel: "Chez nous")])
     #expect(rangees.map(\.id) == ["faq", "residence", "tableau-de-bord", "mes-demandes", "mon-lot"])
     #expect(rangees.first { $0.id == "residence" }?.libelle == "Chez nous")
-    #expect(rangees.first { $0.id == "tableau-de-bord" }?.libelle == "Fil", "le tableau de bord devient le fil")
+    #expect(rangees.first { $0.id == "tableau-de-bord" }?.libelle == "Fil d'activité", "le tableau de bord")
 }
 
 @Test func sansReglageLOrdreEstCeluiDuSite() {
@@ -51,12 +51,12 @@ private func page(_ id: String) -> PageDeNavigation {
 }
 
 @Test func leFilSeRangeJourParJourLePlusRecentEnTete() {
-    let jours = Chronologie.parJour(ServiceSimule.fil)
+    let jours = Chronologie.parJour(Apercu.fil)
     #expect(jours.map(\.jour) == jours.map(\.jour).sorted(by: >))
     for jour in jours {
         #expect(jour.elements.map(\.date) == jour.elements.map(\.date).sorted(by: >))
     }
-    #expect(jours.flatMap(\.elements).count == ServiceSimule.fil.count)
+    #expect(jours.flatMap(\.elements).count == Apercu.fil.count)
 }
 
 @Test func lUrgenceSuitLaRegleDuSite() {

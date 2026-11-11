@@ -43,6 +43,7 @@ struct OngletsView: View {
             }
             .presentationDragIndicator(.visible)
         }
+        .feuilleNotifications(installation, ouverte: $parcours.clocheOuverte)
         // La barre dépend des rôles : ils se relisent à l'ouverture de la résidence.
         .task { await parcours.rafraichirProfil() }
     }
@@ -89,6 +90,14 @@ private struct PlusView: View {
                     EntreeDePlus(libelle: "Profil", symbole: "person.crop.circle")
                 }
                 .accessibilityIdentifier("plus.profil")
+                .listRowBackground(palette.surface)
+                // Le pied de page du site : ©, mentions légales, confidentialité, logiciel libre.
+                NavigationLink {
+                    AProposView(installation: installation)
+                } label: {
+                    EntreeDePlus(libelle: "À propos", symbole: "info.circle")
+                }
+                .accessibilityIdentifier("plus.a-propos")
                 .listRowBackground(palette.surface)
             }
             .scrollContentBackground(.hidden)

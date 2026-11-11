@@ -96,7 +96,8 @@ private func lien(_ texte: String) throws -> Destination {
 private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation] = []) throws -> Parcours {
     let reglages = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
     let parcours = Parcours(
-        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+        service: ServiceSimule(delai: .milliseconds(1)),
+        connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
     connues.forEach(parcours.connues.retenir)
     if let ouverte { parcours.ouvrir(ouverte) }
     return parcours
@@ -135,6 +136,24 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
     #expect(parcours.porte.enAttente == nil)
 }
 
+@MainActor @Test func sansDecouverteUnHoteJamaisVuNOuvreRien() throws {
+    let parcours = try parcoursDeTest(ouverte: tilleuls)
+    let ailleurs = try lien("https://inconnue.exemple.org/")
+    #expect(parcours.suivre(ailleurs, decouvrir: false) == false, "une notification ne découvre pas (#17)")
+    #expect(parcours.ouverte == tilleuls)
+    #expect(parcours.chemin.isEmpty && parcours.porte.enAttente == nil)
+}
+
+@MainActor @Test func laDerniereResidenceGardeSonEcranDEntree() throws {
+    let parcours = try parcoursDeTest(connues: [tilleuls])
+    #expect(parcours.connues.derniere == tilleuls)
+    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    #expect(parcours.chemin.isEmpty, "le retour par Face ID de l'entrée reste à l'écran")
+    #expect(parcours.ouvertureLibre(tilleuls))
+    parcours.ouvrir(tilleuls)
+    #expect(parcours.porte.affaireDansLOnglet == 41)
+}
+
 @MainActor @Test func unHoteJamaisVuPasseParLaConnexionPreRemplieVenueDUnLien() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
     let destination = try lien("https://inconnue.exemple.org/tickets/3")
@@ -142,7 +161,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
     #expect(parcours.ouverte == nil)
     #expect(parcours.reconnue == nil, "aucune palette ni nom avant la découverte")
     #expect(
-        parcours.chemin == [.connexion(.init(adresse: destination.adresse, origine: .lien))],
+        parcours.chemin == [.connexion(.init(adresse: destination.adresse, depuisUnLien: true))],
         "l'hôte se confirme comme après un scan (#82)")
     #expect(parcours.connues.liste.contains { $0.adresse == destination.adresse } == false, "rien n'est retenu")
 }
@@ -157,7 +176,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 }
 
 @MainActor @Test func auLancementLeRetourNOuvrePasUneAutreResidenceQueCelleDuLien() throws {
-    let parcours = try parcoursDeTest(connues: [ServiceSimule.demo, tilleuls])
+    let parcours = try parcoursDeTest(connues: [tilleuls, ServiceSimule.demo])  // la dernière : la démo
     parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
     #expect(parcours.ouvertureLibre(ServiceSimule.demo) == false, "le Face ID d'office de la dernière résidence attend")
     #expect(parcours.ouvertureLibre(tilleuls))

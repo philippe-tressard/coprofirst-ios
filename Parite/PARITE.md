@@ -34,7 +34,9 @@ parallèles ne se gênent pas.
 2. **Écrans des résidents, en quatre sessions parallèles** : #11, #12, #13, #14.
 3. **#15** — Espace conseil syndical et Délégations.
 4. **#16** — Administration, en partie.
-5. Bloqués côté serveur : **#17** notifications push (coprofirst#2458),
+5. **#17** notifications push : côté app livré (autorisation dans la cloche,
+   appareil enregistré et retiré, notification touchée → la cloche de sa résidence) ;
+   réception réelle en attente du relais (coprofirst#2494, clé `.p8`).
    **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
    porte de navigation codées, liste des domaines en attente de décision (#18).
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
@@ -68,7 +70,7 @@ Session parallèle. Dossiers : `Fonctions/Residence`, `Fonctions/Annuaire`.
 |---|---|---|---|---|
 | `residence` | `fiche` | fait | #12 | En lecture : la fiche, les documents et les rapports se déposent et se corrigent sur le site |
 | `residence` | `carnet` | fait | #12 | Le bilan de l'exercice (conseil syndical) et le filtre par année restent sur le site, et l'app le dit |
-| `residence` | `reglement` | fait | #12 | Poser une question et lire les avis ; publier dans la FAQ et supprimer restent sur le site |
+| `residence` | `reglement` | fait | #12, #71 | Poser une question et lire les avis — à renvois (fondements qui mènent aux extraits, sections pliées) ou d'avant ; publier dans la FAQ et supprimer restent sur le site |
 | `annuaire` | — | fait | #12 |  |
 
 ### #13 — Mes lots & accès et Prestataires
@@ -97,7 +99,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
 | `profil` | — | fait | #14 | Sous « Plus » ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
-| `notifications` | — | fait | #14 | La cloche de chaque écran |
+| `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations
 
@@ -120,7 +122,7 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
 | `admin` | `a_traiter` | fait | #16 | La file des comptes et des commandes, la même que l'Espace CS ; les demandes de profil (approuver, rejeter avec motif) |
-| `admin` | `utilisateurs` | fait | #16 | Recherche, type, compte ; la fiche : communauté, auto-match, suppression. Modifier, les rôles et l'accueil d'un arrivant restent au site (coprofirst#2618) |
+| `admin` | `utilisateurs` | fait | #16, #89 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
 | `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `telemetry` | fait | #16 | Quatre vues, filtre gestionnaire, nombres clés, graphe, pages, utilisateurs actifs ; les six autres sections restent au site |
 | `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |

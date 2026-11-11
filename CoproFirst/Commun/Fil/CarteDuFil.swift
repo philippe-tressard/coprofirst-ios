@@ -3,24 +3,17 @@
 
 import SwiftUI
 
-/// Un élément du fil : l'icône de sa nature dans sa teinte, le titre, une ligne.
+/// Un élément du fil : sa gouttière (`VignetteDeNature`), le titre, une ligne.
 /// Une urgence porte le liseré rouge à gauche, comme une affaire urgente ; une affaire
 /// datée, sa vignette d'échéance sous le classement (`VignetteEcheance`, #75).
 struct CarteDuFil: View {
     let element: ElementDuFil
     @Environment(\.palette) private var palette
-    @ScaledMetric(relativeTo: .body) private var cote: CGFloat = 36
 
     var body: some View {
         let nature = element.nature
         HStack(alignment: .top, spacing: 12) {
-            Image(systemName: Pictogrammes.symbole(nature.icone))
-                .font(.body.weight(.semibold))
-                .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                .foregroundStyle(palette[keyPath: nature.couleur])
-                .frame(width: cote, height: cote)
-                .background(palette[keyPath: nature.fond], in: .rect(cornerRadius: 10, style: .continuous))
-                .accessibilityHidden(true)
+            VignetteDeNature(element: element)
             VStack(alignment: .leading, spacing: 4) {
                 // Rubrique, heure, puis nature : sur une ligne tant qu'elle tient, sinon l'une sous
                 // l'autre (très grand texte) — un libellé ne se coupe jamais (#57).

@@ -10,29 +10,38 @@ import Foundation
 /// |---|---|
 /// | celle qui est ouverte | l'écran, tout de suite |
 /// | une résidence connue | sa connexion (Face ID si la session est gardée), puis l'écran |
-/// | un hôte jamais vu | la connexion, adresse pré-remplie : découverte, puis confirmation de l'hôte avant tout mot de passe (#82) |
+/// | un hôte jamais vu | un lien : la connexion, adresse pré-remplie — découverte, puis confirmation de l'hôte avant tout mot de passe (#82) ; une notification (`decouvrir: false`) : rien, `false` rendu — l'app ne découvre pas une installation sur une sollicitation |
 ///
 /// Une page que l'app ne porte pas s'ouvre dans Safari, au-dessus de l'app, quelle que
 /// soit la résidence : un lien à jeton ne demande pas d'être connecté.
 extension Parcours {
-    func suivre(_ destination: Destination) {
+    @discardableResult
+    func suivre(_ destination: Destination, decouvrir: Bool = true) -> Bool {
         if case .navigateur(let url) = destination.ecran {
             porte.pageWeb = PageWeb(url: url)
-            return
+            return true
         }
         if let ouverte, ouverte.adresse == destination.adresse {
             montrer(destination.ecran, dans: ouverte)
-            return
+            return true
         }
-        let connue = connues.liste.first { $0.adresse == destination.adresse }
-        changer(pour: connue)
-        if connue == nil {
-            chemin = [.connexion(Preremplissage(adresse: destination.adresse, origine: .lien))]
+        if let connue = connues.liste.first(where: { $0.adresse == destination.adresse }) {
+            // Rien d'ouvert ni d'empilé, et l'entrée (`EntreeView`) montre déjà cette
+            // résidence : son retour (Face ID) ou sa connexion suffit.
+            if ouverte != nil || connues.derniere?.adresse != connue.adresse || !chemin.isEmpty {
+                changer(pour: connue)
+            }
+        } else {
+            guard decouvrir else { return false }
+            changer(pour: nil)
+            chemin = [.connexion(Preremplissage(adresse: destination.adresse, depuisUnLien: true))]
         }
         porte.enAttente = destination.ecran == .connexion ? nil : destination
+        return true
     }
 
-    /// Appelé à chaque ouverture d'une résidence : l'écran d'un lien qui l'attendait.
+    /// Appelé à chaque ouverture d'une résidence : l'écran d'un lien qui l'attendait ;
+    /// celui d'une autre résidence tombe — l'utilisateur est allé ailleurs.
     func suivreLeLienEnAttente(_ installation: Installation) {
         guard let attente = porte.enAttente else { return }
         porte.enAttente = nil
@@ -55,7 +64,10 @@ extension Parcours {
 
     private func montrer(_ ecran: Destination.Ecran, dans installation: Installation) {
         let pages = pagesDeLaBarre(installation).map(\.id)
-        switch Aiguillage.aiguiller(ecran, pages: pages, visibles: OngletsView.visibles) {
+        let aiguillage = Aiguillage.aiguiller(ecran, pages: pages, visibles: OngletsView.visibles)
+        // La cloche est une feuille : tout autre écran demandé la referme d'abord.
+        clocheOuverte = aiguillage == .cloche
+        switch aiguillage {
         case .onglet(let id):
             onglet = id
         case .affaireDansLOnglet(let id, let affaire):
@@ -66,6 +78,8 @@ extension Parcours {
         case .elementDuFil(let cle):
             aOuvrir = cle
             onglet = OrdrePages.idFil
+        case .cloche:
+            break
         }
     }
 }

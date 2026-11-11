@@ -15,7 +15,8 @@ struct DetailAffaire: Hashable, Sendable {
     var urgente: Bool
     let creeLe: Date
     let auteur: String?
-    /// Le lieu lisible — absent tant que le contrat ne le sert pas (coprofirst#2460).
+    /// Le lieu lisible que le serveur SERT (`perimetre_libelle`) ; `nil` pour le périmètre
+    /// par défaut, qu'il tait.
     var lieu: String?
     /// Les chemins des photos (`/uploads/…`), servis derrière la session.
     let photos: [String]

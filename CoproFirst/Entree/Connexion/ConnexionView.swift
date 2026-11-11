@@ -20,9 +20,8 @@ struct ConnexionView: View {
     @State private var erreur: ErreurService?
     @State private var reussite = 0
     @State private var scanner = false
-    /// L'adresse lue dans un QR ou venue d'un lien (#18), et d'où : elle se confirme
-    /// toujours avant le mot de passe (#82). Une autre adresse retombe sur la saisie.
-    @State private var adresseAConfirmer: (adresse: URL, origine: OrigineAdresse)?
+    /// L'adresse lue dans un QR : elle se confirme toujours avant le mot de passe (#82).
+    @State private var adresseScannee: URL?
     @FocusState private var champ: Champ?
 
     private enum Champ { case email, motDePasse }
@@ -113,7 +112,7 @@ struct ConnexionView: View {
         .sheet(isPresented: $scanner) {
             ScannerQRView { texte in
                 scanner = false
-                adresseAConfirmer = AdresseInstallation.normaliser(texte).map { ($0, .scan) }
+                adresseScannee = AdresseInstallation.normaliser(texte)
                 saisieResidence = texte
             }
             .presentationDetents([.medium, .large])
@@ -171,7 +170,6 @@ struct ConnexionView: View {
         guard saisieResidence.isEmpty else { return }
         let installation = preremplissage.installation ?? parcours.reconnue
         saisieResidence = installation?.hote ?? preremplissage.adresse.map(AdresseInstallation.enSaisie) ?? ""
-        if let adresse = preremplissage.adresse { adresseAConfirmer = (adresse, preremplissage.origine) }
         let retenu = installation.flatMap(parcours.connues.identifiant) ?? ""
         email = preremplissage.email.isEmpty ? retenu : preremplissage.email
         guard installation != nil, !email.isEmpty else { return }
@@ -224,7 +222,7 @@ struct ConnexionView: View {
         enCours = true
         defer { enCours = false }
         do {
-            let origine = adresseAConfirmer.flatMap { $0.adresse == installation.adresse ? $0.origine : nil } ?? .saisie
+            let origine: OrigineAdresse = adresseScannee == installation.adresse ? .scan : .saisie
             // Un hôte jamais vu : rien ne part, la garde ouvre l'écran de confirmation.
             guard
                 try await parcours.garde.connecter(

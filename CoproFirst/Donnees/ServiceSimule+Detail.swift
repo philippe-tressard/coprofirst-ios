@@ -4,11 +4,12 @@
 import SwiftUI
 import UIKit
 
+#if DEBUG
 /// Les détails inventés : affaires, actualité, document (le sondage : `Commun/Detail/Sondage/`). Aucun nom de
 /// personne, aucune requête.
 extension ServiceSimule {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
-        try await Task.sleep(for: .milliseconds(500))
+        try await Task.sleep(for: delaiDetail)
         return try detailSimule(id)
     }
 
@@ -120,3 +121,4 @@ extension ServiceSimule {
             auteur: "Le conseil syndical", lieu: "Bâtiment B", photos: [], suites: [], perimetres: ["bat_b"])
     }
 }
+#endif

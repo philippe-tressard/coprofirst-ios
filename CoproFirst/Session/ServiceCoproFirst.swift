@@ -21,8 +21,9 @@ protocol ServiceCoproFirst: Sendable {
     func aUneSessionGardee(_ installation: Installation) -> Bool
     /// Reprend la session gardée, après Face ID (POST /auth/refresh).
     func reprendre(_ installation: Installation) async throws
-    /// Après la première connexion : garder la session au Trousseau, sous Face ID.
-    func activerFaceID(_ installation: Installation) async -> Bool
+    /// Après la première connexion : garder la session au Trousseau, sous Face ID —
+    /// et dire ce qui la protège vraiment (`nil` : elle n'a pas pu être gardée, #84).
+    func activerFaceID(_ installation: Installation) async -> ProtectionSession?
     /// GET /flux : le fil de la résidence, celui du tableau de bord du site.
     func fil(_ installation: Installation) async throws -> [ElementDuFil]
     /// Entrer dans la démo sous un personnage, d'un toucher — ou `nil` quand aucune

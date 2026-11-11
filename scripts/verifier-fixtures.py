@@ -31,6 +31,16 @@ et le juge vérifie que la route existe et qu'elle n'est toujours pas typée. Le
 contrat la type, il échoue : la réponse se déclare alors par son schéma, et l'écran la lit
 par son type généré, jamais plus par `Relecture`.
 
+Une installation plus récente que le plancher sert, sur une route TYPÉE, des champs que
+le contrat du plancher ne déclare pas encore (#89 : `gestes_roles`, contrat 1.18.0).
+L'API simulée les sert, à la forme du serveur, s'ils sont déclarés :
+
+    AuDessusDuPlancher(schema: "UtilisateurAdminRead", champs: ["gestes_roles"], contrat: "1.18.0")
+
+et le juge les tolère dans ce schéma seulement. Il échoue le jour où le contrat les
+déclare (les lire alors par le type généré, retirer la déclaration), et sur une
+déclaration qu'aucune réponse simulée ne sert plus.
+
 Usage :
   python3 scripts/verifier-fixtures.py [--contrat openapi.json]
       Défaut : le contrat du dépôt. La concordance (#20) passe celui de la dernière
@@ -54,7 +64,9 @@ CONTRAT = RACINE / "Paquets" / "ClientAPI" / "Sources" / "ClientAPI" / "openapi.
 JSON_BRUT = re.compile(r'static let (\w+) = #"""\n(.*?)\n\s*"""#', re.S)
 DECLAREE = re.compile(r'Reponse\(nom: "(\w+)", schema: "(\w+)", json: (\w+)\)')
 NON_TYPEE = re.compile(r'ReponseNonTypee\(nom: "(\w+)", route: "((?:GET|POST|PUT|PATCH|DELETE) /[^"]*)", json: (\w+)\)')
+AU_DESSUS_DECLARE = re.compile(r'AuDessusDuPlancher\(\s*schema: "(\w+)",\s*champs: \[([^\]]*)\]')
 ROUTE = "route:"
+AU_DESSUS = "au-dessus:"
 TYPES = {
     "string": lambda v: isinstance(v, str),
     "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
@@ -78,6 +90,9 @@ class Juge:
     def __init__(self, contrat: dict) -> None:
         self.schemas = contrat.get("components", {}).get("schemas", {})
         self.chemins = contrat.get("paths", {})
+        #: schéma → champs servis au-dessus du plancher, tolérés ; et ceux qu'on a vus.
+        self.tolerés: dict[str, set[str]] = {}
+        self.vus: set[tuple[str, str]] = set()
         if not self.schemas:
             raise Illisible("le contrat ne déclare aucun schéma")
 
@@ -119,14 +134,17 @@ class Juge:
         if isinstance(valeur, list) and isinstance(schema.get("items"), dict):
             return [e for i, v in enumerate(valeur) for e in self._noeud(v, schema["items"], f"{chemin}[{i}]")]
         if isinstance(valeur, dict) and ("properties" in schema or "object" in types):
-            return self._objet(valeur, schema, chemin)
+            return self._objet(valeur, schema, chemin, nom)
         return []
 
-    def _objet(self, valeur: dict, schema: dict, chemin: str) -> list[str]:
+    def _objet(self, valeur: dict, schema: dict, chemin: str, nom: str = "") -> list[str]:
         proprietes = schema.get("properties", {})
         ecarts = []
         if schema.get("additionalProperties") in (None, False):
-            ecarts += [f"{chemin}.{c} : non servi par le serveur" for c in sorted(valeur) if c not in proprietes]
+            hors = [c for c in sorted(valeur) if c not in proprietes]
+            tolerés = self.tolerés.get(nom, set())
+            self.vus |= {(nom, c) for c in hors if c in tolerés}
+            ecarts += [f"{chemin}.{c} : non servi par le serveur" for c in hors if c not in tolerés]
         ecarts += [f"{chemin}.{c} : requis, absent" for c in sorted(schema.get("required", [])) if c not in valeur]
         for cle in sorted(valeur):
             if cle in proprietes:
@@ -143,6 +161,8 @@ def fixtures(racine: pathlib.Path) -> list[tuple[str, str, str, object]]:
         declarees = {variable: (nom, schema) for nom, schema, variable in DECLAREE.findall(texte)}
         declarees |= {variable: (nom, ROUTE + route) for nom, route, variable in NON_TYPEE.findall(texte)}
         relatif = str(fichier.relative_to(racine))
+        for schema, champs in AU_DESSUS_DECLARE.findall(texte):
+            trouvees.append((relatif, "AuDessusDuPlancher", AU_DESSUS + schema, re.findall(r'"(\w+)"', champs)))
         for variable in sorted(set(brutes) - set(declarees)):
             trouvees.append((relatif, variable, "", NonDeclaree("aucune Reponse(…) ne la déclare avec son schéma")))
         for variable, (nom, schema) in sorted(declarees.items()):
@@ -159,6 +179,11 @@ def fixtures(racine: pathlib.Path) -> list[tuple[str, str, str, object]]:
 def juger(juge: Juge, trouvees: list) -> tuple[list[str], list[str]]:
     """(écarts, illisibles) de toutes les réponses simulées."""
     ecarts, illisibles = [], []
+    declarations = [t for t in trouvees if t[2].startswith(AU_DESSUS)]
+    trouvees = [t for t in trouvees if not t[2].startswith(AU_DESSUS)]
+    juge.tolerés, juge.vus = {}, set()
+    for _, _, schema, champs in declarations:
+        juge.tolerés.setdefault(schema[len(AU_DESSUS):], set()).update(champs)
     for fichier, nom, schema, reponse in trouvees:
         if isinstance(reponse, (Illisible, NonDeclaree)):
             (illisibles if isinstance(reponse, Illisible) else ecarts).append(f"{fichier} : {nom} — {reponse}")
@@ -167,6 +192,7 @@ def juger(juge: Juge, trouvees: list) -> tuple[list[str], list[str]]:
                 ecarts += [f"{fichier} : {e}" for e in juge.ecarts(element, schema, f"{nom}[{rang}]")]
         else:
             ecarts += [f"{fichier} : {e}" for e in juge.ecarts(reponse, schema, nom)]
+    ecarts += ecarts_au_dessus(juge, declarations)
     codes, cites = set(), []
     for fichier, nom, schema, reponse in trouvees:
         if isinstance(reponse, (Illisible, NonDeclaree)):
@@ -182,6 +208,25 @@ def juger(juge: Juge, trouvees: list) -> tuple[list[str], list[str]]:
         if codes and code not in codes
     ]
     return ecarts, illisibles
+
+
+def ecarts_au_dessus(juge: Juge, declarations: list) -> list[str]:
+    """Une déclaration `AuDessusDuPlancher` qui ne sert plus : son champ est au contrat,
+    ou aucune réponse simulée ne le sert."""
+    ecarts = []
+    for fichier, nom, schema, champs in declarations:
+        schema = schema[len(AU_DESSUS):]
+        if schema not in juge.schemas:
+            ecarts.append(f"{fichier} : {nom} — schéma {schema} absent du contrat")
+            continue
+        for champ in champs:
+            if champ in juge.schemas[schema].get("properties", {}):
+                ecarts.append(f"{fichier} : {nom} — {schema}.{champ} est au contrat : le lire par le type "
+                              "généré, retirer la déclaration")
+            elif (schema, champ) not in juge.vus:
+                ecarts.append(f"{fichier} : {nom} — {schema}.{champ} : déclaré au-dessus du plancher, servi par "
+                              "aucune réponse simulée — retirer la déclaration")
+    return ecarts
 
 
 def perimetres_cites(valeur, chemin: str):
@@ -246,8 +291,23 @@ def autotest() -> None:
     _, illisibles = juger(vide, arbre[1:])
     if not illisibles:
         raise SystemExit("❌ autotest : sans arbre simulé, les codes cités sont INCONNU")
+    plancher = Juge({"components": {"schemas": {"Compte": {"type": "object", "required": ["id"], "properties": {
+        "id": {"type": "integer"}}}, "Typé": {"type": "object", "properties": {"neuf": {"type": "boolean"}}}}}})
+    declare = ("F", "auDessus", AU_DESSUS + "Compte", ["neuf"])
+    for trouvees, attendu in [
+        ([declare, ("F", "c", "Compte", [{"id": 1, "neuf": True}])], []),
+        ([declare, ("F", "c", "Compte", [{"id": 1, "autre": 1}])],
+         ["F : c[0].autre : non servi par le serveur", "F : auDessus — Compte.neuf : déclaré au-dessus du plancher, "
+          "servi par aucune réponse simulée — retirer la déclaration"]),
+        ([(*declare[:2], AU_DESSUS + "Typé", ["neuf"]), ("F", "t", "Typé", [{"neuf": True}])],
+         ["F : auDessus — Typé.neuf est au contrat : le lire par le type généré, retirer la déclaration"]),
+        ([(*declare[:2], AU_DESSUS + "Absent", ["neuf"])], ["F : auDessus — schéma Absent absent du contrat"]),
+    ]:
+        ecarts, illisibles = juger(plancher, trouvees)
+        if ecarts != attendu or illisibles:
+            raise SystemExit(f"❌ autotest : champ au-dessus du plancher → {ecarts} {illisibles}, attendu {attendu}")
     print("✅ autotest : champ de trop, requis absent, énumération, type, imbriqué, réponse non déclarée, "
-          "code de périmètre, route non typée")
+          "code de périmètre, route non typée, champ au-dessus du plancher")
 
 
 def main() -> int:
