@@ -34,7 +34,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Mesures | `Mise.rayon`, `Mise.marge`, `Mise.cible`… : jamais un chiffre dans une vue. Une mesure que le site a en jeton se lit dans `MesuresDuSite` (**générée**) ; une mesure propre à iOS se déclare (raison, date) dans `MesuresTests`, qui refuse une mesure non déclarée ou un écart devenu caduc (#85) | `Charte/Charte.swift`, `CoproFirstTests/MesuresTests.swift` |
 | Pictogrammes | le nom **Lucide** du site, traduit par `Pictogrammes.symbole` ; un nom neuf d'une table générée ajoute son entrée à `Pictogrammes.table`, sinon `PictogrammesTests` échoue (le repli `circle.fill` ne sert qu'à l'écran, jamais en silence — #85) | `Charte/Theme.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
-| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
+| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`). Un 401 se renouvelle à UNE porte, `Renouvellement` (intergiciel du client généré, #81) : un seul POST /auth/refresh à la fois par hôte, la requête rejouée une fois ; `reprendre` y passe aussi | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
 | Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; une page réservée à un rôle (Prestataires, Espace CS, Admin, Délégations) n'y paraît qu'à qui l'a — `PagesOuvertes`, le filtre de `Nav.svelte`, écrit une fois, sur les populations générées (#15) ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
 | Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
@@ -252,8 +252,3 @@ seule la CI le dit.
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
    test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
    « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
-
-## À trancher quand le premier cas arrive
-
-- Rafraîchissement automatique sur un 401 en cours de session (intergiciel du
-  client) : aujourd'hui, la session se reprend à l'ouverture seulement.
