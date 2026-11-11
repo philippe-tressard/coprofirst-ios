@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les référentiels que l'API simulée sert (`GET /tickets/referentiels`) — en JSON, lu par
 /// le type GÉNÉRÉ puis par `ReferentielsAffaires(lu:)`, comme le service réel. Les valeurs
 /// sont celles du serveur à la version du plancher (`routers/tickets/referentiels.py`) ;
@@ -94,3 +95,4 @@ enum FixturesReferentielsAffaires {
         return ReferentielsAffaires(lu: lu)
     }
 }
+#endif

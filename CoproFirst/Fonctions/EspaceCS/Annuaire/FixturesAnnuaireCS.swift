@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// L'annuaire que l'API simulée sert à « Annuaire CS & Syndic » — le JSON de
 /// `/admin/annuaire/cs` et `/admin/annuaire/syndic`, lu par les types GÉNÉRÉS puis par le
 /// MÊME branchement que le service réel, et jugé contre le contrat par
@@ -75,3 +76,4 @@ enum FixturesAnnuaireCS {
         return Rapprochement(try Relecture.generee(Components.Schemas.Rapprochement.self, json: rapprochementExemple))
     }
 }
+#endif

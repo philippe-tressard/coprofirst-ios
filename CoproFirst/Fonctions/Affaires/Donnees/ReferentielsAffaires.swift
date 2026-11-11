@@ -59,9 +59,3 @@ extension ServiceAPI {
         }
     }
 }
-
-extension ServiceSimule {
-    func referentiels(_ installation: Installation) async throws -> ReferentielsAffaires {
-        try FixturesReferentielsAffaires.lus()
-    }
-}

@@ -56,6 +56,8 @@ struct AffairesView: View {
         .onChange(of: onglets) { _, ouverts in
             if !ouverts.contains(where: { $0.id == onglet }) { onglet = "liste" }
         }
+        // L'affaire d'un lien ou d'une notification (#18, #17) : la porte a choisi cet onglet.
+        .onChange(of: parcours.porte.affaireDansLOnglet, initial: true) { ouvrirDemandee() }
         .task {
             await etat.charger(installation, avec: service)
             await parcours.rafraichirProfil()
@@ -77,6 +79,12 @@ struct AffairesView: View {
     }
 
     private func ouvrir(_ affaire: Affaire) { chemin.append(AffaireAOuvrir(id: affaire.id)) }
+
+    private func ouvrirDemandee() {
+        guard let id = parcours.porte.affaireDansLOnglet else { return }
+        parcours.porte.affaireDansLOnglet = nil
+        chemin.append(AffaireAOuvrir(id: id))
+    }
 
     /// Le choix de l'onglet, sur la matière de la barre : le contenu défile dessous.
     private var enTete: some View {

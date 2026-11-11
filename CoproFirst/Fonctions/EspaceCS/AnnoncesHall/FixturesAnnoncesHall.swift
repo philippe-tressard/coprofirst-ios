@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les affiches que l'API simulée sert — le JSON de `GET /annonces-hall`, lu par le type
 /// GÉNÉRÉ puis par le MÊME branchement que le service réel (`AnnonceHall(_:)`), et jugé
 /// contre le contrat par `scripts/verifier-fixtures.py`. Les gestes servis sont ceux d'un
@@ -63,3 +64,4 @@ enum FixturesAnnoncesHall {
         try Relecture.generee([Components.Schemas.AnnonceHallRead].self, json: affiches).map(AnnonceHall.init)
     }
 }
+#endif

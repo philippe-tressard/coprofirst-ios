@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Télémétrie » simulée : un tableau par vue (`FixturesTelemetrie`), lu par `Relecture`
 /// comme le service réel. Le filtre n'est appliqué que là où le serveur le propose.
 extension ServiceSimule: ServiceTelemetrie {
@@ -18,3 +19,4 @@ extension ServiceSimule: ServiceTelemetrie {
         return tableau
     }
 }
+#endif

@@ -99,12 +99,16 @@ extension ServiceAPI: ServiceAnnuaire {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServiceAnnuaire {
     func annuaire(_ installation: Installation) async throws -> Annuaire {
         try await Task.sleep(for: .milliseconds(400))
-        return Self.annuaire
+        return Apercu.annuaire
     }
+}
+#endif
 
+extension Apercu {
     /// Un annuaire inventé : des prénoms et des noms qui n'appartiennent à personne.
     static let annuaire = Annuaire(
         cs: .init(

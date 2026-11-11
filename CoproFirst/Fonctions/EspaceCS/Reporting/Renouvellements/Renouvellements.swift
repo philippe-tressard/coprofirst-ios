@@ -117,9 +117,11 @@ extension ServiceAPI {
     }
 }
 
+#if DEBUG
 extension ServiceSimule {
     func renouvellements(_ installation: Installation) async throws -> Renouvellements {
         try await Task.sleep(for: .milliseconds(350))
         return try FixturesRenouvellements.releveLu()
     }
 }
+#endif

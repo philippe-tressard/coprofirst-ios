@@ -26,7 +26,7 @@ struct FicheView: View {
             },
             squelette: {
                 ScrollView {
-                    sections(ServiceSimule.contenuFiche).padding(Mise.marge)
+                    sections(Apercu.contenuFiche).padding(Mise.marge)
                 }
             }
         )

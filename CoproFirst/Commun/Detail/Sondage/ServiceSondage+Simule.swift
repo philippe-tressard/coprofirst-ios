@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// La fiche d'un sondage sur l'API simulée : les fiches de `FixturesSondage`, que les
 /// gestes changent comme le serveur (`participation.py`) — le vote compte, sa précision
 /// rejoint les réponses libres, son commentaire rejoint les commentaires.
@@ -82,3 +83,4 @@ extension ServiceSimule: ServiceSondage {
             estCs: false, peutSupprimer: true)
     }
 }
+#endif

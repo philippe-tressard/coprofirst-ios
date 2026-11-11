@@ -62,7 +62,7 @@ struct ReglementView: View {
             },
             squelette: {
                 let etat = EtatReglement(disponible: true, texteDisponible: true)
-                contenu(etat: etat, questions: [ServiceSimule.question])
+                contenu(etat: etat, questions: [Apercu.question])
                     .padding(Mise.marge)
             }
         )

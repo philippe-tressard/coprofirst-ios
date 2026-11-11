@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Ce que l'API simulée sert à « Maintenance » — en JSON, à la forme des routes : la
 /// santé (non typée par le contrat, `ReponseNonTypee`) et le dernier export (typé, jugé
 /// contre son schéma).
@@ -65,3 +66,4 @@ enum FixturesMaintenance {
         DernierExport(try Relecture.generee(Components.Schemas.DernierExport.self, json: dernier))
     }
 }
+#endif

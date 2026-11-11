@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Prestataires » simulé : des entreprises inventées, aucun nom de personne, des
 /// numéros de la plage réservée à la fiction (01 99 00 …), des adresses `exemple.fr`.
 extension ServiceSimule: ServicePrestataires {
@@ -102,3 +103,4 @@ enum PrestatairesSimules {
         Equipement(code: "facade", libelle: "Façades", ordre: 3),
     ]
 }
+#endif

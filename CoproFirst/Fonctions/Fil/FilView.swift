@@ -78,6 +78,8 @@ struct FilView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             if !reseau.enLigne { BandeauHorsLigne() }
         }
+        // Demandé fil déjà chargé : une notification touchée, l'app ouverte (#17).
+        .onChange(of: parcours.aOuvrir) { if phase == .pret { ouvrirDemande() } }
         .task {
             await charger()
             ouvrirDemande()
@@ -89,7 +91,7 @@ struct FilView: View {
         // Des identifiants à part : partagés avec les vrais éléments, SwiftUI
         // réutilisait les vues du squelette — encore grisées une fois le fil chargé.
         ForEach(0..<3, id: \.self) { rang in
-            CarteDuFil(element: ServiceSimule.fil[rang]).padding(.horizontal, Mise.marge)
+            CarteDuFil(element: Apercu.fil[rang]).padding(.horizontal, Mise.marge)
         }
         .redacted(reason: .placeholder)
         .accessibilityHidden(true)
