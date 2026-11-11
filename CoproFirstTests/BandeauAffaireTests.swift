@@ -16,7 +16,7 @@ struct BandeauAffaireTests {
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "T", description: "", categorie: categorie, statut: "en_cours",
-            urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [], droits: droits,
+            urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [], droits: droits,
             archivee: archivee, fusionnee: fusionnee)
     }
 

@@ -28,6 +28,8 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     /// Les natures de l'affaire que porte la carte (`meta.affaire.natures`, dérivées par
     /// le serveur) ; vide pour une rubrique qui n'en a pas — `NatureDeLaCarte` (#78).
     var natures: [String] = []
+    /// Ses photos et documents (`meta.photos_urls`, `meta.fichiers_urls`), comme le site les lit.
+    var pieces: PiecesJointes = .aucune
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 

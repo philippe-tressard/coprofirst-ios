@@ -6,10 +6,16 @@ import OpenAPIRuntime
 
 /// Ce que l'app relit de `meta.affaire` d'un élément du fil — la ligne de pastilles
 /// d'une affaire (`flux/commun.pastilles_affaire`) : ses dates et son délai (`EcheanceDuFil`,
-/// #75), ses natures (`NatureDeLaCarte`, #78). `meta` est un dictionnaire libre du contrat,
+/// #75), ses natures (`NatureDeLaCarte`, #78) — et les pièces jointes de l'élément. `meta` est un dictionnaire libre du contrat,
 /// donc relu (`Relecture`) ; une lecture, deux usages.
 struct MetaDuFil: Decodable {
     let affaire: AffaireServie?
+    /// Les pièces jointes de l'élément (`meta.photos_urls`, `meta.fichiers_urls`), que la
+    /// carte signale (`VignettePieces`) et que le résumé montre (`PiecesJointesView`).
+    let photosUrls: [String]?
+    let fichiersUrls: [String]?
+
+    var pieces: PiecesJointes { PiecesJointes(urls: (photosUrls ?? []) + (fichiersUrls ?? [])) }
 
     struct AffaireServie: Decodable {
         let debut: String?

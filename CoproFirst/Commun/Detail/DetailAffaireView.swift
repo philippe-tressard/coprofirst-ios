@@ -4,7 +4,7 @@
 import SwiftUI
 
 /// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
-/// Actualité : en-tête, description, photos, Historique, le fil des messages (pas sur
+/// Actualité : en-tête, description, pièces jointes, Historique, le fil des messages (pas sur
 /// une actualité), et le bandeau de ses gestes (`BandeauAffaire`), selon ce que le
 /// serveur ouvre au lecteur.
 struct DetailAffaireView: View {
@@ -36,7 +36,7 @@ struct DetailAffaireView: View {
         id: 0, numero: "A-0000", titre: "Une affaire de la résidence qui se charge",
         description: String(repeating: "Le détail de l'affaire arrive. ", count: 5), categorie: "",
         statut: "ouvert", urgente: false, creeLe: .now, auteur: "Le conseil syndical", lieu: "Bâtiment",
-        photos: [], suites: [])
+        suites: [])
 }
 
 private struct ContenuAffaire: View {
@@ -55,10 +55,8 @@ private struct ContenuAffaire: View {
                     .tint(palette.primary)
                     .textSelection(.enabled)
                     .fixedSize(horizontal: false, vertical: true)
-                if !affaire.photos.isEmpty {
-                    GaleriePhotos(chemins: affaire.photos, installation: installation)
-                }
-                Historique(suites: affaire.suites)
+                PiecesJointesView(pieces: affaire.pieces, installation: installation)
+                Historique(suites: affaire.suites, installation: installation)
                 // Pas de messages sur une actualité : elle informe, on n'y répond pas.
                 if !affaire.estActualite {
                     FilMessagesAffaire(messages: affaire.messages, installation: installation)
@@ -131,6 +129,7 @@ private struct EnTeteAffaire: View {
 /// L'Historique, dans l'ordre : ce qui a été écrit, et ce qui a changé d'état.
 private struct Historique: View {
     let suites: [SuiteAffaire]
+    let installation: Installation
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -145,32 +144,46 @@ private struct Historique: View {
             }
             ForEach(suites) { suite in
                 Carte {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(suite.auteur ?? "La résidence")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(palette.text)
-                            Spacer(minLength: 8)
-                            Text(suite.date, format: .relative(presentation: .named))
-                                .font(.caption)
-                                .foregroundStyle(palette.textMuted)
-                        }
-                        if let changement = suite.changementDEtat {
-                            Label(changement, systemImage: "arrow.triangle.2.circlepath")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(palette.primary)
-                        }
-                        if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
-                            contenu
-                                .font(.body)
-                                .foregroundStyle(palette.text)
-                                .tint(palette.primary)
-                                .textSelection(.enabled)
-                        }
+                    VStack(alignment: .leading, spacing: 10) {
+                        EntreeHistorique(suite: suite)
+                        // Hors de l'élément lu d'un trait : chaque pièce s'ouvre à part.
+                        PiecesJointesView(pieces: suite.pieces, installation: installation, format: .compact)
                     }
                 }
-                .accessibilityElement(children: .combine)
             }
         }
+    }
+}
+
+/// Ce qu'une suite dit : son auteur, sa date, le changement d'état, son texte — lu d'un trait.
+private struct EntreeHistorique: View {
+    let suite: SuiteAffaire
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(suite.auteur ?? "La résidence")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(palette.text)
+                Spacer(minLength: 8)
+                Text(suite.date, format: .relative(presentation: .named))
+                    .font(.caption)
+                    .foregroundStyle(palette.textMuted)
+            }
+            if let changement = suite.changementDEtat {
+                Label(changement, systemImage: "arrow.triangle.2.circlepath")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(palette.primary)
+            }
+            if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
+                contenu
+                    .font(.body)
+                    .foregroundStyle(palette.text)
+                    .tint(palette.primary)
+                    .textSelection(.enabled)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }

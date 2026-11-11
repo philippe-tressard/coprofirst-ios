@@ -15,7 +15,7 @@ struct ModifierAffaireTests {
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "Fuite", description: description, categorie: "sinistre",
-            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [],
+            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [],
             perimetres: perimetres)
     }
 

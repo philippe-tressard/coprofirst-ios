@@ -165,6 +165,7 @@ final class SessionsParHote: @unchecked Sendable {
 extension ElementDuFil {
     init(item: Components.Schemas.FluxItem) {
         let meta = item.meta?.additionalProperties.value ?? [:]
+        let lu = MetaDuFil(meta: item.meta?.additionalProperties)
         // Un nombre JSON peut arriver entier ou flottant selon le décodeur.
         func entier(_ cle: String) -> Int? {
             (meta[cle] as? Int) ?? (meta[cle] as? Double).map { Int($0) }
@@ -186,7 +187,8 @@ extension ElementDuFil {
                     fichierNom: meta["fichier_nom"] as? String),
                 lien: item.lien),
             echeance: EcheanceDuFil(meta: item.meta?.additionalProperties),
-            natures: MetaDuFil(meta: item.meta?.additionalProperties)?.affaire?.natures ?? []
+            natures: lu?.affaire?.natures ?? [],
+            pieces: lu?.pieces ?? .aucune
         )
     }
 }

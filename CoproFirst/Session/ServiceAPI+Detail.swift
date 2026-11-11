@@ -102,9 +102,9 @@ extension ServiceAPI {
         }
     }
 
-    /// Une photo de `/uploads/` n'est pas une route de l'API : un fichier derrière la
-    /// session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
-    func photo(_ chemin: String, dans installation: Installation) async throws -> Data {
+    /// Un fichier de `/uploads/` (photo, pièce jointe) n'est pas une route de l'API : il est
+    /// derrière la session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
+    func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data {
         guard let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteURL,
             adresse.host() == installation.adresse.host()
         else { throw ErreurService.inattendue(400) }
@@ -162,7 +162,7 @@ extension DetailAffaire {
             // déduit pas de la priorité.
             urgente: ticket.urgente, creeLe: ticket.creeLe,
             auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: ticket.lieuServi,
-            photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
+            pieces: PiecesJointes(urls: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? [])),
             suites: suites,
             droits: DroitsServisAffaire(
                 repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
@@ -178,6 +178,6 @@ extension SuiteAffaire {
             id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
-            photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
+            pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []))
     }
 }

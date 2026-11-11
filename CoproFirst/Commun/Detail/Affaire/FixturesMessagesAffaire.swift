@@ -23,7 +23,7 @@ enum FixturesMessagesAffaire {
         [
           {"id": 501, "ticket_id": 41, "auteur_id": 7, "auteur_qualite": null,
            "contenu": "<p>Ça goutte encore ce soir, le seau est presque plein.</p>", "interne": false,
-           "cree_le": "2026-11-09T19:40:00", "fichiers_urls": []},
+           "cree_le": "2026-11-09T19:40:00", "fichiers_urls": ["/uploads/tickets/41-seau.jpg"]},
           {"id": 502, "ticket_id": 41, "auteur_id": 1, "auteur_qualite": "Le conseil syndical",
            "contenu": "<p>Merci, nous le vidons ce soir. Le plombier passe <strong>demain matin</strong>.</p>",
            "interne": false, "cree_le": "2026-11-09T20:05:00", "fichiers_urls": []},

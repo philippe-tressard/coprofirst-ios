@@ -18,8 +18,8 @@ struct DetailAffaire: Hashable, Sendable {
     /// Le lieu lisible que le serveur SERT (`perimetre_libelle`) ; `nil` pour le périmètre
     /// par défaut, qu'il tait.
     var lieu: String?
-    /// Les chemins des photos (`/uploads/…`), servis derrière la session.
-    let photos: [String]
+    /// Ses photos et documents (`photos_urls`, `fichiers_urls`), servis derrière la session.
+    var pieces: PiecesJointes = .aucune
     var suites: [SuiteAffaire]
     /// Le fil des messages (`TicketMessage`), sous l'Historique — vide sur une actualité.
     var messages: [MessageAffaire] = []
@@ -45,7 +45,8 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let contenu: String?
     let ancienStatut: String?
     let nouveauStatut: String?
-    let photos: [String]
+    /// Ce qu'elle joint (`fichiers_urls`) : photos et documents.
+    var pieces: PiecesJointes = .aucune
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état.
     var changementDEtat: String? {

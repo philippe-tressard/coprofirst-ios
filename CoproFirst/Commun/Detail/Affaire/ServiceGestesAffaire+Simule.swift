@@ -22,11 +22,11 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.messages.append(
                 MessageAffaire(
                     id: (detail.messages.map(\.id).max() ?? 500) + 1, contenu: contenu, date: .now, deMoi: true,
-                    qualite: nil, interne: false, photos: []))
+                    qualite: nil, interne: false, pieces: .aucune))
             detail.suites.append(
                 SuiteAffaire(
                     id: (detail.suites.map(\.id).max() ?? 0) + 1, type: "reponse", date: .now,
-                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil, photos: []))
+                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil))
         }
     }
 
@@ -40,7 +40,7 @@ extension ServiceSimule: ServiceGestesAffaire {
                     auteur: "Le conseil syndical",
                     contenu: suite.texte.isEmpty ? nil : TexteDuSite.html(saisi: suite.texte),
                     ancienStatut: suite.changeEtat ? detail.statut : nil,
-                    nouveauStatut: suite.changeEtat ? suite.statut : nil, photos: []))
+                    nouveauStatut: suite.changeEtat ? suite.statut : nil))
             detail.statut = suite.statut
         }
     }
