@@ -264,7 +264,7 @@ révision : le contrôle échoue jusqu'à la relecture (au poste, après `swift 
 | `swift-openapi-runtime` | `b9ebb3f06f1dac717156a04f0919ad444cbcf8f5` | embarqué | `Sources/OpenAPIRuntime` | aucune API à raison requise |
 | `swift-openapi-urlsession` | `c97e0f0187d95542b4a254f5bb4dc67f43bf73c9` | embarqué | `Sources/OpenAPIURLSession` | aucune API à raison requise |
 | `swift-http-types` | `bff4b6903cdc99dda49649dd52f46c11cfd3ed50` | embarqué | `Sources/HTTPTypes` | aucune API à raison requise |
-| `swift-collections` | `f96b909e1a9e469620bc5037c1e24e00153f376f` | embarqué | `Sources/DequeModule` `Sources/InternalCollectionsUtilities` | aucune ; seul `DequeModule` est lié (transport) |
+| `swift-collections` | `f96b909e1a9e469620bc5037c1e24e00153f376f` | embarqué | `Sources/DequeModule` `Sources/InternalCollectionsUtilities` `Sources/SpanPreview` | aucune ; seuls `DequeModule` et ses deux modules internes sont liés (transport) — lu dans les produits du build, 11/11/2026 |
 | `swift-openapi-generator` | `fbf4512ebc69ccbca33aa3c5fa4393887e687b76` | outil | — | greffon de build ; le client qu'il génère est relu quand il est construit |
 | `openapikit` | `5b72eb9a6b23b1fec439d9a0bf38f115400421f9` | outil | — | dépendance du générateur |
 | `yams` | `a27b21e0c81c5bf42049b897a62aaf387e80f279` | outil | — | dépendance du générateur |

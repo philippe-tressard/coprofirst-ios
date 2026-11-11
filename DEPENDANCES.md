@@ -15,7 +15,7 @@ Inventaire figé (`standards/14` §6.3) : relu à chaque ajout. Versions exactes
 | apple/swift-openapi-runtime | 1.13.4 | Apache-2.0 | types du client généré |
 | apple/swift-openapi-urlsession | 1.4.0 | Apache-2.0 | transport HTTP (URLSession) |
 | apple/swift-http-types | transitive | Apache-2.0 | requêtes et réponses HTTP |
-| apple/swift-collections (`DequeModule` seul) | transitive | Apache-2.0 | file du transport HTTP (dépendance de swift-openapi-urlsession) |
+| apple/swift-collections (`DequeModule` et ses modules internes, seuls) | transitive | Apache-2.0 | file du transport HTTP (dépendance de swift-openapi-urlsession) |
 | Lucide (tracés, via `icones-svg.json` de coprofirst) | celle du plancher | ISC, MIT (part issue de Feather) | pictogrammes de la gouttière du fil (`Pictogrammes.xcassets`, généré) |
 
 ISC et MIT n'exigent que l'avis de copyright et de licence avec chaque copie : leurs
