@@ -15,7 +15,7 @@ final class RetourUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "retour"]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5), "le fil")
+        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].apparait(), "le fil")
         XCTAssertFalse(element(app, "accueil.demo").exists, "ni l'accueil ni la démo")
     }
 
@@ -24,13 +24,13 @@ final class RetourUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "retour", "-faceid-refuse"]
         app.launch()
-        XCTAssertTrue(element(app, "retour.ouvrir").waitForExistence(timeout: 5), "Face ID se redemande d'un toucher")
+        XCTAssertTrue(element(app, "retour.ouvrir").apparait(), "Face ID se redemande d'un toucher")
         XCTAssertTrue(element(app, "retour.residence").exists, "la résidence, pas l'accueil")
         XCTAssertFalse(element(app, "accueil.demo").exists)
 
         element(app, "retour.motDePasse").tap()
         let email = element(app, "connexion.email")
-        XCTAssertTrue(email.waitForExistence(timeout: 5))
+        XCTAssertTrue(email.apparait())
         XCTAssertEqual(email.value as? String, "resident@exemple.fr", "le courriel retenu")
         XCTAssertEqual(element(app, "connexion.residence").value as? String, "tilleuls.exemple.fr")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "rien ne s'est ouvert par Face ID")
@@ -42,7 +42,7 @@ final class RetourUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "retour-mot-de-passe"]
         app.launch()
         let email = element(app, "connexion.email")
-        XCTAssertTrue(email.waitForExistence(timeout: 5), "la connexion d'emblée")
+        XCTAssertTrue(email.apparait(), "la connexion d'emblée")
         XCTAssertEqual(email.value as? String, "resident@exemple.fr", "le courriel retenu")
         XCTAssertFalse(element(app, "accueil.demo").exists, "ni l'accueil ni la démo")
 
@@ -50,6 +50,6 @@ final class RetourUITests: XCTestCase {
         // Le curseur attend dans le mot de passe : on tape sans toucher le champ.
         XCTAssertTrue(motDePasse.attendre("hasKeyboardFocus == true"), "le curseur attend dans le mot de passe")
         motDePasse.typeText("secret\n")
-        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5), "le fil")
+        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].apparait(), "le fil")
     }
 }

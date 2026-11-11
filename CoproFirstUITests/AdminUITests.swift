@@ -16,7 +16,7 @@ final class AdminUITests: XCTestCase {
     func testLeParametrageDeLAdministrateur() throws {
         let app = ouvrirLeParametrage(["-compte", "administrateur"])
         let aTraiter = app.elementAcces("onglet.a_traiter")
-        XCTAssertTrue(aTraiter.waitForExistence(timeout: 5), "la barre d'onglets")
+        XCTAssertTrue(aTraiter.apparait(), "la barre d'onglets")
         for id in ["utilisateurs", "telemetry", "maintenance", "sur-le-site"] {
             XCTAssertTrue(app.elementAcces("onglet.\(id)").exists, "l'onglet \(id)")
         }
@@ -24,11 +24,11 @@ final class AdminUITests: XCTestCase {
 
         // À traiter : la file du conseil, puis une demande de profil approuvée.
         let demande = app.elementAcces("admin.demande.41")
-        for _ in 0..<8 where !demande.waitForExistence(timeout: 1) || !demande.isHittable { app.swipeUp() }
+        for _ in 0..<8 where !demande.sonde() || !demande.isHittable { app.swipeUp() }
         XCTAssertTrue(demande.exists, "les demandes de profil")
         LancementCaptures.capturer("admin-1-a-traiter")
         app.elementAcces("admin.demande.41.approuver").tap()
-        XCTAssertTrue(demande.waitForNonExistence(timeout: 5), "la demande quitte la file")
+        XCTAssertTrue(demande.disparait(), "la demande quitte la file")
 
         lesUtilisateurs(app)
         laTelemetrie(app)
@@ -40,7 +40,7 @@ final class AdminUITests: XCTestCase {
     func testLaMaintenanceDeLOperateur() throws {
         let app = ouvrirLeParametrage(["-compte", "operateur"])
         let maintenance = app.elementAcces("onglet.maintenance")
-        XCTAssertTrue(maintenance.waitForExistence(timeout: 5), "la barre d'onglets")
+        XCTAssertTrue(maintenance.apparait(), "la barre d'onglets")
         XCTAssertFalse(app.elementAcces("onglet.a_traiter").exists, "l'opérateur n'a que l'Exploitation")
         XCTAssertFalse(app.elementAcces("onglet.utilisateurs").exists)
         laMaintenance(app, operateur: true)
@@ -53,16 +53,16 @@ final class AdminUITests: XCTestCase {
     private func lesUtilisateurs(_ app: XCUIApplication) {
         toucherLOnglet("utilisateurs", app)
         let camille = app.elementAcces("admin.utilisateur.11")
-        XCTAssertTrue(camille.waitForExistence(timeout: 5), "la liste des comptes")
+        XCTAssertTrue(camille.apparait(), "la liste des comptes")
         LancementCaptures.capturer("admin-2-utilisateurs")
         let recherche = app.elementAcces("admin.utilisateurs.recherche")
         recherche.tap()
         recherche.typeText("dominique")
         let dominique = app.elementAcces("admin.utilisateur.12")
-        XCTAssertTrue(dominique.waitForExistence(timeout: 3))
+        XCTAssertTrue(dominique.apparait())
         XCTAssertFalse(camille.exists, "la recherche filtre")
         dominique.tap()
-        XCTAssertTrue(app.elementAcces("admin.fiche.fermer").waitForExistence(timeout: 3), "la fiche")
+        XCTAssertTrue(app.elementAcces("admin.fiche.fermer").apparait(), "la fiche")
         LancementCaptures.capturer("admin-3-fiche")
         // Les gestes sont au bas du formulaire, dont les cellules naissent au défilement.
         let communaute = app.elementAcces("admin.fiche.communaute")
@@ -72,7 +72,7 @@ final class AdminUITests: XCTestCase {
         XCTAssertTrue(communaute.exists, "l'administrateur peut interdire la communauté")
         LancementCaptures.capturer("admin-3-fiche-gestes")
         communaute.tap()
-        XCTAssertTrue(communaute.waitForNonExistence(timeout: 5), "le geste ferme la fiche")
+        XCTAssertTrue(communaute.disparait(), "le geste ferme la fiche")
         lesGestesDeRole(app)
     }
 
@@ -84,7 +84,7 @@ final class AdminUITests: XCTestCase {
         recherche.tap()
         recherche.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "alix")
         let alix = app.elementAcces("admin.utilisateur.13")
-        XCTAssertTrue(alix.waitForExistence(timeout: 3))
+        XCTAssertTrue(alix.apparait())
         alix.tap()
         let ajouterCS = app.elementAcces("admin.fiche.role.conseil_syndical")
         for _ in 0..<6 where !ajouterCS.exists { app.swipeUp() }
@@ -93,19 +93,19 @@ final class AdminUITests: XCTestCase {
         LancementCaptures.capturer("admin-3-fiche-roles")
         ajouterCS.tap()
         let confirmer = app.buttons["Confirmer"].firstMatch
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "la confirmation du geste")
+        XCTAssertTrue(confirmer.apparait(), "la confirmation du geste")
         confirmer.tap()
-        XCTAssertTrue(ajouterCS.waitForNonExistence(timeout: 5), "le geste ferme la fiche")
+        XCTAssertTrue(ajouterCS.disparait(), "le geste ferme la fiche")
     }
 
     @MainActor
     private func laTelemetrie(_ app: XCUIApplication) {
         toucherLOnglet("telemetry", app)
-        XCTAssertTrue(app.elementAcces("admin.telemetrie.indicateurs").waitForExistence(timeout: 5), "les nombres clés")
+        XCTAssertTrue(app.elementAcces("admin.telemetrie.indicateurs").apparait(), "les nombres clés")
         XCTAssertTrue(app.elementAcces("admin.telemetrie.filtre").exists, "le filtre que le serveur propose")
         LancementCaptures.capturer("admin-4-telemetrie-jour")
         app.elementAcces("admin.telemetrie.vue.annee").tap()
-        XCTAssertTrue(app.elementAcces("admin.telemetrie.graphe").waitForExistence(timeout: 5), "le graphe")
+        XCTAssertTrue(app.elementAcces("admin.telemetrie.graphe").apparait(), "le graphe")
         XCTAssertFalse(app.elementAcces("admin.telemetrie.filtre").exists, "rien à écarter sur douze mois")
         LancementCaptures.capturer("admin-5-telemetrie-annee")
     }
@@ -116,11 +116,11 @@ final class AdminUITests: XCTestCase {
     private func laMaintenance(_ app: XCUIApplication, operateur: Bool) {
         toucherLOnglet("maintenance", app)
         if operateur {
-            XCTAssertTrue(app.elementAcces("admin.tache.backup").waitForExistence(timeout: 5), "la santé des tâches")
+            XCTAssertTrue(app.elementAcces("admin.tache.backup").apparait(), "la santé des tâches")
             XCTAssertFalse(app.elementAcces("admin.maintenance.export").exists)
             LancementCaptures.capturer("admin-6-maintenance-operateur")
         } else {
-            XCTAssertTrue(app.elementAcces("admin.maintenance.export").waitForExistence(timeout: 5), "l'export")
+            XCTAssertTrue(app.elementAcces("admin.maintenance.export").apparait(), "l'export")
             XCTAssertFalse(app.elementAcces("admin.tache.backup").exists, "la supervision est à l'opérateur")
             LancementCaptures.capturer("admin-6-maintenance-administrateur")
         }
@@ -130,7 +130,7 @@ final class AdminUITests: XCTestCase {
     private func surLeSite(_ app: XCUIApplication, attendus: [String]) {
         toucherLOnglet("sur-le-site", app)
         for id in attendus {
-            XCTAssertTrue(app.elementAcces("site.onglet.\(id)").waitForExistence(timeout: 3), "le lien vers \(id)")
+            XCTAssertTrue(app.elementAcces("site.onglet.\(id)").apparait(), "le lien vers \(id)")
         }
         LancementCaptures.capturer("admin-7-sur-le-site")
     }
@@ -141,10 +141,10 @@ final class AdminUITests: XCTestCase {
     private func ouvrirLeParametrage(_ arguments: [String]) -> XCUIApplication {
         let app = LancementCaptures.lancer(arguments: arguments)
         let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.waitForExistence(timeout: 8))
+        XCTAssertTrue(plus.apparait())
         plus.tap()
         let admin = app.libelleAcces("Admin")
-        for _ in 0..<6 where !admin.waitForExistence(timeout: 1) || !admin.isHittable { app.swipeUp() }
+        for _ in 0..<6 where !admin.sonde() || !admin.isHittable { app.swipeUp() }
         admin.tap()
         return app
     }

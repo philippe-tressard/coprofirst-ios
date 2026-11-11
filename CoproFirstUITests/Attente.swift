@@ -12,9 +12,31 @@ enum Attente {
     /// la main dès que l'état est là : un plafond large ne ralentit pas un test vert,
     /// il ne coûte qu'à un test rouge.
     static let plafond: TimeInterval = 30
+
+    /// Le délai d'une SONDE : l'élément est-il déjà là ? Pour ce qui peut légitimement
+    /// manquer — une boucle qui fait défiler jusqu'à lui, un chemin facultatif, une
+    /// absence à prouver une fois l'écran posé. Jamais pour affirmer une présence :
+    /// une sonde qui échoue n'est pas un défaut de l'app (#147).
+    static let sonde: TimeInterval = 2
 }
 
 extension XCUIElement {
+    /// L'élément existe, au plus tard au plafond commun. Les seules attentes d'existence
+    /// des tests sont ces trois-là : `scripts/verifier-depot.sh` refuse tout délai écrit
+    /// sur place — 8 s n'ont pas suffi à la feuille des notifications sur un runner
+    /// chargé, et `main` en est sorti rouge sans que l'app ait tort (#147).
+    @MainActor
+    func apparait() -> Bool { waitForExistence(timeout: Attente.plafond) }
+
+    /// L'élément n'existe plus, au plus tard au plafond commun.
+    @MainActor
+    func disparait() -> Bool { waitForNonExistence(timeout: Attente.plafond) }
+
+    /// L'élément est-il là dans le délai d'une sonde (`Attente.sonde`) ? Le résultat se
+    /// LIT (boucle, chemin facultatif, absence) ; il ne s'affirme pas par `XCTAssertTrue`.
+    @MainActor
+    func sonde() -> Bool { waitForExistence(timeout: Attente.sonde) }
+
     /// L'élément est dans l'état `condition` — un format de `NSPredicate`, par exemple
     /// « hasKeyboardFocus == true » — au plus tard au plafond commun. La seule attente
     /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont

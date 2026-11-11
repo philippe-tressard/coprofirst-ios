@@ -17,35 +17,35 @@ final class PrestatairesUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
         let barre = app.tabBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.apparait())
         barre.buttons["Plus"].tap()
         app.libelleAcces("Prestataires").tap()
-        XCTAssertTrue(app.navigationBars["Prestataires"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Prestataires"].apparait())
 
         let fiche = app.elementAcces("prestataire.1")
-        XCTAssertTrue(fiche.waitForExistence(timeout: 5), "les fiches")
+        XCTAssertTrue(fiche.apparait(), "les fiches")
         app.capturerAcces("prestataires-1-liste", dans: self)
         fiche.tap()
-        XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (2)").waitForExistence(timeout: 3), "la fiche dépliée")
+        XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (2)").apparait(), "la fiche dépliée")
         app.capturerAcces("prestataires-2-fiche", dans: self)
 
         let recherche = app.elementAcces("prestataires.recherche")
         recherche.tap()
         recherche.typeText("incendie controles")
-        XCTAssertTrue(app.elementAcces("prestataire.2").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.elementAcces("prestataire.2").apparait())
         XCTAssertFalse(app.elementAcces("prestataire.1").exists, "la recherche filtre, sans accents ni ordre")
         recherche.typeText(XCUIKeyboardKey.delete.rawValue)
 
         app.elementAcces("onglet.contrats").tap()
         let contrat = app.elementAcces("contrat.1")
-        XCTAssertTrue(contrat.waitForExistence(timeout: 5), "les contrats")
+        XCTAssertTrue(contrat.apparait(), "les contrats")
         contrat.tap()
-        XCTAssertTrue(app.libelleAcces("Le contrat").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.libelleAcces("Le contrat").apparait())
         app.capturerAcces("prestataires-3-contrats", dans: self)
 
         app.elementAcces("onglet.consommations").tap()
         // « 47 047 » : l'espace fine insécable de `fmtNombre`.
-        XCTAssertTrue(app.libelleAcces("Index 47").waitForExistence(timeout: 5), "les relevés")
+        XCTAssertTrue(app.libelleAcces("Index 47").apparait(), "les relevés")
         app.capturerAcces("prestataires-4-consommations", dans: self)
     }
 }
