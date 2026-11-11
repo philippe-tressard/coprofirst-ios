@@ -75,6 +75,19 @@ final class EtatUtilisateursAdmin {
             ? TextesUtilisateursAdmin.banniDefinitivement(nom) : TextesUtilisateursAdmin.banniUnMois(nom)
     }
 
+    /// Un geste de rôle servi, puis la LISTE relue : les gestes d'un compte dépendent des
+    /// autres (un rôle ne se retire jamais à son dernier titulaire, `gestes_roles`).
+    func changerRole(
+        _ utilisateur: UtilisateurAdmin, _ offert: GesteDeRole, _ service: any ServiceUtilisateursAdmin,
+        _ installation: Installation
+    ) async throws -> String {
+        enCours = utilisateur.id
+        defer { enCours = nil }
+        try await service.changerRole(utilisateur.id, role: offert.role, geste: offert.geste, dans: installation)
+        await charger(service, installation)
+        return TextesUtilisateursAdmin.roleChange(offert, FormatsDuSite.nom(utilisateur.prenom, utilisateur.nom))
+    }
+
     func relancerRapprochement(
         _ utilisateur: UtilisateurAdmin, _ service: any ServiceUtilisateursAdmin, _ installation: Installation
     ) async throws -> PhraseAvis {
@@ -143,12 +156,39 @@ enum TextesUtilisateursAdmin {
     }
     static let surLeSite =
         "Modifier la fiche, ajouter ou retirer un rôle et l'accueil d'un arrivant se font sur le site."
+    /// Quand l'installation sert les gestes de rôle (contrat 1.18.0) : ils sont ici.
+    static let surLeSiteSansRoles = "Modifier la fiche et l'accueil d'un arrivant se font sur le site."
+
+    // Les gestes de rôle (`GestesRolesCompte.svelte`, `OngletUtilisateurs.svelte`)
+    static let gestesRoles = "Rôles"
+    /// Le nom d'un rôle sur son bouton : « CS » pour le conseil syndical, comme le site,
+    /// son libellé (`RolesUtilisateur`, généré) pour les autres.
+    static func roleCourt(_ role: String) -> String {
+        role == "conseil_syndical" ? "CS" : RolesUtilisateur.libelleRole(role)
+    }
+    /// « + CS », « – Admin » : le tiret demi-cadratin du site.
+    static func bouton(_ offert: GesteDeRole) -> String {
+        (offert.geste == .ajouter ? "+ " : "– ") + roleCourt(offert.role)
+    }
+    /// « Ajouter le rôle Admin » — ce que VoiceOver lit du bouton, et le début de sa question.
+    static func actionRole(_ offert: GesteDeRole) -> String {
+        "\(offert.geste == .ajouter ? "Ajouter" : "Retirer") le rôle \(RolesUtilisateur.libelleRole(offert.role))"
+    }
+    static func confirmerRole(_ offert: GesteDeRole, _ nom: String) -> String {
+        "\(actionRole(offert)) \(offert.geste == .ajouter ? "à" : "de") \(nom) ?"
+    }
+    static let notifie = "Cette personne recevra une notification."
+    static let confirmer = "Confirmer"
 
     // Les annonces
     static func banniDefinitivement(_ nom: String) -> String { "\(nom) banni définitivement de la communauté." }
     static func banniUnMois(_ nom: String) -> String { "\(nom) banni de la communauté pour 1 mois (probatoire)." }
     static func reautorise(_ nom: String) -> String { "\(nom) réautorisé à la communauté." }
     static func supprime(_ nom: String) -> String { "\(nom) supprimé." }
+    static func roleChange(_ offert: GesteDeRole, _ nom: String) -> String {
+        let role = RolesUtilisateur.libelleRole(offert.role)
+        return offert.geste == .ajouter ? "Rôle \(role) ajouté à \(nom)." : "Rôle \(role) retiré de \(nom)."
+    }
 
     /// Les rattachements d'un compte (`ETIQUETTES_COMPTE`), dans l'ordre du site.
     static let etiquettesCompte: [EtiquetteCompte] = [

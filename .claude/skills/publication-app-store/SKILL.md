@@ -41,8 +41,8 @@ fait après le « oui ».
 | Identifiant d'app | `fr.coprofirst.app` — **figé** le 01/11/2026 : c'est un contrat (liens universels `GUX8KASNTG.fr.coprofirst.app`, APNs, App Store Connect) |
 | Exception App Store de la licence | ✅ posée au premier commit (`LICENSES/LicenseRef-CoproFirst-AppStore.txt`) |
 | Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
-| Liens universels | bloqués par l'identifiant d'équipe Apple (coprofirst#2459) |
-| Push APNs | relais de la plateforme à spécifier (coprofirst#2458) |
+| Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; la liste des domaines et l'ouverture dans l'app : #18 |
+| Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive) ; le relais attend la clé `.p8`, créée par Philippe (coprofirst#2494) ; côté app : #17 |
 
 ## Ce qui reste un geste de Philippe
 

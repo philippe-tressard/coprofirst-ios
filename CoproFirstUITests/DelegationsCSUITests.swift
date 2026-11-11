@@ -88,6 +88,14 @@ final class DelegationsCSUITests: XCTestCase {
         let message = app.elementAcces("nouvelle-annonce-hall.message")
         message.tap()
         message.typeText("Intervention prévue lundi matin.")
+        // Le périmètre : une tête, puis l'un de ses espaces — « Bâtiment A › Toit ».
+        let batiment = app.elementAcces("nouvelle-annonce-hall.perimetre.bat_a")
+        for _ in 0..<4 where !batiment.isHittable { app.swipeUp() }
+        batiment.tap()
+        let toit = app.elementAcces("nouvelle-annonce-hall.perimetre.bat_a/toit")
+        XCTAssertTrue(toit.waitForExistence(timeout: 3), "les espaces du bâtiment A")
+        toit.tap()
+        XCTAssertEqual(batiment.label, "Bâtiment A › Toit", "la tête porte l'espace retenu")
         LancementCaptures.capturer("cs-annonces-hall-1-nouvelle")
         let creer = app.elementAcces("nouvelle-annonce-hall.creer")
         for _ in 0..<6 where !creer.isHittable { app.swipeUp() }
