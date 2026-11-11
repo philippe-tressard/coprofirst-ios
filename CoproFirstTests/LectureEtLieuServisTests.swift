@@ -13,13 +13,15 @@ import Testing
 // que le serveur sert — par le client généré puis le corps gardé (`CorpsServi`) —, et une
 // installation antérieure garde le rendu d'avant. Rien n'est recomposé ici.
 
-/// Un serveur qui sert un corps par route (`operationID`) ; 404 ailleurs.
+/// Un serveur qui sert un corps par chemin (sous `/api`, sans requête) ; 404 ailleurs.
 private struct TransportParRoute: ClientTransport {
     let corps: [String: String]
 
     func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
         -> (HTTPResponse, HTTPBody?) {
-        guard let servi = corps[operationID] else { return (HTTPResponse(status: .notFound), nil) }
+        let chemin = (request.path ?? "").split(separator: "?").first.map(String.init) ?? ""
+        let route = chemin.hasPrefix("/api") ? String(chemin.dropFirst(4)) : chemin
+        guard let servi = corps[route] else { return (HTTPResponse(status: .notFound), nil) }
         var reponse = HTTPResponse(status: .ok)
         reponse.headerFields[.contentType] = "application/json"
         return (reponse, HTTPBody(servi))
@@ -49,7 +51,7 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
 @Suite struct LectureServieTests {
     @Test func laListeDesAffairesLitLaPastilleServie() async throws {
         let corps = "[" + ticket(9, ", \"lecture\": " + lectureCS) + "," + ticket(10) + "]"
-        let affaires = try await service(["getTickets": corps]).affaires(residence)
+        let affaires = try await service(["/tickets": corps]).affaires(residence)
         let servie = try #require(affaires.first { $0.id == 9 }?.lecture)
         #expect(servie.court == "CS" && servie.icones == ["shield-check"])
         #expect(servie.enClair() == "Qui la lit : Conseil syndical seul. " + servie.phrase)
@@ -65,8 +67,8 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
              {"id": 3, "type": "commentaire", "cree_le": "2026-11-02T12:00:00", "ticket_id": 9}]
             """#
         let detail = try await service([
-            "getTicketsTicketId": ticket(9, ", \"lecture\": " + lectureCS),
-            "getTicketsTicketIdEvolutions": suites, "getTicketsTicketIdMessages": "[]",
+            "/tickets/9": ticket(9, ", \"lecture\": " + lectureCS),
+            "/tickets/9/evolutions": suites, "/tickets/9/messages": "[]",
         ]).affaire(9, dans: residence)
         #expect(detail.lecture?.cle == "cs")
         #expect(detail.lieu == "Bât. 2 › Toit")
@@ -122,7 +124,7 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
                   "lot_id": null, "lot_libelle": null, "perimetre_cible": ["bat_a"], "statut": "actif",
                   "chez_locataire": false, "cree_le": "2026-02-10T09:00:00"
                 """# + servi + "}]"
-            return try await service(["getAccesAdminVigiks": acces, "getAccesAdminTelecommandes": "[]"])
+            return try await service(["/acces/admin/vigiks": acces, "/acces/admin/telecommandes": "[]"])
                 .parc(residence).first
         }
         #expect(try await parc(#", "perimetre_libelle": "Bât. A › Hall""#)?.lieu(arbre: arbre) == "Bât. A › Hall")
