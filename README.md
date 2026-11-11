@@ -100,6 +100,11 @@ connues ont dépassé la nouvelle version : on change `_plancher.py` et on rég�
 (`python3 scripts/generer.py`) dans la même PR. `--version vX.Y.Z` ou `--derniere`
 permettent de voir ce qu'une montée changerait.
 
+Un champ qu'une installation plus récente sert déjà, au-dessus du plancher, se lit en
+tolérant son absence — l'écran garde alors son geste d'avant — et l'API simulée le
+déclare au juge (`AuDessusDuPlancher`) ; la méthode est dans la skill
+`swiftui-patterns`.
+
 **Concordance** (`scripts/concordance.py`) — deux verdicts, jamais confondus :
 
 - **écart au plancher** : ce qui est généré n'est plus ce que le plancher régénère,

@@ -73,6 +73,29 @@ final class AdminUITests: XCTestCase {
         LancementCaptures.capturer("admin-3-fiche-gestes")
         communaute.tap()
         XCTAssertTrue(communaute.waitForNonExistence(timeout: 5), "le geste ferme la fiche")
+        lesGestesDeRole(app)
+    }
+
+    /// Les gestes de rôle que le serveur sert (#89) : Alix, copropriétaire, peut recevoir
+    /// le conseil syndical ; le geste confirmé ferme la fiche.
+    @MainActor
+    private func lesGestesDeRole(_ app: XCUIApplication) {
+        let recherche = app.elementAcces("admin.utilisateurs.recherche")
+        recherche.tap()
+        recherche.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "alix")
+        let alix = app.elementAcces("admin.utilisateur.13")
+        XCTAssertTrue(alix.waitForExistence(timeout: 3))
+        alix.tap()
+        let ajouterCS = app.elementAcces("admin.fiche.role.conseil_syndical")
+        for _ in 0..<6 where !ajouterCS.exists { app.swipeUp() }
+        XCTAssertTrue(ajouterCS.exists, "« + CS », servi par le serveur")
+        XCTAssertFalse(app.elementAcces("admin.fiche.role.operateur").exists, "aucun geste non servi")
+        LancementCaptures.capturer("admin-3-fiche-roles")
+        ajouterCS.tap()
+        let confirmer = app.buttons["Confirmer"].firstMatch
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "la confirmation du geste")
+        confirmer.tap()
+        XCTAssertTrue(ajouterCS.waitForNonExistence(timeout: 5), "le geste ferme la fiche")
     }
 
     @MainActor

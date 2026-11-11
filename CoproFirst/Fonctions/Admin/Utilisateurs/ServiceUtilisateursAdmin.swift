@@ -5,14 +5,19 @@ import ClientAPI
 import Foundation
 
 /// Ce que l'onglet « Utilisateurs » demande à une installation (#16) : tous les comptes,
-/// et les gestes que l'app porte — interdire ou réautoriser la communauté, relancer le
-/// rapprochement des lots, supprimer. Modifier la fiche, les rôles et l'accueil d'un
-/// arrivant restent au site : qui peut recevoir ou perdre un rôle se décide dans le front
-/// du site, que l'app ne recopie pas (coprofirst#2618). Réalisé par `ServiceAPI` (client
-/// généré) et `ServiceSimule`.
+/// et les gestes que l'app porte — interdire ou réautoriser la communauté, donner ou
+/// retirer un rôle, relancer le rapprochement des lots, supprimer. Les gestes de rôle
+/// sont ceux que le SERVEUR sert avec chaque compte (`gestes_roles`, contrat 1.18.0,
+/// coprofirst#2618, #89) : l'app ne recompose pas la règle. Modifier la fiche et
+/// l'accueil d'un arrivant restent au site. Réalisé par `ServiceAPI` (client généré) et
+/// `ServiceSimule`.
 protocol ServiceUtilisateursAdmin: Sendable {
     /// GET /admin/utilisateurs (conseil et administration).
     func utilisateurs(_ installation: Installation) async throws -> [UtilisateurAdmin]
+    /// POST /admin/utilisateurs/{id}/ajouter-role | retirer-role (administration) — un
+    /// geste SERVI (`gestes_roles`) ; la liste se relit ensuite, les gestes d'un compte
+    /// dépendant des autres.
+    func changerRole(_ id: Int, role: String, geste: GesteRole, dans installation: Installation) async throws
     /// PATCH /admin/utilisateurs/{id}/ban-communaute (administration) — rend l'état servi.
     func bannirCommunaute(_ id: Int, interdit: Bool, dans installation: Installation) async throws -> BanCommunaute
     /// POST /admin/utilisateurs/{id}/auto-match (conseil et administration) — l'annonce
@@ -44,6 +49,9 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
     /// Loti, TC, Vigik, Bail : `ok`, `manque` ou `sans_objet`, par le serveur.
     var etiquettes: [String: String]
     var ban: BanCommunaute
+    /// Les gestes de rôle servis ; `nil` d'une installation antérieure au contrat 1.18.0,
+    /// qui ne les sert pas : les rôles se changent alors sur le site, comme avant.
+    var gestesRoles: [GesteDeRole]?
     /// Averti de sa suppression pour inactivité ; s'efface à la reconnexion.
     var purgeAvertieLe: Date?
     var derniereConnexion: Date?
@@ -54,14 +62,70 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
 struct BanCommunaute: Hashable, Sendable {
     var interdit: Bool
     var jusquAu: Date?
+    /// `communaute_banni` : exclu À CET INSTANT, jugé à l'heure du serveur (contrat
+    /// 1.18.0) ; `nil` d'une installation antérieure.
+    var banniServi: Bool?
 
-    /// Banni : pour de bon, ou jusqu'à une date encore à venir (la lecture du site).
+    /// Banni : ce que le serveur en dit ; à défaut (installation antérieure au contrat
+    /// 1.18.0), pour de bon ou jusqu'à une date encore à venir à l'heure du téléphone.
     func banni(maintenant: Date = .now) -> Bool {
-        interdit || (jusquAu.map { $0 > maintenant } ?? false)
+        banniServi ?? (interdit || (jusquAu.map { $0 > maintenant } ?? false))
+    }
+}
+
+/// Un geste de rôle, tel que le serveur le sert et que sa route le nomme.
+enum GesteRole: String, Hashable, Sendable {
+    case ajouter, retirer
+}
+
+/// Un geste de rôle offert sur un compte (`gestes_roles`, `utils/gestes_roles` du
+/// serveur) : le rôle, tel que la route le nomme, et ce qu'on peut en faire.
+struct GesteDeRole: Hashable, Sendable, Identifiable {
+    let role: String
+    let geste: GesteRole
+    var id: String { role }
+}
+
+/// Ce que GET /admin/utilisateurs (et la réponse `UserRead` d'un geste) sert au-dessus du
+/// plancher, relu par `Relecture.auDessusDuPlancher` : tout est facultatif.
+struct UtilisateurAuDessusDuPlancher: Decodable, Identifiable {
+    let id: Int
+    var gestesRoles: Gestes?
+    var communauteBanni: Bool?
+
+    struct Gestes: Decodable {
+        var conseilSyndical: String?
+        var admin: String?
+        var operateur: String?
+    }
+
+    /// Les gestes servis, dans l'ordre du site (`GestesRolesCompte.svelte`) ; une valeur
+    /// inconnue n'offre rien (défaut fermé).
+    var gestes: [GesteDeRole]? {
+        gestesRoles.map { lus in
+            let servis: [(String, String?)] = [
+                ("conseil_syndical", lus.conseilSyndical), ("admin", lus.admin), ("operateur", lus.operateur),
+            ]
+            return servis.compactMap { role, geste in
+                geste.flatMap(GesteRole.init).map { GesteDeRole(role: role, geste: $0) }
+            }
+        }
     }
 }
 
 extension UtilisateurAdmin {
+    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher
+    /// — le MÊME branchement pour le service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.UtilisateurAdminRead], corps: Data?) -> [UtilisateurAdmin] {
+        let auDessus = Relecture.auDessusDuPlancher(parLigne: UtilisateurAuDessusDuPlancher.self, corps: corps)
+        return generes.map { lu in
+            var compte = UtilisateurAdmin(lu)
+            compte.gestesRoles = auDessus[lu.id]?.gestes
+            compte.ban.banniServi = auDessus[lu.id]?.communauteBanni
+            return compte
+        }
+    }
+
     init(_ lu: Components.Schemas.UtilisateurAdminRead) {
         let roles = lu.roles ?? []
         self.init(
@@ -78,7 +142,11 @@ extension UtilisateurAdmin {
 }
 
 extension BanCommunaute {
-    init(_ lu: Components.Schemas.UserRead) {
-        self.init(interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu)
+    /// L'état que rend un geste (`UserRead`), avec `communaute_banni` s'il est servi.
+    init(_ lu: Components.Schemas.UserRead, corps: Data?) {
+        self.init(
+            interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu,
+            banniServi: Relecture.auDessusDuPlancher(UtilisateurAuDessusDuPlancher.self, corps: corps)?
+                .communauteBanni)
     }
 }
