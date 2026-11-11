@@ -34,7 +34,7 @@ extension Parcours {
         } else {
             guard decouvrir else { return false }
             changer(pour: nil)
-            chemin = [.connexion(Preremplissage(adresse: destination.adresse, depuisUnLien: true))]
+            chemin = [.connexion(Preremplissage(adresse: destination.adresse, origine: .lien))]
         }
         porte.enAttente = destination.ecran == .connexion ? nil : destination
         return true
