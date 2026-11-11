@@ -39,7 +39,10 @@
 #      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
 #      autotest d'abord, #84) ;
 #  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
-#      retiré ne revient (scripts/verifier-regles-servies.py, #83).
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83) ;
+#  17. la confidentialité déclarée est celle du code : manifeste embarqué, fiche de
+#      l'App Store et code concordent sur ce qui se mesure — API à raison requise,
+#      envois, modules, droits, paquets (scripts/verifier-confidentialite.py, #19).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -274,6 +277,13 @@ python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "ticket
 python3 -I scripts/verifier-simule.py --autotest >/dev/null || echec "verifier-simule.py : autotest en échec"
 SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simulation hors de #if DEBUG"; }
 
+# Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
+# manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
+# passage — la ligne s'affiche, elle ne compte pas pour conforme.
+python3 -I scripts/verifier-confidentialite.py --autotest >/dev/null || echec "verifier-confidentialite.py : autotest en échec"
+CONFIDENTIALITE=$(python3 -I scripts/verifier-confidentialite.py) || { echo "$CONFIDENTIALITE"; echec "confidentialité déclarée ≠ code"; }
+grep '^❓' <<< "$CONFIDENTIALITE" || true
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -282,4 +292,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
