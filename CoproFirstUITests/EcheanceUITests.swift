@@ -39,7 +39,7 @@ final class EcheanceUITests: XCTestCase {
 
         // La carte s'ouvre comme avant : la vignette n'en change pas le geste.
         close.tap()
-        XCTAssertTrue(app.navigationBars["A-0031"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.attendreDetailAffaire("A-0031"))
     }
 
     @MainActor
