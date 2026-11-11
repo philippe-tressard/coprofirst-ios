@@ -94,6 +94,26 @@ struct Rapprochement: Hashable, Sendable {
     /// Le NUMÉRO du bâtiment (« A »).
     var batimentNom: String?
     var etage: Int?
+    /// L'étage en clair (« 1er étage »), tel que le serveur le sert (`etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    var etageLibelle: String?
+}
+
+/// Ce que GET /admin/annuaire/rapprochement sert au-dessus du plancher, relu par
+/// `Relecture.auDessusDuPlancher`.
+struct RapprochementAuDessusDuPlancher: Decodable {
+    var etageLibelle: String?
+}
+
+extension Rapprochement {
+    /// Le rapprochement servi : le type généré, puis ce que le corps sert au-dessus du
+    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
+    static func lu(_ lu: Components.Schemas.Rapprochement, corps: Data?) -> Rapprochement {
+        var trouve = Rapprochement(lu)
+        trouve.etageLibelle = Relecture.auDessusDuPlancher(RapprochementAuDessusDuPlancher.self, corps: corps)?
+            .etageLibelle?.nulSiVide
+        return trouve
+    }
 }
 
 extension ServiceAPI: ServiceAnnuaireCS {
@@ -145,12 +165,14 @@ extension ServiceAPI: ServiceAnnuaireCS {
     }
 
     func rapprochement(nom: String, localiser: Bool, dans installation: Installation) async throws -> Rapprochement {
-        let sortie = try await appeler {
-            try await client(installation.adresse).getAdminAnnuaireRapprochement(
-                query: .init(nom: nom, localiser: localiser))
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder {
+                try await client(installation.adresse).getAdminAnnuaireRapprochement(
+                    query: .init(nom: nom, localiser: localiser))
+            }
         }
         switch sortie {
-        case .ok(let ok): return Rapprochement(try ok.body.json)
+        case .ok(let ok): return Rapprochement.lu(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

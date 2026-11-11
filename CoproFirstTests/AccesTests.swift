@@ -125,8 +125,8 @@ import Testing
     #expect(groupes[0].objets == [confie])
 }
 
-@Test func laRechercheIgnoreAccentsCasseEtOrdre() {
-    let fiche = PrestatairesSimules.prestataires[1]
+@Test func laRechercheIgnoreAccentsCasseEtOrdre() throws {
+    let fiche = try FixturesPrestataires.lus()[1]
     #expect(LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "INCENDIE controles"))
     #expect(!LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "ascenseur"))
 }

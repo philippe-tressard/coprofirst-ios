@@ -8,24 +8,28 @@ import Foundation
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
-        async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        // Les deux lectures gardent leur corps servi : ce que le plancher ne type pas encore
+        // s'y relit (`DetailAffaire.lue`, #125, #127).
+        async let ticket = appeler {
+            try await CorpsServi.garder { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        }
         async let evolutions = appeler {
-            try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
+            try await CorpsServi.garder { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let compte = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
-        switch try await ticket {
+        let (sortie, corps) = try await ticket
+        switch sortie {
         case .ok(let ok): lu = try ok.body.json
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
-        var suites: [SuiteAffaire] = []
-        if case .ok(let ok) = try await evolutions {
-            suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
-        }
-        var detail = DetailAffaire(ticket: lu, suites: suites)
+        var lues: [Components.Schemas.TicketEvolutionRead] = []
+        let (suites, corpsSuites) = try await evolutions
+        if case .ok(let ok) = suites { lues = try ok.body.json }
+        var detail = DetailAffaire.lue(lu, corps: corps, evolutions: lues, corpsEvolutions: corpsSuites)
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         // Le compte illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
@@ -150,34 +154,5 @@ extension ErreurService {
         case 403, 404: .introuvable
         default: depuis(statut: statut)
         }
-    }
-}
-
-extension DetailAffaire {
-    init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire]) {
-        self.init(
-            id: ticket.id, numero: ticket.numero, titre: ticket.titre, description: ticket.description,
-            categorie: ticket.categorie, statut: ticket.statut,
-            // Urgente au sens du SERVEUR (`TicketRead.urgente`, contrat 1.8.0) : l'app ne la
-            // déduit pas de la priorité.
-            urgente: ticket.urgente, creeLe: ticket.creeLe,
-            auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: ticket.lieuServi,
-            photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
-            suites: suites,
-            droits: DroitsServisAffaire(
-                repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
-                modifier: ticket.peutModifier ?? false, archiver: ticket.peutArchiver ?? false),
-            epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
-            fusionnee: ticket.fusionnee ?? false, perimetres: ticket.perimetreCible ?? [])
-    }
-}
-
-extension SuiteAffaire {
-    init(evolution: Components.Schemas.TicketEvolutionRead) {
-        self.init(
-            id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
-            contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
-            nouveauStatut: evolution.nouveauStatut,
-            photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
     }
 }

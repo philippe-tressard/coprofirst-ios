@@ -47,6 +47,14 @@ struct ModifierAffaireFeuille: View {
                     Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
                         .listRowBackground(Color.clear)
                 }
+                if affaire.contenuFige {
+                    Section {
+                        Label(Self.contenuFige, systemImage: "lock")
+                            .font(.subheadline)
+                            .foregroundStyle(palette.textMuted)
+                            .accessibilityIdentifier("modifier.contenuFige")
+                    }
+                }
                 if attendLesSections {
                     ProgressView()
                         .frame(maxWidth: .infinity)
@@ -57,7 +65,7 @@ struct ModifierAffaireFeuille: View {
                         saisie: $saisie, categories: categories, installation: installation,
                         service: parcours.service as? any ServicePerimetres, prefixe: "modifier",
                         descriptionFigee: affaire.descriptionSaisie == nil ? affaire.description : nil,
-                        lieuModifiable: affaire.lieuModifiable, forme: forme)
+                        lieuModifiable: affaire.lieuModifiable, contenuFige: affaire.contenuFige, forme: forme)
                 }
             }
             .task { await chercherLesSections() }
@@ -74,6 +82,10 @@ struct ModifierAffaireFeuille: View {
             .interactiveDismissDisabled(!saisie.edition(depuis: affaire).vide)
         }
     }
+
+    /// Le refus que le serveur opposerait (« Modification impossible : le ticket n'est
+    /// plus ouvert »), dit avant l'envoi : le crayon reste, pour l'urgence.
+    static let contenuFige = "L'affaire n'est plus ouverte : son contenu ne se modifie plus. Son urgence, si."
 
     /// Les catégories que ce lecteur peut poser (`FormulaireTicket` du site) : une
     /// actualité ne se convertit qu'au conseil — son auteur ne voit que la sienne. Une

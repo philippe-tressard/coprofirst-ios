@@ -41,6 +41,8 @@ extension ServiceSimule: ServiceGestesAffaire {
                     contenu: suite.texte.isEmpty ? nil : TexteDuSite.html(saisi: suite.texte),
                     ancienStatut: suite.changeEtat ? detail.statut : nil,
                     nouveauStatut: suite.changeEtat ? suite.statut : nil, photos: []))
+            // Ce faux serveur ne tient pas les libellés : la table du site les dit.
+            if suite.changeEtat { detail.statutLibelle = nil }
             detail.statut = suite.statut
         }
     }
@@ -49,7 +51,13 @@ extension ServiceSimule: ServiceGestesAffaire {
         try await Task.sleep(for: .milliseconds(300))
         let lieux = try FixturesPerimetres.lus()
         try changerAffaireSimulee(affaire) { detail in
-            guard detail.droits.modifier else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
+            // Les deux refus du serveur (`update_ticket`) : sans crayon, rien ; un contenu
+            // touché sans le droit sur le contenu, son refus à lui.
+            guard detail.droits.corriger else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
+            let contenu = edition.titre ?? edition.descriptionHTML ?? edition.categorie
+            guard detail.droits.modifier || (contenu == nil && edition.perimetres == nil) else {
+                throw ErreurService.refus(.init(phrase: "Modification impossible : le ticket n'est plus ouvert"))
+            }
             detail.titre = edition.titre ?? detail.titre
             detail.description = edition.descriptionHTML ?? detail.description
             detail.categorie = edition.categorie ?? detail.categorie

@@ -279,11 +279,11 @@ private let toutes = PagesParDefaut.toutes
 @Test func unNomSaisiSeRapprocheParLeServeur() async throws {
     let service = ServiceSimule(delai: .zero)
     let trouve = try await service.rapprochement(nom: "Exemple", localiser: true, dans: ServiceSimule.residence)
-    #expect(trouve == Rapprochement(userId: 7, batimentId: 1, batimentNom: "A", etage: 2))
+    #expect(trouve == Rapprochement(userId: 7, batimentId: 1, batimentNom: "A", etage: 2, etageLibelle: "2ème étage"))
     let sansLogement = try await service.rapprochement(nom: "Exemple", localiser: false, dans: ServiceSimule.residence)
     #expect(sansLogement == Rapprochement(userId: 7), "un interlocuteur du syndic n'a pas de logement")
     #expect(try await service.rapprochement(nom: "Inconnu", localiser: true, dans: ServiceSimule.residence) == .init())
     let lu = try await client(servant: FixturesAnnuaireCS.rapprochementExemple)
         .getAdminAnnuaireRapprochement(query: .init(nom: "Exemple")).ok.body.json
-    #expect(Rapprochement(lu) == trouve)
+    #expect(Rapprochement.lu(lu, corps: Data(FixturesAnnuaireCS.rapprochementExemple.utf8)) == trouve)
 }

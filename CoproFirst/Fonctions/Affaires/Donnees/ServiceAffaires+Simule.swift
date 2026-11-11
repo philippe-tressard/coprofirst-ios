@@ -43,6 +43,7 @@ extension ServiceSimule: ServiceAffaires {
         try await Task.sleep(for: .milliseconds(250))
         magasin.modifier(affaire.id) {
             $0.statut = statut
+            $0.statutLibelle = nil  // ce faux serveur ne le tient pas : la table du site le dit
             $0.close = MagasinAffairesSimule.close(statut)
             $0.colonne = MagasinAffairesSimule.colonne(statut)
         }

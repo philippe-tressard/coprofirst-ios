@@ -112,7 +112,8 @@ enum LancementSimule {
 
     /// `-compte administrateur` : le compte du conseil, administrateur aussi ;
     /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
-    /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire).
+    /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire) ;
+    /// `-compte locataire` : un locataire, et son bail (`FixturesAcces.monBail`, #127).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
     /// Face ID annulé à chaque demande ; `-protection appareil|aucune` : la session gardée
     /// sans biométrie, sous le code de l'appareil ou sans rien (#84) ; `-delai-detail <ms>` :
@@ -137,10 +138,18 @@ enum LancementSimule {
         case "aucune": simule.protectionSimulee = .aucune
         default: break
         }
-        let compte = argument("-compte", arguments)
+        profilChoisi(argument("-compte", arguments), simule)
+    }
+
+    /// Le profil de `-compte` (voir `compteSimule`) ; sans lui, un membre du conseil.
+    @MainActor
+    private static func profilChoisi(_ compte: String?, _ simule: ServiceSimule) {
         switch compte {
         case "administrateur": simule.profilSimule.roles.append("admin")
         case "resident": simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        case "locataire":
+            simule.profilSimule.statut = "locataire"
+            simule.profilSimule.roles = ["résident"]
         case "operateur":
             simule.profilSimule.statut = "admin_technique"
             simule.profilSimule.roles = ["operateur"]

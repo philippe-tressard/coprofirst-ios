@@ -46,7 +46,7 @@ struct CarteAffaire: View {
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
                 : AnyLayout(HStackLayout(spacing: 16))
             pied {
-                PastilleStatut(statut: affaire.statut)
+                PastilleStatut(statut: affaire.statut, libelle: affaire.statutLibelle)
                 if let lieu = affaire.lieu {
                     Label(lieu, systemImage: "mappin")
                 }
@@ -87,7 +87,7 @@ struct CarteAffaire: View {
         var morceaux: [String] = []
         if affaire.urgente { morceaux.append("Urgente") }
         morceaux.append(affaire.titre)
-        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)
+        morceaux.append(StatutsAffaire.libelle(affaire.statut, servi: affaire.statutLibelle))
         if archive { morceaux.append("archivée") }
         morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
         if let lieu = affaire.lieu { morceaux.append(lieu) }

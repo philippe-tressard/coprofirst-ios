@@ -19,9 +19,12 @@ extension ServiceAPI: ServiceAcces {
 
     func monBail(_ installation: Installation) async throws -> BailDuLocataire? {
         do {
-            let sortie = try await client(installation.adresse).getBailleurMonBail()
+            // Le corps servi est gardé : l'étage en clair s'y relit (`lot_etage_libelle`, #127).
+            let (sortie, corps) = try await CorpsServi.garder {
+                try await client(installation.adresse).getBailleurMonBail()
+            }
             switch sortie {
-            case .ok(let ok): return BailDuLocataire(try ok.body.json)
+            case .ok(let ok): return BailDuLocataire.lu(try ok.body.json, corps: corps)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _):
                 if statut == 404 { return nil }
@@ -204,6 +207,14 @@ extension AccesDetenu {
 }
 
 extension BailDuLocataire {
+    /// Le bail servi : le type généré, puis ce que le corps sert au-dessus du plancher —
+    /// le MÊME branchement pour le service réel et l'API simulée.
+    static func lu(_ bail: Components.Schemas.BailLocataireOut, corps: Data?) -> BailDuLocataire {
+        var lu = BailDuLocataire(bail)
+        lu.lotEtageLibelle = Relecture.auDessusDuPlancher(BailAuDessusDuPlancher.self, corps: corps)?.lotEtageLibelle
+        return lu
+    }
+
     init(_ bail: Components.Schemas.BailLocataireOut) {
         self.init(
             id: bail.id, statut: bail.statut.rawValue, lotBatimentNom: bail.lotBatimentNom,

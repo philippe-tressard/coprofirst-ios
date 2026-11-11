@@ -94,7 +94,8 @@ extension Affaire {
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],
             prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],
             lieu: ticket.lieuServi, messages: nil, colonne: ticket.colonneKanban,
-            peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false)
+            peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false,
+            statutLibelle: ticket.statutLibelle)
     }
 }
 

@@ -20,7 +20,8 @@ struct BandeauAffaireTests {
             archivee: archivee, fusionnee: fusionnee)
     }
 
-    private let tout = DroitsServisAffaire(repondre: true, changerEtat: true, modifier: true, archiver: true)
+    private let tout = DroitsServisAffaire(
+        repondre: true, changerEtat: true, modifier: true, archiver: true, corriger: true)
 
     @Test func leConseilSuitLAffaireSansRepondre() {
         #expect(

@@ -41,6 +41,7 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertTrue(contrat.apparait(), "les contrats")
         contrat.tap()
         XCTAssertTrue(app.libelleAcces("Le contrat").apparait())
+        XCTAssertTrue(app.libelleAcces("↺ Mensuel").exists, "la fréquence servie (`frequence_libelle`, #125)")
         app.capturerAcces("prestataires-3-contrats", dans: self)
 
         app.elementAcces("onglet.consommations").tap()
