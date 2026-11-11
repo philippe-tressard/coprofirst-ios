@@ -96,7 +96,8 @@ private func lien(_ texte: String) throws -> Destination {
 private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation] = []) throws -> Parcours {
     let reglages = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
     let parcours = Parcours(
-        service: ServiceSimule(delai: .milliseconds(1)), connues: InstallationsConnues(reglages: reglages))
+        service: ServiceSimule(delai: .milliseconds(1)),
+        connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
     connues.forEach(parcours.connues.retenir)
     if let ouverte { parcours.ouvrir(ouverte) }
     return parcours

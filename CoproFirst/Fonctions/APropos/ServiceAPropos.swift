@@ -67,6 +67,7 @@ extension ServiceAPI: ServiceAPropos {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServiceAPropos {
     func aPropos(_ installation: Installation) async throws -> AProposResidence {
         try await Task.sleep(for: .milliseconds(250))
@@ -86,3 +87,4 @@ extension ServiceSimule: ServiceAPropos {
             ])
     }
 }
+#endif

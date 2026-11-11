@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les fiches de sondage que l'API simulée sert — en JSON, telles que GET /sondages/{id}
 /// les renvoie (`SondageDetail`), lues par le type GÉNÉRÉ puis par le MÊME branchement
 /// que le service réel (`DetailSondage(_:moi:)`). `scripts/verifier-fixtures.py` les
@@ -85,3 +86,4 @@ enum FixturesSondage {
             .map { DetailSondage($0, moi: moi) }
     }
 }
+#endif

@@ -4,6 +4,7 @@
 import ClientAPI
 import Foundation
 
+#if DEBUG
 /// Les réponses du serveur que l'API simulée sert pour « Mes lots & accès » — en
 /// JSON, telles que les routes les renvoient, lues par les types GÉNÉRÉS puis par le
 /// MÊME branchement que le service réel (`LotDuCompte.init(_:)`, `AccesDetenu.init(_:type:)`).
@@ -135,3 +136,4 @@ enum FixturesAcces {
         try Relecture.generee(type, json: json)
     }
 }
+#endif

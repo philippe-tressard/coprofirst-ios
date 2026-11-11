@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Les gestes du bandeau sur l'API simulée : les affaires inventées
 /// (`ServiceSimule.affaires(_:)`) changent comme le serveur les changerait, le temps
 /// de la session — une réponse rejoint le fil des messages, une suite l'Historique,
@@ -99,3 +100,4 @@ extension ServiceSimule: ServiceGestesAffaire {
         }
     }
 }
+#endif
