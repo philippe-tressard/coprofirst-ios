@@ -8,9 +8,11 @@ import Foundation
 /// (contrat 1.12.0, coprofirst#2522).
 extension ServiceAPI: ServiceComptesCS {
     func comptesEnAttente(_ installation: Installation) async throws -> [CompteEnAttente] {
-        let sortie = try await appeler { try await client(installation.adresse).getAdminComptesEnAttente() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getAdminComptesEnAttente() }
+        }
         switch sortie {
-        case .ok(let ok): return try ok.body.json.map(CompteEnAttente.init)
+        case .ok(let ok): return CompteEnAttente.lus(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -68,9 +70,16 @@ extension ServiceAPI: ServiceComptesCS {
 }
 
 extension CompteEnAttente {
-    init(_ user: Components.Schemas.UserRead) {
-        self.init(
-            id: user.id, prenom: user.prenom, nom: user.nom, statut: user.statut.rawValue,
-            batimentNom: user.batimentNom, prenomAide: user.prenomAide, nomAide: user.nomAide, creeLe: user.creeLe)
+    /// La file servie, puis les noms affichés relus au-dessus du plancher — le MÊME
+    /// branchement pour le service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.UserRead], corps: Data?) -> [CompteEnAttente] {
+        let personnes = PersonneServie.parLigne(corps)
+        return generes.map { user in
+            CompteEnAttente(
+                id: user.id, prenom: user.prenom, nom: user.nom, statut: user.statut.rawValue,
+                batimentNom: user.batimentNom, prenomAide: user.prenomAide, nomAide: user.nomAide,
+                creeLe: user.creeLe, nomServi: personnes[user.id]?.nomAffiche,
+                nomAideServi: personnes[user.id]?.nomAideAffiche)
+        }
     }
 }

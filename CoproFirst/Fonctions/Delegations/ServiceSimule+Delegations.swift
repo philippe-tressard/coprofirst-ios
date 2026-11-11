@@ -28,7 +28,7 @@ extension ServiceSimule: ServiceDelegations {
             throw ErreurService.refus(.init(phrase: "Le mandant et l'aidant doivent être différents"))
         }
         let residents = try FixturesDelegations.residentsLus()
-        let nom = { (id: Int) in residents.first { $0.id == id }.map { "\($0.prenom ?? "") \($0.nom ?? "")" } ?? "?" }
+        let nom = { (id: Int) in residents.first { $0.id == id }?.nomAffiche ?? "?" }
         // Ce que le serveur rendrait : en attente, que seul l'aidant accepte.
         let creee = Delegation(
             id: 100 + Int.random(in: 0..<900), mandantId: mandant, mandantNom: nom(mandant), aidantId: aidant,

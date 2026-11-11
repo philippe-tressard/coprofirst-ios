@@ -37,6 +37,15 @@ struct ContactPrestataire: Hashable, Sendable {
     var fonction: String?
     var telephone: String?
     var email: String?
+    /// `nom_affiche` servi (`PrestataireContactLu`, contrat 1.25.0, #135) ; `nil` d'une
+    /// installation antérieure.
+    var nomServi: String?
+
+    /// « Prénom NOM » servi ; à défaut, le repli. `nil` pour un contact sans nom.
+    var nomAffiche: String? {
+        let lu = FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom)
+        return lu == FormatsDuSite.tiret ? nil : lu
+    }
 }
 
 struct Prestataire: Hashable, Sendable, Identifiable {
