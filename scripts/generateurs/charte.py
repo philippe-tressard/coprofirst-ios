@@ -12,7 +12,9 @@
 - la LISTE BLANCHE du texte riche : balises et attributs (`ALLOWED_TAGS`,
   `ALLOWED_ATTR` de `front/src/lib/sanitize.ts`), schémas de lien (`SCHEMAS_URL` de
   `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
-  → `CoproFirst/Charte/BalisesDuSite.swift` (#22).
+  → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
+- les MESURES du site que `Mise` confronte aux siennes (`MESURES`, jetons de longueur de
+  `front/src/styles/socle.css`) → `CoproFirst/Charte/MesuresDuSite.swift` (#85).
 """
 
 from __future__ import annotations
@@ -20,7 +22,7 @@ from __future__ import annotations
 import re
 
 import lecture_ts
-from generateurs._commun import CHARTE, propriete
+from generateurs._commun import CHARTE, jetons_du_socle, propriete
 
 SOURCES = [
     "front/src/lib/flux.ts",
@@ -29,7 +31,15 @@ SOURCES = [
     "front/src/lib/components/EnteteAccueil.svelte",
     "front/src/lib/sanitize.ts",
     "api/app/utils/html_sur.py",
+    "front/src/styles/socle.css",
 ]
+
+# Les jetons de longueur du site qu'une mesure de l'app (`Mise`) confronte : jeton → nom
+# Swift. Une mesure de `Mise` sans jeton ici est PROPRE À iOS, déclarée dans
+# `CoproFirstTests/MesuresTests.swift` (#85).
+MESURES = {"radius": "rayon"}
+# 1 rem = 16 pt : la racine du site vaut 100 % de la taille du navigateur, 16 px par défaut.
+LONGUEUR = re.compile(r"^([0-9]*\.?[0-9]+)(rem|px)$")
 
 
 def natures(ctx) -> int:
@@ -135,8 +145,27 @@ def balises(ctx) -> int:
     return len(tags)
 
 
+def mesures(ctx) -> int:
+    socle = jetons_du_socle(ctx)
+    corps = ctx.entete("front/src/styles/socle.css (jetons de longueur)")
+    corps += "\nimport CoreGraphics\n\n"
+    corps += "/// Les mesures du site que l'app confronte aux siennes (`Mise`, #85), en points\n"
+    corps += "/// (1 rem = 16 pt). `MesuresTests` refuse un écart non déclaré.\n"
+    corps += "enum MesuresDuSite {\n"
+    for jeton, nom in MESURES.items():
+        m = LONGUEUR.match(socle.get(jeton, ""))
+        if not m:
+            raise SystemExit(f"❌ --{jeton} introuvable ou hors de rem/px dans socle.css : {socle.get(jeton)!r}")
+        points = float(m.group(1)) * (16 if m.group(2) == "rem" else 1)
+        corps += f"    /// `--{jeton}: {socle[jeton]}`\n    static let {nom}: CGFloat = {points:g}\n"
+    corps += "}\n"
+    ctx.ecrire(CHARTE / "MesuresDuSite.swift", corps)
+    return len(MESURES)
+
+
 def generer(ctx) -> str:
     return (
         f"{natures(ctx)} natures du fil ; {statuts(ctx)} statuts ; "
-        f"{roles(ctx)} rôles et statuts d'utilisateur ; {balises(ctx)} balises de texte riche"
+        f"{roles(ctx)} rôles et statuts d'utilisateur ; {balises(ctx)} balises de texte riche ; "
+        f"{mesures(ctx)} mesure(s) du site"
     )
