@@ -208,6 +208,31 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(restante.exists, "les autres restent")
     }
 
+    /// « Supprimer les lues » (#53) : le geste du site, direct — sans « Modifier » ni
+    /// sélection —, confirmé, puis absent dès qu'il n'y a plus de notification lue.
+    @MainActor
+    func testLesLuesSeSupprimentDUnGeste() throws {
+        let app = lancer()
+        XCTAssertTrue(el(app, "cloche").waitForExistence(timeout: 8))
+        el(app, "cloche").tap()
+        let lues = el(app, "notifications.supprimerLues")
+        XCTAssertTrue(lues.waitForExistence(timeout: 8), "le geste se voit dès l'ouverture, en tête de la liste")
+        XCTAssertTrue(lues.isHittable, "et se touche, sans passer par « Modifier »")
+        XCTAssertGreaterThanOrEqual(lues.frame.height, 44, "une cible tactile entière")
+        capture("8c-notifications-supprimer-les-lues")
+        lues.tap()
+        let confirmer = el(app, "notifications.confirmerSuppression")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        XCTAssertTrue(texte(app, "Les 138 notifications lues").exists, "la confirmation dit ce qui part")
+        capture("8d-notifications-confirmer-les-lues")
+        confirmer.tap()
+        XCTAssertTrue(el(app, "notification.3").waitForNonExistence(timeout: 8), "les lues sont parties")
+        XCTAssertTrue(texte(app, "Notifications lues supprimées").waitForExistence(timeout: 5), "et l'app le dit")
+        capture("8e-notifications-lues-supprimees")
+        XCTAssertTrue(el(app, "notification.5").exists, "les non lues restent")
+        XCTAssertTrue(lues.waitForNonExistence(timeout: 5), "plus aucune lue : le geste n'est plus offert")
+    }
+
     @MainActor
     func testLaFAQEtLeProfilSOuvrent() throws {
         let app = lancer()

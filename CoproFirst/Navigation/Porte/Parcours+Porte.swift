@@ -64,7 +64,10 @@ extension Parcours {
 
     private func montrer(_ ecran: Destination.Ecran, dans installation: Installation) {
         let pages = pagesDeLaBarre(installation).map(\.id)
-        switch Aiguillage.aiguiller(ecran, pages: pages, visibles: OngletsView.visibles) {
+        let aiguillage = Aiguillage.aiguiller(ecran, pages: pages, visibles: OngletsView.visibles)
+        // La cloche est une feuille : tout autre écran demandé la referme d'abord.
+        clocheOuverte = aiguillage == .cloche
+        switch aiguillage {
         case .onglet(let id):
             onglet = id
         case .affaireDansLOnglet(let id, let affaire):
@@ -75,6 +78,8 @@ extension Parcours {
         case .elementDuFil(let cle):
             aOuvrir = cle
             onglet = OrdrePages.idFil
+        case .cloche:
+            break
         }
     }
 }

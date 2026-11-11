@@ -42,7 +42,7 @@ fait après le « oui ».
 | Exception App Store de la licence | ✅ posée au premier commit (`LICENSES/LicenseRef-CoproFirst-AppStore.txt`) |
 | Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
 | Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; la liste des domaines et l'ouverture dans l'app : #18 |
-| Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive) ; le relais attend la clé `.p8`, créée par Philippe (coprofirst#2494) ; côté app : #17 |
+| Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive). Côté app livré par #17 : autorisation demandée dans la cloche, jamais au lancement ; appareil enregistré à l'ouverture d'une résidence, retiré à la déconnexion (`Fonctions/Notifications/Push/`). Droit `time-sensitive` (avis urgents, décision du 03/11/2026) ajouté par #17 ; capacité « Time Sensitive Notifications » **acceptée par Philippe le 11/11/2026**, enregistrée au compte à la prochaine compilation signée au poste. Réception réelle **INCONNUE** tant que le relais (coprofirst#2494) n'a pas sa clé `.p8` |
 
 ## Ce qui reste un geste de Philippe
 
@@ -62,6 +62,12 @@ fait après le « oui ».
 - [ ] Suppression du compte **dans l'app**.
 - [ ] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception).
 - [ ] Compte de démonstration pour la revue, sur `demo.coprofirst.fr`, sans donnée réelle.
-- [ ] Aucune donnée personnelle dans une charge de notification.
-- [ ] Clé d'API App Store Connect et clé APNs (`.p8`) : hors du dépôt
-      (`.gitignore`), dans les secrets de la CI le moment venu.
+- [ ] Aucune donnée personnelle dans une charge de notification — côté app, tenu
+      (#17 : l'app ne lit que l'abonnement opaque `a`, le jeton ne s'écrit nulle part) ;
+      la charge est composée par le relais (coprofirst#2494), à vérifier à sa mise en route.
+- [ ] Étiquettes de confidentialité : le jeton d'appareil et l'abonnement partent à
+      l'installation, le jeton et une charge générique chez Apple (spec push de
+      coprofirst §7, lot P4 coprofirst#2495).
+- [ ] Clé d'API App Store Connect : hors du dépôt (`.gitignore`), dans les secrets de
+      la CI le moment venu. La clé APNs (`.p8`) n'entre **ni** dans ce dépôt **ni** dans
+      sa CI : elle vit chez le relais de la plateforme seul (spec push N1).

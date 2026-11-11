@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- GÉNÉRÉ par scripts/rendre-symbole-hors-ligne.swift — NE PAS MODIFIER -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" width="3300" height="2200">
+ <g id="Notes">
+  <text style="font-family:'LucidaGrande';font-size:13" x="18" y="40">hors-ligne — le toit sans onde (CoproFirst-iOS)</text>
+  <text id="template-version" style="font-family:'LucidaGrande';font-size:13" x="3036" y="1933">Template v.3.0</text>
+ </g>
+ <g id="Guides">
+  <line id="Baseline-S" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="696" y2="696"/>
+  <line id="Capline-S" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="625.541" y2="625.541"/>
+  <line id="Baseline-M" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1126" y2="1126"/>
+  <line id="Capline-M" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1055.54" y2="1055.54"/>
+  <line id="Baseline-L" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1556" y2="1556"/>
+  <line id="Capline-L" style="fill:none;stroke:#27AAE1;opacity:1;stroke-width:0.5;" x1="263" x2="3036" y1="1485.54" y2="1485.54"/>
+  <line id="left-margin-Regular-M" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1394.00" x2="1394.00" y1="1030.79" y2="1150.12"/>
+  <line id="right-margin-Regular-M" style="fill:none;stroke:#00AEEF;stroke-width:0.5;opacity:1.0;" x1="1494.21" x2="1494.21" y1="1030.79" y2="1150.12"/>
+ </g>
+ <g id="Symbols">
+  <g id="Regular-M">
+   <path d="M1464.86 1084.34C1466.58 1086.07 1466.58 1088.86 1464.86 1090.58L1422.96 1132.48C1421.24 1134.20 1418.45 1134.20 1416.73 1132.48C1415.01 1130.76 1415.01 1127.96 1416.73 1126.24L1458.63 1084.34C1460.35 1082.62 1463.14 1082.62 1464.86 1084.34ZM1449.62 1124.07C1449.62 1127.11 1447.15 1129.58 1444.10 1129.58C1441.06 1129.58 1438.59 1127.11 1438.59 1124.07C1438.59 1123.37 1438.72 1122.71 1438.96 1122.10L1442.13 1118.92C1442.74 1118.68 1443.41 1118.56 1444.10 1118.56C1447.15 1118.56 1449.62 1121.02 1449.62 1124.07ZM1458.14 1110.03C1459.86 1111.76 1459.86 1114.55 1458.14 1116.27C1456.41 1117.99 1453.62 1117.99 1451.90 1116.27C1450.62 1114.99 1449.10 1114.09 1447.48 1113.58L1454.11 1106.95C1455.55 1107.77 1456.90 1108.80 1458.14 1110.03ZM1468.74 1099.43C1470.46 1101.15 1470.46 1103.95 1468.74 1105.67C1467.02 1107.39 1464.22 1107.39 1462.50 1105.67C1461.28 1104.45 1459.98 1103.38 1458.59 1102.46L1464.90 1096.16C1466.25 1097.12 1467.53 1098.22 1468.74 1099.43ZM1447.90 1089.45L1438.74 1098.62C1433.96 1099.61 1429.41 1101.96 1425.70 1105.67C1423.98 1107.39 1421.19 1107.39 1419.47 1105.67C1417.74 1103.95 1417.74 1101.15 1419.47 1099.43C1427.24 1091.66 1437.77 1088.33 1447.90 1089.45ZM1446.93 1048.79L1486.62 1081.87C1488.49 1083.43 1488.74 1086.21 1487.18 1088.08C1485.62 1089.95 1482.84 1090.21 1480.97 1088.65L1444.10 1057.92L1407.23 1088.65C1405.36 1090.21 1402.58 1089.95 1401.02 1088.08C1399.46 1086.21 1399.72 1083.43 1401.59 1081.87L1441.28 1048.79C1442.91 1047.43 1445.29 1047.43 1446.93 1048.79Z"/>
+  </g>
+ </g>
+</svg>

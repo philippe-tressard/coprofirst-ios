@@ -7,6 +7,8 @@ import SwiftUI
 /// la carte du site (`VueKanbanAffaires`), sans l'aperçu : la colonne dit l'état.
 struct CarteKanban: View {
     let affaire: Affaire
+    /// Le pictogramme de sa catégorie, servi (`GET /tickets/referentiels`) ; `nil` s'il manque.
+    let emoji: String?
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -51,8 +53,9 @@ struct CarteKanban: View {
     }
 
     /// « 🛠️ Panne · A-0041 » — la catégorie et le numéro, comme le pied de carte du site.
+    /// Le libellé est celui que le serveur SERT (`categorie_libelle`), jamais vide.
     private var pied: String {
-        let categorie = TablesAffaires.categorieParCode[affaire.categorie].map { "\($0.emoji) \($0.libelle)" }
-        return [categorie, affaire.numero].compactMap { $0 }.joined(separator: " · ")
+        let categorie = [emoji, affaire.categorieLibelle].compactMap { $0 }.joined(separator: " ")
+        return [categorie, affaire.numero].joined(separator: " · ")
     }
 }

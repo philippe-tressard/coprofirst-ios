@@ -27,7 +27,8 @@
 #      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
 #  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, et coprofirst-site
 #      qu'à un commit épinglé (#51), par scripts/generateurs/_source.py seul : ni
-#      clone, ni arbre de travail, ni branche (#34, #20) ;
+#      clone, ni arbre de travail, ni branche (#34, #20) ; le logo, lui, se compare
+#      et se recopie à l'étiquette du plancher (scripts/plancher.sh, #133) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. la relance des tests au simulateur reste bornée et déclarée : autotests de
@@ -36,7 +37,9 @@
 #      autotest de scripts/tickets_concordance.py (#67).
 #  15. la simulation ne part pas en production : `ServiceSimule`, ses jeux de
 #      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
-#      autotest d'abord, #84).
+#      autotest d'abord, #84) ;
+#  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -191,10 +194,38 @@ while IFS= read -r f; do
   [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E "$GENERATION" <<< "$FICHIERS")
 
+# Le logo se compare et se recopie à l'étiquette du plancher (scripts/plancher.sh),
+# jamais à une branche : `dev` de coprofirst disparaît à chaque mise en production,
+# et le job « Dépôt » rougissait au hasard (#133).
+REF_LOGO='REF=${1:-$(bash scripts/plancher.sh)}'
+# $1 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_ref_logo() { grep -qF "$REF_LOGO" "$1" || echo "la référence par défaut n'est pas le plancher (scripts/plancher.sh)"; }
+autotest_ref_logo() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf 'REF=${1:-dev}\n' > "$d/branche"
+  printf '%s || exit 2\n' "$REF_LOGO" > "$d/plancher"
+  [ -n "$(refus_ref_logo "$d/branche")" ] || ok=1
+  [ -z "$(refus_ref_logo "$d/plancher")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_ref_logo || echec "verifier-depot.sh : autotest de la référence du logo en échec"
+for f in scripts/verifier-logo.sh scripts/importer-logo.sh; do
+  motif=$(refus_ref_logo "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+done
+bash scripts/plancher.sh > /dev/null || echec "scripts/plancher.sh : plancher illisible (INCONNU)"
+
 # Les réponses de l'API simulée contre le schéma du serveur : l'autotest d'abord, puis
 # le juge. INCONNU (sortie 2) est un échec, jamais un succès.
 python3 -I scripts/verifier-fixtures.py --autotest >/dev/null || echec "verifier-fixtures.py : autotest en échec"
 FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec "API simulée hors du schéma du serveur"; }
+
+# Ce que le serveur SERT ne se recalcule plus (#83) : une table ou un prédicat retiré
+# qui revient échoue. L'autotest d'abord ; INCONNU (sortie 2) est un échec.
+python3 -I scripts/verifier-regles-servies.py --autotest >/dev/null || echec "verifier-regles-servies.py : autotest en échec"
+SERVIES=$(python3 -I scripts/verifier-regles-servies.py) || { echo "$SERVIES"; echec "une règle servie est recalculée dans l'app"; }
 
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
 # et charge, NSAttributedString(.html) passe par WebKit et charge des ressources
@@ -251,4 +282,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

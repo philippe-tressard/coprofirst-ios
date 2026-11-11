@@ -108,7 +108,7 @@ struct DetailAnnonce: View {
 
     @ToolbarContentBuilder
     private func actions(_ annonce: Annonce) -> some ToolbarContent {
-        let peutSupprimer = annonce.estAuteur == true || etat.moi?.estConseil == true
+        let peutSupprimer = annonce.peutSupprimer
         let peutSignaler = annonce.estAuteur != true
         if peutSupprimer || peutSignaler {
             ToolbarItem(placement: .topBarTrailing) {

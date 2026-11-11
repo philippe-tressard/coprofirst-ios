@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -112,4 +113,19 @@ private struct Factice: ServiceCommunaute {
     #expect(apres.monVote != avant.monVote && apres.nbVotes == avant.nbVotes + 1)
     #expect(try await service.voterIdee(5, dans: residence) == "Vote retiré")
     #expect(try await service.idees(residence).first { $0.id == 5 } == avant, "le second toucher retire le vote")
+}
+
+/// « Supprimer l'annonce » se LIT dans `AnnonceRead.peut_supprimer` (l'auteur ou le conseil,
+/// #83) : l'app ne le déduit plus de ses rôles. Absent, le geste n'est pas offert.
+@Test func supprimerUneAnnonceSeLitDansLAnnonceServie() async throws {
+    let json = #"""
+        [{"id": 1, "titre": "Vélo", "description": "", "type_annonce": "vente", "categorie": "divers",
+          "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
+          "peut_supprimer": true, "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0},
+         {"id": 2, "titre": "Lampe", "description": "", "type_annonce": "don", "categorie": "divers",
+          "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
+          "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0}]
+        """#
+    let lues = try await client(servant: json).getAnnonces().ok.body.json.map(Annonce.init)
+    #expect(lues.map(\.peutSupprimer) == [true, false])
 }

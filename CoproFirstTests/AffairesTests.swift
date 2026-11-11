@@ -65,8 +65,9 @@ import Testing
         let date = calendrier.date(from: DateComponents(year: annee, month: mois, day: 1)) ?? jour
         return Affaire(
             id: id, numero: "A-\(id)", titre: "", apercu: "", creeLe: date, misAJourLe: date, statut: "résolu",
-            close: true, categorie: "panne", urgente: false, meConcerne: false, archivee: true, suiviKanban: false,
-            natures: [], prestataire: nil, perimetres: [], lieu: nil, messages: nil)
+            close: true, categorie: "panne", categorieLibelle: "Panne", urgente: false, meConcerne: false,
+            archivee: true, suiviKanban: false, natures: [], prestataire: nil, perimetres: [], lieu: nil,
+            messages: nil, colonne: "termine", peutDeplacer: false, peutArchiver: false)
     }
     let affaires = [archivee(1, 2025, 3), archivee(2, 2026, 2), archivee(3, 2026, 9), archivee(4, 2022, 1)]
     let groupes = affaires.archives(au: jour, calendrier: calendrier)
@@ -80,14 +81,60 @@ import Testing
     #expect(!kanban.contains { $0.statut == "publie" }, "un statut sans colonne sort du tableau")
 }
 
-@Test func lesColonnesEtLesStatutsSeRepondent() {
-    // L'inverse est dérivé : chaque colonne atteinte pose un statut qui y ramène.
-    for (colonne, statut) in TablesAffaires.statutParColonne {
-        #expect(TablesAffaires.colonneParStatut[statut] == colonne)
+/// L'état qu'une colonne pose se lit dans les référentiels SERVIS (`GET /tickets/referentiels`,
+/// #83) : plus aucune table colonne ⇄ statut dans l'app. Remplace le test de la table générée
+/// `colonneParStatut`, qui décrivait le recalcul retiré.
+@Test func chaqueColonneServiePoseUnEtatServiQuiYRamene() throws {
+    let servis = try FixturesReferentielsAffaires.lus()
+    #expect(servis.colonnes.map(\.id) == ["ag", "cs", "syndic", "fournisseur", "termine", "annule"])
+    for colonne in servis.colonnes {
+        let statut = try #require(servis.statut(pourColonne: colonne.id), "\(colonne.id) : aucun état n'y mène")
+        #expect(statut.colonne == colonne.id)
     }
     // La colonne « fournisseur » est atteinte par chez_prestataire (#1092).
-    #expect(TablesAffaires.statutParColonne["fournisseur"] == "chez_prestataire")
-    #expect(Set(TablesAffaires.colonnesKanban.map(\.id)) == Set(TablesAffaires.colonneParStatut.values))
+    #expect(servis.statut(pourColonne: "fournisseur")?.code == "chez_prestataire")
+    #expect(servis.statut(pourColonne: "termine")?.clos == true, "« Terminé » clôt : le serveur le dit")
+    #expect(servis.statut(pourColonne: "inconnue") == nil)
+    // Une colonne neuve, que le site ne teinte pas encore, garde un trait neutre.
+    #expect(ColonneKanban(id: "neuve", libelle: "Neuve", libelleCourt: "N").teinte == \Palette.border)
+}
+
+/// `Apercu.affaires` écrit en données ce que le serveur sert (colonne, clôture, libellé) :
+/// il doit dire la même chose que les référentiels simulés, sans quoi la démo mentirait.
+@Test func lApercuEstServiCommeLesReferentielsSimules() throws {
+    let servis = try FixturesReferentielsAffaires.lus()
+    for affaire in Apercu.affaires {
+        let statut = try #require(servis.statuts.first { $0.code == affaire.statut }, "\(affaire.statut) : inconnu")
+        #expect(affaire.colonne == statut.colonne, "A-\(affaire.id) : colonne")
+        #expect(affaire.close == statut.clos, "A-\(affaire.id) : clôture")
+        #expect(affaire.categorieLibelle == servis.categorie(affaire.categorie)?.libelle, "A-\(affaire.id) : libellé")
+    }
+}
+
+/// La colonne, le libellé de la catégorie, le lieu et les gestes se LISENT dans
+/// `TicketRead` : un serveur qui range « ouvert » ailleurs que l'ancienne table est suivi.
+@Test func colonneLibelleLieuEtGestesSontLusDansLAffaireServie() async throws {
+    let json = #"""
+        [{"id": 9, "numero": "TK-9", "titre": "Essai", "description": "", "categorie": "panne", "statut": "ouvert",
+          "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
+          "categorie_libelle": "Panne (servie)", "statut_libelle": "Ouvert", "close": false,
+          "colonne_kanban": "ag", "nouveau": false, "nom_proprietaire": "Camille Essai",
+          "perimetre_libelle": "Bât. 2 › Toit", "peut_deplacer_au_kanban": true, "peut_archiver": true},
+         {"id": 10, "numero": "TK-10", "titre": "Essai", "description": "", "categorie": "panne", "statut": "ouvert",
+          "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false, "categorie_libelle": "Panne",
+          "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null, "nouveau": false,
+          "nom_proprietaire": "Camille Essai", "perimetre_libelle": ""}]
+        """#
+    let lues = try await client(servant: json).getTickets().ok.body.json.map(Affaire.init(ticket:))
+    let servie = try #require(lues.first)
+    #expect(servie.colonne == "ag", "la colonne servie, pas celle d'une table")
+    #expect(servie.categorieLibelle == "Panne (servie)")
+    #expect(servie.lieu == "Bât. 2 › Toit")
+    #expect(servie.peutDeplacer && servie.peutArchiver)
+    let muette = try #require(lues.last)
+    #expect(muette.colonne == nil, "hors tableau : le serveur le dit")
+    #expect(muette.lieu == nil, "périmètre par défaut : le serveur le tait")
+    #expect(!muette.peutDeplacer && !muette.peutArchiver, "un geste non servi n'est pas offert")
 }
 
 // MARK: - Droits
@@ -166,8 +213,9 @@ import Testing
     await etat.charger(ServiceSimule.residence, avec: service)
     let ouvertes = etat.affaires.filter { $0.statut == "ouvert" && !$0.archivee }
     etat.filtres.suivi = "ouvert"
+    let versAG = try #require(etat.referentiels?.statut(pourColonne: "ag"), "référentiels servis et lus")
     for affaire in ouvertes {
-        await etat.deplacer(affaire, vers: "en_ag", dans: ServiceSimule.residence, avec: service)
+        await etat.deplacer(affaire, vers: versAG, dans: ServiceSimule.residence, avec: service)
     }
     #expect(etat.affaires.filter { ouvertes.map(\.id).contains($0.id) }.allSatisfy { $0.colonne == "ag" })
     #expect(etat.filtres.suivi == nil, "plus aucune affaire ouverte : on retombe sur « Toutes »")

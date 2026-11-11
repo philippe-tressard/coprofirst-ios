@@ -5,6 +5,7 @@ import SwiftUI
 
 @main
 struct CoproFirstApp: App {
+    @UIApplicationDelegateAdaptor(DelegueApp.self) private var delegue
     @State private var parcours: Parcours
     @State private var reseau = Reseau()
     @State private var vitrine: Vitrine
@@ -21,6 +22,13 @@ struct CoproFirstApp: App {
                 .environment(parcours)
                 .environment(reseau)
                 .environment(vitrine)
+                .environment(delegue.push)
+                .task {
+                    await delegue.push.attacher(parcours)
+                    #if DEBUG
+                    LancementSimule.toucherNotification(ProcessInfo.processInfo.arguments, delegue.push)
+                    #endif
+                }
         }
     }
 }
