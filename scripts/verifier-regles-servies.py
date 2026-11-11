@@ -43,12 +43,28 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, la règle GÉNÉRÉE du site (`DroitsOnglet.cs`)"),
+    # #135 : « Prénom NOM » est SERVI (`nom_affiche`…, contrat 1.25.0) ; le repli d'une
+    # installation antérieure vit dans `FormatsDuSite.nom(affiche:prenom:nom:)`, seul.
+    (re.compile(r"\bFormatsDuSite\.nom\((?!affiche:)"),
+     "le nom servi (`nom_affiche`, `locataire_nom_affiche`…) par `FormatsDuSite.nom(affiche:prenom:nom:)`"),
+    (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
+     "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
+    # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0).
+    (re.compile(r"\bOngletsDuSite\.rolesCS\b"),
+     "`est_moderateur` servi, lu par `DroitsOnglet.cs`"),
+    # #138 : « le mien » est SERVI (`est_auteur`, contrat 1.26.0).
+    (re.compile(r"\bmessage\.auteurId == moi\b"),
+     "`est_auteur` servi (`MessageAffaire.lus`)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
 DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
+    "CoproFirst/Navigation/OngletsOuverts.swift":
+        "repli de `DroitsOnglet.cs` quand l'installation ne sert pas `est_moderateur` (contrat < 1.25.0, #136)",
+    "CoproFirst/Commun/Detail/Affaire/MessageAffaire.swift":
+        "repli de `MessageAffaire.lus` quand l'installation ne sert pas `est_auteur` (contrat < 1.26.0, #138)",
 }
 
 
@@ -85,11 +101,19 @@ def autotest() -> int:
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
+        "        let nom = FormatsDuSite.nom(compte.prenom, compte.nom)",
+        '                Text("\\(compte.prenom) \\(compte.nom)").font(.headline)',
+        '        let nom = { residents.first { $0.id == id }.map { "\\($0.prenom ?? "") \\($0.nom ?? "")" } }',
+        "            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS),",
+        "            deMoi: moi != nil && message.auteurId == moi,",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
+        '            let cle = email.isEmpty ? "\\(bail.locatairePrenom ?? "")|\\(bail.locataireNom ?? "")" : email',
+        "                deMoi: servi?.estAuteur ?? false, nom: servi?.auteurNom,",
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
