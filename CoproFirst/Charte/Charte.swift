@@ -37,6 +37,10 @@ extension Color {
 }
 
 /// Typographie et mesures de l'app — écrites une fois.
+///
+/// Chacune est PROPRE À iOS, déclarée avec sa raison et sa date dans
+/// `CoproFirstTests/MesuresTests.swift` ; une mesure dont le site a le jeton se lit dans
+/// `MesuresDuSite` (généré). Une mesure ajoutée ici sans déclaration fait échouer le test (#85).
 enum Mise {
     /// Rayon des cartes, des champs et des boutons (coins continus).
     static let rayon: CGFloat = 14
@@ -44,6 +48,8 @@ enum Mise {
     static let marge: CGFloat = 20
     /// Hauteur minimale d'une cible tactile (Human Interface Guidelines).
     static let cible: CGFloat = 44
+    /// L'approche des libellés en capitales (`styleLibelle`).
+    static let approcheLibelle: CGFloat = 0.6
 }
 
 extension Font {
@@ -66,7 +72,7 @@ private struct StyleLibelle: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.caption.weight(.semibold))
-            .tracking(0.6)
+            .tracking(Mise.approcheLibelle)
             .textCase(.uppercase)
             .foregroundStyle(palette.textMuted)
     }

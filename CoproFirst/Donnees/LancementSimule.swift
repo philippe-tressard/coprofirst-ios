@@ -98,13 +98,17 @@ enum LancementSimule {
     /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
     /// Face ID annulé à chaque demande ; `-protection appareil|aucune` : la session gardée
-    /// sans biométrie, sous le code de l'appareil ou sans rien (#84).
+    /// sans biométrie, sous le code de l'appareil ou sans rien (#84) ; `-delai-detail <ms>` :
+    /// le détail d'une affaire servi en <ms>, le runner lent de la CI (#98).
     @MainActor
     private static func compteSimule(_ arguments: [String], _ simule: ServiceSimule) {
         if arguments.contains("-logement-long") {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
+        if let ms = argument("-delai-detail", arguments).flatMap(Int.init) {
+            simule.delaiDetail = .milliseconds(ms)
+        }
         switch argument("-protection", arguments) {
         case "appareil": simule.protectionSimulee = .codeAppareil
         case "aucune": simule.protectionSimulee = .aucune

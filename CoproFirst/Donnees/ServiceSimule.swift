@@ -21,6 +21,9 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     var residenceServie = ServiceSimule.residence
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
+    /// Le délai du détail d'une affaire ; `-delai-detail <ms>` l'allonge, pour jouer le
+    /// runner lent de la CI (#98).
+    var delaiDetail: Duration = .milliseconds(500)
     /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
     private var deconnectes: Set<String> = []
     private let verrou = NSLock()

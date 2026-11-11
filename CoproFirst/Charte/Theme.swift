@@ -31,17 +31,27 @@ struct NatureDuFil: Sendable {
 
 /// Les pictogrammes Lucide du site, rendus par leur équivalent SF Symbols.
 /// La traduction d'un dessin, pas une donnée : le nom vient toujours du site.
+///
+/// Un nom absent de `table` se rend par `repli` — jamais une erreur à l'écran, mais
+/// jamais en silence non plus : chaque nom que citent les tables générées a son entrée
+/// (`PictogrammesTests`, #85), et une icône ajoutée au site fait échouer le test.
 enum Pictogrammes {
+    /// Le point neutre d'un nom que la table ne connaît pas.
+    static let repli = "circle.fill"
+
     static func symbole(_ lucide: String) -> String {
-        table[lucide] ?? "circle.fill"
+        table[lucide] ?? repli
     }
 
-    private static let table: [String: String] = [
+    static let table: [String: String] = [
         "activity": "waveform.path.ecg",
         "bar-chart-3": "chart.bar.fill",
         "bell": "bell.fill",
+        "book-open": "book.fill",
         "building-2": "building.2.fill",
         "calendar": "calendar",
+        // Le pictogramme de `NatureDuFil.inconnue` : le point neutre, comme avant #85.
+        "circle": "circle.fill",
         "circle-check": "checkmark.circle.fill",
         "file-text": "doc.text.fill",
         "hard-hat": "wrench.and.screwdriver.fill",
