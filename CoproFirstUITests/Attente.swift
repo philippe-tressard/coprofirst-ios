@@ -34,6 +34,10 @@ extension XCUIElement {
     /// LIT (boucle, chemin facultatif, absence) ; il ne s'affirme pas par `XCTAssertTrue`.
     func sonde() -> Bool { waitForExistence(timeout: Attente.sonde) }
 
+    /// L'élément est-il ENCORE là après `duree` secondes ? La seule attente qui dure exprès :
+    /// elle prouve qu'un état passager est tenu (l'avis sous `-avis-durable`, #123).
+    func demeure(_ duree: TimeInterval) -> Bool { !waitForNonExistence(timeout: duree) }
+
     /// L'élément est dans l'état `condition` — un format de `NSPredicate`, par exemple
     /// « hasKeyboardFocus == true » — au plus tard au plafond commun. La seule attente
     /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont

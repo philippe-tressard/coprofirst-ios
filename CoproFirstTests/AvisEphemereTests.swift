@@ -19,6 +19,13 @@ import Testing
     #expect(avis.texte == nil)
 }
 
+// Sous les tests d'interface seulement : hors de l'API simulée, l'avis se retire toujours.
+@Test func lAvisNeDureQueSousLesTestsDInterface() {
+    #expect(LancementSimule.avisDurable(["-api-simulee", "-ecran", "fil", "-avis-durable"]))
+    #expect(!LancementSimule.avisDurable(["-api-simulee", "-ecran", "fil"]))
+    #expect(!LancementSimule.avisDurable(["-avis-durable"]))
+}
+
 @MainActor @Test func lEtatDesAccesAnnonceParLAvis() {
     let etat = EtatAcces()
     etat.annoncer("Accès enregistré")

@@ -18,6 +18,7 @@ import Foundation
 /// `-lien <adresse>` : un lien universel reçu au lancement (#18) ;
 /// `-push non-demandee|refusee` : l'autorisation des notifications (accordée sinon),
 /// et `-push-touchee` : une notification de la résidence touchée au lancement (#17) ;
+/// `-avis-durable` : l'avis qui suit un geste ne se retire pas de lui-même (#123) ;
 /// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
@@ -148,6 +149,15 @@ enum LancementSimule {
     private static func profilConnu(_ parcours: Parcours, _ residence: Installation) {
         guard let simule = parcours.service as? ServiceSimule else { return }
         parcours.connues.noter(simule.profilSimule, pour: residence)
+    }
+
+    /// `-avis-durable` : l'avis qui suit un geste (`AvisEphemere`) reste à l'écran jusqu'au
+    /// suivant. Il dure 4 s, comme sur le site ; sur le runner de la CI une seule requête
+    /// d'accessibilité en a pris jusqu'à 30 : l'avis était dit, puis reparti, avant que le
+    /// test le lise — rouge sans que l'app ait tort (AccesUITests, run 43060065387). Un
+    /// état passager ne se prouve pas par un délai plus long : il se rend durable.
+    static func avisDurable(_ arguments: [String]) -> Bool {
+        arguments.contains("-api-simulee") && arguments.contains("-avis-durable")
     }
 
     /// La valeur qui suit `nom` dans les arguments de lancement.

@@ -10,6 +10,14 @@ import XCTest
 /// ⚠️ Un élément se cherche par son IDENTIFIANT ou son libellé, jamais par son type
 /// (`app.buttons`, `app.links`…) : le type d'accessibilité diffère d'une version
 /// d'iOS à l'autre (poste en iOS 27, CI en iOS 26 — leçon de #12).
+///
+/// ⚠️ Aucune attente n'a son propre délai : toutes rendent la main dès que l'état est
+/// là, au plus tard au plafond commun (`Attente.plafond`, #123). Et l'avis qui suit un
+/// geste (« Accès enregistré ») dure 4 s dans l'app : il se lit sous `-avis-durable`,
+/// qui le garde à l'écran — sur le runner, deux requêtes d'accessibilité expirées
+/// d'affilée (57,8 s) l'ont laissé repartir avant d'être lu (run 43060065387). La
+/// preuve du geste reste l'état durable qui le suit : l'accès perdu ne se signale
+/// plus, le code déclaré est dans la liste relue.
 final class AccesUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
@@ -18,7 +26,7 @@ final class AccesUITests: XCTestCase {
     @MainActor
     private func ouvrirAcces() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", "fil"]
+        app.launchArguments = ["-api-simulee", "-ecran", "fil", "-avis-durable"]
         app.launch()
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.apparait())
@@ -91,7 +99,11 @@ final class AccesUITests: XCTestCase {
         app.libelleAcces("Lot 15").tap()
         app.capturerAcces("acces-6-nouvel-acces", dans: self)
         app.elementAcces("acces.feuille.enregistrer").tap()
-        XCTAssertTrue(app.libelleAcces("Demande envoyée au conseil syndical").apparait())
+        let avis = app.libelleAcces("Demande envoyée au conseil syndical")
+        XCTAssertTrue(avis.apparait())
+        // Le garde-fou de `-avis-durable` : passé les 4 s de l'app, l'avis est toujours là.
+        // Sans lui, les avis de ces tests se liraient de nouveau contre la montre.
+        XCTAssertTrue(avis.demeure(6), "sous -avis-durable, l'avis ne se retire pas")
     }
 }
 
