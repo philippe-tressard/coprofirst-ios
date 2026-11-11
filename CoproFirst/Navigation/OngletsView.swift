@@ -90,6 +90,14 @@ private struct PlusView: View {
                 }
                 .accessibilityIdentifier("plus.profil")
                 .listRowBackground(palette.surface)
+                // Le pied de page du site : ©, mentions légales, confidentialité, logiciel libre.
+                NavigationLink {
+                    AProposView(installation: installation)
+                } label: {
+                    EntreeDePlus(libelle: "À propos", symbole: "info.circle")
+                }
+                .accessibilityIdentifier("plus.a-propos")
+                .listRowBackground(palette.surface)
             }
             .scrollContentBackground(.hidden)
             .background(palette.bg)
