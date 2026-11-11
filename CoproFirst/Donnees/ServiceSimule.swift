@@ -54,10 +54,26 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         }
     }
 
-    func connecter(_ installation: Installation, email: String, motDePasse: String) async throws {
+    func connecter(_ hote: HoteConfirme, email: String, motDePasse: String) async throws {
+        verrou.withLock { motsDePasseRecus.append(hote.installation.adresse) }
         try await Task.sleep(for: delai)
         if motDePasse == "refuse" { throw ErreurService.identifiantsRefuses }
-        _ = verrou.withLock { deconnectes.remove(installation.hote) }
+        _ = verrou.withLock { deconnectes.remove(hote.installation.hote) }
+    }
+
+    /// Les adresses qui ont reçu un mot de passe, dans l'ordre (#82).
+    var adressesAyantRecuUnMotDePasse: [URL] { verrou.withLock { motsDePasseRecus } }
+    private var motsDePasseRecus: [URL] = []
+
+    /// La résidence inventée et la démo déclarent l'app ; `sans-app.exemple.fr` sert un
+    /// fichier qui ne la déclare pas ; tout autre hôte n'en sert aucun (#82).
+    func preuve(_ adresse: URL) async -> PreuveHote {
+        try? await Task.sleep(for: delai)
+        switch adresse.host() {
+        case residenceServie.hote, Self.demo.hote: return .declaree
+        case "sans-app.exemple.fr": return .sansLApp
+        default: return .absente
+        }
     }
 
     func aUneSessionGardee(_ installation: Installation) -> Bool {

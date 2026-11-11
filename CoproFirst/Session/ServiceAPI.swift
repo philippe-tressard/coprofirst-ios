@@ -40,9 +40,9 @@ final class ServiceAPI: ServiceCoproFirst {
         }
     }
 
-    func connecter(_ installation: Installation, email: String, motDePasse: String) async throws {
+    func connecter(_ hote: HoteConfirme, email: String, motDePasse: String) async throws {
         let sortie = try await appeler {
-            try await client(installation.adresse).postAuthLogin(
+            try await client(hote.installation.adresse).postAuthLogin(
                 body: .json(.init(email: email, password: motDePasse)))
         }
         switch sortie {

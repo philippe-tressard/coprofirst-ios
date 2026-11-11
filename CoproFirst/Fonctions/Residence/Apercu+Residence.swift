@@ -95,25 +95,54 @@ extension Apercu {
             detail: nil, numero: "A-0012", equipement: nil, lien: "/tickets/12", alerte: nil, extrait: nil),
     ]
 
+    /// Un avis à renvois (contrat 1.14.0) : chaque affirmation porte son renvoi, R3 n'a
+    /// pas d'extrait derrière, R2 n'a pas été retrouvé mot pour mot.
     static let question = QuestionReglement(
         id: 1, question: "Puis-je installer une climatisation sur mon balcon ?",
         reponse: "<p>Oui, <strong>sous conditions</strong> : l'unité extérieure modifie l'aspect de la façade, "
-            + "ce qui demande une autorisation de l'assemblée générale [R1]. Le bruit reste encadré [R3].</p>",
+            + "ce qui demande une autorisation de l'assemblée générale [R1]. L'assemblée de 2024 l'a accordée "
+            + "pour les balcons sur cour [AG1]. Le bruit reste encadré [R3].</p>",
         reponseSansRenvois: "<p>Oui, <strong>sous conditions</strong> : l'unité extérieure modifie l'aspect "
-            + "de la façade, ce qui demande une autorisation de l'assemblée générale. Le bruit reste encadré.</p>",
-        verdictLibelle: "Sous conditions", poseeLe: FormatsDuSite.lire("2026-10-20T08:05:00") ?? .now,
-        texteEnVigueur: true,
-        selonReglement: "<p>L'article 9 interdit de modifier l'aspect extérieur sans accord de l'AG.</p>",
-        selonAG: nil, synthese: nil, reserves: "<p>Le bruit de l'unité reste soumis aux règles de voisinage.</p>",
+            + "de la façade, ce qui demande une autorisation de l'assemblée générale. L'assemblée de 2024 l'a "
+            + "accordée pour les balcons sur cour. Le bruit reste encadré.</p>",
+        verdictLibelle: "Sous conditions", verdictTon: "alerte",
+        poseeLe: FormatsDuSite.lire("2026-10-20T08:05:00") ?? .now, texteEnVigueur: true,
+        selonReglement: "<ul><li>L'aspect extérieur ne se modifie pas sans l'accord de l'assemblée [R1].</li>"
+            + "<li>Le balcon reste à l'usage exclusif du lot [R2].</li></ul>",
+        selonAG: "<ul><li>La résolution 12 autorise les unités extérieures sur les balcons sur cour [AG1].</li></ul>",
+        synthese: nil, reserves: "<p>Le bruit de l'unité reste soumis aux règles de voisinage.</p>",
         provenance: "le règlement de copropriété de 2019", modele: "l'assistant", auteur: nil, dansLaFAQ: false,
         extraits: [
             ExtraitReglement(
                 citation: "Aucune modification de l'aspect extérieur ne pourra être faite sans l'autorisation "
                     + "de l'assemblée générale.",
                 verifie: true, reference: "Art. 9", apport: "Fonde l'autorisation préalable.",
-                acte: "Règlement de copropriété", page: "14", source: "reglement"),
+                acte: "Règlement de copropriété", rubrique: "Chapitre II", page: "p. 14", source: "reglement",
+                renvoi: "R1"),
             ExtraitReglement(
                 citation: "Les balcons restent à l'usage exclusif du lot.", verifie: false, reference: "Art. 4",
-                apport: nil, acte: nil, page: nil, source: "reglement"),
+                apport: nil, acte: nil, page: nil, source: "reglement", renvoi: "R2"),
+            ExtraitReglement(
+                citation: "L'assemblée autorise l'installation d'unités extérieures sur les balcons donnant sur cour.",
+                verifie: true, reference: "Résolution 12", apport: "Une autorisation déjà donnée.",
+                acte: "AG du 12 juin 2024", rubrique: "Résolution 12", page: "p. 3", source: "ag", renvoi: "AG1"),
         ], renvoisSansExtrait: ["R3"])
+
+    /// Un avis d'avant les renvois : il se lit section après section, comme avant.
+    static let questionAvant = QuestionReglement(
+        id: 2, question: "Puis-je poser une jardinière sur le garde-corps ?",
+        reponse: "<p><strong>Non</strong> : le règlement interdit tout objet en surplomb de la façade.</p>",
+        reponseSansRenvois: "<p><strong>Non</strong> : le règlement interdit tout objet en surplomb de la "
+            + "façade.</p>",
+        verdictLibelle: "Non", verdictTon: "danger",
+        poseeLe: FormatsDuSite.lire("2026-06-02T18:40:00") ?? .now, texteEnVigueur: true,
+        selonReglement: "<p>L'article 11 interdit les objets suspendus aux garde-corps.</p>",
+        selonAG: nil, synthese: nil, reserves: nil, provenance: "le règlement de copropriété de 2019",
+        modele: "l'assistant", auteur: nil, dansLaFAQ: true,
+        extraits: [
+            ExtraitReglement(
+                citation: "Il ne pourra être suspendu aucun objet aux garde-corps des balcons.", verifie: true,
+                reference: "Art. 11", apport: nil, acte: "Règlement de copropriété", page: "p. 16",
+                source: "reglement"),
+        ])
 }

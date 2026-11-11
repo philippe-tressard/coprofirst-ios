@@ -28,8 +28,16 @@ private func contenu(_ suite: String) -> String {
     let parcours = Parcours(service: service, connues: InstallationsConnues(reglages: reglages, coffre: coffre))
     let residence = ServiceSimule.residence
 
-    // Le parcours de `ConnexionView.seConnecter`, puis la relecture du profil (GET /auth/me).
-    try await service.connecter(residence, email: "resident@exemple.fr", motDePasse: "secret")
+    // Le parcours de `ConnexionView.seConnecter` : l'hôte jamais vu se confirme d'abord
+    // (#82), puis le mot de passe part par la garde ; enfin la relecture du profil.
+    let garde = parcours.garde
+    func seConnecter() async throws -> Bool {
+        try await garde.connecter(residence, origine: .saisie, email: "resident@exemple.fr", motDePasse: "secret")
+    }
+    #expect(try await seConnecter() == false, "la confirmation de l'hôte d'abord")
+    await garde.verifier()
+    #expect(garde.confirmer())
+    #expect(try await seConnecter())
     parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: residence)
     parcours.ouvrir(residence, premiereConnexion: true)
     await parcours.rafraichirProfil()

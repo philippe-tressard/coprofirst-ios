@@ -38,6 +38,8 @@ final class ParcoursUITests: XCTestCase {
         email.typeText("resident@exemple.fr\n")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
         motDePasse.typeText("refuse\n")
+        // Saisie à la main, jamais vue : l'adresse se confirme avant le mot de passe (#82).
+        ConfirmationHoteUITests.confirmer(app)
         XCTAssertTrue(app.staticTexts["Adresse électronique ou mot de passe incorrect."].waitForExistence(timeout: 5))
 
         email.tap()

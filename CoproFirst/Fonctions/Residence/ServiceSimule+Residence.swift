@@ -30,7 +30,7 @@ extension ServiceSimule: ServiceResidence {
     func reglement(_ installation: Installation) async throws -> (EtatReglement, [QuestionReglement]) {
         try await Task.sleep(for: .milliseconds(450))
         let etat = EtatReglement(disponible: true, texteDisponible: true, lienReglement: nil)
-        return (etat, verrouQuestions.withLock { questionsPosees } + [Apercu.question])
+        return (etat, verrouQuestions.withLock { questionsPosees } + [Apercu.question, Apercu.questionAvant])
     }
 
     func poser(_ question: String, dans installation: Installation) async throws -> QuestionReglement {
@@ -39,9 +39,11 @@ extension ServiceSimule: ServiceResidence {
         var reponse = QuestionReglement(
             id: Int.random(in: 1_000...9_999), question: question, reponse: modele.reponse,
             reponseSansRenvois: modele.reponseSansRenvois,
-            verdictLibelle: modele.verdictLibelle, poseeLe: .now, texteEnVigueur: true, dansLaFAQ: false,
+            verdictLibelle: modele.verdictLibelle, verdictTon: modele.verdictTon, poseeLe: .now,
+            texteEnVigueur: true, dansLaFAQ: false,
             extraits: modele.extraits, renvoisSansExtrait: modele.renvoisSansExtrait)
         reponse.selonReglement = modele.selonReglement
+        reponse.selonAG = modele.selonAG
         reponse.reserves = modele.reserves
         reponse.provenance = modele.provenance
         reponse.modele = modele.modele

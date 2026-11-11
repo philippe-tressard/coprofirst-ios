@@ -112,11 +112,14 @@ private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
         #expect(await serveur.lecturesDuFil == 6)
     }
 
-    /// Un 401 à la connexion dit des identifiants refusés : rien à renouveler.
+    /// Un 401 à la connexion dit des identifiants refusés : rien à renouveler. Le mot de
+    /// passe passe par la garde (#82), seule porte de `connecter` : la résidence est connue.
+    @MainActor
     @Test func uneConnexionRefuseeNeRenouvellePas() async {
         let serveur = ServeurAJetonCourt()
+        let garde = GardeHote(service: service(serveur), connues: { [residence] })
         await #expect(throws: ErreurService.identifiantsRefuses) {
-            try await service(serveur).connecter(residence, email: "a@exemple.fr", motDePasse: "x")
+            try await garde.connecter(residence, origine: .saisie, email: "a@exemple.fr", motDePasse: "x")
         }
         #expect(await serveur.renouvellements == 0)
     }

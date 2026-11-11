@@ -31,6 +31,8 @@ final class ConnexionUITests: XCTestCase {
         app.coordinate(withNormalizedOffset: .zero)
             .withOffset(CGVector(dx: valider.frame.midX, dy: valider.frame.midY))
             .tap()
+        // Un hôte jamais vu sur cet appareil : l'adresse se confirme d'abord (#82).
+        ConfirmationHoteUITests.confirmer(app)
 
         XCTAssertTrue(
             app.buttons["faceid.plusTard"].waitForExistence(timeout: 5),
