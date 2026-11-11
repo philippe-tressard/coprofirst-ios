@@ -169,7 +169,7 @@ struct ConnexionView: View {
     private func preremplir() {
         guard saisieResidence.isEmpty else { return }
         let installation = preremplissage.installation ?? parcours.reconnue
-        saisieResidence = installation?.hote ?? ""
+        saisieResidence = installation?.hote ?? preremplissage.adresse.map(AdresseInstallation.enSaisie) ?? ""
         let retenu = installation.flatMap(parcours.connues.identifiant) ?? ""
         email = preremplissage.email.isEmpty ? retenu : preremplissage.email
         guard installation != nil, !email.isEmpty else { return }
