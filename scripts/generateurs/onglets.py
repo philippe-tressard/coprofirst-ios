@@ -3,6 +3,8 @@
 """Les PAGES et leurs ONGLETS, lus dans `PAGES` (`front/src/lib/pages.ts`) et
 `PAGES_ROLES` (`pages-roles.ts`) :
 
+- le TITRE du fil d'activité, la section du tableau de bord que l'app ouvre en premier
+  (`.titre-fil` de `tableau-de-bord/+page.svelte`) → `PagesParDefaut.titreDuFil` ;
 - l'ordre par défaut des pages, que `pages_order` de GET /config réordonne — celles de
   `PAGES`, puis celles de `PAGES_ROLES` (Espace CS, Admin, Délégations), comme `PAGES`
   les étale : `PagesOuvertes` (Navigation/) décide ensuite qui les voit (#15)
@@ -32,6 +34,7 @@ SOURCES = [
     "front/src/lib/archives.ts",
     "front/src/lib/stores/auth.ts",
     "front/src/lib/roles.ts",
+    "front/src/routes/(app)/tableau-de-bord/+page.svelte",
 ]
 
 RESERVES = ("proprioOuCS", "nonLocataire", "operateur", "nonGestionnaire")
@@ -137,6 +140,15 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
     return corps, n
 
 
+def titre_du_fil(ctx) -> str:
+    """« Fil d'activité » : le titre de la section du fil, au tableau de bord du site."""
+    texte = ctx.lire(SOURCES[5])
+    m = re.search(r'class="section-title titre-fil">\s*(?:<Icon[^>]*/>)?\s*([^<{]+?)\s*</h2>', texte)
+    if not m:
+        raise SystemExit("❌ tableau-de-bord/+page.svelte : le titre du fil (.titre-fil) est introuvable")
+    return m.group(1).replace('"', '\\"')
+
+
 def pages(ctx) -> int:
     lignes = []
     table, roles = tables_des_pages(ctx.front)
@@ -147,9 +159,12 @@ def pages(ctx) -> int:
             f'        PageDeNavigation(id: "{p["id"]}", route: "{p["href"]}", '
             f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}"),\n'
         )
-    corps = ctx.entete("front/src/lib/pages.ts (PAGES) et pages-roles.ts (PAGES_ROLES)")
+    corps = ctx.entete("front/src/lib/pages.ts (PAGES), pages-roles.ts (PAGES_ROLES) et le titre du fil "
+                       "(routes/(app)/tableau-de-bord/+page.svelte)")
     corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"
-    corps += "enum PagesParDefaut {\n    static let toutes: [PageDeNavigation] = [\n" + "".join(lignes) + "    ]\n}\n"
+    corps += "enum PagesParDefaut {\n    static let toutes: [PageDeNavigation] = [\n" + "".join(lignes) + "    ]\n"
+    corps += "    /// Le titre de la section du tableau de bord que le fil de l'app reprend (`.titre-fil`).\n"
+    corps += f'    static let titreDuFil = "{titre_du_fil(ctx)}"\n}}\n'
     ctx.ecrire(NAVIGATION / "PagesParDefaut.swift", corps)
     return len(lignes)
 

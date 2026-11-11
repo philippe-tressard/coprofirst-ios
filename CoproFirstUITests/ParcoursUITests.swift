@@ -23,6 +23,13 @@ final class ParcoursUITests: XCTestCase {
             ].waitForExistence(timeout: 5),
             "un hôte inconnu (421) se dit en une phrase")
 
+        residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "ancienne.exemple.fr")
+        XCTAssertTrue(
+            app.staticTexts[
+                "Cette résidence doit être mise à jour pour s'ouvrir dans l'app. Prévenez son administrateur."
+            ].waitForExistence(timeout: 5),
+            "une résidence sous le plancher le dit (#83)")
+
         residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "tilleuls.exemple.fr")
         XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].waitForExistence(timeout: 5), "reconnue")
 
@@ -66,7 +73,7 @@ final class ParcoursUITests: XCTestCase {
         app.launch()
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.waitForExistence(timeout: 5))
-        for libelle in ["Fil", "Résidence", "Affaires", "Accès", "Plus"] {
+        for libelle in ["Fil d'activité", "Résidence", "Affaires", "Accès", "Plus"] {
             XCTAssertTrue(barre.buttons[libelle].exists, "« \(libelle) » dans la barre")
         }
         XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)

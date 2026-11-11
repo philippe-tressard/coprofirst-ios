@@ -20,6 +20,9 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     var residenceServie = ServiceSimule.residence
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
+    /// Le délai du détail d'une affaire ; `-delai-detail <ms>` l'allonge, pour jouer le
+    /// runner lent de la CI (#98).
+    var delaiDetail: Duration = .milliseconds(500)
     /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
     private var deconnectes: Set<String> = []
     private let verrou = NSLock()
@@ -37,6 +40,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         switch adresse.host() {
         case "inconnue.exemple.fr": throw ErreurService.hoteInconnu
         case "injoignable.exemple.fr": throw ErreurService.injoignable
+        case "ancienne.exemple.fr":
+            // Une installation sous le plancher (#83) : la découverte doit le dire.
+            var ancienne = residenceServie
+            (ancienne.adresse, ancienne.versionContrat) = (adresse, "1.12.0")
+            return ancienne
         case "demo.coprofirst.fr": return Self.demo
         default:
             var installation = residenceServie

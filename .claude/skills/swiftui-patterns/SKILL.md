@@ -32,8 +32,10 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Couleurs | `@Environment(\\.palette) private var palette`, puis `palette.<jeton>` : la charte avant toute résidence, sa palette (`site_palette`) ensuite, posée par `RacineView` ; palettes **générées** (`scripts/generer.py`), teintes du Kanban comprises (`palette.kanbanAg`…, #34) ; `verifier-depot.sh` refuse `Color.red`, `Color(red:)` | `Charte/` |
 | Formats | dates, nombres et montants **par `FormatsDuSite`**, à la règle du site (`fmtDate` « 2 avr. 2026 », `fmtDateShort` « 02/04/2026 », `fmtDateLong` « 2 avril 2026 » et `fmtDatetime` « 2 avr. 2026, 16:30 » (#12, la « Dernière connexion » du Profil), `fmtTime` « 16:30 » (`heure`, #41 : une notification du jour, une carte du fil), `fmtJourCourt` « mar. 17 nov. » (`jourCourt`, #75 : la vignette d'échéance du fil, l'année seulement si ce n'est pas la courante), `fmtNombre`, `fmtMontant`, `fmtOctets` (`octets`), `fmtMoisCourt` et `fmtMonthYear` (`moisCourt`, `moisAnnee`, #16), et un nom tel que servi (`nom(prenom, nom)`, #15) ; fr-FR, fuseau de Paris ; « — » pour une valeur absente) — jamais un `formatted()` écrit dans un écran (#37) | `Commun/Texte/FormatsDuSite.swift` |
 | Typographie | titres `Font.titre(.largeTitle)` (serif New York), texte en styles dynamiques ; libellés `.styleLibelle()` (capitales) ; grands titres de navigation en serif (`ApparenceNavigation`) | `Charte/Charte.swift` |
+| Mesures | `Mise.rayon`, `Mise.marge`, `Mise.cible`… : jamais un chiffre dans une vue. Une mesure que le site a en jeton se lit dans `MesuresDuSite` (**générée**) ; une mesure propre à iOS se déclare (raison, date) dans `MesuresTests`, qui refuse une mesure non déclarée ou un écart devenu caduc (#85) | `Charte/Charte.swift`, `CoproFirstTests/MesuresTests.swift` |
+| Pictogrammes | le nom **Lucide** du site, traduit par `Pictogrammes.symbole` ; un nom neuf d'une table générée ajoute son entrée à `Pictogrammes.table`, sinon `PictogrammesTests` échoue (le repli `circle.fill` ne sert qu'à l'écran, jamais en silence — #85) | `Charte/Theme.swift` |
 | Composants | un par notion — catalogue ci-dessous | `Commun/` |
-| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`) | `Session/`, `Donnees/` |
+| Données | les écrans parlent à `ServiceCoproFirst` : `ServiceAPI` (client généré, une URLSession éphémère par hôte, jeton au Trousseau si Face ID est accepté) ou `ServiceSimule` (`-api-simulee`). Un 401 se renouvelle à UNE porte, `Renouvellement` (intergiciel du client généré, #81) : un seul POST /auth/refresh à la fois par hôte, la requête rejouée une fois ; `reprendre` y passe aussi | `Session/`, `Donnees/` |
 | État | `@Observable` + `.environment` : `Parcours` (navigation, résidence reconnue puis ouverte), `Reseau` (hors ligne) | `Session/` |
 | Navigation | la barre suit `pages_order` (`OrdrePages`), jamais un ordre écrit dans l'app ; une page réservée à un rôle (Prestataires, Espace CS, Admin, Délégations) n'y paraît qu'à qui l'a — `PagesOuvertes`, le filtre de `Nav.svelte`, écrit une fois, sur les populations générées (#15) ; chaque page ouvre l'écran que `RegistreDesMenus` inscrit, « Bientôt » sinon ; « où suis-je » en haut à droite | `Navigation/` |
 | Erreurs | `ErreurService` : une phrase par cas, jamais un code (421 → « aucune résidence n'y est installée ») ; un écran montre `ErreurService.depuis(error).phrase` — « Phrase du serveur » ci-dessous | `Session/ErreurService.swift` |
@@ -153,6 +155,10 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   simulée se déclare par sa ROUTE, `ReponseNonTypee(nom:route:json:)`, lue par le même
   `Relecture` (`.lire(_:)`). Le juge vérifie que la route existe et qu'elle n'est toujours pas
   typée : le jour où le contrat la type, il échoue, et la lecture passe au type généré (#16).
+- **Un champ servi au-dessus du plancher** sur une route TYPÉE (#89) : l'API simulée le
+  sert à la forme du serveur, et le `Fixtures*.swift` le déclare,
+  `AuDessusDuPlancher(schema:champs:contrat:)` ; le juge le tolère dans ce schéma seulement,
+  et échoue le jour où le contrat le déclare, ou quand plus aucune réponse ne le sert.
 
 ### Les composants communs — à réutiliser, pas à modifier
 
@@ -200,6 +206,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | Geste | Règle | Où |
 |---|---|---|
 | **Réponse non typée** | une route sans `response_model` côté serveur rend un `OpenAPIValueContainer` : il se relit par `Relecture.lire(T.self, depuis: valeur)` (`json:` pour des octets, dans un test) — clés `snake_case` → `camelCase`, dates comme le client généré (ISO, sans fuseau = UTC). Le modèle ne déclare **pas** de `CodingKeys` en `snake_case` (la conversion les rendrait muets). Jamais un `JSONDecoder` monté dans un service. Chaque usage est un besoin noté pour coprofirst (#2460, #2505, #2507). **Au contrat 1.12.0, plus aucun écran n'en use** : toute réponse lue est typée (#53-#56) | `Commun/Session/Relecture.swift` |
+| **Champ au-dessus du plancher** | une installation plus récente sert, sur une route **typée**, un champ que le contrat du plancher ignore — et que le type généré jette. L'appel passe par le client généré dans `CorpsServi.garder { … }`, qui rend aussi le corps servi ; le champ s'y relit par `Relecture.auDessusDuPlancher(T.self, corps:)` (`parLigne:` pour une liste, par `id`), dans un modèle aux champs **tous facultatifs**. Absent (installation antérieure) ou illisible : `nil`, et l'écran garde son geste d'avant — défaut fermé, jamais un geste que le serveur n'a pas annoncé. Le modèle de l'écran se construit par une seule fonction, partagée par le service réel et l'API simulée (`UtilisateurAdmin.lus`, `Perimetre.lus`). Le jour où le plancher l'atteint, il se lit par le type généré | `Paquets/ClientAPI/…/CorpsServi.swift`, `Commun/Session/Relecture.swift` (tests : `AuDessusDuPlancherTests`) |
 | **Phrase du serveur** | la réponse non documentée d'un **geste** (POST, PATCH, DELETE) passe par `throw await Self.refus(statut, reponse)` : `{"detail": "…"}` devient `ErreurService.refus(RefusDuServeur)`, dont la `phrase` est celle du serveur ; sans phrase, le cas que dit le statut. Une **lecture** refusée garde `ErreurService.depuisLecture(statut)` (« introuvable »). Un service simulé lève la même chose : `ErreurService.refus(.init(phrase: …))`. Un **422** servi avec SA phrase alors que le contrat le documente en erreur de validation (une liste) ne se décode pas : `appeler` le lit quand même (`refusSousValidation`, #55) | `Commun/Session/RefusDuServeur.swift` (tests : `CommunSessionTests`) |
 | **Fichier servi** | une route qui sert un `FileResponse` que le contrat déclare en JSON (document, rapport…) se lit par `try await Self.fichierServi(nom:defaut:) { … }` : la fermeture lance l'appel généré et lève `ErreurService.depuisLecture(statut)` sur un `.undocumented` ; le corps se lit dans l'erreur du client, sur un 200 seulement, et s'écrit sous `Fichiers.nomSur` dans `tmp/documents/`, en `.completeFileProtection`. **Aucune autre écriture de ce geste** : `grep -rn "ClientCoproFirst.fichierServi" CoproFirst` ne rend que `Commun/Session/` (#32). Besoin noté : coprofirst#2505 | `Commun/Session/FichierServi.swift` (tests : `FichierServiTests`) |
 | **Afficher un échec** | `ErreurService.depuis(error).phrase` ; un écran qui a sa propre phrase d'échec (celle du site, « Erreur lors de l'export. ») écrit `ErreurService.phrase(error, sinon: "…")` : la phrase du serveur passe devant. Un menu qui a ses erreurs (`ErreurAffaires`) range un refus en `.service(.refus(…))`, jamais une phrase fixe par statut | `Session/ErreurService.swift` |
@@ -239,15 +246,15 @@ seule la CI le dit.
    seconde sur une longue liste.
 4. Aucun délai ne s'allonge pour rendre un test vert : un échec de CI se lit dans son
    journal (`gh run view <id> --log-failed`, la ligne « Check for interrupting elements
-   affecting … » donne le type réellement trouvé).
+   affecting … » donne le type réellement trouvé). On attend un **état**, jamais une
+   durée : un écran chargé a son point d'attente commun, que tous ses tests emploient
+   avant de lire le reste par `.exists` — pour le détail d'une affaire,
+   `attendreDetailAffaire` (titre ET bandeau, qui arrive après le titre sur le runner :
+   jusqu'à 12 s, #98) ; jamais un `.exists` juste après un toucher. Un écran lent se
+   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`).
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
    test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
    « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
-
-## À trancher quand le premier cas arrive
-
-- Rafraîchissement automatique sur un 401 en cours de session (intergiciel du
-  client) : aujourd'hui, la session se reprend à l'ouverture seulement.

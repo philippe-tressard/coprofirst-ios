@@ -60,7 +60,8 @@ enum LibellesBarre {
 enum OrdrePages {
     /// Le tableau de bord du site devient le fil de l'app.
     static let idFil = "tableau-de-bord"
-    static let libelleFil = "Fil"
+    /// « Fil d'activité », comme le titre de la section au tableau de bord du site.
+    static let libelleFil = PagesParDefaut.titreDuFil
 
     static func ordonner(
         _ pages: [PageDeNavigation], ordre: [String]?, surcharges: [String: SurchargePage]

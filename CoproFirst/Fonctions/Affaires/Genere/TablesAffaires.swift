@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.73.0 (commit de78b44da68b31e8e256ff1ef80e4507ac49d24b), front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css.
+// Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css.
 // swiftlint:disable line_length
 
 import SwiftUI
@@ -25,9 +25,9 @@ enum TablesAffaires {
     ]
     /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.
     static let natures: [NatureAffaire] = [
-        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", badge: "badge-blue"),
-        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", badge: "badge-purple"),
-        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", badge: "badge-orange"),
+        NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", icone: "newspaper", badge: "badge-blue"),
+        NatureAffaire(code: "calendrier", libelle: "Calendrier", abrege: "CAL.", emoji: "📅", icone: "calendar-days", badge: "badge-purple"),
+        NatureAffaire(code: "activite", libelle: "Affaire", abrege: "AFF.", emoji: "🛠️", icone: "wrench", badge: "badge-orange"),
     ]
     /// Les colonnes du Kanban — ces colonnes SONT le workflow (`KANBAN_COLS`).
     static let colonnesKanban: [ColonneKanban] = [
