@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Ce que « Prestataires » demande à une installation (#13), en LECTURE. Réalisé par
@@ -49,6 +50,42 @@ struct Prestataire: Hashable, Sendable, Identifiable {
     var adresse: String?
     var description: String?
     var contacts: [ContactPrestataire] = []
+    /// Les numéros, un lien d'appel chacun : ceux que le serveur SERT (`telephones`,
+    /// contrat 1.20.0, #125) ; d'une installation antérieure, `telephone` découpé comme
+    /// avant (`Prestataire.lus`).
+    var telephones: [String] = []
+}
+
+/// Ce que GET /prestataires (et ses archives) sert au-dessus du plancher, relu par
+/// `Relecture.auDessusDuPlancher` : les numéros découpés et dédoublonnés par le serveur.
+struct PrestataireAuDessusDuPlancher: Decodable, Identifiable {
+    let id: Int
+    var telephones: [String]?
+}
+
+extension Prestataire {
+    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher
+    /// — le MÊME branchement pour le service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.PrestataireRead], corps: Data?) -> [Prestataire] {
+        let servis = Relecture.auDessusDuPlancher(parLigne: PrestataireAuDessusDuPlancher.self, corps: corps)
+        return generes.map { lu in
+            var prestataire = Prestataire(lu)
+            prestataire.telephones = servis[lu.id]?.telephones ?? decoupes(lu.telephone)
+            return prestataire
+        }
+    }
+
+    /// `telephonesDe` du site, pour une installation antérieure au contrat 1.20.0 qui ne
+    /// sert pas `telephones` : découpés sur la virgule, sans vide ni doublon. Le jour où
+    /// le plancher l'atteint, ce repli se retire.
+    static func decoupes(_ champ: String?) -> [String] {
+        var vus: [String] = []
+        for brut in (champ ?? "").split(separator: ",") {
+            let numero = brut.trimmingCharacters(in: .whitespaces)
+            if !numero.isEmpty, !vus.contains(numero) { vus.append(numero) }
+        }
+        return vus
+    }
 }
 
 struct Contrat: Hashable, Sendable, Identifiable {
@@ -62,6 +99,9 @@ struct Contrat: Hashable, Sendable, Identifiable {
     var dureeUnite: String?
     var frequenceType: String?
     var frequenceValeur: Int?
+    /// « ↺ Mensuel » : la fréquence en clair, SERVIE (`frequence_libelle`, contrat ≤ 1.14.0,
+    /// coprofirst#2507) — vide sans fréquence.
+    var frequenceLibelle: String?
     var prochaineVisite: String?
     var notes: String?
 }

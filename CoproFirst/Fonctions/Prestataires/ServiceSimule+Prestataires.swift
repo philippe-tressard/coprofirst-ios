@@ -9,7 +9,7 @@ import Foundation
 extension ServiceSimule: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         try await Task.sleep(for: .milliseconds(300))
-        return archives ? PrestatairesSimules.archives : PrestatairesSimules.prestataires
+        return try FixturesPrestataires.lus(archives: archives)
     }
 
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat] {
@@ -53,35 +53,19 @@ extension ServiceSimule: ServicePrestataires {
     }
 }
 
+/// Les contrats, avis et équipements simulés (les fiches : `FixturesPrestataires`). Une
+/// fréquence en clair est celle que le serveur servirait (`frequence_libelle`).
 enum PrestatairesSimules {
-    static let prestataires: [Prestataire] = [
-        Prestataire(
-            id: 1, nom: "Ascenseurs du Parc (fictif)", specialite: "ascenseur", type: "maintenance_depannage",
-            telephone: "01 99 00 00 11, 01 99 00 00 12", email: "contact@ascenseurs.exemple.fr",
-            adresse: "12 rue de l'Exemple, 75000 Paris",
-            description: "<p>Astreinte <strong>24 h/24</strong> pour les personnes bloquées en cabine.</p>",
-            contacts: [ContactPrestataire(fonction: "Astreinte", telephone: "01 99 00 00 13")]),
-        Prestataire(
-            id: 2, nom: "Contrôles Sécurité Exemple", specialite: "incendie", type: "reglementaire",
-            telephone: "01 99 00 00 21", email: "planning@controles.exemple.fr"),
-        Prestataire(
-            id: 3, nom: "Eaux de la Ville (fictif)", specialite: "eau", type: "gestion", telephone: "01 99 00 00 31"),
-        Prestataire(id: 4, nom: "Peinture & Façades Exemple", specialite: "facade", type: "travaux"),
-    ]
-
-    static let archives: [Prestataire] = [
-        Prestataire(id: 9, nom: "Ancien jardinier (fictif)", specialite: "espaces_verts", type: "maintenance_depannage")
-    ]
-
     static let contrats: [Contrat] = [
         Contrat(
             id: 1, prestataireId: 1, libelle: "Maintenance des deux ascenseurs", typeEquipement: "ascenseur",
             numeroContrat: "ASC-2024-118", dateDebut: "2024-01-01", dureeValeur: 3, dureeUnite: "ans",
-            frequenceType: "mois", frequenceValeur: 1, prochaineVisite: "2026-11-18",
+            frequenceType: "mois", frequenceValeur: 1, frequenceLibelle: "↺ Mensuel", prochaineVisite: "2026-11-18",
             notes: "<p>Visite mensuelle ; remplacement des câbles prévu en 2027.</p>"),
         Contrat(
             id: 2, prestataireId: 2, libelle: "Vérification des extincteurs", typeEquipement: "incendie",
-            dateDebut: "2023-06-01", frequenceType: "fois_par_an", frequenceValeur: 1, prochaineVisite: "2026-09-30"),
+            dateDebut: "2023-06-01", frequenceType: "fois_par_an", frequenceValeur: 1, frequenceLibelle: "↺ 1×/an",
+            prochaineVisite: "2026-09-30"),
         Contrat(
             id: 3, prestataireId: 3, libelle: "Abonnement eau froide", typeEquipement: "autre",
             dateDebut: "2020-01-01"),

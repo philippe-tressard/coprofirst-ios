@@ -59,9 +59,9 @@ struct CartePrestataire: View {
         }
     }
 
-    /// L'aperçu des contacts : les contacts nommés, sinon les numéros, puis le courriel.
+    /// L'aperçu des contacts : les contacts nommés, sinon les numéros — un lien d'appel
+    /// par numéro SERVI (`Prestataire.telephones`) —, puis le courriel.
     @ViewBuilder private var apercuContacts: some View {
-        let telephones = Self.telephones(prestataire.telephone)
         VStack(alignment: .leading, spacing: 2) {
             if !prestataire.contacts.isEmpty {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
@@ -73,7 +73,7 @@ struct CartePrestataire: View {
                         tel: contact.telephone)
                 }
             } else {
-                ForEach(telephones, id: \.self) { lien("📞 \($0)", tel: $0) }
+                ForEach(prestataire.telephones, id: \.self) { lien("📞 \($0)", tel: $0) }
             }
             if let email = prestataire.email, !email.isEmpty, let url = URL(string: "mailto:\(email)") {
                 Link("✉️ \(email)", destination: url).font(.subheadline).frame(minHeight: Mise.cible)
@@ -103,16 +103,6 @@ struct CartePrestataire: View {
             }
         }
         .transition(.opacity)
-    }
-
-    /// `telephonesDe` : découpés sur la virgule, sans doublon.
-    static func telephones(_ champ: String?) -> [String] {
-        var vus: [String] = []
-        for brut in (champ ?? "").split(separator: ",") {
-            let numero = brut.trimmingCharacters(in: .whitespaces)
-            if !numero.isEmpty, !vus.contains(numero) { vus.append(numero) }
-        }
-        return vus
     }
 }
 
