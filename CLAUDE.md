@@ -74,7 +74,8 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   l'énumération des installations est interdite (spec `multi-coproprietes.md`
   §4.1 bis de coprofirst).
 - **Contrôles** : `bash scripts/verifier-depot.sh` (500 lignes, encodage, modes,
-  syntaxe, LICENSE, confidentialité déclarée = code) et `reuse lint`, rejoués par le hook pre-commit (armé par
+  syntaxe, LICENSE, confidentialité déclarée = code, dépendances = `Package.resolved`)
+  et `reuse lint`, rejoués par le hook pre-commit (armé par
   `git config core.hooksPath .githooks`) et par la CI ; SwiftLint `--strict` ;
   tests `swift test` (ClientAPI) et `bash scripts/tests-simulateur.sh` au
   simulateur — requêtes d'accessibilité expirées au résumé du run, et une relance

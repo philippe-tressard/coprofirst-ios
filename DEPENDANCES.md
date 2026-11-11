@@ -7,6 +7,8 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 Inventaire figé (`standards/14` §6.3) : relu à chaque ajout. Versions exactes dans
 `Paquets/ClientAPI/Package.swift`, transitives dans `Paquets/ClientAPI/Package.resolved`.
+Une version écrite ici est celle de `Package.resolved`, et chaque paquet embarqué de la
+fiche de confidentialité est listé ci-dessous : `scripts/verifier-dependances.py` (#143).
 
 ## Embarquées dans l'application
 

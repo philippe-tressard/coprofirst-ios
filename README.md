@@ -22,7 +22,8 @@ Aujourd'hui, une version ne sort que sur l'iPhone de Philippe :
 
 1. la version se lit dans `project.yml` (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) ;
    l'app n'a ni étiquette ni release ;
-2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; Philippe fusionne sur `main` ;
+2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; qui fusionne
+   sur `main` se lit au champ `fusion` du registre (`CLAUDE.md`, « Dépôt ») ;
 3. au poste : `bash scripts/generer-projet.sh`, puis Xcode signe (signature automatique,
    équipe `GUX8KASNTG`) et installe l'app sur l'iPhone branché.
 
