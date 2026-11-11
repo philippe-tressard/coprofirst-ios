@@ -58,7 +58,7 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69) |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) |
 | `mes-demandes` | `kanban` | fait | #11 | Fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
