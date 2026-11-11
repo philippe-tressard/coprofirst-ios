@@ -32,13 +32,19 @@ private enum RegistreMagasinsCS {
     private static let verrou = NSLock()
     nonisolated(unsafe) private static var boites: [String: (ServiceSimule, AnyObject)] = [:]
 
+    /// La boîte se construit HORS du verrou : son contenu de départ peut lire un autre
+    /// magasin du même service (la boîte des notifications lit son volume dans ses
+    /// réglages, #118), et le verrou, non réentrant, se reprendrait lui-même — l'app
+    /// simulée se figeait. Deux fils peuvent donc en construire deux : la première
+    /// rangée est gardée, l'autre jetée.
     static func boite<B: AnyObject>(_ service: ServiceSimule, cle: String, neuve: () -> B) -> B {
-        verrou.withLock {
-            let cle = "\(ObjectIdentifier(service).hashValue)|\(cle)"
+        let cle = "\(ObjectIdentifier(service).hashValue)|\(cle)"
+        if let existante = verrou.withLock({ boites[cle]?.1 as? B }) { return existante }
+        let candidate = neuve()
+        return verrou.withLock {
             if let existante = boites[cle]?.1 as? B { return existante }
-            let boite = neuve()
-            boites[cle] = (service, boite)
-            return boite
+            boites[cle] = (service, candidate)
+            return candidate
         }
     }
 }
