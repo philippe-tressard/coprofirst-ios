@@ -16,7 +16,10 @@ extension ServiceAPI {
         async let evolutions = appeler {
             try await CorpsServi.garder { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         }
-        async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
+        // Le corps servi est gardé : `auteur_nom` et `est_auteur` sont au-dessus du plancher (#138).
+        async let messages = appeler {
+            try await CorpsServi.garder { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
+        }
         async let compte = appeler { try await client.getAuthMe() }
 
         let lu: Components.Schemas.TicketRead
@@ -32,11 +35,13 @@ extension ServiceAPI {
         var detail = DetailAffaire.lue(lu, corps: corps, evolutions: lues, corpsEvolutions: corpsSuites)
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
-        // Le compte illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
+        // `moi` ne sert qu'au repli d'une installation qui ne sert pas `est_auteur`. Le compte
+        // illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
         var moi: Int?
         if case .ok(let ok)? = try? await compte { moi = try? ok.body.json.id }
-        switch try await messages {
-        case .ok(let ok): detail.messages = try ok.body.json.map { MessageAffaire($0, moi: moi) }
+        let (sortie, corps) = try await messages
+        switch sortie {
+        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json, corps: corps, moi: moi)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

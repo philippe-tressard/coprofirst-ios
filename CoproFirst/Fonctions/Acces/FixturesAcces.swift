@@ -71,6 +71,7 @@ enum FixturesAcces {
         [
           {"id": 3, "lot_id": 31, "bailleur_id": 70, "locataire_id": 81, "locataire_nom": "du lot 31",
            "locataire_prenom": "Locataire", "locataire_email": "locataire.31@exemple.fr",
+           "locataire_nom_affiche": "Locataire DU LOT 31",
            "locataire_telephone": "01 99 00 00 31", "date_entree": "2025-09-01", "date_sortie_prevue": null,
            "date_sortie_reelle": null, "statut": "actif",
            "notes": "<p>Préavis d'<strong>un mois</strong> (zone tendue).</p>",
@@ -85,11 +86,13 @@ enum FixturesAcces {
            ]},
           {"id": 4, "lot_id": 32, "bailleur_id": 71, "locataire_id": null, "locataire_nom": "du lot 32",
            "locataire_prenom": "Locataire", "locataire_email": null, "locataire_telephone": null,
+           "locataire_nom_affiche": "Locataire DU LOT 32",
            "date_entree": "2023-02-15", "date_sortie_prevue": "2026-11-30", "date_sortie_reelle": null,
            "statut": "en_cours_sortie", "notes": null, "cree_le": "2023-02-01T10:00:00",
            "mis_a_jour_le": "2026-10-01T10:00:00", "objets": []},
           {"id": 2, "lot_id": 31, "bailleur_id": 70, "locataire_id": 80, "locataire_nom": "du lot 31",
            "locataire_prenom": "Ancien locataire", "locataire_email": null, "locataire_telephone": null,
+           "locataire_nom_affiche": "Ancien locataire DU LOT 31",
            "date_entree": "2021-03-01", "date_sortie_prevue": "2025-06-30", "date_sortie_reelle": "2025-07-02",
            "statut": "termine", "notes": null, "cree_le": "2021-02-15T10:00:00",
            "mis_a_jour_le": "2025-07-02T10:00:00",
@@ -130,6 +133,9 @@ enum FixturesAcces {
         Reponse(nom: "monBail", schema: "BailLocataireOut", json: monBail),
     ]
 
+    /// Le nom affiché du locataire, servi au-dessus du plancher (contrat 1.25.0, #135).
+    static let auDessus = AuDessusDuPlancher(schema: "BailOut", champs: ["locataire_nom_affiche"], contrat: "1.25.0")
+
     // MARK: - Lues comme le client généré les lit
 
     static func lots() throws -> [LotDuCompte] {
@@ -142,7 +148,7 @@ enum FixturesAcces {
     }
 
     static func bauxLus() throws -> [Bail] {
-        try lire([Components.Schemas.BailOut].self, baux).map(Bail.init)
+        Bail.lus(try lire([Components.Schemas.BailOut].self, baux), corps: Data(baux.utf8))
     }
 
     static func monBailLu() throws -> BailDuLocataire {

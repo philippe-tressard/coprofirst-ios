@@ -42,7 +42,7 @@ struct FicheUtilisateurAdmin: View {
     }
 
     private func fiche(_ compte: UtilisateurAdmin) -> some View {
-        let nom = FormatsDuSite.nom(compte.prenom, compte.nom)
+        let nom = compte.nomAffiche
         return Form {
             if let echec {
                 Section { MessageErreur(texte: echec).listRowInsets(EdgeInsets()) }

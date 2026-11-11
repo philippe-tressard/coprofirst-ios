@@ -174,7 +174,8 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
     // Typé par le contrat 1.5.0 (`AnnuaireLu`) : décodé comme le client, branché par `Annuaire(_:)`.
     let annuaire = Annuaire(try Relecture.generee(Components.Schemas.AnnuaireLu.self, json: json))
     #expect(annuaire.cs.membres.first?.estPresident == true)
-    #expect(annuaire.cs.membres.first?.nomComplet == "Mme Alix Exemple")
+    // La civilité puis le nom SERVI (`nom_affiche`, #135), comme la carte du site.
+    #expect(annuaire.cs.membres.first?.nomComplet == "Mme Alix EXEMPLE")
     #expect(annuaire.syndic.membres.first?.telephones == ["01 02", "06 07"], "un doublon ne s'affiche qu'une fois")
     #expect(annuaire.syndic.membres.first?.initiales == "EG")
 }

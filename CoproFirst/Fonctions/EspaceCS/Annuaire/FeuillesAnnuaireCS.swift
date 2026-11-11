@@ -38,7 +38,7 @@ struct FeuilleEnteteConseil: View {
                     Picker(TextesAnnuaire.president, selection: $president) {
                         Text(TextesAnnuaireCS.aucun).tag(Int?.none)
                         ForEach(Array(conseil.membres.enumerated()), id: \.offset) { rang, membre in
-                            Text(FormatsDuSite.nom(membre.prenom, membre.nom)).tag(Int?.some(rang))
+                            Text(membre.nomAffiche).tag(Int?.some(rang))
                         }
                     }
                     .pickerStyle(.inline)
@@ -134,7 +134,7 @@ struct FeuilleEnteteSyndic: View {
                     Picker(TextesAnnuaire.principal, selection: $principal) {
                         Text(TextesAnnuaireCS.aucun).tag(Int?.none)
                         ForEach(Array(syndic.membres.enumerated()), id: \.offset) { rang, membre in
-                            Text(FormatsDuSite.nom(membre.prenom, membre.nom)).tag(Int?.some(rang))
+                            Text(membre.nomAffiche).tag(Int?.some(rang))
                         }
                     }
                     .pickerStyle(.inline)

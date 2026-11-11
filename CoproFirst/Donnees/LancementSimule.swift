@@ -146,13 +146,18 @@ enum LancementSimule {
     private static func profilChoisi(_ compte: String?, _ simule: ServiceSimule) {
         switch compte {
         case "administrateur": simule.profilSimule.roles.append("admin")
-        case "resident": simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        // `est_moderateur` est ce que le serveur sert pour ce compte (#136) — pas recalculé.
+        case "resident":
+            simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+            simule.profilSimule.estModerateur = false
         case "locataire":
             simule.profilSimule.statut = "locataire"
             simule.profilSimule.roles = ["résident"]
+            simule.profilSimule.estModerateur = false
         case "operateur":
             simule.profilSimule.statut = "admin_technique"
             simule.profilSimule.roles = ["operateur"]
+            simule.profilSimule.estModerateur = false
         default: break
         }
     }

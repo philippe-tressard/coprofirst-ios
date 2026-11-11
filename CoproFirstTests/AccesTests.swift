@@ -106,8 +106,9 @@ import Testing
     sansLibelle.etageLibelle = ""
     #expect(sansLibelle.typeLu == "cave")
     #expect(sansLibelle.etageLu == "-1")
-    #expect(FormatsDuSite.nom(" Marie ", "Durand") == "Marie Durand")
-    #expect(FormatsDuSite.nom(nil, "  ") == "—")
+    // Le repli d'une installation qui ne sert pas encore le nom affiché (#135).
+    #expect(FormatsDuSite.nom(affiche: nil, prenom: " Marie ", nom: "Durand") == "Marie Durand")
+    #expect(FormatsDuSite.nom(affiche: nil, prenom: nil, nom: "  ") == "—")
 }
 
 @Test func lesBauxSeGroupentParLocataire() throws {

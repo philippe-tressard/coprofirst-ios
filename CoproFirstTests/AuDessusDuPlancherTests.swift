@@ -70,7 +70,7 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
     let ajouterCS = try #require(alix.gestesRoles?.first { $0.role == "conseil_syndical" })
     #expect(ajouterCS.geste == .ajouter)
     let annonce = try await etat.changerRole(alix, ajouterCS, service, ServiceSimule.residence)
-    #expect(annonce == "Rôle Conseil syndical ajouté à Alix Modèle.")
+    #expect(annonce == "Rôle Conseil syndical ajouté à Alix MODÈLE.")
     #expect(etat.compte(13)?.roles.contains("conseil_syndical") == true)
     #expect(etat.compte(13)?.gestesRoles?.first?.geste == .retirer)
     #expect(etat.membresDuConseil == 2)

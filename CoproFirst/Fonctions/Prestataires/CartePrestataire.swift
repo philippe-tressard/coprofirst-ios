@@ -65,8 +65,7 @@ struct CartePrestataire: View {
         VStack(alignment: .leading, spacing: 2) {
             if !prestataire.contacts.isEmpty {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
-                    let lu = FormatsDuSite.nom(contact.prenom, contact.nom)
-                    let nom = lu == FormatsDuSite.tiret ? "" : lu
+                    let nom = contact.nomAffiche ?? ""
                     let fonction = contact.fonction.map { " (\($0))" } ?? ""
                     lien(
                         "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(nom.isEmpty ? "" : " — \(nom)\(fonction)")",

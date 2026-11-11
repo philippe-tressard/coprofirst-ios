@@ -24,6 +24,10 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// défaut — calculé par le SERVEUR, l'app le lit. Facultatif : un profil gardé avant
     /// #69 se relit sans lui.
     var saisieAffaire: String?
+    /// Conseil syndical ou administration, tel que le SERVEUR le juge (`est_moderateur`,
+    /// contrat 1.25.0, #136) : lu par `DroitsOnglet`. `nil` d'une installation antérieure
+    /// ou d'un profil gardé avant #136 — les rôles en décident alors, comme avant.
+    var estModerateur: Bool?
 
     /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
     /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
@@ -43,6 +47,19 @@ struct ProfilResidence: Codable, Hashable, Sendable {
             libelles.append(RolesUtilisateur.libelleRole(role))
         }
         return libelles
+    }
+}
+
+extension ProfilResidence {
+    /// Le compte servi par `GET /auth/me`, et ce que son corps sert au-dessus du plancher
+    /// (`est_moderateur`) — le MÊME branchement pour toute lecture du profil.
+    init(_ moi: Components.Schemas.UserRead, corps: Data?) {
+        // Le libellé du logement, composé par le serveur (contrat ≥ 1.2.0, coprofirst#2500) :
+        // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
+        self.init(
+            statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
+            libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
+            saisieAffaire: moi.saisieAffaireEffective, estModerateur: PersonneServie.lue(corps)?.estModerateur)
     }
 }
 

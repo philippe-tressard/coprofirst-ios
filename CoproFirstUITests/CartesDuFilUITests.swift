@@ -32,6 +32,14 @@ final class CartesDuFilUITests: XCTestCase {
         // Le fil des messages, sous l'Historique : la note interne du conseil n'y est pas.
         XCTAssertTrue(app.elementAcces("affaire.message.502").exists)
         XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
+        // « Le mien » et le nom de l'auteur sont SERVIS (`est_auteur`, `auteur_nom`, #138).
+        let bulle = { (id: Int, texte: String) in
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier == %@ AND label CONTAINS %@", "affaire.message.\(id)", texte))
+                .firstMatch.exists
+        }
+        XCTAssertTrue(bulle(501, "Vous"), "est_auteur servi : la bulle du compte")
+        XCTAssertTrue(bulle(502, "Le conseil syndical"), "auteur_nom servi")
         app.elementAcces("affaire.repondre").tap()
         let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.apparait())

@@ -15,7 +15,9 @@ extension ServiceSimule: ServiceCommunaute {
 
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
         try await Task.sleep(for: .milliseconds(150))
-        return MoiCommunaute(id: 7, statut: profilSimule.statut ?? "", roles: profilSimule.roles, motifRefus: nil)
+        return MoiCommunaute(
+            id: 7, statut: profilSimule.statut ?? "", roles: profilSimule.roles, motifRefus: nil,
+            estModerateur: profilSimule.estModerateur)
     }
 
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {

@@ -118,7 +118,7 @@ struct ProfilView: View {
     private func sectionIdentite(_ compte: Compte) -> some View {
         Section {
             VStack(alignment: .leading, spacing: 4) {
-                Text("\(compte.prenom) \(compte.nom)").font(.headline).foregroundStyle(palette.text)
+                Text(compte.nomAffiche).font(.headline).foregroundStyle(palette.text)
                 Text(compte.email).font(.subheadline).foregroundStyle(palette.textMuted)
             }
             .padding(.vertical, 2)
