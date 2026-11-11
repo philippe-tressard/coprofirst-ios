@@ -108,21 +108,29 @@ extension ServiceAPI {
         guard let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteURL,
             adresse.host() == installation.adresse.host()
         else { throw ErreurService.inattendue(400) }
-        return try await lireFichier(adresse)
+        return try await lireFichier(adresse, session: installation.adresse)
     }
 
     /// Le logo de la résidence, à l'adresse que donne `Installation.adresseLogo(sombre:)`
     /// — une image servie par l'API, que le contrat déclare en JSON : la session de
-    /// l'hôte la lit, comme une photo.
+    /// l'hôte la lit, comme une photo. Une route publique : rien à renouveler.
     func logo(_ adresse: URL) async throws -> Data {
-        try await lireFichier(adresse)
+        try await lireFichier(adresse, session: nil)
     }
 
-    /// Un fichier de l'hôte (image, photo), lu par la session HTTP de son installation.
-    private func lireFichier(_ adresse: URL) async throws -> Data {
+    /// Un fichier de l'hôte (image, photo), lu par la session HTTP de son installation ;
+    /// derrière la `session` de cette installation, un 401 s'y renouvelle (#81).
+    private func lireFichier(_ adresse: URL, session installation: URL?) async throws -> Data {
+        let lire = { [sessions] in try await sessions.session(pour: adresse).data(from: adresse) }
+        let statutLu: ((Data, URLResponse)) -> Int = { ($0.1 as? HTTPURLResponse)?.statusCode ?? 0 }
         do {
-            let (donnees, reponse) = try await sessions.session(pour: adresse).data(from: adresse)
-            let statut = (reponse as? HTTPURLResponse)?.statusCode ?? 0
+            let (donnees, reponse) =
+                if let installation {
+                    try await rejouerSurRefus(installation, statut: statutLu, envoyer: lire)
+                } else {
+                    try await lire()
+                }
+            let statut = statutLu((donnees, reponse))
             guard statut == 200 else { throw ErreurService.depuisLecture(statut) }
             return donnees
         } catch let erreur as ErreurService {

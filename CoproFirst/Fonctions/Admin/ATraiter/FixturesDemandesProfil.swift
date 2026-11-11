@@ -26,6 +26,24 @@ enum FixturesDemandesProfil {
 
     static let reponse = ReponseNonTypee(nom: "demandes", route: "GET /admin/demandes-profil", json: demandes)
 
+    /// POST /admin/demandes-profil/{id}/traiter, tel que le sert le serveur v3.81.0 : le
+    /// statut, et l'annonce qu'il compose.
+    static let approuvee = #"""
+        {"statut": "approuvee", "annonce": {"ton": "success", "texte": "Demande approuvée."}}
+        """#
+    static let rejetee = #"""
+        {"statut": "rejetee", "annonce": {"ton": "success", "texte": "Demande rejetée."}}
+        """#
+
+    static let traitements = [
+        ReponseNonTypee(nom: "approuvee", route: "POST /admin/demandes-profil/{demande_id}/traiter", json: approuvee),
+        ReponseNonTypee(nom: "rejetee", route: "POST /admin/demandes-profil/{demande_id}/traiter", json: rejetee),
+    ]
+
+    static func annonce(approuver: Bool) throws -> PhraseAvis? {
+        try traitements[approuver ? 0 : 1].lire(DemandeProfilTraitee.self).phrase
+    }
+
     static func lues() throws -> [DemandeProfil] {
         try reponse.lire([DemandeProfil].self)
     }

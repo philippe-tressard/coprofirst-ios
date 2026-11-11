@@ -57,9 +57,7 @@ enum Lancement {
         let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages))
         simule.residenceServie = residenceSimulee(arguments)
         let residence = simule.residenceServie
-        let ecran = arguments.firstIndex(of: "-ecran").flatMap {
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-        }
+        let ecran = valeur(de: "-ecran", dans: arguments)
         switch ecran {
         case "en-savoir-plus":
             parcours.chemin = [.enSavoirPlus]
@@ -81,9 +79,7 @@ enum Lancement {
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
             profilConnu(parcours, residence)
-            parcours.aOuvrir = arguments.firstIndex(of: "-ouvrir").flatMap {
-                arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-            }
+            parcours.aOuvrir = valeur(de: "-ouvrir", dans: arguments)
         case "affaires":
             parcours.connues.noterFaceIDProposee(residence)
             parcours.ouvrir(residence)
@@ -111,9 +107,7 @@ enum Lancement {
     /// variante sombre, servis à ce contrat (#70).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
-        if let contrat = arguments.firstIndex(of: "-logo-residence").flatMap({
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
-        }) {
+        if let contrat = valeur(de: "-logo-residence", dans: arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true
             residence.versionContrat = contrat
@@ -125,16 +119,18 @@ enum Lancement {
     /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
     /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
-    /// Face ID annulé à chaque demande.
+    /// Face ID annulé à chaque demande ; `-delai-detail <ms>` : le détail d'une affaire
+    /// servi en <ms>, le runner lent de la CI (#98).
     @MainActor
     private static func compteSimule(_ arguments: [String], _ simule: ServiceSimule) {
         if arguments.contains("-logement-long") {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
-        let compte = arguments.firstIndex(of: "-compte").flatMap {
-            arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil
+        if let ms = valeur(de: "-delai-detail", dans: arguments).flatMap(Int.init) {
+            simule.delaiDetail = .milliseconds(ms)
         }
+        let compte = valeur(de: "-compte", dans: arguments)
         switch compte {
         case "administrateur": simule.profilSimule.roles.append("admin")
         case "resident": simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
@@ -151,5 +147,10 @@ enum Lancement {
     private static func profilConnu(_ parcours: Parcours, _ residence: Installation) {
         guard let simule = parcours.service as? ServiceSimule else { return }
         parcours.connues.noter(simule.profilSimule, pour: residence)
+    }
+
+    /// La valeur qui suit un argument (`-compte resident` → `resident`), nil sans elle.
+    private static func valeur(de argument: String, dans arguments: [String]) -> String? {
+        arguments.firstIndex(of: argument).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
 }
