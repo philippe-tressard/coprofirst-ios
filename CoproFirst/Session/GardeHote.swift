@@ -30,6 +30,9 @@ struct HoteConfirme: Sendable {
 /// l'hôte n'est pas celui d'une résidence connue (une connexion y a déjà réussi) ni la
 /// démonstration de CoproFirst. Sans preuve, il faut un second accord.
 ///
+/// Le renouvellement d'une session (POST /auth/refresh, `Renouvellement`) n'y passe pas :
+/// il n'envoie que le jeton que CET hôte a émis après une connexion passée par la garde.
+///
 /// Une garde par lancement (`Parcours.garde`) : une confirmation vit en mémoire, et
 /// l'hôte devient une résidence connue à la première connexion réussie.
 @MainActor @Observable
