@@ -17,7 +17,7 @@ final class CartesDuFilUITests: XCTestCase {
     func testUneAffaireSOuvreEtSeRepond() throws {
         let app = lancer(["-compte", "resident"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        XCTAssertTrue(carte.apparait())
         carte.tap()
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         // La carte de l'Historique se lit d'un bloc (VoiceOver) : on cherche dans son libellé.
@@ -34,10 +34,10 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
         app.elementAcces("affaire.repondre").tap()
         let texte = app.elementAcces("repondre.texte")
-        XCTAssertTrue(texte.waitForExistence(timeout: 3))
+        XCTAssertTrue(texte.apparait())
         texte.typeText("Merci, je contourne la zone.")
         app.elementAcces("repondre.envoyer").tap()
-        XCTAssertTrue(app.elementAcces("affaire.repondre").waitForExistence(timeout: 5), "la feuille se referme")
+        XCTAssertTrue(app.elementAcces("affaire.repondre").apparait(), "la feuille se referme")
         // La réponse est un MESSAGE (comme sur le site), pas une suite de l'Historique.
         let message = app.descendants(matching: .any)
             .matching(
@@ -45,7 +45,7 @@ final class CartesDuFilUITests: XCTestCase {
                     format: "identifier BEGINSWITH %@ AND label CONTAINS %@", "affaire.message.",
                     "Merci, je contourne la zone.")
             ).firstMatch
-        XCTAssertTrue(message.waitForExistence(timeout: 5), "la réponse rejoint le fil des messages")
+        XCTAssertTrue(message.apparait(), "la réponse rejoint le fil des messages")
     }
 
     /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
@@ -54,7 +54,7 @@ final class CartesDuFilUITests: XCTestCase {
     func testLeConseilSuitEtArchiveDepuisLeBandeau() throws {
         let app = lancer()
         let carte = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        XCTAssertTrue(carte.apparait())
         carte.tap()
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let suite = app.elementAcces("affaire.suite")
@@ -65,18 +65,18 @@ final class CartesDuFilUITests: XCTestCase {
 
         suite.tap()
         let texte = app.elementAcces("suite.texte")
-        XCTAssertTrue(texte.waitForExistence(timeout: 3))
+        XCTAssertTrue(texte.apparait())
         texte.tap()
         texte.typeText("Le plombier est passé.")
         app.elementAcces("suite.enregistrer").tap()
         let ajoutee = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Le plombier est passé.")).firstMatch
-        XCTAssertTrue(ajoutee.waitForExistence(timeout: 5), "la suite rejoint l'Historique")
+        XCTAssertTrue(ajoutee.apparait(), "la suite rejoint l'Historique")
 
         app.elementAcces("affaire.archiver").tap()
         let archivee = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Affaire archivée")).firstMatch
-        XCTAssertTrue(archivee.waitForExistence(timeout: 5))
+        XCTAssertTrue(archivee.apparait())
         XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
     }
 
@@ -86,7 +86,7 @@ final class CartesDuFilUITests: XCTestCase {
     func testLeConseilModifieLAffaireDepuisLeBandeau() throws {
         let app = lancer()
         let carte = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        XCTAssertTrue(carte.apparait())
         carte.tap()
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let modifier = app.elementAcces("affaire.modifier")
@@ -94,7 +94,7 @@ final class CartesDuFilUITests: XCTestCase {
         modifier.tap()
 
         let titre = app.textFields["modifier.titre"]
-        XCTAssertTrue(titre.waitForExistence(timeout: 3))
+        XCTAssertTrue(titre.apparait())
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
@@ -106,7 +106,7 @@ final class CartesDuFilUITests: XCTestCase {
             // Le toucher pose le curseur où il tombe : on cherche le mot, pas sa place.
             .matching(NSPredicate(format: "label BEGINSWITH %@ AND label CONTAINS %@", "Fuite d'eau", "nord"))
             .firstMatch
-        XCTAssertTrue(modifiee.waitForExistence(timeout: 5), "le nouveau titre, relu")
+        XCTAssertTrue(modifiee.apparait(), "le nouveau titre, relu")
     }
 
     /// #98 : un détail servi en 8 s — bien plus que les 5 s qu'attendaient ces tests — se lit
@@ -115,7 +115,7 @@ final class CartesDuFilUITests: XCTestCase {
     func testUnDetailLentSAttendJusquASonBandeau() throws {
         let app = lancer(["-delai-detail", "8000"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(carte.waitForExistence(timeout: 5))
+        XCTAssertTrue(carte.apparait())
         carte.tap()
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         XCTAssertTrue(app.elementAcces("affaire.suite").exists)
@@ -126,22 +126,22 @@ final class CartesDuFilUITests: XCTestCase {
     func testUnSondageUnDocumentEtUnResumeSOuvrent() throws {
         let app = lancer()
         let sondage = app.buttons["fil.sondage_ouvert:3"]
-        XCTAssertTrue(sondage.waitForExistence(timeout: 5))
+        XCTAssertTrue(sondage.apparait())
         sondage.tap()
-        XCTAssertTrue(app.elementAcces("sondage.option.1").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.elementAcces("sondage.option.1").apparait())
         app.navigationBars.buttons.firstMatch.tap()
 
         let document = app.buttons["fil.document:7"]
-        XCTAssertTrue(document.waitForExistence(timeout: 5))
+        XCTAssertTrue(document.apparait())
         document.tap()
-        XCTAssertTrue(app.navigationBars["Procès-verbal de l'assemblée générale"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.navigationBars["Procès-verbal de l'assemblée générale"].apparait())
         app.navigationBars.buttons.firstMatch.tap()
 
         let point = app.buttons["fil.point_conseil:2"]
         if !point.isHittable { app.swipeUp() }
-        XCTAssertTrue(point.waitForExistence(timeout: 5))
+        XCTAssertTrue(point.apparait())
         point.tap()
         XCTAssertTrue(
-            app.staticTexts["Ordre du jour : ascenseur, ravalement, contrat d'entretien."].waitForExistence(timeout: 5))
+            app.staticTexts["Ordre du jour : ascenseur, ravalement, contrat d'entretien."].apparait())
     }
 }

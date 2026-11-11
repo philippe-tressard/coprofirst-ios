@@ -13,25 +13,25 @@ final class ParcoursUITests: XCTestCase {
 
         app.buttons["accueil.entrer"].tap()
         let residence = app.textFields["connexion.residence"]
-        XCTAssertTrue(residence.waitForExistence(timeout: 5))
+        XCTAssertTrue(residence.apparait())
         residence.tap()
         residence.typeText("inconnue.exemple.fr")
         XCTAssertTrue(
             app.staticTexts[
                 "Cette adresse répond, mais aucune résidence n'y est installée. "
                     + "Vérifiez-la sur votre fiche d'arrivée."
-            ].waitForExistence(timeout: 5),
+            ].apparait(),
             "un hôte inconnu (421) se dit en une phrase")
 
         residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "ancienne.exemple.fr")
         XCTAssertTrue(
             app.staticTexts[
                 "Cette résidence doit être mise à jour pour s'ouvrir dans l'app. Prévenez son administrateur."
-            ].waitForExistence(timeout: 5),
+            ].apparait(),
             "une résidence sous le plancher le dit (#83)")
 
         residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "tilleuls.exemple.fr")
-        XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].waitForExistence(timeout: 5), "reconnue")
+        XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].apparait(), "reconnue")
 
         let email = app.textFields["connexion.email"]
         email.tap()
@@ -40,16 +40,16 @@ final class ParcoursUITests: XCTestCase {
         motDePasse.typeText("refuse\n")
         // Saisie à la main, jamais vue : l'adresse se confirme avant le mot de passe (#82).
         ConfirmationHoteUITests.confirmer(app)
-        XCTAssertTrue(app.staticTexts["Adresse électronique ou mot de passe incorrect."].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Adresse électronique ou mot de passe incorrect."].apparait())
 
         email.tap()
         email.typeText("\n")
         motDePasse.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 10) + "secret\n")
 
         let plusTard = app.buttons["faceid.plusTard"]
-        XCTAssertTrue(plusTard.waitForExistence(timeout: 5), "Face ID proposé après la 1ʳᵉ connexion")
+        XCTAssertTrue(plusTard.apparait(), "Face ID proposé après la 1ʳᵉ connexion")
         plusTard.tap()
-        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].apparait())
         XCTAssertTrue(app.buttons["pastille.residence"].exists)
     }
 
@@ -61,9 +61,9 @@ final class ParcoursUITests: XCTestCase {
 
         app.buttons["accueil.demo"].tap()
         let conseil = app.buttons["demo.user-cs"]
-        XCTAssertTrue(conseil.waitForExistence(timeout: 5))
+        XCTAssertTrue(conseil.apparait())
         conseil.tap()
-        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Fuite d'eau au plafond du parking"].apparait())
     }
 
     @MainActor
@@ -72,13 +72,13 @@ final class ParcoursUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
         let barre = app.tabBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.apparait())
         for libelle in ["Fil d'activité", "Résidence", "Affaires", "Accès", "Plus"] {
             XCTAssertTrue(barre.buttons[libelle].exists, "« \(libelle) » dans la barre")
         }
         XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)
         barre.buttons["Accès"].tap()
-        XCTAssertTrue(app.navigationBars["Mes lots & accès"].waitForExistence(timeout: 3), "l'écran garde son titre")
+        XCTAssertTrue(app.navigationBars["Mes lots & accès"].apparait(), "l'écran garde son titre")
     }
 
     @MainActor
@@ -87,7 +87,7 @@ final class ParcoursUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil", "-page-renommee"]
         app.launch()
         let barre = app.tabBars.firstMatch
-        XCTAssertTrue(barre.waitForExistence(timeout: 5))
+        XCTAssertTrue(barre.apparait())
         XCTAssertTrue(barre.buttons["Clés et badges"].exists)
         XCTAssertFalse(barre.buttons["Accès"].exists)
     }
@@ -98,22 +98,22 @@ final class ParcoursUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
         let logement = app.buttons["fil.lot"]
-        XCTAssertTrue(logement.waitForExistence(timeout: 5), "le logement en haut à gauche, dans la barre")
+        XCTAssertTrue(logement.apparait(), "le logement en haut à gauche, dans la barre")
         XCTAssertLessThan(logement.frame.maxX, app.buttons["pastille.residence"].frame.minX, "à gauche de la résidence")
 
         app.buttons["pastille.residence"].tap()
         let roles = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Conseil syndical")).firstMatch
-        XCTAssertTrue(roles.waitForExistence(timeout: 5), "les rôles de la résidence")
+        XCTAssertTrue(roles.apparait(), "les rôles de la résidence")
 
         app.buttons["residence.deconnecter"].tap()
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
         let confirmer = app.buttons["sortie.confirmer"].firstMatch
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "le geste se confirme")
+        XCTAssertTrue(confirmer.apparait(), "le geste se confirme")
         confirmer.tap()
 
         let adresse = app.textFields["connexion.residence"]
-        XCTAssertTrue(adresse.waitForExistence(timeout: 5), "retour à la connexion")
+        XCTAssertTrue(adresse.apparait(), "retour à la connexion")
         XCTAssertEqual(adresse.value as? String, "tilleuls.exemple.fr", "adresse pré-remplie")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "le fil n'est plus affiché")
     }
@@ -126,9 +126,9 @@ final class ParcoursUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil", "-logement-long"]
         app.launch()
         let logement = app.buttons["fil.lot"]
-        XCTAssertTrue(logement.waitForExistence(timeout: 5))
+        XCTAssertTrue(logement.apparait())
         let residence = app.buttons["pastille.residence"]
-        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable, "la résidence reste visible")
+        XCTAssertTrue(residence.apparait() && residence.isHittable, "la résidence reste visible")
         XCTAssertTrue(app.buttons["cloche"].isHittable, "la cloche aussi")
         XCTAssertLessThan(logement.frame.maxX, residence.frame.minX)
 
@@ -148,9 +148,9 @@ final class ParcoursUITests: XCTestCase {
         ]
         app.launch()
         let logement = app.buttons["fil.lot"]
-        XCTAssertTrue(logement.waitForExistence(timeout: 5))
+        XCTAssertTrue(logement.apparait())
         let residence = app.buttons["pastille.residence"]
-        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable)
+        XCTAssertTrue(residence.apparait() && residence.isHittable)
         XCTAssertGreaterThan(logement.frame.minY, residence.frame.maxY, "sous la barre, pas dedans")
     }
 }

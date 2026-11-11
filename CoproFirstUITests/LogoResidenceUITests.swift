@@ -27,18 +27,18 @@ final class LogoResidenceUITests: XCTestCase {
     private func parcourir(contrat: String) throws {
         var app = LancementCaptures.lancer(ecran: "fil", arguments: ["-logo-residence", contrat])
         let pastille = app.descendants(matching: .any).matching(identifier: "pastille.residence").firstMatch
-        XCTAssertTrue(pastille.waitForExistence(timeout: 5))
+        XCTAssertTrue(pastille.apparait())
         capturer("logo-\(contrat)-pastille")
 
         pastille.tap()
         let sortir = app.descendants(matching: .any).matching(identifier: "residence.deconnecter").firstMatch
-        XCTAssertTrue(sortir.waitForExistence(timeout: 5), "la feuille de la résidence s'ouvre")
+        XCTAssertTrue(sortir.apparait(), "la feuille de la résidence s'ouvre")
         capturer("logo-\(contrat)-feuille")
         app.terminate()
 
         app = LancementCaptures.lancer(ecran: "connexion", arguments: ["-logo-residence", contrat])
         let champ = app.descendants(matching: .any).matching(identifier: "connexion.residence").firstMatch
-        XCTAssertTrue(champ.waitForExistence(timeout: 5))
+        XCTAssertTrue(champ.apparait())
         capturer("logo-\(contrat)-connexion")
     }
 

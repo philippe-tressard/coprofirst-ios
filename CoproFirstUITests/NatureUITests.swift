@@ -12,7 +12,7 @@ final class NatureUITests: XCTestCase {
     func testLaNatureSeLitSurLesAffairesDateesEtNulleParAilleurs() throws {
         let app = LancementCaptures.lancer()
         let sansDate = app.elementAcces("fil.ticket_ouvert:41")
-        XCTAssertTrue(sansDate.waitForExistence(timeout: 8), "le fil est chargé")
+        XCTAssertTrue(sansDate.apparait(), "le fil est chargé")
         XCTAssertFalse(sansDate.label.contains("Calendrier"), sansDate.label)
         LancementCaptures.capturer("fil-nature-1-debut")
 
@@ -41,7 +41,7 @@ final class NatureUITests: XCTestCase {
     @MainActor
     func testEnAX5LaPastilleSeLitEnEntier() throws {
         let app = LancementCaptures.lancer(taille: .ax5)
-        XCTAssertTrue(app.elementAcces("fil.ticket_ouvert:41").waitForExistence(timeout: 8), "le fil est chargé")
+        XCTAssertTrue(app.elementAcces("fil.ticket_ouvert:41").apparait(), "le fil est chargé")
         let datee = app.elementAcces("fil.ticket_mis_a_jour:44")
         // Une carte de très grand texte dépasse l'écran en hauteur : on la veut présente, pas « touchable ».
         for _ in 0..<16 where !datee.exists || datee.frame.minY > app.frame.height { app.swipeUp() }

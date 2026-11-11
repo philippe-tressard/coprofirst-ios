@@ -14,22 +14,22 @@ final class PushUITests: XCTestCase {
     }
 
     /// La feuille des notifications est ouverte : son bouton « OK » paraît.
-    private func feuilleOuverte(_ app: XCUIApplication, delai: TimeInterval = 8) -> Bool {
-        el(app, "notifications.ok").waitForExistence(timeout: delai)
+    private func feuilleOuverte(_ app: XCUIApplication) -> Bool {
+        el(app, "notifications.ok").apparait()
     }
 
     @MainActor
     func testAucuneDemandeAuLancementLOffreAttendDansLaCloche() throws {
         let app = LancementCaptures.lancer(arguments: ["-push", "non-demandee"])
         let cloche = el(app, "cloche")
-        XCTAssertTrue(cloche.waitForExistence(timeout: 8))
+        XCTAssertTrue(cloche.apparait())
         XCTAssertFalse(el(app, "push.offre").exists, "rien ne se propose hors de la cloche")
         cloche.tap()
-        XCTAssertTrue(el(app, "push.offre").waitForExistence(timeout: 5), "l'offre en tête de la cloche")
+        XCTAssertTrue(el(app, "push.offre").apparait(), "l'offre en tête de la cloche")
         LancementCaptures.capturer("17a-offre-push")
         el(app, "push.activer").tap()
         XCTAssertTrue(
-            el(app, "push.offre").waitForNonExistence(timeout: 5), "accordée : l'offre se retire")
+            el(app, "push.offre").disparait(), "accordée : l'offre se retire")
         XCTAssertTrue(el(app, "notifications.modifier").exists, "la liste reste")
     }
 
@@ -37,16 +37,16 @@ final class PushUITests: XCTestCase {
     func testPlusTardRetireLOffre() throws {
         let app = LancementCaptures.lancer(arguments: ["-push", "non-demandee"])
         el(app, "cloche").tap()
-        XCTAssertTrue(el(app, "push.plusTard").waitForExistence(timeout: 5))
+        XCTAssertTrue(el(app, "push.plusTard").apparait())
         el(app, "push.plusTard").tap()
-        XCTAssertTrue(el(app, "push.offre").waitForNonExistence(timeout: 5))
+        XCTAssertTrue(el(app, "push.offre").disparait())
     }
 
     @MainActor
     func testUnRefusDIOSNeSeRedemandePas() throws {
         let app = LancementCaptures.lancer(arguments: ["-push", "refusee"])
         el(app, "cloche").tap()
-        XCTAssertTrue(el(app, "notifications.modifier").waitForExistence(timeout: 8), "la liste chargée")
+        XCTAssertTrue(el(app, "notifications.modifier").apparait(), "la liste chargée")
         XCTAssertFalse(el(app, "push.offre").exists)
     }
 
@@ -61,6 +61,6 @@ final class PushUITests: XCTestCase {
     @MainActor
     func testUneNotificationToucheeAFroidPasseParFaceIDPuisOuvreLaCloche() throws {
         let app = LancementCaptures.lancer(ecran: "retour", arguments: ["-push-touchee"])
-        XCTAssertTrue(feuilleOuverte(app, delai: 10), "après Face ID, la cloche")
+        XCTAssertTrue(feuilleOuverte(app), "après Face ID, la cloche")
     }
 }

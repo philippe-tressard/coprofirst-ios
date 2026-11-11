@@ -11,22 +11,23 @@ final class CommunauteUITests: XCTestCase {
 
     @MainActor private func capture(_ nom: String) { LancementCaptures.capturer(nom) }
 
-    /// Le libellé ou la valeur de l'élément contient-il `texte`, d'ici `delai` secondes ?
-    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur), d'ici `delai` ?
+    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur) ? `sonde` : pour
+    /// prouver qu'il ne le dit PAS, sans attendre le plafond.
     /// Par prédicat sur TOUS les éléments de l'identifiant : sous iOS 26.5, un bouton de
     /// barre d'outils est enveloppé dans un conteneur de même identifiant, que
     /// `firstMatch` rendrait — sans le libellé ni la valeur du bouton.
-    private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String, delai: TimeInterval = 8)
+    private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String, sonde: Bool = false)
         -> Bool {
         let predicat = NSPredicate(
             format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: delai)
+        let element = app.descendants(matching: .any).matching(predicat).firstMatch
+        return sonde ? element.sonde() : element.apparait()
     }
 
     /// Un élément de cet identifiant est-il inactif ? (Le conteneur, lui, l'est toujours.)
     private func inactif(_ app: XCUIApplication, _ identifiant: String) -> Bool {
         let predicat = NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 3)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
     }
 
     /// Un élément par son identifiant (ou son libellé), QUEL QUE SOIT SON TYPE : un `Link`
@@ -43,7 +44,7 @@ final class CommunauteUITests: XCTestCase {
     /// L'élément, ramené à l'écran : en très grand texte, il faut souvent défiler.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> XCUIElement {
-        _ = element.waitForExistence(timeout: 8)
+        _ = element.apparait()
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {
             app.swipeUp()
@@ -55,7 +56,7 @@ final class CommunauteUITests: XCTestCase {
     /// Une rubrique de la Communauté : la barre défile jusqu'à elle (très grand texte).
     private func rubrique(_ app: XCUIApplication, _ id: String) {
         let onglet = el(app, "communaute.onglet.\(id)")
-        XCTAssertTrue(onglet.waitForExistence(timeout: 5))
+        XCTAssertTrue(onglet.apparait())
         var essais = 0
         // Hors de l'écran, l'élément n'a pas de point d'activation : on compare les cadres.
         let ecran = app.windows.firstMatch.frame
@@ -90,7 +91,7 @@ final class CommunauteUITests: XCTestCase {
 
     private func ouvrirDansPlus(_ app: XCUIApplication, _ libelle: String) {
         let plus = app.tabBars.buttons["Plus"]
-        XCTAssertTrue(plus.waitForExistence(timeout: 8))
+        XCTAssertTrue(plus.apparait())
         plus.tap()
         let ligne = atteindre(app, el(app, libelle))
         XCTAssertTrue(ligne.exists, "« \(libelle) » dans Plus")
@@ -101,7 +102,7 @@ final class CommunauteUITests: XCTestCase {
     func testLaCommunauteSOuvreEtUneIdeeSeSoutient() throws {
         let app = lancer()
         ouvrirDansPlus(app, "Communauté")
-        XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
+        XCTAssertTrue(el(app, "sondage.12").apparait())
         capture("1-communaute-sondages")
 
         rubrique(app, "idees")
@@ -128,10 +129,10 @@ final class CommunauteUITests: XCTestCase {
         app.navigationBars.buttons.firstMatch.tap()
 
         rubrique(app, "avis")
-        XCTAssertTrue(app.descendants(matching: .any)["avis.4"].waitForExistence(timeout: 8))
+        XCTAssertTrue(app.descendants(matching: .any)["avis.4"].apparait())
         capture("6-communaute-avis")
         el(app, "communaute.creer").tap()
-        XCTAssertTrue(app.navigationBars["Donner mon avis"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Donner mon avis"].apparait())
         XCTAssertTrue(inactif(app, "formulaire.enregistrer"), "rien n'est saisi : le bouton attend")
         capture("7-donner-mon-avis")
     }
@@ -142,7 +143,7 @@ final class CommunauteUITests: XCTestCase {
     func testLaClocheOuvreLesNotificationsEtToutSeMarqueLu() throws {
         let app = lancer()
         let cloche = el(app, "cloche")
-        XCTAssertTrue(cloche.waitForExistence(timeout: 8))
+        XCTAssertTrue(cloche.apparait())
         // VoiceOver lit le nombre : dans la valeur, ou dans la pastille que la barre d'iOS 26 y ajoute.
         XCTAssertTrue(
             lu(app, "cloche", contient: "12"),
@@ -151,14 +152,14 @@ final class CommunauteUITests: XCTestCase {
         capture("7b-cloche")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
-        XCTAssertTrue(tout.waitForExistence(timeout: 8))
+        XCTAssertTrue(tout.apparait())
         XCTAssertTrue(tout.isHittable, "« Tout marquer lu » se voit et se touche, en haut")
         XCTAssertTrue(el(app, "notifications.modifier").isHittable, "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
         tout.tap()
-        XCTAssertTrue(tout.waitForNonExistence(timeout: 5), "plus rien à marquer")
+        XCTAssertTrue(tout.disparait(), "plus rien à marquer")
         el(app, "notifications.ok").tap()
-        XCTAssertFalse(lu(app, "cloche", contient: "12", delai: 3), "la cloche n'a plus de pastille")
+        XCTAssertFalse(lu(app, "cloche", contient: "12", sonde: true), "la cloche n'a plus de pastille")
     }
 
     /// La cloche d'un menu de « Plus » : « Modifier », trois alertes choisies, supprimées
@@ -167,10 +168,10 @@ final class CommunauteUITests: XCTestCase {
     func testPlusieursNotificationsSeSuppriment() throws {
         let app = lancer()
         ouvrirDansPlus(app, "Communauté")
-        XCTAssertTrue(el(app, "sondage.12").waitForExistence(timeout: 8))
+        XCTAssertTrue(el(app, "sondage.12").apparait())
         el(app, "cloche").tap()
         let modifier = el(app, "notifications.modifier")
-        XCTAssertTrue(modifier.waitForExistence(timeout: 8))
+        XCTAssertTrue(modifier.apparait())
         XCTAssertTrue(modifier.isHittable, "« Modifier » se voit et se touche, en haut")
         modifier.tap()
         for id in [5, 4, 3] {
@@ -185,20 +186,20 @@ final class CommunauteUITests: XCTestCase {
             toucherLaPartieVisible(app, ligne)
         }
         let supprimer = el(app, "notifications.supprimerSelection")
-        XCTAssertTrue(supprimer.waitForExistence(timeout: 5))
+        XCTAssertTrue(supprimer.apparait())
         XCTAssertTrue(supprimer.isHittable, "la suppression se voit, au bas de la liste")
         XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(3)"), "trois alertes choisies")
         capture("8b-notifications-modifier")
         supprimer.tap()
         let confirmer = el(app, "notifications.confirmerSuppression")
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        XCTAssertTrue(confirmer.apparait(), "la suppression se confirme : elle est définitive")
         confirmer.tap()
-        XCTAssertTrue(el(app, "notification.5").waitForNonExistence(timeout: 8), "les trois alertes sont parties")
+        XCTAssertTrue(el(app, "notification.5").disparait(), "les trois alertes sont parties")
         XCTAssertFalse(el(app, "notification.4").exists)
         XCTAssertFalse(el(app, "notification.3").exists)
         // Deux non lues parties (5 et 4) : 12 → 10 ; et la voisine reste (au-dessus,
         // après la suppression, en très grand texte).
-        XCTAssertTrue(texte(app, "10 non lues").waitForExistence(timeout: 5), "le compte suit")
+        XCTAssertTrue(texte(app, "10 non lues").apparait(), "le compte suit")
         let restante = el(app, "notification.2")
         var crans = 0
         while !restante.exists, crans < 6 {
@@ -213,24 +214,24 @@ final class CommunauteUITests: XCTestCase {
     @MainActor
     func testLesLuesSeSupprimentDUnGeste() throws {
         let app = lancer()
-        XCTAssertTrue(el(app, "cloche").waitForExistence(timeout: 8))
+        XCTAssertTrue(el(app, "cloche").apparait())
         el(app, "cloche").tap()
         let lues = el(app, "notifications.supprimerLues")
-        XCTAssertTrue(lues.waitForExistence(timeout: 8), "le geste se voit dès l'ouverture, en tête de la liste")
+        XCTAssertTrue(lues.apparait(), "le geste se voit dès l'ouverture, en tête de la liste")
         XCTAssertTrue(lues.isHittable, "et se touche, sans passer par « Modifier »")
         XCTAssertGreaterThanOrEqual(lues.frame.height, 44, "une cible tactile entière")
         capture("8c-notifications-supprimer-les-lues")
         lues.tap()
         let confirmer = el(app, "notifications.confirmerSuppression")
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 5), "la suppression se confirme : elle est définitive")
+        XCTAssertTrue(confirmer.apparait(), "la suppression se confirme : elle est définitive")
         XCTAssertTrue(texte(app, "Les 138 notifications lues").exists, "la confirmation dit ce qui part")
         capture("8d-notifications-confirmer-les-lues")
         confirmer.tap()
-        XCTAssertTrue(el(app, "notification.3").waitForNonExistence(timeout: 8), "les lues sont parties")
-        XCTAssertTrue(texte(app, "Notifications lues supprimées").waitForExistence(timeout: 5), "et l'app le dit")
+        XCTAssertTrue(el(app, "notification.3").disparait(), "les lues sont parties")
+        XCTAssertTrue(texte(app, "Notifications lues supprimées").apparait(), "et l'app le dit")
         capture("8e-notifications-lues-supprimees")
         XCTAssertTrue(el(app, "notification.5").exists, "les non lues restent")
-        XCTAssertTrue(lues.waitForNonExistence(timeout: 5), "plus aucune lue : le geste n'est plus offert")
+        XCTAssertTrue(lues.disparait(), "plus aucune lue : le geste n'est plus offert")
     }
 
     @MainActor
