@@ -134,8 +134,7 @@ final class ParcoursUITests: XCTestCase {
 
         logement.tap()
         // Le geste ouvre Mes lots & accès : l'onglet est retenu (attendu, la barre s'anime).
-        expectation(for: NSPredicate(format: "isSelected == true"), evaluatedWith: app.tabBars.buttons["Accès"])
-        waitForExpectations(timeout: 3)
+        XCTAssertTrue(app.tabBars.buttons["Accès"].attendre("isSelected == true"), "l'onglet Accès est retenu")
     }
 
     /// Aux tailles d'accessibilité, le logement redescend sous le titre : dans la barre,

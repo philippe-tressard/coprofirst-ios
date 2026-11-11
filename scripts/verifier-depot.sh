@@ -31,15 +31,21 @@
 #      et se recopie à l'étiquette du plancher (scripts/plancher.sh, #133) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
-#  13. la relance des tests au simulateur reste bornée et déclarée : autotests de
-#      scripts/bilan_tests_ui.py et scripts/tests-simulateur.sh (#50) ;
+#  13. les tests au simulateur : relance bornée et déclarée (#50), un passage qui ne
+#      joue rien rendu INCONNU (#96), un seul passage à la fois sur le poste et
+#      l'arrêt par le pid (#108) — autotests de scripts/bilan_tests_ui.py et
+#      scripts/tests-simulateur.sh ; le simulateur choisi sans hasard — autotest de
+#      scripts/destination_simulateur.py (#112) ;
 #  14. les tickets de la concordance : un vert ferme, un rouge ou un INCONNU jamais —
 #      autotest de scripts/tickets_concordance.py (#67).
 #  15. la simulation ne part pas en production : `ServiceSimule`, ses jeux de
 #      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
 #      autotest d'abord, #84) ;
 #  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
-#      retiré ne revient (scripts/verifier-regles-servies.py, #83).
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83) ;
+#  17. dans les tests d'interface, une attente par prédicat passe par le point
+#      d'attente commun (CoproFirstUITests/Attente.swift) et son plafond : aucune
+#      n'est écrite sur place avec son propre délai (#123).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -264,6 +270,46 @@ PARITE=$(python3 -I scripts/verifier-parite.py) || { echo "$PARITE"; echec "pari
 # (#50). Les deux autotests prouvent que la décision refuse ce qu'elle doit refuser.
 python3 -I scripts/bilan_tests_ui.py --autotest >/dev/null || echec "bilan_tests_ui.py : autotest en échec"
 bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateur.sh : autotest en échec"
+# Le simulateur des tests : un iPhone de série du runtime standard, ou INCONNU (#112).
+python3 -I scripts/destination_simulateur.py --autotest >/dev/null || echec "destination_simulateur.py : autotest en échec"
+
+# Une attente par prédicat (le focus du clavier, un onglet retenu) passe par le point
+# d'attente commun et son plafond (#123) : écrite sur place, chacune portait son délai,
+# et 3 s ne tiennent pas sur un runner qui met 2 s par requête d'accessibilité.
+ATTENTE_SUR_PLACE='expectation\(for:|waitForExpectations|XCTNSPredicateExpectation|XCTWaiter|[^.[:alnum:]]wait\(for:'
+POINT_ATTENTE=CoproFirstUITests/Attente.swift
+# $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_attente() {
+  local trouve
+  [ "$1" != "$POINT_ATTENTE" ] || return 0
+  # Le code seul : un commentaire qui explique l'interdit a le droit de le nommer.
+  trouve=$(grep -nE "$ATTENTE_SUR_PLACE" "$2" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
+  [ -z "$trouve" ] || echo "attente par prédicat écrite sur place (ligne ${trouve%%:*}) — element.attendre(\"…\"), $POINT_ATTENTE"
+}
+autotest_attente() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '        expectation(for: NSPredicate(format: "hasKeyboardFocus == true"), evaluatedWith: champ)\n        waitForExpectations(timeout: 3)\n' > "$d/focus"
+  printf '        wait(for: [visible], timeout: 3)\n' > "$d/visible"
+  printf '        XCTAssertTrue(champ.attendre("hasKeyboardFocus == true"))\n        // jamais waitForExpectations(timeout: 3)\n' > "$d/commun"
+  [ -n "$(refus_attente CoproFirstUITests/RetourUITests.swift "$d/focus")" ] || ok=1
+  [ -n "$(refus_attente CoproFirstUITests/ConnexionUITests.swift "$d/visible")" ] || ok=1
+  [ -z "$(refus_attente CoproFirstUITests/RetourUITests.swift "$d/commun")" ] || ok=1
+  [ -z "$(refus_attente "$POINT_ATTENTE" "$d/focus")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_attente || echec "verifier-depot.sh : autotest des attentes par prédicat en échec"
+grep -qx "$POINT_ATTENTE" <<< "$FICHIERS" || echec "$POINT_ATTENTE absent : les attentes n'ont plus de point commun"
+ATTENTES=0
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  motif=$(refus_attente "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+  [ "$f" = "$POINT_ATTENTE" ] || ! grep -q '\.attendre("' "$f" || ATTENTES=$((ATTENTES + 1))
+done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
+# Un point commun que personne n'emploie ne remplace rien.
+[ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
 
 # Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
@@ -282,4 +328,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

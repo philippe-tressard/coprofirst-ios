@@ -253,10 +253,22 @@ seule la CI le dit.
    avant de lire le reste par `.exists` — pour le détail d'une affaire,
    `attendreDetailAffaire` (titre ET bandeau, qui arrive après le titre sur le runner :
    jusqu'à 12 s, #98) ; jamais un `.exists` juste après un toucher. Un écran lent se
-   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`).
+   joue au poste par l'API simulée ralentie (`-delai-detail <ms>`). Le plafond de ces
+   attentes est commun, et large (`Attente.plafond`, `CoproFirstUITests/Attente.swift`) :
+   l'attente rend la main dès que l'état est là, un délai court ne fait gagner du temps
+   qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
+   onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
+   attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test
    joué avant, ou sur un démarrage non confirmé (#48). Pour mesurer : la durée d'un même
    test au premier passage et aux suivants (`-test-iterations`), et la durée des étapes
    « Find the … » du journal — plus de 3 s, l'app ne répondait pas.
+6. **Un seul passage au simulateur à la fois sur le poste**, et ce n'est pas une
+   consigne : `scripts/tests-simulateur.sh` prend lui-même le verrou que partagent les
+   worktrees, attend son tour et dit qui le tient (#108) — on le lance nu, sans lanceur.
+   Un passage s'arrête par le pid de la fiche du verrou (l'en-tête du script donne la
+   commande), jamais par son nom. Un passage filtré donne **un filtre par argument** :
+   s'il ne joue aucun test il sort INCONNU, pas vert (#96). Sans `DESTINATION`, le
+   simulateur est choisi et nommé par `scripts/destination-simulateur.sh` (#112).

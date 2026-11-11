@@ -23,8 +23,7 @@ final class ConnexionUITests: XCTestCase {
 
         // Le champ mot de passe a le focus : le bouton doit se voir au-dessus du clavier.
         let valider = app.buttons["connexion.valider"]
-        let visible = expectation(for: NSPredicate(format: "isHittable == true"), evaluatedWith: valider)
-        wait(for: [visible], timeout: 3)
+        XCTAssertTrue(valider.attendre("isHittable == true"), "le bouton se voit au-dessus du clavier")
 
         // Un toucher là où le bouton est dessiné, comme un doigt : sans le défilement
         // qu'XCUITest ajoute de lui-même avant `tap()` sur un élément caché.

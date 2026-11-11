@@ -82,7 +82,7 @@ final class AccesUITests: XCTestCase {
         app.elementAcces("onglet.badges").tap()
         app.elementAcces("acces.gestes").tap()
         app.elementAcces("acces.geste.demander").tap()
-        XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].waitForExistence(timeout: Attente.plafond))
         app.elementAcces("acces.feuille.enregistrer").tap()
         XCTAssertTrue(app.libelleAcces("Sélectionnez un lot").waitForExistence(timeout: 3), "un lot est exigé")
         app.elementAcces("acces.demande.lot").tap()
