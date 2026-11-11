@@ -156,6 +156,8 @@ struct QuestionReglement: Hashable, Sendable, Identifiable {
     /// La réponse sans ses « [R2] », servie (contrat 1.14.0) : l'aperçu de la carte la lit.
     var reponseSansRenvois: String
     var verdictLibelle: String
+    /// Ce que la capsule du verdict signale (`verdict_ton`, #2505) — `succes`, `alerte`…
+    var verdictTon: String
     var poseeLe: Date
     var texteEnVigueur: Bool
     var selonReglement: String?
@@ -173,6 +175,15 @@ struct QuestionReglement: Hashable, Sendable, Identifiable {
     var extraitsReglement: [ExtraitReglement] { extraits.filter { $0.source != "ag" } }
     var extraitsAG: [ExtraitReglement] { extraits.filter { $0.source == "ag" } }
     var verifies: Int { extraits.filter(\.verifie).count }
+    /// Un avis à RENVOIS (contrat 1.14.0) se lit en synthèse, fondements et sections
+    /// pliées ; un avis d'avant n'en a pas et se lit section après section (`CarteQuestionReglement`).
+    var avecRenvois: Bool { extraits.contains { $0.renvoi != nil } }
+    /// « Ce qui fonde l'avis » : le règlement d'abord, puis les AG, comme le site.
+    var fondements: [ExtraitReglement] { extraitsReglement + extraitsAG }
+    /// La classe de la capsule du verdict, pour le ton servi (table générée de `BadgeVerdict`).
+    var badgeDuVerdict: String {
+        TablesReglement.badgesDuVerdict[verdictTon] ?? TablesReglement.badgeDuVerdictInconnu
+    }
 }
 
 struct ExtraitReglement: Hashable, Sendable {
@@ -181,13 +192,17 @@ struct ExtraitReglement: Hashable, Sendable {
     var reference: String?
     var apport: String?
     var acte: String?
+    /// Le chapitre, la section ou la résolution, déduit du texte par le serveur.
+    var rubrique: String?
     var page: String?
     var source: String?
+    /// Le renvoi que l'avis cite (`R1`, `AG2`) — absent d'un avis d'avant.
+    var renvoi: String?
 
-    /// L'acte et la page, joints comme le site les joint (`ExtraitsReglement.svelte`),
-    /// ou la référence donnée à défaut.
+    /// L'acte, la rubrique et la page, joints comme le site les joint (`ExtraitsReglement`,
+    /// `AvisReglement`), ou la référence donnée à défaut.
     var origine: String? {
-        let morceaux = [acte, page].compactMap { $0 }.filter { !$0.isEmpty }
-        return morceaux.isEmpty ? reference : morceaux.joined(separator: " — ")
+        let morceaux = [acte, rubrique, page].compactMap { $0 }.filter { !$0.isEmpty }
+        return morceaux.isEmpty ? reference : morceaux.joined(separator: TablesReglement.tiret)
     }
 }

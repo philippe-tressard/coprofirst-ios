@@ -127,10 +127,27 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 
 @Test func lesExtraitsSeLisentAvecCeQueLeCodeAVerifie() {
     let question = Apercu.question
-    #expect(question.verifies == 1)
-    #expect(question.extraitsReglement.count == 2 && question.extraitsAG.isEmpty)
-    #expect(question.extraits.first?.origine == "Règlement de copropriété — 14")
-    #expect(question.extraits.last?.origine == "Art. 4", "sans acte ni page : la référence donnée")
+    #expect(question.verifies == 2)
+    #expect(question.extraitsReglement.count == 2 && question.extraitsAG.count == 1)
+    // L'acte, la rubrique et la page, joints par le séparateur du site : insécable après le tiret.
+    #expect(question.extraits.first?.origine == "Règlement de copropriété —\u{00A0}Chapitre II —\u{00A0}p. 14")
+    #expect(question.extraits[1].origine == "Art. 4", "sans acte ni page : la référence donnée")
+}
+
+/// Un avis à renvois se lit par ses fondements — le règlement, puis les AG —, un avis
+/// d'avant section après section ; le ton du verdict est servi, sa teinte générée.
+@Test func unAvisARenvoisSeLitParSesFondements() {
+    let question = Apercu.question
+    #expect(question.avecRenvois)
+    #expect(question.fondements.compactMap(\.renvoi) == ["R1", "R2", "AG1"])
+    #expect(!Apercu.questionAvant.avecRenvois)
+    #expect(question.badgeDuVerdict == "badge-orange")
+    #expect(Apercu.questionAvant.badgeDuVerdict == "badge-red")
+    var inconnu = question
+    inconnu.verdictTon = "incertain"
+    #expect(inconnu.badgeDuVerdict == TablesReglement.badgeDuVerdictInconnu, "un ton inconnu se lit incertain")
+    #expect(TextesAvis.sansExtrait(["R3"]) == "Renvoi sans extrait —\u{00A0}à vérifier\u{00A0}: R3.")
+    #expect(TextesAvis.sansExtrait(["R3", "AG2"]).hasPrefix("Renvoi sans extraits"))
 }
 
 @Test func uneQuestionPoseeRevientEnTete() async throws {
@@ -182,4 +199,21 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
     #expect(question.reponseSansRenvois == "<p>Oui, sauf.</p>")
     #expect(question.renvoisSansExtrait == ["R2"])
     #expect(question.extraits.count == 1)
+    #expect(question.verdictTon == "succes" && question.badgeDuVerdict == "badge-green")
+    #expect(question.avecRenvois && question.extraits.first?.renvoi == "R1")
+}
+
+/// Le lieu d'un extrait vient du serveur — acte, rubrique, page —, jamais du modèle.
+@Test func unExtraitLitSaRubriqueEtSonRenvoiServis() throws {
+    let json = """
+        {"id": 8, "texte_id": 1, "question": "Q ?", "reponse": "<p>Non [AG1].</p>",
+        "reponse_sans_renvois": "<p>Non.</p>", "renvois_sans_extrait": [], "verdict": "non",
+        "verdict_libelle": "Non", "verdict_ton": "danger", "texte_en_vigueur": true,
+        "cree_le": "2026-11-10T08:00:00", "extraits": [{"citation": "C", "verifie": true, "renvoi": "AG1",
+        "source": "ag", "acte": "AG du 3 mai 2025", "rubrique": "Résolution 4", "page": "p. 2"}]}
+        """
+    let lue = try Relecture.generee(Components.Schemas.QuestionReglementRead.self, json: json)
+    let question = QuestionReglement(lue: lue)
+    #expect(question.extraitsAG.first?.rubrique == "Résolution 4")
+    #expect(question.fondements.first?.origine == "AG du 3 mai 2025 —\u{00A0}Résolution 4 —\u{00A0}p. 2")
 }

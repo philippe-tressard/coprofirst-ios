@@ -4,31 +4,31 @@
 import SwiftUI
 
 /// L'avis entier sur une question au règlement (la carte dépliée du site) : la
-/// mention, la réponse, puis ses sections — d'après le règlement, ses extraits,
-/// d'après les AG, leurs extraits, la synthèse et les réserves.
+/// mention, puis l'avis. Un avis à renvois se lit en synthèse, fondements et sections
+/// pliées (`AvisARenvois`) ; un avis d'avant, section après section — d'après le
+/// règlement, ses extraits, d'après les AG, leurs extraits, la synthèse et les réserves.
 struct QuestionReglementView: View {
     let question: QuestionReglement
     let installation: Installation
     @Environment(\.palette) private var palette
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text(question.question).font(.titre(.title2)).foregroundStyle(palette.text)
-                PiedQuestion(question: question)
-                Text(mention).font(.footnote).italic().foregroundStyle(palette.textMuted)
-                riche(question.reponse)
-                renvoisSansExtrait
-                section("D'après le règlement", question.selonReglement)
-                Extraits(titre: "Extraits du règlement", extraits: question.extraitsReglement)
-                section("D'après les assemblées générales", question.selonAG)
-                Extraits(titre: "Extraits des décisions d'AG", extraits: question.extraitsAG)
-                section("Synthèse", question.synthese)
-                section("Réserves", question.reserves)
+        ScrollViewReader { defilement in
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Text(question.question).font(.titre(.title2)).foregroundStyle(palette.text)
+                    PiedQuestion(question: question)
+                    Text(mention).font(.footnote).italic().foregroundStyle(palette.textMuted)
+                    if question.avecRenvois {
+                        AvisARenvois(question: question, defilement: defilement)
+                    } else {
+                        avisDAvant
+                    }
+                }
+                .padding(.horizontal, Mise.marge)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.horizontal, Mise.marge)
-            .padding(.vertical, 16)
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .background(palette.bg)
         .navigationTitle("Avis sur le règlement")
@@ -49,16 +49,16 @@ struct QuestionReglementView: View {
         return texte
     }
 
-    /// « Renvoi sans extrait — à vérifier : R3. », servi par l'API (`AvisReglement.svelte`) :
-    /// le site le dit sous les fondements de l'avis, donc quand il y a des extraits.
+    /// Un avis d'avant les renvois se rend comme il l'a toujours été (`CarteQuestionReglement`).
     @ViewBuilder
-    private var renvoisSansExtrait: some View {
-        let renvois = question.renvoisSansExtrait
-        if !question.extraits.isEmpty, !renvois.isEmpty {
-            let pluriel = renvois.count > 1 ? "s" : ""
-            Text("Renvoi\(pluriel) sans extrait — à vérifier\u{00A0}: \(renvois.joined(separator: ", ")).")
-                .font(.footnote).foregroundStyle(palette.warningTexte)
-        }
+    private var avisDAvant: some View {
+        riche(question.reponse)
+        section("D'après le règlement", question.selonReglement)
+        ExtraitsReglementView(titre: "Extraits du règlement", extraits: question.extraitsReglement)
+        section("D'après les assemblées générales", question.selonAG)
+        ExtraitsReglementView(titre: "Extraits des décisions d'AG", extraits: question.extraitsAG)
+        section("Synthèse", question.synthese)
+        section("Réserves", question.reserves)
     }
 
     private func riche(_ html: String) -> some View {
@@ -73,44 +73,5 @@ struct QuestionReglementView: View {
                 riche(html)
             }
         }
-    }
-}
-
-/// Les extraits d'un avis, avec ce que le CODE en a vérifié (`ExtraitsReglement`) :
-/// un extrait retrouvé montre son repère, un extrait non retrouvé le dit en clair.
-private struct Extraits: View {
-    let titre: String
-    let extraits: [ExtraitReglement]
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        if !extraits.isEmpty {
-            VStack(alignment: .leading, spacing: 12) {
-                Text(titre).font(.headline).foregroundStyle(palette.text).accessibilityAddTraits(.isHeader)
-                ForEach(extraits, id: \.self) { extrait in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("« \(extrait.citation) »")
-                            .font(.body.italic())
-                            .foregroundStyle(palette.text)
-                            .padding(.leading, 12)
-                            .overlay(alignment: .leading) { palette.border.frame(width: 3) }
-                        if extrait.verifie {
-                            Text("✓ \(extrait.origine ?? "")").font(.footnote).foregroundStyle(palette.successTexte)
-                        } else {
-                            Text(nonRetrouve(extrait)).font(.footnote).foregroundStyle(palette.warningTexte)
-                        }
-                        if let apport = extrait.apport, !apport.isEmpty {
-                            Text(apport).font(.footnote).foregroundStyle(palette.textMuted)
-                        }
-                    }
-                    .accessibilityElement(children: .combine)
-                }
-            }
-        }
-    }
-
-    private func nonRetrouve(_ extrait: ExtraitReglement) -> String {
-        "⚠️ Non retrouvé mot pour mot dans le texte — à vérifier"
-            + (extrait.reference.map { " (référence donnée : \($0))" } ?? "")
     }
 }
