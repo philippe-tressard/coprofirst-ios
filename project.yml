@@ -54,6 +54,20 @@ targets:
         NSFaceIDUsageDescription: "Face ID ouvre votre espace sans ressaisir votre mot de passe."
         UILaunchScreen: {}
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+    # Droits de l'app, générés comme l'Info.plist (non versionnés). Capacités
+    # enregistrées au compte Apple par la signature automatique, au poste (10/11/2026,
+    # accord de Philippe) : Push (#17, relais coprofirst#2494) et liens universels (#18,
+    # AASA servi par coprofirst#2459). La CI ne signe pas : ces droits n'y servent pas.
+    entitlements:
+      path: CoproFirst/CoproFirst.entitlements
+      properties:
+        # « development » au poste ; l'archive de distribution le passe à « production ».
+        aps-environment: development
+        # Les installations connues qui servent l'AASA de l'app. Liste à arrêter au
+        # lot #18 : une installation hors de cette liste n'ouvre pas l'app par un lien.
+        com.apple.developer.associated-domains:
+          - applinks:demo.coprofirst.fr
+          - applinks:5hostachy.fr
     settings:
       base:
         # FIGÉ le 01/11/2026 : c'est un contrat — liens universels
