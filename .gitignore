@@ -38,10 +38,11 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 .swiftpm/
-# Le projet Xcode et l'Info.plist se génèrent depuis project.yml (XcodeGen)
+# Le projet Xcode, l'Info.plist et les droits se génèrent depuis project.yml (XcodeGen)
 *.xcodeproj/
 *.xcworkspace/
 /CoproFirst/Info.plist
+/CoproFirst/CoproFirst.entitlements
 # Signature et secrets : clés d'API App Store Connect et APNs, certificats, profils
 *.p8
 *.p12
