@@ -19,12 +19,26 @@
 #   - UNE relance au plus, des seuls tests tombés, et seulement si chacun est un
 #     test d'interface tombé sur une cause déclarée — la liste et le plafond font
 #     foi dans scripts/bilan_tests_ui.py (CAUSES_RELANCE, PLAFOND_TESTS). La
-#     relance se déclare au résumé et en annotation ; jamais une relance muette.
+#     relance se déclare au résumé et en annotation ; jamais une relance muette ;
+#   - un passage sorti en 0 n'est vert que s'il a JOUÉ des tests : le compte se lit au
+#     résumé de xcresult et se dit au résumé du run ; zéro test, ou un résumé qui ne
+#     se lit pas, c'est INCONNU, sortie 2 (#96) ;
+#   - UN SEUL passage à la fois sur le poste (#108) : le script prend le verrou
+#     `simulateur.verrou` du répertoire git commun — celui que partagent tous les
+#     worktrees —, attend son tour en disant qui le tient et depuis quand, et le rend
+#     à sa sortie. Douze sessions lançaient chacune leur passage : charge à 959 sur 12
+#     cœurs, et des « Lost connection » pris pour des défauts. En CI, pas de verrou :
+#     un runner, un passage. Un passage s'ARRÊTE PAR SON PID, celui de la fiche du
+#     verrou (`kill "$(cat "$(git rev-parse --git-common-dir)/simulateur.verrou/pid")"`),
+#     jamais par son nom : le script arrête alors ses descendants (xcodebuild ne lui
+#     survit pas), éteint le simulateur s'il l'a démarré, et rend le verrou.
 #
 # Arguments : passés au premier `xcodebuild test`, pour un passage partiel au poste
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
-# `--autotest` rejoue la décision avec un faux xcodebuild : relance permise, refusée,
-# ratée, INCONNU. Lancé par verifier-depot.sh (CI et pre-commit).
+# `--autotest` rejoue tout cela avec un faux xcodebuild
+# (scripts/autotest-tests-simulateur.sh) : relance permise, refusée, ratée, INCONNU,
+# passage vide, deux passages en même temps, verrou orphelin, arrêt par le pid. Lancé
+# par verifier-depot.sh (CI et pre-commit).
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
@@ -32,6 +46,29 @@ XCODEBUILD=${XCODEBUILD:-xcodebuild}
 XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
+A_ETEINDRE=""
+# Le verrou du poste : prendre_verrou, rendre_verrou.
+source scripts/verrou-simulateur.sh
+
+# Les descendants de $1, les plus lointains d'abord — par filiation, jamais par nom.
+descendants() {
+  local p
+  for p in $(pgrep -P "$1" 2>/dev/null); do
+    descendants "$p"
+    DESCENDANTS="$DESCENDANTS $p"
+  done
+}
+
+# À la sortie, quelle qu'elle soit : plus aucun descendant (un xcodebuild orphelin
+# continuait de charger le poste, #108), le simulateur éteint si ce passage l'a
+# démarré, le verrou rendu s'il est le sien.
+sortir() {
+  DESCENDANTS=""
+  descendants $$
+  [ -z "$DESCENDANTS" ] || kill $DESCENDANTS 2>/dev/null
+  [ -z "$A_ETEINDRE" ] || "$XCRUN" simctl shutdown "$A_ETEINDRE" > /dev/null 2>&1
+  rendre_verrou
+}
 
 # Ce que le simulateur a dit de la fin de l'app : tuée (jetsam), terminée, ou rien —
 # rien, c'est l'app vivante et figée, pas morte.
@@ -46,6 +83,8 @@ fin_de_l_app() {
 # tâches de premier démarrage se font pendant la compilation, pas pendant les tests.
 demarrer_simulateur() {
   local udid=${DESTINATION##*id=}
+  # Déjà démarré (par Xcode, par Philippe) : il n'est pas à ce passage, qui le laisse.
+  "$XCRUN" simctl list devices booted 2>/dev/null | grep -q "$udid" || A_ETEINDRE=$udid
   if ! "$XCRUN" simctl bootstatus "$udid" -b > /dev/null 2>&1; then
     echo "❌ simulateur $udid : démarrage non confirmé (simctl bootstatus) — INCONNU, aucun test joué." >&2
     return 1
@@ -71,6 +110,24 @@ mesurer() {
   echo
 }
 
+# xcodebuild, son journal à l'écran et dans $1, et sa sortie pour code de retour. En
+# arrière-plan et attendu par `wait` : un signal (l'arrêt par le pid) est alors traité
+# tout de suite — bash le garderait jusqu'à la fin d'une commande de premier plan.
+lancer() {
+  local journal=$1
+  shift
+  rm -f "$RESULTATS/code"
+  { "$XCODEBUILD" "$@" 2>&1; echo $? > "$RESULTATS/code"; } | tee "$journal" &
+  wait $!
+  return "$(cat "$RESULTATS/code" 2>/dev/null || echo 2)"
+}
+
+# Le résumé de $1.xcresult, écrit dans $2 ; sortie non nulle s'il ne se lit pas.
+resumer() {
+  "$XCRUN" xcresulttool get test-results summary --path "$RESULTATS/$1.xcresult" --compact \
+    > "$RESULTATS/$2" 2>/dev/null
+}
+
 passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md}
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
@@ -84,17 +141,25 @@ passer() {
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
     -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO
   )
-  local debut=$SECONDS code
-  "$XCODEBUILD" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult" 2>&1 | tee "$RESULTATS/tests.log"
-  code=${PIPESTATUS[0]}
+  local debut=$SECONDS code seuls motif decision
+  lancer "$RESULTATS/tests.log" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
+  code=$?
   echo "## Tests au simulateur" >> "$RESUME"
   python3 -I scripts/bilan_tests_ui.py lenteurs "$RESULTATS/tests.log" "$RESUME"
-  [ "$code" -eq 0 ] && return 0
+  if [ "$code" -eq 0 ]; then
+    # Sortie 0 ne suffit pas : un filtre qui ne vise rien sort en 0 sans rien jouer (#96).
+    if ! resumer tests resume.json; then
+      echo "Tests joués : INCONNU — le résumé de xcresult ne se lit pas, rien ne prouve un test joué." >> "$RESUME"
+      return 2
+    fi
+    motif=$(python3 -I scripts/bilan_tests_ui.py joues "$RESULTATS/resume.json")
+    decision=$?
+    echo "Tests joués : $motif" >> "$RESUME"
+    return "$decision"
+  fi
 
   mesurer $((SECONDS - debut)) >> "$RESUME"
-  local seuls motif decision
-  if ! "$XCRUN" xcresulttool get test-results summary --path "$RESULTATS/tests.xcresult" --compact \
-      > "$RESULTATS/resume.json" 2>/dev/null; then
+  if ! resumer tests resume.json; then
     echo "Relance : aucune — INCONNU, le résumé de xcresult ne se lit pas." >> "$RESUME"
     return "$code"
   fi
@@ -110,9 +175,9 @@ passer() {
   echo "**Relance déclarée (#50)** : $motif — une fois, seuls ces tests." >> "$RESUME"
   local relance=()
   while IFS= read -r ligne; do relance+=("$ligne"); done <<< "$seuls"
-  "$XCODEBUILD" test-without-building "${communs[@]}" "${relance[@]}" \
-    -resultBundlePath "$RESULTATS/relance.xcresult" 2>&1 | tee "$RESULTATS/relance.log"
-  code=${PIPESTATUS[0]}
+  lancer "$RESULTATS/relance.log" test-without-building "${communs[@]}" "${relance[@]}" \
+    -resultBundlePath "$RESULTATS/relance.xcresult"
+  code=$?
   python3 -I scripts/bilan_tests_ui.py lenteurs "$RESULTATS/relance.log" "$RESUME"
   if [ "$code" -ne 0 ]; then
     echo "Relance : rouge à son tour — le run échoue." >> "$RESUME"
@@ -120,8 +185,7 @@ passer() {
   fi
   # Sortie 0 ne suffit pas : un -only-testing qui ne vise rien sort en 0 sans rien jouer.
   motif=""
-  if "$XCRUN" xcresulttool get test-results summary --path "$RESULTATS/relance.xcresult" --compact \
-      > "$RESULTATS/relance.json" 2>/dev/null \
+  if resumer relance relance.json \
       && motif=$(python3 -I scripts/bilan_tests_ui.py relance-verte "$RESULTATS/relance.json" "${#relance[@]}"); then
     echo "Relance : verte ($motif). Le run passe, et cette ligne reste : la cause se suit au ticket #50." >> "$RESUME"
     return 0
@@ -130,78 +194,16 @@ passer() {
   return 1
 }
 
-# ── Autotest : un faux xcodebuild, qui sert aussi de faux xcrun ────────────────
-autotest() {
-  local d rate=0
-  d=$(mktemp -d) || return 2
-  cat > "$d/faux" <<'FAUX'
-#!/bin/bash
-echo "$*" >> "$FAUX_DOSSIER/appels"
-case "$1" in
-  test) cat "$FAUX_DOSSIER/journal"; exit "$(cat "$FAUX_DOSSIER/sortie-test")" ;;
-  test-without-building) exit "$(cat "$FAUX_DOSSIER/sortie-relance")" ;;
-  simctl) [ -f "$FAUX_DOSSIER/demarrage-rate" ] && exit 1; exit 0 ;;
-  xcresulttool)
-    case "$*" in *relance.xcresult*) f=resume-relance.json ;; *) f=resume.json ;; esac
-    [ -f "$FAUX_DOSSIER/$f" ] && cat "$FAUX_DOSSIER/$f" ;;
-  *) exit 1 ;;
-esac
-FAUX
-  chmod +x "$d/faux"
-  local perte='Failed to get matching snapshots: Lost connection to the application (pid 22209).'
-  local acces='{"targetName":"CoproFirstUITests","testIdentifierString":"AccesUITests/testSignalerPerduPuisDeclarer()","failureText":"'$perte'","testName":"t"}'
-  local assertion='{"targetName":"CoproFirstUITests","testIdentifierString":"AffairesUITests/testUn()","failureText":"XCTAssertTrue failed","testName":"t"}'
-  local vert='{"result":"Passed","failedTests":0,"passedTests":1,"testFailures":[]}'
-  local vide='{"result":"Passed","failedTests":0,"passedTests":0,"testFailures":[]}'
-  # $1 nom, $2 sortie du 1er passage, $3 résumé JSON (vide : illisible), $4 sortie de
-  # la relance, $5 sortie attendue, $6 relance attendue (oui/non), $7 résumé de la relance
-  scenario() {
-    rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json"
-    [ -z "${7:-}" ] || echo "$7" > "$d/resume-relance.json"
-    printf "Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' started.\n" > "$d/journal"
-    echo "$2" > "$d/sortie-test"
-    echo "$4" > "$d/sortie-relance"
-    [ -z "$3" ] || echo "$3" > "$d/resume.json"
-    local sortie relancee=non
-    FAUX_DOSSIER=$d XCODEBUILD=$d/faux XCRUN=$d/faux MESURER=0 DESTINATION='platform=iOS Simulator,id=X' \
-      RESULTATS=$d/r GITHUB_STEP_SUMMARY=$d/resume.md passer > "$d/sortie.txt" 2>&1
-    sortie=$?
-    grep -q '^test-without-building' "$d/appels" 2>/dev/null && relancee=oui
-    if [ "$sortie" != "$5" ] || [ "$relancee" != "$6" ]; then
-      echo "❌ $1 : sortie $sortie (attendu $5), relance $relancee (attendu $6)"; rate=$((rate + 1))
-    fi
-  }
-  scenario "vert d'emblée" 0 "" 0 0 non
-  scenario "perte de connexion, relance verte" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 0 oui "$vert"
-  if ! grep -q -- '-only-testing:CoproFirstUITests/AccesUITests/testSignalerPerduPuisDeclarer' "$d/appels" \
-      || ! grep -q 'Relance déclarée' "$d/resume.md" || ! grep -q '::warning' "$d/sortie.txt"; then
-    echo "❌ la relance ne vise pas le seul test tombé, ou ne se déclare pas"; rate=$((rate + 1))
-  fi
-  scenario "perte de connexion, relance rouge" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 65 65 oui
-  scenario "relance qui ne joue rien : rouge" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 1 oui "$vide"
-  scenario "résumé de la relance illisible : rouge" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 1 oui
-  scenario "une assertion : pas de relance" 65 '{"result":"Failed","failedTests":2,"testFailures":['"$acces,$assertion"']}' 0 65 non
-  scenario "résumé illisible : INCONNU" 65 "" 0 65 non
-  # Le simulateur se démarre AVANT le build et les tests (#48) ; non confirmé, rien ne joue.
-  scenario "vert d'emblée, démarrage d'abord" 0 "" 0 0 non
-  if [ "$(head -n 1 "$d/appels")" != "simctl bootstatus X -b" ] || ! sed -n 2p "$d/appels" | grep -q '^test '; then
-    echo "❌ le simulateur n'est pas démarré avant le build et les tests"; rate=$((rate + 1))
-  fi
-  touch "$d/demarrage-rate"
-  scenario "démarrage non confirmé : INCONNU" 0 "" 0 1 non
-  if grep -q '^test' "$d/appels"; then
-    echo "❌ des tests joués sur un simulateur au démarrage non confirmé"; rate=$((rate + 1))
-  fi
-  rm -f "$d/demarrage-rate"
-  rm -rf "${d:?}"
-  [ "$rate" -eq 0 ] && echo "✅ tests-simulateur : autotest" && return 0
-  return 1
-}
-
 if [ "${1:-}" = "--autotest" ]; then
+  source scripts/autotest-tests-simulateur.sh
   autotest
   exit $?
 fi
+trap sortir EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+trap 'exit 129' HUP
+prendre_verrou || exit $?
 passer "$@"
 code=$?
 [ -n "${GITHUB_STEP_SUMMARY:-}" ] || cat "$RESULTATS/resume.md" 2>/dev/null

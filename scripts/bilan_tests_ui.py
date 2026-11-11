@@ -19,6 +19,9 @@ Appelé par `scripts/tests-simulateur.sh` (#50). Deux lectures :
   (sortie 1) ; un résumé illisible rend INCONNU (sortie 2), jamais une relance.
 - `relance-verte <résumé.json> <n>` — la relance ne compte verte que si son résumé
   dit les n tests rejoués et passés.
+- `joues <résumé.json>` — un passage sorti en 0 n'est vert que s'il a joué des tests :
+  le compte s'imprime (sortie 0) ; zéro test joué, ou un résumé qui se contredit ou ne
+  se lit pas, rend INCONNU (sortie 2), jamais vert (#96).
 
 `--autotest` rejoue les deux lectures sur des extraits de journaux réels (runs
 42066224812 et 41940166154) : un contrôle qui ne refuse rien ne prouve rien.
@@ -95,6 +98,27 @@ def relance_verte(resume: dict, attendus: int) -> tuple[bool, str]:
     if resultat == "Passed" and rates == 0 and passes == attendus:
         return True, f"{passes} test(s) rejoué(s), tous verts"
     return False, f"relance : {resultat}, {passes} passé(s) et {rates} en échec pour {attendus} relancé(s)"
+
+
+def joues(resume: dict) -> tuple[int, str]:
+    """(sortie, ce qui se dit) pour un passage que xcodebuild a sorti en 0.
+
+    « Executed 0 tests » sort en 0 avec ** TEST SUCCEEDED ** (#96). Rejoué le
+    11/11/2026 : deux `-only-testing:` passés en UN seul argument (une variable entre
+    guillemets) ne visent aucun test — résumé « unknown », 0 test ; un filtre de
+    méthode et des filtres de classe en arguments séparés, eux, jouent leurs 12 tests.
+    """
+    try:
+        passes, rates, resultat = int(resume["passedTests"]), int(resume["failedTests"]), resume["result"]
+        sautes = int(resume.get("skippedTests", 0))
+    except (KeyError, TypeError, ValueError, AttributeError) as erreur:
+        return 2, f"INCONNU : résumé de xcresult illisible ({erreur!r})"
+    if passes + rates == 0:
+        return 2, (f"INCONNU : aucun test joué ({sautes} sauté(s)) — un filtre -only-testing qui ne vise aucun "
+                   "test sort en 0 sans rien jouer. Un filtre par argument, à la forme Cible/Classe[/méthode].")
+    if rates or resultat != "Passed":
+        return 2, f"INCONNU : xcodebuild sort en 0, son résumé dit {resultat} et {rates} test(s) en échec"
+    return 0, f"{passes} passé(s), {sautes} sauté(s)"
 
 
 def lenteurs(journal: str) -> dict[str, int]:
@@ -177,6 +201,22 @@ def autotest() -> int:
         if verte != attendu:
             print(f"❌ relance_verte({passes}, {rates}, {resultat}) : {verte} ({motif})")
             rate += 1
+    for nom, resume, sortie in [
+            ("457 passés, 2 sautés : vert",
+             {"passedTests": 457, "failedTests": 0, "skippedTests": 2, "result": "Passed"}, 0),
+            ("aucun test joué (le résumé réel du 11/11/2026) : INCONNU",
+             {"passedTests": 0, "failedTests": 0, "skippedTests": 0, "result": "unknown", "totalTestCount": 0}, 2),
+            ("aucun test joué, résultat « Passed » : INCONNU",
+             {"passedTests": 0, "failedTests": 0, "skippedTests": 0, "result": "Passed"}, 2),
+            ("que des tests sautés : INCONNU",
+             {"passedTests": 0, "failedTests": 0, "skippedTests": 3, "result": "Passed"}, 2),
+            ("sortie 0 et un échec au résumé : INCONNU", {"passedTests": 3, "failedTests": 1, "result": "Failed"}, 2),
+            ("résumé illisible : INCONNU", {"result": "Passed"}, 2),
+            ("résumé qui n'est pas un objet : INCONNU", [], 2)]:
+        obtenu, motif = joues(resume)
+        if obtenu != sortie or not motif:
+            print(f"❌ joues, {nom} : sortie {obtenu} ({motif})")
+            rate += 1
     rangs = lenteurs(JOURNAL)
     if rangs != {"AccesUITests/testSignalerPerduPuisDeclarer": 2, "AffairesUITests/testUneCarteOuvreSonDetail": 1}:
         print(f"❌ lenteurs : {rangs}")
@@ -203,6 +243,14 @@ def main(argv: list[str]) -> int:
         print(motif, file=sys.stderr)
         print("\n".join(seuls))
         return sortie
+    if len(argv) == 3 and argv[1] == "joues":
+        try:
+            with open(argv[2], encoding="utf-8") as f:
+                sortie, motif = joues(json.load(f))
+        except (OSError, ValueError) as erreur:
+            sortie, motif = 2, f"INCONNU : résumé de xcresult illisible ({erreur})"
+        print(motif)
+        return sortie
     if len(argv) == 4 and argv[1] == "relance-verte":
         try:
             with open(argv[2], encoding="utf-8") as f:
@@ -219,7 +267,7 @@ def main(argv: list[str]) -> int:
         print("\n".join(annotations))
         return 0
     print("usage : bilan_tests_ui.py --autotest | decider <résumé.json> | relance-verte <résumé.json> <n> "
-          "| lenteurs <journal> <résumé.md>",
+          "| joues <résumé.json> | lenteurs <journal> <résumé.md>",
           file=sys.stderr)
     return 2
 
