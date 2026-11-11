@@ -17,7 +17,8 @@ import Foundation
 /// le contrat qu'elle sert (`1.15.0` la demande au thème sombre, `1.14.0` non — #70) ;
 /// `-lien <adresse>` : un lien universel reçu au lancement (#18) ;
 /// `-push non-demandee|refusee` : l'autorisation des notifications (accordée sinon),
-/// et `-push-touchee` : une notification de la résidence touchée au lancement (#17).
+/// et `-push-touchee` : une notification de la résidence touchée au lancement (#17) ;
+/// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -119,6 +120,9 @@ enum LancementSimule {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
+        if let saisie = argument("-saisie", arguments) {
+            simule.profilSimule.saisieAffaire = saisie
+        }
         if let ms = argument("-delai-detail", arguments).flatMap(Int.init) {
             simule.delaiDetail = .milliseconds(ms)
         }

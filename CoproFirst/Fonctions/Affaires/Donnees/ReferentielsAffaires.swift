@@ -16,11 +16,13 @@ struct ReferentielsAffaires: Hashable, Sendable {
         let colonne: String?
     }
 
-    /// Une catégorie : ce que le pied d'une carte en montre.
+    /// Une catégorie : ce que le pied d'une carte en montre, et les sections que la
+    /// saisie Essentielle de « Nouvelle affaire » montre pour elle (#69).
     struct Categorie: Hashable, Sendable {
         let code: String
         let libelle: String
         let emoji: String
+        var sectionsEssentielles: [String] = []
     }
 
     /// Les colonnes, dans l'ordre servi — ces colonnes SONT le workflow.
@@ -44,7 +46,10 @@ extension ReferentielsAffaires {
             statuts: lu.statuts.map {
                 Statut(code: $0.code, libelle: $0.libelle, clos: $0.clos, colonne: $0.colonneKanban)
             },
-            categories: lu.categories.map { Categorie(code: $0.code, libelle: $0.libelle, emoji: $0.emoji) })
+            categories: lu.categories.map {
+                Categorie(
+                    code: $0.code, libelle: $0.libelle, emoji: $0.emoji, sectionsEssentielles: $0.sectionsEssentielles)
+            })
     }
 }
 
