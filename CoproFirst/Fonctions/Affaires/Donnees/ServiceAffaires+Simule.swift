@@ -15,6 +15,10 @@ extension ServiceSimule: ServiceAffaires {
         return magasin.affaires
     }
 
+    func referentiels(_ installation: Installation) async throws -> ReferentielsAffaires {
+        try FixturesReferentielsAffaires.lus()
+    }
+
     func rechercher(_ terme: String, dans installation: Installation) async throws -> [Int] {
         try await Task.sleep(for: .milliseconds(200))
         // La règle vit au serveur ; la simulation ne cherche que dans le titre et le numéro.
@@ -40,6 +44,7 @@ extension ServiceSimule: ServiceAffaires {
         magasin.modifier(affaire.id) {
             $0.statut = statut
             $0.close = MagasinAffairesSimule.close(statut)
+            $0.colonne = MagasinAffairesSimule.colonne(statut)
         }
     }
 
@@ -66,8 +71,19 @@ final class MagasinAffairesSimule: @unchecked Sendable {
         }
     }
 
-    /// Ce que le serveur simulé SERT comme `close` — lui seul la calcule, comme le vrai.
-    static func close(_ statut: String) -> Bool { Apercu.close(statut) }
+    /// Les référentiels du serveur simulé : il y lit ce qu'il SERT sur chaque affaire
+    /// (`close`, `colonne_kanban`, `categorie_libelle`) — lui seul le calcule, comme le vrai.
+    private static let referentiels = try? FixturesReferentielsAffaires.lus()
+
+    static func close(_ statut: String) -> Bool {
+        referentiels?.statuts.first { $0.code == statut }?.clos ?? false
+    }
+
+    static func colonne(_ statut: String) -> String? {
+        referentiels?.statuts.first { $0.code == statut }?.colonne
+    }
+
+    static func libelle(_ categorie: String) -> String { referentiels?.categorie(categorie)?.libelle ?? categorie }
 
     private var contenu = Apercu.affaires
     private let verrou = NSLock()
@@ -81,10 +97,11 @@ final class MagasinAffairesSimule: @unchecked Sendable {
             let neuve = Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: saisie.titre, apercu: saisie.descriptionHTML,
                 creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert", close: false,
-                categorie: saisie.categorie,
+                categorie: saisie.categorie, categorieLibelle: Self.libelle(saisie.categorie),
                 urgente: saisie.urgente, meConcerne: true, archivee: false, suiviKanban: false,
                 natures: [actualite ? "actualite" : "activite"], prestataire: nil,
-                perimetres: saisie.perimetre.map { [$0] } ?? [], lieu: nil, messages: nil)
+                perimetres: saisie.perimetre.map { [$0] } ?? [], lieu: nil, messages: nil,
+                colonne: Self.colonne(actualite ? "publie" : "ouvert"), peutDeplacer: false, peutArchiver: true)
             contenu.insert(neuve, at: 0)
             return neuve
         }

@@ -37,7 +37,9 @@
 #      autotest de scripts/tickets_concordance.py (#67).
 #  15. la simulation ne part pas en production : `ServiceSimule`, ses jeux de
 #      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
-#      autotest d'abord, #84).
+#      autotest d'abord, #84) ;
+#  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -220,6 +222,11 @@ bash scripts/plancher.sh > /dev/null || echec "scripts/plancher.sh : plancher il
 python3 -I scripts/verifier-fixtures.py --autotest >/dev/null || echec "verifier-fixtures.py : autotest en échec"
 FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec "API simulée hors du schéma du serveur"; }
 
+# Ce que le serveur SERT ne se recalcule plus (#83) : une table ou un prédicat retiré
+# qui revient échoue. L'autotest d'abord ; INCONNU (sortie 2) est un échec.
+python3 -I scripts/verifier-regles-servies.py --autotest >/dev/null || echec "verifier-regles-servies.py : autotest en échec"
+SERVIES=$(python3 -I scripts/verifier-regles-servies.py) || { echo "$SERVIES"; echec "une règle servie est recalculée dans l'app"; }
+
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
 # et charge, NSAttributedString(.html) passe par WebKit et charge des ressources
 # distantes. Ni l'un ni l'autre dans l'app.
@@ -275,4 +282,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

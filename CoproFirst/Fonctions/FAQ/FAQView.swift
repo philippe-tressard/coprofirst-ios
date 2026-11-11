@@ -123,10 +123,9 @@ private struct ListeFAQ: View {
     }
 
     /// Le conseil syndical et l'administration rédigent la FAQ (`require_cs_or_admin`).
-    private var estConseil: Bool {
-        let roles = parcours.ouverteAJour?.profil?.roles ?? []
-        return roles.contains("conseil_syndical") || roles.contains("admin")
-    }
+    /// Aucun droit servi ne le dit encore (#104) : la règle GÉNÉRÉE du site (`$isCS`), lue par
+    /// `DroitsOnglet` — jamais des rôles écrits ici.
+    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }
 }
 
 /// Une question, dépliable ; une seule ouverte à la fois, comme sur le site.
