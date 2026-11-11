@@ -256,7 +256,10 @@ seule la CI le dit.
    joue au poste par l'API simulée ralentie (`-delai-detail <ms>`). Le plafond de ces
    attentes est commun, et large (`Attente.plafond`, `CoproFirstUITests/Attente.swift`) :
    l'attente rend la main dès que l'état est là, un délai court ne fait gagner du temps
-   qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
+   qu'à un test rouge (#123). Une attente de moins de 5 s ne s'écrit sur place que
+   déclarée — `// sonde courte : <raison>` au-dessus (sonde avant défilement, preuve
+   d'absence) —, le reste est refusé par `scripts/verifier-attentes-courtes.py` (#147).
+   Un état autre que la présence — le focus du clavier, un
    onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
    attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à

@@ -20,19 +20,21 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertTrue(barre.waitForExistence(timeout: 5))
         barre.buttons["Plus"].tap()
         app.libelleAcces("Prestataires").tap()
-        XCTAssertTrue(app.navigationBars["Prestataires"].waitForExistence(timeout: 3))
+        XCTAssertTrue(app.navigationBars["Prestataires"].waitForExistence(timeout: Attente.plafond))
 
         let fiche = app.elementAcces("prestataire.1")
         XCTAssertTrue(fiche.waitForExistence(timeout: 5), "les fiches")
         app.capturerAcces("prestataires-1-liste", dans: self)
         fiche.tap()
-        XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (2)").waitForExistence(timeout: 3), "la fiche dépliée")
+        XCTAssertTrue(
+            app.libelleAcces("Avis du conseil syndical (2)").waitForExistence(timeout: Attente.plafond),
+            "la fiche dépliée")
         app.capturerAcces("prestataires-2-fiche", dans: self)
 
         let recherche = app.elementAcces("prestataires.recherche")
         recherche.tap()
         recherche.typeText("incendie controles")
-        XCTAssertTrue(app.elementAcces("prestataire.2").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.elementAcces("prestataire.2").waitForExistence(timeout: Attente.plafond))
         XCTAssertFalse(app.elementAcces("prestataire.1").exists, "la recherche filtre, sans accents ni ordre")
         recherche.typeText(XCUIKeyboardKey.delete.rawValue)
 
@@ -40,7 +42,7 @@ final class PrestatairesUITests: XCTestCase {
         let contrat = app.elementAcces("contrat.1")
         XCTAssertTrue(contrat.waitForExistence(timeout: 5), "les contrats")
         contrat.tap()
-        XCTAssertTrue(app.libelleAcces("Le contrat").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.libelleAcces("Le contrat").waitForExistence(timeout: Attente.plafond))
         app.capturerAcces("prestataires-3-contrats", dans: self)
 
         app.elementAcces("onglet.consommations").tap()

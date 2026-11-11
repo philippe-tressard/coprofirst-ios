@@ -34,7 +34,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
         app.elementAcces("affaire.repondre").tap()
         let texte = app.elementAcces("repondre.texte")
-        XCTAssertTrue(texte.waitForExistence(timeout: 3))
+        XCTAssertTrue(texte.waitForExistence(timeout: Attente.plafond))
         texte.typeText("Merci, je contourne la zone.")
         app.elementAcces("repondre.envoyer").tap()
         XCTAssertTrue(app.elementAcces("affaire.repondre").waitForExistence(timeout: 5), "la feuille se referme")
@@ -65,7 +65,7 @@ final class CartesDuFilUITests: XCTestCase {
 
         suite.tap()
         let texte = app.elementAcces("suite.texte")
-        XCTAssertTrue(texte.waitForExistence(timeout: 3))
+        XCTAssertTrue(texte.waitForExistence(timeout: Attente.plafond))
         texte.tap()
         texte.typeText("Le plombier est passé.")
         app.elementAcces("suite.enregistrer").tap()
@@ -94,7 +94,7 @@ final class CartesDuFilUITests: XCTestCase {
         modifier.tap()
 
         let titre = app.textFields["modifier.titre"]
-        XCTAssertTrue(titre.waitForExistence(timeout: 3))
+        XCTAssertTrue(titre.waitForExistence(timeout: Attente.plafond))
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")

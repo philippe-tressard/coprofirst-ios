@@ -105,10 +105,10 @@ final class AffairesUITests: XCTestCase {
         let app = lancer()
         XCTAssertTrue(element("affaires.carte.A-0041", dans: app).waitForExistence(timeout: 5))
         let resolues = element("affaires.suivi.résolu", dans: app)
-        XCTAssertTrue(resolues.waitForExistence(timeout: 3))
+        XCTAssertTrue(resolues.waitForExistence(timeout: Attente.plafond))
         if !resolues.isHittable { element("affaires.suivi.toutes", dans: app).swipeLeft() }
         resolues.tap()
-        XCTAssertTrue(element("affaires.carte.A-0031", dans: app).waitForExistence(timeout: 3))
+        XCTAssertTrue(element("affaires.carte.A-0031", dans: app).waitForExistence(timeout: Attente.plafond))
         XCTAssertFalse(element("affaires.carte.A-0041", dans: app).exists, "une affaire chez le syndic sort")
         XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une résolue archivée reste aux Archives")
     }

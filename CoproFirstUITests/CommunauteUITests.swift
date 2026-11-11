@@ -26,7 +26,7 @@ final class CommunauteUITests: XCTestCase {
     /// Un élément de cet identifiant est-il inactif ? (Le conteneur, lui, l'est toujours.)
     private func inactif(_ app: XCUIApplication, _ identifiant: String) -> Bool {
         let predicat = NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 3)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: Attente.plafond)
     }
 
     /// Un élément par son identifiant (ou son libellé), QUEL QUE SOIT SON TYPE : un `Link`

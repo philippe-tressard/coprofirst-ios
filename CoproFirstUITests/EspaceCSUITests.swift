@@ -35,7 +35,7 @@ final class EspaceCSUITests: XCTestCase {
         LancementCaptures.capturer("cs-1-comptes-et-acces")
         app.elementAcces("cs.compte.501.approuver").tap()
         let nouvelArrivant = app.elementAcces("cs.validation.nouvel-arrivant")
-        XCTAssertTrue(nouvelArrivant.waitForExistence(timeout: 3), "la feuille d'approbation")
+        XCTAssertTrue(nouvelArrivant.waitForExistence(timeout: Attente.plafond), "la feuille d'approbation")
         // L'interrupteur, à droite de la ligne : toucher son libellé ne le bascule pas.
         nouvelArrivant.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
         LancementCaptures.capturer("cs-2-approuver-nouvel-arrivant")
@@ -57,7 +57,7 @@ final class EspaceCSUITests: XCTestCase {
         // Le champ d'une alerte ne garde pas son identifiant : il se trouve par son indication.
         let codes = app.descendants(matching: .any)
             .matching(NSPredicate(format: "placeholderValue == %@", "4521, 417D5927")).firstMatch
-        XCTAssertTrue(codes.waitForExistence(timeout: 3), "les codes remis")
+        XCTAssertTrue(codes.waitForExistence(timeout: Attente.plafond), "les codes remis")
         codes.typeText("4521")
         app.descendants(matching: .any)["Accepter"].firstMatch.tap()
         XCTAssertTrue(commande.waitForNonExistence(timeout: 5), "la commande quitte la file")
@@ -73,7 +73,7 @@ final class EspaceCSUITests: XCTestCase {
         let recherche = app.elementAcces("cs.badges.recherche")
         recherche.tap()
         recherche.typeText("celeste")
-        XCTAssertTrue(app.elementAcces("cs.badge.vigik-4").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.elementAcces("cs.badge.vigik-4").waitForExistence(timeout: Attente.plafond))
         XCTAssertFalse(badge.exists, "la recherche filtre")
     }
 
@@ -84,7 +84,8 @@ final class EspaceCSUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("cs.annuaire.conseil.0").waitForExistence(timeout: 5), "le conseil")
         LancementCaptures.capturer("cs-4-annuaire-conseil")
         app.elementAcces("cs.annuaire.conseil.modifier").tap()
-        XCTAssertTrue(app.elementAcces("cs.feuille.entete-conseil").waitForExistence(timeout: 3), "l'en-tête")
+        XCTAssertTrue(
+            app.elementAcces("cs.feuille.entete-conseil").waitForExistence(timeout: Attente.plafond), "l'en-tête")
         LancementCaptures.capturer("cs-5-annuaire-entete")
         app.descendants(matching: .any)["Annuler"].firstMatch.tap()
         let syndic = app.elementAcces("cs.annuaire.syndic.0")

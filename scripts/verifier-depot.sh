@@ -51,7 +51,10 @@
 #      envois, modules, droits, paquets (scripts/verifier-confidentialite.py, #19) ;
 #  19. DEPENDANCES.md dit ce que Package.resolved épingle : chaque paquet embarqué de
 #      la fiche y est listé embarqué, et chaque version écrite est l'épinglée
-#      (scripts/verifier-dependances.py, #143).
+#      (scripts/verifier-dependances.py, #143) ;
+#  20. aucune attente de moins de 5 s écrite sur place dans les tests d'interface :
+#      le plafond commun, ou une sonde déclarée avec sa raison ; le reste sous un
+#      plafond décroissant (scripts/verifier-attentes-courtes.py, #147).
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -316,6 +319,9 @@ while IFS= read -r f; do
 done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
+# Les attentes courtes (#147) : l'autotest d'abord, puis les tests d'interface.
+python3 -I scripts/verifier-attentes-courtes.py --autotest >/dev/null || echec "verifier-attentes-courtes.py : autotest en échec"
+COURTES=$(python3 -I scripts/verifier-attentes-courtes.py) || { echo "$COURTES"; echec "attente courte écrite sur place"; }
 
 # Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
@@ -345,4 +351,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, attentes courtes déclarées, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

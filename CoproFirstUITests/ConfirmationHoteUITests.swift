@@ -55,7 +55,9 @@ final class ConfirmationHoteUITests: XCTestCase {
         let annuler = app.elementAcces("confirmationHote.annuler")
         XCTAssertTrue(annuler.waitForExistence(timeout: 5))
         annuler.tap()
-        XCTAssertTrue(app.elementAcces("connexion.valider").waitForExistence(timeout: 3), "retour à la connexion")
+        XCTAssertTrue(
+            app.elementAcces("connexion.valider").waitForExistence(timeout: Attente.plafond), "retour à la connexion")
+        // sonde courte : preuve d'absence, 2 s laissées à une feuille qui s'ouvrirait à tort
         XCTAssertFalse(app.buttons["faceid.plusTard"].waitForExistence(timeout: 2), "rien ne s'est ouvert")
     }
 

@@ -30,7 +30,9 @@ final class AvisReglementUITests: XCTestCase {
         LancementCaptures.capturer("avis-renvois-extrait")
 
         element(app, "avis.section.assemblees").tap()
-        XCTAssertTrue(element(app, "avis.extrait.AG1").waitForNonExistence(timeout: 3), "le bandeau replie sa section")
+        XCTAssertTrue(
+            element(app, "avis.extrait.AG1").waitForNonExistence(timeout: Attente.plafond),
+            "le bandeau replie sa section")
     }
 
     @MainActor
@@ -48,6 +50,7 @@ final class AvisReglementUITests: XCTestCase {
         XCTAssertTrue(barre.waitForExistence(timeout: 10))
         barre.descendants(matching: .any)["Résidence"].firstMatch.tap()
         let onglet = app.descendants(matching: .any)["Règlement"].firstMatch
+        // sonde courte : absent aux tailles d'accessibilité, les onglets passent par le menu
         if !onglet.waitForExistence(timeout: 3) {
             // Aux tailles d'accessibilité, les onglets sont un menu (`ResidenceView.choixOnglet`).
             element(app, "residence.onglets").tap()
@@ -55,6 +58,7 @@ final class AvisReglementUITests: XCTestCase {
         XCTAssertTrue(onglet.waitForExistence(timeout: 5))
         onglet.tap()
         let carte = app.descendants(matching: .any)[question].firstMatch
+        // sonde courte : la carte sous le pli n'existe qu'une fois ramenée, on défile
         for _ in 0..<4 where !(carte.waitForExistence(timeout: 2) && carte.isHittable) {
             app.swipeUp()
         }

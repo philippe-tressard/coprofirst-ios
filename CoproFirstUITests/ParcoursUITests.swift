@@ -78,7 +78,9 @@ final class ParcoursUITests: XCTestCase {
         }
         XCTAssertFalse(barre.buttons["Mes lots & accès"].exists)
         barre.buttons["Accès"].tap()
-        XCTAssertTrue(app.navigationBars["Mes lots & accès"].waitForExistence(timeout: 3), "l'écran garde son titre")
+        XCTAssertTrue(
+            app.navigationBars["Mes lots & accès"].waitForExistence(timeout: Attente.plafond),
+            "l'écran garde son titre")
     }
 
     @MainActor
@@ -109,7 +111,7 @@ final class ParcoursUITests: XCTestCase {
         app.buttons["residence.deconnecter"].tap()
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
         let confirmer = app.buttons["sortie.confirmer"].firstMatch
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "le geste se confirme")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: Attente.plafond), "le geste se confirme")
         confirmer.tap()
 
         let adresse = app.textFields["connexion.residence"]
@@ -128,7 +130,8 @@ final class ParcoursUITests: XCTestCase {
         let logement = app.buttons["fil.lot"]
         XCTAssertTrue(logement.waitForExistence(timeout: 5))
         let residence = app.buttons["pastille.residence"]
-        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable, "la résidence reste visible")
+        XCTAssertTrue(
+            residence.waitForExistence(timeout: Attente.plafond) && residence.isHittable, "la résidence reste visible")
         XCTAssertTrue(app.buttons["cloche"].isHittable, "la cloche aussi")
         XCTAssertLessThan(logement.frame.maxX, residence.frame.minX)
 
@@ -150,7 +153,7 @@ final class ParcoursUITests: XCTestCase {
         let logement = app.buttons["fil.lot"]
         XCTAssertTrue(logement.waitForExistence(timeout: 5))
         let residence = app.buttons["pastille.residence"]
-        XCTAssertTrue(residence.waitForExistence(timeout: 3) && residence.isHittable)
+        XCTAssertTrue(residence.waitForExistence(timeout: Attente.plafond) && residence.isHittable)
         XCTAssertGreaterThan(logement.frame.minY, residence.frame.maxY, "sous la barre, pas dedans")
     }
 }

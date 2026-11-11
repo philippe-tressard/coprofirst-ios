@@ -38,7 +38,7 @@ final class SondageUITests: XCTestCase {
     @MainActor
     private func inactif(_ app: XCUIApplication, _ identifiant: String) -> Bool {
         let predicat = NSPredicate(format: "identifier == %@ AND isEnabled == false", identifiant)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 3)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: Attente.plafond)
     }
 
     /// Le cadre de l'élément en UNE requête d'accessibilité (`nil` s'il n'existe pas) :
@@ -115,7 +115,7 @@ final class SondageUITests: XCTestCase {
     /// tombe sur la rangée, qui se referme.
     @MainActor
     private func toucherApresBalayage(_ bouton: XCUIElement) {
-        XCTAssertTrue(bouton.waitForExistence(timeout: 3), "\(bouton) après le balayage")
+        XCTAssertTrue(bouton.waitForExistence(timeout: Attente.plafond), "\(bouton) après le balayage")
         immobile(bouton)
         bouton.tap()
     }
@@ -135,6 +135,7 @@ final class SondageUITests: XCTestCase {
     @MainActor
     private func fermerLeClavier(_ app: XCUIApplication) {
         let ok = app.elementAcces("clavier.ok")
+        // sonde courte : sans champ actif, la barre du clavier n'existe pas
         guard ok.waitForExistence(timeout: 2) else { return }
         ok.tap()
         XCTAssertTrue(ok.waitForNonExistence(timeout: 5), "plus aucun champ actif")

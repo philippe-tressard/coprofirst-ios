@@ -89,7 +89,7 @@ final class GrandTexteUITests: XCTestCase {
         let texte = barre.identifier
         let titre = barre.staticTexts[texte]
         LancementCaptures.capturer(ecran + "-ax5")
-        guard titre.waitForExistence(timeout: 3) else {
+        guard titre.waitForExistence(timeout: Attente.plafond) else {
             return XCTFail("\(ecran) : le titre « \(texte) » n'est pas dans la barre (chassé par ses boutons)")
         }
         let police = UIFont.preferredFont(forTextStyle: .headline, compatibleWith: plafondDesBarres)

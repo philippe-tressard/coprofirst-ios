@@ -24,6 +24,7 @@ final class AdminUITests: XCTestCase {
 
         // À traiter : la file du conseil, puis une demande de profil approuvée.
         let demande = app.elementAcces("admin.demande.41")
+        // sonde courte : la demande sous le pli n'existe qu'une fois ramenée, on défile
         for _ in 0..<8 where !demande.waitForExistence(timeout: 1) || !demande.isHittable { app.swipeUp() }
         XCTAssertTrue(demande.exists, "les demandes de profil")
         LancementCaptures.capturer("admin-1-a-traiter")
@@ -59,10 +60,10 @@ final class AdminUITests: XCTestCase {
         recherche.tap()
         recherche.typeText("dominique")
         let dominique = app.elementAcces("admin.utilisateur.12")
-        XCTAssertTrue(dominique.waitForExistence(timeout: 3))
+        XCTAssertTrue(dominique.waitForExistence(timeout: Attente.plafond))
         XCTAssertFalse(camille.exists, "la recherche filtre")
         dominique.tap()
-        XCTAssertTrue(app.elementAcces("admin.fiche.fermer").waitForExistence(timeout: 3), "la fiche")
+        XCTAssertTrue(app.elementAcces("admin.fiche.fermer").waitForExistence(timeout: Attente.plafond), "la fiche")
         LancementCaptures.capturer("admin-3-fiche")
         // Les gestes sont au bas du formulaire, dont les cellules naissent au défilement.
         let communaute = app.elementAcces("admin.fiche.communaute")
@@ -84,7 +85,7 @@ final class AdminUITests: XCTestCase {
         recherche.tap()
         recherche.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + "alix")
         let alix = app.elementAcces("admin.utilisateur.13")
-        XCTAssertTrue(alix.waitForExistence(timeout: 3))
+        XCTAssertTrue(alix.waitForExistence(timeout: Attente.plafond))
         alix.tap()
         let ajouterCS = app.elementAcces("admin.fiche.role.conseil_syndical")
         for _ in 0..<6 where !ajouterCS.exists { app.swipeUp() }
@@ -93,7 +94,7 @@ final class AdminUITests: XCTestCase {
         LancementCaptures.capturer("admin-3-fiche-roles")
         ajouterCS.tap()
         let confirmer = app.buttons["Confirmer"].firstMatch
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "la confirmation du geste")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: Attente.plafond), "la confirmation du geste")
         confirmer.tap()
         XCTAssertTrue(ajouterCS.waitForNonExistence(timeout: 5), "le geste ferme la fiche")
     }
@@ -130,7 +131,8 @@ final class AdminUITests: XCTestCase {
     private func surLeSite(_ app: XCUIApplication, attendus: [String]) {
         toucherLOnglet("sur-le-site", app)
         for id in attendus {
-            XCTAssertTrue(app.elementAcces("site.onglet.\(id)").waitForExistence(timeout: 3), "le lien vers \(id)")
+            XCTAssertTrue(
+                app.elementAcces("site.onglet.\(id)").waitForExistence(timeout: Attente.plafond), "le lien vers \(id)")
         }
         LancementCaptures.capturer("admin-7-sur-le-site")
     }
@@ -144,6 +146,7 @@ final class AdminUITests: XCTestCase {
         XCTAssertTrue(plus.waitForExistence(timeout: 8))
         plus.tap()
         let admin = app.libelleAcces("Admin")
+        // sonde courte : la ligne sous le pli n'existe qu'une fois ramenée, on défile
         for _ in 0..<6 where !admin.waitForExistence(timeout: 1) || !admin.isHittable { app.swipeUp() }
         admin.tap()
         return app

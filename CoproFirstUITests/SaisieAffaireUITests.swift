@@ -38,6 +38,7 @@ final class SaisieAffaireUITests: XCTestCase {
     /// lignes hors de l'écran : on défile tant qu'il n'est pas là, pas seulement tant qu'il est caché.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> Bool {
+        // sonde courte : un Form ne crée pas la ligne hors de l'écran, on défile ensuite
         _ = element.waitForExistence(timeout: 3)
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {

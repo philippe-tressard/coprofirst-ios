@@ -18,6 +18,7 @@ final class DelegationsCSUITests: XCTestCase {
         plus.tap()
         let entree = app.libelleAcces(libelle)
         // Aux grandes tailles, la ligne est sous le pli : la liste ne la crée qu'au défilement.
+        // sonde courte : aux grandes tailles la ligne est sous le pli, on défile ensuite
         _ = entree.waitForExistence(timeout: 3)
         for _ in 0..<6 where !(entree.exists && entree.isHittable) { app.swipeUp() }
         XCTAssertTrue(entree.exists, "« \(libelle) » dans Plus")
@@ -39,13 +40,13 @@ final class DelegationsCSUITests: XCTestCase {
         // Révoquer demande une confirmation.
         app.elementAcces("delegation.8.revoquer").tap()
         let confirmer = app.elementAcces("delegations.revoquer.confirmer")
-        XCTAssertTrue(confirmer.waitForExistence(timeout: 3), "la confirmation")
+        XCTAssertTrue(confirmer.waitForExistence(timeout: Attente.plafond), "la confirmation")
         confirmer.tap()
         XCTAssertTrue(app.elementAcces("delegation.8.revoquer").waitForNonExistence(timeout: 5), "révoquée")
 
         // Nouvelle délégation (conseil) : « Enregistrer » attend deux personnes.
         app.elementAcces("delegations.nouvelle").tap()
-        XCTAssertTrue(app.elementAcces("nouvelle-delegation.mandant").waitForExistence(timeout: 3))
+        XCTAssertTrue(app.elementAcces("nouvelle-delegation.mandant").waitForExistence(timeout: Attente.plafond))
         let inactif = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND isEnabled == false", "nouvelle-delegation.enregistrer"))
             .firstMatch
@@ -93,7 +94,7 @@ final class DelegationsCSUITests: XCTestCase {
         for _ in 0..<4 where !batiment.isHittable { app.swipeUp() }
         batiment.tap()
         let toit = app.elementAcces("nouvelle-annonce-hall.perimetre.bat_a/toit")
-        XCTAssertTrue(toit.waitForExistence(timeout: 3), "les espaces du bâtiment A")
+        XCTAssertTrue(toit.waitForExistence(timeout: Attente.plafond), "les espaces du bâtiment A")
         toit.tap()
         XCTAssertEqual(batiment.label, "Bâtiment A › Toit", "la tête porte l'espace retenu")
         LancementCaptures.capturer("cs-annonces-hall-1-nouvelle")
@@ -110,7 +111,8 @@ final class DelegationsCSUITests: XCTestCase {
         let message41 = app.elementAcces("courriel.41")
         XCTAssertTrue(message41.waitForExistence(timeout: 5), "le journal")
         message41.tap()
-        XCTAssertTrue(app.elementAcces("courriel.41.affaire").waitForExistence(timeout: 3), "l'affaire rejointe")
+        XCTAssertTrue(
+            app.elementAcces("courriel.41.affaire").waitForExistence(timeout: Attente.plafond), "l'affaire rejointe")
         LancementCaptures.capturer("cs-courriels-1-journal")
     }
 }
