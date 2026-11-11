@@ -42,7 +42,9 @@ MESURES = {"radius": "rayon"}
 LONGUEUR = re.compile(r"^([0-9]*\.?[0-9]+)(rem|px)$")
 
 
-def natures(ctx) -> int:
+def natures_du_fil(ctx) -> list[tuple[str, str, str, str, str]]:
+    """`(type, libelle, couleur, fond, icone)` de chaque rubrique de `NATURES` (`flux.ts`) —
+    lue ici seulement : `pictogrammes.py` en tire les pictogrammes à embarquer."""
     texte = (ctx.front / "src" / "lib" / "flux.ts").read_text(encoding="utf-8")
     trouvees = re.findall(
         r"\n\t([a-z_]+): \{\s*libelle: '([^']*)',\s*couleur: 'var\(--([a-z-]+)\)',"
@@ -51,6 +53,11 @@ def natures(ctx) -> int:
     )
     if not trouvees:
         raise SystemExit("❌ table NATURES introuvable dans flux.ts")
+    return trouvees
+
+
+def natures(ctx) -> int:
+    trouvees = natures_du_fil(ctx)
     corps = ctx.entete("front/src/lib/flux.ts (NATURES)")
     corps += "\n/// Ce que le fil montre de chaque type d'élément : libellé, teinte, pictogramme (Lucide).\n"
     corps += "enum NaturesDuFil {\n    static let parType: [String: NatureDuFil] = [\n"

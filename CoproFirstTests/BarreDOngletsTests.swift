@@ -6,9 +6,9 @@ import Testing
 @testable import CoproFirst
 
 /// La barre du bas : un libellé court par page, sauf si l'administration l'a renommée.
-@Test func laBarreParDefautSeLitFilResidenceAffairesAccesPlus() {
+@Test func laBarreParDefautSeLitFilDActiviteResidenceAffairesAccesPlus() {
     let pages = OrdrePages.ordonner(PagesParDefaut.toutes, ordre: nil, surcharges: [:])
-    #expect(pages.prefix(4).map(\.libelle) == ["Fil", "Résidence", "Affaires", "Accès"])
+    #expect(pages.prefix(4).map(\.libelle) == ["Fil d'activité", "Résidence", "Affaires", "Accès"])
     #expect(pages.count > 4, "au-delà de quatre, « Plus »")
     // L'écran garde le titre de la page, comme le site.
     #expect(pages.first { $0.id == "mon-lot" }?.titre == "Mes lots & accès")

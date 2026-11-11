@@ -66,6 +66,12 @@ def badge_de_nature(code: str, teintes: dict[str, str]) -> str:
     return BADGE_PAR_COULEUR[couleur]
 
 
+def natures_d_affaire(ctx) -> list[dict]:
+    """`NATURES` de `tickets-categories.ts` — lue ici seulement : `pictogrammes.py` en tire
+    les pictogrammes de la gouttière."""
+    return lecture_ts.table(ctx.lire(SOURCES[0]), "NATURES")
+
+
 def categories(ctx) -> str:
     texte = ctx.lire(SOURCES[0])
     lignes = [
@@ -78,9 +84,9 @@ def categories(ctx) -> str:
     teintes = {code: couleur for code, couleur in NATURE_FORT.findall(ctx.lire(SOURCES[3]))}
     natures = [
         f"        NatureAffaire(code: {chaine(n['val'])}, libelle: {chaine(n['libelle'])}, "
-        f"abrege: {chaine(n['abrege'])}, emoji: {chaine(n['emoji'])}, "
+        f"abrege: {chaine(n['abrege'])}, emoji: {chaine(n['emoji'])}, icone: {chaine(n['icone'])}, "
         f"badge: {chaine(badge_de_nature(n['val'], teintes))}),\n"
-        for n in lecture_ts.table(texte, "NATURES")
+        for n in natures_d_affaire(ctx)
     ]
     return (
         "    /// Les catégories, dans l'ordre du site (fréquence attendue) — `CATEGORIES_TICKET`.\n"

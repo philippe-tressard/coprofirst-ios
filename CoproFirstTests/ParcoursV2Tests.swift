@@ -18,7 +18,7 @@ private func page(_ id: String) -> PageDeNavigation {
         surcharges: ["residence": SurchargePage(navLabel: "Chez nous")])
     #expect(rangees.map(\.id) == ["faq", "residence", "tableau-de-bord", "mes-demandes", "mon-lot"])
     #expect(rangees.first { $0.id == "residence" }?.libelle == "Chez nous")
-    #expect(rangees.first { $0.id == "tableau-de-bord" }?.libelle == "Fil", "le tableau de bord devient le fil")
+    #expect(rangees.first { $0.id == "tableau-de-bord" }?.libelle == "Fil d'activité", "le tableau de bord")
 }
 
 @Test func sansReglageLOrdreEstCeluiDuSite() {
