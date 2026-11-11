@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// « Maintenance » simulée : la santé et le dernier export de `FixturesMaintenance`, lus
 /// comme le service réel les lit.
 extension ServiceSimule: ServiceMaintenance {
@@ -16,3 +17,4 @@ extension ServiceSimule: ServiceMaintenance {
         return try FixturesMaintenance.dernierExportLu()
     }
 }
+#endif

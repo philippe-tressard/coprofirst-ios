@@ -81,9 +81,11 @@ extension AccesDuParc {
     }
 }
 
+#if DEBUG
 extension ServiceSimule: ServiceBadgesCS {
     func parc(_ installation: Installation) async throws -> [AccesDuParc] {
         try await Task.sleep(for: .milliseconds(350))
         return try FixturesBadgesCS.parcLu()
     }
 }
+#endif

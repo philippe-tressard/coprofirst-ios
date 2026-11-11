@@ -45,6 +45,7 @@ struct CentreSysteme: CentreNotifications {
     }
 }
 
+#if DEBUG
 /// Le centre simulé : l'autorisation est celle du lancement (`-push non-demandee|refusee`,
 /// accordée sinon), « Autoriser » est répondu d'office, et l'inscription rend un
 /// jeton inventé, par le même chemin que celui d'iOS.
@@ -82,3 +83,4 @@ final class CentreSimule: CentreNotifications, @unchecked Sendable {
         jetonRecu?(Self.jeton)
     }
 }
+#endif

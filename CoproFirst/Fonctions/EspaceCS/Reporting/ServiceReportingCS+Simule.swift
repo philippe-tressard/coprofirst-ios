@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// Un suivi inventé, pour les aperçus, les tests et les captures : des affaires
 /// d'exemple, aucune requête. Les teintes sont celles que le serveur choisirait : les
 /// séries pour les catégories (`s1`…), les paliers pour les bâtiments (`p1`…).
@@ -101,3 +102,4 @@ extension ServiceSimule {
             },
         ])
 }
+#endif

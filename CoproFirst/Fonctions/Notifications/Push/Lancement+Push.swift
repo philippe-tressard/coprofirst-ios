@@ -4,14 +4,26 @@
 import Foundation
 
 extension Lancement {
-    /// Le centre d'iOS ; sous `-api-simulee`, le centre simulé — aucune alerte système,
-    /// l'autorisation dite par `-push non-demandee|refusee`, accordée sinon : les écrans
-    /// et captures des autres lots ne voient pas l'offre de la cloche.
+    /// Le centre de notifications d'iOS ; en Debug, sous l'API simulée, le centre simulé
+    /// (`LancementSimule.push`) — un build Release ne le compile pas (#84).
     @MainActor
     static func push(_ arguments: [String]) -> NotificationsPush {
-        guard arguments.contains("-api-simulee") else { return NotificationsPush(centre: CentreSysteme()) }
+        #if DEBUG
+        if let push = LancementSimule.push(arguments) { return push }
+        #endif
+        return NotificationsPush(centre: CentreSysteme())
+    }
+}
+
+#if DEBUG
+extension LancementSimule {
+    /// Aucune alerte système : l'autorisation est dite par `-push non-demandee|refusee`,
+    /// accordée sinon — les écrans et captures des autres lots ne voient pas l'offre.
+    @MainActor
+    static func push(_ arguments: [String]) -> NotificationsPush? {
+        guard arguments.contains("-api-simulee") else { return nil }
         let etat: AutorisationPush =
-            switch valeur(de: "-push", dans: arguments) {
+            switch argument("-push", arguments) {
             case "non-demandee": .nonDemandee
             case "refusee": .refusee
             default: .accordee
@@ -25,8 +37,9 @@ extension Lancement {
     /// `-push-touchee` : une notification de la résidence inventée, touchée — comme si
     /// l'appareil y était enregistré d'un passage précédent.
     @MainActor
-    static func toucherSimule(_ arguments: [String], _ push: NotificationsPush) {
+    static func toucherNotification(_ arguments: [String], _ push: NotificationsPush) {
         guard arguments.contains("-api-simulee"), arguments.contains("-push-touchee") else { return }
         push.touchee(abonnement: push.abonnements.abonnement(pour: ServiceSimule.residence))
     }
 }
+#endif

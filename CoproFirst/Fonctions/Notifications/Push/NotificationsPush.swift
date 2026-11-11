@@ -43,9 +43,11 @@ final class NotificationsPush {
         self.reglages = reglages
         self.environnement = environnement
         abonnements = AbonnementsPush(reglages: reglages)
+        #if DEBUG
         if let simule = centre as? CentreSimule {
             simule.jetonRecu = { [weak self] octets in Task { await self?.jetonRecu(octets) } }
         }
+        #endif
     }
 
     /// Branche les notifications sur le parcours, une fois l'app prête.

@@ -3,6 +3,7 @@
 
 import Foundation
 
+#if DEBUG
 /// La table `appareil` de l'installation simulée, à la forme du serveur
 /// (`utils/push/appareils.enregistrer`, `routers/appareils`) : un abonnement par
 /// appareil et par résidence ; un même abonnement se RAFRAÎCHIT (jeton, environnement) ;
@@ -41,3 +42,4 @@ extension ServiceSimule: ServiceAppareils {
         guard aUneSessionOuverte(installation) else { throw ErreurService.sessionExpiree }
     }
 }
+#endif
