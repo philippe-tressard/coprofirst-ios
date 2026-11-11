@@ -70,7 +70,9 @@ final class SaisieAffaireUITests: XCTestCase {
         XCTAssertTrue(panne.apparait())
         panne.tap()
         XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
-        XCTAssertFalse(el(app, "nouvelle.plusDeDetails").exists, "plus rien à ranger : pas de groupe")
+        // Le groupe se retire après le toucher : son absence s'attend, elle ne se lit pas
+        // par `.exists` dans la foulée (vu rouge au poste chargé, 11/11/2026).
+        XCTAssertTrue(el(app, "nouvelle.plusDeDetails").disparait(), "plus rien à ranger : pas de groupe")
         LancementCaptures.capturer("saisie-3-essentielle-panne")
     }
 
