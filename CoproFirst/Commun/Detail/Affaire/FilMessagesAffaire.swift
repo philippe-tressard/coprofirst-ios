@@ -12,9 +12,9 @@ import SwiftUI
 /// Écarts déclarés avec le site (`standards/11` §14) :
 /// - un intitulé « Messages » le sépare de l'Historique, qui a le sien ; le site n'en
 ///   met pas, son fil suit la carte ;
-/// - l'auteur : le contrat ne sert que `auteur_id` et `auteur_qualite`. La bulle dit
-///   « Vous » pour le compte, la qualité servie sinon — le site, qui lit un `auteur`
-///   jamais servi, n'affiche aucun nom.
+/// - l'auteur : la bulle dit « Vous » pour le compte (`est_auteur` servi, contrat
+///   1.26.0, #138), le nom servi sinon (`auteur_nom`) ; d'une installation antérieure, la
+///   qualité servie (`auteur_qualite`).
 struct FilMessagesAffaire: View {
     let messages: [MessageAffaire]
     let installation: Installation
@@ -33,8 +33,8 @@ struct FilMessagesAffaire: View {
     }
 }
 
-/// Une bulle : à droite et teintée pour le compte, à gauche pour les autres ; une note
-/// interne, en jaune, porte sa pastille.
+/// Une bulle : à droite et teintée pour le compte (`deMoi`, servi), à gauche pour les
+/// autres ; une note interne, en jaune, porte sa pastille.
 private struct BulleMessage: View {
     let message: MessageAffaire
     let installation: Installation

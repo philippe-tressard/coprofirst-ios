@@ -22,7 +22,7 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.messages.append(
                 MessageAffaire(
                     id: (detail.messages.map(\.id).max() ?? 500) + 1, contenu: contenu, date: .now, deMoi: true,
-                    qualite: nil, interne: false, photos: []))
+                    nom: "Camille ESSAI", qualite: nil, interne: false, photos: []))
             detail.suites.append(
                 SuiteAffaire(
                     id: (detail.suites.map(\.id).max() ?? 0) + 1, type: "reponse", date: .now,
