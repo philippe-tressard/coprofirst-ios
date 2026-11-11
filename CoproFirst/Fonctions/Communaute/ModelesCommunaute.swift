@@ -12,9 +12,12 @@ struct MoiCommunaute: Hashable, Sendable {
     /// quand la Communauté est fermée à ce compte — profil de gestionnaire (l'Avis
     /// reste ouvert) ou suspension (tout est fermé). L'app ne recalcule pas la règle.
     let motifRefus: String?
+    /// `est_moderateur` servi (contrat 1.25.0, #136) ; `nil` d'une installation antérieure.
+    var estModerateur: Bool?
 
-    /// Ce que le compte est, pour juger des onglets — la règle GÉNÉRÉE du site.
-    var droits: DroitsOnglet { DroitsOnglet(roles: roles, role: nil, statut: statut) }
+    /// Ce que le compte est, pour juger des onglets — la règle GÉNÉRÉE du site ; modérer,
+    /// tel que le serveur le sert.
+    var droits: DroitsOnglet { DroitsOnglet(roles: roles, role: nil, statut: statut, estModerateur: estModerateur) }
 }
 
 /// Les rubriques de la page `communaute`. Leurs identifiants sont ceux du site ;

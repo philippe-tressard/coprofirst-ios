@@ -10,13 +10,16 @@ import OpenAPIRuntime
 /// coprofirst#2460 (déclarer leurs `response_model`).
 extension ServiceAPI: ServiceCommunaute {
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
-        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getAuthMe() }
+        }
         switch sortie {
         case .ok(let ok):
             let moi = try ok.body.json
             return MoiCommunaute(
                 id: moi.id, statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
-                motifRefus: moi.communauteMotifRefus.flatMap { $0.isEmpty ? nil : $0 })
+                motifRefus: moi.communauteMotifRefus.flatMap { $0.isEmpty ? nil : $0 },
+                estModerateur: PersonneServie.lue(corps)?.estModerateur)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

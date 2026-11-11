@@ -7,16 +7,13 @@ import Foundation
 /// Le compte dans une résidence : qui l'on y est, et en sortir.
 extension ServiceAPI {
     func profil(_ installation: Installation) async throws -> ProfilResidence {
-        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
+        // Le corps servi est gardé : `est_moderateur` est au-dessus du plancher (#136).
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getAuthMe() }
+        }
         switch sortie {
         case .ok(let ok):
-            let moi = try ok.body.json
-            // Le libellé du logement, composé par le serveur (contrat ≥ 1.2.0, coprofirst#2500) :
-            // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
-            return ProfilResidence(
-                statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
-                libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
-                saisieAffaire: moi.saisieAffaireEffective)
+            return ProfilResidence(try ok.body.json, corps: corps)
         case .unprocessableContent:
             throw ErreurService.inattendue(422)
         case .undocumented(let statut, _):
