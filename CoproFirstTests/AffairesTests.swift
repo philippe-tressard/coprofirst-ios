@@ -200,6 +200,20 @@ import Testing
     #expect(StatutsAffaire.libelle("en_cours", servi: nil, dans: .vides) == "en_cours", "rien de servi : le code")
 }
 
+/// Glisser une carte au Kanban pose l'état ET son libellé servi : la pastille de la liste
+/// ne garde pas l'ancien (le défaut de la mise à jour immédiate, #105).
+@MainActor
+@Test func deplacerPoseLeLibelleServiDeLEtat() async throws {
+    let etat = EtatAffaires()
+    let service = ServiceSimule(delai: .zero)
+    await etat.charger(ServiceSimule.residence, avec: service)
+    let affaire = try #require(etat.affaires.first { $0.statut == "ouvert" && !$0.archivee })
+    let versAG = try #require(etat.referentiels?.statut(pourColonne: "ag"))
+    await etat.deplacer(affaire, vers: versAG, dans: ServiceSimule.residence, avec: service)
+    let deplacee = try #require(etat.affaires.first { $0.id == affaire.id })
+    #expect(deplacee.statut == versAG.code && deplacee.statutLibelle == versAG.libelle)
+}
+
 // MARK: - Création
 
 @Test func laDescriptionPartEnParagraphesSansBaliseSaisie() {

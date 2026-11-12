@@ -143,6 +143,8 @@ final class EtatAffaires {
         }
         remplacer(affaire.id) {
             $0.statut = statut.code
+            // Son libellé avec lui, tel que servi : la pastille de la liste ne garde pas l'ancien.
+            $0.statutLibelle = statut.libelle
             $0.colonne = statut.colonne
         }
         do {
