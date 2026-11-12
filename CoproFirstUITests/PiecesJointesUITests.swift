@@ -53,8 +53,14 @@ final class PiecesJointesUITests: XCTestCase {
         XCTAssertEqual(devis.label, "PDF, Devis plombier")
         capturer("2-affaire")
 
-        // Une photo s'ouvre dans Coup d'œil, qui feuillette toutes celles de l'affaire.
-        app.elementAcces("pieces.photo.0").tap()
+        // Une photo s'ouvre dans Coup d'œil, qui feuillette toutes celles de l'affaire. Le
+        // toucher vise le centre : la photo doit être au-dessus du bandeau du bas, sinon il
+        // tombe sur la barre (vu quand « Qui la lit », #158, l'a fait descendre).
+        let photo = app.elementAcces("pieces.photo.0")
+        let bandeau = app.elementAcces("affaire.lien")
+        for _ in 0..<4 where photo.frame.maxY > bandeau.frame.minY - 8 { app.swipeUp() }
+        XCTAssertLessThan(photo.frame.maxY, bandeau.frame.minY, "la photo est au-dessus du bandeau")
+        photo.tap()
         let apercu = app.otherElements["QLPreviewControllerView"].firstMatch
         XCTAssertTrue(apercu.apparait(), "Coup d'œil s'ouvre sur la photo touchée")
         // Ouvert ne suffit pas : la photo doit s'y AFFICHER (un aperçu noir resterait vert sinon).
