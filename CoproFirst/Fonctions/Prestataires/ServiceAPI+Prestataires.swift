@@ -107,32 +107,14 @@ extension ServiceAPI: ServicePrestataires {
 }
 
 extension Prestataire {
-    /// Les prestataires servis, puis le nom affiché de chaque contact relu au-dessus du
-    /// plancher (`PrestataireContactLu`, contrat 1.25.0), contact par contact, dans l'ordre servi.
-    static func lus(_ generes: [Components.Schemas.PrestataireRead], corps: Data?) -> [Prestataire] {
-        let servis = Relecture.auDessusDuPlancher(parLigne: PrestataireServi.self, corps: corps)
-        return generes.map { lu in
-            let noms = servis[lu.id]?.contacts ?? []
-            return Prestataire(
-                id: lu.id, nom: lu.nom, specialite: lu.specialite, type: lu.typePrestataire?.rawValue,
-                telephone: lu.telephone, email: lu.email, adresse: lu.adresse, description: lu.description,
-                contacts: (lu.contacts ?? []).enumerated().map { rang, contact in
-                    ContactPrestataire(
-                        prenom: contact.prenom, nom: contact.nom, fonction: contact.fonction,
-                        telephone: contact.telephone, email: contact.email,
-                        nomServi: noms.indices.contains(rang) ? noms[rang].nomAffiche : nil)
-                })
-        }
-    }
-}
-
-/// Ce que `PrestataireRead` sert au-dessus du plancher : le nom affiché de ses contacts.
-private struct PrestataireServi: Decodable, Identifiable {
-    let id: Int
-    var contacts: [Contact]?
-
-    struct Contact: Decodable {
-        var nomAffiche: String?
+    init(_ lu: Components.Schemas.PrestataireRead) {
+        self.init(
+            id: lu.id, nom: lu.nom, specialite: lu.specialite, type: lu.typePrestataire?.rawValue,
+            telephone: lu.telephone, email: lu.email, adresse: lu.adresse, description: lu.description,
+            contacts: (lu.contacts ?? []).map {
+                ContactPrestataire(
+                    prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email)
+            })
     }
 }
 

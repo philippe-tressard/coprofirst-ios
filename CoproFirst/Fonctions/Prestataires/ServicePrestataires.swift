@@ -66,10 +66,17 @@ struct Prestataire: Hashable, Sendable, Identifiable {
 }
 
 /// Ce que GET /prestataires (et ses archives) sert au-dessus du plancher, relu par
-/// `Relecture.auDessusDuPlancher` : les numéros découpés et dédoublonnés par le serveur.
+/// `Relecture.auDessusDuPlancher` : les numéros découpés et dédoublonnés par le serveur
+/// (#125), et le nom affiché de chaque contact, dans l'ordre servi (`PrestataireContactLu`,
+/// contrat 1.25.0, #135).
 struct PrestataireAuDessusDuPlancher: Decodable, Identifiable {
     let id: Int
     var telephones: [String]?
+    var contacts: [Contact]?
+
+    struct Contact: Decodable {
+        var nomAffiche: String?
+    }
 }
 
 extension Prestataire {
@@ -80,6 +87,10 @@ extension Prestataire {
         return generes.map { lu in
             var prestataire = Prestataire(lu)
             prestataire.telephones = servis[lu.id]?.telephones ?? decoupes(lu.telephone)
+            let noms = servis[lu.id]?.contacts ?? []
+            for rang in prestataire.contacts.indices where noms.indices.contains(rang) {
+                prestataire.contacts[rang].nomServi = noms[rang].nomAffiche
+            }
             return prestataire
         }
     }

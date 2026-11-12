@@ -39,9 +39,9 @@ extension ServiceAPI {
         // illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
         var moi: Int?
         if case .ok(let ok)? = try? await compte { moi = try? ok.body.json.id }
-        let (sortie, corps) = try await messages
-        switch sortie {
-        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json, corps: corps, moi: moi)
+        let (fil, corpsFil) = try await messages
+        switch fil {
+        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json, corps: corpsFil, moi: moi)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

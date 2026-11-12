@@ -114,8 +114,12 @@ enum FixturesAcces {
          "bailleur_telephone": "01 99 00 00 70", "acces": []}
         """#
 
-    static let auDessus = AuDessusDuPlancher(
-        schema: "BailLocataireOut", champs: ["lot_etage_libelle"], contrat: "1.21.0")
+    /// Servis au-dessus du plancher : l'étage en clair du bail du locataire (contrat 1.21.0,
+    /// #127), le nom affiché du locataire d'un bail (contrat 1.25.0, #135).
+    static let auDessus = [
+        AuDessusDuPlancher(schema: "BailLocataireOut", champs: ["lot_etage_libelle"], contrat: "1.21.0"),
+        AuDessusDuPlancher(schema: "BailOut", champs: ["locataire_nom_affiche"], contrat: "1.25.0"),
+    ]
 
     /// Une réponse simulée et le schéma de sa route (`components/schemas`).
     struct Reponse: Sendable {
@@ -132,9 +136,6 @@ enum FixturesAcces {
         Reponse(nom: "baux", schema: "BailOut", json: baux),
         Reponse(nom: "monBail", schema: "BailLocataireOut", json: monBail),
     ]
-
-    /// Le nom affiché du locataire, servi au-dessus du plancher (contrat 1.25.0, #135).
-    static let auDessus = AuDessusDuPlancher(schema: "BailOut", champs: ["locataire_nom_affiche"], contrat: "1.25.0")
 
     // MARK: - Lues comme le client généré les lit
 
