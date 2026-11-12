@@ -21,7 +21,13 @@ struct FormulaireIdentite: View {
             if let erreur { MessageErreur(texte: erreur.phrase).listRowBackground(Color.clear).listRowInsets(.init()) }
             Section {
                 TextField("Prénom", text: $saisie.prenom).textContentType(.givenName)
+                    .accessibilityIdentifier("profil.identite.prenom")
                 TextField("Nom", text: $saisie.nom).textContentType(.familyName)
+                    .accessibilityIdentifier("profil.identite.nom")
+                NomDeLaSaisie(
+                    saisie: NomSaisi(prenom: saisie.prenom, nom: saisie.nom),
+                    connu: (NomSaisi(prenom: compte.prenom, nom: compte.nom), compte.nomAffiche),
+                    identifiant: "profil.identite.nom-affiche")
             }
             Section {
                 TextField("Adresse e-mail", text: $saisie.email)

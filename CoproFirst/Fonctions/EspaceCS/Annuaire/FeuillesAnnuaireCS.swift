@@ -79,7 +79,8 @@ struct FeuilleMembreConseil: View {
             identifiant: "cs.feuille.membre-conseil", complete: AnnuaireCS.nomme(membre.prenom, membre.nom),
             envoyer: envoyer
         ) {
-            ChampsIdentite(genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom)
+            ChampsIdentite(
+                genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom, nomServi: membre.nomServi)
             RapprochementServi(lie: membre.userId != nil, batiment: membre.batimentNom)
         }
         .rapprochement(du: membre.nom, avec: rapprocher, saisi: { membre.userId = nil }, appliquer: appliquer)
@@ -168,7 +169,8 @@ struct FeuilleMembreSyndic: View {
             identifiant: "cs.feuille.membre-syndic", complete: AnnuaireCS.nomme(membre.prenom, membre.nom),
             envoyer: envoyer
         ) {
-            ChampsIdentite(genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom)
+            ChampsIdentite(
+                genre: $membre.genre, prenom: $membre.prenom, nom: $membre.nom, nomServi: membre.nomServi)
             RapprochementServi(lie: membre.userId != nil, batiment: nil)
             Section {
                 TextField(TextesAnnuaireCS.fonctionIndication, text: champ(\.fonction))
@@ -269,11 +271,21 @@ private struct RapprochementDuNom: ViewModifier {
     }
 }
 
-/// Civilité, prénom et nom : les trois champs de toute fiche.
+/// Civilité, prénom et nom : les trois champs de toute fiche — puis le nom affiché que
+/// le serveur en rend (#135).
 private struct ChampsIdentite: View {
     @Binding var genre: String?
     @Binding var prenom: String?
     @Binding var nom: String?
+    /// Le nom servi avec la fiche : il nomme la fiche telle qu'enregistrée, sans redemande.
+    let connu: (NomSaisi, String)?
+
+    init(genre: Binding<String?>, prenom: Binding<String?>, nom: Binding<String?>, nomServi: String?) {
+        _genre = genre
+        _prenom = prenom
+        _nom = nom
+        connu = nomServi.map { (NomSaisi(prenom: prenom.wrappedValue ?? "", nom: nom.wrappedValue ?? ""), $0) }
+    }
 
     var body: some View {
         Section {
@@ -288,6 +300,9 @@ private struct ChampsIdentite: View {
             TextField(TextesAnnuaireCS.nom, text: Binding { nom ?? "" } set: { nom = $0 })
                 .textContentType(.familyName)
                 .accessibilityIdentifier("cs.feuille.nom")
+            NomDeLaSaisie(
+                saisie: NomSaisi(prenom: prenom ?? "", nom: nom ?? ""), connu: connu,
+                identifiant: "cs.feuille.nom-affiche")
         }
     }
 }

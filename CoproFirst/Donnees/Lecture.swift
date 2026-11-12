@@ -28,6 +28,9 @@ struct Lecture: Codable, Hashable, Sendable {
     let exclus: String
     /// Personne n'est exclu : rien sur la carte (`PastilleLecture` du site).
     let parDefaut: Bool
+    /// Ce qu'un formulaire doit dire en plus (`avertissement`) ; `nil` ou vide : rien. Le
+    /// `meta` du fil ne le sert pas toujours.
+    var avertissement: String?
 
     /// Ce que dit la bulle du site, et ce que VoiceOver lit : « Qui la lit : CS. Lue par
     /// le conseil syndical seul. » — « Qui le lit » pour un sondage.
@@ -50,7 +53,7 @@ extension Lecture {
         self.init(
             cle: servie.cle, icones: servie.icones, court: servie.court, titre: servie.titre,
             perimetreReserve: servie.perimetreReserve, phrase: servie.phrase, exclus: servie.exclus,
-            parDefaut: servie.parDefaut)
+            parDefaut: servie.parDefaut, avertissement: servie.avertissement)
     }
 }
 

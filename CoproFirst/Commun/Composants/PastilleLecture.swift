@@ -14,10 +14,13 @@ struct PastilleLecture: View {
     let lecture: Lecture?
     /// Un sondage : « Qui le lit ».
     var masculin = false
+    /// Une SAISIE (« Qui la lira », #129) : la pastille se montre même quand personne
+    /// n'est exclu — le badge de la section Destinataires du site.
+    var memeParDefaut = false
     @Environment(\.palette) private var palette
 
     var body: some View {
-        if let lecture = Lecture.aMontrer(lecture) {
+        if let lecture = memeParDefaut ? lecture : Lecture.aMontrer(lecture) {
             let (texte, fond) = PastilleTeinte.teintes("badge-blue")
             HStack(spacing: 3) {
                 ForEach(Array(lecture.icones.enumerated()), id: \.offset) { _, nom in
