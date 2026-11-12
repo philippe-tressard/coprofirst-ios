@@ -3,13 +3,14 @@
 """Les tables de « Mes lots & accès » et de « Prestataires » (#13).
 
 Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
-`TypePrestataire`) : les libellés et les teintes vivent dans le front du site :
+`TypePrestataire`) : les libellés et les teintes sont ceux que le site publie
+(`tables-clients.json`) :
 
-- le descriptif des onglets de `mon-lot` et `prestataires` (`pages.ts`) — les onglets
+- le descriptif des onglets de `mon-lot` et `prestataires` (table `pages`) — les onglets
   eux-mêmes sont dans `Charte/OngletsDuSite.swift` (#30) ;
-- `STATUTS_ACCES` et `TYPES_ACCES` (`types-acces.ts`) ;
-- l'état d'un bail (`parAttribut` de `bail.ts`) ;
-- `TYPES_PRESTATAIRE` et `FILTRES_CONTRAT` (`prestataires.ts`).
+- `statutsAcces` et `typesAcces` ;
+- l'état d'un bail (`etatsBail`) ;
+- `typesPrestataire` et `filtresContrat`.
 
 → `CoproFirst/Fonctions/Acces/Genere/TablesAcces.swift` et
 `CoproFirst/Fonctions/Prestataires/Genere/TablesPrestataires.swift`.
@@ -17,80 +18,61 @@ Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
 
 from __future__ import annotations
 
-import lecture_ts
-from generateurs._commun import FONCTIONS, chaine, ecrire_table, objet
+from generateurs._commun import ATTRIBUTS, FONCTIONS, OPTION, chaine, couples, ecrire_table, page_du_site, teintes
+from generateurs._tables import source
 
-SOURCES = [
-    "front/src/lib/pages.ts",
-    "front/src/lib/types-acces.ts",
-    "front/src/lib/bail.ts",
-    "front/src/lib/prestataires.ts",
-]
-
-
-def lire(ctx, nom: str) -> str:
-    return ctx.lire(f"front/src/lib/{nom}")
-
-
-def page(ctx, identifiant: str) -> dict:
-    return next(p for p in lecture_ts.table(lire(ctx, "pages.ts"), "PAGES") if p["id"] == identifiant)
+SOURCES: list[str] = []
 
 
 def descriptifs(ctx, identifiant: str) -> str:
-    """Le descriptif de chaque onglet de la page (`pages.ts`). Les onglets eux-mêmes —
+    """Le descriptif de chaque onglet de la page (table `pages`). Les onglets eux-mêmes —
     libellé, ordre, réserve — sont générés une fois pour toute l'app :
     `Charte/OngletsDuSite.swift` (#30)."""
-    lignes = "".join(
-        f"        {chaine(o['id'])}: {chaine(o.get('descriptif', ''))},\n" for o in page(ctx, identifiant)["onglets"])
+    onglets = page_du_site(ctx, identifiant).get("onglets") or []
+    if not onglets:
+        raise SystemExit(f"❌ la page {identifiant} n'a plus d'onglets dans la table « pages »")
+    lignes = "".join(f"        {chaine(o['id'])}: {chaine(o.get('descriptif', ''))},\n" for o in onglets)
     return (
         f"    /// Le descriptif de chaque onglet de la page `{identifiant}` (texte du site, parfois HTML).\n"
         "    static let descriptifs: [String: String] = [\n" + lignes + "    ]\n"
     )
 
 
-def teintes(nom: str, entrees: list[tuple[str, str, str]], doc: str) -> str:
-    lignes = "".join(f"        {chaine(c)}: LibelleTeinte({chaine(l)}, {chaine(b)}),\n" for c, l, b in entrees)
-    return f"    /// {doc}\n    static let {nom}: [String: LibelleTeinte] = [\n{lignes}    ]\n"
+def options(ctx, table: str) -> list[tuple[str, str]]:
+    return [(e["val"], e["label"]) for e in ctx.table(table, [OPTION])]
 
 
 def acces(ctx) -> str:
-    texte = lire(ctx, "types-acces.ts")
-    statuts = [(s["val"], s["label"], s["badge"]) for s in lecture_ts.table(texte, "STATUTS_ACCES")]
-    types = "".join(
-        f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in lecture_ts.table(texte, "TYPES_ACCES"))
-    bail = objet(lire(ctx, "bail.ts"), r"\bconst ETAT\s*=\s*parAttribut\(")
+    statuts = [(s["val"], s["label"], s["badge"]) for s in ctx.table("statutsAcces", [{**OPTION, "badge": str}])]
+    bail = ctx.table("etatsBail", ATTRIBUTS)
     return (
         descriptifs(ctx, "mon-lot")
-        + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
-        + "    /// Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).\n"
-        "    static let typesAcces: [(code: String, libelle: String)] = [\n" + types + "    ]\n"
-        + teintes("statutsBail", [(c, v["libelle"], v["badge"]) for c, v in bail.items()],
-                  "L'état d'un bail (`ETAT` de `bail.ts`).")
+        + teintes("statutsAcces", "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).", statuts)
+        + couples("typesAcces", "Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).",
+                  options(ctx, "typesAcces"))
+        + teintes("statutsBail", "L'état d'un bail (`ETATS_BAIL`).",
+                  [(c, v["libelle"], v["badge"]) for c, v in bail.items()])
     )
 
 
 def prestataires(ctx) -> str:
-    texte = lire(ctx, "prestataires.ts")
     types = "".join(
         f"        TypePrestataire(code: {chaine(t['val'])}, libelle: {chaine(t['label'])}, "
         f"description: {chaine(t['desc'])}),\n"
-        for t in lecture_ts.table(texte, "TYPES_PRESTATAIRE"))
-    filtres = "".join(
-        f"        ({chaine(f['val'])}, {chaine(f['label'])}),\n" for f in lecture_ts.table(texte, "FILTRES_CONTRAT"))
+        for t in ctx.table("typesPrestataire", [{**OPTION, "desc": str}]))
     return (
         descriptifs(ctx, "prestataires")
         + "    /// Les catégories de prestataires, dans l'ordre du site (`TYPES_PRESTATAIRE`).\n"
         "    static let types: [TypePrestataire] = [\n" + types + "    ]\n"
-        "    /// Le filtre « Contrat » (`FILTRES_CONTRAT`).\n"
-        "    static let filtresContrat: [(code: String, libelle: String)] = [\n" + filtres + "    ]\n"
+        + couples("filtresContrat", "Le filtre « Contrat » (`FILTRES_CONTRAT`).", options(ctx, "filtresContrat"))
     )
 
 
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Acces" / "Genere" / "TablesAcces.swift",
-                 "front/src/lib/pages.ts, types-acces.ts, bail.ts", "TablesAcces",
+                 source("pages", "statutsAcces", "typesAcces", "etatsBail"), "TablesAcces",
                  "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx))
     ecrire_table(ctx, FONCTIONS / "Prestataires" / "Genere" / "TablesPrestataires.swift",
-                 "front/src/lib/pages.ts, prestataires.ts", "TablesPrestataires",
+                 source("pages", "typesPrestataire", "filtresContrat"), "TablesPrestataires",
                  "Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.", prestataires(ctx))
     return "accès, baux et prestataires"

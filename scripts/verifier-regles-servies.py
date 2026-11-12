@@ -39,6 +39,10 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "les référentiels servis (`ReferentielsAffaires`), jamais une table écrite ou générée"),
     (re.compile(r"\b(COLONNE_PAR_STATUT_TICKET|STATUTS_TICKET_CLOS)\b"),
      "les référentiels servis : le générateur ne lit plus ces tables du front"),
+    # #128 : le site PUBLIE ces deux tables (`tables-clients.json`) ; l'app ne les lit pas
+    # pour autant — la colonne et la clôture sont servies avec l'affaire.
+    (re.compile(r"\btable\(\s*[\"'](colonneParStatutTicket|statutsTicketClos)[\"']"),
+     "les référentiels servis : ces tables publiées ne se génèrent pas dans l'app"),
     (re.compile(r"\bpeutRepondre\(moi:"),
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
@@ -114,6 +118,7 @@ def autotest() -> int:
         "    var colonne: String? { TablesAffaires.colonneParStatut[statut] }",
         "    static let statutsClos: Set<String> = [\"résolu\"]",
         '    par_statut = table_simple(texte, "COLONNE_PAR_STATUT_TICKET")',
+        '    clos = ctx.table("statutsTicketClos", [str])',
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
@@ -128,6 +133,7 @@ def autotest() -> int:
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
+        '    for c in ctx.table("colonnesKanban", [{"id": str, "color": str}]):',
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
         "            case .modifier, .options: affaire.droits.corriger",
