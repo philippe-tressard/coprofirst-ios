@@ -25,8 +25,12 @@ textes sont dans `LICENSES/` et dans l'écran « À propos » (Plus › À propo
 Composants tiers).
 
 Apache-2.0 est compatible avec l'AGPL v3 et n'impose aucune restriction qui gêne la
-distribution par l'App Store. Son texte et ses avis (NOTICE) devront figurer dans
-l'écran « À propos / licences » de l'app avant la première distribution.
+distribution par l'App Store. Son texte (`LICENSES/Apache-2.0.txt`, copié dans l'app) et
+les avis des paquets (NOTICE, recopiés à l'identique dans
+`CoproFirst/Ressources/AvisTiers/`) sont dans l'écran « À propos » (Plus › À propos ›
+Composants tiers), un composant par ligne (#168). `swift-collections` n'a pas de fichier
+NOTICE. **Monter un paquet embarqué, c'est recopier son NOTICE** : `verifier-dependances.py`
+le compare aux sources quand elles sont extraites au poste.
 
 Aucun de ces paquets ne collecte ni ne transmet de donnée de lui-même, et aucun n'appelle
 d'API « à raison requise » : relus à leur révision épinglée, et tenus par
