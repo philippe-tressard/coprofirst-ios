@@ -18,9 +18,7 @@ final class CommunauteUITests: XCTestCase {
     /// `firstMatch` rendrait — sans le libellé ni la valeur du bouton.
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String, sonde: Bool = false)
         -> Bool {
-        let predicat = NSPredicate(
-            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        let element = app.descendants(matching: .any).matching(predicat).firstMatch
+        let element = app.elementDisant(identifiant, texte)
         return sonde ? element.sonde() : element.apparait()
     }
 

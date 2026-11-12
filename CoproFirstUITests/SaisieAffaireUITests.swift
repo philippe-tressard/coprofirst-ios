@@ -29,9 +29,7 @@ final class SaisieAffaireUITests: XCTestCase {
 
     /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur) ?
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String) -> Bool {
-        let predicat = NSPredicate(
-            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
+        app.elementDisant(identifiant, texte).apparait()
     }
 
     /// L'élément ramené à l'écran ; `false` s'il n'y paraît pas. Un `Form` ne crée pas les
@@ -101,6 +99,24 @@ final class SaisieAffaireUITests: XCTestCase {
             LancementCaptures.capturer(duConseil ? "saisie-6-grille-conseil" : "saisie-7-grille-resident")
             app.terminate()
         }
+    }
+
+    /// #129, #130 : « Qui la lira » attend la catégorie, puis dit ce que le serveur rend de
+    /// la saisie ; le lieu posé par défaut se dit en clair, nommé par le serveur.
+    func testQuiLaLiraEtLeLieuSontServis() throws {
+        let app = lancer()
+        el(app, "affaires.nouvelle").tap()
+        XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait())
+        XCTAssertTrue(atteindre(app, el(app, "nouvelle.quiLaLira")))
+        XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "catégorie choisie"), "rien à demander sans catégorie")
+        let panne = el(app, "nouvelle.categorie.panne")
+        for _ in 0..<6 where !(panne.exists && panne.isHittable) { app.swipeDown() }
+        panne.tap()
+        XCTAssertTrue(atteindre(app, el(app, "nouvelle.lieuServi")))
+        XCTAssertTrue(lu(app, "nouvelle.lieuServi", contient: "Toute la copropriété"), "le défaut, en clair")
+        XCTAssertTrue(atteindre(app, el(app, "nouvelle.quiLaLira")))
+        XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "Copropriétaires et locataires"), "la pastille servie")
+        LancementCaptures.capturer("apercus-1-qui-la-lira")
     }
 
     func testLeChoixDuProfilVautAussitot() throws {
