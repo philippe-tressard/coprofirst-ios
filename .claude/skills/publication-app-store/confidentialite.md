@@ -75,6 +75,7 @@ relais de l'éditeur, puis par Apple (§4).
 | le jeton de session, **si** Face ID est activé | Trousseau, biométrie, jamais synchronisé | `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet` |
 | le courriel de la dernière connexion, par résidence | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)` |
 | le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
+| l'identifiant du compte dans la résidence (`id` de `GET /auth/me`, #94), le temps d'une session : il dit quel compte d'« Utilisateurs » est celui du lecteur | avec le profil, au Trousseau ; effacé à la déconnexion | `CoproFirst/Donnees/ProfilResidence.swift` › `idCompte: moi.id` ; `CoproFirst/Session/Parcours.swift` › `connues.oublierLeCompte(installation)` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
 | Face ID déjà proposé, par résidence | réglages | `CoproFirst/Session/InstallationsConnues.swift` › `reglages.set(true, forKey: "faceid-propose." + installation.hote)` |
 | l'abonnement push, par résidence | réglages | `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `private static let cle = "push-abonnements"` |
@@ -88,7 +89,9 @@ La déconnexion efface la session — le jeton, la dernière lecture gardée et 
 fichiers ouverts, à une seule porte : `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Trousseau.supprimer(pour: installation.hote)` ;
 `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `lectures.effacer(installation.hote)` ;
 `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Fichiers.effacerLesCopies()`.
-Une session que le serveur refuse efface de même. La lecture gardée ne quitte jamais
+Une session que le serveur refuse efface de même ; l'une et l'autre retirent aussi du profil
+gardé l'identifiant du compte (`CoproFirst/Session/InstallationsConnues.swift` › `profil.idCompte = nil`),
+que le prochain `GET /auth/me` redit — il ne quitte pas l'appareil. La lecture gardée ne quitte jamais
 l'appareil : elle ne change donc rien au §5 (rien de plus n'est « collecté »), mais elle se
 dit ici et dans la politique de confidentialité du site (`coprofirst-site`, à mettre à jour).
 « Oublier toutes les résidences » efface le courriel et le profil. La caméra lit le QR

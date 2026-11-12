@@ -98,7 +98,9 @@ l'appareil sans réseau, et une dernière lecture gardée, trop ancienne, ou abs
 (`scripts/verifier-simule.py`, #84).
 
 Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
-dernière connexion — va au Trousseau de l'appareil ; les réglages ne gardent que la
+dernière connexion — va au Trousseau de l'appareil ; l'identifiant du compte, gardé avec
+le profil le temps d'une session (« votre compte » dans Utilisateurs, #94), s'efface à
+la déconnexion ; les réglages ne gardent que la
 résidence (adresse, nom, présentation). La dernière lecture d'une résidence (hors
 ligne, #101) va dans `Application Support`, chiffrée et exclue des sauvegardes.
 

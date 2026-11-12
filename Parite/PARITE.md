@@ -122,7 +122,7 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
 | `admin` | `a_traiter` | fait | #16 | La file des comptes et des commandes, la même que l'Espace CS ; les demandes de profil (approuver, rejeter avec motif) |
-| `admin` | `utilisateurs` | fait | #16, #89 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
+| `admin` | `utilisateurs` | fait | #16, #89, #94 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0 ; « Opérateur désigné par l'exploitant » sur une instance commune, « votre compte » dans la confirmation), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
 | `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `telemetry` | fait | #16 | Quatre vues, filtre gestionnaire, nombres clés, graphe, pages, utilisateurs actifs ; les six autres sections restent au site |
 | `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |
