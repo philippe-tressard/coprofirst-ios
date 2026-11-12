@@ -72,6 +72,9 @@ extension ServiceSimule {
         detail.lecture = Apercu.affaires.first { $0.id == id }?.lecture
         // Une Suite qui précise le lieu, telle que servie (#130).
         if id == 41 { detail.suites[0].perimetrePrecise = "Périmètre précisé : 🔹 Parking" }
+        // Le fil (#178) : ses comptes rendus, et la synthèse d'une affaire close.
+        detail.comptesRendus = try FixturesFilAffaire.comptesRendus(id)
+        if detail.close { detail.synthese = try FixturesFilAffaire.synthese(id) }
         if conseil {
             detail.droits = DroitsServisAffaire(
                 repondre: !detail.estActualite, changerEtat: true, modifier: true, archiver: true, corriger: true)

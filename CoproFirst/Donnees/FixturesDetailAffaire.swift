@@ -104,7 +104,15 @@ enum FixturesDetailAffaire {
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
            "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
-           "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false}
+           "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false},
+          {"id": 4, "ticket_id": 31, "type": "etat", "cree_le": "2026-11-07T09:30:00",
+           "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "résolu",
+           "nouveau_statut_libelle": "Résolu", "perimetre_precise_libelle": "",
+           "contenu": "La carte électronique du portail a été remplacée.",
+           "statut_avant": "ouvert", "peut_modifier": false, "peut_supprimer": false},
+          {"id": 5, "ticket_id": 31, "type": "synthese", "cree_le": "2026-11-08T10:00:00",
+           "auteur_nom": "Le conseil syndical", "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "statut_avant": "résolu", "peut_modifier": false, "peut_supprimer": false}
         ]
         """#
 

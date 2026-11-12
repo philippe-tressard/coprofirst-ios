@@ -48,6 +48,7 @@ extension DetailAffaire {
             intervenant: Self.intervenant(ticket.prestataireNom, rythme: Self.rythme(ticket)),
             // « Qui la lit », servie (`lecture`, #129).
             lecture: ticket.lecture.map(Lecture.init))
+        close = ticket.close ?? false
     }
 }
 

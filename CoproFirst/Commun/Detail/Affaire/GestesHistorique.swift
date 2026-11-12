@@ -80,17 +80,15 @@ struct GestesHistorique: ViewModifier {
 /// actions d'accessibilité de l'entrée, que VoiceOver lit d'un trait. Rien quand le
 /// serveur n'en sert aucun, ni hors d'un écran qui les porte (le squelette).
 private struct GestesSuite: ViewModifier {
-    let suite: SuiteAffaire
+    let suite: SuiteAffaire?
     @Environment(ChoixDeSuite.self) private var choix: ChoixDeSuite?
     @Environment(\.palette) private var palette
     /// La hauteur de la première ligne de l'entrée : le bouton s'y aligne.
     @ScaledMetric(relativeTo: .subheadline) private var ligne: CGFloat = 20
 
     func body(content: Content) -> some View {
-        let gestes = choix == nil ? [] : GesteSuite.offerts(pour: suite)
-        if gestes.isEmpty {
-            content
-        } else {
+        let gestes = choix == nil ? [] : suite.map(GesteSuite.offerts(pour:)) ?? []
+        if let suite, !gestes.isEmpty {
             HStack(alignment: .top, spacing: 8) {
                 content
                     .accessibilityActions {
@@ -122,6 +120,8 @@ private struct GestesSuite: ViewModifier {
                 .gesteEnLigne()
                 .accessibilityIdentifier("historique.gestes.\(suite.id)")
             }
+        } else {
+            content
         }
     }
 }
@@ -134,6 +134,7 @@ extension View {
         modifier(GestesHistorique(affaire: affaire, installation: installation, recharger: recharger))
     }
 
-    /// À poser sur une entrée de l'Historique, lue d'un trait (`accessibilityElement`).
-    func gestesSuite(_ suite: SuiteAffaire) -> some View { modifier(GestesSuite(suite: suite)) }
+    /// À poser sur une entrée de la suite, lue d'un trait (`accessibilityElement`) ; rien
+    /// sans entrée (un compte rendu, une partie de la synthèse).
+    func gestesSuite(_ suite: SuiteAffaire?) -> some View { modifier(GestesSuite(suite: suite)) }
 }

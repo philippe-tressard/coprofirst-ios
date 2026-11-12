@@ -12,6 +12,7 @@ extension ServiceAPI {
         async let evolutions = appeler { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let servis = referentiels(installation)
+        async let comptesRendus = comptesRendus(id, client: client)
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -26,6 +27,9 @@ extension ServiceAPI {
         // ouvrent n'est alors offert (états d'une Suite, catégories), et un état que l'objet
         // ne met pas en clair se montre par son code.
         detail.referentiels = (try? await servis) ?? .vides
+        // Le fil de l'affaire (#178) : ses comptes rendus, puis sa synthèse si elle est close.
+        detail.comptesRendus = await comptesRendus
+        if detail.close { detail.synthese = await synthese(id, client: client) }
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         switch try await messages {

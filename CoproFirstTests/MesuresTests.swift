@@ -63,6 +63,20 @@ private let propresAIOS: [String: MesurePropre] = [
         raison: "la vignette d'une carte du fil : 56 px au site (`FluxVignette.svelte`, `size`), écrit en dur, "
             + "sans jeton",
         depuis: "11/11/2026"),
+    "jalon": MesurePropre(
+        valeur: Mise.jalon, ecart: nil,
+        raison: "la pastille d'une section du fil d'une affaire, pleine pour le réalisé (maquette A, #178) ; "
+            + "le site y met un jalon à pictogramme de 2 rem écrit en dur (`RubriqueEtape.svelte`), sans jeton",
+        depuis: "12/11/2026"),
+    "jalonSecondaire": MesurePropre(
+        valeur: Mise.jalonSecondaire, ecart: nil,
+        raison: "la pastille d'un élément sous une section (arborescence de la maquette A, #178) : "
+            + "le site n'a pas de sous-jalon",
+        depuis: "12/11/2026"),
+    "filetRail": MesurePropre(
+        valeur: Mise.filetRail, ecart: nil,
+        raison: "le trait du rail : 2 px au site, écrit en dur (`RubriqueEtape.svelte`, `.etape::before`), sans jeton",
+        depuis: "12/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.
