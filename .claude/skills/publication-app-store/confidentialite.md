@@ -172,6 +172,8 @@ Tous les appels d'écriture du client généré, et le type de donnée que chacu
 | `postAuthChangePassword` | `OtherDataTypes` |
 | `patchAuthMe` | `Name` `EmailAddress` `PhoneNumber` `OtherDataTypes` |
 | `postAuthMeDemandeModification` | `OtherDataTypes` |
+| `postAuthDemandeSuppression` | `OtherDataTypes` |
+| `deleteAuthDemandeSuppression` | — |
 | `patchAuthMeOptOutTelemetrie` | `OtherDataTypes` |
 | `deleteAuthMeTelemetrie` | — |
 | `postAppareils` | `DeviceID` |

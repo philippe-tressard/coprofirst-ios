@@ -79,7 +79,8 @@ func lesDatesDeLAPISeLisent(texte: String) throws {
          "statut": "ouvert", "priorite": "haute", "cree_le": "2026-11-02T09:30:00Z",
          "urgente": true, "categorie_libelle": "C", "statut_libelle": "Ouvert", "close": false,
          "colonne_kanban": null, "nouveau": false, "nom_proprietaire": "Alix Exemple",
-         "me_concerne": true, "perimetre_cible": null, "auteur_nom": null}
+         "me_concerne": true, "perimetre_cible": null, "auteur_nom": null,
+         "frequence_libelle": "", "suivi_actualite_libelle": ""}
         """#
     let decodeur = JSONDecoder()
     decodeur.dateDecodingStrategy = .iso8601
@@ -101,7 +102,8 @@ func leLibelleDuLogementSeLit(champ: String, attendu: String?) throws {
     let json = #"""
         {"id": 7, "nom": "Durand", "prenom": "Alix", "email": "alix@exemple.fr",
          "statut": "locataire", "role": "résident", "actif": true, "onboarding_complete": true,
-         "onboarding_etape": 0, "preferences_notifications": "{}", "cree_le": "2026-11-02T09:30:00Z"
+         "onboarding_etape": 0, "preferences_notifications": "{}", "cree_le": "2026-11-02T09:30:00Z",
+         "nom_affiche": "Alix DURAND", "nom_aide_affiche": "Alix D."
         """# + champ + "}"
     let decodeur = JSONDecoder()
     decodeur.dateDecodingStrategy = .iso8601

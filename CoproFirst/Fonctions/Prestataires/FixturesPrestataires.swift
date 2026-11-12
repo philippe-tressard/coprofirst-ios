@@ -24,7 +24,7 @@ enum FixturesPrestataires {
            "telephone": "01 99 00 00 11, 01 99 00 00 12", "telephones": ["01 99 00 00 11", "01 99 00 00 12"],
            "email": "contact@ascenseurs.exemple.fr", "adresse": "12 rue de l'Exemple, 75000 Paris",
            "description": "<p>Astreinte <strong>24 h/24</strong> pour les personnes bloquées en cabine.</p>",
-           "contacts": [{"fonction": "Astreinte", "telephone": "01 99 00 00 13"}]},
+           "contacts": [{"fonction": "Astreinte", "telephone": "01 99 00 00 13", "nom_affiche": ""}]},
           {"id": 2, "nom": "Contrôles Sécurité Exemple", "specialite": "incendie",
            "type_prestataire": "reglementaire", "actif": true,
            "telephone": "01 99 00 00 21,01 99 00 00 21", "telephones": ["01 99 00 00 21"],
@@ -44,8 +44,6 @@ enum FixturesPrestataires {
         ]
         """#
 
-    static let auDessus = AuDessusDuPlancher(schema: "PrestataireRead", champs: ["telephones"], contrat: "1.20.0")
-
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [
         Reponse(nom: "prestataires", schema: "PrestataireRead", json: prestataires),
@@ -54,8 +52,7 @@ enum FixturesPrestataires {
 
     static func lus(archives: Bool = false) throws -> [Prestataire] {
         let json = archives ? Self.archives : prestataires
-        return Prestataire.lus(
-            try Relecture.generee([Components.Schemas.PrestataireRead].self, json: json), corps: Data(json.utf8))
+        return try Relecture.generee([Components.Schemas.PrestataireRead].self, json: json).map(Prestataire.init)
     }
 }
 #endif

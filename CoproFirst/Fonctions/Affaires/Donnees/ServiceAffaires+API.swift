@@ -7,11 +7,9 @@ import Foundation
 /// Le menu Affaires par le client GÉNÉRÉ — aucune route écrite à la main.
 extension ServiceAPI: ServiceAffaires {
     func affaires(_ installation: Installation) async throws -> [Affaire] {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getTickets() }
-        }
+        let sortie = try await appeler { try await client(installation.adresse).getTickets() }
         switch sortie {
-        case .ok(let ok): return Affaire.lues(try ok.body.json, corps: corps)
+        case .ok(let ok): return try ok.body.json.map(Affaire.init(ticket:))
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -90,14 +88,6 @@ extension ServiceAPI: ServiceAffaires {
 }
 
 extension Affaire {
-    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher
-    /// (`lecture`, #129) — le MÊME branchement pour le service réel et les tests.
-    static func lues(_ generes: [Components.Schemas.TicketRead], corps: Data?) -> [Affaire] {
-        ServiAuDessusDuPlancher.relire(generes, corps: corps, id: \.id, en: Affaire.init(ticket:)) {
-            $0.lecture = $1?.lecture?.valeur
-        }
-    }
-
     init(ticket: Components.Schemas.TicketRead) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
@@ -109,6 +99,8 @@ extension Affaire {
             prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],
             lieu: ticket.lieuServi, messages: nil, colonne: ticket.colonneKanban,
             peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false)
+        // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
+        lecture = ticket.lecture.map(Lecture.init)
     }
 }
 

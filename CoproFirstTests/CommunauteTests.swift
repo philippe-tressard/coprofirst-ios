@@ -120,9 +120,11 @@ private struct Factice: ServiceCommunaute {
 @Test func supprimerUneAnnonceSeLitDansLAnnonceServie() async throws {
     let json = #"""
         [{"id": 1, "titre": "Vélo", "description": "", "type_annonce": "vente", "categorie": "divers",
+          "perimetre_libelle": "",
           "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
           "peut_supprimer": true, "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0},
          {"id": 2, "titre": "Lampe", "description": "", "type_annonce": "don", "categorie": "divers",
+          "perimetre_libelle": "",
           "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
           "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0}]
         """#

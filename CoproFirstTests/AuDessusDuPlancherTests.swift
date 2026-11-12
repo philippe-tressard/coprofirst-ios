@@ -7,10 +7,12 @@ import Testing
 
 @testable import CoproFirst
 
-// Ce que le serveur sert au-dessus du plancher, relu sans rien recomposer (#87, #88, #89) :
-// chaque champ, servi puis absent (installation antérieure : le comportement d'avant).
+// Ce que le serveur servait au-dessus du plancher (#87, #88, #89), au contrat depuis le
+// plancher 1.27.0 : lu par les types générés, sans rien recomposer. Le mécanisme qui relit
+// un champ au-dessus du plancher (`Relecture.auDessusDuPlancher`) reste, pour le suivant.
 
-/// Un compte de `UtilisateurAdminRead`, avec `extra` ajouté tel quel au JSON servi.
+/// Un compte de `UtilisateurAdminRead`, avec `extra` ajouté tel quel au JSON servi ; sans
+/// `gestes_roles` dans `extra`, aucun geste.
 private func compte(_ extra: String) -> String {
     #"""
     [{"id": 21, "prenom": "Alex", "nom": "Témoin", "email": "alex@exemple.fr",
@@ -18,14 +20,16 @@ private func compte(_ extra: String) -> String {
       "has_lots": true, "has_tc": false, "has_vigik": false, "has_bail": false,
       "etiquettes": {"loti": "ok", "tc": "sans_objet", "vigik": "sans_objet", "bail": "sans_objet"},
       "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
-      "communaute_ban_jusqu_au": "2099-01-01T00:00:00", "cree_le": "2026-01-01T10:00:00"
-    """# + extra + "}]"
+      "communaute_ban_jusqu_au": "2099-01-01T00:00:00", "cree_le": "2026-01-01T10:00:00",
+      "nom_affiche": "Alex TÉMOIN", "nom_aide_affiche": ""
+    """# + (extra.contains("gestes_roles") ? "" : aucunGeste) + extra + "}]"
 }
 
+private let aucunGeste = #", "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null}"#
+
 private func lu(_ extra: String) throws -> UtilisateurAdmin {
-    let json = compte(extra)
-    let generes = try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: json)
-    return try #require(UtilisateurAdmin.lus(generes, corps: Data(json.utf8)).first)
+    let generes = try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: compte(extra))
+    return try #require(generes.map(UtilisateurAdmin.init).first)
 }
 
 // MARK: - #89 : gestes de rôle et bannissement servis
@@ -37,14 +41,9 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
     #expect(alex.gestesRoles.map { $0.map(TextesUtilisateursAdmin.bouton) } == ["+ CS", "– Admin", "+ Opérateur"])
 }
 
-@Test func unGesteNulOuInconnuNEstPasOffert() throws {
-    let alex = try lu(#", "gestes_roles": {"conseil_syndical": null, "admin": "promouvoir", "operateur": null}"#)
+@Test func unGesteNulNEstPasOffert() throws {
+    let alex = try lu(#", "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null}"#)
     #expect(alex.gestesRoles == [], "servis, mais aucun : rien à offrir (défaut fermé)")
-}
-
-@Test func sansGestesServisLesRolesRestentAuSite() throws {
-    let alex = try lu("")
-    #expect(alex.gestesRoles == nil, "installation antérieure au contrat 1.18.0")
 }
 
 /// `communaute_banni` prime sur l'heure du téléphone : le ban court jusqu'en 2099, mais
@@ -52,12 +51,19 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
 @Test func leBannissementSeLitTelQueServi() throws {
     #expect(try lu(#", "communaute_banni": false"#).ban.banni() == false)
     #expect(try lu(#", "communaute_banni": true"#).ban.banni() == true)
-    #expect(try lu("").ban.banni() == true, "non servi : la date, à l'heure du téléphone, comme avant")
+    #expect(try lu("").ban.banni() == true, "non servi (facultatif) : la date, à l'heure du téléphone")
+}
+
+/// Un champ servi au-dessus du plancher, relu par le mécanisme qui reste pour le suivant.
+private struct Temoin: Decodable, Equatable {
+    var champServi: Bool?
 }
 
 @Test func unCorpsIllisibleNOffreRien() {
-    #expect(Relecture.auDessusDuPlancher(UtilisateurAuDessusDuPlancher.self, corps: Data("<html>".utf8)) == nil)
-    #expect(Relecture.auDessusDuPlancher(UtilisateurAuDessusDuPlancher.self, corps: nil) == nil)
+    let servi = Data(#"{"champ_servi": true}"#.utf8)
+    #expect(Relecture.auDessusDuPlancher(Temoin.self, corps: servi) == Temoin(champServi: true))
+    #expect(Relecture.auDessusDuPlancher(Temoin.self, corps: Data("<html>".utf8)) == nil)
+    #expect(Relecture.auDessusDuPlancher(Temoin.self, corps: nil) == nil)
 }
 
 /// Après un geste, la LISTE se relit ; l'API simulée sert le geste inverse.
@@ -86,13 +92,9 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
 // MARK: - #87 : l'annonce d'une demande traitée
 
 @Test func lAnnonceDuTraitementSeLitTelleQueServie() throws {
-    let servie = ReponseNonTypee(
-        nom: "v3.81", route: "POST /admin/demandes-profil/{demande_id}/traiter",
-        json: #"{"statut": "rejetee", "annonce": {"ton": "warning", "texte": "Phrase du serveur."}}"#)
-    #expect(try servie.lire(DemandeProfilTraitee.self).phrase == PhraseAvis(texte: "Phrase du serveur.", ton: .warning))
-    let ancienne = ReponseNonTypee(
-        nom: "v3.73", route: "POST /admin/demandes-profil/{demande_id}/traiter", json: #"{"statut": "approuvee"}"#)
-    #expect(try ancienne.lire(DemandeProfilTraitee.self).phrase == nil)
+    let json = #"{"statut": "rejetee", "annonce": {"ton": "warning", "texte": "Phrase du serveur."}}"#
+    let servie = try Relecture.generee(Components.Schemas.DemandeProfilTraitee.self, json: json)
+    #expect(PhraseAvis(servie.annonce) == PhraseAvis(texte: "Phrase du serveur.", ton: .warning))
 }
 
 /// Un serveur antérieur au contrat 1.16.0 ne sert pas d'annonce : la phrase d'avant.

@@ -125,10 +125,13 @@ class Juge:
                 return [] if any(not b for b in branches) else min(branches, key=len)
         if "allOf" in schema:
             return [e for b in schema["allOf"] for e in self._noeud(valeur, b, chemin)]
-        if "enum" in schema and valeur not in schema["enum"]:
-            return [f"{chemin} : « {valeur} » hors de {nom or 'l’énumération'}"]
         types = schema.get("type")
         types = [types] if isinstance(types, str) else (types or [])
+        # Une énumération que le contrat déclare nullable (`"type": ["string", "null"]`,
+        # `GestesRoles`, contrat 1.18.0) admet `null`, même absent de sa liste.
+        nul_admis = valeur is None and "null" in types
+        if "enum" in schema and valeur not in schema["enum"] and not nul_admis:
+            return [f"{chemin} : « {valeur} » hors de {nom or 'l’énumération'}"]
         if types and not any(TYPES.get(t, lambda v: True)(valeur) for t in types):
             return [f"{chemin} : {json.dumps(valeur, ensure_ascii=False)[:40]} n'est pas {'|'.join(types)}"]
         if isinstance(valeur, list) and isinstance(schema.get("items"), dict):
@@ -249,12 +252,15 @@ def autotest() -> None:
             "id": {"type": "integer"}, "code": {"type": "string"},
             "statut": {"$ref": "#/components/schemas/Statut"},
             "lot": {"type": ["string", "null"]},
+            "geste": {"type": ["string", "null"], "enum": ["ajouter", "retirer"]},
             "objets": {"type": "array", "items": {"$ref": "#/components/schemas/Objet"}}}},
         "Objet": {"type": "object", "properties": {"libelle": {"type": "string"}}},
     }}}
     juge = Juge(contrat)
     cas = [
         ({"id": 1, "code": "X", "statut": "actif", "lot": None, "objets": [{"libelle": "a"}]}, []),
+        ({"id": 1, "code": "X", "geste": None}, []),
+        ({"id": 1, "code": "X", "geste": "garder"}, ["x.geste : « garder » hors de l’énumération"]),
         ({"id": 1, "code": "X", "type": "vigik"}, ["x.type : non servi par le serveur"]),
         ({"id": 1}, ["x.code : requis, absent"]),
         ({"id": 1, "code": "X", "statut": "volé"}, ["x.statut : « volé » hors de Statut"]),

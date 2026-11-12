@@ -1,38 +1,32 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""La CHARTE de ce que l'app affiche, hors couleurs :
+"""La CHARTE de ce que l'app affiche, hors couleurs — lue dans `tables-clients.json` de
+la release (#128), sauf l'API Python, que le fichier ne publie pas :
 
-- les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément, lus
-  dans la table `NATURES` de `front/src/lib/flux.ts` → `CoproFirst/Charte/NaturesDuFil.swift` ;
-- les STATUTS d'une affaire, leur pastille seule — le libellé est servi, #105 (`STATUTS_TICKET` et ses deux
-  compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
-- les RÔLES et STATUTS d'un utilisateur (`ROLE`, `STATUT`, `LIBELLES_HERITES` de
-  `front/src/lib/roles.ts`) et les rôles que l'en-tête de l'accueil met en avant
-  (`EnteteAccueil.svelte`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
-- la LISTE BLANCHE du texte riche : balises et attributs (`ALLOWED_TAGS`,
-  `ALLOWED_ATTR` de `front/src/lib/sanitize.ts`), schémas de lien (`SCHEMAS_URL` de
-  `api/app/utils/html_sur.py`, dont `BALISES` doit égaler `ALLOWED_TAGS`)
+- les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément
+  (`naturesDuFil`) → `CoproFirst/Charte/NaturesDuFil.swift` ;
+- les STATUTS d'une affaire, leur pastille seule — le libellé est servi, #105
+  (`statutsTicket` et ses deux compléments, `statutsTicketHistoriques`,
+  `statutsTicketSansCycle`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
+- les RÔLES et STATUTS d'un utilisateur (`attributsRole`, `attributsStatut`,
+  `libellesHerites`) et les rôles que l'en-tête de l'accueil met en avant
+  (`rolesMisEnAvant`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
+- la LISTE BLANCHE du texte riche : balises et attributs (`balisesAdmises`,
+  `attributsAdmis`), schémas de lien (`SCHEMAS_URL` de `api/app/utils/html_sur.py`, lu
+  par motif, dont `BALISES` doit égaler `balisesAdmises`)
   → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
 - les MESURES du site que `Mise` confronte aux siennes (`MESURES`, jetons de longueur de
-  `front/src/styles/socle.css`) → `CoproFirst/Charte/MesuresDuSite.swift` (#85).
+  `jetonsCharte`) → `CoproFirst/Charte/MesuresDuSite.swift` (#85).
 """
 
 from __future__ import annotations
 
 import re
 
-import lecture_ts
-from generateurs._commun import CHARTE, jetons_du_socle, propriete
+from generateurs._commun import CHARTE, propriete
 
-SOURCES = [
-    "front/src/lib/flux.ts",
-    "front/src/lib/tickets.ts",
-    "front/src/lib/roles.ts",
-    "front/src/lib/components/EnteteAccueil.svelte",
-    "front/src/lib/sanitize.ts",
-    "api/app/utils/html_sur.py",
-    "front/src/styles/socle.css",
-]
+# Seule l'API Python reste lue dans les sources : `tables-clients.json` ne publie que le front (#128).
+SOURCES = ["api/app/utils/html_sur.py"]
 
 # Les jetons de longueur du site qu'une mesure de l'app (`Mise`) confronte : jeton → nom
 # Swift. Une mesure de `Mise` sans jeton ici est PROPRE À iOS, déclarée dans
@@ -42,23 +36,32 @@ MESURES = {"radius": "rayon"}
 LONGUEUR = re.compile(r"^([0-9]*\.?[0-9]+)(rem|px)$")
 
 
+#: La teinte d'une nature du fil : un jeton de la charte, `var(--fil-rouge)`.
+JETON = re.compile(r"^var\(--([a-z0-9-]+)\)$")
+
+
+def _sources(ctx, *noms: str) -> str:
+    """L'en-tête « Source : » d'un fichier tiré de tables publiées."""
+    return ", ".join(ctx.source_table(nom) for nom in noms) + " (tables-clients.json)"
+
+
 def natures_du_fil(ctx) -> list[tuple[str, str, str, str, str]]:
-    """`(type, libelle, couleur, fond, icone)` de chaque rubrique de `NATURES` (`flux.ts`) —
+    """`(type, libelle, couleur, fond, icone)` de chaque rubrique de `naturesDuFil` —
     lue ici seulement : `pictogrammes.py` en tire les pictogrammes à embarquer."""
-    texte = (ctx.front / "src" / "lib" / "flux.ts").read_text(encoding="utf-8")
-    trouvees = re.findall(
-        r"\n\t([a-z_]+): \{\s*libelle: '([^']*)',\s*couleur: 'var\(--([a-z-]+)\)',"
-        r"\s*fond: 'var\(--([a-z-]+)\)',\s*icone: '([^']*)'",
-        texte,
-    )
+    trouvees = []
+    for type_, n in ctx.table("naturesDuFil").items():
+        couleur, fond = (JETON.match(str(n.get(cle, ""))) for cle in ("couleur", "fond"))
+        if not couleur or not fond or not n.get("libelle") or not n.get("icone"):
+            raise SystemExit(f"❌ naturesDuFil : la rubrique {type_} n'a pas la forme attendue ({n!r})")
+        trouvees.append((type_, n["libelle"], couleur.group(1), fond.group(1), n["icone"]))
     if not trouvees:
-        raise SystemExit("❌ table NATURES introuvable dans flux.ts")
+        raise SystemExit("❌ naturesDuFil vide dans tables-clients.json")
     return trouvees
 
 
 def natures(ctx) -> int:
     trouvees = natures_du_fil(ctx)
-    corps = ctx.entete("front/src/lib/flux.ts (NATURES)")
+    corps = ctx.entete(_sources(ctx, "naturesDuFil"))
     corps += "\n/// Ce que le fil montre de chaque type d'élément : libellé, teinte, pictogramme (Lucide).\n"
     corps += "enum NaturesDuFil {\n    static let parType: [String: NatureDuFil] = [\n"
     for type_, libelle, couleur, fond, icone in trouvees:
@@ -72,50 +75,37 @@ def natures(ctx) -> int:
 
 
 def statuts(ctx) -> int:
-    texte = (ctx.front / "src" / "lib" / "tickets.ts").read_text(encoding="utf-8")
-    debut = texte.index("export const STATUTS_TICKET")
-    fin = texte.index("export const STATUT_TICKET_LABELS", debut)
-    table = texte[debut:fin]
-    trouves = re.findall(r"value: '([^']+)',\s*label: '([^']+)',.*?badge: '([^']+)'", table, re.S)
-    trouves += re.findall(r"\n\t([^\s:]+): \{ label: '([^']+)', badge: '([^']+)' \}", table)
+    noms = ("statutsTicket", "statutsTicketHistoriques", "statutsTicketSansCycle")
+    cycle, historiques, sans_cycle = (ctx.table(nom) for nom in noms)
+    trouves = [(s["value"], s["badge"]) for s in cycle]
+    trouves += [(v, s["badge"]) for table in (historiques, sans_cycle) for v, s in table.items()]
     if len(trouves) < 6:
-        raise SystemExit("❌ STATUTS_TICKET introuvable dans tickets.ts")
-    corps = ctx.entete("front/src/lib/tickets.ts (STATUTS_TICKET et compléments)")
+        raise SystemExit("❌ statutsTicket : moins de six statuts dans tables-clients.json")
+    corps = ctx.entete(_sources(ctx, *noms))
     # Le LIBELLÉ d'un statut est servi (`statut_libelle`, #105) : seule la teinte se génère.
     corps += "\n/// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.\n"
     corps += "enum StatutsAffaire {\n    static let pastilles: [String: String] = [\n"
-    corps += "".join(f'        "{v}": "{b}",\n' for v, _, b in trouves)
+    corps += "".join(f'        "{v}": "{b}",\n' for v, b in trouves)
     corps += "    ]\n}\n"
     ctx.ecrire(CHARTE / "StatutsAffaire.swift", corps)
     return len(trouves)
 
 
 def roles(ctx) -> int:
-    lib = ctx.front / "src" / "lib"
-    texte = (lib / "roles.ts").read_text(encoding="utf-8")
-
-    def table(nom: str) -> list[tuple[str, str]]:
-        debut = texte.index(f"const {nom} = parAttribut({{")
-        corps = texte[debut : texte.index("\n});", debut)]
-        corps = re.sub(r"//[^\n]*", "", corps)
-        return re.findall(r"([^\s{:,]+): \{\s*libelle: '([^']+)'", corps)
-
-    herites = texte[texte.index("const LIBELLES_HERITES") :]
-    herites = re.findall(r"\n\t([^\s:]+): '([^']+)'", herites[: herites.index("};")])
-    accueil = (lib / "components" / "EnteteAccueil.svelte").read_text(encoding="utf-8")
-    m = re.search(r"for \(const r of \[([^\]]+)\]\)", accueil)
-    if not m:
-        raise SystemExit("❌ rôles mis en avant introuvables dans EnteteAccueil.svelte")
-    en_avant = re.findall(r"'([^']+)'", m.group(1))
-    role, statut = table("ROLE"), table("STATUT")
+    noms = ("attributsRole", "attributsStatut", "libellesHerites", "rolesMisEnAvant")
+    role, statut = ([(c, a["libelle"]) for c, a in ctx.table(nom).items()] for nom in noms[:2])
+    herites = list(ctx.table("libellesHerites").items())
+    en_avant = ctx.table("rolesMisEnAvant")
     if len(role) < 4 or len(statut) < 4:
-        raise SystemExit("❌ tables ROLE / STATUT introuvables dans roles.ts")
+        raise SystemExit("❌ attributsRole / attributsStatut : moins de quatre entrées dans tables-clients.json")
+    if not en_avant or not all(r in dict(role) for r in en_avant):
+        raise SystemExit(f"❌ rolesMisEnAvant : {en_avant!r} n'est pas une liste de rôles d'attributsRole")
 
     def dico(nom: str, paires: list[tuple[str, str]]) -> str:
         return f"    static let {nom}: [String: String] = [\n" + "".join(
             f'        "{c}": "{l}",\n' for c, l in paires) + "    ]\n"
 
-    corps = ctx.entete("front/src/lib/roles.ts et components/EnteteAccueil.svelte")
+    corps = ctx.entete(_sources(ctx, *noms))
     corps += "\n/// Les libellés des rôles et statuts d'un utilisateur, comme le site les écrit.\n"
     corps += "enum RolesUtilisateur {\n"
     corps += dico("libellesRole", role) + dico("libellesStatut", statut) + dico("libellesHerites", herites)
@@ -126,15 +116,14 @@ def roles(ctx) -> int:
 
 
 def balises(ctx) -> int:
-    sanitize = (ctx.front / "src" / "lib" / "sanitize.ts").read_text(encoding="utf-8")
-    tags, attrs = (lecture_ts.table(sanitize, nom) for nom in ("ALLOWED_TAGS", "ALLOWED_ATTR"))
-    html_sur = (ctx.front.parent / "api" / "app" / "utils" / "html_sur.py").read_text(encoding="utf-8")
+    tags, attrs = ctx.table("balisesAdmises"), ctx.table("attributsAdmis")
+    html_sur = ctx.lire(SOURCES[0])
     m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
     s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
     if not m or not s:
         raise SystemExit("❌ BALISES ou SCHEMAS_URL introuvable dans api/app/utils/html_sur.py")
     if set(re.findall(r'"([a-z0-9]+)"', m.group(1))) != set(tags):
-        raise SystemExit("❌ html_sur.BALISES diverge de sanitize.ts ALLOWED_TAGS — à signaler à coprofirst")
+        raise SystemExit("❌ html_sur.BALISES diverge de balisesAdmises (ALLOWED_TAGS) — à signaler à coprofirst")
     schemas = sorted(re.findall(r'"([a-z]+)"', s.group(1)))
     if len(tags) < 10 or not schemas:
         raise SystemExit("❌ liste blanche du texte riche illisible")
@@ -142,7 +131,7 @@ def balises(ctx) -> int:
     def ensemble(valeurs: list[str]) -> str:
         return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
 
-    corps = ctx.entete("front/src/lib/sanitize.ts (ALLOWED_TAGS, ALLOWED_ATTR) et api/app/utils/html_sur.py")
+    corps = ctx.entete(f"{_sources(ctx, 'balisesAdmises', 'attributsAdmis')} et {SOURCES[0]}")
     corps += "\n/// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).\n"
     corps += "enum BalisesDuSite {\n"
     corps += f"    static let balises: Set<String> = {ensemble(tags)}\n"
@@ -154,18 +143,19 @@ def balises(ctx) -> int:
 
 
 def mesures(ctx) -> int:
-    socle = jetons_du_socle(ctx)
-    corps = ctx.entete("front/src/styles/socle.css (jetons de longueur)")
+    jetons = ctx.table("jetonsCharte")
+    corps = ctx.entete(_sources(ctx, "jetonsCharte") + ", jetons de longueur")
     corps += "\nimport CoreGraphics\n\n"
     corps += "/// Les mesures du site que l'app confronte aux siennes (`Mise`, #85), en points\n"
     corps += "/// (1 rem = 16 pt). `MesuresTests` refuse un écart non déclaré.\n"
     corps += "enum MesuresDuSite {\n"
     for jeton, nom in MESURES.items():
-        m = LONGUEUR.match(socle.get(jeton, ""))
+        valeur = jetons.get(f"--{jeton}", "")
+        m = LONGUEUR.match(valeur)
         if not m:
-            raise SystemExit(f"❌ --{jeton} introuvable ou hors de rem/px dans socle.css : {socle.get(jeton)!r}")
+            raise SystemExit(f"❌ --{jeton} introuvable ou hors de rem/px dans jetonsCharte : {valeur!r}")
         points = float(m.group(1)) * (16 if m.group(2) == "rem" else 1)
-        corps += f"    /// `--{jeton}: {socle[jeton]}`\n    static let {nom}: CGFloat = {points:g}\n"
+        corps += f"    /// `--{jeton}: {valeur}`\n    static let {nom}: CGFloat = {points:g}\n"
     corps += "}\n"
     ctx.ecrire(CHARTE / "MesuresDuSite.swift", corps)
     return len(MESURES)

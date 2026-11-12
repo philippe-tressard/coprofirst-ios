@@ -28,8 +28,8 @@ struct MessagesAffaireTests {
         #expect(lus.first?.deMoi == true && lus.first?.auteur == "Vous")
         #expect(lus.last?.deMoi == false && lus.last?.auteur == "Le conseil syndical")
         let servi = try Relecture.generee([MessageAffaire.Servi].self, json: FixturesMessagesAffaire.messages)
-        let sansCompte = MessageAffaire.lus(servi, corps: nil, moi: nil)
-        #expect(sansCompte.allSatisfy { !$0.deMoi }, "installation antérieure, compte illisible : rien n'est à moi")
+        let sansCompte = MessageAffaire.lus(servi, moi: nil)
+        #expect(sansCompte.first?.deMoi == true, "`est_auteur` servi fait foi, compte lisible ou non")
     }
 
     @Test func uneActualiteNaPasDeFilDeMessages() throws {
@@ -53,9 +53,9 @@ struct MessagesAffaireTests {
 
     /// Le client généré lit le fil tel que le serveur le sert, puis le branchement du service.
     @Test func leFilServiSeLitParLeClientGenere() async throws {
-        let (sortie, corps) = try await filServi(FixturesMessagesAffaire.messages)
+        let sortie = try await filServi(FixturesMessagesAffaire.messages)
         // `moi` n'y est pour rien : `est_auteur` est servi, il fait foi.
-        let lus = MessageAffaire.lus(try sortie.ok.body.json, corps: corps, moi: nil)
+        let lus = MessageAffaire.lus(try sortie.ok.body.json, moi: nil)
         #expect(lus.map(\.id) == [501, 502, 503] && lus[0].deMoi && lus[2].interne)
         #expect(lus.map(\.nom) == ["Camille ESSAI", "Le conseil syndical", "Le conseil syndical"])
     }
@@ -75,14 +75,10 @@ struct MessagesAffaireTests {
     }
 }
 
-/// GET /tickets/41/messages par le client généré, son corps servi gardé — hors de l'acteur
-/// principal, comme le service réel.
-private func filServi(
-    _ json: String
-) async throws -> (sortie: Operations.GetTicketsTicketIdMessages.Output, corps: Data?) {
-    try await CorpsServi.garder {
-        try await client(servant: json).getTicketsTicketIdMessages(path: .init(ticketId: 41))
-    }
+/// GET /tickets/41/messages par le client généré — hors de l'acteur principal, comme le
+/// service réel.
+private func filServi(_ json: String) async throws -> Operations.GetTicketsTicketIdMessages.Output {
+    try await client(servant: json).getTicketsTicketIdMessages(path: .init(ticketId: 41))
 }
 
 /// Ce que le client a envoyé, retenu pour le test.

@@ -80,13 +80,9 @@ enum FixturesPerimetres {
         Reponse(nom: "arbre", schema: "PerimetreRead", json: arbre)
     ]
 
-    static let auDessus = AuDessusDuPlancher(
-        schema: "PerimetreRead", champs: ["niveau", "niveaux_libres", "hauteur"], contrat: "1.17.0")
-
     /// Lu comme le client généré le lit, branché comme le service réel (actifs seulement).
     static func lus() throws -> [Perimetre] {
-        Perimetre.lus(
-            try Relecture.generee([Components.Schemas.PerimetreRead].self, json: arbre), corps: Data(arbre.utf8))
+        Perimetre.lus(try Relecture.generee([Components.Schemas.PerimetreRead].self, json: arbre))
     }
 }
 #endif

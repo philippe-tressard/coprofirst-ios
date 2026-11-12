@@ -10,8 +10,8 @@ import Foundation
 /// qu'au rôle que sa route accepte. Lancer une tâche, vérifier ou lancer un export
 /// restent au site. Réalisé par `ServiceAPI` (client généré) et `ServiceSimule`.
 protocol ServiceMaintenance: Sendable {
-    /// GET /admin/maintenance/sante — réponse NON TYPÉE au contrat 1.12.0 : relue par
-    /// `Relecture` (besoin noté : coprofirst#2618).
+    /// GET /admin/maintenance/sante → `SanteMaintenance` (typé depuis le contrat 1.16.0,
+    /// coprofirst#2618).
     func santeTaches(_ installation: Installation) async throws -> SanteTaches
     /// GET /admin/export-copropriete/dernier → `DernierExport`.
     func dernierExport(_ installation: Installation) async throws -> DernierExport
@@ -24,27 +24,49 @@ extension ContexteOnglet {
 /// La santé des tâches planifiées, telle que le serveur la juge (`utils/etat_taches`) :
 /// une ligne par tâche, son statut, sa dernière exécution — et ce qui a échoué récemment.
 /// Les nœuds sont nommés par le SERVEUR : l'app n'en connaît aucun.
-struct SanteTaches: Decodable, Hashable, Sendable {
+struct SanteTaches: Hashable, Sendable {
     var taches: [Tache]
     var anomaliesRecentes: [Anomalie]
     var anomaliesFenetreJours: Int
 
-    struct Tache: Decodable, Hashable, Sendable, Identifiable {
+    struct Tache: Hashable, Sendable, Identifiable {
         var tache: String
         var statut: String
         var noeud: String?
-        var derniere: String?
+        var derniere: Date?
         var retardHeures: Double?
         var noeudEnRetard: String?
         var statutEnRetard: String?
         var id: String { tache }
     }
 
-    struct Anomalie: Decodable, Hashable, Sendable {
+    struct Anomalie: Hashable, Sendable {
         var tache: String
         var noeud: String?
-        var creeLe: String?
+        var creeLe: Date?
         var erreur: String?
+    }
+}
+
+extension SanteTaches {
+    init(_ lu: Components.Schemas.SanteMaintenance) {
+        self.init(
+            taches: lu.taches.map(Tache.init), anomaliesRecentes: lu.anomaliesRecentes.map(Anomalie.init),
+            anomaliesFenetreJours: lu.anomaliesFenetreJours)
+    }
+}
+
+extension SanteTaches.Tache {
+    init(_ lu: Components.Schemas.SanteTache) {
+        self.init(
+            tache: lu.tache, statut: lu.statut, noeud: lu.noeud, derniere: lu.derniere, retardHeures: lu.retardHeures,
+            noeudEnRetard: lu.noeudEnRetard, statutEnRetard: lu.statutEnRetard)
+    }
+}
+
+extension SanteTaches.Anomalie {
+    init(_ lu: Components.Schemas.AnomalieRecente) {
+        self.init(tache: lu.tache, noeud: lu.noeud, creeLe: lu.creeLe, erreur: lu.erreur)
     }
 }
 

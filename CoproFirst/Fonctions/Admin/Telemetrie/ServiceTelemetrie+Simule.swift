@@ -4,7 +4,7 @@
 import Foundation
 
 #if DEBUG
-/// « Télémétrie » simulée : un tableau par vue (`FixturesTelemetrie`), lu par `Relecture`
+/// « Télémétrie » simulée : un tableau par vue (`FixturesTelemetrie`), lu par le type généré
 /// comme le service réel. Le filtre n'est appliqué que là où le serveur le propose.
 extension ServiceSimule: ServiceTelemetrie {
     func tableauTelemetrie(

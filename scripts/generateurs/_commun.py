@@ -76,6 +76,53 @@ class Contexte:
         """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`)."""
         return (self.racine / relatif).read_text(encoding="utf-8")
 
+    def table(self, nom: str):
+        """Une table que coprofirst PUBLIE pour ses clients (`tables-clients.json`, jointe à
+        chaque release depuis v3.88.0, coprofirst#2634) : sa `valeur`, telle que servie.
+
+        La lecture par motif dans les sources du site (`lire` + `lecture_ts`) ne vaut plus
+        que pour ce que le fichier ne publie pas (#128). Une table absente, ou un format que
+        ce script ne connaît pas, arrête la génération : la source a changé de forme."""
+        tables = _tables_clients(self.version)
+        if nom not in tables:
+            raise SystemExit(f"❌ tables-clients.json de {self.version.etiquette} : table « {nom} » absente")
+        return tables[nom]["valeur"]
+
+    def source_table(self, nom: str) -> str:
+        """Le fichier du site dont la table est tirée (`front/src/lib/bail.ts#ETATS_BAIL`)."""
+        self.table(nom)
+        source = _tables_clients(self.version)[nom].get("source")
+        return source if isinstance(source, str) else "tables-clients.json"
+
+    def provenance_tables(self, *noms: str) -> str:
+        """L'en-tête « Source : » d'une table générée : le fichier du site de chaque table
+        publiée lue, puis « (tables-clients.json) »."""
+        return ", ".join(self.source_table(n) for n in noms) + " (tables-clients.json)"
+
+
+_TABLES: dict[str, dict] = {}
+#: La version MAJEURE de `tables-clients.json` que ces générateurs savent lire : une
+#: majeure de plus annonce une table retirée ou une forme qui recule (`RETRAITS` côté serveur).
+FORMAT_TABLES = 1
+
+
+def _tables_clients(version: Version) -> dict:
+    if version.etiquette not in _TABLES:
+        import json
+
+        try:
+            lu = json.loads(version.piece_jointe("tables-clients.json"))
+            majeure = int(str(lu["version"]).split(".")[0])
+            tables = lu["tables"]
+        except (ValueError, KeyError, TypeError) as erreur:
+            raise SystemExit(f"❌ tables-clients.json de {version.etiquette} illisible ({erreur})") from erreur
+        if lu.get("format") != FORMAT_TABLES or majeure != FORMAT_TABLES:
+            raise SystemExit(
+                f"❌ tables-clients.json de {version.etiquette} : format {lu.get('format')}, version {lu['version']} "
+                f"— ces générateurs lisent le format {FORMAT_TABLES}, version {FORMAT_TABLES}.x")
+        _TABLES[version.etiquette] = tables
+    return _TABLES[version.etiquette]
+
 
 def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, doc: str, corps: str,
                  *, swiftui: bool = False, provenance: str | None = None) -> None:
@@ -159,8 +206,3 @@ def propriete(jeton: str) -> str:
     return camel(jeton[len("color-"):]) if jeton.startswith("color-") else camel(jeton)
 
 
-def tables_des_pages(front: pathlib.Path) -> tuple[list[dict], list[dict]]:
-    """`PAGES` (sans l'étalement `...PAGES_ROLES`) et `PAGES_ROLES`, lues par lecture_ts."""
-    lib = front / "src" / "lib"
-    return (lecture_ts.table((lib / "pages.ts").read_text(encoding="utf-8"), "PAGES"),
-            lecture_ts.table((lib / "pages-roles.ts").read_text(encoding="utf-8"), "PAGES_ROLES"))

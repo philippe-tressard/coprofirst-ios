@@ -12,14 +12,16 @@ import Testing
 
 // MARK: - Qui voit l'Espace CS (la barre du site, `Nav.svelte`)
 
-private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
-    DroitsOnglet(roles: roles, role: nil, statut: statut)
+/// `moderateur` : `est_moderateur` tel que le serveur le sert au conseil et à l'administration (#136).
+private func droits(_ roles: [String], statut: String? = nil, moderateur: Bool = false) -> DroitsOnglet {
+    DroitsOnglet(roles: roles, role: nil, statut: statut, estModerateur: moderateur)
 }
 
 private let toutes = PagesParDefaut.toutes
 
 @Test func leConseilVoitLEspaceCSEtLesPrestataires() {
-    let ids = PagesOuvertes.filtrer(toutes, droits: droits(["résident", "propriétaire", "conseil_syndical"])).map(\.id)
+    let conseil = droits(["résident", "propriétaire", "conseil_syndical"], moderateur: true)
+    let ids = PagesOuvertes.filtrer(toutes, droits: conseil).map(\.id)
     #expect(ids.contains("espace-cs"))
     #expect(ids.contains("prestataires"))
     #expect(!ids.contains("admin"), "un membre du conseil n'est pas administrateur")
@@ -34,7 +36,7 @@ private let toutes = PagesParDefaut.toutes
 }
 
 @Test func leCompteTechniqueNAPasLesOutilsDuConseil() {
-    let technique = droits(["admin"])
+    let technique = droits(["admin"], moderateur: true)
     #expect(technique.adminSeul)
     #expect(technique.cs, "`$isCS` inclut l'administrateur…")
     #expect(!PagesOuvertes.ouverte("espace-cs", droits: technique), "…mais pas le compte technique")
@@ -42,7 +44,7 @@ private let toutes = PagesParDefaut.toutes
 }
 
 @Test func unAdministrateurCoproprietaireALEspaceCS() {
-    let admin = droits(["propriétaire", "admin"])
+    let admin = droits(["propriétaire", "admin"], moderateur: true)
     #expect(!admin.adminSeul)
     #expect(PagesOuvertes.ouverte("espace-cs", droits: admin))
     #expect(PagesOuvertes.ouverte("admin", droits: admin))
@@ -287,5 +289,5 @@ private let toutes = PagesParDefaut.toutes
     #expect(try await service.rapprochement(nom: "Inconnu", localiser: true, dans: ServiceSimule.residence) == .init())
     let lu = try await client(servant: FixturesAnnuaireCS.rapprochementExemple)
         .getAdminAnnuaireRapprochement(query: .init(nom: "Exemple")).ok.body.json
-    #expect(Rapprochement.lu(lu, corps: Data(FixturesAnnuaireCS.rapprochementExemple.utf8)) == trouve)
+    #expect(Rapprochement(lu) == trouve)
 }
