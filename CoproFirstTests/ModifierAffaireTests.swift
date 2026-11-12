@@ -36,7 +36,10 @@ struct ModifierAffaireTests {
     /// Le faux serveur refuse ce que le vrai refuse : un contenu sans `peut_modifier`.
     @Test func leServeurSimuleRefuseUnContenuFige() async throws {
         let service = ServiceSimule(delai: .zero)
+        // Un résident : ni le rôle, ni « modère » — que le serveur sert, et que `DroitsOnglet`
+        // lit avant les rôles (#136).
         service.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        service.profilSimule.estModerateur = false
         let residence = ServiceSimule.residence
         let avant = try service.detailSimule(41)
         #expect(avant.droits.corriger && avant.contenuFige, "l'auteur de 41, engagée, garde le crayon seul")
