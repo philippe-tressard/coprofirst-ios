@@ -41,6 +41,10 @@ targets:
       # par cette ligne, comme ressource à la racine de l'app : `ManifesteConfidentialiteTests`
       # le relit dans l'app construite, scripts/verifier-confidentialite.py le tient au code.
       - path: CoproFirst
+      # Le texte d'Apache-2.0 des paquets embarqués (#168) : le fichier de LICENSES/ lui-même,
+      # copié dans l'app — une seule copie du texte, que « À propos › Composants tiers » lit.
+      - path: LICENSES/Apache-2.0.txt
+        buildPhase: resources
     dependencies:
       - package: ClientAPI
     info:
