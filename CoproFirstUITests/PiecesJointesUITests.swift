@@ -6,6 +6,7 @@ import XCTest
 /// Les pièces jointes se voient et s'ouvrent : la vignette d'une carte du fil, la mosaïque
 /// et les documents d'une affaire, ceux d'une suite et d'un message — contre l'API simulée.
 final class PiecesJointesUITests: XCTestCase {
+    @MainActor
     private func lancer() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "fil", "-compte", "resident"]
@@ -15,6 +16,7 @@ final class PiecesJointesUITests: XCTestCase {
 
     /// Une capture gardée au résultat, quand on la demande (`TEST_RUNNER_CAPTURES=1`) : la
     /// relecture du rendu au poste, sans peser sur la CI.
+    @MainActor
     private func capturer(_ nom: String) {
         guard ProcessInfo.processInfo.environment["CAPTURES"] != nil else { return }
         let capture = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
@@ -27,7 +29,7 @@ final class PiecesJointesUITests: XCTestCase {
     func testLesPiecesDUneAffaireSeVoientEtSOuvrent() throws {
         let app = lancer()
         let carte = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(carte.waitForExistence(timeout: Attente.plafond))
+        XCTAssertTrue(carte.apparait())
         // La carte FERMÉE dit ses pièces (la vignette, décorative, est dans son libellé).
         XCTAssertTrue(carte.label.contains("4 photos, 1 pièce jointe"), carte.label)
         capturer("1-fil")
@@ -54,9 +56,9 @@ final class PiecesJointesUITests: XCTestCase {
         // Une photo s'ouvre dans Coup d'œil, qui feuillette toutes celles de l'affaire.
         app.elementAcces("pieces.photo.0").tap()
         let apercu = app.otherElements["QLPreviewControllerView"].firstMatch
-        XCTAssertTrue(apercu.waitForExistence(timeout: Attente.plafond), "Coup d'œil s'ouvre sur la photo touchée")
+        XCTAssertTrue(apercu.apparait(), "Coup d'œil s'ouvre sur la photo touchée")
         // Ouvert ne suffit pas : la photo doit s'y AFFICHER (un aperçu noir resterait vert sinon).
-        XCTAssertTrue(apercu.images.firstMatch.waitForExistence(timeout: Attente.plafond), "la photo s'affiche")
+        XCTAssertTrue(apercu.images.firstMatch.apparait(), "la photo s'affiche")
         capturer("3-coup-d-oeil")
     }
 }

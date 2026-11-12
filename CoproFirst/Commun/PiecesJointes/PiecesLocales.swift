@@ -1,14 +1,13 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
-import CryptoKit
 import Foundation
 
 /// Les pièces jointes ouvertes, en fichiers locaux : Coup d'œil (QuickLook) ne lit qu'un
 /// fichier sur le disque. Chacune se lit UNE fois par lancement — par la session de son
 /// installation (`ServiceCoproFirst.fichierProtege`) — puis se rouvre sans réseau.
 ///
-/// Le fichier s'écrit sous `tmp/pieces/<empreinte de l'adresse>/<nom montré>` : deux
+/// Le fichier s'écrit sous `tmp/pieces/<adresse rendue sûre>/<nom montré>` : deux
 /// « devis.pdf » de deux affaires ne s'écrasent pas, et Coup d'œil titre la pièce par
 /// son nom lisible. Protégé tant que l'appareil est verrouillé (`Fichiers.ecrire`).
 actor PiecesLocales {
@@ -43,9 +42,9 @@ actor PiecesLocales {
         }
     }
 
-    /// L'empreinte de l'adresse entière (hôte + chemin) : un nom de dossier sûr et stable.
+    /// L'adresse entière (hôte + chemin), rendue sûre pour un nom de dossier : unique et stable.
     private static func cle(_ chemin: String, _ installation: Installation) -> String {
         let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteString ?? chemin
-        return SHA256.hash(data: Data(adresse.utf8)).prefix(12).map { String(format: "%02x", $0) }.joined()
+        return Fichiers.nomSur(adresse, defaut: "piece")
     }
 }
