@@ -47,6 +47,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutArchiver: Bool
     /// L'état en clair que le serveur SERT (`statut_libelle`, #127) ; `nil` : la table du site.
     var statutLibelle: String?
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure : aucune pastille.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.

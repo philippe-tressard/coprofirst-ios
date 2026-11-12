@@ -9,7 +9,7 @@ extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
         // Les deux lectures gardent leur corps servi : ce que le plancher ne type pas encore
-        // s'y relit (`DetailAffaire.lue`, #125, #127).
+        // s'y relit (`DetailAffaire.lue` : #125, #127, et `lecture`, le lieu d'une Suite, #129, #130).
         async let ticket = appeler {
             try await CorpsServi.garder { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
         }

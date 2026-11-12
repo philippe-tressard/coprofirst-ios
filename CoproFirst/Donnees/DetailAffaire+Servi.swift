@@ -40,9 +40,12 @@ extension DetailAffaire {
         evolutions: [Components.Schemas.TicketEvolutionRead], corpsEvolutions: Data?
     ) -> DetailAffaire {
         let entrees = Relecture.auDessusDuPlancher(parLigne: SuiteAuDessusDuPlancher.self, corps: corpsEvolutions)
+        // Le lieu qu'une Suite précise, tel que servi (`perimetre_precise_libelle`, #130).
+        let lieux = ServiAuDessusDuPlancher.parLigne(corpsEvolutions)
         let suites = evolutions.map { evolution in
             var suite = SuiteAffaire(evolution: evolution)
             suite.nouveauStatutLibelle = entrees[evolution.id]?.nouveauStatutLibelle
+            suite.perimetrePrecise = LieuServi.lieu(lieux[evolution.id]?.perimetrePreciseLibelle?.valeur)
             return suite
         }
         var detail = DetailAffaire(ticket: ticket, suites: suites.sorted { $0.date < $1.date })
@@ -51,6 +54,8 @@ extension DetailAffaire {
         detail.droits.corriger = servi?.peutCorriger ?? detail.droits.modifier
         detail.suiviActualiteLibelle = servi?.suiviActualiteLibelle
         detail.intervenant = intervenant(ticket.prestataireNom, rythme: servi?.rythme)
+        // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
+        detail.lecture = ServiAuDessusDuPlancher.un(corps)?.lecture?.valeur
         return detail
     }
 

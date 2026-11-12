@@ -3,8 +3,8 @@
 
 import SwiftUI
 
-/// Une affaire dans la liste : date, titre, aperçu sur trois lignes, statut, lieu et
-/// messages. Une affaire urgente porte un liseré rouge à gauche ; une archivée
+/// Une affaire dans la liste : date, titre, aperçu sur trois lignes, statut, qui la lit
+/// (#129), lieu et messages. Une affaire urgente porte un liseré rouge à gauche ; une archivée
 /// s'atténue (« allure d'archive » du site), sans perdre le contraste de son texte.
 struct CarteAffaire: View {
     @Environment(\.palette) private var palette
@@ -47,9 +47,8 @@ struct CarteAffaire: View {
                 : AnyLayout(HStackLayout(spacing: 16))
             pied {
                 PastilleStatut(statut: affaire.statut, libelle: affaire.statutLibelle)
-                if let lieu = affaire.lieu {
-                    Label(lieu, systemImage: "mappin")
-                }
+                PastilleLecture(lecture: affaire.lecture)
+                EtiquetteLieu(lieu: affaire.lieu)
                 if let messages = affaire.messages {
                     Label {
                         Text(messages, format: .number).monospacedDigit()
@@ -91,6 +90,7 @@ struct CarteAffaire: View {
         if archive { morceaux.append("archivée") }
         morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
         if let lieu = affaire.lieu { morceaux.append(lieu) }
+        if let lecture = Lecture.aMontrer(affaire.lecture) { morceaux.append(lecture.enClair()) }
         if let messages = affaire.messages { morceaux.append("\(messages) messages") }
         morceaux.append(TexteDuSite.apercu(affaire.apercu))
         return Text(morceaux.joined(separator: ", "))

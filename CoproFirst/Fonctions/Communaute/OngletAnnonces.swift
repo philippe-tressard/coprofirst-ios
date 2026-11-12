@@ -144,7 +144,8 @@ private struct LigneAnnonce: View {
     }
 }
 
-/// Le statut, la catégorie, le prix (« Négociable ») et l'auteur — dans l'ordre du site.
+/// Le statut, la catégorie, le prix (« Négociable ») et l'auteur — dans l'ordre du site ;
+/// puis qui la lit et son lieu, servis (#129, #130).
 struct EtiquettesAnnonce: View {
     let annonce: Annonce
     @Environment(\.palette) private var palette
@@ -167,6 +168,8 @@ struct EtiquettesAnnonce: View {
             if let auteur = annonce.auteur {
                 Text(auteur).font(.caption).foregroundStyle(palette.textMuted)
             }
+            PastilleLecture(lecture: annonce.lecture)
+            EtiquetteLieu(lieu: annonce.lieu).font(.caption).foregroundStyle(palette.textMuted)
         }
     }
 }

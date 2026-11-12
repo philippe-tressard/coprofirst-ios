@@ -26,11 +26,12 @@ extension ServiceSimule: ServiceCommunaute {
             SondageResume(
                 id: 12, question: "Quel jour pour la fête des voisins ?",
                 description: "<p>Trois dates sont proposées.</p>", clotureLe: Self.dans(jours: 5), cloture: false,
-                nbVotants: 27, archivee: false, creeLe: Self.dans(jours: -1)),
+                nbVotants: 27, archivee: false, creeLe: Self.dans(jours: -1), lecture: Apercu.lecture("tous")),
             SondageResume(
                 id: 11, question: "Faut-il installer des arceaux à vélos devant le bâtiment B ?",
                 description: "<p>Le devis est joint à l'affaire correspondante.</p>", clotureLe: nil, cloture: false,
-                nbVotants: 1, archivee: false, creeLe: Self.dans(jours: -9)),
+                nbVotants: 1, archivee: false, creeLe: Self.dans(jours: -9),
+                lieu: "Bâtiment B"),
             SondageResume(
                 id: 9, question: "Horaires d'ouverture du local à vélos", description: nil,
                 clotureLe: Self.dans(jours: -20), cloture: true, nbVotants: 41, archivee: true,

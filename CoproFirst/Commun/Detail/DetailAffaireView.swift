@@ -106,9 +106,7 @@ private struct EnTeteAffaire: View {
                 .foregroundStyle(palette.text)
                 .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
-                if let lieu = affaire.lieu {
-                    Label(lieu, systemImage: "mappin")
-                }
+                EtiquetteLieu(lieu: affaire.lieu)
                 Label {
                     Text(affaire.creeLe, format: .dateTime.day().month(.wide).year().hour().minute())
                 } icon: {
@@ -125,6 +123,7 @@ private struct EnTeteAffaire: View {
             }
             .font(.subheadline)
             .foregroundStyle(palette.textMuted)
+            LectureDetaillee(lecture: affaire.lecture)
         }
         .padding(.leading, affaire.urgente ? 12 : 0)
         .overlay(alignment: .leading) {
@@ -164,6 +163,12 @@ private struct Historique: View {
                             Label(changement, systemImage: "arrow.triangle.2.circlepath")
                                 .font(.subheadline.weight(.medium))
                                 .foregroundStyle(palette.primary)
+                        }
+                        // La phrase servie telle quelle, son 🔹 compris (#130).
+                        if let precise = suite.perimetrePrecise {
+                            Text(precise)
+                                .font(.subheadline)
+                                .foregroundStyle(palette.textMuted)
                         }
                         if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
                             contenu

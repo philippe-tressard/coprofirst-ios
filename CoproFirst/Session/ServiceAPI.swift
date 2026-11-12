@@ -185,8 +185,8 @@ extension ElementDuFil {
                     ticketId: entier("ticket_id"), sondageId: entier("sondage_id"), documentId: entier("document_id"),
                     fichierNom: meta["fichier_nom"] as? String),
                 lien: item.lien),
-            echeance: EcheanceDuFil(meta: item.meta?.additionalProperties),
-            natures: MetaDuFil(meta: item.meta?.additionalProperties)?.affaire?.natures ?? []
+            echeance: EcheanceDuFil(meta: item.meta?.additionalProperties)
         )
+        poser(MetaDuFil(meta: item.meta?.additionalProperties))
     }
 }

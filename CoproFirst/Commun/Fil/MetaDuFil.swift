@@ -6,8 +6,8 @@ import OpenAPIRuntime
 
 /// Ce que l'app relit de `meta.affaire` d'un élément du fil — la ligne de pastilles
 /// d'une affaire (`flux/commun.pastilles_affaire`) : ses dates et son délai (`EcheanceDuFil`,
-/// #75), ses natures (`NatureDeLaCarte`, #78). `meta` est un dictionnaire libre du contrat,
-/// donc relu (`Relecture`) ; une lecture, deux usages.
+/// #75), ses natures (`NatureDeLaCarte`, #78), qui la lit et son lieu (#129, #130). `meta`
+/// est un dictionnaire libre du contrat, donc relu (`Relecture`) ; une lecture, plusieurs usages.
 struct MetaDuFil: Decodable {
     let affaire: AffaireServie?
 
@@ -17,6 +17,10 @@ struct MetaDuFil: Decodable {
         let echeance: EcheanceServie?
         /// Les natures que le serveur DÉRIVE (`utils/nature_affaire`) — jamais redérivées ici.
         let natures: [String]?
+        /// « Qui la lit », servie (contrat 1.22.0) — illisible, elle n'emporte pas le reste.
+        let lecture: Tolere<Lecture>?
+        /// Le lieu du badge 🔹 (contrat 1.24.0) : `""` pour le périmètre par défaut.
+        let perimetreLibelle: String?
     }
 
     struct EcheanceServie: Decodable {

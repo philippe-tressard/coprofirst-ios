@@ -33,13 +33,15 @@ private func date(_ texte: String) -> Date? { ISO8601DateFormatter().date(from: 
 }
 
 /// L'API simulée sert ce que le service réel lirait des mêmes octets : un écart de
-/// lecture entre les deux chemins ne peut plus rester invisible.
+/// lecture entre les deux chemins ne peut plus rester invisible — corps gardé compris
+/// (qui la lit et où, servis au-dessus du plancher, #129, #130).
 @Test func laSimulationLitCommeLeServiceReel() async throws {
     let simule = ServiceSimule(delai: .zero)
     let installation = ServiceSimule.demo
-    let lues = try await client(servant: FixturesCommunaute.idees).getIdees().ok.body.json.map(Idee.init)
+    func reel(_ corps: String) -> ServiceAPI { ServiceAPI(transport: { _ in TransportFixe(corps: corps) }) }
+    let lues = try await reel(FixturesCommunaute.idees).idees(installation)
+    #expect(lues.contains { $0.lieu != nil }, "le corps servi est relu")
     #expect(try await simule.idees(installation) == lues)
-    let annonces = try await client(servant: FixturesCommunaute.annonces).getAnnonces().ok.body.json
-        .map(Annonce.init)
+    let annonces = try await reel(FixturesCommunaute.annonces).annonces(installation)
     #expect(try await simule.annonces(installation) == annonces)
 }

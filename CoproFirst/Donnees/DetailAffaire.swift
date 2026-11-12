@@ -42,6 +42,9 @@ struct DetailAffaire: Hashable, Sendable {
     /// L'intervenant, tel que la fiche du site l'écrit (`intervenantAffiche`) : le
     /// prestataire, puis le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125).
     var intervenant: String?
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == "actualite" }
 
@@ -77,6 +80,10 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     /// L'état que l'entrée donne, en clair, tel que le serveur le sert
     /// (`nouveau_statut_libelle`, contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
     var nouveauStatutLibelle: String?
+    /// « Périmètre précisé : 🔹 Bât. 2 » — le lieu que la Suite déclare, tel que servi
+    /// (`perimetre_precise_libelle`, contrat 1.24.0, #130), même par défaut ; `nil` quand
+    /// elle n'en déclare pas, ou d'une installation antérieure.
+    var perimetrePrecise: String?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
     /// lit tel que servi ; l'ancien, que le serveur ne met pas en clair, par la table du

@@ -77,7 +77,8 @@ struct OngletIdees: View {
     }
 }
 
-/// Une idée : le cœur et ses voix à gauche, le titre, l'état, l'aperçu, les réponses.
+/// Une idée : le cœur et ses voix à gauche, le titre, l'état (qui la lit, où), l'aperçu,
+/// les réponses.
 private struct LigneIdee: View {
     let idee: Idee
     let voter: () -> Void
@@ -88,8 +89,13 @@ private struct LigneIdee: View {
             BoutonCoeur(idee: idee, voter: voter)
             VStack(alignment: .leading, spacing: 6) {
                 Text(idee.titre).font(.headline).foregroundStyle(palette.text)
-                let statut = RegleCommunaute.statutsIdee.first { $0.code == idee.statut }
-                PastilleTeinte(libelle: statut?.libelle ?? idee.statut, badge: statut?.pastille ?? "badge-gray")
+                // L'état, qui la lit et son lieu (#129, #130), comme la carte du site.
+                FlowEtiquettes(espace: 6) {
+                    let statut = RegleCommunaute.statutsIdee.first { $0.code == idee.statut }
+                    PastilleTeinte(libelle: statut?.libelle ?? idee.statut, badge: statut?.pastille ?? "badge-gray")
+                    PastilleLecture(lecture: idee.lecture)
+                    EtiquetteLieu(lieu: idee.lieu).font(.caption).foregroundStyle(palette.textMuted)
+                }
                 Text(TexteDuSite.apercu(idee.description))
                     .font(.subheadline)
                     .foregroundStyle(palette.textMuted)
