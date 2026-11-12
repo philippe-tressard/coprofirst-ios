@@ -26,10 +26,10 @@ extension ServiceSimule: ServiceUtilisateursAdmin {
             let dejaBanni = comptes[rang].ban.jusquAu != nil
             comptes[rang].ban =
                 !interdit
-                ? BanCommunaute(interdit: false, jusquAu: nil, banni: false)
+                ? BanCommunaute(interdit: false, jusquAu: nil, banniServi: false)
                 : BanCommunaute(
                     interdit: dejaBanni, jusquAu: dejaBanni ? nil : .now.addingTimeInterval(30 * 86_400),
-                    banni: true)
+                    banniServi: true)
             return comptes[rang].ban
         }
     }
@@ -38,11 +38,11 @@ extension ServiceSimule: ServiceUtilisateursAdmin {
         try await Task.sleep(for: .milliseconds(300))
         try modifierSimule(depuis: FixturesUtilisateursAdmin.lus) { comptes in
             guard let rang = comptes.firstIndex(where: { $0.id == id }),
-                let servi = comptes[rang].gestesRoles.firstIndex(where: { $0.role == role && $0.geste == geste })
+                let servi = comptes[rang].gestesRoles?.firstIndex(where: { $0.role == role && $0.geste == geste })
             else { throw ErreurService.refus(.init(phrase: "Ce geste n'est plus possible : la liste a changé.")) }
             comptes[rang].roles.removeAll { $0 == role }
             if geste == .ajouter { comptes[rang].roles.append(role) }
-            comptes[rang].gestesRoles[servi] = GesteDeRole(role: role, geste: geste == .ajouter ? .retirer : .ajouter)
+            comptes[rang].gestesRoles?[servi] = GesteDeRole(role: role, geste: geste == .ajouter ? .retirer : .ajouter)
         }
     }
 

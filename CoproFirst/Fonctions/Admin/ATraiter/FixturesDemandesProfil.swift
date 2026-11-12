@@ -6,14 +6,13 @@ import Foundation
 
 #if DEBUG
 /// Les demandes de profil que l'API simulée sert à « À traiter » — en JSON, à la forme
-/// de leurs routes, jugées contre leurs schémas (`DemandeProfilEnAttente`,
-/// `DemandeProfilTraitee`).
+/// de la route, jugé contre son schéma (typé depuis le contrat 1.16.0).
 ///
 /// Tout est inventé : aucun nom de personne réelle.
 enum FixturesDemandesProfil {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/demandes-profil → `[DemandeProfilEnAttente]`.
+    /// GET /admin/demandes-profil.
     static let demandes = #"""
         [
           {"id": 41, "utilisateur_id": 31, "statut_demande": "en_attente", "statut_souhaite": "copropriétaire_bailleur",
@@ -29,8 +28,8 @@ enum FixturesDemandesProfil {
         ]
         """#
 
-    /// POST /admin/demandes-profil/{id}/traiter → `DemandeProfilTraitee` : le statut, et
-    /// l'annonce que le serveur compose.
+    /// POST /admin/demandes-profil/{id}/traiter, tel que le sert le serveur v3.81.0 : le
+    /// statut, et l'annonce qu'il compose.
     static let approuvee = #"""
         {"statut": "approuvee", "annonce": {"ton": "success", "texte": "Demande approuvée."}}
         """#
@@ -45,15 +44,13 @@ enum FixturesDemandesProfil {
         Reponse(nom: "rejetee", schema: "DemandeProfilTraitee", json: rejetee),
     ]
 
-    static func annonce(approuver: Bool) throws -> PhraseAvis {
-        PhraseAvis(
-            try Relecture.generee(Components.Schemas.DemandeProfilTraitee.self, json: approuver ? approuvee : rejetee)
-                .annonce)
+    static func annonce(approuver: Bool) throws -> PhraseAvis? {
+        let json = approuver ? approuvee : rejetee
+        return PhraseAvis(try Relecture.generee(Components.Schemas.DemandeProfilTraitee.self, json: json).annonce)
     }
 
     static func lues() throws -> [DemandeProfil] {
-        try Relecture.generee([Components.Schemas.DemandeProfilEnAttente].self, json: demandes)
-            .map(DemandeProfil.init)
+        try Relecture.generee([Components.Schemas.DemandeProfilEnAttente].self, json: demandes).map(DemandeProfil.init)
     }
 }
 #endif

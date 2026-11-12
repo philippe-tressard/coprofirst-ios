@@ -3,33 +3,41 @@
 """Les tables du menu Affaires (#11).
 
 Le contrat d'API ne sert que des CODES (`CategorieTicket`, `StatutTicket`) : les
-libellés et l'ordre sont ceux que le site publie (`tables-clients.json`) :
+libellés et l'ordre vivent dans le front du site :
 
-- les NATURES d'une affaire (`naturesAffaire`), avec leur teinte (`teinteNature` : le
-  `--nature-fort` de chaque `[data-nature]`, rendu en classe `badge-*` de la
-  `PastilleTeinte`, #78). Les CATÉGORIES, et celles que chaque compte peut poser, sont
-  SERVIES (`GET /tickets/referentiels`, `permise`) : elles ne se génèrent plus dans l'app
-  (#105) — `categoriesTicket` ne sert qu'à la réponse simulée (`saisie_affaire.py`) ;
-- la TEINTE de chaque colonne du Kanban (`colonnesKanban`), un jeton `--kanban-*` de
-  la `Palette` (#34) nommé ici par son chemin, et le mot d'une colonne vide
-  (`motColonneVide`). Les colonnes elles-mêmes (ordre, libellés), la colonne de
-  chaque statut et les statuts clos sont SERVIS (`GET /tickets/referentiels`,
-  `TicketRead.colonne_kanban`) : ils ne se génèrent plus (#83,
-  `scripts/verifier-regles-servies.py`) ;
-- les GROUPES de suivi des statuts (`groupesSuivi`) et la catégorie d'une actualité
-  (`categorieActualite`). L'ordre des statuts, leurs libellés et ceux qu'une Suite
-  propose sont SERVIS (`statuts`, `proposable`) : ils ne se génèrent plus (#105).
+- les NATURES d'une affaire (`NATURES`, `tickets-categories.ts`), avec leur teinte
+  (`[data-nature=…]` de `normes.css`, rendue en classe `badge-*` de la `PastilleTeinte`,
+  #78). Les CATÉGORIES, et celles que chaque compte peut poser, sont SERVIES depuis le
+  contrat 1.14.0 (`GET /tickets/referentiels`, `permise`) : elles ne se génèrent plus (#105) ;
+- la TEINTE de chaque colonne du Kanban (`KANBAN_COLS` de `kanban.ts`), un jeton
+  `--kanban-*` de la `Palette` (#34) nommé ici par son chemin, et le mot d'une colonne
+  vide (`MOT_COLONNE_VIDE`). Les colonnes elles-mêmes (ordre, libellés), la colonne de
+  chaque statut et les statuts clos sont SERVIS depuis le contrat 1.14.0
+  (`GET /tickets/referentiels`, `TicketRead.colonne_kanban`) : ils ne se génèrent plus
+  (#83, `scripts/verifier-regles-servies.py`) ;
+- les GROUPES de suivi des statuts (`tickets.ts`). L'ordre des statuts, leurs libellés et
+  ceux qu'une Suite propose sont SERVIS (`statuts`, `proposable`) : ils ne se génèrent
+  plus (#105).
 
 → `CoproFirst/Fonctions/Affaires/Genere/TablesAffaires.swift`.
 """
 
 from __future__ import annotations
 
-from generateurs._commun import FONCTIONS, chaine, ecrire_table, jeton_de, propriete, sans_pictogramme
-from generateurs._tables import Facultatif, source
+import re
 
-SOURCES: list[str] = []
+import lecture_ts
+from generateurs._commun import FONCTIONS, chaine, ecrire_table, propriete, sans_pictogramme
 
+SOURCES = [
+    "front/src/lib/tickets-categories.ts",
+    "front/src/lib/kanban.ts",
+    "front/src/lib/tickets.ts",
+    "front/src/styles/normes.css",
+]
+
+VAR_KANBAN = re.compile(r"^var\(--(kanban-[a-z0-9-]+)\)$")
+NATURE_FORT = re.compile(r"\[data-nature='([a-z]+)'\]\s*\{\s*--nature-fort:\s*var\(--color-([a-z-]+)\);\s*\}")
 #: La couleur d'état du site → la classe `badge-*` qui la porte (`PastilleTeinte.teintes`).
 BADGE_PAR_COULEUR = {
     "info": "badge-blue",
@@ -38,35 +46,34 @@ BADGE_PAR_COULEUR = {
     "success": "badge-green",
     "danger": "badge-red",
 }
-CATEGORIE = {"value": str, "label": str, "emoji": str, "description": str, "carnet": Facultatif(bool),
-             "reserveCS": Facultatif(bool), "enTete": Facultatif(bool)}
 
 
-def categories_du_site(ctx) -> list[dict]:
-    """`categoriesTicket` — pour la seule réponse simulée des catégories servies
-    (`saisie_affaire.py`) : l'app lit les catégories du serveur (#105)."""
-    return ctx.table("categoriesTicket", [CATEGORIE])
+def constante(texte: str, nom: str) -> str:
+    m = re.search(rf"\bconst {nom}\s*=\s*'([^']*)'", texte)
+    if not m:
+        raise SystemExit(f"❌ {nom} introuvable")
+    return m.group(1)
 
 
-def natures_d_affaire(ctx) -> list[dict]:
-    """`naturesAffaire` — lue ici seulement : `pictogrammes.py` en tire les pictogrammes de
-    la gouttière."""
-    return ctx.table("naturesAffaire", [{"val": str, "libelle": str, "abrege": str, "emoji": str, "icone": str}])
-
-
-def badge_de_nature(code: str, teintes: dict[str, dict]) -> str:
-    """La classe `badge-*` de la teinte que le site donne à une nature (`--nature-fort`)."""
-    if code not in teintes:
-        raise SystemExit(f"❌ teinteNature : la nature « {code} » n'a pas de teinte")
-    couleur = jeton_de(teintes[code]["--nature-fort"], f"teinteNature.{code}").removeprefix("color-")
+def badge_de_nature(code: str, teintes: dict[str, str]) -> str:
+    """La classe `badge-*` de la teinte que `normes.css` donne à une nature."""
+    couleur = teintes.get(code)
     if couleur not in BADGE_PAR_COULEUR:
-        raise SystemExit(f"❌ teinteNature : la teinte de « {code} » ({couleur}) n'a pas de classe badge-* connue")
+        raise SystemExit(f"❌ NATURES : la teinte de « {code} » ({couleur}) n'a pas de classe badge-* connue")
     return BADGE_PAR_COULEUR[couleur]
 
 
+def natures_d_affaire(ctx) -> list[dict]:
+    """`NATURES` de `tickets-categories.ts`, lue par motif (l'app ne lit pas encore la table
+    publiée `naturesAffaire` ici, #128 lot B ; `pictogrammes.py` la lit, elle)."""
+    return lecture_ts.table(ctx.lire(SOURCES[0]), "NATURES")
+
+
 def natures(ctx) -> str:
-    teintes = ctx.table("teinteNature", {str: {"--nature-fort": str}})
-    lignes = [
+    # Les catégories et ce que chaque compte peut poser sont SERVIS (`GET /tickets/referentiels`,
+    # `permise`, #105) : plus lus ici.
+    teintes = {code: couleur for code, couleur in NATURE_FORT.findall(ctx.lire(SOURCES[3]))}
+    natures = [
         f"        NatureAffaire(code: {chaine(n['val'])}, libelle: {chaine(n['libelle'])}, "
         f"abrege: {chaine(n['abrege'])}, emoji: {chaine(n['emoji'])}, icone: {chaine(n['icone'])}, "
         f"badge: {chaine(badge_de_nature(n['val'], teintes))}),\n"
@@ -74,47 +81,48 @@ def natures(ctx) -> str:
     ]
     return (
         "    /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.\n"
-        "    static let natures: [NatureAffaire] = [\n" + "".join(lignes) + "    ]\n"
+        "    static let natures: [NatureAffaire] = [\n" + "".join(natures) + "    ]\n"
     )
 
 
 def kanban(ctx) -> str:
+    texte = ctx.lire(SOURCES[1])
     lignes = []
-    for c in ctx.table("colonnesKanban", [{"id": str, "color": str}]):
-        jeton = jeton_de(c["color"], f"colonnesKanban.{c['id']}")
-        if not jeton.startswith("kanban-"):
-            raise SystemExit(f"❌ colonnesKanban : la teinte de {c['id']} n'est pas un jeton --kanban-* ({c['color']})")
-        lignes.append(f"        {chaine(c['id'])}: \\.{propriete(jeton)},\n")
+    for c in lecture_ts.table(texte, "KANBAN_COLS"):
+        m = VAR_KANBAN.match(str(c["color"]))
+        if not m:
+            raise SystemExit(f"❌ KANBAN_COLS : la teinte de {c['id']} n'est pas un jeton --kanban-* ({c['color']})")
+        lignes.append(f"        {chaine(c['id'])}: \\.{propriete(m.group(1))},\n")
     return (
         "    /// La teinte de chaque colonne du Kanban, par son code (`KANBAN_COLS`) — les colonnes\n"
         "    /// elles-mêmes sont SERVIES (`GET /tickets/referentiels`).\n"
         "    static let teintesKanban: [String: KeyPath<Palette, Color> & Sendable] = [\n"
         + "".join(lignes) + "    ]\n"
         "    /// Ce qu'une colonne vide affiche (`MOT_COLONNE_VIDE`).\n"
-        f"    static let colonneVide = {chaine(ctx.table('motColonneVide', str))}\n"
+        f"    static let colonneVide = {chaine(constante(texte, 'MOT_COLONNE_VIDE'))}\n"
     )
 
 
 def statuts(ctx) -> str:
     # Les états du cycle, leurs libellés et ceux qu'une Suite propose sont SERVIS
-    # (`statuts`, `proposable`, #105) : `statutsTicket` n'est pas lu ici.
+    # (`statuts`, `proposable`, #105) : `STATUTS_TICKET` n'est plus lu ici.
+    texte = ctx.lire(SOURCES[2])
     groupes = [
         f"        GroupeDeSuivi(code: {chaine(g['value'])}, libelle: {chaine(sans_pictogramme(g['label']))}, "
         f"statuts: [{', '.join(chaine(s) for s in g['statuts'])}]),\n"
-        for g in ctx.table("groupesSuivi", [{"value": str, "label": str, "statuts": [str]}])
+        for g in lecture_ts.table(texte, "GROUPES_SUIVI")
     ]
     return (
         "    /// Des statuts que le filtre « Suivi » réunit sous une option (`GROUPES_SUIVI`).\n"
         "    static let groupesDeSuivi: [GroupeDeSuivi] = [\n" + "".join(groupes) + "    ]\n"
         "    /// La catégorie d'une actualité (`CATEGORIE_ACTUALITE`).\n"
-        f"    static let categorieActualite = {chaine(ctx.table('categorieActualite', str))}\n"
+        f"    static let categorieActualite = {chaine(constante(texte, 'CATEGORIE_ACTUALITE'))}\n"
     )
 
 
 def generer(ctx) -> str:
     corps = natures(ctx) + kanban(ctx) + statuts(ctx)
     ecrire_table(ctx, FONCTIONS / "Affaires" / "Genere" / "TablesAffaires.swift",
-                 source("naturesAffaire", "teinteNature", "colonnesKanban", "motColonneVide", "groupesSuivi",
-                        "categorieActualite"), "TablesAffaires",
+                 "front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css", "TablesAffaires",
                  "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps, swiftui=True)
     return "natures, teintes du Kanban et groupes de suivi des affaires"

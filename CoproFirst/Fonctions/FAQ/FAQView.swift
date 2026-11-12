@@ -13,14 +13,14 @@ enum TextesFAQ {
     static let manuel = "Le Manuel utilisateur vous guide pas à pas."
     static let ouvrirManuel = "Ouvrir le Manuel utilisateur"
     static let copierLien = "Copier le lien"
-    /// Divergence déclarée : la rédaction reste au site — dit à qui le serveur l'ouvre.
+    /// Divergence déclarée : la rédaction (conseil syndical) reste au site.
     static let redactionAuSite = "Rédiger, masquer ou réorganiser les questions se fait sur le site."
     static let ouvrirSite = "Ouvrir la FAQ sur le site"
 }
 
 /// La FAQ de la résidence : une section par catégorie, une question dépliée à la
-/// fois, la réponse en texte riche. Lecture seule ; qui peut la rédiger (`peut_rediger`,
-/// servi par GET /faq/gestes) le fait sur le site, et l'écran le lui dit.
+/// fois, la réponse en texte riche. Lecture seule ; le conseil syndical rédige sur
+/// le site, et l'écran le dit.
 struct FAQView: View {
     let installation: Installation
     var titre = "FAQ"
@@ -31,18 +31,11 @@ struct FAQView: View {
         let service = parcours.serviceFAQ
         let installation = installation
         Chargement(
-            charger: {
-                async let questions = service.questionsFAQ(installation)
-                // Le droit de rédiger est SERVI (#87). Illisible, il vaut « non » : la FAQ
-                // se lit quand même, sans l'indication réservée à qui la rédige.
-                async let redige = try? service.peutRedigerLaFAQ(installation)
-                return FAQLue(
-                    categories: CategorieFAQ.regrouper(try await questions), peutRediger: await redige ?? false)
+            charger: { CategorieFAQ.regrouper(try await service.questionsFAQ(installation)) },
+            contenu: { categories, recharger in
+                ListeFAQ(categories: categories, installation: installation, recharger: recharger)
             },
-            contenu: { lue, recharger in ListeFAQ(lue: lue, installation: installation, recharger: recharger) },
-            squelette: {
-                ListeFAQ(lue: FAQLue(categories: Self.squelette), installation: installation, recharger: {})
-            }
+            squelette: { ListeFAQ(categories: Self.squelette, installation: installation, recharger: {}) }
         )
         .background(palette.bg)
         .navigationTitle(titre)
@@ -60,7 +53,7 @@ struct FAQView: View {
 }
 
 private struct ListeFAQ: View {
-    let lue: FAQLue
+    let categories: [CategorieFAQ]
     let installation: Installation
     let recharger: () -> Void
     @Environment(Parcours.self) private var parcours
@@ -68,7 +61,6 @@ private struct ListeFAQ: View {
     @State private var ouverte: Int?
 
     var body: some View {
-        let categories = lue.categories
         List {
             if categories.isEmpty {
                 ContentUnavailableView(TextesFAQ.vide, systemImage: "questionmark.bubble")
@@ -113,7 +105,7 @@ private struct ListeFAQ: View {
             }
             .listRowBackground(palette.surface)
         } footer: {
-            if lue.peutRediger {
+            if estConseil {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(TextesFAQ.redactionAuSite)
                     Link(TextesFAQ.ouvrirSite, destination: installation.adresse.appending(path: "faq"))
@@ -121,7 +113,6 @@ private struct ListeFAQ: View {
                 }
                 .font(.footnote)
                 .padding(.top, 6)
-                .accessibilityIdentifier("faq.redaction")
             }
         }
     }
@@ -130,6 +121,11 @@ private struct ListeFAQ: View {
     private var ongletAffaires: String? {
         installation.pages.prefix(4).first { $0.id == "mes-demandes" }?.id
     }
+
+    /// Le conseil syndical et l'administration rédigent la FAQ (`require_cs_or_admin`).
+    /// Aucun droit servi ne le dit encore (#104) : la règle GÉNÉRÉE du site (`$isCS`), lue par
+    /// `DroitsOnglet` — jamais des rôles écrits ici.
+    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }
 }
 
 /// Une question, dépliable ; une seule ouverte à la fois, comme sur le site.

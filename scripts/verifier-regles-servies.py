@@ -79,24 +79,18 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bFormatsDuSite\.nom\("),
      "le nom servi (`nom_affiche`, `locataire_nom_affiche`…), lu du type généré"),
     (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
-     "le nom servi (`nom_affiche`), lu du type généré — jamais un prénom et un nom accolés"),
-    # #136 : « CS ou admin » est SERVI (`est_moderateur`) — le site ne publie plus de
-    # population de rôles pour le dire, et aucune ne revient ici.
-    (re.compile(r"\bOngletsDuSite\.(rolesCS|rolesProprioOuCS)\b|\bstatic let (rolesCS|rolesProprioOuCS)\b"),
-     "`est_moderateur` servi, lu par `DroitsOnglet` (`cs`, `proprioOuCS`)"),
-    # #138 : « le mien » est SERVI (`est_auteur`) ; aucun identifiant de compte ne se compare.
-    (re.compile(r"\bauteurId == moi\b"),
-     "`est_auteur` servi (`MessageAffaire(_:)`)"),
-    #  #130 : le lieu d'un contenu se LIT (`perimetre_libelle`) ; nommer des codes par
-    #  l'arbre recopie la règle du serveur (`utils/perimetres/libelles.py`).
-    (re.compile(r"\blibelles\([^)]*parmi:|\blieu\([^)]*\b(repli|arbre):"),
-     "le lieu servi (`perimetre_libelle`) par `LieuServi.lieu(_:)` — aucun repli sur l'arbre ni sur un libellé"),
-    # #125 : les numéros d'une fiche sont SERVIS (`telephones`), découpés par le serveur.
-    (re.compile(r"\bdecoupes\("),
-     "`telephones` servi (`PrestataireRead`) — l'app ne découpe pas `telephone`"),
-    # #89 : le bannissement en cours est SERVI (`communaute_banni`), jugé à l'heure du serveur.
-    (re.compile(r"\bbanni\(maintenant:|\bjusquAu\.map \{ \$0 > "),
-     "`communaute_banni` servi (`BanCommunaute.banni`) — jamais une date comparée à l'heure du téléphone"),
+     "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
+    # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0) ; `rolesCS` n'est
+    # plus généré depuis v3.89.0 — la règle reste, garde contre son retour.
+    (re.compile(r"\bOngletsDuSite\.rolesCS\b"),
+     "`est_moderateur` servi, lu par `DroitsOnglet.cs`"),
+    # #138 : « le mien » est SERVI (`est_auteur`, contrat 1.26.0).
+    (re.compile(r"\bmessage\.auteurId == moi\b"),
+     "`est_auteur` servi (`MessageAffaire.lus`)"),
+    #  #130 : le lieu d'un contenu se LIT (`perimetre_libelle`, contrat 1.24.0) ; nommer
+    #  des codes par l'arbre recopie la règle du serveur (`utils/perimetres/libelles.py`).
+    (re.compile(r"\blibelles\([^)]*parmi:"),
+     "le lieu servi (`perimetre_libelle`) par `LieuServi.lieu` — le repli au plancher n'a qu'un endroit"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -109,6 +103,11 @@ DISPENSES: dict[str, str] = {
         "fiche que la relecture ne retrouve pas",
     "CoproFirst/Fonctions/Annuaire/ServiceAnnuaire.swift":
         "un annuaire gardé en cache avant #135 se relit sans `nom_affiche` : le repli le nomme",
+    "CoproFirst/Commun/Detail/Affaire/MessageAffaire.swift":
+        "repli de `MessageAffaire.lus` quand l'installation ne sert pas `est_auteur` (contrat < 1.26.0, #138)",
+    "CoproFirst/Donnees/LieuServi.swift":
+        "le SEUL repli au plancher (#130) : une installation antérieure au contrat 1.24.0 ne sert pas le lieu "
+        "d'un accès ; il se retire quand le plancher atteint 1.24.0",
 }
 
 

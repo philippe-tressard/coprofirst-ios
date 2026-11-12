@@ -31,8 +31,8 @@ struct DroitsOnglet: Hashable, Sendable {
     var locataire = false
     var gestionnaire = false
     /// Conseil syndical ou administration — `$estModerateur` du site : `est_moderateur`
-    /// SERVI (#136). Aucune réserve d'onglet ne l'emploie seul ; un écran le lit (le
-    /// Règlement, #12). Un geste fin servi avec l'objet (`peut_*`) prime toujours.
+    /// SERVI (contrat 1.25.0, #136). Aucune réserve d'onglet ne l'emploie ; un écran le
+    /// lit (le Règlement, #12). Un geste fin servi avec l'objet (`peut_*`) prime toujours.
     var cs = false
     /// Le compte technique de l'installation : administrateur, sans lot ni conseil
     /// (`$isAdminOnly` du site). Il n'a pas les outils du conseil (`PagesOuvertes`).
@@ -54,23 +54,22 @@ struct DroitsOnglet: Hashable, Sendable {
     }
 
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
-    /// `aRole` du site), `statut`, et `est_moderateur` (#136).
+    /// `aRole` du site), `statut`, et `est_moderateur` (contrat 1.25.0, #136).
     ///
-    /// Modérer se LIT : `estModerateur` servi fait foi, aucun rôle n'en décide — le site
-    /// ne publie plus cette population (`stores/auth.ts`). Propriétaire ou conseil : le
-    /// rôle de propriétaire, ou modérer (`isProprioOuCS` du site). Sans `estModerateur`
-    /// (un profil gardé avant #136) : non, jusqu'à la prochaine lecture du compte.
+    /// Modérer se LIT : `estModerateur` servi fait foi, comme le site (`isCS`) ; non servi
+    /// (le champ est facultatif au contrat), il vaut « non ». Aucun repli par les rôles
+    /// (`scripts/verifier-regles-servies.py` le refuse). « Propriétaire ou CS » : un des
+    /// rôles GÉNÉRÉS `rolesProprietaire`, ou modérateur (`isProprioOuCS` du site).
     init(roles: [String], role: String?, statut: String?, estModerateur: Bool? = nil) {
         let portes = Set(roles.isEmpty ? [role].compactMap { $0 } : roles)
         let statut = statut ?? ""
-        let modere = estModerateur ?? false
         self.init(
             administrateur: !portes.isDisjoint(with: OngletsDuSite.rolesAdministrateur),
             operateur: !portes.isDisjoint(with: OngletsDuSite.rolesOperateur),
-            proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprietaire) || modere,
+            proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprietaire) || (estModerateur ?? false),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
             gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
-            cs: modere,
+            cs: estModerateur ?? false,
             adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)
                 && portes.isDisjoint(with: OngletsDuSite.rolesSansAdminSeul))
     }

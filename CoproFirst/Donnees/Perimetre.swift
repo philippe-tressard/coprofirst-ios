@@ -25,8 +25,8 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var libelleCourt: String?
     /// Ce que le nœud implique (« notifie l'ensemble du conseil syndical ») : l'aide du choix.
     var description: String?
-    /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, #88) ;
-    /// `nil` quand le serveur ne le dit pas : le nœud ne limite alors rien.
+    /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, contrat
+    /// 1.17.0, #88) ; `nil` s'il n'est pas servi.
     var niveauxLibres: Int?
 
     var id: String { code }
@@ -53,16 +53,17 @@ struct Perimetre: Identifiable, Hashable, Sendable {
             description: lu.description, niveauxLibres: lu.niveauxLibres)
     }
 
-    /// L'arbre servi, ACTIFS seulement, par son type GÉNÉRÉ — le même branchement pour le
-    /// service réel et l'API simulée.
+    /// L'arbre servi, ACTIFS seulement — le MÊME branchement pour le service réel et
+    /// l'API simulée.
     static func lus(_ generes: [Components.Schemas.PerimetreRead]) -> [Perimetre] {
-        generes.filter(\.actif).map(Perimetre.init(lu:))
+        generes.filter(\.actif).map { Perimetre(lu: $0) }
     }
 
     /// Les lieux qu'un sélecteur propose (#88) : les nœuds sélectionnables, jusqu'au
     /// niveau 3 et jamais plus bas — un nœud écrit avant la règle sous un parent qui ne
     /// peut plus rien porter (`niveaux_libres` servi à 0) ne se propose pas. Le plafond
-    /// n'est pas recopié ici : il se lit sur ce que le serveur sert.
+    /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Une installation
+    /// antérieure au contrat 1.17.0 ne le sert pas : tout nœud sélectionnable, comme avant.
     ///
     /// `garder` : le lieu déjà enregistré d'un contenu qu'on modifie — proposé même trop
     /// profond, pour que le modifier ne le perde pas en silence.
@@ -88,7 +89,8 @@ protocol ServicePerimetres: Sendable {
 
 extension ServiceAPI: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        switch try await appeler({ try await client(installation.adresse).getPerimetres() }) {
+        let sortie = try await appeler { try await client(installation.adresse).getPerimetres() }
+        switch sortie {
         case .ok(let ok): return Perimetre.lus(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)

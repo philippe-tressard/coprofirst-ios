@@ -100,10 +100,10 @@ func lesDatesDeLAPISeLisent(texte: String) throws {
     ] as [(String, String?)])
 func leLibelleDuLogementSeLit(champ: String, attendu: String?) throws {
     let json = #"""
-        {"id": 7, "nom": "Durand", "prenom": "Alix", "nom_affiche": "Alix DURAND", "nom_aide_affiche": "",
-         "email": "alix@exemple.fr",
+        {"id": 7, "nom": "Durand", "prenom": "Alix", "email": "alix@exemple.fr",
          "statut": "locataire", "role": "résident", "actif": true, "onboarding_complete": true,
-         "onboarding_etape": 0, "preferences_notifications": "{}", "cree_le": "2026-11-02T09:30:00Z"
+         "onboarding_etape": 0, "preferences_notifications": "{}", "cree_le": "2026-11-02T09:30:00Z",
+         "nom_affiche": "Alix DURAND", "nom_aide_affiche": "Alix D."
         """# + champ + "}"
     let decodeur = JSONDecoder()
     decodeur.dateDecodingStrategy = .iso8601

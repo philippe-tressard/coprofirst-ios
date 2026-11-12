@@ -35,8 +35,9 @@ extension UtilisateurAdmin {
     /// « Opérateur désigné par l'exploitant » (`GestesRolesCompte.svelte`) : ce que l'écran
     /// DIT, pas ce qu'il offre — sur une instance commune (`operateur_par_exploitant` servi
     /// par `GET /config`), un compte actif qui porte le rôle et dont le serveur n'offre aucun
-    /// geste d'opérateur. Aucun geste n'en dépend (#94).
+    /// geste d'opérateur. Gestes non servis : rien n'est dit. Aucun geste n'en dépend (#94).
     func operateurDesigneParLExploitant(instanceCommune: Bool) -> Bool {
-        instanceCommune && actif && roles.contains("operateur") && !gestesRoles.contains { $0.role == "operateur" }
+        guard instanceCommune, actif, roles.contains("operateur"), let gestes = gestesRoles else { return false }
+        return !gestes.contains { $0.role == "operateur" }
     }
 }

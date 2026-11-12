@@ -141,7 +141,7 @@ struct LigneUtilisateurAdmin: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Text(compte.nomAffiche).font(.headline).foregroundStyle(palette.text)
-                        if compte.ban.banni {
+                        if compte.ban.banni() {
                             Image(systemName: compte.ban.interdit ? "nosign" : "hourglass")
                                 .font(.footnote)
                                 .foregroundStyle(palette.danger)

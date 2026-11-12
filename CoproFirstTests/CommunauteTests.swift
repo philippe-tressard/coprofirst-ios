@@ -26,7 +26,6 @@ private struct Factice: ServiceCommunaute {
         ListeAvis(avis: [], gestionnaire: false, monAvisId: nil)
     }
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] { [] }
-    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool { false }
     func idees(_ installation: Installation) async throws -> [Idee] { [] }
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws {}
     func voterIdee(_ id: Int, dans installation: Installation) async throws -> String? {
@@ -121,39 +120,14 @@ private struct Factice: ServiceCommunaute {
 @Test func supprimerUneAnnonceSeLitDansLAnnonceServie() async throws {
     let json = #"""
         [{"id": 1, "titre": "Vélo", "description": "", "type_annonce": "vente", "categorie": "divers",
+          "perimetre_libelle": "",
           "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
-          "peut_supprimer": true, "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0,
-          "perimetre_libelle": ""},
+          "peut_supprimer": true, "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0},
          {"id": 2, "titre": "Lampe", "description": "", "type_annonce": "don", "categorie": "divers",
+          "perimetre_libelle": "",
           "negotiable": false, "photos": [], "statut": "en_cours", "auteur_id": 3, "est_auteur": false,
-          "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0, "perimetre_libelle": ""}]
+          "archivee": false, "cree_le": "2026-11-02T09:00:00", "nb_reponses": 0}]
         """#
     let lues = try await client(servant: json).getAnnonces().ok.body.json.map(Annonce.init)
     #expect(lues.map(\.peutSupprimer) == [true, false])
-}
-
-// MARK: - #87 : créer un sondage, rédiger la FAQ — des droits SERVIS
-
-/// `GET /sondages/gestes` et `GET /faq/gestes` se lisent par les routes générées : aucun
-/// rôle n'en décide. Le compte simulé est du conseil — puis ne modère plus.
-@MainActor
-@Test func creerUnSondageEtRedigerLaFAQSontServis() async throws {
-    let service = ServiceSimule(delai: .zero)
-    let residence = ServiceSimule.residence
-    let etat = EtatCommunaute()
-    await etat.charger(.sondages, residence, avec: service)
-    #expect(etat.peutCreerUnSondage)
-    #expect(try await service.peutRedigerLaFAQ(residence))
-    service.profilSimule.estModerateur = false
-    await etat.charger(.sondages, residence, avec: service)
-    #expect(!etat.peutCreerUnSondage, "le serveur dit non : le rôle « conseil_syndical » n'y change rien")
-    #expect(try await !service.peutRedigerLaFAQ(residence))
-}
-
-/// La route générée lit la réponse telle que le serveur la sert.
-@Test func lesGestesServisSeLisentParLesRoutesGenerees() async throws {
-    let faq = try await client(servant: #"{"peut_rediger": true}"#).getFaqGestes().ok.body.json
-    #expect(faq.peutRediger)
-    let sondages = try await client(servant: #"{"peut_creer": false}"#).getSondagesGestes().ok.body.json
-    #expect(!sondages.peutCreer)
 }

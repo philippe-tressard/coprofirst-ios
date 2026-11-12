@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe tables-clients.json de la release (cookieTheme, themeParDefaut, optionsTheme, canauxNotifications, statutsDemandables) ; api/app/utils/preferences_mail.py et mots_de_passe.py.
+// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), front/src/lib/theme.ts#COOKIE_THEME, front/src/lib/theme.ts#THEME_PAR_DEFAUT, front/src/lib/theme.ts#OPTIONS_THEME, front/src/lib/preferences.ts#CANAUX_NOTIFS, front/src/lib/roles.ts#STATUTS_DEMANDABLES (tables-clients.json) ; api/app/utils/preferences_mail.py et mots_de_passe.py.
 
 /// Ce que le site écrit du Profil et que le contrat ne sert pas.
 enum TablesProfil {

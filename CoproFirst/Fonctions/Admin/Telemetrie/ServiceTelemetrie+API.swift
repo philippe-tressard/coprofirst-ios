@@ -4,8 +4,8 @@
 import ClientAPI
 import Foundation
 
-/// « Télémétrie » par le client GÉNÉRÉ : le tableau se lit par son type
-/// (`TableauTelemetrie`, contrat 1.16.0, #87).
+/// « Télémétrie » par le client GÉNÉRÉ : le tableau est typé (`TableauTelemetrie`, contrat
+/// 1.16.0).
 extension ServiceAPI: ServiceTelemetrie {
     func tableauTelemetrie(
         _ installation: Installation, portee: PorteeTelemetrie, sansGestionnaire: Bool

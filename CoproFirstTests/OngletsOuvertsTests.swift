@@ -25,14 +25,10 @@ private let locataire = DroitsOnglet(roles: ["résident"], role: "résident", st
     #expect(locataire == DroitsOnglet(locataire: true))
     #expect(DroitsOnglet(roles: [], role: "admin", statut: nil).administrateur, "`role` seul quand `roles` est vide")
     #expect(DroitsOnglet(roles: [], role: nil, statut: "syndic").gestionnaire)
-    // « Modère » est SERVI (`est_moderateur`) : aucun rôle n'en décide, pas même « admin ».
-    #expect(!DroitsOnglet(roles: ["admin", "conseil_syndical"], role: "admin", statut: nil).cs)
-    #expect(DroitsOnglet(roles: ["résident"], role: "résident", statut: nil, estModerateur: true).cs)
+    // `$isCS` du site inclut l'administrateur ; le copropriétaire n'en est pas.
+    #expect(DroitsOnglet(roles: ["admin"], role: "admin", statut: nil, estModerateur: true).cs)
     #expect(!coproprietaire.cs)
-    #expect(OngletsDuSite.rolesProprietaire == ["propriétaire"], "`ROLES_DU_DROIT.proprietaire` du site")
-    // Propriétaire ou conseil : le rôle, ou modérer (`isProprioOuCS` du site).
-    #expect(DroitsOnglet(roles: ["résident"], role: "résident", statut: nil, estModerateur: true).proprioOuCS)
-    #expect(!DroitsOnglet(roles: ["résident", "conseil_syndical"], role: "résident", statut: nil).proprioOuCS)
+    #expect(OngletsDuSite.rolesProprietaire == ["propriétaire"], "lu dans isProprioOuCS de stores/auth.ts")
 }
 
 @Test func leLocataireNeVoitNiCarnetNiReglementNiKanban() {

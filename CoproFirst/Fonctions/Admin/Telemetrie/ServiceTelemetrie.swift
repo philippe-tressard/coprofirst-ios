@@ -8,7 +8,8 @@ import Foundation
 /// d'une vue, avec ou sans le gestionnaire du site. Réservé à l'administration
 /// (`require_admin`). Réalisé par `ServiceAPI` (client généré) et `ServiceSimule`.
 protocol ServiceTelemetrie: Sendable {
-    /// GET /telemetry/dashboard → `TableauTelemetrie` (typé depuis le contrat 1.16.0, #87).
+    /// GET /telemetry/dashboard → `TableauTelemetrie` (typé depuis le contrat 1.16.0,
+    /// coprofirst#2618).
     func tableauTelemetrie(
         _ installation: Installation, portee: PorteeTelemetrie, sansGestionnaire: Bool
     ) async throws -> TableauTelemetrie
@@ -39,9 +40,9 @@ struct TableauTelemetrie: Hashable, Sendable {
 
     /// Les nombres clés : ils changent avec la vue, chacun se lit seul.
     struct Indicateurs: Hashable, Sendable {
-        var vues: Int
+        var vues: Int?
         var utilisateurs: Int?
-        var pages: Int
+        var pages: Int?
         var heurePointe: String?
         var moyVuesUtilisateur: Double?
         var moyVuesJour: Double?
@@ -95,24 +96,14 @@ struct TableauTelemetrie: Hashable, Sendable {
     }
 }
 
+// MARK: - Lu du type généré
+
 extension TableauTelemetrie {
-    /// Le tableau servi, par son type GÉNÉRÉ — le même branchement pour le service réel
-    /// et l'API simulée.
     init(_ lu: Components.Schemas.TableauTelemetrie) {
-        let filtre = lu.filtreGestionnaire
         self.init(
-            scope: lu.scope, kpi: Indicateurs(lu.kpi),
-            chart: lu.chart.map { Baton(label: $0.label, total: $0.total, uniques: $0.uniques) },
-            chartLabel: lu.chartLabel,
-            topPages: lu.topPages.map { PageVue(page: $0.page, total: $0.total, uniques: $0.uniques) },
-            topUsers: lu.topUsers.map {
-                UtilisateurActif(
-                    nom: $0.nom, statut: $0.statut, total: $0.total, pages: $0.pages,
-                    derniereConnexion: $0.derniereConnexion)
-            },
-            filtreGestionnaire: FiltreGestionnaire(
-                propose: filtre.propose, gestionnaireDesigne: filtre.gestionnaireDesigne, applique: filtre.applique,
-                nonDistingueJusquAu: filtre.nonDistingueJusquAu))
+            scope: lu.scope, kpi: Indicateurs(lu.kpi), chart: lu.chart.map(Baton.init), chartLabel: lu.chartLabel,
+            topPages: lu.topPages.map(PageVue.init), topUsers: lu.topUsers.map(UtilisateurActif.init),
+            filtreGestionnaire: FiltreGestionnaire(lu.filtreGestionnaire))
     }
 }
 
@@ -129,7 +120,28 @@ extension TableauTelemetrie.Indicateurs {
 }
 
 extension TableauTelemetrie.Record {
-    init(_ lu: Components.Schemas.Record) {
-        self.init(uniques: lu.uniques, jour: lu.jour, mois: lu.mois)
+    init(_ lu: Components.Schemas.Record) { self.init(uniques: lu.uniques, jour: lu.jour, mois: lu.mois) }
+}
+
+extension TableauTelemetrie.Baton {
+    init(_ lu: Components.Schemas.Baton) { self.init(label: lu.label, total: lu.total, uniques: lu.uniques) }
+}
+
+extension TableauTelemetrie.PageVue {
+    init(_ lu: Components.Schemas.PageTop) { self.init(page: lu.page, total: lu.total, uniques: lu.uniques) }
+}
+
+extension TableauTelemetrie.UtilisateurActif {
+    init(_ lu: Components.Schemas.UtilisateurTop) {
+        self.init(
+            nom: lu.nom, statut: lu.statut, total: lu.total, pages: lu.pages, derniereConnexion: lu.derniereConnexion)
+    }
+}
+
+extension TableauTelemetrie.FiltreGestionnaire {
+    init(_ lu: Components.Schemas.FiltreGestionnaire) {
+        self.init(
+            propose: lu.propose, gestionnaireDesigne: lu.gestionnaireDesigne, applique: lu.applique,
+            nonDistingueJusquAu: lu.nonDistingueJusquAu)
     }
 }

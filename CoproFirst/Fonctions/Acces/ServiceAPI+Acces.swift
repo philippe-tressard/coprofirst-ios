@@ -19,7 +19,8 @@ extension ServiceAPI: ServiceAcces {
 
     func monBail(_ installation: Installation) async throws -> BailDuLocataire? {
         do {
-            switch try await client(installation.adresse).getBailleurMonBail() {
+            let sortie = try await client(installation.adresse).getBailleurMonBail()
+            switch sortie {
             case .ok(let ok): return BailDuLocataire(try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _):
@@ -41,13 +42,15 @@ extension ServiceAPI: ServiceAcces {
     func baux(_ installation: Installation, tous: Bool) async throws -> [Bail] {
         let client = client(installation.adresse)
         if tous {
-            switch try await appeler({ try await client.getBailleurTousLesBaux() }) {
+            let sortie = try await appeler { try await client.getBailleurTousLesBaux() }
+            switch sortie {
             case .ok(let ok): return try ok.body.json.map(Bail.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.getBailleurMesBaux() }) {
+        let sortie = try await appeler { try await client.getBailleurMesBaux() }
+        switch sortie {
         case .ok(let ok): return try ok.body.json.map(Bail.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -153,8 +156,7 @@ extension ServiceAPI: ServiceAcces {
 }
 
 extension Bail {
-    /// Le bail servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée.
+    /// Un bail servi — le MÊME branchement pour le service réel et l'API simulée.
     init(_ bail: Components.Schemas.BailOut) {
         self.init(
             id: bail.id, lotId: bail.lotId, statut: bail.statut.rawValue, locataireId: bail.locataireId,
@@ -162,7 +164,7 @@ extension Bail {
             locataireEmail: bail.locataireEmail, locataireTelephone: bail.locataireTelephone,
             dateEntree: bail.dateEntree, dateSortiePrevue: bail.dateSortiePrevue,
             dateSortieReelle: bail.dateSortieReelle, notes: bail.notes,
-            objets: (bail.objets ?? []).map(ObjetRemis.init), locataireNomAffiche: bail.locataireNomAffiche)
+            objets: (bail.objets ?? []).map(ObjetRemis.init), locataireNomServi: bail.locataireNomAffiche)
     }
 }
 
@@ -205,15 +207,16 @@ extension AccesDetenu {
 }
 
 extension BailDuLocataire {
-    /// Le bail servi, par son type GÉNÉRÉ — l'étage en clair (#127) et le nom affiché du
-    /// bailleur (#135) compris ; le même branchement pour le service réel et l'API simulée.
+    /// Le bail servi, l'étage en clair (#127) et le nom affiché du bailleur (#135) compris
+    /// — le MÊME branchement pour le service réel et l'API simulée.
     init(_ bail: Components.Schemas.BailLocataireOut) {
         self.init(
             id: bail.id, statut: bail.statut.rawValue, lotBatimentNom: bail.lotBatimentNom,
             lotNumero: bail.lotNumero, lotType: bail.lotType, lotTypeAppartement: bail.lotTypeAppartement,
             lotEtage: bail.lotEtage, lotSuperficie: bail.lotSuperficie, dateEntree: bail.dateEntree,
-            dateSortiePrevue: bail.dateSortiePrevue, bailleurEmail: bail.bailleurEmail,
+            dateSortiePrevue: bail.dateSortiePrevue, bailleurPrenom: bail.bailleurPrenom,
+            bailleurNom: bail.bailleurNom, bailleurEmail: bail.bailleurEmail,
             bailleurTelephone: bail.bailleurTelephone, lotEtageLibelle: bail.lotEtageLibelle,
-            nomBailleur: bail.bailleurNomAffiche)
+            bailleurNomServi: bail.bailleurNomAffiche)
     }
 }

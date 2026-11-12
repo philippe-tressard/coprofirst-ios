@@ -61,7 +61,9 @@ struct FicheUtilisateurAdmin: View {
             gestes(compte, nom)
             Section {
                 RenvoiAuSite(
-                    texte: TextesUtilisateursAdmin.surLeSite, onglet: "utilisateurs",
+                    texte: compte.gestesRoles == nil
+                        ? TextesUtilisateursAdmin.surLeSite : TextesUtilisateursAdmin.surLeSiteSansRoles,
+                    onglet: "utilisateurs",
                     adresse: contexte.installation.adresse)
             }
         }
@@ -127,7 +129,7 @@ struct FicheUtilisateurAdmin: View {
         Section(TextesUtilisateursAdmin.communaute) {
             ligne(TextesUtilisateursAdmin.communaute, etatCommunaute(compte.ban))
             if droits.administrateur {
-                let banni = compte.ban.banni
+                let banni = compte.ban.banni()
                 Button {
                     geste {
                         PhraseAvis(texte: try await etat.basculerCommunaute(compte, service, contexte.installation))
@@ -143,8 +145,9 @@ struct FicheUtilisateurAdmin: View {
         }
         let parExploitant = compte.operateurDesigneParLExploitant(
             instanceCommune: contexte.installation.operateurParExploitant == true)
-        if !compte.gestesRoles.isEmpty || parExploitant {
-            GestesRolesCompte(gestes: compte.gestesRoles, parExploitant: parExploitant) { roleAConfirmer = $0 }
+        let roles = compte.gestesRoles ?? []
+        if !roles.isEmpty || parExploitant {
+            GestesRolesCompte(gestes: roles, parExploitant: parExploitant) { roleAConfirmer = $0 }
         }
         if (droits.cs || droits.administrateur) && compte.actif && !compte.aDesLots {
             Section {
@@ -168,7 +171,7 @@ struct FicheUtilisateurAdmin: View {
 
     private func etatCommunaute(_ ban: BanCommunaute) -> String {
         if ban.interdit { return TextesUtilisateursAdmin.banniPourDeBon }
-        if ban.banni, let fin = ban.jusquAu { return TextesUtilisateursAdmin.banniJusquAu(FormatsDuSite.date(fin)) }
+        if ban.banni(), let fin = ban.jusquAu { return TextesUtilisateursAdmin.banniJusquAu(FormatsDuSite.date(fin)) }
         return TextesUtilisateursAdmin.autorisee
     }
 

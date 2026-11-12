@@ -111,15 +111,15 @@ struct Bail: Hashable, Sendable, Identifiable {
     var dateSortieReelle: String?
     var notes: String?
     var objets: [ObjetRemis]
-    /// « Prénom NOM » du locataire, tel que le serveur l'affiche (`locataire_nom_affiche`,
-    /// #135) — vide pour un bail sans nom de locataire.
-    var locataireNomAffiche: String
+    /// `locataire_nom_affiche` servi (contrat 1.25.0, #135).
+    var locataireNomServi: String?
 
     /// `bailEnCours`, `front/src/lib/bail.ts`.
     var enCours: Bool { statut == "actif" || statut == "en_cours_sortie" }
     var termine: Bool { statut == "termine" }
-    /// Le nom servi ; « — » quand le serveur n'en sert aucun.
-    var nomLocataire: String { locataireNomAffiche.nulSiVide ?? FormatsDuSite.tiret }
+    var nomLocataire: String {
+        FormatsDuSite.nom(affiche: locataireNomServi, prenom: locatairePrenom, nom: locataireNom)
+    }
     /// Le regroupement du site : un même locataire, ou ce bail seul (`ext_<id>`).
     var cleLocataire: String { locataireId.map { "\($0)" } ?? "ext_\(id)" }
 }
@@ -148,12 +148,17 @@ struct BailDuLocataire: Hashable, Sendable {
     var lotSuperficie: Double?
     var dateEntree: String
     var dateSortiePrevue: String?
+    var bailleurPrenom: String
+    var bailleurNom: String
     var bailleurEmail: String?
     var bailleurTelephone: String?
-    /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`, #127).
+    /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure : le nombre, comme avant.
     var lotEtageLibelle: String?
-    /// « Prénom NOM » du bailleur, tel que le serveur l'affiche (`bailleur_nom_affiche`, #135).
-    var nomBailleur: String
+    /// `bailleur_nom_affiche` servi (contrat 1.25.0, #135).
+    var bailleurNomServi: String?
+
+    var nomBailleur: String { FormatsDuSite.nom(affiche: bailleurNomServi, prenom: bailleurPrenom, nom: bailleurNom) }
 }
 
 /// Une demande d'accès (`CommandeAccesCreate`).

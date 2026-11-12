@@ -34,18 +34,10 @@ struct CategorieFAQ: Hashable, Sendable, Identifiable {
 }
 
 /// Ce que l'écran de la FAQ demande à une installation (#14) : la lecture seule.
-/// La rédaction reste au site ; le serveur dit à qui il l'ouvre.
+/// La rédaction (conseil syndical) reste au site.
 protocol ServiceFAQ: Sendable {
     /// GET /faq : les questions actives.
     func questionsFAQ(_ installation: Installation) async throws -> [QuestionFAQ]
-    /// GET /faq/gestes → `GestesFaq.peut_rediger` : ce lecteur rédige-t-il la FAQ (#87) ?
-    func peutRedigerLaFAQ(_ installation: Installation) async throws -> Bool
-}
-
-/// La FAQ lue : ses catégories, et le droit SERVI de la rédiger.
-struct FAQLue: Hashable, Sendable {
-    var categories: [CategorieFAQ]
-    var peutRediger = false
 }
 
 extension Parcours {
@@ -68,23 +60,11 @@ extension ServiceAPI: ServiceFAQ {
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
-
-    func peutRedigerLaFAQ(_ installation: Installation) async throws -> Bool {
-        switch try await appeler({ try await client(installation.adresse).getFaqGestes() }) {
-        case .ok(let ok): return try ok.body.json.peutRediger
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-        }
-    }
 }
 
 #if DEBUG
 /// Des questions inventées, pour les aperçus, les tests et les captures.
 extension ServiceSimule: ServiceFAQ {
-    func peutRedigerLaFAQ(_ installation: Installation) async throws -> Bool {
-        try FixturesGestesServis.peutRedigerLaFAQ(moderateur: profilSimule.estModerateur ?? false)
-    }
-
     func questionsFAQ(_ installation: Installation) async throws -> [QuestionFAQ] {
         try await Task.sleep(for: .milliseconds(400))
         return [

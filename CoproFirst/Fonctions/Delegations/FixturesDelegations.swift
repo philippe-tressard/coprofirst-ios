@@ -32,41 +32,38 @@ enum FixturesDelegations {
         ]
         """#
 
-    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, les champs que le contrat exige.
+    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, les champs que le contrat exige ;
+    /// le conseil syndical qui lit n'a aucun geste de rôle (`gestes_roles`, contrat 1.18.0).
     static let utilisateurs = #"""
         [
           {"id": 3, "prenom": "Lucie", "nom": "Exemple",
-           "nom_affiche": "Lucie EXEMPLE", "nom_aide_affiche": "",
-           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "email": "lucie@exemple.fr", "actif": true,
+           "nom_affiche": "Lucie EXEMPLE", "email": "lucie@exemple.fr", "actif": true,
            "role": "propriétaire", "statut": "copropriétaire_résident", "cree_le": "2025-03-02T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": true, "has_tc": false,
-           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "non"}},
+           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "non"},
+           "nom_aide_affiche": "", "gestes_roles": {"admin": null, "conseil_syndical": null, "operateur": null}},
           {"id": 4, "prenom": "Marc", "nom": "Démo",
-           "nom_affiche": "Marc DÉMO", "nom_aide_affiche": "",
-           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "email": "marc@exemple.fr", "actif": true,
+           "nom_affiche": "Marc DÉMO", "email": "marc@exemple.fr", "actif": true,
            "role": "propriétaire", "statut": "copropriétaire_résident", "cree_le": "2025-04-12T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": false, "has_tc": false,
-           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "non", "tc": "non"}},
+           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "non", "tc": "non"},
+           "nom_aide_affiche": "", "gestes_roles": {"admin": null, "conseil_syndical": null, "operateur": null}},
           {"id": 7, "prenom": "Camille", "nom": "Essai",
-           "nom_affiche": "Camille ESSAI", "nom_aide_affiche": "",
-           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "email": "camille@exemple.fr", "actif": true,
+           "nom_affiche": "Camille ESSAI", "email": "camille@exemple.fr", "actif": true,
            "role": "conseil_syndical", "statut": "copropriétaire_résident", "cree_le": "2024-09-01T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": true, "has_tc": true,
-           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "oui"}},
+           "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "oui"},
+           "nom_aide_affiche": "", "gestes_roles": {"admin": null, "conseil_syndical": null, "operateur": null}},
           {"id": 9, "prenom": "Paul", "nom": "Fictif",
-           "nom_affiche": "Paul FICTIF", "nom_aide_affiche": "",
-           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "email": "paul@exemple.fr", "actif": false,
+           "nom_affiche": "Paul FICTIF", "email": "paul@exemple.fr", "actif": false,
            "role": "résident", "statut": "locataire", "cree_le": "2023-01-15T10:00:00",
            "onboarding_complete": false, "onboarding_etape": 1, "preferences_notifications": "{}",
            "has_lots": false, "has_bail": true, "has_vigik": false, "has_tc": false,
-           "etiquettes": {"loti": "non", "bail": "oui", "vigik": "non", "tc": "non"}}
+           "etiquettes": {"loti": "non", "bail": "oui", "vigik": "non", "tc": "non"},
+           "nom_aide_affiche": "", "gestes_roles": {"admin": null, "conseil_syndical": null, "operateur": null}}
         ]
         """#
 

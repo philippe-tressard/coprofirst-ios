@@ -62,10 +62,14 @@ extension Delegation {
 /// Un compte qu'une délégation peut lier (`UtilisateurAdminRead`, champs lus).
 struct ResidentDelegable: Hashable, Sendable, Identifiable {
     let id: Int
+    var prenom: String?
+    var nom: String?
     var email: String
     var actif: Bool
-    /// « Prénom NOM », tel que le serveur l'affiche (`nom_affiche`, #135).
-    var nomAffiche: String
+    /// `nom_affiche` servi (contrat 1.25.0, #135).
+    var nomServi: String?
+
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// La saisie de « Nouvelle délégation » (`DelegationCreate`).
@@ -84,9 +88,10 @@ struct SaisieDelegation: Hashable, Sendable {
 }
 
 extension ResidentDelegable {
-    /// Le compte servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée.
+    /// Un compte servi, son nom affiché compris — le MÊME branchement pour le service réel
+    /// et l'API simulée.
     init(_ lu: Components.Schemas.UtilisateurAdminRead) {
-        self.init(id: lu.id, email: lu.email, actif: lu.actif, nomAffiche: lu.nomAffiche)
+        self.init(
+            id: lu.id, prenom: lu.prenom, nom: lu.nom, email: lu.email, actif: lu.actif, nomServi: lu.nomAffiche)
     }
 }

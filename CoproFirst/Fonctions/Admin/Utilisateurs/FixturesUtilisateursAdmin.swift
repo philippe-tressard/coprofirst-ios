@@ -13,8 +13,8 @@ import Foundation
 enum FixturesUtilisateursAdmin {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]` : le nom affiché, « Prénom NOM »
-    /// (#135), et les gestes de rôle d'un administrateur qui lit la liste — Camille est le
+    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, à la forme du serveur v3.89.0 :
+    /// le nom affiché, « Prénom NOM » (#135), et les gestes de rôle d'un administrateur qui lit la liste — Camille est le
     /// seul administrateur, son rôle Admin ne se retire pas ; un compte inactif n'a aucun
     /// geste ; Sacha, le compte technique de l'opérateur, n'en a aucun non plus : son rôle
     /// ne se retire pas d'ici (une instance commune, `-instance-commune`, #94).

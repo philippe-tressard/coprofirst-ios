@@ -11,10 +11,7 @@ fichier. Ce module est le SEUL à toucher coprofirst et coprofirst-site :
 - les fichiers lus : l'archive du tag servie par GitHub, dont l'en-tête pax porte le
   commit ; seuls les fichiers DÉCLARÉS (`SOURCES` des modules) en sont extraits — un
   module qui lit un fichier non déclaré échoue, la concordance ne le manque donc pas ;
-- les pièces jointes de la release : `openapi.json` (le contrat publié) et
-  `tables-clients.json` (les tables que le site publie pour ses clients, depuis
-  v3.88.0 — `tables_clients`, #128) : une table du site ne se cherche plus par motif
-  dans ses sources ;
+- les pièces jointes de la release (`openapi.json`, le contrat publié) ;
 - un fichier de coprofirst-site (le contenu de la vitrine, #51), lu à un COMMIT
   nommé par le générateur qui le lit (`fichier_du_site`) : un commit est immuable,
   comme une étiquette — jamais une branche ;
@@ -42,9 +39,6 @@ DEPOT_SITE = os.environ.get("COPROFIRST_SITE_DEPOT", "philippe-tressard/coprofir
 VERSION = re.compile(r"^v\d+\.\d+\.\d+$")
 CONTRAT = re.compile(r"^\d+\.\d+\.\d+$")
 COMMIT = re.compile(r"^[0-9a-f]{40}$")
-TABLES_CLIENTS = "tables-clients.json"
-# Le format de `tables-clients.json` que les générateurs savent lire : un autre est refusé.
-FORMAT_TABLES = 1
 
 
 class SourceIllisible(Exception):
@@ -142,28 +136,6 @@ class Version:
         if nom not in self._pieces:
             raise SourceIllisible(f"{self.etiquette} : la release ne joint pas {nom}")
         return _lire(self._pieces[nom])
-
-    def tables_clients(self) -> dict[str, dict]:
-        """Les tables publiées (`tables-clients.json`) : `{nom: {source, valeur}}`.
-
-        Une version qui ne joint pas le fichier (avant v3.88.0), un autre format, une
-        entrée sans `valeur` : illisible — jamais une table supposée."""
-        origine = f"{self.etiquette} : {TABLES_CLIENTS}"
-        try:
-            document = json.loads(self.piece_jointe(TABLES_CLIENTS))
-        except ValueError as erreur:
-            raise SourceIllisible(f"{origine} illisible ({erreur})") from erreur
-        if not isinstance(document, dict) or document.get("format") != FORMAT_TABLES:
-            lu = document.get("format") if isinstance(document, dict) else None
-            raise SourceIllisible(f"{origine} n'est pas au format {FORMAT_TABLES} (lu : {lu!r})")
-        tables = document.get("tables")
-        if not isinstance(tables, dict) or not tables:
-            raise SourceIllisible(f"{origine} ne porte aucune table")
-        sans_valeur = sorted(nom for nom, entree in tables.items()
-                             if not isinstance(entree, dict) or "valeur" not in entree or "source" not in entree)
-        if sans_valeur:
-            raise SourceIllisible(f"{origine} : entrée(s) sans `source` ou `valeur` — {', '.join(sans_valeur)}")
-        return tables
 
     def contrat(self) -> str:
         """La version du contrat publié (`info.version` de la pièce jointe `openapi.json`)."""

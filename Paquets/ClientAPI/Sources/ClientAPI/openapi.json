@@ -6861,6 +6861,148 @@
         "title": "DemandeSuppression",
         "type": "object"
       },
+      "DemandeSuppressionCreate": {
+        "properties": {
+          "mot_de_passe": {
+            "minLength": 1,
+            "title": "Mot De Passe",
+            "type": "string"
+          },
+          "motif": {
+            "maxLength": 1000,
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mot_de_passe"
+        ],
+        "title": "DemandeSuppressionCreate",
+        "type": "object"
+      },
+      "DemandeSuppressionEnAttente": {
+        "description": "Une demande de la file de l'administration : la demande, et qui la fait.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "motif": {
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          },
+          "traitee_le": {
+            "format": "date-time",
+            "title": "Traitee Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilisateur_email": {
+            "title": "Utilisateur Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilisateur_id": {
+            "title": "Utilisateur Id",
+            "type": "integer"
+          },
+          "utilisateur_nom": {
+            "title": "Utilisateur Nom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "statut",
+          "cree_le",
+          "utilisateur_id",
+          "utilisateur_nom"
+        ],
+        "title": "DemandeSuppressionEnAttente",
+        "type": "object"
+      },
+      "DemandeSuppressionRead": {
+        "description": "Une demande de suppression, telle que la personne et l'administration la lisent.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          },
+          "traitee_le": {
+            "format": "date-time",
+            "title": "Traitee Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "statut",
+          "cree_le"
+        ],
+        "title": "DemandeSuppressionRead",
+        "type": "object"
+      },
+      "DemandeSuppressionTraitee": {
+        "description": "`POST /admin/demandes-suppression/{id}/traiter` : le nouvel état, et la phrase à afficher.",
+        "properties": {
+          "annonce": {
+            "$ref": "#/components/schemas/Annonce"
+          },
+          "compte_efface": {
+            "title": "Compte Efface",
+            "type": "boolean"
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          }
+        },
+        "required": [
+          "statut",
+          "compte_efface",
+          "annonce"
+        ],
+        "title": "DemandeSuppressionTraitee",
+        "type": "object"
+      },
       "DemandeTarif": {
         "properties": {
           "modele": {
@@ -7857,6 +7999,31 @@
           "nombre"
         ],
         "title": "EtapeMoyenne",
+        "type": "object"
+      },
+      "EtatDemandeSuppression": {
+        "description": "`GET /auth/demande-suppression` : ma demande en cours (ou rien), et ce qu'il faut savoir avant.",
+        "properties": {
+          "consequences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Consequences",
+            "type": "array"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "demande": {
+            "$ref": "#/components/schemas/DemandeSuppressionRead"
+          }
+        },
+        "required": [
+          "consequences"
+        ],
+        "title": "EtatDemandeSuppression",
         "type": "object"
       },
       "EtatDescriptifLu": {
@@ -15799,6 +15966,15 @@
         "title": "StatutDemandeProfil",
         "type": "string"
       },
+      "StatutDemandeSuppression": {
+        "enum": [
+          "ouverte",
+          "traitee",
+          "retiree"
+        ],
+        "title": "StatutDemandeSuppression",
+        "type": "string"
+      },
       "StatutObjet": {
         "enum": [
           "en_possession",
@@ -19548,7 +19724,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "1.26.0"
+    "version": "1.27.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -21929,6 +22105,85 @@
           }
         },
         "summary": "Traiter Demande Profil",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/demandes-suppression": {
+      "get": {
+        "description": "Les demandes de suppression en cours, la plus ancienne d'abord.",
+        "operationId": "get_admin_demandes_suppression",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeSuppressionEnAttente"
+                  },
+                  "title": "Response Get Admin Demandes Suppression",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lister Demandes Suppression",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/demandes-suppression/{demande_id}/traiter": {
+      "post": {
+        "description": "Efface le compte qui l'a demandé (jamais en démonstration). 409 si elle n'est plus en cours.",
+        "operationId": "post_admin_demandes_suppression_demande_id_traiter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demande_id",
+            "required": true,
+            "schema": {
+              "title": "Demande Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeSuppressionTraitee"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Traiter Demande Suppression",
         "tags": [
           "admin"
         ]
@@ -24917,6 +25172,101 @@
           }
         },
         "summary": "Change Password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/demande-suppression": {
+      "delete": {
+        "description": "Je retire ma demande, tant qu'elle n'a pas été traitée. 404 s'il n'y en a pas.",
+        "operationId": "delete_auth_demande_suppression",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retirer Demande Suppression",
+        "tags": [
+          "auth"
+        ]
+      },
+      "get": {
+        "description": "Ma demande en cours (`demande` vide s'il n'y en a pas), le délai annoncé et ce qui sera effacé.",
+        "operationId": "get_auth_demande_suppression",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatDemandeSuppression"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ma Demande Suppression",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "description": "Demande la suppression de mon compte. 400 : mot de passe faux ; 409 : une demande est déjà en cours.",
+        "operationId": "post_auth_demande_suppression",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemandeSuppressionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeSuppressionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demander Suppression",
         "tags": [
           "auth"
         ]

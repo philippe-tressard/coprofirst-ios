@@ -4,19 +4,20 @@
 import ClientAPI
 import Foundation
 
-/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées, numéros
-/// servis (`telephones`, #125) et nom affiché des contacts (#135) compris.
+/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées.
 extension ServiceAPI: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         let client = client(installation.adresse)
         if archives {
-            switch try await appeler({ try await client.getPrestatairesArchives() }) {
+            let sortie = try await appeler { try await client.getPrestatairesArchives() }
+            switch sortie {
             case .ok(let ok): return try ok.body.json.map(Prestataire.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.getPrestataires() }) {
+        let sortie = try await appeler { try await client.getPrestataires() }
+        switch sortie {
         case .ok(let ok): return try ok.body.json.map(Prestataire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -101,8 +102,6 @@ extension ServiceAPI: ServicePrestataires {
 }
 
 extension Prestataire {
-    /// La fiche servie, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée.
     init(_ lu: Components.Schemas.PrestataireRead) {
         self.init(
             id: lu.id, nom: lu.nom, specialite: lu.specialite, type: lu.typePrestataire?.rawValue,
@@ -110,9 +109,8 @@ extension Prestataire {
             contacts: (lu.contacts ?? []).map {
                 ContactPrestataire(
                     prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email,
-                    nomAffiche: $0.nomAffiche.nulSiVide)
-            },
-            telephones: lu.telephones)
+                    nomServi: $0.nomAffiche)
+            }, telephones: lu.telephones)
     }
 }
 

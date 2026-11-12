@@ -38,9 +38,15 @@ struct ContactPrestataire: Hashable, Sendable {
     var fonction: String?
     var telephone: String?
     var email: String?
-    /// « Prénom NOM », tel que le serveur l'affiche (`nom_affiche` de `PrestataireContactLu`,
-    /// #135) ; `nil` pour un contact sans nom (le serveur sert alors `""`).
-    var nomAffiche: String?
+    /// `nom_affiche` servi (`PrestataireContactLu`, contrat 1.25.0, #135) ; `nil` d'une
+    /// installation antérieure.
+    var nomServi: String?
+
+    /// « Prénom NOM » servi ; à défaut, le repli. `nil` pour un contact sans nom.
+    var nomAffiche: String? {
+        let lu = FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom)
+        return lu == FormatsDuSite.tiret ? nil : lu
+    }
 }
 
 struct Prestataire: Hashable, Sendable, Identifiable {
@@ -54,7 +60,7 @@ struct Prestataire: Hashable, Sendable, Identifiable {
     var description: String?
     var contacts: [ContactPrestataire] = []
     /// Les numéros, un lien d'appel chacun : ceux que le serveur SERT, découpés et
-    /// dédoublonnés par lui (`telephones`, #125) — l'app ne découpe pas `telephone`.
+    /// dédoublonnés (`telephones`, contrat 1.20.0, #125).
     var telephones: [String] = []
 }
 

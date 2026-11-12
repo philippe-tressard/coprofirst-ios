@@ -119,16 +119,16 @@ import Testing
 @Test func colonneLibelleLieuEtGestesSontLusDansLAffaireServie() async throws {
     let json = #"""
         [{"id": 9, "numero": "TK-9", "titre": "Essai", "description": "", "categorie": "panne", "statut": "ouvert",
+          "suivi_actualite_libelle": "", "frequence_libelle": "",
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
           "categorie_libelle": "Panne (servie)", "statut_libelle": "Ouvert", "close": false,
           "colonne_kanban": "ag", "nouveau": false, "nom_proprietaire": "Camille Essai",
-          "perimetre_libelle": "Bât. 2 › Toit", "peut_deplacer_au_kanban": true, "peut_archiver": true,
-          "frequence_libelle": "", "suivi_actualite_libelle": ""},
+          "perimetre_libelle": "Bât. 2 › Toit", "peut_deplacer_au_kanban": true, "peut_archiver": true},
          {"id": 10, "numero": "TK-10", "titre": "Essai", "description": "", "categorie": "panne", "statut": "ouvert",
+          "suivi_actualite_libelle": "", "frequence_libelle": "",
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false, "categorie_libelle": "Panne",
           "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null, "nouveau": false,
-          "nom_proprietaire": "Camille Essai", "perimetre_libelle": "",
-          "frequence_libelle": "", "suivi_actualite_libelle": ""}]
+          "nom_proprietaire": "Camille Essai", "perimetre_libelle": ""}]
         """#
     let lues = try await client(servant: json).getTickets().ok.body.json.map(Affaire.init(ticket:))
     let servie = try #require(lues.first)
@@ -309,9 +309,10 @@ import Testing
     // « normale » peut être urgente : seul ce que le serveur sert compte.
     let json = #"""
         [{"id": 9, "numero": "TK-9", "titre": "Essai", "description": "", "categorie": "panne", "statut": "fermé",
+          "suivi_actualite_libelle": "", "frequence_libelle": "",
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": true, "categorie_libelle": "Panne",
           "statut_libelle": "Fermé", "close": false, "colonne_kanban": null, "nouveau": false,
-          "nom_proprietaire": "Camille Essai", "frequence_libelle": "", "suivi_actualite_libelle": ""}]
+          "nom_proprietaire": "Camille Essai"}]
         """#
     let lue = try #require(try await client(servant: json).getTickets().ok.body.json.first)
     let affaire = Affaire(ticket: lue)

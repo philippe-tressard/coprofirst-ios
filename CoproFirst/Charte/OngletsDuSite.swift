@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe tables-clients.json de la release (pages, rolesDuDroit, statutsDuProfil).
+// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), front/src/lib/pages.ts#PAGES, front/src/lib/roles.ts#ROLES_DU_DROIT, front/src/lib/roles.ts#STATUTS_DU_PROFIL (tables-clients.json).
 
 /// Les onglets de chaque page du site, dans leur ordre, avec leur réserve (#29).
 /// La règle qui en décide l'ouverture : `OngletsDuSite.ouverts` (Navigation/OngletsOuverts.swift).
@@ -73,8 +73,9 @@ enum OngletsDuSite {
     /// `ouvertOperateur`, s'il est opérateur.
     static let pagesReserveesAdmin: Set<String> = ["admin"]
 
-    /// Qui porte chaque droit : rôles (`ROLES_DU_DROIT`), statuts (`STATUTS_DU_PROFIL`).
-    /// « Modère » n'est pas ici : le serveur le sert (`est_moderateur`).
+    /// Qui porte chaque droit : rôles (`ROLES_DU_DROIT`, que lit `aRole` de `stores/auth.ts`),
+    /// statuts (`STATUTS_DU_PROFIL` de `roles.ts`). Le modérateur n'y est pas : il est servi
+    /// (`est_moderateur`) ; `isProprioOuCS` = un de `rolesProprietaire`, ou modérateur.
     static let rolesAdministrateur: Set<String> = ["admin"]
     static let rolesOperateur: Set<String> = ["operateur"]
     static let rolesProprietaire: Set<String> = ["propriétaire"]

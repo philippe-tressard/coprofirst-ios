@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; pièce jointe tables-clients.json de la release (categoriesTicket).
+// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; front/src/lib/tickets-categories.ts (CATEGORIES_TICKET).
 // swiftlint:disable line_length
 
 #if DEBUG

@@ -7,11 +7,11 @@ import Foundation
 #if DEBUG
 /// Les fiches que l'API simulée sert à « Prestataires » — en JSON, tel que GET
 /// /prestataires et /prestataires/archives les renvoient, lues par le type GÉNÉRÉ puis
-/// par le MÊME branchement que le service réel (`Prestataire(_:)`), et jugées contre le
+/// par le MÊME branchement que le service réel (`Prestataire.lus`), et jugées contre le
 /// contrat par `scripts/verifier-fixtures.py`.
 ///
-/// `telephones` (#125) : le contrôleur a saisi deux fois son numéro, le serveur n'en sert
-/// qu'un. Des entreprises inventées,
+/// À la forme du serveur v3.88.1 : `telephones` (contrat 1.20.0, #125) — le contrôleur
+/// a saisi deux fois son numéro, le serveur n'en sert qu'un. Des entreprises inventées,
 /// aucun nom de personne, des numéros de la plage réservée à la fiction (01 99 00 …).
 enum FixturesPrestataires {
     typealias Reponse = FixturesAcces.Reponse

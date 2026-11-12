@@ -9,22 +9,23 @@ import Foundation
 /// traitement. Réalisé par `ServiceAPI` (client généré) et `ServiceSimule`, dans ce
 /// dossier. Le serveur réserve les deux routes au conseil et à l'administration.
 protocol ServiceDemandesProfil: Sendable {
-    /// GET /admin/demandes-profil → `[DemandeProfilEnAttente]`.
+    /// GET /admin/demandes-profil → `[DemandeProfilEnAttente]` (typé depuis le contrat
+    /// 1.16.0, coprofirst#2618).
     func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil]
     /// POST /admin/demandes-profil/{id}/traiter — `approuver`, ou `rejeter` avec un motif.
-    /// Rend l'annonce SERVIE (`DemandeProfilTraitee.annonce`, #87) : l'app ne compose pas
-    /// la phrase d'un traitement.
+    /// Rend l'annonce SERVIE (`annonce`, contrat 1.16.0, #87) ; `nil` d'une installation
+    /// antérieure, qui ne la sert pas.
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis
+    ) async throws -> PhraseAvis?
 }
 
 extension ContexteOnglet {
     var serviceDemandesProfil: (any ServiceDemandesProfil)? { service as? any ServiceDemandesProfil }
 }
 
-/// Une demande de modification de profil en attente (`DemandeProfilEnAttente`) : la
-/// demande, et ce que la liste y ajoute (le demandeur, son statut et son bâtiment actuels).
+/// Une demande de modification de profil en attente : `DemandeModifRead` et ce que la
+/// liste y ajoute (le demandeur, son statut et son bâtiment actuels).
 struct DemandeProfil: Hashable, Sendable, Identifiable {
     let id: Int
     var utilisateurNom: String

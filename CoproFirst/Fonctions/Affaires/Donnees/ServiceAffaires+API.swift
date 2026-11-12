@@ -7,7 +7,8 @@ import Foundation
 /// Le menu Affaires par le client GÉNÉRÉ — aucune route écrite à la main.
 extension ServiceAPI: ServiceAffaires {
     func affaires(_ installation: Installation) async throws -> [Affaire] {
-        switch try await appeler({ try await client(installation.adresse).getTickets() }) {
+        let sortie = try await appeler { try await client(installation.adresse).getTickets() }
+        switch sortie {
         case .ok(let ok): return try ok.body.json.map(Affaire.init(ticket:))
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -77,15 +78,16 @@ extension ServiceAPI: ServiceAffaires {
     }
 
     func archiver(_ affaire: Affaire, dans installation: Installation) async throws -> Affaire {
-        Affaire(
+        var archivee = Affaire(
             ticket: try await modifierAffaire(
                 affaire.id, .init(archiveManuel: true), dans: installation, siInvalide: ErreurAffaires.saisieRefusee))
+        // La réponse du geste se lit sans son corps : la pastille reste celle qu'on lisait.
+        archivee.lecture = affaire.lecture
+        return archivee
     }
 }
 
 extension Affaire {
-    /// L'affaire servie, par son type GÉNÉRÉ (`TicketRead`), « qui la lit » comprise
-    /// (`lecture`, #129) — le même branchement pour le service réel et les tests.
     init(ticket: Components.Schemas.TicketRead) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
@@ -96,15 +98,16 @@ extension Affaire {
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],
             prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],
             lieu: ticket.lieuServi, messages: nil, colonne: ticket.colonneKanban,
-            peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false,
-            lecture: ticket.lecture.map(Lecture.init))
+            peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false)
+        // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
+        lecture = ticket.lecture.map(Lecture.init)
     }
 }
 
 extension Components.Schemas.TicketRead {
     /// Le lieu que le serveur SERT (`perimetre_libelle`) : vide pour le périmètre par
     /// défaut, qu'il tait — l'app ne recompose pas l'arbre des périmètres.
-    var lieuServi: String? { LieuServi.lieu(perimetreLibelle) }
+    var lieuServi: String? { perimetreLibelle.flatMap { $0.isEmpty ? nil : $0 } }
 }
 
 /// Ce qu'un geste du menu peut rencontrer, en une phrase.

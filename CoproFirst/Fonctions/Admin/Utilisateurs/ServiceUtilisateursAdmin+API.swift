@@ -4,8 +4,8 @@
 import ClientAPI
 import Foundation
 
-/// « Utilisateurs » par le client GÉNÉRÉ : chaque réponse se lit par son type, gestes de
-/// rôle et bannissement compris (`gestes_roles`, `communaute_banni`, #89).
+/// « Utilisateurs » par le client GÉNÉRÉ : chaque réponse se lit par son type
+/// (`gestes_roles`, `communaute_banni` au contrat depuis 1.18.0, #89).
 extension ServiceAPI: ServiceUtilisateursAdmin {
     func utilisateurs(_ installation: Installation) async throws -> [UtilisateurAdmin] {
         let sortie = try await appeler { try await client(installation.adresse).getAdminUtilisateurs() }

@@ -12,8 +12,9 @@ import OpenAPIRuntime
 /// sert son libellé (`utils/echeance_affaire`) ; l'app l'affiche tel quel
 /// (`standards/09` §8). Elle ne formate que les deux dates (`FormatsDuSite.jourCourt`).
 ///
-/// Lu dans `meta.affaire` de GET /flux, un dictionnaire libre du contrat : sans `fin` ni
-/// `echeance` (une affaire non datée), pas d'échéance.
+/// Lu dans `meta.affaire` de GET /flux. Un serveur antérieur à v3.79.0 (contrat
+/// 1.14.0 de la démo) n'y met ni `fin` ni `echeance` : pas d'échéance, et la carte
+/// reste telle qu'avant.
 struct EcheanceDuFil: Hashable, Sendable {
     /// « J-8 », « Jour J », « En cours », « Passé » — tel que servi ; `nil` pour une
     /// affaire close : la date seule dit quand c'était prévu.

@@ -4,17 +4,13 @@
 
 Chaque module (hors `_*`) déclare :
 
-- `SOURCES` : les fichiers de l'ARCHIVE de coprofirst qu'il lit encore, relatifs à la
-  racine du dépôt (`api/app/utils/avis.py`) — seuls ceux-là sont extraits de la version
-  lue. Une table du site n'en fait plus partie : elle se lit dans la pièce jointe
-  `tables-clients.json` (#128) ; un fichier de `front/` n'est admis que s'il est déclaré
-  dans `_tables.HORS_TABLES`, avec sa raison ;
-- `generer(ctx) -> str` : il lit une table du site par `ctx.table(nom, forme)` — absente
-  ou d'une autre forme, la génération s'arrête —, un fichier de l'archive par `ctx.lire`,
-  écrit par `ctx.ecrire`, date par `ctx.entete`, et rend une phrase de bilan.
+- `SOURCES` : les fichiers de coprofirst qu'il lit, relatifs à la racine du dépôt
+  (`front/src/lib/pages.ts`) — seuls ceux-là sont extraits de la version lue ;
+- `generer(ctx) -> str` : il lit par `ctx.lire` (ou sous `ctx.front`), écrit par
+  `ctx.ecrire`, date par `ctx.entete`, et rend une phrase de bilan.
 
-Un module peut aussi déclarer `PIECES_JOINTES` (les autres fichiers joints à la release
-qu'il lit par `ctx.version.piece_jointe` : `openapi.json`).
+Un module peut aussi déclarer `PIECES_JOINTES` (les fichiers joints à la release
+qu'il lit par `ctx.version.piece_jointe`).
 
 Aucun module ne lit coprofirst autrement que par `ctx` : `_source.py` seul y touche,
 à une version publiée (`verifier-depot.sh` refuse le reste). `scripts/generer.py` les

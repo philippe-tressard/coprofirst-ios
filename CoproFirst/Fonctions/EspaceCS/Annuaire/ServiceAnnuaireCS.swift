@@ -108,8 +108,8 @@ struct Rapprochement: Hashable, Sendable {
     /// Le NUMÉRO du bâtiment (« A »).
     var batimentNom: String?
     var etage: Int?
-    /// L'étage en clair (« 1er étage »), tel que le serveur le sert (`etage_libelle`, #127) ;
-    /// `nil` quand il n'y a pas d'étage à dire (le serveur sert alors `""`).
+    /// L'étage en clair (« 1er étage »), tel que le serveur le sert (`etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` quand il est vide (aucun logement).
     var etageLibelle: String?
 }
 
@@ -262,8 +262,6 @@ extension MembreSyndic {
 }
 
 extension Rapprochement {
-    /// Le rapprochement servi, par son type GÉNÉRÉ — le même branchement pour le service
-    /// réel et l'API simulée.
     init(_ lu: Components.Schemas.Rapprochement) {
         self.init(
             userId: lu.userId, batimentId: lu.batimentId, batimentNom: lu.batimentNom, etage: lu.etage,

@@ -31,24 +31,26 @@ extension ContexteOnglet {
 /// Un compte en attente de validation (`UserRead`, ce que la carte en montre).
 struct CompteEnAttente: Hashable, Sendable, Identifiable {
     let id: Int
+    var prenom: String
+    var nom: String
     var statut: String
     /// Le bâtiment tel que le serveur le nomme.
     var batimentNom: String?
+    /// L'aidé, pour un compte d'aidant ou de mandataire.
+    var prenomAide: String?
+    var nomAide: String?
     var creeLe: Date
-    /// « Prénom NOM », tel que le serveur l'affiche (`nom_affiche`, #135).
-    var nomAffiche: String
-    /// La personne aidée d'un compte d'aidant ou de mandataire, nommée de même
-    /// (`nom_aide_affiche`) — `nil` sans elle : le serveur sert alors `""`.
-    var nomAideAffiche: String?
-}
+    /// `nom_affiche` et `nom_aide_affiche` servis (contrat 1.25.0, #135) ; `nil` d'une
+    /// installation antérieure.
+    var nomServi: String?
+    var nomAideServi: String?
 
-extension CompteEnAttente {
-    /// Le compte servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée.
-    init(_ lu: Components.Schemas.UserRead) {
-        self.init(
-            id: lu.id, statut: lu.statut.rawValue, batimentNom: lu.batimentNom, creeLe: lu.creeLe,
-            nomAffiche: lu.nomAffiche, nomAideAffiche: lu.nomAideAffiche.nulSiVide)
+    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
+    /// La personne aidée, nommée de même — `nil` sans elle.
+    var nomAideAffiche: String? {
+        guard prenomAide != nil || nomAide != nil else { return nil }
+        return FormatsDuSite.nom(affiche: nomAideServi, prenom: prenomAide, nom: nomAide)
     }
 }
 

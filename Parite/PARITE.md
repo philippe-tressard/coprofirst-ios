@@ -98,7 +98,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
-| `profil` | — | fait | #14 | Sous « Plus », saisie d'une affaire comprise (#69) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
+| `profil` | — | fait | #14, #166 | Sous « Plus », saisie d'une affaire comprise (#69), demande de suppression du compte (#166) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
 | `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations

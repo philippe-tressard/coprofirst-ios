@@ -3,14 +3,15 @@
 """Les PICTOGRAMMES de la gouttière du fil, au trait, tels que le site les dessine.
 
 Le site dessine ses pictogrammes depuis un catalogue de tracés Lucide
-(`front/src/lib/icones-svg.json`, rendu avec les attributs de la table `attributsTrace` :
-grille de 24, trait de 1,5, bouts ronds). L'app les traduisait en SF Symbols pleins — une autre famille, un
+(`front/src/lib/icones-svg.json`, rendu par `Icon.svelte` : grille de 24, trait de
+1,5, bouts ronds). L'app les traduisait en SF Symbols pleins — une autre famille, un
 autre dessin (demande du 11/11/2026 : « les icônes du web sont à reprendre pour
 cette gouttière »).
 
 Ce module en extrait ceux que la gouttière d'une carte du fil peut montrer : le
-pictogramme de chaque rubrique (table `naturesDuFil`) et celui de chaque nature
-d'affaire (table `naturesAffaire`, `classeDuFlux` du site). Chacun
+pictogramme de chaque rubrique (`naturesDuFil`) et celui de chaque nature d'affaire
+(`naturesAffaire`, `classeDuFlux` du site), tables de `tables-clients.json` (#128), avec
+les attributs du trait (`attributsTrace`). Chacun
 devient une image vectorielle du catalogue `Pictogrammes.xcassets`, dans l'espace de
 noms `Lucide` (`Image("Lucide/wrench")`), rendue en modèle : la carte la teinte.
 
@@ -24,11 +25,13 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 
-from generateurs import affaires, charte
+from generateurs import charte
 from generateurs._commun import SIGNATURE
 
-# Le catalogue des tracés est déjà un JSON, hors des tables publiées (`_tables.HORS_TABLES`).
+# Le catalogue des tracés et les licences ne sont pas des tables : ils se lisent dans
+# l'archive. Le reste vient de `tables-clients.json` (#128).
 SOURCES = [
     "front/src/lib/icones-svg.json",
     "LICENSES/ISC.txt",
@@ -37,7 +40,7 @@ SOURCES = [
 
 CATALOGUE = pathlib.Path("CoproFirst/Ressources/Pictogrammes.xcassets")
 ESPACE = "Lucide"
-#: Les attributs du <svg> du site (`attributsTrace`), lus et non recopiés : le trait suit le site.
+#: Les attributs du <svg> (`attributsTrace`), lus et non recopiés : le trait suit le site.
 ATTRIBUTS = ("viewBox", "fill", "stroke-width", "stroke-linecap", "stroke-linejoin")
 
 
@@ -47,18 +50,22 @@ def _json(objet: dict) -> str:
 
 
 def attributs_du_site(ctx) -> str:
-    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels que le site les pose."""
-    lus = ctx.table("attributsTrace", {nom: str for nom in ATTRIBUTS})
-    illisibles = [nom for nom in ATTRIBUTS if not lus[nom] or any(c in lus[nom] for c in '"<>{}')]
-    if illisibles:
-        raise SystemExit(f"❌ attributsTrace : valeur inattendue pour {', '.join(illisibles)}")
-    return " ".join(f'{nom}="{lus[nom]}"' for nom in ATTRIBUTS)
+    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels qu'`Icon.svelte` les pose
+    (`attributsTrace`, publiée depuis `ATTRIBUTS_TRACE` d'`icones.ts`)."""
+    publies = ctx.table("attributsTrace")
+    lus = []
+    for nom in ATTRIBUTS:
+        valeur = publies.get(nom)
+        if not isinstance(valeur, str) or not re.fullmatch(r'[^"<>&{}]+', valeur):
+            raise SystemExit(f"❌ attributsTrace : l'attribut {nom} du <svg> est absent ou illisible ({valeur!r})")
+        lus.append(f'{nom}="{valeur}"')
+    return " ".join(lus)
 
 
 def noms(ctx) -> list[str]:
     """Les pictogrammes que la gouttière du fil peut montrer, triés."""
     rubriques = {icone for *_, icone in charte.natures_du_fil(ctx)}
-    natures = {n["icone"] for n in affaires.natures_d_affaire(ctx)}
+    natures = {n["icone"] for n in ctx.table("naturesAffaire")}
     return sorted(rubriques | natures)
 
 

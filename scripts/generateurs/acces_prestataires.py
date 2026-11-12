@@ -3,14 +3,14 @@
 """Les tables de « Mes lots & accès » et de « Prestataires » (#13).
 
 Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
-`TypePrestataire`) : les libellés et les teintes sont ceux que le site publie
-(`tables-clients.json`) :
+`TypePrestataire`) : les libellés et les teintes vivent dans le front du site, qui les
+publie dans `tables-clients.json` de chaque release (#128) :
 
-- le descriptif des onglets de `mon-lot` et `prestataires` (table `pages`) — les onglets
+- le descriptif des onglets de `mon-lot` et `prestataires` (`pages`) — les onglets
   eux-mêmes sont dans `Charte/OngletsDuSite.swift` (#30) ;
-- `statutsAcces` et `typesAcces` ;
-- l'état d'un bail (`etatsBail`) ;
-- `typesPrestataire` et `filtresContrat`.
+- `statutsAcces` et `typesAcces` (`types-acces.ts`) ;
+- l'état d'un bail (`etatsBail`, `ETATS_BAIL` de `bail.ts`) ;
+- `typesPrestataire` et `filtresContrat` (`prestataires.ts`).
 
 → `CoproFirst/Fonctions/Acces/Genere/TablesAcces.swift` et
 `CoproFirst/Fonctions/Prestataires/Genere/TablesPrestataires.swift`.
@@ -18,40 +18,43 @@ Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
 
 from __future__ import annotations
 
-from generateurs._commun import ATTRIBUTS, FONCTIONS, OPTION, chaine, couples, ecrire_table, page_du_site, teintes
-from generateurs._tables import source
+from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-SOURCES: list[str] = []
+SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas dans les sources
+
+
+def page(ctx, identifiant: str) -> dict:
+    return next(p for p in ctx.table("pages") if p["id"] == identifiant)
 
 
 def descriptifs(ctx, identifiant: str) -> str:
-    """Le descriptif de chaque onglet de la page (table `pages`). Les onglets eux-mêmes —
+    """Le descriptif de chaque onglet de la page (`pages`). Les onglets eux-mêmes —
     libellé, ordre, réserve — sont générés une fois pour toute l'app :
     `Charte/OngletsDuSite.swift` (#30)."""
-    onglets = page_du_site(ctx, identifiant).get("onglets") or []
-    if not onglets:
-        raise SystemExit(f"❌ la page {identifiant} n'a plus d'onglets dans la table « pages »")
-    lignes = "".join(f"        {chaine(o['id'])}: {chaine(o.get('descriptif', ''))},\n" for o in onglets)
+    lignes = "".join(
+        f"        {chaine(o['id'])}: {chaine(o.get('descriptif', ''))},\n" for o in page(ctx, identifiant)["onglets"])
     return (
         f"    /// Le descriptif de chaque onglet de la page `{identifiant}` (texte du site, parfois HTML).\n"
         "    static let descriptifs: [String: String] = [\n" + lignes + "    ]\n"
     )
 
 
-def options(ctx, table: str) -> list[tuple[str, str]]:
-    return [(e["val"], e["label"]) for e in ctx.table(table, [OPTION])]
+def teintes(nom: str, entrees: list[tuple[str, str, str]], doc: str) -> str:
+    lignes = "".join(f"        {chaine(c)}: LibelleTeinte({chaine(l)}, {chaine(b)}),\n" for c, l, b in entrees)
+    return f"    /// {doc}\n    static let {nom}: [String: LibelleTeinte] = [\n{lignes}    ]\n"
 
 
 def acces(ctx) -> str:
-    statuts = [(s["val"], s["label"], s["badge"]) for s in ctx.table("statutsAcces", [{**OPTION, "badge": str}])]
-    bail = ctx.table("etatsBail", ATTRIBUTS)
+    statuts = [(s["val"], s["label"], s["badge"]) for s in ctx.table("statutsAcces")]
+    types = "".join(f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in ctx.table("typesAcces"))
+    bail = ctx.table("etatsBail")
     return (
         descriptifs(ctx, "mon-lot")
-        + teintes("statutsAcces", "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).", statuts)
-        + couples("typesAcces", "Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).",
-                  options(ctx, "typesAcces"))
-        + teintes("statutsBail", "L'état d'un bail (`ETATS_BAIL`).",
-                  [(c, v["libelle"], v["badge"]) for c, v in bail.items()])
+        + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
+        + "    /// Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).\n"
+        "    static let typesAcces: [(code: String, libelle: String)] = [\n" + types + "    ]\n"
+        + teintes("statutsBail", [(c, v["libelle"], v["badge"]) for c, v in bail.items()],
+                  "L'état d'un bail (`ETATS_BAIL`).")
     )
 
 
@@ -59,20 +62,22 @@ def prestataires(ctx) -> str:
     types = "".join(
         f"        TypePrestataire(code: {chaine(t['val'])}, libelle: {chaine(t['label'])}, "
         f"description: {chaine(t['desc'])}),\n"
-        for t in ctx.table("typesPrestataire", [{**OPTION, "desc": str}]))
+        for t in ctx.table("typesPrestataire"))
+    filtres = "".join(f"        ({chaine(f['val'])}, {chaine(f['label'])}),\n" for f in ctx.table("filtresContrat"))
     return (
         descriptifs(ctx, "prestataires")
         + "    /// Les catégories de prestataires, dans l'ordre du site (`TYPES_PRESTATAIRE`).\n"
         "    static let types: [TypePrestataire] = [\n" + types + "    ]\n"
-        + couples("filtresContrat", "Le filtre « Contrat » (`FILTRES_CONTRAT`).", options(ctx, "filtresContrat"))
+        "    /// Le filtre « Contrat » (`FILTRES_CONTRAT`).\n"
+        "    static let filtresContrat: [(code: String, libelle: String)] = [\n" + filtres + "    ]\n"
     )
 
 
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Acces" / "Genere" / "TablesAcces.swift",
-                 source("pages", "statutsAcces", "typesAcces", "etatsBail"), "TablesAcces",
+                 ctx.provenance_tables("pages", "statutsAcces", "typesAcces", "etatsBail"), "TablesAcces",
                  "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx))
     ecrire_table(ctx, FONCTIONS / "Prestataires" / "Genere" / "TablesPrestataires.swift",
-                 source("pages", "typesPrestataire", "filtresContrat"), "TablesPrestataires",
+                 ctx.provenance_tables("pages", "typesPrestataire", "filtresContrat"), "TablesPrestataires",
                  "Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.", prestataires(ctx))
     return "accès, baux et prestataires"

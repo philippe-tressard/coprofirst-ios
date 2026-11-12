@@ -6,14 +6,14 @@ import Foundation
 
 #if DEBUG
 /// Ce que l'API simulée sert à « Maintenance » — en JSON, à la forme des routes : la
-/// santé et le dernier export, jugés contre leurs schémas.
+/// santé et le dernier export, chacun jugé contre son schéma.
 ///
 /// Tout est inventé : les nœuds s'appellent « nœud-a » et « nœud-b », aucune adresse,
 /// aucun nom de machine réel.
 enum FixturesMaintenance {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/maintenance/sante → `SanteMaintenance`.
+    /// GET /admin/maintenance/sante.
     static let sante = #"""
         {
          "taches": [

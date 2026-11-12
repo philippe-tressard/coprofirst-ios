@@ -1,19 +1,20 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""La CHARTE de ce que l'app affiche, hors couleurs — lue dans les tables que le site
-publie (`tables-clients.json`) :
+"""La CHARTE de ce que l'app affiche, hors couleurs — lue dans `tables-clients.json` de
+la release (#128), sauf l'API Python, que le fichier ne publie pas :
 
 - les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément
   (`naturesDuFil`) → `CoproFirst/Charte/NaturesDuFil.swift` ;
 - les STATUTS d'une affaire, leur pastille seule — le libellé est servi, #105
-  (`statutsTicket` et ses deux compléments, `statutsTicketHistoriques` et
+  (`statutsTicket` et ses deux compléments, `statutsTicketHistoriques`,
   `statutsTicketSansCycle`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
 - les RÔLES et STATUTS d'un utilisateur (`attributsRole`, `attributsStatut`,
   `libellesHerites`) et les rôles que l'en-tête de l'accueil met en avant
   (`rolesMisEnAvant`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
 - la LISTE BLANCHE du texte riche : balises et attributs (`balisesAdmises`,
-  `attributsAdmis`), schémas de lien (`SCHEMAS_URL` de `api/app/utils/html_sur.py`, dont
-  `BALISES` doit égaler les balises admises) → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
+  `attributsAdmis`), schémas de lien (`SCHEMAS_URL` de `api/app/utils/html_sur.py`, lu
+  par motif, dont `BALISES` doit égaler `balisesAdmises`)
+  → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
 - les MESURES du site que `Mise` confronte aux siennes (`MESURES`, jetons de longueur de
   `jetonsCharte`) → `CoproFirst/Charte/MesuresDuSite.swift` (#85).
 """
@@ -22,10 +23,9 @@ from __future__ import annotations
 
 import re
 
-from generateurs._commun import ATTRIBUTS, CHARTE, chaine, dictionnaire, jeton_de, jetons_de_la_charte, propriete
-from generateurs._tables import source
+from generateurs._commun import CHARTE, propriete
 
-# `html_sur.py` est un fichier de l'API : le site ne le publie pas en table (#128).
+# Seule l'API Python reste lue dans les sources : `tables-clients.json` ne publie que le front (#128).
 SOURCES = ["api/app/utils/html_sur.py"]
 
 # Les jetons de longueur du site qu'une mesure de l'app (`Mise`) confronte : jeton → nom
@@ -36,23 +36,38 @@ MESURES = {"radius": "rayon"}
 LONGUEUR = re.compile(r"^([0-9]*\.?[0-9]+)(rem|px)$")
 
 
+#: La teinte d'une nature du fil : un jeton de la charte, `var(--fil-rouge)`.
+JETON = re.compile(r"^var\(--([a-z0-9-]+)\)$")
+
+
+def _sources(ctx, *noms: str) -> str:
+    """L'en-tête « Source : » d'un fichier tiré de tables publiées."""
+    return ", ".join(ctx.source_table(nom) for nom in noms) + " (tables-clients.json)"
+
+
 def natures_du_fil(ctx) -> list[tuple[str, str, str, str, str]]:
-    """`(type, libelle, couleur, fond, icone)` de chaque rubrique de `naturesDuFil`, teintes
-    en jetons — lue ici seulement : `pictogrammes.py` en tire les pictogrammes à embarquer."""
-    table = ctx.table("naturesDuFil", {str: {"libelle": str, "couleur": str, "fond": str, "icone": str}})
-    return [(type_, n["libelle"], jeton_de(n["couleur"], f"naturesDuFil.{type_}.couleur"),
-             jeton_de(n["fond"], f"naturesDuFil.{type_}.fond"), n["icone"]) for type_, n in table.items()]
+    """`(type, libelle, couleur, fond, icone)` de chaque rubrique de `naturesDuFil` —
+    lue ici seulement : `pictogrammes.py` en tire les pictogrammes à embarquer."""
+    trouvees = []
+    for type_, n in ctx.table("naturesDuFil").items():
+        couleur, fond = (JETON.match(str(n.get(cle, ""))) for cle in ("couleur", "fond"))
+        if not couleur or not fond or not n.get("libelle") or not n.get("icone"):
+            raise SystemExit(f"❌ naturesDuFil : la rubrique {type_} n'a pas la forme attendue ({n!r})")
+        trouvees.append((type_, n["libelle"], couleur.group(1), fond.group(1), n["icone"]))
+    if not trouvees:
+        raise SystemExit("❌ naturesDuFil vide dans tables-clients.json")
+    return trouvees
 
 
 def natures(ctx) -> int:
     trouvees = natures_du_fil(ctx)
-    corps = ctx.entete(source("naturesDuFil"))
+    corps = ctx.entete(_sources(ctx, "naturesDuFil"))
     corps += "\n/// Ce que le fil montre de chaque type d'élément : libellé, teinte, pictogramme (Lucide).\n"
     corps += "enum NaturesDuFil {\n    static let parType: [String: NatureDuFil] = [\n"
     for type_, libelle, couleur, fond, icone in trouvees:
         corps += (
-            f"        {chaine(type_)}: NatureDuFil(libelle: {chaine(libelle)}, couleur: \\.{propriete(couleur)}, "
-            f"fond: \\.{propriete(fond)}, icone: {chaine(icone)}),\n"
+            f'        "{type_}": NatureDuFil(libelle: "{libelle}", couleur: \\.{propriete(couleur)}, '
+            f'fond: \\.{propriete(fond)}, icone: "{icone}"),\n'
         )
     corps += "    ]\n}\n"
     ctx.ecrire(CHARTE / "NaturesDuFil.swift", corps)
@@ -60,61 +75,63 @@ def natures(ctx) -> int:
 
 
 def statuts(ctx) -> int:
-    """La pastille des statuts du cycle, dans leur ordre, puis de ceux que le site garde hors
-    du cycle. Le LIBELLÉ d'un statut est servi (`statut_libelle`, #105) : seule la teinte se
-    génère."""
-    trouves = [(s["value"], s["badge"]) for s in ctx.table("statutsTicket", [{"value": str, "badge": str}])]
-    for complement in ("statutsTicketHistoriques", "statutsTicketSansCycle"):
-        trouves += [(code, s["badge"]) for code, s in ctx.table(complement, {str: {"badge": str}}).items()]
-    codes = [code for code, _ in trouves]
-    if len(set(codes)) != len(codes):
-        raise SystemExit(f"❌ un statut d'affaire est décrit deux fois dans les tables du site : {codes}")
-    corps = ctx.entete(source("statutsTicket", "statutsTicketHistoriques", "statutsTicketSansCycle"))
+    noms = ("statutsTicket", "statutsTicketHistoriques", "statutsTicketSansCycle")
+    cycle, historiques, sans_cycle = (ctx.table(nom) for nom in noms)
+    trouves = [(s["value"], s["badge"]) for s in cycle]
+    trouves += [(v, s["badge"]) for table in (historiques, sans_cycle) for v, s in table.items()]
+    if len(trouves) < 6:
+        raise SystemExit("❌ statutsTicket : moins de six statuts dans tables-clients.json")
+    corps = ctx.entete(_sources(ctx, *noms))
+    # Le LIBELLÉ d'un statut est servi (`statut_libelle`, #105) : seule la teinte se génère.
     corps += "\n/// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.\n"
     corps += "enum StatutsAffaire {\n    static let pastilles: [String: String] = [\n"
-    corps += "".join(f"        {chaine(v)}: {chaine(b)},\n" for v, b in trouves)
+    corps += "".join(f'        "{v}": "{b}",\n' for v, b in trouves)
     corps += "    ]\n}\n"
     ctx.ecrire(CHARTE / "StatutsAffaire.swift", corps)
     return len(trouves)
 
 
 def roles(ctx) -> int:
-    role, statut = ctx.table("attributsRole", ATTRIBUTS), ctx.table("attributsStatut", ATTRIBUTS)
-    herites = ctx.table("libellesHerites", {str: str})
-    en_avant = ctx.table("rolesMisEnAvant", [str])
-    inconnus = [r for r in en_avant if r not in role]
-    if inconnus:
-        raise SystemExit(f"❌ rolesMisEnAvant cite des rôles sans libellé : {inconnus}")
+    noms = ("attributsRole", "attributsStatut", "libellesHerites", "rolesMisEnAvant")
+    role, statut = ([(c, a["libelle"]) for c, a in ctx.table(nom).items()] for nom in noms[:2])
+    herites = list(ctx.table("libellesHerites").items())
+    en_avant = ctx.table("rolesMisEnAvant")
+    if len(role) < 4 or len(statut) < 4:
+        raise SystemExit("❌ attributsRole / attributsStatut : moins de quatre entrées dans tables-clients.json")
+    if not en_avant or not all(r in dict(role) for r in en_avant):
+        raise SystemExit(f"❌ rolesMisEnAvant : {en_avant!r} n'est pas une liste de rôles d'attributsRole")
 
-    corps = ctx.entete(source("attributsRole", "attributsStatut", "libellesHerites", "rolesMisEnAvant"))
+    def dico(nom: str, paires: list[tuple[str, str]]) -> str:
+        return f"    static let {nom}: [String: String] = [\n" + "".join(
+            f'        "{c}": "{l}",\n' for c, l in paires) + "    ]\n"
+
+    corps = ctx.entete(_sources(ctx, *noms))
     corps += "\n/// Les libellés des rôles et statuts d'un utilisateur, comme le site les écrit.\n"
     corps += "enum RolesUtilisateur {\n"
-    corps += dictionnaire("libellesRole", None, {c: r["libelle"] for c, r in role.items()})
-    corps += dictionnaire("libellesStatut", None, {c: s["libelle"] for c, s in statut.items()})
-    corps += dictionnaire("libellesHerites", None, herites)
+    corps += dico("libellesRole", role) + dico("libellesStatut", statut) + dico("libellesHerites", herites)
     corps += "    /// Les rôles que l'en-tête de l'accueil ajoute au statut, dans cet ordre.\n"
-    corps += "    static let misEnAvant: [String] = [" + ", ".join(chaine(r) for r in en_avant) + "]\n}\n"
+    corps += "    static let misEnAvant: [String] = [" + ", ".join(f'"{r}"' for r in en_avant) + "]\n}\n"
     ctx.ecrire(CHARTE / "RolesUtilisateur.swift", corps)
     return len(role) + len(statut)
 
 
 def balises(ctx) -> int:
-    tags, attrs = ctx.table("balisesAdmises", [str]), ctx.table("attributsAdmis", [str])
+    tags, attrs = ctx.table("balisesAdmises"), ctx.table("attributsAdmis")
     html_sur = ctx.lire(SOURCES[0])
     m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
     s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
     if not m or not s:
         raise SystemExit("❌ BALISES ou SCHEMAS_URL introuvable dans api/app/utils/html_sur.py")
     if set(re.findall(r'"([a-z0-9]+)"', m.group(1))) != set(tags):
-        raise SystemExit("❌ html_sur.BALISES diverge de la table balisesAdmises — à signaler à coprofirst")
+        raise SystemExit("❌ html_sur.BALISES diverge de balisesAdmises (ALLOWED_TAGS) — à signaler à coprofirst")
     schemas = sorted(re.findall(r'"([a-z]+)"', s.group(1)))
     if len(tags) < 10 or not schemas:
         raise SystemExit("❌ liste blanche du texte riche illisible")
 
     def ensemble(valeurs: list[str]) -> str:
-        return "[" + ", ".join(chaine(v) for v in valeurs) + "]"
+        return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
 
-    corps = ctx.entete(f"{source('balisesAdmises', 'attributsAdmis')} et api/app/utils/html_sur.py")
+    corps = ctx.entete(f"{_sources(ctx, 'balisesAdmises', 'attributsAdmis')} et {SOURCES[0]}")
     corps += "\n/// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).\n"
     corps += "enum BalisesDuSite {\n"
     corps += f"    static let balises: Set<String> = {ensemble(tags)}\n"
@@ -126,18 +143,19 @@ def balises(ctx) -> int:
 
 
 def mesures(ctx) -> int:
-    socle = jetons_de_la_charte(ctx)
-    corps = ctx.entete(f"{source('jetonsCharte')} — jetons de longueur")
+    jetons = ctx.table("jetonsCharte")
+    corps = ctx.entete(_sources(ctx, "jetonsCharte") + ", jetons de longueur")
     corps += "\nimport CoreGraphics\n\n"
     corps += "/// Les mesures du site que l'app confronte aux siennes (`Mise`, #85), en points\n"
     corps += "/// (1 rem = 16 pt). `MesuresTests` refuse un écart non déclaré.\n"
     corps += "enum MesuresDuSite {\n"
     for jeton, nom in MESURES.items():
-        m = LONGUEUR.match(socle.get(jeton, ""))
+        valeur = jetons.get(f"--{jeton}", "")
+        m = LONGUEUR.match(valeur)
         if not m:
-            raise SystemExit(f"❌ --{jeton} introuvable ou hors de rem/px dans jetonsCharte : {socle.get(jeton)!r}")
+            raise SystemExit(f"❌ --{jeton} introuvable ou hors de rem/px dans jetonsCharte : {valeur!r}")
         points = float(m.group(1)) * (16 if m.group(2) == "rem" else 1)
-        corps += f"    /// `--{jeton}: {socle[jeton]}`\n    static let {nom}: CGFloat = {points:g}\n"
+        corps += f"    /// `--{jeton}: {valeur}`\n    static let {nom}: CGFloat = {points:g}\n"
     corps += "}\n"
     ctx.ecrire(CHARTE / "MesuresDuSite.swift", corps)
     return len(MESURES)

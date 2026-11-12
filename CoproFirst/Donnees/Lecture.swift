@@ -5,12 +5,13 @@ import ClientAPI
 import Foundation
 
 /// « Qui la lit » : la pastille de lecture d'un contenu, telle que le serveur la SERT
-/// (`lecture`, coprofirst#2633, #129) — avec une affaire, une ligne du fil, une petite
-/// annonce, une idée, un sondage.
+/// (`lecture`, contrat 1.22.0, coprofirst#2633, #129) — avec une affaire, une ligne du
+/// fil, une petite annonce, une idée, un sondage.
 ///
 /// 🔴 L'app ne la recompose pas : qui lit dépend de la catégorie, de l'état, des
 /// Destinataires, du périmètre et de son arbre — la règle de `ticket_visible`, écrite
-/// au serveur seul (`standards/09` §8). Non servie : aucune pastille.
+/// au serveur seul (`standards/09` §8). Non servie (le champ est facultatif) : aucune
+/// pastille.
 struct Lecture: Codable, Hashable, Sendable {
     /// `tous`, `residents`, `coproprietaires`, `cs`, `concerne`, ou des codes joints par « + ».
     let cle: String
@@ -28,8 +29,8 @@ struct Lecture: Codable, Hashable, Sendable {
     let exclus: String
     /// Personne n'est exclu : rien sur la carte (`PastilleLecture` du site).
     let parDefaut: Bool
-    /// Ce qu'un formulaire doit dire en plus (`avertissement`) ; `nil` ou vide : rien. Le
-    /// `meta` du fil ne le sert pas toujours.
+    /// Ce qu'un formulaire doit dire en plus (`avertissement`, #129) ; `nil` ou vide : rien.
+    /// Le `meta` du fil ne le sert pas toujours.
     var avertissement: String?
 
     /// Ce que dit la bulle du site, et ce que VoiceOver lit : « Qui la lit : CS. Lue par
@@ -47,8 +48,7 @@ struct Lecture: Codable, Hashable, Sendable {
 }
 
 extension Lecture {
-    /// La pastille servie par une route TYPÉE (`Lecture` du contrat) — le fil, lui, la
-    /// relit de son `meta` libre (`MetaDuFil`), par le même modèle.
+    /// La pastille SERVIE, lue par le type généré (au plancher depuis le contrat 1.22.0).
     init(_ servie: Components.Schemas.Lecture) {
         self.init(
             cle: servie.cle, icones: servie.icones, court: servie.court, titre: servie.titre,
@@ -57,8 +57,8 @@ extension Lecture {
     }
 }
 
-/// Une valeur relue d'un JSON libre (`meta` du fil) qui ne fait pas échouer son
-/// conteneur : illisible, elle vaut `nil` — la ligne garde ses autres champs.
+/// Une valeur relue qui ne fait pas échouer son conteneur : illisible, elle vaut `nil`
+/// — la ligne garde ses autres champs.
 struct Tolere<Valeur: Decodable & Sendable>: Decodable, Sendable {
     let valeur: Valeur?
 

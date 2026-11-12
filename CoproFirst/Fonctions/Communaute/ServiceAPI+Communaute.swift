@@ -5,7 +5,9 @@ import ClientAPI
 import Foundation
 import OpenAPIRuntime
 
-/// La Communauté par le client GÉNÉRÉ : chaque réponse se lit par son type.
+/// La Communauté par le client GÉNÉRÉ. Idées et annonces n'ont pas de réponse typée
+/// dans le contrat : elles se relisent en miroir (`Relecture`) — besoin noté pour
+/// coprofirst#2460 (déclarer leurs `response_model`).
 extension ServiceAPI: ServiceCommunaute {
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
         let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
@@ -15,30 +17,32 @@ extension ServiceAPI: ServiceCommunaute {
             return MoiCommunaute(
                 id: moi.id, statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
                 motifRefus: moi.communauteMotifRefus.flatMap { $0.isEmpty ? nil : $0 },
-                estModerateur: moi.estModerateur ?? false)
+                estModerateur: moi.estModerateur)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
-        switch try await appeler({ try await client(installation.adresse).getSondages() }) {
-        case .ok(let ok): return try ok.body.json.map(SondageResume.init)
-        case .unprocessableContent: throw ErreurService.inattendue(422)
-        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
-        }
-    }
-
-    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool {
-        switch try await appeler({ try await client(installation.adresse).getSondagesGestes() }) {
-        case .ok(let ok): return try ok.body.json.peutCreer
+        let sortie = try await appeler { try await client(installation.adresse).getSondages() }
+        switch sortie {
+        case .ok(let ok):
+            return try ok.body.json.map {
+                var resume = SondageResume(
+                    id: $0.id, question: $0.question, description: $0.description, clotureLe: $0.clotureLe,
+                    cloture: $0.cloture ?? false, nbVotants: $0.nbVotants ?? 0, archivee: $0.archivee ?? false,
+                    creeLe: $0.creeLe)
+                (resume.lecture, resume.lieu) = ($0.lecture.map(Lecture.init), LieuServi.lieu($0.perimetreLibelle))
+                return resume
+            }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     func idees(_ installation: Installation) async throws -> [Idee] {
-        switch try await appeler({ try await client(installation.adresse).getIdees() }) {
+        let sortie = try await appeler { try await client(installation.adresse).getIdees() }
+        switch sortie {
         case .ok(let ok): return try ok.body.json.map(Idee.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -66,7 +70,8 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func annonces(_ installation: Installation) async throws -> [Annonce] {
-        switch try await appeler({ try await client(installation.adresse).getAnnonces() }) {
+        let sortie = try await appeler { try await client(installation.adresse).getAnnonces() }
+        switch sortie {
         case .ok(let ok): return try ok.body.json.map(Annonce.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -286,24 +291,15 @@ extension AvisResident {
 // Le contrat 1.5.0 type les idées et les annonces (`IdeeRead`, `AnnonceRead`) : elles se
 // lisent par leurs types générés — le client a déjà décodé leurs dates. Les relire par
 // `Relecture` réencodait ces dates en nombre (bogue du 06/11/2026). L'API simulée passe
-// par ces mêmes branchements (`FixturesCommunaute`). Qui les lit et leur lieu (`lecture`,
-// `perimetre_libelle`, #129, #130) se lisent de même, par le type généré.
+// par ces mêmes branchements (`FixturesCommunaute`). Qui les lit et leur lieu (#129,
+// #130) sont au contrat depuis 1.22.0 et 1.24.0 : lus par le type généré.
 extension Idee {
     init(_ lue: Components.Schemas.IdeeRead) {
         self.init(
             id: lue.id, titre: lue.titre, description: lue.description, auteurId: lue.auteurId, statut: lue.statut,
             creeLe: lue.creeLe, nbVotes: lue.nbVotes ?? 0, monVote: lue.monVote ?? false, archivee: lue.archivee,
-            reponses: lue.reponses?.map(ReponseCommunaute.init), lecture: lue.lecture.map(Lecture.init),
-            lieu: LieuServi.lieu(lue.perimetreLibelle))
-    }
-}
-
-extension SondageResume {
-    init(_ lu: Components.Schemas.SondageRead) {
-        self.init(
-            id: lu.id, question: lu.question, description: lu.description, clotureLe: lu.clotureLe,
-            cloture: lu.cloture ?? false, nbVotants: lu.nbVotants ?? 0, archivee: lu.archivee ?? false,
-            creeLe: lu.creeLe, lecture: lu.lecture.map(Lecture.init), lieu: LieuServi.lieu(lu.perimetreLibelle))
+            reponses: lue.reponses?.map(ReponseCommunaute.init))
+        (lecture, lieu) = (lue.lecture.map(Lecture.init), LieuServi.lieu(lue.perimetreLibelle))
     }
 }
 
@@ -315,7 +311,7 @@ extension Annonce {
             statut: lue.statut.rawValue, auteurPrenom: lue.auteurPrenom, auteurNom: lue.auteurNom,
             auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, peutSupprimer: lue.peutSupprimer ?? false,
             archivee: lue.archivee, creeLe: lue.creeLe,
-            reponses: lue.reponses?.map(ReponseCommunaute.init), lecture: lue.lecture.map(Lecture.init),
-            lieu: LieuServi.lieu(lue.perimetreLibelle))
+            reponses: lue.reponses?.map(ReponseCommunaute.init))
+        (lecture, lieu) = (lue.lecture.map(Lecture.init), LieuServi.lieu(lue.perimetreLibelle))
     }
 }

@@ -186,6 +186,8 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `postAuthChangePassword` | `OtherDataTypes` |
 | `patchAuthMe` | `Name` `EmailAddress` `PhoneNumber` `OtherDataTypes` |
 | `postAuthMeDemandeModification` | `OtherDataTypes` |
+| `postAuthDemandeSuppression` | `OtherDataTypes` |
+| `deleteAuthDemandeSuppression` | — |
 | `patchAuthMeOptOutTelemetrie` | `OtherDataTypes` |
 | `deleteAuthMeTelemetrie` | — |
 | `postAppareils` | `DeviceID` |

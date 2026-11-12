@@ -10,7 +10,8 @@ import Foundation
 /// MÊME branchement que le service réel (`DetailAffaire.lue`), et jugées contre le
 /// contrat par `scripts/verifier-fixtures.py`.
 ///
-/// Les droits sont ceux d'un RÉSIDENT : l'auteur de l'affaire 41, engagée chez le syndic, garde le crayon (`peut_corriger`) sans plus
+/// Les droits sont ceux d'un RÉSIDENT, à la forme du serveur v3.88.1 : l'auteur de
+/// l'affaire 41, engagée chez le syndic, garde le crayon (`peut_corriger`) sans plus
 /// corriger le contenu (`peut_modifier`, #127). Le conseil syndical reçoit les siens de
 /// `ServiceSimule.affaires(_:conseil:)`. Tout est inventé : aucun nom de personne.
 enum FixturesDetailAffaire {
@@ -34,7 +35,7 @@ enum FixturesDetailAffaire {
            "fichiers_urls": ["/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf",
                              "/uploads/tickets/41-consignes.txt"],
            "peut_repondre": true, "peut_modifier": false, "peut_corriger": true,
-           "frequence_libelle": "", "suivi_actualite_libelle": ""},
+           "suivi_actualite_libelle": "", "frequence_libelle": ""},
           {"id": 12, "numero": "A-0012", "titre": "Coupure d'eau jeudi de 9 h à 12 h",
            "description": "Le remplacement d'une vanne dans la cave du bâtiment A impose de couper l'eau froide et l'eau chaude jeudi matin, de 9 h à 12 h. Pensez à faire une réserve.",
            "categorie": "actualite", "categorie_libelle": "Actualité", "statut": "publie",
@@ -50,7 +51,7 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "ag", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-08T10:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_a"], "perimetre_libelle": "Bâtiment A", "peut_repondre": true,
-           "frequence_libelle": "", "suivi_actualite_libelle": ""},
+           "suivi_actualite_libelle": "", "frequence_libelle": ""},
           {"id": 31, "numero": "A-0031", "titre": "Portail du garage remis en service",
            "description": "La télécommande fonctionne de nouveau après le remplacement de la carte électronique.",
            "categorie": "panne", "categorie_libelle": "Panne", "statut": "résolu",
@@ -58,7 +59,7 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "termine", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-06T18:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["parking"], "perimetre_libelle": "Parking",
-           "frequence_libelle": "", "suivi_actualite_libelle": ""},
+           "suivi_actualite_libelle": "", "frequence_libelle": ""},
           {"id": 44, "numero": "A-0044", "titre": "Ramonage des conduits de cheminée",
            "description": "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits.",
            "categorie": "entretien", "categorie_libelle": "Entretien", "statut": "en_cours",
@@ -122,8 +123,7 @@ enum FixturesDetailAffaire {
         Reponse(nom: "evolutions", schema: "TicketEvolutionRead", json: evolutions),
     ]
 
-    /// L'affaire `id` telle que le service réel la lirait : son `TicketRead`, puis ses
-    /// évolutions.
+    /// L'affaire `id` telle que le service réel la lirait, puis ses évolutions.
     static func lue(_ id: Int) throws -> DetailAffaire? {
         let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: affaires)
         guard let ticket = tickets.first(where: { $0.id == id }) else { return nil }

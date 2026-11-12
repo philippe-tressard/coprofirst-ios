@@ -4,8 +4,8 @@
 import ClientAPI
 import Foundation
 
-/// « Demandes de profil » par le client GÉNÉRÉ : la liste et le traitement se lisent par
-/// leurs types (`DemandeProfilEnAttente`, `DemandeProfilTraitee`, contrat 1.16.0, #87).
+/// « Demandes de profil » par le client GÉNÉRÉ : la liste (`DemandeProfilEnAttente`) et
+/// le traitement (`DemandeProfilTraitee`) sont typés depuis le contrat 1.16.0.
 extension ServiceAPI: ServiceDemandesProfil {
     func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil] {
         let sortie = try await appeler { try await client(installation.adresse).getAdminDemandesProfil() }
@@ -18,7 +18,7 @@ extension ServiceAPI: ServiceDemandesProfil {
 
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis {
+    ) async throws -> PhraseAvis? {
         let corps = Components.Schemas.DemandeProfilAction(
             action: approuver ? "approuver" : "rejeter", motifRefus: approuver ? nil : motif?.nulSiVide)
         let sortie = try await appeler {

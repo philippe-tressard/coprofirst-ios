@@ -45,11 +45,11 @@ struct BandeauAffaireTests {
     @Test func lesDroitsSeLisentDansLAffaireServie() throws {
         let json = #"""
             {"id": 41, "numero": "A-0041", "titre": "T", "description": "", "categorie": "plomberie",
+             "suivi_actualite_libelle": "", "frequence_libelle": "",
              "categorie_libelle": "Plomberie", "statut": "en_cours", "statut_libelle": "Chez le syndic",
              "close": false, "colonne_kanban": "en_cours", "cree_le": "2026-11-01T10:00:00",
              "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false,
-             "peut_repondre": true, "peut_archiver": true, "epingle": true,
-             "frequence_libelle": "", "suivi_actualite_libelle": ""}
+             "peut_repondre": true, "peut_archiver": true, "epingle": true}
             """#
         let lu = DetailAffaire(
             ticket: try Relecture.generee(Components.Schemas.TicketRead.self, json: json), suites: [])

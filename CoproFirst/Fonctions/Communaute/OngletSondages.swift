@@ -24,12 +24,12 @@ struct OngletSondages: View {
                 Section {
                     ForEach(enCours) { ligne($0) }
                 } footer: {
-                    // Qui crée un sondage est SERVI (`peut_creer`, GET /sondages/gestes, #87).
-                    if etat.peutCreerUnSondage {
+                    // Aucun droit servi ne dit encore qui crée un sondage (#104) : le conseil
+                    // se lit par la règle GÉNÉRÉE du site (`$isCS`), jamais par des rôles écrits ici.
+                    if etat.moi?.droits.cs == true {
                         Text("Créer, modifier ou stopper un sondage se fait sur le site.")
                             .font(.footnote)
                             .foregroundStyle(palette.textMuted)
-                            .accessibilityIdentifier("sondages.creation")
                     }
                 }
                 SectionArchives(elements: liste.elements.filter(\.archivee)) { ligne($0) }

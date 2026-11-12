@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe tables-clients.json de la release (pages, titreFil).
+// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), front/src/lib/pages.ts#PAGES et front/src/lib/flux.ts#TITRE_FIL (tables-clients.json).
 
 /// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.
 enum PagesParDefaut {
@@ -20,6 +20,6 @@ enum PagesParDefaut {
         PageDeNavigation(id: "admin", route: "/admin", libelle: "Admin", titre: "Paramétrage", icone: "sliders-horizontal"),
         PageDeNavigation(id: "delegations", route: "/delegations", libelle: "Délégations", titre: "Délégations aidant", icone: "heart-handshake"),
     ]
-    /// Le titre de la section du tableau de bord que le fil de l'app reprend (`TITRE_FIL`).
+    /// Le titre de la section du tableau de bord que le fil de l'app reprend (`.titre-fil`).
     static let titreDuFil = "Fil d'activité"
 }

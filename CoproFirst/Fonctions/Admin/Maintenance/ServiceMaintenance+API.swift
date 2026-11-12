@@ -4,8 +4,8 @@
 import ClientAPI
 import Foundation
 
-/// « Maintenance » par le client GÉNÉRÉ : la santé des tâches se lit par son type
-/// (`SanteMaintenance`, contrat 1.16.0, #87).
+/// « Maintenance » par le client GÉNÉRÉ : la santé des tâches est typée
+/// (`SanteMaintenance`, contrat 1.16.0).
 extension ServiceAPI: ServiceMaintenance {
     func santeTaches(_ installation: Installation) async throws -> SanteTaches {
         let sortie = try await appeler { try await client(installation.adresse).getAdminMaintenanceSante() }

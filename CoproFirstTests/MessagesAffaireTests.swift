@@ -27,11 +27,9 @@ struct MessagesAffaireTests {
         let lus = try FixturesMessagesAffaire.lus(pour: 41, conseil: false)
         #expect(lus.first?.deMoi == true && lus.first?.auteur == "Vous")
         #expect(lus.last?.deMoi == false && lus.last?.auteur == "Le conseil syndical")
-        // `est_auteur` n'est pas requis par le contrat : non servi, rien n'est « à moi ».
-        let sansAuteur = FixturesMessagesAffaire.messages.replacingOccurrences(
-            of: #""est_auteur": true"#, with: #""est_auteur": null"#)
-        let lusSans = try Relecture.generee([MessageAffaire.Servi].self, json: sansAuteur).map(MessageAffaire.init)
-        #expect(lusSans.allSatisfy { !$0.deMoi }, "défaut fermé : aucun identifiant n'est comparé")
+        let servi = try Relecture.generee([MessageAffaire.Servi].self, json: FixturesMessagesAffaire.messages)
+        let sansCompte = MessageAffaire.lus(servi, moi: nil)
+        #expect(sansCompte.first?.deMoi == true, "`est_auteur` servi fait foi, compte lisible ou non")
     }
 
     @Test func uneActualiteNaPasDeFilDeMessages() throws {
@@ -56,8 +54,8 @@ struct MessagesAffaireTests {
     /// Le client généré lit le fil tel que le serveur le sert, puis le branchement du service.
     @Test func leFilServiSeLitParLeClientGenere() async throws {
         let sortie = try await filServi(FixturesMessagesAffaire.messages)
-        // `est_auteur` est servi, il fait foi : aucun identifiant de compte n'est lu.
-        let lus = try sortie.ok.body.json.map(MessageAffaire.init)
+        // `moi` n'y est pour rien : `est_auteur` est servi, il fait foi.
+        let lus = MessageAffaire.lus(try sortie.ok.body.json, moi: nil)
         #expect(lus.map(\.id) == [501, 502, 503] && lus[0].deMoi && lus[2].interne)
         #expect(lus.map(\.nom) == ["Camille ESSAI", "Le conseil syndical", "Le conseil syndical"])
     }

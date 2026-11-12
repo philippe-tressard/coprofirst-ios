@@ -30,8 +30,8 @@ struct PastilleStatut: View {
 extension StatutsAffaire {
     /// Un état en clair — LA seule écriture (#127, #105) : tel que le serveur le SERT avec
     /// l'objet (`statut_libelle`, `nouveau_statut_libelle`, `suivi_actualite_libelle`…) ; à
-    /// défaut — un état que le serveur ne met pas en clair avec l'objet (l'ancien état
-    /// d'une Suite), un geste fait ici —, le libellé que ses
+    /// défaut — une installation antérieure, un état que le serveur ne met pas en clair
+    /// avec l'objet (l'ancien état d'une Suite), un geste fait ici —, le libellé que ses
     /// référentiels SERVENT (`statuts[].libelle`, `GET /tickets/referentiels`) ; puis le
     /// code brut. Plus aucune table du site : seule la teinte se génère.
     static func libelle(_ code: String, servi: String?, dans referentiels: ReferentielsAffaires) -> String {

@@ -11,10 +11,6 @@ import Foundation
 /// où le contrat les déclare : ils se lisent alors par le type généré, et la déclaration
 /// se retire. `contrat` dit la version qui les sert : celle que le plancher doit
 /// atteindre.
-///
-/// Depuis la montée du plancher à v3.88.1 (contrat 1.26.0), plus aucune réponse simulée
-/// n'en déclare : le type reste, avec le juge et `Relecture.auDessusDuPlancher`, pour le
-/// prochain champ qu'une installation servira avant que le plancher ne le type.
 struct AuDessusDuPlancher: Sendable {
     let schema: String
     let champs: [String]

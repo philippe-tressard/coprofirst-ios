@@ -25,8 +25,8 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// #69 se relit sans lui.
     var saisieAffaire: String?
     /// Conseil syndical ou administration, tel que le SERVEUR le juge (`est_moderateur`,
-    /// #136) : lu par `DroitsOnglet`. Facultatif : un profil gardé avant #136 se relit
-    /// sans lui, et ne modère pas tant que `GET /auth/me` ne l'a pas redit (défaut fermé).
+    /// contrat 1.25.0, #136) : lu par `DroitsOnglet`. `nil` (non servi, ou profil gardé
+    /// avant #136, jusqu'à sa relecture) vaut « non », comme au site.
     var estModerateur: Bool?
     /// L'identifiant du compte dans cette résidence (`id` de `GET /auth/me`) : il dit quel
     /// compte de la liste d'« Utilisateurs » est celui du lecteur — la confirmation d'un
@@ -58,15 +58,15 @@ struct ProfilResidence: Codable, Hashable, Sendable {
 }
 
 extension ProfilResidence {
-    /// Le compte servi par `GET /auth/me`, par son type GÉNÉRÉ — le même branchement pour
-    /// toute lecture du profil.
+    /// Le compte servi par `GET /auth/me`, `est_moderateur` compris (contrat 1.25.0, #136)
+    /// — le MÊME branchement pour toute lecture du profil.
     init(_ moi: Components.Schemas.UserRead) {
         // Le libellé du logement, composé par le serveur (contrat ≥ 1.2.0, coprofirst#2500) :
         // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
         self.init(
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
             libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
-            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur ?? false, idCompte: moi.id)
+            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id)
     }
 }
 

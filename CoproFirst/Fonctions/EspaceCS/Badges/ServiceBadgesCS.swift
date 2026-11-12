@@ -7,8 +7,8 @@ import Foundation
 /// Ce que l'onglet « Badges & télécommandes » demande à une installation (#15) : le
 /// parc de la copropriété, badges Vigik et télécommandes confondus — un RÉFÉRENTIEL
 /// qu'on consulte (`pages-roles.ts`). Le serveur refuse ces routes à qui n'est pas du
-/// conseil. Ce qu'un accès ouvre est nommé par le serveur (`perimetre_libelle`, #130).
-protocol ServiceBadgesCS: Sendable {
+/// conseil. Ce qu'un accès ouvre se dit par l'arbre des périmètres (`ServicePerimetres`).
+protocol ServiceBadgesCS: ServicePerimetres {
     /// GET /acces/admin/vigiks et /acces/admin/telecommandes.
     func parc(_ installation: Installation) async throws -> [AccesDuParc]
 }
@@ -29,11 +29,19 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     var porteurRang: Int
     var porteurId: Int?
     var lotLibelle: String?
+    /// Ce que l'accès ouvre : des CODES de périmètre — nommés par l'arbre au seul repli
+    /// d'une installation antérieure au contrat 1.24.0 (`lieu(arbre:)`).
+    var perimetreCible: [String]
     var statut: String
     var chezLocataire: Bool
-    /// Ce que l'accès ouvre, nommé par le serveur (`perimetre_libelle`, #130) — rien pour
-    /// le périmètre par défaut (`LieuServi`).
-    var lieu: String?
+    /// Ce qu'il ouvre, nommé par le serveur (`perimetre_libelle`, contrat 1.24.0, #130).
+    var perimetreLibelle: String?
+
+    /// Ce que l'accès ouvre, à montrer : le lieu servi (`""` → rien), sinon le repli au
+    /// plancher (`LieuServi`, le seul).
+    func lieu(arbre: [Perimetre]) -> String? {
+        LieuServi.lieu(perimetreLibelle, codes: perimetreCible, arbre: arbre)
+    }
 
     var id: String { "\(type.rawValue)-\(numero)" }
 
@@ -48,20 +56,24 @@ extension ServiceAPI: ServiceBadgesCS {
         let client = client(installation.adresse)
         async let vigiks = appeler { try await client.getAccesAdminVigiks() }
         async let telecommandes = appeler { try await client.getAccesAdminTelecommandes() }
-        return try Self.lus(await vigiks) + Self.lus(await telecommandes)
+        return try Self.lus(.vigik, await vigiks) + Self.lus(.telecommande, await telecommandes)
     }
 
-    private static func lus(_ servie: Operations.GetAccesAdminVigiks.Output) throws -> [AccesDuParc] {
+    private static func lus(
+        _ type: TypeAcces, _ servie: Operations.GetAccesAdminVigiks.Output
+    ) throws -> [AccesDuParc] {
         switch servie {
-        case .ok(let ok): return try ok.body.json.map { AccesDuParc(.vigik, $0) }
+        case .ok(let ok): return try ok.body.json.map { AccesDuParc(type, $0) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
-    private static func lus(_ servie: Operations.GetAccesAdminTelecommandes.Output) throws -> [AccesDuParc] {
+    private static func lus(
+        _ type: TypeAcces, _ servie: Operations.GetAccesAdminTelecommandes.Output
+    ) throws -> [AccesDuParc] {
         switch servie {
-        case .ok(let ok): return try ok.body.json.map { AccesDuParc(.telecommande, $0) }
+        case .ok(let ok): return try ok.body.json.map { AccesDuParc(type, $0) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -69,14 +81,12 @@ extension ServiceAPI: ServiceBadgesCS {
 }
 
 extension AccesDuParc {
-    /// L'accès servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée ; son type est celui de la route qui l'a servi.
     init(_ type: TypeAcces, _ acces: Components.Schemas.AccesAdminOut) {
         self.init(
             type: type, numero: acces.id, code: acces.code, porteurNom: acces.porteurNom,
             porteurRang: acces.porteurRang, porteurId: acces.porteurId, lotLibelle: acces.lotLibelle,
-            statut: acces.statut.rawValue, chezLocataire: acces.chezLocataire,
-            lieu: LieuServi.lieu(acces.perimetreLibelle))
+            perimetreCible: acces.perimetreCible ?? [], statut: acces.statut.rawValue,
+            chezLocataire: acces.chezLocataire, perimetreLibelle: acces.perimetreLibelle)
     }
 }
 

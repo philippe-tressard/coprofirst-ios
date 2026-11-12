@@ -7,8 +7,8 @@ import Foundation
 /// Ce que l'onglet « Utilisateurs » demande à une installation (#16) : tous les comptes,
 /// et les gestes que l'app porte — interdire ou réautoriser la communauté, donner ou
 /// retirer un rôle, relancer le rapprochement des lots, supprimer. Les gestes de rôle
-/// sont ceux que le SERVEUR sert avec chaque compte (`gestes_roles`, coprofirst#2618,
-/// #89) : l'app ne recompose pas la règle. Modifier la fiche et
+/// sont ceux que le SERVEUR sert avec chaque compte (`gestes_roles`, contrat 1.18.0,
+/// coprofirst#2618, #89) : l'app ne recompose pas la règle. Modifier la fiche et
 /// l'accueil d'un arrivant restent au site. Réalisé par `ServiceAPI` (client généré) et
 /// `ServiceSimule`.
 protocol ServiceUtilisateursAdmin: Sendable {
@@ -49,24 +49,33 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
     /// Loti, TC, Vigik, Bail : `ok`, `manque` ou `sans_objet`, par le serveur.
     var etiquettes: [String: String]
     var ban: BanCommunaute
-    /// Les gestes de rôle que le serveur offre sur ce compte (`gestes_roles`) ; aucun :
-    /// rien à offrir.
-    var gestesRoles: [GesteDeRole]
+    /// Les gestes de rôle servis (`gestes_roles`, contrat 1.18.0) ; `nil` seulement d'un
+    /// modèle construit hors du serveur.
+    var gestesRoles: [GesteDeRole]?
     /// Averti de sa suppression pour inactivité ; s'efface à la reconnexion.
     var purgeAvertieLe: Date?
     var derniereConnexion: Date?
     var creeLe: Date
-    /// « Prénom NOM », tel que le serveur l'affiche (`nom_affiche`, #135).
-    var nomAffiche: String
+    /// `nom_affiche` servi (contrat 1.25.0, #135).
+    var nomServi: String?
+
+    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// Ce que le serveur dit de l'accès d'un compte à la communauté.
 struct BanCommunaute: Hashable, Sendable {
     var interdit: Bool
     var jusquAu: Date?
-    /// `communaute_banni` : exclu À CET INSTANT, jugé à l'heure du SERVEUR — l'app ne
-    /// compare pas `jusquAu` à l'heure du téléphone.
-    var banni: Bool
+    /// `communaute_banni` : exclu À CET INSTANT, jugé à l'heure du serveur (contrat
+    /// 1.18.0) ; `nil` d'une installation antérieure.
+    var banniServi: Bool?
+
+    /// Banni : ce que le serveur en dit ; à défaut (installation antérieure au contrat
+    /// 1.18.0), pour de bon ou jusqu'à une date encore à venir à l'heure du téléphone.
+    func banni(maintenant: Date = .now) -> Bool {
+        banniServi ?? (interdit || (jusquAu.map { $0 > maintenant } ?? false))
+    }
 }
 
 /// Un geste de rôle, tel que le serveur le sert et que sa route le nomme.
@@ -83,8 +92,8 @@ struct GesteDeRole: Hashable, Sendable, Identifiable {
 }
 
 extension GesteDeRole {
-    /// Les gestes servis (`GestesRoles`), dans l'ordre du site (`GestesRolesCompte.svelte`) ;
-    /// un rôle servi `null` n'offre rien.
+    /// Les gestes servis (`gestes_roles`, contrat 1.18.0), dans l'ordre du site
+    /// (`GestesRolesCompte.svelte`) ; un rôle sans geste n'offre rien.
     static func servis(_ lus: Components.Schemas.GestesRoles) -> [GesteDeRole] {
         let servis: [(String, String?)] = [
             ("conseil_syndical", lus.conseilSyndical?.rawValue), ("admin", lus.admin?.rawValue),
@@ -97,8 +106,8 @@ extension GesteDeRole {
 }
 
 extension UtilisateurAdmin {
-    /// Le compte servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
-    /// l'API simulée.
+    /// Un compte servi, gestes de rôle, bannissement et nom affiché compris — le MÊME
+    /// branchement pour le service réel et l'API simulée.
     init(_ lu: Components.Schemas.UtilisateurAdminRead) {
         let roles = lu.roles ?? []
         self.init(
@@ -111,18 +120,17 @@ extension UtilisateurAdmin {
             ],
             ban: BanCommunaute(
                 interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu,
-                banni: lu.communauteBanni ?? false),
-            gestesRoles: GesteDeRole.servis(lu.gestesRoles),
-            purgeAvertieLe: lu.purgeAvertieLe, derniereConnexion: lu.derniereConnexion, creeLe: lu.creeLe,
-            nomAffiche: lu.nomAffiche)
+                banniServi: lu.communauteBanni),
+            gestesRoles: GesteDeRole.servis(lu.gestesRoles), purgeAvertieLe: lu.purgeAvertieLe,
+            derniereConnexion: lu.derniereConnexion, creeLe: lu.creeLe, nomServi: lu.nomAffiche)
     }
 }
 
 extension BanCommunaute {
-    /// L'état que rend un geste (`UserRead`).
+    /// L'état que rend un geste (`UserRead`), avec `communaute_banni` s'il est servi.
     init(_ lu: Components.Schemas.UserRead) {
         self.init(
             interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu,
-            banni: lu.communauteBanni ?? false)
+            banniServi: lu.communauteBanni)
     }
 }

@@ -13,8 +13,7 @@ génère que ce que le contrat ne sert pas, et ce que l'API SIMULÉE doit servir
 - le libellé de chaque mode (`LIBELLE_MODE`) ;
 - les identifiants des sections d'une affaire, dans l'ordre du cadre (`TICKET`,
   `front/src/lib/entites/ticket.ts`) : le vocabulaire de `sections_essentielles` ;
-- la réponse simulée des catégories servies (`[CategorieServie]`, depuis la table
-  `categoriesTicket` que le site publie), ses sections
+- la réponse simulée des catégories servies (`[CategorieServie]`), ses sections
   essentielles CALCULÉES depuis la table du serveur (`SECTIONS_DE_BASE`,
   `SECTIONS_ESSENTIELLES_PAR_CATEGORIE`) — jamais écrites à la main.
 
@@ -29,15 +28,12 @@ import json
 import re
 
 import lecture_ts
-from generateurs import affaires
 from generateurs._commun import FONCTIONS, chaine, ecrire_table
-from generateurs._tables import source
 
-# Le site ne publie en table ni les choix de la saisie ni le cadre d'une affaire
-# (`_tables.HORS_TABLES`) ; `saisie_affaire.py` est un fichier de l'API.
 SOURCES = [
     "front/src/lib/saisie-affaire.ts",
     "front/src/lib/entites/ticket.ts",
+    "front/src/lib/tickets-categories.ts",
     "api/app/utils/saisie_affaire.py",
 ]
 GENERE = FONCTIONS / "Affaires" / "Genere"
@@ -114,7 +110,7 @@ def tables(ctx, modes: list[str], sections: list[str]) -> str:
 
 def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
     """La réponse simulée : chaque catégorie du site, telle que le serveur la sert."""
-    categories = affaires.categories_du_site(ctx)
+    categories = lecture_ts.table(ctx.lire(SOURCES[2]), "CATEGORIES_TICKET")
     servies = [
         {
             "code": c["value"], "libelle": c["label"], "emoji": c["emoji"], "description": c["description"],
@@ -131,7 +127,7 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
     lignes = ",\n".join(f"          {json.dumps(c, ensure_ascii=False)}" for c in servies)
     texte = (
         ctx.entete("api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; "
-                   + source("categoriesTicket"))
+                   "front/src/lib/tickets-categories.ts (CATEGORIES_TICKET)")
         + "// swiftlint:disable line_length\n\n"
         "#if DEBUG\n"
         "/// Les catégories que l'API simulée sert (`GET /tickets/referentiels` → `categories`,\n"
@@ -157,7 +153,7 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
 
 
 def generer(ctx) -> str:
-    serveur = ctx.lire(SOURCES[2])
+    serveur = ctx.lire(SOURCES[3])
     noms = constantes_python(serveur)
     chaines = {n: v.value for n, v in noms.items() if isinstance(v, ast.Constant) and isinstance(v.value, str)}
     modes = valeur(noms, "MODES", chaines)

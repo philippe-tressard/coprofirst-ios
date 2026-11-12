@@ -146,6 +146,6 @@ extension Compte {
             roles: (moi.roles ?? [moi.role.rawValue]), batimentNom: moi.batimentNom, actif: moi.actif,
             creeLe: moi.creeLe, derniereConnexion: moi.derniereConnexion, preferences: moi.preferencesNotifications,
             restreindreAMesBatiments: moi.restreindreAMesBatiments ?? false,
-            refusTelemetrie: moi.optOutTelemetrie ?? false, nomAffiche: moi.nomAffiche)
+            refusTelemetrie: moi.optOutTelemetrie ?? false, nomServi: moi.nomAffiche)
     }
 }

@@ -50,14 +50,14 @@ enum FixturesAcces {
     static let mesVigiks = #"""
         [
           {"id": 11, "code": "A4F21C07", "statut": "actif", "chez_locataire": false, "lot_id": 15,
-           "perimetre_cible": [], "perimetre_libelle": "",
-           "lot_libelle": "Logement 15", "cree_le": "2025-01-10T09:00:00"},
+           "perimetre_cible": [], "perimetre_libelle": "", "lot_libelle": "Logement 15",
+           "cree_le": "2025-01-10T09:00:00"},
           {"id": 12, "code": "A4F21C08", "statut": "actif", "chez_locataire": false, "lot_id": 15,
-           "perimetre_cible": [], "perimetre_libelle": "",
-           "lot_libelle": "Logement 15", "cree_le": "2025-01-10T09:00:00"},
+           "perimetre_cible": [], "perimetre_libelle": "", "lot_libelle": "Logement 15",
+           "cree_le": "2025-01-10T09:00:00"},
           {"id": 13, "code": "9B0E33D1", "statut": "perdu", "chez_locataire": false, "lot_id": 15,
-           "perimetre_cible": [], "perimetre_libelle": "",
-           "lot_libelle": "Logement 15", "cree_le": "2024-06-02T14:30:00"}
+           "perimetre_cible": [], "perimetre_libelle": "", "lot_libelle": "Logement 15",
+           "cree_le": "2024-06-02T14:30:00"}
         ]
         """#
 
@@ -65,8 +65,8 @@ enum FixturesAcces {
     static let mesTelecommandes = #"""
         [
           {"id": 21, "code": "TC-2048", "statut": "actif", "chez_locataire": false, "lot_id": 450,
-           "perimetre_cible": [], "perimetre_libelle": "",
-           "lot_libelle": "Place 450", "cree_le": "2025-03-01T10:00:00"}
+           "perimetre_cible": [], "perimetre_libelle": "", "lot_libelle": "Place 450",
+           "cree_le": "2025-03-01T10:00:00"}
         ]
         """#
 
@@ -108,8 +108,8 @@ enum FixturesAcces {
         ]
         """#
 
-    /// GET /bailleur/mon-bail (`-compte locataire`) → `BailLocataireOut` : l'étage du lot en
-    /// clair (`lot_etage_libelle`, #127), le nom affiché du bailleur (`bailleur_nom_affiche`, #135).
+    /// GET /bailleur/mon-bail (`-compte locataire`) → `BailLocataireOut`, à la forme du
+    /// serveur v3.88.1 : l'étage du lot en clair (`lot_etage_libelle`, contrat 1.21.0, #127).
     static let monBail = #"""
         {"id": 3, "lot_id": 15, "statut": "actif", "lot_batiment_nom": "Bât. A", "lot_numero": "15",
          "lot_type": "appartement", "lot_type_appartement": "T3", "lot_etage": 2, "lot_etage_libelle": "2ème",

@@ -66,3 +66,14 @@ extension ServiceAPI: ServiceComptesCS {
         }
     }
 }
+
+extension CompteEnAttente {
+    /// Un compte de la file servie, noms affichés compris — le MÊME branchement pour le
+    /// service réel et l'API simulée.
+    init(_ user: Components.Schemas.UserRead) {
+        self.init(
+            id: user.id, prenom: user.prenom, nom: user.nom, statut: user.statut.rawValue,
+            batimentNom: user.batimentNom, prenomAide: user.prenomAide, nomAide: user.nomAide,
+            creeLe: user.creeLe, nomServi: user.nomAffiche, nomAideServi: user.nomAideAffiche)
+    }
+}
