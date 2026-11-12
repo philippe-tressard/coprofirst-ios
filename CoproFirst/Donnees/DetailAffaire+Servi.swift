@@ -82,6 +82,7 @@ extension DetailAffaire {
             epingle: ticket.epingle ?? false, archivee: ticket.archivee ?? false,
             fusionnee: ticket.fusionnee ?? false, perimetres: ticket.perimetreCible ?? [],
             statutLibelle: ticket.statutLibelle, suiviActualite: ticket.suiviActualite)
+        close = ticket.close ?? false
     }
 }
 
