@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# CI : garde-fous du dépôt et REUSE, puis build, tests et SwiftLint sur macOS.
+# CI : garde-fous du dépôt et REUSE ; build, SwiftLint et tests unitaires ; tests
+# d'interface en deux lots — en parallèle sur macOS, réunis sous le check requis.
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
 name: CI
 
@@ -41,14 +42,15 @@ jobs:
           "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check "reuse[charset-normalizer]==6.2.0"
           "$RUNNER_TEMP/reuse/bin/reuse" lint
 
-  ios:
-    name: Build, tests, SwiftLint
+  # Les tests au simulateur en jobs parallèles, chacun sous son plafond (décision du
+  # 12/11/2026, #139) : un job unique dépassait 85 min — 14 de build, plus de 70 de tests
+  # d'interface sur un runner deux fois plus lent que le poste. On scinde, on ne relève
+  # pas le plafond : le signal des unitaires arrive vite, et chaque job reste sous la
+  # limite quand la suite grossit.
+  unitaires:
+    name: Unitaires (build, SwiftLint, client d'API)
     runs-on: macos-latest
-    # 90 min, pas 60 : le 11/11/2026 le job a été annulé à l'heure pile sur main, sans
-    # aucun test rouge — 5 min de tests du client, 15 de build, et les tests d'interface
-    # à 38 min non finis sur un runner deux fois plus lent que le poste (#139). Le
-    # plafond borne un job figé ; faire redescendre la durée est le reste de #139.
-    timeout-minutes: 90
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
@@ -62,9 +64,67 @@ jobs:
         run: swift test --disable-automatic-resolution
       - name: Projet Xcode (XcodeGen)
         run: bash scripts/generer-projet.sh
-      - name: Build et tests (unitaires et interface) au simulateur
+      - name: Build et tests unitaires au simulateur
         # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
         # (skill publication-app-store). project.yml signe, le poste seul.
+        run: bash scripts/tests-simulateur.sh -only-testing:CoproFirstTests
+
+  interface:
+    name: Interface (${{ matrix.lot }}/2)
+    runs-on: macos-latest
+    # Les tests d'interface seuls approchaient déjà 70 min : deux lots, chacun sous 70.
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      matrix:
+        lot: [1, 2]
+    env:
+      # Le lot 1, nommé classe par classe (~30 min en CI le 12/11/2026) ; le lot 2 joue
+      # TOUT le reste — une classe neuve y tombe d'office, aucune n'est oubliée.
+      LOT_1: >-
+        CommunauteUITests AdminUITests CartesDuFilUITests AffairesUITests
+        AccesUITests HistoriqueUITests EcheanceUITests
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: Projet Xcode (XcodeGen)
+        run: bash scripts/generer-projet.sh
+      - name: Build et tests d'interface au simulateur (lot ${{ matrix.lot }})
         # Requêtes d'accessibilité expirées, mesure à l'échec et relance bornée,
         # déclarée au résumé du run : scripts/tests-simulateur.sh (#50).
-        run: bash scripts/tests-simulateur.sh
+        env:
+          LOT: ${{ matrix.lot }}
+        run: |
+          filtres=()
+          [ "$LOT" = 2 ] && filtres+=(-only-testing:CoproFirstUITests)
+          for classe in $LOT_1; do
+            # Une classe renommée ne se jouerait plus nulle part, sans bruit : INCONNU.
+            grep -qE "class $classe([^[:alnum:]_]|$)" CoproFirstUITests/*.swift \
+              || { echo "::error::LOT_1 nomme $classe, absente de CoproFirstUITests"; exit 2; }
+            if [ "$LOT" = 1 ]; then
+              filtres+=("-only-testing:CoproFirstUITests/$classe")
+            else
+              filtres+=("-skip-testing:CoproFirstUITests/$classe")
+            fi
+          done
+          bash scripts/tests-simulateur.sh "${filtres[@]}"
+
+  ios:
+    # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
+    # unitaires ET les deux lots d'interface le sont — jamais par défaut.
+    name: Build, tests, SwiftLint
+    needs: [unitaires, interface]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Unitaires et interface verts
+        env:
+          UNITAIRES: ${{ needs.unitaires.result }}
+          INTERFACE: ${{ needs.interface.result }}
+        run: |
+          echo "unitaires : $UNITAIRES ; interface : $INTERFACE"
+          [ "$UNITAIRES" = success ] && [ "$INTERFACE" = success ]

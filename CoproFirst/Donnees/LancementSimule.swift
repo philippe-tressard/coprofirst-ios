@@ -21,13 +21,23 @@ import Foundation
 /// `-avis-durable` : l'avis qui suit un geste ne se retire pas de lui-même (#123) ;
 /// `-notifications <nombre>` : le volume de la cloche, et `-panne-suppression <rang>` : la
 /// suppression groupée de ce rang perd le réseau (#118) ;
-/// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle).
+/// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle) ;
+/// `-hors-ligne gardee|perimee|sans-lecture` : l'appareil sans réseau au lancement (#101) —
+/// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
+/// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
     @MainActor
     static func vitrine(_ arguments: [String]) -> Vitrine? {
         arguments.contains("-api-simulee") ? Vitrine(lecteur: nil, cache: nil) : nil
+    }
+
+    /// `-hors-ligne` : un réseau figé, absent — l'observateur du système n'est pas lancé.
+    @MainActor
+    static func reseau(_ arguments: [String]) -> Reseau? {
+        guard arguments.contains("-api-simulee"), argument("-hors-ligne", arguments) != nil else { return nil }
+        return Reseau(fige: false)
     }
 
     @MainActor
@@ -99,9 +109,11 @@ enum LancementSimule {
     }
 
     /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
-    /// variante sombre, servis à ce contrat (#70).
+    /// variante sombre, servis à ce contrat (#70) ; avec `-instance-commune`, l'opérateur
+    /// désigné par l'exploitant (`operateur_par_exploitant`, #94).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
+        if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true
@@ -124,6 +136,14 @@ enum LancementSimule {
             simule.profilSimule.libelleLogement = "Bât 4 (A), T4 duplex, 12ème étage, porte gauche"
         }
         simule.refuserFaceID = arguments.contains("-faceid-refuse")
+        if let lecture = argument("-hors-ligne", arguments) {
+            simule.horsLigneSimule = true
+            switch lecture {
+            case "gardee": simule.lectureSimulee = .gardee(ServiceSimule.lectureDuTicket)
+            case "perimee": simule.lectureSimulee = .perimee
+            default: simule.lectureSimulee = .aucune
+            }
+        }
         if let saisie = argument("-saisie", arguments) {
             simule.profilSimule.saisieAffaire = saisie
         }

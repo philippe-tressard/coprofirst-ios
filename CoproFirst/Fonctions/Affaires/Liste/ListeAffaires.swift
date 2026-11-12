@@ -111,6 +111,7 @@ struct ListeAffaires: View {
                     Button("Nouvelle affaire", action: nouvelle)
                         .buttonStyle(.plein)
                         .fixedSize()
+                        .gesteEnLigne()
                 }
             }
         }
@@ -126,6 +127,7 @@ struct ListeAffaires: View {
                 Label("Archiver", systemImage: "archivebox")
             }
             .tint(palette.primaryPlein)
+            .gesteEnLigne()
         }
     }
 

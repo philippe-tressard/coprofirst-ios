@@ -58,7 +58,7 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) ; sur la fiche, une suite de l'Historique se corrige et s'efface depuis son entrée, selon le droit servi avec elle (#91, #93) |
 | `mes-demandes` | `kanban` | fait | #11 | Fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
@@ -122,7 +122,7 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
 | `admin` | `a_traiter` | fait | #16 | La file des comptes et des commandes, la même que l'Espace CS ; les demandes de profil (approuver, rejeter avec motif) |
-| `admin` | `utilisateurs` | fait | #16, #89 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
+| `admin` | `utilisateurs` | fait | #16, #89, #94 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0 ; « Opérateur désigné par l'exploitant » sur une instance commune, « votre compte » dans la confirmation), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
 | `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `telemetry` | fait | #16 | Quatre vues, filtre gestionnaire, nombres clés, graphe, pages, utilisateurs actifs ; les six autres sections restent au site |
 | `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |

@@ -78,7 +78,7 @@ struct FicheUtilisateurAdmin: View {
             }
         }
         .confirmationDialog(
-            roleAConfirmer.map { TextesUtilisateursAdmin.confirmerRole($0, nom) } ?? "",
+            roleAConfirmer.map { confirmation($0, compte).question } ?? "",
             isPresented: Binding { roleAConfirmer != nil } set: { if !$0 { roleAConfirmer = nil } },
             titleVisibility: .visible, presenting: roleAConfirmer
         ) { offert in
@@ -90,9 +90,16 @@ struct FicheUtilisateurAdmin: View {
                     return PhraseAvis(texte: annonce)
                 }
             }
-        } message: { _ in
-            Text(TextesUtilisateursAdmin.notifie)
+        } message: { offert in
+            if let suite = confirmation(offert, compte).suite { Text(suite) }
         }
+    }
+
+    /// La question et sa suite (`ConfirmationRole`) : « votre compte » quand la fiche est
+    /// celle du lecteur — l'identifiant gardé avec son profil (#94).
+    private func confirmation(_ offert: GesteDeRole, _ compte: UtilisateurAdmin) -> ConfirmationRole {
+        let lecteur = (parcours.ouverteAJour?.profil ?? contexte.installation.profil)?.idCompte
+        return ConfirmationRole(offert, sur: compte, lecteur: lecteur)
     }
 
     private func identite(_ compte: UtilisateurAdmin) -> some View {
@@ -136,8 +143,11 @@ struct FicheUtilisateurAdmin: View {
                 .accessibilityIdentifier("admin.fiche.communaute")
             }
         }
-        if let roles = compte.gestesRoles, !roles.isEmpty {
-            GestesRolesCompte(gestes: roles) { roleAConfirmer = $0 }
+        let parExploitant = compte.operateurDesigneParLExploitant(
+            instanceCommune: contexte.installation.operateurParExploitant == true)
+        let roles = compte.gestesRoles ?? []
+        if !roles.isEmpty || parExploitant {
+            GestesRolesCompte(gestes: roles, parExploitant: parExploitant) { roleAConfirmer = $0 }
         }
         if (droits.cs || droits.administrateur) && compte.actif && !compte.aDesLots {
             Section {

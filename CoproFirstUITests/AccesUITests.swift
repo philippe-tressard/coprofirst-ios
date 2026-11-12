@@ -120,6 +120,29 @@ extension XCUIApplication {
         descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", debut)).firstMatch
     }
 
+    /// Un élément de cet identifiant qui DIT `texte`, dans son libellé ou sa valeur — à
+    /// attendre par `apparait()` ou à lire par `sonde()`. Tous les éléments de
+    /// l'identifiant sont lus : il peut être porté par un conteneur muet (#11).
+    func elementDisant(_ identifiant: String, _ texte: String) -> XCUIElement {
+        let predicat = NSPredicate(
+            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
+        return descendants(matching: .any).matching(predicat).firstMatch
+    }
+
+    /// « Plus », puis l'entrée de ce libellé. Aux grandes tailles, la ligne est sous le pli :
+    /// la liste ne la crée qu'au défilement.
+    @MainActor
+    func ouvrirDansPlus(_ libelle: String) {
+        let plus = descendants(matching: .any)["Plus"].firstMatch
+        XCTAssertTrue(plus.apparait())
+        plus.tap()
+        let entree = libelleAcces(libelle)
+        _ = entree.sonde()
+        for _ in 0..<6 where !(entree.exists && entree.isHittable) { swipeUp() }
+        XCTAssertTrue(entree.exists, "« \(libelle) » dans Plus")
+        entree.tap()
+    }
+
     @MainActor
     func capturerAcces(_ nom: String, dans test: XCTestCase) {
         let piece = XCTAttachment(screenshot: screenshot())

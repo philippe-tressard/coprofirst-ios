@@ -62,6 +62,9 @@ extension SuiteAffaire {
     init(evolution: Components.Schemas.TicketEvolutionRead) {
         self.init(
             id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
+            // Ce que CE lecteur peut faire de l'entrée, servi avec elle (#93) ; absent, « non ».
+            droits: DroitsServisSuite(
+                modifier: evolution.peutModifier ?? false, supprimer: evolution.peutSupprimer ?? false),
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
             pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []))

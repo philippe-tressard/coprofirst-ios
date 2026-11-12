@@ -12,22 +12,9 @@ final class DelegationsCSUITests: XCTestCase {
     }
 
     @MainActor
-    private func ouvrir(_ libelle: String, _ app: XCUIApplication) {
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.apparait())
-        plus.tap()
-        let entree = app.libelleAcces(libelle)
-        // Aux grandes tailles, la ligne est sous le pli : la liste ne la crée qu'au défilement.
-        _ = entree.sonde()
-        for _ in 0..<6 where !(entree.exists && entree.isHittable) { app.swipeUp() }
-        XCTAssertTrue(entree.exists, "« \(libelle) » dans Plus")
-        entree.tap()
-    }
-
-    @MainActor
     func testLesDelegationsSAcceptentSeRevoquentEtSeCreent() throws {
         let app = LancementCaptures.lancer()
-        ouvrir("Délégations", app)
+        app.ouvrirDansPlus("Délégations")
 
         let accepter = app.elementAcces("delegation.12.accepter")
         XCTAssertTrue(accepter.apparait(), "l'aidant accepte la délégation en attente")
@@ -56,7 +43,7 @@ final class DelegationsCSUITests: XCTestCase {
     @MainActor
     func testLeReportingLesAnnoncesHallEtLesCourriels() throws {
         let app = LancementCaptures.lancer()
-        ouvrir("Espace CS", app)
+        app.ouvrirDansPlus("Espace CS")
 
         // Reporting : le Suivi des affaires, puis les entretiens périodiques.
         let reporting = app.elementAcces("onglet.reporting")
@@ -96,6 +83,9 @@ final class DelegationsCSUITests: XCTestCase {
         XCTAssertTrue(toit.apparait(), "les espaces du bâtiment A")
         toit.tap()
         XCTAssertEqual(batiment.label, "Bâtiment A › Toit", "la tête porte l'espace retenu")
+        XCTAssertTrue(
+            app.elementDisant("nouvelle-annonce-hall.perimetre.lieu", "Bâtiment A › Toit").apparait(),
+            "le lieu retenu, nommé par le serveur (#130)")
         LancementCaptures.capturer("cs-annonces-hall-1-nouvelle")
         let creer = app.elementAcces("nouvelle-annonce-hall.creer")
         for _ in 0..<6 where !creer.isHittable { app.swipeUp() }

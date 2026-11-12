@@ -152,7 +152,7 @@ struct ChampsAffaire: View {
             } header: {
                 Text("Description")
             } footer: {
-                Text("Sa mise en forme (gras, listes, liens) se modifie depuis le site.")
+                Text(TexteDuSite.miseEnFormeAuSite)
             }
         } else {
             Section("Description") {
@@ -188,6 +188,11 @@ struct ChampsAffaire: View {
             .pickerStyle(.navigationLink)
             .disabled(contenuFige)
             .accessibilityIdentifier("\(prefixe).lieu")
+            // Le lieu choisi en clair, nommé par le serveur (#130) : le sélecteur ne montre
+            // que le nom du nœud (« Toit »), pas celui de son bâtiment.
+            if let code = saisie.perimetre {
+                LieuDeLaSaisie(codes: [code], identifiant: "\(prefixe).lieuServi")
+            }
         }
     }
 

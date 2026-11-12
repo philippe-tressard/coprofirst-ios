@@ -47,6 +47,8 @@ struct ElementFil: Identifiable, Hashable {
     var precise: String?
     var pieces: PiecesJointes = .aucune
     var realise = true
+    /// L'entrée de la suite qu'il montre : ses gestes servis (#91, #93) s'y posent.
+    var suite: SuiteAffaire?
 }
 
 /// Une section du fil — un jalon sur le rail, ses éléments en retrait.
@@ -119,7 +121,7 @@ extension EtapeFil {
         return ElementFil(
             id: "suite.\(suite.id)", titre: changement ?? auteur, ligne: ligne.joined(separator: " · "),
             apercu: suite.contenu.map(TexteDuSite.apercu).flatMap(\.nulSiVide), html: suite.contenu,
-            precise: suite.perimetrePrecise, pieces: suite.pieces)
+            precise: suite.perimetrePrecise, pieces: suite.pieces, suite: suite)
     }
 
     static func comptesRendus(_ lus: [CompteRenduAffaire]?, close: Bool = false) -> EtapeFil {

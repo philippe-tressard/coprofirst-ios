@@ -155,8 +155,9 @@ enum FormatsDuSite {
     /// `locataire_nom_affiche`, `bailleur_nom_affiche`, `nom_aide_affiche` — contrat 1.25.0,
     /// coprofirst#2633 lot 4, #135), jamais composé dans un écran.
     ///
-    /// Non servi ou vide — une installation antérieure, une saisie pas encore enregistrée
-    /// (`POST /noms/affiche` n'est pas au client généré du plancher) — : le repli d'avant,
+    /// Non servi ou vide — une installation antérieure, une fiche de l'annuaire renommée
+    /// que la relecture ne retrouve pas (la feuille, elle, montre le nom que le serveur rend
+    /// de la saisie, `NomDeLaSaisie`, `POST /noms/affiche`, #135) — : le repli d'avant,
     /// prénom puis nom tels que servis, « — » sans l'un ni l'autre. Ce repli vit ICI
     /// seulement : `scripts/verifier-regles-servies.py` refuse toute autre composition.
     static func nom(affiche: String?, prenom: String?, nom: String?) -> String {

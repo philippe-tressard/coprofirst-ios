@@ -27,8 +27,11 @@
 #      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
 #  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, et coprofirst-site
 #      qu'à un commit épinglé (#51), par scripts/generateurs/_source.py seul : ni
-#      clone, ni arbre de travail, ni branche (#34, #20) ; le logo, lui, se compare
-#      et se recopie à l'étiquette du plancher (scripts/plancher.sh, #133) ;
+#      clone, ni arbre de travail, ni branche (#34, #20) ; une table du site se lit
+#      dans la pièce jointe tables-clients.json, par son nom et à la forme attendue,
+#      jamais par motif dans une source du front — autotest de scripts/concordance.py
+#      (#128) ; le logo, lui, se compare et se recopie à l'étiquette du plancher
+#      (scripts/plancher.sh, #133) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. les tests au simulateur : relance bornée et déclarée (#50), un passage qui ne
@@ -51,7 +54,9 @@
 #      envois, modules, droits, paquets (scripts/verifier-confidentialite.py, #19) ;
 #  19. DEPENDANCES.md dit ce que Package.resolved épingle : chaque paquet embarqué de
 #      la fiche y est listé embarqué, et chaque version écrite est l'épinglée
-#      (scripts/verifier-dependances.py, #143).
+#      (scripts/verifier-dependances.py, #143) ;
+#  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
+#      #135) : ni ses trois routes, ni son service, ni son délai ailleurs.
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -199,6 +204,11 @@ autotest_lecture() {
   return $ok
 }
 autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofirst en échec"
+# Les tables du site se lisent dans tables-clients.json (#128) : l'autotest prouve qu'une
+# table absente, vide ou d'une autre forme arrête la génération, et qu'un module ne peut
+# plus déclarer une source du front que le site publie. Il découvre aussi chaque module.
+python3 -I scripts/concordance.py --autotest >/dev/null || echec "concordance.py : autotest en échec (comparaison, tables du site)"
+python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare une source du front que le site publie en table"
 grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
@@ -248,6 +258,89 @@ while IFS= read -r f; do
   # Le code seul : un commentaire qui explique l'interdit a le droit de le nommer.
   trouve=$(grep -nE "$MOTEUR_WEB" "$f" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
   [ -z "$trouve" ] || echec "$f : moteur web pour du HTML (${trouve%%:*}) — passer par TexteDuSite"
+done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+
+# La consultation hors ligne (#101) : ce qu'une session laisse sur l'appareil (jeton,
+# lecture gardée, copies ouvertes) s'efface à UNE porte, `oublierCeQuiEstGarde` — un
+# `Trousseau.supprimer(` ailleurs effacerait le jeton en laissant la lecture lisible. Et
+# un fichier protégé se lit par `fichierConsultable` : un `fichierProtege(` appelé par
+# un écran partirait sur le réseau pendant la consultation.
+# $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_porte_session() {
+  local code
+  code=$(grep -vE '^[[:space:]]*///?' "$2")
+  case "$1" in
+    CoproFirst/Session/Trousseau.swift | CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift) ;;
+    *) grep -qE 'Trousseau\.supprimer\(' <<< "$code" &&
+      echo "Trousseau.supprimer( hors de oublierCeQuiEstGarde — le jeton partirait sans la lecture gardée" ;;
+  esac
+  case "$1" in
+    CoproFirst/Session/* | CoproFirst/Donnees/ServiceSimule*) ;;
+    *) grep -E 'fichierProtege\(' <<< "$code" | grep -qvE 'func fichierProtege\(' &&
+      echo "fichierProtege( lu par un écran — passer par fichierConsultable (consultation hors ligne)" ;;
+  esac
+}
+autotest_porte_session() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '        Trousseau.supprimer(pour: installation.hote)\n' > "$d/jeton"
+  printf '        let d = try await service.fichierProtege(chemin, dans: i)\n' > "$d/fichier"
+  printf '    /// pas de Trousseau.supprimer( ici : fichierProtege( non plus\n        x()\n' > "$d/commentaire"
+  printf '    func fichierProtege(_ chemin: String, dans i: Installation) async throws -> Data {\n' > "$d/definition"
+  [ -n "$(refus_porte_session CoproFirst/Session/ServiceAPI+Compte.swift "$d/jeton")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift "$d/jeton")" ] || ok=1
+  [ -n "$(refus_porte_session CoproFirst/Commun/PiecesJointes/X.swift "$d/fichier")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Session/LectureGardee/X.swift "$d/fichier")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Commun/X.swift "$d/commentaire")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Commun/X.swift "$d/definition")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_porte_session || echec "verifier-depot.sh : autotest des portes de la session en échec"
+
+# L'aperçu servi d'une saisie (#129, #130, #135) passe par UNE porte, `ApercuServi` : le
+# délai, la réponse périmée ignorée et le hors ligne y sont écrits une fois. Un écran
+# qui appellerait la route ou le service lui-même recopierait le mécanisme, ou s'en
+# passerait. $1 : chemin dans le dépôt ; $2 : le fichier à lire.
+refus_porte_apercu() {
+  local code
+  code=$(grep -vE '^[[:space:]]*///?' "$2")
+  case "$1" in
+    CoproFirst/Donnees/ServiceApercus.swift) ;;
+    *) grep -qE 'post(LecturesApercu|PerimetresLibelle|NomsAffiche)\(' <<< "$code" &&
+      echo "route d'aperçu appelée hors de ServiceApercus — poser ApercuServi" ;;
+  esac
+  case "$1" in
+    CoproFirst/Commun/Apercu/* | CoproFirst/Donnees/ServiceApercus.swift | CoproFirst/Donnees/FixturesApercus.swift) ;;
+    *) grep -qE '\.apercus\b|ServiceApercus\b|EtatApercu\b|ApercuSaisie\.delai' <<< "$code" &&
+      echo "aperçu demandé hors d'ApercuServi (délai, réponse périmée, hors ligne) — poser QuiLaLira, LieuDeLaSaisie ou NomDeLaSaisie" ;;
+  esac
+}
+autotest_porte_apercu() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '        let r = try await client(i.adresse).postNomsAffiche(body: .json(corps))\n' > "$d/route"
+  printf '            let nom = try? await parcours.service.apercus?.nomAffiche(s, dans: i)\n' > "$d/service"
+  printf '            try await Task.sleep(for: ApercuSaisie.delai)\n' > "$d/delai"
+  printf '    /// jamais .apercus ni postNomsAffiche( ici : ApercuServi\n        x()\n' > "$d/commentaire"
+  printf '        NomDeLaSaisie(saisie: s, identifiant: "profil.nom")\n' > "$d/ecran"
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/route")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Donnees/ServiceApercus.swift "$d/route")" ] || ok=1
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/service")" ] || ok=1
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Affaires/X.swift "$d/delai")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Commun/Apercu/X.swift "$d/service")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/commentaire")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/ecran")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_porte_apercu || echec "verifier-depot.sh : autotest de la porte des aperçus en échec"
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  motif=$(refus_porte_session "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+  motif=$(refus_porte_apercu "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
 # Les gestes qui envoient une version en revue chez Apple : soumission à l'App
@@ -367,4 +460,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

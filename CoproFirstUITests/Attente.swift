@@ -48,3 +48,24 @@ extension XCUIElement {
         return XCTWaiter().wait(for: [etat], timeout: Attente.plafond) == .completed
     }
 }
+
+extension XCUIApplication {
+    /// L'élément amené à l'écran, touchable : par PETITS défilements (un quart d'écran), vers
+    /// le bas du contenu d'abord, puis vers le haut s'il a été dépassé. Un balayage plein
+    /// sautait une ligne d'un `Form`, qui ne crée pas ses lignes hors de l'écran — surtout
+    /// clavier ouvert (AffairesUITests rouge en CI le 12/11/2026). Les gestes se font dans
+    /// le haut de l'écran, au-dessus d'un clavier. `false` s'il n'existe pas à l'issue.
+    @discardableResult
+    func amener(_ element: XCUIElement, essais: Int = 10) -> Bool {
+        _ = element.sonde()
+        let fenetre = windows.firstMatch
+        for (depart, arrivee) in [(0.5, 0.25), (0.25, 0.5)] {
+            for _ in 0..<essais where !(element.exists && element.isHittable) {
+                let vers = fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: arrivee))
+                fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: depart))
+                    .press(forDuration: 0.05, thenDragTo: vers)
+            }
+        }
+        return element.exists
+    }
+}

@@ -120,7 +120,7 @@ func chaqueVueDeLaTelemetrieSeLit(portee: PorteeTelemetrie) throws {
 @Test func lesUtilisateursSeFiltrentEtSeTrientCommeSurLeSite() async throws {
     let etat = EtatUtilisateursAdmin()
     await etat.charger(ServiceSimule(), ServiceSimule.residence)
-    #expect(etat.affiches.map(\.id) == [11, 12, 14, 13], "par nom, puis prénom")
+    #expect(etat.affiches.map(\.id) == [11, 12, 14, 13, 15], "par nom, puis prénom")
     etat.recherche = "dominique"
     #expect(etat.affiches.map(\.id) == [12])
     etat.recherche = ""

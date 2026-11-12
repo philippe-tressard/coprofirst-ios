@@ -28,8 +28,9 @@ extension ServiceAPI {
         } catch {
             atteint = false
         }
-        // L'effacement local se fait TOUJOURS, serveur joint ou non.
-        Trousseau.supprimer(pour: installation.hote)
+        // L'effacement local se fait TOUJOURS, serveur joint ou non : le jeton et la
+        // lecture gardée pour la consultation hors ligne, par la même porte (#101).
+        oublierCeQuiEstGarde(installation)
         sessions.oublier(installation.adresse)
         return atteint
     }

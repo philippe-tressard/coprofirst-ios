@@ -15,6 +15,9 @@ struct RacineView: View {
         Group {
             if let ouverte = parcours.ouverte {
                 OngletsView(installation: ouverte)
+                    // Le réseau revenu, la session reprise : l'espace se reconstruit, tout se relit (#101).
+                    .id(parcours.consultation == nil)
+                    .repriseEnLigne()
                     .transition(.opacity)
                     .sheet(isPresented: $parcours.proposerFaceID) {
                         FaceIDFeuille(installation: ouverte)
