@@ -71,6 +71,7 @@ enum FixturesAcces {
         [
           {"id": 3, "lot_id": 31, "bailleur_id": 70, "locataire_id": 81, "locataire_nom": "du lot 31",
            "locataire_prenom": "Locataire", "locataire_email": "locataire.31@exemple.fr",
+           "locataire_nom_affiche": "Locataire DU LOT 31",
            "locataire_telephone": "01 99 00 00 31", "date_entree": "2025-09-01", "date_sortie_prevue": null,
            "date_sortie_reelle": null, "statut": "actif",
            "notes": "<p>Préavis d'<strong>un mois</strong> (zone tendue).</p>",
@@ -85,11 +86,13 @@ enum FixturesAcces {
            ]},
           {"id": 4, "lot_id": 32, "bailleur_id": 71, "locataire_id": null, "locataire_nom": "du lot 32",
            "locataire_prenom": "Locataire", "locataire_email": null, "locataire_telephone": null,
+           "locataire_nom_affiche": "Locataire DU LOT 32",
            "date_entree": "2023-02-15", "date_sortie_prevue": "2026-11-30", "date_sortie_reelle": null,
            "statut": "en_cours_sortie", "notes": null, "cree_le": "2023-02-01T10:00:00",
            "mis_a_jour_le": "2026-10-01T10:00:00", "objets": []},
           {"id": 2, "lot_id": 31, "bailleur_id": 70, "locataire_id": 80, "locataire_nom": "du lot 31",
            "locataire_prenom": "Ancien locataire", "locataire_email": null, "locataire_telephone": null,
+           "locataire_nom_affiche": "Ancien locataire DU LOT 31",
            "date_entree": "2021-03-01", "date_sortie_prevue": "2025-06-30", "date_sortie_reelle": "2025-07-02",
            "statut": "termine", "notes": null, "cree_le": "2021-02-15T10:00:00",
            "mis_a_jour_le": "2025-07-02T10:00:00",
@@ -100,6 +103,23 @@ enum FixturesAcces {
            ]}
         ]
         """#
+
+    /// GET /bailleur/mon-bail (`-compte locataire`) → `BailLocataireOut`, à la forme du
+    /// serveur v3.88.1 : l'étage du lot en clair (`lot_etage_libelle`, contrat 1.21.0, #127).
+    static let monBail = #"""
+        {"id": 3, "lot_id": 15, "statut": "actif", "lot_batiment_nom": "Bât. A", "lot_numero": "15",
+         "lot_type": "appartement", "lot_type_appartement": "T3", "lot_etage": 2, "lot_etage_libelle": "2ème",
+         "lot_superficie": 64.5, "date_entree": "2025-09-01", "date_sortie_prevue": null,
+         "bailleur_prenom": "Sacha", "bailleur_nom": "Exemple", "bailleur_email": "bailleur@exemple.fr",
+         "bailleur_telephone": "01 99 00 00 70", "acces": []}
+        """#
+
+    /// Servis au-dessus du plancher : l'étage en clair du bail du locataire (contrat 1.21.0,
+    /// #127), le nom affiché du locataire d'un bail (contrat 1.25.0, #135).
+    static let auDessus = [
+        AuDessusDuPlancher(schema: "BailLocataireOut", champs: ["lot_etage_libelle"], contrat: "1.21.0"),
+        AuDessusDuPlancher(schema: "BailOut", champs: ["locataire_nom_affiche"], contrat: "1.25.0"),
+    ]
 
     /// Une réponse simulée et le schéma de sa route (`components/schemas`).
     struct Reponse: Sendable {
@@ -114,6 +134,7 @@ enum FixturesAcces {
         Reponse(nom: "mesVigiks", schema: "AccesPorteur", json: mesVigiks),
         Reponse(nom: "mesTelecommandes", schema: "AccesPorteur", json: mesTelecommandes),
         Reponse(nom: "baux", schema: "BailOut", json: baux),
+        Reponse(nom: "monBail", schema: "BailLocataireOut", json: monBail),
     ]
 
     // MARK: - Lues comme le client généré les lit
@@ -128,7 +149,11 @@ enum FixturesAcces {
     }
 
     static func bauxLus() throws -> [Bail] {
-        try lire([Components.Schemas.BailOut].self, baux).map(Bail.init)
+        Bail.lus(try lire([Components.Schemas.BailOut].self, baux), corps: Data(baux.utf8))
+    }
+
+    static func monBailLu() throws -> BailDuLocataire {
+        BailDuLocataire.lu(try lire(Components.Schemas.BailLocataireOut.self, monBail), corps: Data(monBail.utf8))
     }
 
     /// Le décodage du client généré : clés du contrat, dates par `TranscodeurDates`.

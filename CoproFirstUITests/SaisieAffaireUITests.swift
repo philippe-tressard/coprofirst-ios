@@ -38,7 +38,7 @@ final class SaisieAffaireUITests: XCTestCase {
     /// lignes hors de l'écran : on défile tant qu'il n'est pas là, pas seulement tant qu'il est caché.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> Bool {
-        _ = element.apparait()
+        _ = element.sonde()
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {
             app.swipeUp()
@@ -83,6 +83,24 @@ final class SaisieAffaireUITests: XCTestCase {
         XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "en Complète, l'urgence est à son rang")
         XCTAssertFalse(el(app, "nouvelle.plusDeDetails").exists)
         LancementCaptures.capturer("saisie-4-complete")
+    }
+
+    /// Ce que la feuille offre et dit suit ce que le serveur PERMET au compte (#105) : un
+    /// résident n'a ni « Actualité » (en tête de la grille du conseil) ni la phrase du
+    /// conseil ; le conseil a les deux.
+    func testLaGrilleEtLaPhraseSuiventCeQueLeServeurPermet() throws {
+        for (arguments, duConseil) in [(["-compte", "resident"], false), ([String](), true)] {
+            let app = lancer(arguments)
+            el(app, "affaires.nouvelle").tap()
+            XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait(), "la grille est servie")
+            // La grille est posée : « Actualité », sa première vignette, y est ou n'y est pas.
+            XCTAssertEqual(el(app, "nouvelle.categorie.actualite").exists, duConseil, "réservée au conseil")
+            XCTAssertTrue(atteindre(app, el(app, "nouvelle.depuisLeSite")))
+            let phrase = duConseil ? "les affaires liées aussi" : "Le conseil syndical désigne"
+            XCTAssertTrue(lu(app, "nouvelle.depuisLeSite", contient: phrase), "la phrase de ce compte")
+            LancementCaptures.capturer(duConseil ? "saisie-6-grille-conseil" : "saisie-7-grille-resident")
+            app.terminate()
+        }
     }
 
     func testLeChoixDuProfilVautAussitot() throws {

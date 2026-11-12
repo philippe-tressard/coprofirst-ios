@@ -22,11 +22,11 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.messages.append(
                 MessageAffaire(
                     id: (detail.messages.map(\.id).max() ?? 500) + 1, contenu: contenu, date: .now, deMoi: true,
-                    qualite: nil, interne: false, photos: []))
+                    nom: "Camille ESSAI", qualite: nil, interne: false, pieces: .aucune))
             detail.suites.append(
                 SuiteAffaire(
                     id: (detail.suites.map(\.id).max() ?? 0) + 1, type: "reponse", date: .now,
-                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil, photos: []))
+                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil))
         }
     }
 
@@ -40,7 +40,9 @@ extension ServiceSimule: ServiceGestesAffaire {
                     auteur: "Le conseil syndical",
                     contenu: suite.texte.isEmpty ? nil : TexteDuSite.html(saisi: suite.texte),
                     ancienStatut: suite.changeEtat ? detail.statut : nil,
-                    nouveauStatut: suite.changeEtat ? suite.statut : nil, photos: []))
+                    nouveauStatut: suite.changeEtat ? suite.statut : nil))
+            // Comme le vrai serveur, le simulé sert l'état en clair avec l'affaire.
+            if suite.changeEtat { detail.statutLibelle = MagasinAffairesSimule.libelle(statut: suite.statut) }
             detail.statut = suite.statut
         }
     }
@@ -49,7 +51,13 @@ extension ServiceSimule: ServiceGestesAffaire {
         try await Task.sleep(for: .milliseconds(300))
         let lieux = try FixturesPerimetres.lus()
         try changerAffaireSimulee(affaire) { detail in
-            guard detail.droits.modifier else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
+            // Les deux refus du serveur (`update_ticket`) : sans crayon, rien ; un contenu
+            // touché sans le droit sur le contenu, son refus à lui.
+            guard detail.droits.corriger else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
+            let contenu = edition.titre ?? edition.descriptionHTML ?? edition.categorie
+            guard detail.droits.modifier || (contenu == nil && edition.perimetres == nil) else {
+                throw ErreurService.refus(.init(phrase: "Modification impossible : le ticket n'est plus ouvert"))
+            }
             detail.titre = edition.titre ?? detail.titre
             detail.description = edition.descriptionHTML ?? detail.description
             detail.categorie = edition.categorie ?? detail.categorie
@@ -77,16 +85,6 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(affaire) { $0.archivee = true }
     }
 
-    func corrigerSuite(
-        _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
-    ) async throws {
-        try await Task.sleep(for: .milliseconds(300))
-    }
-
-    func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws {
-        try await Task.sleep(for: .milliseconds(250))
-    }
-
     /// Au premier usage, aucune affaire n'a encore changé.
     private static func aucuneChangee() -> [Int: DetailAffaire] { [:] }
 
@@ -95,16 +93,23 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(id) { _ in }
     }
 
+    /// Un geste sur l'affaire `id` du magasin de la session — aussi pour ceux de son
+    /// Historique (`ServiceSimule+Historique.swift`).
     @discardableResult
-    private func changerAffaireSimulee(
+    func changerAffaireSimulee(
         _ id: Int, _ geste: (inout DetailAffaire) throws -> Void
     ) throws -> DetailAffaire {
-        let conseil = DroitsOnglet(profil: profilSimule).cs
+        let lecteur = DroitsOnglet(profil: profilSimule)
+        let conseil = lecteur.cs
         return try modifierSimule(depuis: Self.aucuneChangee) { affaires in
             guard var detail = try affaires[id] ?? Self.affaires(id, conseil: conseil) else {
                 throw ErreurService.introuvable
             }
             try geste(&detail)
+            // Servis à CE compte, comme le vrai serveur.
+            detail.referentiels = try FixturesReferentielsAffaires.lus(moderateur: conseil)
+            // Les gestes de chaque entrée, servis à CE compte — une suite ajoutée comprise.
+            detail.suites = detail.suites.map { Self.servie($0, a: lecteur, fusionnee: detail.fusionnee) }
             affaires[id] = detail
             return detail
         }

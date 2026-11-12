@@ -26,6 +26,11 @@ enum FixturesCommunaute {
            "description": "<p>Pour réduire nos déchets et nourrir les massifs.</p>", "auteur_id": 7,
            "statut": "retenue", "cree_le": "2026-10-25T09:30:00", "nb_votes": 18, "mon_vote": true,
            "archivee": false, "nb_reponses": 1,
+           "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous", "titre": "Tous",
+             "profils": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "perimetre_reserve": false,
+             "hors_perimetre": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "du_perimetre": "",
+             "phrase": "Lue par tous.", "exclus": "", "par_defaut": true,
+             "avertissement": ""}, "perimetre_libelle": "",
            "reponses": [
              {"id": 1, "auteur_id": 5, "contenu": "Excellente idée, je veux bien m'en occuper.",
               "cree_le": "2026-10-26T18:00:00", "auteur_nom": "Voisin du bât. A", "auteur_batiment": "Bât. A",
@@ -34,7 +39,13 @@ enum FixturesCommunaute {
           {"id": 5, "titre": "Une boîte à livres dans le hall A",
            "description": "<p>Une étagère où chacun dépose et emprunte.</p>", "auteur_id": 4,
            "statut": "ouverte", "cree_le": "2026-11-05T08:00:00", "nb_votes": 9, "mon_vote": false,
-           "archivee": false, "nb_reponses": 1,
+           "archivee": false, "nb_reponses": 1, "perimetre_cible": ["bat_a"],
+           "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous",
+             "titre": "Tous · du périmètre seulement",
+             "profils": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "perimetre_reserve": true,
+             "hors_perimetre": [], "du_perimetre": "", "phrase": "Lue par tous, dans le périmètre seulement.",
+             "exclus": "Pas les personnes hors du périmètre.", "par_defaut": false, "avertissement": ""},
+           "perimetre_libelle": "Bâtiment A",
            "reponses": [
              {"id": 2, "auteur_id": 1, "contenu": "Le conseil syndical en parlera jeudi.",
               "cree_le": "2026-11-05T19:00:00", "auteur_nom": "Conseil syndical", "auteur_batiment": "Bât. A",
@@ -42,7 +53,12 @@ enum FixturesCommunaute {
            ]},
           {"id": 1, "titre": "Repeindre la cage d'escalier", "description": "<p>Elle en a bien besoin.</p>",
            "auteur_id": 2, "statut": "realisee", "cree_le": "2026-04-20T10:00:00", "nb_votes": 31,
-           "mon_vote": false, "archivee": true, "nb_reponses": 0, "reponses": []}
+           "mon_vote": false, "archivee": true, "nb_reponses": 0, "reponses": [],
+           "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous", "titre": "Tous",
+             "profils": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "perimetre_reserve": false,
+             "hors_perimetre": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "du_perimetre": "",
+             "phrase": "Lue par tous.", "exclus": "", "par_defaut": true,
+             "avertissement": ""}, "perimetre_libelle": ""}
         ]
         """#
 
@@ -56,6 +72,11 @@ enum FixturesCommunaute {
            "auteur_email": "voisine@exemple.fr", "est_auteur": false, "peut_modifier": false,
            "peut_supprimer": true, "archivee": false,
            "cree_le": "2026-11-04T10:00:00", "nb_reponses": 1,
+           "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous", "titre": "Tous",
+             "profils": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "perimetre_reserve": false,
+             "hors_perimetre": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "du_perimetre": "",
+             "phrase": "Lue par tous.", "exclus": "", "par_defaut": true,
+             "avertissement": ""}, "perimetre_libelle": "",
            "reponses": [
              {"id": 3, "auteur_id": 5, "contenu": "Est-il encore disponible samedi ?",
               "cree_le": "2026-11-05T18:00:00", "auteur_nom": "Voisin du bât. A", "auteur_batiment": "Bât. A",
@@ -65,12 +86,26 @@ enum FixturesCommunaute {
            "type_annonce": "don", "categorie": "divers", "negotiable": false, "photos": [], "statut": "reserve",
            "auteur_id": 7, "auteur_prenom": "Moi", "est_auteur": true, "peut_modifier": true,
            "peut_supprimer": true, "archivee": false,
-           "cree_le": "2026-10-31T15:00:00", "nb_reponses": 0, "reponses": []},
+           "cree_le": "2026-10-31T15:00:00", "nb_reponses": 0, "reponses": [],
+           "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous", "titre": "Tous",
+             "profils": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "perimetre_reserve": false,
+             "hors_perimetre": ["occupants", "copro_bailleurs", "bailleurs", "locataires"], "du_perimetre": "",
+             "phrase": "Lue par tous.", "exclus": "", "par_defaut": true,
+             "avertissement": ""}, "perimetre_libelle": ""},
           {"id": 23, "titre": "Cherche place de parking", "description": "<p>Au sous-sol, pour une citadine.</p>",
            "type_annonce": "recherche", "categorie": "parking_cave", "negotiable": false, "photos": [],
            "statut": "en_cours", "auteur_id": 14, "auteur_prenom": "Voisin du 5ᵉ", "est_auteur": false,
            "peut_modifier": false, "peut_supprimer": true, "archivee": false, "cree_le": "2026-10-22T11:00:00",
-           "nb_reponses": 0, "reponses": []}
+           "nb_reponses": 0, "reponses": [], "perimetre_cible": ["parking"],
+           "lecture": {"cle": "coproprietaires", "icones": ["key-round"], "court": "Copropriétaires",
+             "long": "Copropriétaires (occupants et bailleurs)",
+             "titre": "Copropriétaires (occupants et bailleurs) · du périmètre seulement",
+             "profils": ["occupants", "copro_bailleurs"], "perimetre_reserve": true, "hors_perimetre": [],
+             "du_perimetre": "",
+             "phrase": "Lue par les copropriétaires (occupants et bailleurs), dans le périmètre seulement.",
+             "exclus": "Pas les bailleurs (mandataires), ni les locataires, ni les personnes hors du périmètre.",
+             "par_defaut": false, "avertissement": ""},
+           "perimetre_libelle": "Parking"}
         ]
         """#
 
@@ -80,14 +115,23 @@ enum FixturesCommunaute {
         Reponse(nom: "annonces", schema: "AnnonceRead", json: annonces),
     ]
 
+    /// Qui les lit et leur lieu, servis au-dessus du plancher (coprofirst v3.88.1, #129, #130).
+    static let auDessus = [
+        AuDessusDuPlancher(schema: "IdeeRead", champs: ["lecture"], contrat: "1.22.0"),
+        AuDessusDuPlancher(schema: "IdeeRead", champs: ["perimetre_libelle"], contrat: "1.24.0"),
+        AuDessusDuPlancher(schema: "AnnonceRead", champs: ["lecture"], contrat: "1.22.0"),
+        AuDessusDuPlancher(schema: "AnnonceRead", champs: ["perimetre_libelle"], contrat: "1.24.0"),
+    ]
+
     // MARK: - Lues comme le client généré les lit, branchées comme le service réel
 
     static func ideesLues() throws -> [Idee] {
-        try Relecture.generee([Components.Schemas.IdeeRead].self, json: idees).map(Idee.init)
+        Idee.lues(try Relecture.generee([Components.Schemas.IdeeRead].self, json: idees), corps: Data(idees.utf8))
     }
 
     static func annoncesLues() throws -> [Annonce] {
-        try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces).map(Annonce.init)
+        Annonce.lues(
+            try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces), corps: Data(annonces.utf8))
     }
 }
 #endif

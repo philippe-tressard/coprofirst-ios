@@ -36,6 +36,7 @@ enum TextesPrestataires {
     static let leContrat = "Le contrat"
     static let debut = "Début"
     static let dureeInitiale = "Durée initiale"
+    static let frequence = "Fréquence"
     static let description = "Description"
     static func documents(_ n: Int) -> String { "Documents (\(n))" }
     static let aucunDocument = "Aucun document."

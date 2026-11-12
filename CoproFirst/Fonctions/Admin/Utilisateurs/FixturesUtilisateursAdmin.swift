@@ -13,13 +13,15 @@ import Foundation
 enum FixturesUtilisateursAdmin {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, avec ce que le serveur v3.83.0
-    /// sert au-dessus du plancher (`auDessus`) : les gestes de rôle d'un administrateur
+    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, avec ce que le serveur v3.88.1
+    /// sert au-dessus du plancher (`auDessus`, `nomsServis`) : le nom affiché, « Prénom NOM »
+    /// (#135), et les gestes de rôle d'un administrateur
     /// qui lit la liste — Camille est le seul administrateur, son rôle Admin ne se retire
     /// pas ; un compte inactif n'a aucun geste.
     static let utilisateurs = #"""
         [
-          {"id": 11, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@exemple.fr",
+          {"id": 11, "prenom": "Camille", "nom": "Exemple", "nom_affiche": "Camille EXEMPLE",
+           "nom_aide_affiche": "", "est_moderateur": true, "email": "camille.exemple@exemple.fr",
            "statut": "copropriétaire_résident", "role": "propriétaire", "roles": ["propriétaire",
            "conseil_syndical", "admin"],
            "actif": true, "email_verifie": true, "batiment_nom": "Bâtiment A", "has_lots": true, "has_tc": true,
@@ -29,7 +31,8 @@ enum FixturesUtilisateursAdmin {
            "communaute_banni": false,
            "gestes_roles": {"conseil_syndical": "retirer", "admin": null, "operateur": "ajouter"},
            "derniere_connexion": "2026-11-09T18:20:00", "cree_le": "2025-03-02T10:00:00"},
-          {"id": 12, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@exemple.fr",
+          {"id": 12, "prenom": "Dominique", "nom": "Fictif", "nom_affiche": "Dominique FICTIF",
+           "nom_aide_affiche": "", "est_moderateur": false, "email": "dominique@exemple.fr",
            "statut": "locataire", "role": "résident", "roles": ["résident"], "nom_proprietaire": "Sacha Exemple",
            "actif": true, "email_verifie": true, "batiment_nom": "Bâtiment B", "has_lots": true, "has_tc": false,
            "has_vigik": true, "has_bail": true, "etiquettes": {"loti": "ok", "tc": "manque", "vigik": "ok",
@@ -38,7 +41,8 @@ enum FixturesUtilisateursAdmin {
            "communaute_ban_jusqu_au": "2026-12-05T10:00:00", "communaute_ban_count": 1, "communaute_banni": true,
            "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
            "derniere_connexion": "2026-11-02T08:00:00", "cree_le": "2025-09-14T10:00:00"},
-          {"id": 13, "prenom": "Alix", "nom": "Modèle", "email": "alix@exemple.fr",
+          {"id": 13, "prenom": "Alix", "nom": "Modèle", "nom_affiche": "Alix MODÈLE",
+           "nom_aide_affiche": "", "est_moderateur": false, "email": "alix@exemple.fr",
            "statut": "copropriétaire_bailleur", "role": "propriétaire", "roles": ["propriétaire"],
            "actif": true, "email_verifie": true, "batiment_nom": null, "has_lots": false, "has_tc": false,
            "has_vigik": false, "has_bail": false, "etiquettes": {"loti": "manque", "tc": "sans_objet",
@@ -47,7 +51,8 @@ enum FixturesUtilisateursAdmin {
            "communaute_banni": false,
            "gestes_roles": {"conseil_syndical": "ajouter", "admin": "ajouter", "operateur": null},
            "purge_avertie_le": "2026-10-28T06:00:00", "derniere_connexion": null, "cree_le": "2026-04-30T10:00:00"},
-          {"id": 14, "prenom": "Morgan", "nom": "Fictif", "email": "morgan@exemple.fr",
+          {"id": 14, "prenom": "Morgan", "nom": "Fictif", "nom_affiche": "Morgan FICTIF",
+           "nom_aide_affiche": "", "est_moderateur": false, "email": "morgan@exemple.fr",
            "statut": "copropriétaire_résident", "role": "propriétaire", "roles": ["propriétaire", "résident"],
            "actif": false, "email_verifie": false, "batiment_nom": "Bâtiment A", "has_lots": false, "has_tc": false,
            "has_vigik": false, "has_bail": false, "etiquettes": {"loti": "manque", "tc": "manque",
@@ -67,6 +72,10 @@ enum FixturesUtilisateursAdmin {
 
     static let auDessus = AuDessusDuPlancher(
         schema: "UtilisateurAdminRead", champs: ["communaute_banni", "gestes_roles"], contrat: "1.18.0")
+
+    static let nomsServis = AuDessusDuPlancher(
+        schema: "UtilisateurAdminRead", champs: ["nom_affiche", "nom_aide_affiche", "est_moderateur"],
+        contrat: "1.25.0")
 
     static let parSchema: [Reponse] = [
         Reponse(nom: "utilisateurs", schema: "UtilisateurAdminRead", json: utilisateurs),

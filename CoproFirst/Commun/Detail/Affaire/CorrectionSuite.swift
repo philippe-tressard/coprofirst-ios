@@ -106,9 +106,22 @@ extension SaisieSuite {
         etats.contains(statutActuel) && etats.contains(statut)
     }
 
-    /// Ce qui a changé depuis `suite` — et rien d'autre.
+    /// Ce qui a changé depuis `suite` — et rien d'autre. Le texte ne part que si la feuille
+    /// le montrait à modifier ; le Suivi, que si l'entrée n'en dit plus la même chose.
     func correction(depuis suite: SuiteAffaire, de affaire: DetailAffaire) -> CorrectionSuite {
-        CorrectionSuite()
+        let origine = SaisieSuite(corrigeant: suite, de: affaire)
+        var correction = CorrectionSuite()
+        if suite.contenuSaisi != nil, texte != origine.texte {
+            correction.contenuHTML = texte.isEmpty ? "" : TexteDuSite.html(saisi: texte)
+        }
+        let suivi = suiviDeLEntree
+        if suivi != origine.suiviDeLEntree { correction.suivi = suivi }
+        return correction
+    }
+
+    /// Ce que l'entrée dit de l'état : une transition vers l'état choisi, ou rien.
+    private var suiviDeLEntree: CorrectionSuite.Suivi {
+        changeEtat ? .init(type: "etat", statut: statut) : .init(type: "commentaire", statut: nil)
     }
 
     /// Prête à partir : ce qu'une Suite exige (un état donné, ou un texte — celui que la

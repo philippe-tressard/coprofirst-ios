@@ -84,7 +84,7 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 | `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
 | `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
 | `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
-| `prestataires` | `contrats` | fait | #13 | En lecture : résumé, échéances, documents |
+| `prestataires` | `contrats` | fait | #13, #125 | En lecture : résumé, échéances, fréquence servie, documents |
 | `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 
 ### #14 — Communauté, FAQ, Profil et Notifications

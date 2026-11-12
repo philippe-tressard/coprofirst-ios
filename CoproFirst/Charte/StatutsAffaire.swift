@@ -5,16 +5,16 @@
 // swift-format-ignore-file
 // Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/tickets.ts (STATUTS_TICKET et compléments).
 
-/// Le libellé et la pastille de chaque statut d'une affaire, comme le site les écrit.
+/// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.
 enum StatutsAffaire {
-    static let parCode: [String: (libelle: String, pastille: String)] = [
-        "ouvert": ("Ouvert", "badge-blue"),
-        "en_ag": ("À l’AG", "badge-purple"),
-        "en_cours": ("Chez le syndic", "badge-orange"),
-        "chez_prestataire": ("Chez le prestataire", "badge-yellow"),
-        "résolu": ("Résolu", "badge-green"),
-        "annulé": ("Annulé", "badge-gray"),
-        "fermé": ("Fermé", "badge-gray"),
-        "publie": ("Publiée", "badge-blue"),
+    static let pastilles: [String: String] = [
+        "ouvert": "badge-blue",
+        "en_ag": "badge-purple",
+        "en_cours": "badge-orange",
+        "chez_prestataire": "badge-yellow",
+        "résolu": "badge-green",
+        "annulé": "badge-gray",
+        "fermé": "badge-gray",
+        "publie": "badge-blue",
     ]
 }

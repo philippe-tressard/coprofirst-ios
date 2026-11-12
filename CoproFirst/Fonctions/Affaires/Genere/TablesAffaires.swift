@@ -10,19 +10,6 @@ import SwiftUI
 
 /// Ce que le site écrit des affaires et que le contrat ne sert pas.
 enum TablesAffaires {
-    /// Les catégories, dans l'ordre du site (fréquence attendue) — `CATEGORIES_TICKET`.
-    static let categories: [CategorieAffaire] = [
-        CategorieAffaire(code: "panne", libelle: "Panne", emoji: "🛠️", description: "Ascenseur, chauffage, éclairage, fuite, porte — à réparer", carnet: true, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "nuisance", libelle: "Nuisance & propreté", emoji: "📢", description: "Bruit, odeurs, stationnement…", carnet: false, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "acces_accueil", libelle: "Accès & accueil", emoji: "🔑", description: "Interphone, boîte aux lettres, emménagement", carnet: false, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "espaces_verts", libelle: "Espaces verts", emoji: "🌳", description: "Élagage, haies, arrosage, allées…", carnet: true, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "sinistre", libelle: "Sinistre", emoji: "💧", description: "Dégât constaté : eau, incendie, vandalisme…", carnet: true, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "etude_travaux", libelle: "Étude & travaux", emoji: "🏗️", description: "Diagnostic, sondage, devis, chantier suivi par le conseil", carnet: true, reserveCS: true, enTete: false),
-        CategorieAffaire(code: "entretien", libelle: "Entretien", emoji: "🧰", description: "Visite ou maintenance d’un prestataire, récurrente ou non", carnet: true, reserveCS: true, enTete: false),
-        CategorieAffaire(code: "question", libelle: "Question", emoji: "❓", description: "Information, procédure…", carnet: false, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "bug", libelle: "Bug", emoji: "🐛", description: "Pb technique sur le site", carnet: false, reserveCS: false, enTete: false),
-        CategorieAffaire(code: "actualite", libelle: "Actualité", emoji: "📰", description: "Information — suivi optionnel", carnet: false, reserveCS: true, enTete: true),
-    ]
     /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.
     static let natures: [NatureAffaire] = [
         NatureAffaire(code: "actualite", libelle: "Actualité", abrege: "ACTU.", emoji: "📰", icone: "newspaper", badge: "badge-blue"),
@@ -41,8 +28,6 @@ enum TablesAffaires {
     ]
     /// Ce qu'une colonne vide affiche (`MOT_COLONNE_VIDE`).
     static let colonneVide = "Aucune affaire"
-    /// Les statuts du cycle d'une affaire, dans l'ordre du site (`STATUTS_TICKET`).
-    static let ordreDesStatuts: [String] = ["ouvert", "en_ag", "en_cours", "chez_prestataire", "résolu", "annulé"]
     /// Des statuts que le filtre « Suivi » réunit sous une option (`GROUPES_SUIVI`).
     static let groupesDeSuivi: [GroupeDeSuivi] = [
         GroupeDeSuivi(code: "en_cours", libelle: "En cours", statuts: ["en_ag", "en_cours", "chez_prestataire"]),

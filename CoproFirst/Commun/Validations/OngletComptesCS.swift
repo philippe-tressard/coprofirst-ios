@@ -105,7 +105,7 @@ extension OngletComptesCS {
                 .presentationDragIndicator(.visible)
             })
             .confirmationDialog(
-                aRejeter.map { TextesComptesCS.rejeterCompte(FormatsDuSite.nom($0.prenom, $0.nom)) } ?? "",
+                aRejeter.map { TextesComptesCS.rejeterCompte($0.nomAffiche) } ?? "",
                 isPresented: presente($aRejeter), titleVisibility: .visible, presenting: aRejeter
             ) { compte in
                 Button(TextesEspaceCS.rejeter, role: .destructive) {

@@ -118,13 +118,13 @@ struct LotsDuLocataire: View {
         let lot = LotDuCompte(
             id: bail.id, numero: bail.lotNumero ?? FormatsDuSite.tiret, type: bail.lotType,
             typeAppartement: bail.lotTypeAppartement, etage: bail.lotEtage, superficie: bail.lotSuperficie,
-            batimentNom: bail.lotBatimentNom)
+            batimentNom: bail.lotBatimentNom, etageLibelle: bail.lotEtageLibelle)
         var apres = [("Entrée", FormatsDuSite.dateCourte(bail.dateEntree))]
         if bail.dateSortiePrevue != nil {
             apres.append(("Sortie prévue", FormatsDuSite.dateCourte(bail.dateSortiePrevue)))
         }
         let statut = LibellesAcces.statutBail(bail.statut)
-        let proprietaire = FormatsDuSite.nom(bail.bailleurPrenom, bail.bailleurNom)
+        let proprietaire = bail.nomBailleur
         return Carte {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(alignment: .firstTextBaseline) {

@@ -7,9 +7,11 @@ import Foundation
 /// Le menu Affaires par le client GÉNÉRÉ — aucune route écrite à la main.
 extension ServiceAPI: ServiceAffaires {
     func affaires(_ installation: Installation) async throws -> [Affaire] {
-        let sortie = try await appeler { try await client(installation.adresse).getTickets() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getTickets() }
+        }
         switch sortie {
-        case .ok(let ok): return try ok.body.json.map(Affaire.init(ticket:))
+        case .ok(let ok): return Affaire.lues(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -78,17 +80,29 @@ extension ServiceAPI: ServiceAffaires {
     }
 
     func archiver(_ affaire: Affaire, dans installation: Installation) async throws -> Affaire {
-        Affaire(
+        var archivee = Affaire(
             ticket: try await modifierAffaire(
                 affaire.id, .init(archiveManuel: true), dans: installation, siInvalide: ErreurAffaires.saisieRefusee))
+        // La réponse du geste se lit sans son corps : la pastille reste celle qu'on lisait.
+        archivee.lecture = affaire.lecture
+        return archivee
     }
 }
 
 extension Affaire {
+    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher
+    /// (`lecture`, #129) — le MÊME branchement pour le service réel et les tests.
+    static func lues(_ generes: [Components.Schemas.TicketRead], corps: Data?) -> [Affaire] {
+        ServiAuDessusDuPlancher.relire(generes, corps: corps, id: \.id, en: Affaire.init(ticket:)) {
+            $0.lecture = $1?.lecture?.valeur
+        }
+    }
+
     init(ticket: Components.Schemas.TicketRead) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
-            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut, close: ticket.close,
+            creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut,
+            statutLibelle: ticket.statutLibelle, close: ticket.close,
             categorie: ticket.categorie, categorieLibelle: ticket.categorieLibelle, urgente: ticket.urgente,
             meConcerne: ticket.meConcerne, archivee: ticket.archivee ?? false,
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],

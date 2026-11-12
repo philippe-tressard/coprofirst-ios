@@ -40,7 +40,8 @@ extension Repartition {
 extension AffaireSuivie {
     init(_ lu: Components.Schemas.AffaireOuverteRead) {
         self.init(
-            id: lu.id, numero: lu.numero, titre: lu.titre, statut: lu.statut, libelleCategorie: lu.libelleCategorie,
+            id: lu.id, numero: lu.numero, titre: lu.titre, statut: lu.statut, libelleStatut: lu.libelleStatut,
+            libelleCategorie: lu.libelleCategorie,
             ouverteLe: lu.ouverteLe, ageJours: lu.ageJours, anciennete: lu.anciennete, apercu: lu.apercu,
             apercuIA: lu.apercuIa, aEvolue: lu.aEvolue, motifEvolution: lu.motifEvolution, etatVisite: lu.etatVisite)
     }

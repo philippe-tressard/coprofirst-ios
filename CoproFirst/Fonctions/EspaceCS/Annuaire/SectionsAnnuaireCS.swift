@@ -234,7 +234,8 @@ extension MembreConseil {
     var enCarte: Annuaire.Membre {
         Annuaire.Membre(
             id: id ?? 0, genre: genre, prenom: prenom, nom: nom, batimentNom: batimentNom,
-            estGestionnaireSite: estGestionnaireSite, estPresident: estPresident, photoUrl: photoUrl)
+            estGestionnaireSite: estGestionnaireSite, estPresident: estPresident, photoUrl: photoUrl,
+            nomServi: nomServi)
     }
 }
 
@@ -242,6 +243,6 @@ extension MembreSyndic {
     var enCarte: Annuaire.Membre {
         Annuaire.Membre(
             id: id ?? 0, genre: genre, prenom: prenom, nom: nom, photoUrl: photoUrl, fonction: fonction, email: email,
-            telephone: telephone, estPrincipal: estPrincipal)
+            telephone: telephone, estPrincipal: estPrincipal, nomServi: nomServi)
     }
 }

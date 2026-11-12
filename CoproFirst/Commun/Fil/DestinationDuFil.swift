@@ -7,15 +7,16 @@ import SwiftUI
 /// ou en feuille (résumé). Le toucher se voit à l'instant.
 struct CarteOuvrable: View {
     let element: ElementDuFil
+    let installation: Installation
     let zoom: Namespace.ID
     let ouvrirResume: () -> Void
 
     var body: some View {
         Group {
             if case .resume = element.cible {
-                Button(action: ouvrirResume) { CarteDuFil(element: element) }
+                Button(action: ouvrirResume) { CarteDuFil(element: element, installation: installation) }
             } else {
-                NavigationLink(value: element) { CarteDuFil(element: element) }
+                NavigationLink(value: element) { CarteDuFil(element: element, installation: installation) }
             }
         }
         .buttonStyle(StyleCarte())

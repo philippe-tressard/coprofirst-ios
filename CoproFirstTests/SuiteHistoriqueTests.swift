@@ -14,24 +14,47 @@ import Testing
 struct SuiteHistoriqueTests {
     private let residence = ServiceSimule.residence
 
-    /// L'Historique lu comme le service réel le lit : le type généré, puis le corps servi.
-    private func lues(_ json: String, corps: Data? = nil) throws -> [SuiteAffaire] {
-        try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: json)
-            .map(SuiteAffaire.init(evolution:)).avecGestesServis(corps: corps ?? Data(json.utf8))
+    /// Une affaire servie, sans rien au-dessus du plancher.
+    private let ticket = #"""
+        {"id": 41, "numero": "A-0041", "titre": "T", "description": "", "categorie": "plomberie",
+         "categorie_libelle": "Plomberie", "statut": "en_cours", "statut_libelle": "Chez le syndic",
+         "close": false, "colonne_kanban": "en_cours", "cree_le": "2026-11-01T10:00:00",
+         "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false}
+        """#
+
+    /// Trois entrées servies à un administrateur : un changement d'état et un commentaire,
+    /// qu'il corrige et efface ; une réponse, qui appartient à son auteur.
+    private let servies = #"""
+        [{"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
+          "ancien_statut": "ouvert", "nouveau_statut": "en_cours", "peut_modifier": true, "peut_supprimer": true},
+         {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
+          "contenu": "Un mot.", "statut_avant": "en_cours", "peut_modifier": true, "peut_supprimer": true},
+         {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
+          "contenu": "Une réponse.", "peut_modifier": false, "peut_supprimer": false}]
+        """#
+
+    /// L'Historique lu par LA relecture du détail (`DetailAffaire.lue`), comme le service
+    /// réel le lit : le type généré, puis le corps servi (`corps`).
+    private func lues(_ json: String, corps: Data?) throws -> [SuiteAffaire] {
+        let lu = try Relecture.generee(Components.Schemas.TicketRead.self, json: ticket)
+        let evolutions = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: json)
+        return DetailAffaire.lue(lu, corps: nil, evolutions: evolutions, corpsEvolutions: corps).suites
     }
+
+    private func lues(_ json: String) throws -> [SuiteAffaire] { try lues(json, corps: Data(json.utf8)) }
 
     private func entree(
         _ type: String, contenu: String? = nil, avant: String? = "en_cours", nouveau: String? = nil
     ) -> SuiteAffaire {
         SuiteAffaire(
             id: 7, type: type, date: .now, auteur: nil, contenu: contenu, ancienStatut: avant,
-            nouveauStatut: nouveau, photos: [])
+            nouveauStatut: nouveau)
     }
 
     private var affaire: DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "T", description: "", categorie: "sinistre", statut: "résolu",
-            urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [])
+            urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [])
     }
 
     private func service(_ compte: String = "conseil") -> ServiceSimule {
@@ -47,7 +70,7 @@ struct SuiteHistoriqueTests {
     // MARK: - #93 : les gestes d'une entrée se lisent tels que servis
 
     @Test func lesGestesDUneEntreeSeLisentTelsQueServis() throws {
-        let servies = try lues(FixturesSuitesAffaire.evolutions)
+        let servies = try lues(servies)
         let tout = DroitsServisSuite(modifier: true, supprimer: true)
         #expect(servies.map(\.droits) == [tout, tout, DroitsServisSuite()], "une réponse appartient à son auteur")
         #expect(servies.map(GesteSuite.offerts) == [[.modifier, .supprimer], [.modifier, .supprimer], []])
@@ -76,10 +99,8 @@ struct SuiteHistoriqueTests {
     }
 
     @Test func unCorpsIllisibleOuAbsentNOffreRien() throws {
-        let servi = FixturesSuitesAffaire.evolutions
-        #expect(try lues(servi, corps: Data("<html>".utf8)).allSatisfy { GesteSuite.offerts(pour: $0).isEmpty })
-        let sansCorps = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: servi)
-            .map(SuiteAffaire.init(evolution:)).avecGestesServis(corps: nil)
+        #expect(try lues(servies, corps: Data("<html>".utf8)).allSatisfy { GesteSuite.offerts(pour: $0).isEmpty })
+        let sansCorps = try lues(servies, corps: nil)
         #expect(sansCorps.count == 3 && sansCorps.allSatisfy { $0.droits == DroitsServisSuite() })
     }
 
@@ -152,7 +173,7 @@ struct SuiteHistoriqueTests {
     }
 
     @Test func unEtatQueLaListeNeDitPasNeSeCorrigePas() {
-        let etats = TablesAffaires.ordreDesStatuts
+        let etats = ["ouvert", "en_cours", "résolu"]
         #expect(SaisieSuite(corrigeant: entree("commentaire"), de: affaire).suiviCorrigeable(parmi: etats))
         let hors = entree("etat", avant: "ouvert", nouveau: "état_inconnu")
         #expect(!SaisieSuite(corrigeant: hors, de: affaire).suiviCorrigeable(parmi: etats))
@@ -187,13 +208,12 @@ struct SuiteHistoriqueTests {
         #expect(try service("resident").detailSimule(41).suites.allSatisfy { $0.droits == DroitsServisSuite() })
     }
 
-    /// La fixture sert les gestes des entrées que `ServiceSimule.affaires` invente : les
-    /// deux doivent parler des mêmes entrées.
-    @Test func laFixtureDecritLesEntreesSimulees() throws {
-        let inventees = try #require(try ServiceSimule.affaires(41, conseil: true)).suites
-        let servies = try FixturesSuitesAffaire.lues().filter { $0.ticketId == 41 }
-        #expect(inventees.map(\.id) == servies.map(\.id) && inventees.map(\.type) == servies.map(\._type))
-        #expect(inventees.map(\.contenu) == servies.map(\.contenu))
+    /// La fixture sert l'Historique à un résident, par LA relecture du détail : les champs y
+    /// sont servis (le juge des fixtures les exige déclarés), et tous fermés.
+    @Test func laFixtureServieAUnResidentNOuvreAucunGeste() throws {
+        let suites = try #require(try FixturesDetailAffaire.lue(41)).suites
+        #expect(suites.count == 3 && suites.allSatisfy { GesteSuite.offerts(pour: $0).isEmpty })
+        #expect(suites.map(\.ancienStatut) == ["ouvert", "en_cours", "en_cours"], "l'état d'avant chaque entrée")
     }
 
     @Test func uneSuiteDuCompteSeCorrigeEtNeSEffacePas() async throws {
@@ -218,17 +238,20 @@ struct SuiteHistoriqueTests {
     /// Le Suivi de la DERNIÈRE transition : l'affaire suit la correction (`suivi_fil.py`).
     @Test func corrigerLeSuiviFaitSuivreLAffaire() async throws {
         let admin = service("administrateur")
-        let transition = try #require(try admin.detailSimule(41).suites.first)
-        #expect(transition.changementDEtat == "Ouvert → Chez le syndic")
+        let avant = try admin.detailSimule(41)
+        let transition = try #require(avant.suites.first)
+        #expect(transition.changementDEtat(avant.referentiels) == "Ouvert → Chez le syndic")
         try await admin.corrigerSuite(
             CorrectionSuite(suivi: .init(type: "etat", statut: "résolu")), transition.id, de: 41, dans: residence)
         var apres = try admin.detailSimule(41)
-        #expect(apres.suites.first?.changementDEtat == "Ouvert → Résolu" && apres.statut == "résolu")
+        #expect(apres.suites.first?.changementDEtat(apres.referentiels) == "Ouvert → Résolu")
+        #expect(apres.statut == "résolu")
 
         try await admin.corrigerSuite(
             CorrectionSuite(suivi: .init(type: "commentaire", statut: nil)), transition.id, de: 41, dans: residence)
         apres = try admin.detailSimule(41)
-        #expect(apres.suites.first?.type == "commentaire" && apres.suites.first?.changementDEtat == nil)
+        #expect(
+            apres.suites.first?.type == "commentaire" && apres.suites.first?.changementDEtat(apres.referentiels) == nil)
         #expect(apres.statut == "ouvert", "revenue à l'état d'avant l'entrée")
     }
 

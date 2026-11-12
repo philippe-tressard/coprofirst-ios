@@ -22,18 +22,19 @@ enum Apercu {
             _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
             badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil, meta: String? = nil
         ) -> ElementDuFil {
-            ElementDuFil(
+            var element = ElementDuFil(
                 id: "\(type):\(id)", type: type, date: date, titre: titre, detail: detail, badges: badges,
                 publicationUrgente: false, statut: nil, meConcerne: meConcerne, cible: cible,
-                echeance: meta.flatMap(EcheanceDuFil.init(metaJSON:)),
-                natures: meta.flatMap(MetaDuFil.init(json:))?.affaire?.natures ?? [])
+                echeance: meta.flatMap(EcheanceDuFil.init(metaJSON:)))
+            element.poser(meta.flatMap(MetaDuFil.init(json:)))
+            return element
         }
         return [
             element(
                 "41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
                 "<p>Niveau -1, place 12. Le plombier passe dans la <em>matinée</em>.</p>", badges: ["urgent"],
                 meConcerne: true,
-                cible: .affaire(id: 41), meta: #"{"affaire": {"natures": ["activite"]}}"#),
+                cible: .affaire(id: 41), meta: piecesDe41),
             element(
                 "12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
                 "Remplacement d'une vanne dans la cave du bâtiment A.", cible: .affaire(id: 12),
@@ -42,7 +43,7 @@ enum Apercu {
             element(
                 "44", "ticket_mis_a_jour", le(0, 7), "Ramonage des conduits de cheminée",
                 "Le ramoneur passe dans les caves du bâtiment B.", cible: .affaire(id: 44),
-                meta: metaAffaire(dans: 0, etat: "jour_j", libelle: "Jour J")),
+                meta: metaAffaire(dans: 0, etat: "jour_j", libelle: "Jour J", lecture: "copros", lieu: "Bâtiment B")),
             element(
                 "3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
                 "Trois dates proposées, réponses jusqu'à vendredi.", cible: .sondage(id: 3)),
@@ -51,7 +52,8 @@ enum Apercu {
                 "Ajouté dans Documents › Assemblées.", cible: .document(id: 7, nom: "proces-verbal-ag.pdf")),
             element(
                 "2", "point_conseil", le(2, 17), "Point avec le syndic",
-                "Ordre du jour : ascenseur, ravalement, contrat d'entretien.", cible: .resume(lien: nil)),
+                "Ordre du jour : ascenseur, ravalement, contrat d'entretien.", cible: .resume(lien: nil),
+                meta: #"{"fichiers_urls": ["/uploads/evenements/ordre-du-jour.pdf"]}"#),
             element(
                 "38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
                 "Le devis retenu sera présenté au conseil syndical.", meConcerne: true, cible: .affaire(id: 38),
@@ -67,12 +69,21 @@ enum Apercu {
         ]
     }()
 
+    /// `meta` de l'affaire 41 : sa nature, ses quatre photos et son devis (`meta.photos_urls`,
+    /// `meta.fichiers_urls`), comme le serveur les sert.
+    private static let piecesDe41 =
+        #"{"affaire": {"natures": ["activite"], \#(servi("reserve", lieu: "Parking"))}, "#
+        + #""photos_urls": ["/uploads/tickets/41-1.jpg", "#
+        + #""/uploads/tickets/41-2.jpg", "/uploads/tickets/41-3.jpg", "/uploads/tickets/41-4.jpg"], "#
+        + #""fichiers_urls": ["/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"]}"#
+
     /// `meta` d'une affaire datée, à la forme que sert coprofirst v3.79.0 (`meta.affaire`,
     /// `flux/commun.pastilles_affaire`) : début à 9 h, à `dans` jours d'aujourd'hui, et
     /// fin le jour `jusquA`. Le délai est celui du serveur simulé, écrit comme lui ; les natures,
     /// celles que `utils/nature_affaire` dérive (une actualité datée en porte deux).
     private static func metaAffaire(
-        dans: Int, jusquA: Int? = nil, etat: String, libelle: String?, natures: [String] = ["calendrier"]
+        dans: Int, jusquA: Int? = nil, etat: String, libelle: String?, natures: [String] = ["calendrier"],
+        lecture: String = "tous", lieu: String = ""
     ) -> String {
         let calendrier = Chronologie.calendrier
         func iso(_ jours: Int, heure: Int) -> String {
@@ -89,7 +100,14 @@ enum Apercu {
             {"affaire": {"debut": "\#(iso(dans, heure: 9))",
              "fin": \#(fin), "echeance": {"etat": "\#(etat)", "jours": \#(dans), "libelle": \#(delai),
              "plusieurs_jours": \#(jusquA != nil)},
-             "natures": [\#(natures.map { "\"\($0)\"" }.joined(separator: ", "))]}}
+             "natures": [\#(natures.map { "\"\($0)\"" }.joined(separator: ", "))],
+             \#(servi(lecture, lieu: lieu))}}
             """#
+    }
+
+    /// `lecture` et `perimetre_libelle` de `meta.affaire`, comme coprofirst v3.88.1 les sert
+    /// (#129, #130) : la pastille par son nom (`lecturesServies`), le lieu (`""` : le défaut).
+    private static func servi(_ lecture: String, lieu: String) -> String {
+        #""lecture": \#(lecturesServies[lecture] ?? "null"), "perimetre_libelle": "\#(lieu)""#
     }
 }

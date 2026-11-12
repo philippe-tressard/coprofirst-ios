@@ -26,6 +26,10 @@ struct ChampsAffaire: View {
     /// Le HTML d'une description que l'app ne sait pas réécrire, montré tel quel.
     var descriptionFigee: String?
     var lieuModifiable = true
+    /// Édition : le CONTENU (catégorie, titre, description, lieu) se montre sans se
+    /// toucher — le serveur ne le laisse plus corriger (`peut_modifier`, #127) ;
+    /// l'urgence reste.
+    var contenuFige = false
     /// `nil` : un serveur qui ne sert pas la saisie — tout à son rang, sans phrase.
     var forme: FormeDeSaisie?
     @Environment(\.palette) private var palette
@@ -65,6 +69,7 @@ struct ChampsAffaire: View {
         if !categories.isEmpty {
             Section {
                 ChoixCategorie(categories: categories, choisie: categorie)
+                    .disabled(contenuFige)
                     .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
                     .listRowBackground(Color.clear)
             } header: {
@@ -80,6 +85,7 @@ struct ChampsAffaire: View {
                 .focused($champ, equals: .titre)
                 .submitLabel(.next)
                 .onSubmit { champ = descriptionFigee == nil ? .description : nil }
+                .disabled(contenuFige)
                 .accessibilityIdentifier("\(prefixe).titre")
         }
         description
@@ -153,6 +159,7 @@ struct ChampsAffaire: View {
                 TextField("Le problème, en détail", text: $saisie.description, axis: .vertical)
                     .lineLimit(4...12)
                     .focused($champ, equals: .description)
+                    .disabled(contenuFige)
                     .accessibilityIdentifier("\(prefixe).description")
             }
         }
@@ -179,6 +186,7 @@ struct ChampsAffaire: View {
                 }
             }
             .pickerStyle(.navigationLink)
+            .disabled(contenuFige)
             .accessibilityIdentifier("\(prefixe).lieu")
         }
     }

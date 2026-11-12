@@ -38,7 +38,7 @@ struct SuiteFeuille: View {
     var body: some View {
         // En correction, le Suivi ne se montre que si la liste sait dire les deux états de l'entrée.
         let proposes = SaisieSuite.etats(pour: affaire)
-        let etats = corrigee == nil || saisie.suiviCorrigeable(parmi: proposes) ? proposes : []
+        let etats = corrigee == nil || saisie.suiviCorrigeable(parmi: proposes.map(\.code)) ? proposes : []
         NavigationStack {
             Form {
                 if let erreur {
@@ -48,8 +48,8 @@ struct SuiteFeuille: View {
                 if !etats.isEmpty {
                     Section {
                         Picker("État", selection: $saisie.statut) {
-                            ForEach(etats, id: \.self) { code in
-                                Text(StatutsAffaire.parCode[code]?.libelle ?? code).tag(code)
+                            ForEach(etats, id: \.code) { etat in
+                                Text(etat.libelle).tag(etat.code)
                             }
                         }
                         .accessibilityIdentifier("suite.etat")
