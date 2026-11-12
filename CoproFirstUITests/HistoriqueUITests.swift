@@ -9,7 +9,7 @@ import XCTest
 final class HistoriqueUITests: XCTestCase {
     @MainActor
     private func ouvrirLAffaire(_ arguments: [String] = []) -> XCUIApplication {
-        let app = LancementCaptures.lancer(arguments: ["-avis-durable"] + arguments)
+        let app = LancementCaptures.lancer(arguments: arguments)
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
         carte.tap()
