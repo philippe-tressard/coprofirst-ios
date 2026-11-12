@@ -64,8 +64,8 @@ def badge_de_nature(code: str, teintes: dict[str, str]) -> str:
 
 
 def natures_d_affaire(ctx) -> list[dict]:
-    """`NATURES` de `tickets-categories.ts` — lue ici seulement : `pictogrammes.py` en tire
-    les pictogrammes de la gouttière."""
+    """`NATURES` de `tickets-categories.ts`, lue par motif (l'app ne lit pas encore la table
+    publiée `naturesAffaire` ici, #128 lot B ; `pictogrammes.py` la lit, elle)."""
     return lecture_ts.table(ctx.lire(SOURCES[0]), "NATURES")
 
 

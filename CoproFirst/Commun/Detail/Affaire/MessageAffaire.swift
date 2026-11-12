@@ -19,7 +19,7 @@ struct MessageAffaire: Identifiable, Hashable, Sendable {
     let deMoi: Bool
     /// Le nom affiché de l'auteur, servi (`auteur_nom`, contrat 1.26.0, #138) : « Prénom
     /// NOM », la qualité d'un auteur détaché par la conservation, « Ancien résident ».
-    /// `nil` d'une installation antérieure.
+    /// `nil` s'il n'est pas servi.
     let nom: String?
     /// « Un résident », « Le conseil syndical » — l'auteur détaché par la conservation
     /// (`auteur_qualite`, #2014) : ce que la bulle dit quand le nom n'est pas servi.
@@ -38,29 +38,19 @@ extension MessageAffaire {
     /// `MessageRead` (celui de la Communauté) existant à côté.
     typealias Servi = Components.Schemas.AppRoutersTicketsMessagesSchemasMessageRead
 
-    /// Le fil servi, puis ce que son corps sert au-dessus du plancher (`auteur_nom`,
-    /// `est_auteur`) — le MÊME branchement pour le service réel et l'API simulée.
+    /// Le fil servi, `auteur_nom` et `est_auteur` compris (contrat 1.26.0, #138) — le MÊME
+    /// branchement pour le service réel et l'API simulée.
     ///
-    /// `moi` (l'identifiant du compte, `GET /auth/me`) ne sert qu'au REPLI d'une
-    /// installation antérieure à 1.26.0, qui ne sert pas `est_auteur` : la comparaison à
+    /// `moi` (l'identifiant du compte, `GET /auth/me`) ne sert qu'au REPLI d'un message
+    /// servi sans `est_auteur` (le champ est facultatif au contrat) : la comparaison à
     /// `auteur_id` d'avant, écrite ici seulement. Compte illisible : aucun message « à moi ».
-    static func lus(_ servis: [Servi], corps: Data?, moi: Int?) -> [MessageAffaire] {
-        let auDessus = Relecture.auDessusDuPlancher(parLigne: MessageAuDessusDuPlancher.self, corps: corps)
-        return servis.map { message in
-            let servi = auDessus[message.id]
-            return MessageAffaire(
+    static func lus(_ servis: [Servi], moi: Int?) -> [MessageAffaire] {
+        servis.map { message in
+            MessageAffaire(
                 id: message.id, contenu: message.contenu, date: message.creeLe,
-                deMoi: servi?.estAuteur ?? (moi != nil && message.auteurId == moi), nom: servi?.auteurNom,
+                deMoi: message.estAuteur ?? (moi != nil && message.auteurId == moi), nom: message.auteurNom,
                 qualite: message.auteurQualite, interne: message.interne,
                 pieces: PiecesJointes(urls: message.fichiersUrls ?? []))
         }
     }
-}
-
-/// Ce que `MessageRead` des tickets sert au-dessus du plancher (contrat 1.26.0,
-/// coprofirst#2680) : tout est facultatif.
-struct MessageAuDessusDuPlancher: Decodable, Identifiable {
-    let id: Int
-    var auteurNom: String?
-    var estAuteur: Bool?
 }

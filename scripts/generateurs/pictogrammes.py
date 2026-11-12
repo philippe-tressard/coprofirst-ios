@@ -9,8 +9,9 @@ autre dessin (demande du 11/11/2026 : « les icônes du web sont à reprendre po
 cette gouttière »).
 
 Ce module en extrait ceux que la gouttière d'une carte du fil peut montrer : le
-pictogramme de chaque rubrique (`NATURES` de `flux.ts`) et celui de chaque nature
-d'affaire (`NATURES` de `tickets-categories.ts`, `classeDuFlux` du site). Chacun
+pictogramme de chaque rubrique (`naturesDuFil`) et celui de chaque nature d'affaire
+(`naturesAffaire`, `classeDuFlux` du site), tables de `tables-clients.json` (#128), avec
+les attributs du trait (`attributsTrace`). Chacun
 devient une image vectorielle du catalogue `Pictogrammes.xcassets`, dans l'espace de
 noms `Lucide` (`Image("Lucide/wrench")`), rendue en modèle : la carte la teinte.
 
@@ -26,21 +27,20 @@ import json
 import pathlib
 import re
 
-from generateurs import affaires, charte
+from generateurs import charte
 from generateurs._commun import SIGNATURE
 
+# Le catalogue des tracés et les licences ne sont pas des tables : ils se lisent dans
+# l'archive. Le reste vient de `tables-clients.json` (#128).
 SOURCES = [
     "front/src/lib/icones-svg.json",
-    "front/src/lib/components/Icon.svelte",
-    "front/src/lib/flux.ts",
-    "front/src/lib/tickets-categories.ts",
     "LICENSES/ISC.txt",
     "LICENSES/MIT.txt",
 ]
 
 CATALOGUE = pathlib.Path("CoproFirst/Ressources/Pictogrammes.xcassets")
 ESPACE = "Lucide"
-#: Les attributs du <svg> d'`Icon.svelte`, lus et non recopiés : le trait suit le site.
+#: Les attributs du <svg> (`attributsTrace`), lus et non recopiés : le trait suit le site.
 ATTRIBUTS = ("viewBox", "fill", "stroke-width", "stroke-linecap", "stroke-linejoin")
 
 
@@ -50,21 +50,22 @@ def _json(objet: dict) -> str:
 
 
 def attributs_du_site(ctx) -> str:
-    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels qu'`Icon.svelte` les pose."""
-    texte = ctx.lire(SOURCES[1])
+    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels qu'`Icon.svelte` les pose
+    (`attributsTrace`, publiée depuis `ATTRIBUTS_TRACE` d'`icones.ts`)."""
+    publies = ctx.table("attributsTrace")
     lus = []
     for nom in ATTRIBUTS:
-        m = re.search(rf'\s{nom}="([^"{{}}]+)"', texte)
-        if not m:
-            raise SystemExit(f"❌ Icon.svelte : l'attribut {nom} du <svg> est introuvable")
-        lus.append(f'{nom}="{m.group(1)}"')
+        valeur = publies.get(nom)
+        if not isinstance(valeur, str) or not re.fullmatch(r'[^"<>&{}]+', valeur):
+            raise SystemExit(f"❌ attributsTrace : l'attribut {nom} du <svg> est absent ou illisible ({valeur!r})")
+        lus.append(f'{nom}="{valeur}"')
     return " ".join(lus)
 
 
 def noms(ctx) -> list[str]:
     """Les pictogrammes que la gouttière du fil peut montrer, triés."""
     rubriques = {icone for *_, icone in charte.natures_du_fil(ctx)}
-    natures = {n["icone"] for n in affaires.natures_d_affaire(ctx)}
+    natures = {n["icone"] for n in ctx.table("naturesAffaire")}
     return sorted(rubriques | natures)
 
 

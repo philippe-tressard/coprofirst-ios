@@ -7,12 +7,9 @@ import Foundation
 /// Le profil par le client GÉNÉRÉ.
 extension ServiceAPI: ServiceProfil {
     func compte(_ installation: Installation) async throws -> Compte {
-        // Le corps servi est gardé : le nom affiché est au-dessus du plancher (#135).
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getAuthMe() }
-        }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
         switch sortie {
-        case .ok(let ok): return Compte(lu: try ok.body.json, corps: corps)
+        case .ok(let ok): return Compte(lu: try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -142,13 +139,13 @@ extension ServiceAPI: ServiceProfil {
 }
 
 extension Compte {
-    init(lu moi: Components.Schemas.UserRead, corps: Data?) {
+    init(lu moi: Components.Schemas.UserRead) {
         self.init(
             prenom: moi.prenom, nom: moi.nom, email: moi.email, telephone: moi.telephone, societe: moi.societe,
             fonction: moi.fonction, photo: moi.photoUrl, statut: moi.statut.rawValue,
             roles: (moi.roles ?? [moi.role.rawValue]), batimentNom: moi.batimentNom, actif: moi.actif,
             creeLe: moi.creeLe, derniereConnexion: moi.derniereConnexion, preferences: moi.preferencesNotifications,
             restreindreAMesBatiments: moi.restreindreAMesBatiments ?? false,
-            refusTelemetrie: moi.optOutTelemetrie ?? false, nomServi: PersonneServie.lue(corps)?.nomAffiche)
+            refusTelemetrie: moi.optOutTelemetrie ?? false, nomServi: moi.nomAffiche)
     }
 }

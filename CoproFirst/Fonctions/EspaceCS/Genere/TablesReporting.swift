@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/entretien-periodique.ts, reporting.ts, components/reporting/ (TableauAffaires, VueSuiviAffaires, BarresCroisees).
+// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), front/src/lib/reporting.ts#TEINTE_AGE, front/src/lib/reporting.ts#MODES_SUIVI, front/src/lib/entretien-periodique.ts#ETATS_VISITE, front/src/lib/reporting.ts#MOTIFS_EVOLUTION, front/src/lib/reporting.ts#MOTIF_EVOLUTION_PAR_DEFAUT, front/src/lib/components/reporting/BarresCroisees.svelte@[data-teinte='*'] (tables-clients.json).
 
 import SwiftUI
 
@@ -15,7 +15,7 @@ enum TablesReporting {
         "moyenne": "badge-orange",
         "recente": "badge-gray",
     ]
-    /// Les modes du Suivi des affaires, dans l'ordre du site (`MODES`).
+    /// Les modes du Suivi des affaires, dans l'ordre du site (`MODES_SUIVI`).
     static let modes: [(code: String, libelle: String)] = [
         ("suivi", "Suivi affaires"),
         ("entretien", "Suivi entretiens périodiques"),

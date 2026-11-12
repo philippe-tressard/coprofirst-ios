@@ -153,6 +153,12 @@
             "title": "Perimetre Cible",
             "type": "array"
           },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
+          },
           "porteur_id": {
             "title": "Porteur Id",
             "type": [
@@ -179,7 +185,8 @@
           "chez_locataire",
           "cree_le",
           "porteur_nom",
-          "porteur_rang"
+          "porteur_rang",
+          "perimetre_libelle"
         ],
         "title": "AccesAdminOut",
         "type": "object"
@@ -325,6 +332,12 @@
             "title": "Perimetre Cible",
             "type": "array"
           },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
+          },
           "statut": {
             "$ref": "#/components/schemas/StatutAcces"
           }
@@ -334,7 +347,8 @@
           "code",
           "statut",
           "chez_locataire",
-          "cree_le"
+          "cree_le",
+          "perimetre_libelle"
         ],
         "title": "AccesPorteur",
         "type": "object"
@@ -511,6 +525,53 @@
         "title": "AdminUserUpdate",
         "type": "object"
       },
+      "Adoption": {
+        "description": "`global` est un mot réservé de Python : le champ s'appelle `ensemble`, et\nsort sous son nom servi par l'alias.",
+        "properties": {
+          "global": {
+            "$ref": "#/components/schemas/LigneAdoption"
+          },
+          "par_batiment": {
+            "items": {
+              "$ref": "#/components/schemas/LigneAdoption"
+            },
+            "title": "Par Batiment",
+            "type": "array"
+          },
+          "par_profil": {
+            "items": {
+              "$ref": "#/components/schemas/LigneAdoption"
+            },
+            "title": "Par Profil",
+            "type": "array"
+          },
+          "par_type": {
+            "items": {
+              "$ref": "#/components/schemas/LigneAdoption"
+            },
+            "title": "Par Type",
+            "type": "array"
+          },
+          "periode": {
+            "title": "Periode",
+            "type": "string"
+          },
+          "refus": {
+            "title": "Refus",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "periode",
+          "global",
+          "refus",
+          "par_profil",
+          "par_type",
+          "par_batiment"
+        ],
+        "title": "Adoption",
+        "type": "object"
+      },
       "AffaireCiteeRead": {
         "properties": {
           "id": {
@@ -561,6 +622,11 @@
           },
           "statut": {
             "title": "Statut",
+            "type": "string"
+          },
+          "statut_libelle": {
+            "default": "",
+            "title": "Statut Libelle",
             "type": "string"
           },
           "titre": {
@@ -700,6 +766,9 @@
             "title": "Jours Sans Avancee",
             "type": "integer"
           },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
+          },
           "libelle_categorie": {
             "title": "Libelle Categorie",
             "type": "string"
@@ -730,6 +799,12 @@
             },
             "title": "Perimetre Cible",
             "type": "array"
+          },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
           },
           "public_cible": {
             "default": [],
@@ -780,7 +855,8 @@
           "apercu",
           "apercu_ia",
           "batiments",
-          "a_evolue"
+          "a_evolue",
+          "perimetre_libelle"
         ],
         "title": "AffaireOuverteRead",
         "type": "object"
@@ -1133,6 +1209,12 @@
             "title": "Perimetre Label",
             "type": "string"
           },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
+          },
           "peut_archiver": {
             "title": "Peut Archiver",
             "type": "boolean"
@@ -1183,7 +1265,8 @@
           "auteur_nom",
           "peut_archiver",
           "peut_restaurer",
-          "peut_supprimer"
+          "peut_supprimer",
+          "perimetre_libelle"
         ],
         "title": "AnnonceHallRead",
         "type": "object"
@@ -1258,6 +1341,9 @@
             "title": "Id",
             "type": "integer"
           },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
+          },
           "mis_a_jour_le": {
             "format": "date-time",
             "title": "Mis A Jour Le",
@@ -1288,6 +1374,12 @@
             },
             "title": "Perimetre Cible",
             "type": "array"
+          },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
           },
           "peut_modifier": {
             "default": false,
@@ -1362,7 +1454,8 @@
           "categorie",
           "statut",
           "auteur_id",
-          "cree_le"
+          "cree_le",
+          "perimetre_libelle"
         ],
         "title": "AnnonceRead",
         "type": "object"
@@ -1480,6 +1573,39 @@
         "title": "AnnuaireLu",
         "type": "object"
       },
+      "AnomalieRecente": {
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "erreur": {
+            "title": "Erreur",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noeud": {
+            "title": "Noeud",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tache": {
+            "title": "Tache",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tache",
+          "cree_le"
+        ],
+        "title": "AnomalieRecente",
+        "type": "object"
+      },
       "ApercuCanal": {
         "description": "Un canal, tel qu'il partira — ou la raison pour laquelle il ne partira pas.",
         "properties": {
@@ -1594,6 +1720,81 @@
           "motif"
         ],
         "title": "ApercuEcarte",
+        "type": "object"
+      },
+      "ApercuLecture": {
+        "description": "La pastille d'une SAISIE, et ce que sa nature décide sans choix du conseil.",
+        "properties": {
+          "destinataires_par_defaut": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Destinataires Par Defaut",
+            "type": "array"
+          },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
+          },
+          "lue_du_seul_conseil": {
+            "title": "Lue Du Seul Conseil",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "lecture",
+          "destinataires_par_defaut",
+          "lue_du_seul_conseil"
+        ],
+        "title": "ApercuLecture",
+        "type": "object"
+      },
+      "ApercuLectureEntree": {
+        "description": "Ce que la saisie dit de ses lecteurs.",
+        "properties": {
+          "categorie": {
+            "maxLength": 64,
+            "title": "Categorie",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confidentiel": {
+            "default": false,
+            "title": "Confidentiel",
+            "type": "boolean"
+          },
+          "perimetre_cible": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Perimetre Cible",
+            "type": "array"
+          },
+          "public_cible": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Public Cible",
+            "type": "array"
+          },
+          "reserve_perimetre": {
+            "default": false,
+            "title": "Reserve Perimetre",
+            "type": "boolean"
+          },
+          "statut": {
+            "maxLength": 64,
+            "title": "Statut",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "ApercuLectureEntree",
         "type": "object"
       },
       "AppareilEnregistre": {
@@ -1737,6 +1938,50 @@
           "cree_le"
         ],
         "title": "ArchiveLue",
+        "type": "object"
+      },
+      "Arrivee": {
+        "properties": {
+          "arrivees": {
+            "title": "Arrivees",
+            "type": "integer"
+          },
+          "canal": {
+            "title": "Canal",
+            "type": "string"
+          },
+          "comptes": {
+            "title": "Comptes",
+            "type": "integer"
+          },
+          "envois": {
+            "title": "Envois",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "modele": {
+            "title": "Modele",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "canal",
+          "arrivees",
+          "comptes"
+        ],
+        "title": "Arrivee",
         "type": "object"
       },
       "AutoMatchRelance": {
@@ -2177,6 +2422,12 @@
             "title": "Bailleur Nom",
             "type": "string"
           },
+          "bailleur_nom_affiche": {
+            "description": "« Prénom NOM » du bailleur (`utils/noms.nom_affiche`), servi au locataire (#2633).",
+            "readOnly": true,
+            "title": "Bailleur Nom Affiche",
+            "type": "string"
+          },
           "bailleur_prenom": {
             "title": "Bailleur Prenom",
             "type": "string"
@@ -2218,6 +2469,11 @@
               "integer",
               "null"
             ]
+          },
+          "lot_etage_libelle": {
+            "default": "",
+            "title": "Lot Etage Libelle",
+            "type": "string"
           },
           "lot_id": {
             "title": "Lot Id",
@@ -2271,7 +2527,8 @@
           "bailleur_telephone",
           "date_entree",
           "date_sortie_prevue",
-          "statut"
+          "statut",
+          "bailleur_nom_affiche"
         ],
         "title": "BailLocataireOut",
         "type": "object"
@@ -2365,6 +2622,12 @@
               "null"
             ]
           },
+          "locataire_nom_affiche": {
+            "description": "« Prénom NOM » du locataire saisi au bail (`utils/noms`) — `''` s'il manque (#2633).",
+            "readOnly": true,
+            "title": "Locataire Nom Affiche",
+            "type": "string"
+          },
           "locataire_prenom": {
             "title": "Locataire Prenom",
             "type": [
@@ -2422,7 +2685,8 @@
           "statut",
           "notes",
           "cree_le",
-          "mis_a_jour_le"
+          "mis_a_jour_le",
+          "locataire_nom_affiche"
         ],
         "title": "BailOut",
         "type": "object"
@@ -2660,6 +2924,32 @@
           "nb_etages"
         ],
         "title": "BatimentRead",
+        "type": "object"
+      },
+      "Baton": {
+        "description": "Un bâton du graphique ; `uniques` est absent du graphique par année.",
+        "properties": {
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "uniques": {
+            "title": "Uniques",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "label",
+          "total"
+        ],
+        "title": "Baton",
         "type": "object"
       },
       "BattementTache": {
@@ -3237,6 +3527,11 @@
           },
           "statut": {
             "title": "Statut",
+            "type": "string"
+          },
+          "statut_libelle": {
+            "default": "",
+            "title": "Statut Libelle",
             "type": "string"
           },
           "titre": {
@@ -4095,6 +4390,41 @@
         "title": "CompteAction",
         "type": "object"
       },
+      "CompteDormant": {
+        "properties": {
+          "derniere_visite": {
+            "title": "Derniere Visite",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jours": {
+            "title": "Jours",
+            "type": "integer"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "user_id",
+          "nom",
+          "type",
+          "jours"
+        ],
+        "title": "CompteDormant",
+        "type": "object"
+      },
       "CompteEnAttenteItem": {
         "description": "User en attente enrichi du nombre de lots trouvés dans l'import.",
         "properties": {
@@ -4489,6 +4819,13 @@
       "Consignes": {
         "description": "Ce que lit et écrit l'écran : les rubriques, et si elles sont propres à la résidence.",
         "properties": {
+          "accueil": {
+            "default": "Vous venez d'emménager dans notre résidence. Ne restez pas sur le carreau ! Consultez régulièrement les actualités sur le site {site} de la copropriété.",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Accueil",
+            "type": "string"
+          },
           "consignes": {
             "items": {
               "$ref": "#/components/schemas/Consigne"
@@ -4632,73 +4969,6 @@
           "echeances"
         ],
         "title": "ConstatConservation",
-        "type": "object"
-      },
-      "Contact": {
-        "description": "L'administrateur de l'installation — gardé ici pour l'afficher et le rectifier.",
-        "properties": {
-          "courriel": {
-            "title": "Courriel",
-            "type": "string"
-          },
-          "nom": {
-            "title": "Nom",
-            "type": "string"
-          },
-          "prenom": {
-            "title": "Prenom",
-            "type": "string"
-          },
-          "telephone": {
-            "title": "Telephone",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "prenom",
-          "nom",
-          "courriel"
-        ],
-        "title": "Contact",
-        "type": "object"
-      },
-      "ContactLu": {
-        "properties": {
-          "courriel": {
-            "title": "Courriel",
-            "type": "string"
-          },
-          "mis_a_jour_le": {
-            "format": "date-time",
-            "title": "Mis A Jour Le",
-            "type": "string"
-          },
-          "nom": {
-            "title": "Nom",
-            "type": "string"
-          },
-          "prenom": {
-            "title": "Prenom",
-            "type": "string"
-          },
-          "telephone": {
-            "title": "Telephone",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "prenom",
-          "nom",
-          "courriel",
-          "mis_a_jour_le"
-        ],
-        "title": "ContactLu",
         "type": "object"
       },
       "ContratARenouveler": {
@@ -5081,6 +5351,11 @@
       "ContratDeLAffaire": {
         "description": "Le contrat sous lequel intervient le prestataire d'une affaire (#1445).\n\nDÉRIVÉ à la lecture (`routers/tickets/commun.contrat_de_l_affaire`). Le\nrythme se lit par tous — il était déjà affiché sur l'affaire ; le libellé et\nle numéro par le conseil seul, comme la liste des contrats\n(`GET /prestataires/contrats`, réservée au conseil).",
         "properties": {
+          "frequence_libelle": {
+            "default": "",
+            "title": "Frequence Libelle",
+            "type": "string"
+          },
           "frequence_type": {
             "title": "Frequence Type",
             "type": [
@@ -5940,6 +6215,12 @@
               "null"
             ]
           },
+          "etat_cible_libelle": {
+            "description": "L'état décidé, en clair — vide sans état à la validation (#2633).",
+            "readOnly": true,
+            "title": "Etat Cible Libelle",
+            "type": "string"
+          },
           "mis_a_jour_le": {
             "format": "date-time",
             "title": "Mis A Jour Le",
@@ -5955,7 +6236,8 @@
           "contenu",
           "brouillon",
           "conseil_seul",
-          "mis_a_jour_le"
+          "mis_a_jour_le",
+          "etat_cible_libelle"
         ],
         "title": "CrRead",
         "type": "object"
@@ -6418,6 +6700,129 @@
         "title": "DemandeProfilAction",
         "type": "object"
       },
+      "DemandeProfilEnAttente": {
+        "description": "Une demande de la file du conseil : la demande, plus ce qui identifie le demandeur.\n\nTypée depuis #2618 : la route rendait des `dict` que le contrat annonçait `{}`,\net l'app iOS les relisait « en miroir ».",
+        "properties": {
+          "batiment_actuel": {
+            "title": "Batiment Actuel",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "batiment_id_souhaite": {
+            "title": "Batiment Id Souhaite",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "batiment_nom_souhaite": {
+            "title": "Batiment Nom Souhaite",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "motif": {
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "motif_refus": {
+            "title": "Motif Refus",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut_actuel": {
+            "title": "Statut Actuel",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut_demande": {
+            "$ref": "#/components/schemas/StatutDemandeProfil"
+          },
+          "statut_souhaite": {
+            "title": "Statut Souhaite",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "traite_le": {
+            "format": "date-time",
+            "title": "Traite Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "traite_par_id": {
+            "title": "Traite Par Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "utilisateur_email": {
+            "title": "Utilisateur Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilisateur_id": {
+            "title": "Utilisateur Id",
+            "type": "integer"
+          },
+          "utilisateur_nom": {
+            "title": "Utilisateur Nom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "utilisateur_id",
+          "statut_demande",
+          "cree_le",
+          "utilisateur_nom"
+        ],
+        "title": "DemandeProfilEnAttente",
+        "type": "object"
+      },
+      "DemandeProfilTraitee": {
+        "description": "`POST /admin/demandes-profil/{id}/traiter` : le nouvel état, et la phrase à afficher.\n\n`annonce` est composée ICI et lue par le site ET l'app iOS (#2618), comme celle\nd'un compte traité (`CompteTraiteResult`, #2522).",
+        "properties": {
+          "annonce": {
+            "$ref": "#/components/schemas/Annonce"
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statut",
+          "annonce"
+        ],
+        "title": "DemandeProfilTraitee",
+        "type": "object"
+      },
       "DemandeServices": {
         "properties": {
           "motif": {
@@ -6454,6 +6859,148 @@
           "motif"
         ],
         "title": "DemandeSuppression",
+        "type": "object"
+      },
+      "DemandeSuppressionCreate": {
+        "properties": {
+          "mot_de_passe": {
+            "minLength": 1,
+            "title": "Mot De Passe",
+            "type": "string"
+          },
+          "motif": {
+            "maxLength": 1000,
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "mot_de_passe"
+        ],
+        "title": "DemandeSuppressionCreate",
+        "type": "object"
+      },
+      "DemandeSuppressionEnAttente": {
+        "description": "Une demande de la file de l'administration : la demande, et qui la fait.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "motif": {
+            "title": "Motif",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          },
+          "traitee_le": {
+            "format": "date-time",
+            "title": "Traitee Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilisateur_email": {
+            "title": "Utilisateur Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "utilisateur_id": {
+            "title": "Utilisateur Id",
+            "type": "integer"
+          },
+          "utilisateur_nom": {
+            "title": "Utilisateur Nom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "statut",
+          "cree_le",
+          "utilisateur_id",
+          "utilisateur_nom"
+        ],
+        "title": "DemandeSuppressionEnAttente",
+        "type": "object"
+      },
+      "DemandeSuppressionRead": {
+        "description": "Une demande de suppression, telle que la personne et l'administration la lisent.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          },
+          "traitee_le": {
+            "format": "date-time",
+            "title": "Traitee Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "statut",
+          "cree_le"
+        ],
+        "title": "DemandeSuppressionRead",
+        "type": "object"
+      },
+      "DemandeSuppressionTraitee": {
+        "description": "`POST /admin/demandes-suppression/{id}/traiter` : le nouvel état, et la phrase à afficher.",
+        "properties": {
+          "annonce": {
+            "$ref": "#/components/schemas/Annonce"
+          },
+          "compte_efface": {
+            "title": "Compte Efface",
+            "type": "boolean"
+          },
+          "statut": {
+            "$ref": "#/components/schemas/StatutDemandeSuppression"
+          }
+        },
+        "required": [
+          "statut",
+          "compte_efface",
+          "annonce"
+        ],
+        "title": "DemandeSuppressionTraitee",
         "type": "object"
       },
       "DemandeTarif": {
@@ -6804,7 +7351,7 @@
             ]
           },
           "perimetre_libelle": {
-            "description": "Le lieu du badge 🔹, `\"\"` pour le périmètre par défaut — la règle de\n`BadgePerimetre`, servie au site et à l'app iOS (#2505).",
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
             "readOnly": true,
             "title": "Perimetre Libelle",
             "type": "string"
@@ -6901,6 +7448,63 @@
           }
         },
         "title": "DocumentUpdate",
+        "type": "object"
+      },
+      "DureePage": {
+        "properties": {
+          "indicateur": {
+            "title": "Indicateur",
+            "type": "string"
+          },
+          "mediane": {
+            "title": "Mediane",
+            "type": "integer"
+          },
+          "mesures": {
+            "title": "Mesures",
+            "type": "integer"
+          },
+          "p75": {
+            "title": "P75",
+            "type": "integer"
+          },
+          "page": {
+            "title": "Page",
+            "type": "string"
+          }
+        },
+        "required": [
+          "indicateur",
+          "mesures",
+          "mediane",
+          "p75",
+          "page"
+        ],
+        "title": "DureePage",
+        "type": "object"
+      },
+      "Durees": {
+        "properties": {
+          "indicateurs": {
+            "items": {
+              "$ref": "#/components/schemas/IndicateurDuree"
+            },
+            "title": "Indicateurs",
+            "type": "array"
+          },
+          "pages": {
+            "items": {
+              "$ref": "#/components/schemas/DureePage"
+            },
+            "title": "Pages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "indicateurs",
+          "pages"
+        ],
+        "title": "Durees",
         "type": "object"
       },
       "EcartFusion": {
@@ -7236,6 +7840,12 @@
             "title": "Perimetres",
             "type": "array"
           },
+          "perimetres_libelle": {
+            "description": "Où l'équipement se trouve, nommé — vide sans lieu lié (#2633).",
+            "readOnly": true,
+            "title": "Perimetres Libelle",
+            "type": "string"
+          },
           "pour_affaires": {
             "default": true,
             "title": "Pour Affaires",
@@ -7253,7 +7863,8 @@
           "libelle",
           "icone",
           "ordre",
-          "actif"
+          "actif",
+          "perimetres_libelle"
         ],
         "title": "EquipementRead",
         "type": "object"
@@ -7317,6 +7928,41 @@
         "title": "EquipementUpdate",
         "type": "object"
       },
+      "ErreurDuTableau": {
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "derniere_le": {
+            "format": "date-time",
+            "title": "Derniere Le",
+            "type": "string"
+          },
+          "page": {
+            "title": "Page",
+            "type": "string"
+          },
+          "premiere_le": {
+            "format": "date-time",
+            "title": "Premiere Le",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "code",
+          "total",
+          "premiere_le",
+          "derniere_le"
+        ],
+        "title": "ErreurDuTableau",
+        "type": "object"
+      },
       "EtageLotUpdate": {
         "description": "L'étage d'un lot, seul champ que son occupant peut écrire.",
         "properties": {
@@ -7353,6 +7999,31 @@
           "nombre"
         ],
         "title": "EtapeMoyenne",
+        "type": "object"
+      },
+      "EtatDemandeSuppression": {
+        "description": "`GET /auth/demande-suppression` : ma demande en cours (ou rien), et ce qu'il faut savoir avant.",
+        "properties": {
+          "consequences": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Consequences",
+            "type": "array"
+          },
+          "delai_annonce_jours": {
+            "default": 30,
+            "title": "Delai Annonce Jours",
+            "type": "integer"
+          },
+          "demande": {
+            "$ref": "#/components/schemas/DemandeSuppressionRead"
+          }
+        },
+        "required": [
+          "consequences"
+        ],
+        "title": "EtatDemandeSuppression",
         "type": "object"
       },
       "EtatDescriptifLu": {
@@ -7996,7 +8667,7 @@
             ]
           },
           "contact": {
-            "$ref": "#/components/schemas/ContactLu"
+            "$ref": "#/components/schemas/app__routers__admin__installations__ContactLu"
           },
           "contrats": {
             "items": {
@@ -8094,6 +8765,36 @@
           "decisions"
         ],
         "title": "FicheInstallation",
+        "type": "object"
+      },
+      "FiltreGestionnaire": {
+        "properties": {
+          "applique": {
+            "title": "Applique",
+            "type": "string"
+          },
+          "gestionnaire_designe": {
+            "title": "Gestionnaire Designe",
+            "type": "boolean"
+          },
+          "non_distingue_jusqu_au": {
+            "title": "Non Distingue Jusqu Au",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "propose": {
+            "title": "Propose",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "propose",
+          "gestionnaire_designe",
+          "applique"
+        ],
+        "title": "FiltreGestionnaire",
         "type": "object"
       },
       "FluxItem": {
@@ -8328,6 +9029,104 @@
         "title": "FusionRead",
         "type": "object"
       },
+      "Geste": {
+        "properties": {
+          "envois": {
+            "title": "Envois",
+            "type": "integer"
+          },
+          "geste": {
+            "title": "Geste",
+            "type": "string"
+          },
+          "ouvertures": {
+            "title": "Ouvertures",
+            "type": "integer"
+          },
+          "taux": {
+            "title": "Taux",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "geste",
+          "ouvertures",
+          "envois"
+        ],
+        "title": "Geste",
+        "type": "object"
+      },
+      "GestesFaq": {
+        "description": "`GET /faq/gestes` — ce que CE lecteur peut faire de la FAQ (#2654).\n\n`peut_rediger` ouvre tout ce que l'écran offre au rédacteur : créer, modifier,\nretirer, réorganiser une entrée, renommer une catégorie, lire les entrées\ninactives. Ces routes prennent toutes `require_cs_or_admin`.",
+        "properties": {
+          "peut_rediger": {
+            "title": "Peut Rediger",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "peut_rediger"
+        ],
+        "title": "GestesFaq",
+        "type": "object"
+      },
+      "GestesRoles": {
+        "description": "Le geste qu'Admin › Utilisateurs offre sur chaque rôle d'un compte.",
+        "properties": {
+          "admin": {
+            "enum": [
+              "ajouter",
+              "retirer"
+            ],
+            "title": "Admin",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conseil_syndical": {
+            "enum": [
+              "ajouter",
+              "retirer"
+            ],
+            "title": "Conseil Syndical",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "operateur": {
+            "enum": [
+              "ajouter",
+              "retirer"
+            ],
+            "title": "Operateur",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "GestesRoles",
+        "type": "object"
+      },
+      "GestesSondages": {
+        "description": "`GET /sondages/gestes` — ce que CE lecteur peut faire de la rubrique (#2654).\n\nModifier ou stopper un sondage reste un geste PAR sondage (`peut_editer` :\nl'auteur ou l'administrateur) ; seul celui de créer se sert ici.",
+        "properties": {
+          "peut_creer": {
+            "title": "Peut Creer",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "peut_creer"
+        ],
+        "title": "GestesSondages",
+        "type": "object"
+      },
       "GroupeCarnet": {
         "description": "Les entrées d'un équipement, dans l'ordre où l'écran les montre.",
         "properties": {
@@ -8552,6 +9351,9 @@
             "title": "Id",
             "type": "integer"
           },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
+          },
           "mon_vote": {
             "default": false,
             "title": "Mon Vote",
@@ -8579,6 +9381,12 @@
             },
             "title": "Perimetre Cible",
             "type": "array"
+          },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
           },
           "peut_modifier": {
             "default": false,
@@ -8620,7 +9428,8 @@
           "titre",
           "description",
           "statut",
-          "cree_le"
+          "cree_le",
+          "perimetre_libelle"
         ],
         "title": "IdeeRead",
         "type": "object"
@@ -8712,6 +9521,132 @@
         "title": "Identite",
         "type": "object"
       },
+      "IndicateurDuree": {
+        "properties": {
+          "indicateur": {
+            "title": "Indicateur",
+            "type": "string"
+          },
+          "mediane": {
+            "title": "Mediane",
+            "type": "integer"
+          },
+          "mesures": {
+            "title": "Mesures",
+            "type": "integer"
+          },
+          "p75": {
+            "title": "P75",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "indicateur",
+          "mesures",
+          "mediane",
+          "p75"
+        ],
+        "title": "IndicateurDuree",
+        "type": "object"
+      },
+      "IndicateursTelemetrie": {
+        "description": "`kpi` — la partie qui dépend de la portée (jour, mois, année, total).",
+        "properties": {
+          "annees_actives": {
+            "title": "Annees Actives",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "heure_pointe": {
+            "title": "Heure Pointe",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "jour_pointe": {
+            "$ref": "#/components/schemas/Record"
+          },
+          "mois_actifs": {
+            "title": "Mois Actifs",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "moy_utilisateurs_jour": {
+            "title": "Moy Utilisateurs Jour",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "moy_vues_an": {
+            "title": "Moy Vues An",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "moy_vues_jour": {
+            "title": "Moy Vues Jour",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "moy_vues_mois": {
+            "title": "Moy Vues Mois",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "moy_vues_utilisateur": {
+            "title": "Moy Vues Utilisateur",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "pages": {
+            "title": "Pages",
+            "type": "integer"
+          },
+          "record_jour": {
+            "$ref": "#/components/schemas/Record"
+          },
+          "record_mois": {
+            "$ref": "#/components/schemas/Record"
+          },
+          "utilisateurs": {
+            "title": "Utilisateurs",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "vues": {
+            "title": "Vues",
+            "type": "integer"
+          },
+          "vues_non_attribuees": {
+            "title": "Vues Non Attribuees",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "vues",
+          "pages"
+        ],
+        "title": "IndicateursTelemetrie",
+        "type": "object"
+      },
       "InfoSyndicAdmin": {
         "description": "`GET /admin/annuaire/syndic` : le nom vient du CONTRAT quand il y en a un (#535).",
         "properties": {
@@ -8775,6 +9710,122 @@
           "messages"
         ],
         "title": "JournalCourriels",
+        "type": "object"
+      },
+      "Lecture": {
+        "description": "La pastille de lecture, telle que les deux clients l'affichent.",
+        "properties": {
+          "avertissement": {
+            "title": "Avertissement",
+            "type": "string"
+          },
+          "cle": {
+            "title": "Cle",
+            "type": "string"
+          },
+          "court": {
+            "title": "Court",
+            "type": "string"
+          },
+          "du_perimetre": {
+            "title": "Du Perimetre",
+            "type": "string"
+          },
+          "exclus": {
+            "title": "Exclus",
+            "type": "string"
+          },
+          "hors_perimetre": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Hors Perimetre",
+            "type": "array"
+          },
+          "icones": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Icones",
+            "type": "array"
+          },
+          "long": {
+            "title": "Long",
+            "type": "string"
+          },
+          "par_defaut": {
+            "title": "Par Defaut",
+            "type": "boolean"
+          },
+          "perimetre_reserve": {
+            "title": "Perimetre Reserve",
+            "type": "boolean"
+          },
+          "phrase": {
+            "title": "Phrase",
+            "type": "string"
+          },
+          "profils": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Profils",
+            "type": "array"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "cle",
+          "icones",
+          "court",
+          "long",
+          "titre",
+          "profils",
+          "perimetre_reserve",
+          "hors_perimetre",
+          "du_perimetre",
+          "phrase",
+          "exclus",
+          "par_defaut",
+          "avertissement"
+        ],
+        "title": "Lecture",
+        "type": "object"
+      },
+      "LibellePerimetre": {
+        "properties": {
+          "badge": {
+            "title": "Badge",
+            "type": "string"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          }
+        },
+        "required": [
+          "libelle",
+          "badge"
+        ],
+        "title": "LibellePerimetre",
+        "type": "object"
+      },
+      "LibellePerimetreEntree": {
+        "description": "Une sélection de périmètres — celle d'une saisie en cours.",
+        "properties": {
+          "codes": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Codes",
+            "type": "array"
+          }
+        },
+        "title": "LibellePerimetreEntree",
         "type": "object"
       },
       "LienRead": {
@@ -8880,6 +9931,36 @@
           "adresse"
         ],
         "title": "LieuRead",
+        "type": "object"
+      },
+      "LigneAdoption": {
+        "properties": {
+          "actifs": {
+            "title": "Actifs",
+            "type": "integer"
+          },
+          "comptes": {
+            "title": "Comptes",
+            "type": "integer"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "taux": {
+            "title": "Taux",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "libelle",
+          "actifs",
+          "comptes"
+        ],
+        "title": "LigneAdoption",
         "type": "object"
       },
       "LigneDeCle": {
@@ -9056,6 +10137,12 @@
             "title": "Nom",
             "type": "string"
           },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
           "prenom": {
             "title": "Prenom",
             "type": "string"
@@ -9066,7 +10153,8 @@
           "nom",
           "prenom",
           "email_masque",
-          "actif"
+          "actif",
+          "nom_affiche"
         ],
         "title": "LocataireInfo",
         "type": "object"
@@ -9173,6 +10261,11 @@
           "etage_libelle": {
             "default": "",
             "title": "Etage Libelle",
+            "type": "string"
+          },
+          "etage_libelle_complet": {
+            "default": "",
+            "title": "Etage Libelle Complet",
             "type": "string"
           },
           "explication": {
@@ -9319,6 +10412,11 @@
           "etage_libelle": {
             "default": "",
             "title": "Etage Libelle",
+            "type": "string"
+          },
+          "etage_libelle_complet": {
+            "default": "",
+            "title": "Etage Libelle Complet",
             "type": "string"
           },
           "explication": {
@@ -9764,6 +10862,12 @@
             "title": "Nom",
             "type": "string"
           },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
           "prenom": {
             "title": "Prenom",
             "type": "string"
@@ -9772,7 +10876,8 @@
         "required": [
           "id",
           "prenom",
-          "nom"
+          "nom",
+          "nom_affiche"
         ],
         "title": "MembreRead",
         "type": "object"
@@ -10129,6 +11234,42 @@
           "libelle"
         ],
         "title": "NatureServie",
+        "type": "object"
+      },
+      "NomRendu": {
+        "properties": {
+          "nom_affiche": {
+            "title": "Nom Affiche",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nom_affiche"
+        ],
+        "title": "NomRendu",
+        "type": "object"
+      },
+      "NomSaisi": {
+        "description": "Ce que la saisie dit de la personne.",
+        "properties": {
+          "nom": {
+            "maxLength": 120,
+            "title": "Nom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prenom": {
+            "maxLength": 120,
+            "title": "Prenom",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "title": "NomSaisi",
         "type": "object"
       },
       "NotationCreate": {
@@ -10601,6 +11742,29 @@
           "ordre"
         ],
         "title": "OptionFiche",
+        "type": "object"
+      },
+      "PageTop": {
+        "properties": {
+          "page": {
+            "title": "Page",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "uniques": {
+            "title": "Uniques",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "page",
+          "total",
+          "uniques"
+        ],
+        "title": "PageTop",
         "type": "object"
       },
       "PaletteRead": {
@@ -11105,6 +12269,11 @@
             "title": "Dupliquable",
             "type": "boolean"
           },
+          "hauteur": {
+            "default": 0,
+            "title": "Hauteur",
+            "type": "integer"
+          },
           "hors_copropriete": {
             "title": "Hors Copropriete",
             "type": "boolean"
@@ -11131,6 +12300,16 @@
           "nb_descendants": {
             "default": 0,
             "title": "Nb Descendants",
+            "type": "integer"
+          },
+          "niveau": {
+            "default": 0,
+            "title": "Niveau",
+            "type": "integer"
+          },
+          "niveaux_libres": {
+            "default": 0,
+            "title": "Niveaux Libres",
             "type": "integer"
           },
           "ordre": {
@@ -11802,6 +12981,12 @@
               "null"
             ]
           },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
           "par_derogation": {
             "default": false,
             "title": "Par Derogation",
@@ -11832,7 +13017,8 @@
         },
         "required": [
           "nature",
-          "id"
+          "id",
+          "nom_affiche"
         ],
         "title": "PresentRead",
         "type": "object"
@@ -11876,6 +13062,57 @@
           }
         },
         "title": "PrestataireContact",
+        "type": "object"
+      },
+      "PrestataireContactLu": {
+        "description": "Un contact LU : son « Prénom NOM » servi (#2633). Jamais en entrée — le\ncontact saisi s'écrit tel quel dans `contacts_json`, sans champ calculé.",
+        "properties": {
+          "email": {
+            "title": "Email",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fonction": {
+            "title": "Fonction",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nom": {
+            "title": "Nom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "telephone": {
+            "title": "Telephone",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "nom_affiche"
+        ],
+        "title": "PrestataireContactLu",
         "type": "object"
       },
       "PrestataireCreate": {
@@ -11998,7 +13235,7 @@
           "contacts": {
             "default": [],
             "items": {
-              "$ref": "#/components/schemas/PrestataireContact"
+              "$ref": "#/components/schemas/PrestataireContactLu"
             },
             "title": "Contacts",
             "type": "array"
@@ -12056,6 +13293,15 @@
               "null"
             ]
           },
+          "telephones": {
+            "description": "Les numéros du champ, découpés sur les virgules et sans doublon (#2633).",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Telephones",
+            "type": "array"
+          },
           "type_prestataire": {
             "$ref": "#/components/schemas/TypePrestataire",
             "default": "maintenance_depannage"
@@ -12065,7 +13311,8 @@
           "id",
           "nom",
           "specialite",
-          "actif"
+          "actif",
+          "telephones"
         ],
         "title": "PrestataireRead",
         "type": "object"
@@ -12806,6 +14053,12 @@
               "null"
             ]
           },
+          "etage_libelle": {
+            "description": "« RDC », « 2ème étage » — comme la fiche du membre (#2633).",
+            "readOnly": true,
+            "title": "Etage Libelle",
+            "type": "string"
+          },
           "user_id": {
             "title": "User Id",
             "type": [
@@ -12814,6 +14067,9 @@
             ]
           }
         },
+        "required": [
+          "etage_libelle"
+        ],
         "title": "Rapprochement",
         "type": "object"
       },
@@ -12845,6 +14101,34 @@
           "lot_ids"
         ],
         "title": "RattachementLocation",
+        "type": "object"
+      },
+      "Record": {
+        "description": "Le jour (`jour`, « AAAA-MM-JJ ») ou le mois (`mois`, « AAAA-MM ») record.",
+        "properties": {
+          "jour": {
+            "title": "Jour",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "mois": {
+            "title": "Mois",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uniques": {
+            "title": "Uniques",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uniques"
+        ],
+        "title": "Record",
         "type": "object"
       },
       "Rederivation": {
@@ -13802,6 +15086,89 @@
         "title": "ResumesRedigesRead",
         "type": "object"
       },
+      "Retour": {
+        "properties": {
+          "arrivants": {
+            "$ref": "#/components/schemas/RetourArrivants"
+          },
+          "comptes_mesures": {
+            "title": "Comptes Mesures",
+            "type": "integer"
+          },
+          "dormants": {
+            "items": {
+              "$ref": "#/components/schemas/SeuilDormants"
+            },
+            "title": "Dormants",
+            "type": "array"
+          },
+          "liste_dormants": {
+            "items": {
+              "$ref": "#/components/schemas/CompteDormant"
+            },
+            "title": "Liste Dormants",
+            "type": "array"
+          },
+          "refus": {
+            "title": "Refus",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "comptes_mesures",
+          "refus",
+          "dormants",
+          "liste_dormants",
+          "arrivants"
+        ],
+        "title": "Retour",
+        "type": "object"
+      },
+      "RetourArrivants": {
+        "properties": {
+          "en_attente": {
+            "title": "En Attente",
+            "type": "integer"
+          },
+          "fenetre_jours": {
+            "title": "Fenetre Jours",
+            "type": "integer"
+          },
+          "jamais_revenus": {
+            "title": "Jamais Revenus",
+            "type": "integer"
+          },
+          "periode": {
+            "title": "Periode",
+            "type": "string"
+          },
+          "revenus": {
+            "title": "Revenus",
+            "type": "integer"
+          },
+          "taux": {
+            "title": "Taux",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "valides": {
+            "title": "Valides",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "periode",
+          "fenetre_jours",
+          "valides",
+          "revenus",
+          "jamais_revenus",
+          "en_attente"
+        ],
+        "title": "RetourArrivants",
+        "type": "object"
+      },
       "RetourObjet": {
         "properties": {
           "perdu": {
@@ -13844,6 +15211,154 @@
         ],
         "title": "RoleUtilisateur",
         "type": "string"
+      },
+      "SanteMaintenance": {
+        "properties": {
+          "anomalies_fenetre_jours": {
+            "title": "Anomalies Fenetre Jours",
+            "type": "integer"
+          },
+          "anomalies_recentes": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalieRecente"
+            },
+            "title": "Anomalies Recentes",
+            "type": "array"
+          },
+          "genere_le": {
+            "format": "date-time",
+            "title": "Genere Le",
+            "type": "string"
+          },
+          "taches": {
+            "items": {
+              "$ref": "#/components/schemas/SanteTache"
+            },
+            "title": "Taches",
+            "type": "array"
+          }
+        },
+        "required": [
+          "taches",
+          "anomalies_recentes",
+          "anomalies_fenetre_jours",
+          "genere_le"
+        ],
+        "title": "SanteMaintenance",
+        "type": "object"
+      },
+      "SanteNoeud": {
+        "properties": {
+          "derniere": {
+            "format": "date-time",
+            "title": "Derniere",
+            "type": "string"
+          },
+          "noeud": {
+            "title": "Noeud",
+            "type": "string"
+          },
+          "portee": {
+            "title": "Portee",
+            "type": "string"
+          },
+          "retard_heures": {
+            "title": "Retard Heures",
+            "type": "number"
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "noeud",
+          "statut",
+          "portee",
+          "derniere",
+          "retard_heures"
+        ],
+        "title": "SanteNoeud",
+        "type": "object"
+      },
+      "SanteTache": {
+        "properties": {
+          "derniere": {
+            "format": "date-time",
+            "title": "Derniere",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noeud": {
+            "title": "Noeud",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noeud_en_retard": {
+            "title": "Noeud En Retard",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noeud_enregistre": {
+            "title": "Noeud Enregistre",
+            "type": "boolean"
+          },
+          "noeuds": {
+            "items": {
+              "$ref": "#/components/schemas/SanteNoeud"
+            },
+            "title": "Noeuds",
+            "type": "array"
+          },
+          "periodicite_heures": {
+            "title": "Periodicite Heures",
+            "type": "integer"
+          },
+          "portee": {
+            "title": "Portee",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "retard_heures": {
+            "title": "Retard Heures",
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          },
+          "statut_en_retard": {
+            "title": "Statut En Retard",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tache": {
+            "title": "Tache",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tache",
+          "noeuds",
+          "noeud_enregistre",
+          "statut",
+          "periodicite_heures"
+        ],
+        "title": "SanteTache",
+        "type": "object"
       },
       "Sauvegarde": {
         "additionalProperties": false,
@@ -13920,6 +15435,24 @@
           "libelle"
         ],
         "title": "ServiceAccordable",
+        "type": "object"
+      },
+      "SeuilDormants": {
+        "properties": {
+          "nombre": {
+            "title": "Nombre",
+            "type": "integer"
+          },
+          "seuil": {
+            "title": "Seuil",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seuil",
+          "nombre"
+        ],
+        "title": "SeuilDormants",
         "type": "object"
       },
       "SignalementCreate": {
@@ -14233,6 +15766,9 @@
             "title": "Id",
             "type": "integer"
           },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
+          },
           "nb_votants": {
             "default": 0,
             "title": "Nb Votants",
@@ -14250,6 +15786,12 @@
             },
             "title": "Perimetre Cible",
             "type": "array"
+          },
+          "perimetre_libelle": {
+            "description": "« Bât. 2 › Toit » — `\"\"` pour le périmètre par défaut, que le badge tait.",
+            "readOnly": true,
+            "title": "Perimetre Libelle",
+            "type": "string"
           },
           "public_cible": {
             "default": [],
@@ -14272,7 +15814,8 @@
           "id",
           "question",
           "resultats_publics",
-          "cree_le"
+          "cree_le",
+          "perimetre_libelle"
         ],
         "title": "SondageRead",
         "type": "object"
@@ -14421,6 +15964,15 @@
           "rejetee"
         ],
         "title": "StatutDemandeProfil",
+        "type": "string"
+      },
+      "StatutDemandeSuppression": {
+        "enum": [
+          "ouverte",
+          "traitee",
+          "retiree"
+        ],
+        "title": "StatutDemandeSuppression",
         "type": "string"
       },
       "StatutObjet": {
@@ -14914,6 +16466,92 @@
           }
         },
         "title": "TableauCharges",
+        "type": "object"
+      },
+      "TableauTelemetrie": {
+        "description": "`GET /telemetry/dashboard` — le pendant serveur de `TableauTelemetrie` (front).",
+        "properties": {
+          "adoption": {
+            "$ref": "#/components/schemas/Adoption"
+          },
+          "arrivees": {
+            "items": {
+              "$ref": "#/components/schemas/Arrivee"
+            },
+            "title": "Arrivees",
+            "type": "array"
+          },
+          "chart": {
+            "items": {
+              "$ref": "#/components/schemas/Baton"
+            },
+            "title": "Chart",
+            "type": "array"
+          },
+          "chart_label": {
+            "title": "Chart Label",
+            "type": "string"
+          },
+          "erreurs": {
+            "items": {
+              "$ref": "#/components/schemas/ErreurDuTableau"
+            },
+            "title": "Erreurs",
+            "type": "array"
+          },
+          "filtre_gestionnaire": {
+            "$ref": "#/components/schemas/FiltreGestionnaire"
+          },
+          "gestes": {
+            "items": {
+              "$ref": "#/components/schemas/Geste"
+            },
+            "title": "Gestes",
+            "type": "array"
+          },
+          "kpi": {
+            "$ref": "#/components/schemas/IndicateursTelemetrie"
+          },
+          "performance": {
+            "$ref": "#/components/schemas/Durees"
+          },
+          "retour": {
+            "$ref": "#/components/schemas/Retour"
+          },
+          "scope": {
+            "title": "Scope",
+            "type": "string"
+          },
+          "top_pages": {
+            "items": {
+              "$ref": "#/components/schemas/PageTop"
+            },
+            "title": "Top Pages",
+            "type": "array"
+          },
+          "top_users": {
+            "items": {
+              "$ref": "#/components/schemas/UtilisateurTop"
+            },
+            "title": "Top Users",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scope",
+          "kpi",
+          "chart",
+          "chart_label",
+          "top_pages",
+          "top_users",
+          "erreurs",
+          "performance",
+          "gestes",
+          "arrivees",
+          "retour",
+          "filtre_gestionnaire"
+        ],
+        "title": "TableauTelemetrie",
         "type": "object"
       },
       "TarifEnregistre": {
@@ -15464,6 +17102,12 @@
               "null"
             ]
           },
+          "nouveau_statut_libelle": {
+            "description": "L'état qu'une Suite donne, en clair — vide sans changement d'état (#2633).",
+            "readOnly": true,
+            "title": "Nouveau Statut Libelle",
+            "type": "string"
+          },
           "perimetre_cible": {
             "items": {
               "type": "string"
@@ -15473,6 +17117,22 @@
               "array",
               "null"
             ]
+          },
+          "perimetre_precise_libelle": {
+            "description": "« Périmètre précisé : 🔹 Bât. 2 » — le lieu que la Suite déclare, MÊME par\ndéfaut ; vide quand elle n'en parle pas (#2633).",
+            "readOnly": true,
+            "title": "Perimetre Precise Libelle",
+            "type": "string"
+          },
+          "peut_modifier": {
+            "default": false,
+            "title": "Peut Modifier",
+            "type": "boolean"
+          },
+          "peut_supprimer": {
+            "default": false,
+            "title": "Peut Supprimer",
+            "type": "boolean"
           },
           "statut_avant": {
             "title": "Statut Avant",
@@ -15494,7 +17154,9 @@
           "id",
           "type",
           "cree_le",
-          "ticket_id"
+          "ticket_id",
+          "nouveau_statut_libelle",
+          "perimetre_precise_libelle"
         ],
         "title": "TicketEvolutionRead",
         "type": "object"
@@ -15784,6 +17446,19 @@
             "title": "Destinataire Syndic",
             "type": "boolean"
           },
+          "destinataires_par_etat": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "Destinataires Par Etat",
+            "type": [
+              "object",
+              "null"
+            ]
+          },
           "envoyer_auteur": {
             "default": false,
             "title": "Envoyer Auteur",
@@ -15817,6 +17492,12 @@
               "null"
             ]
           },
+          "frequence_libelle": {
+            "description": "« ↺ Mensuel » — le rythme SAISI sur l'affaire, vide sans fréquence (#2633).\n\nSous contrat, le rythme qui fait foi est celui du contrat\n(`contrat.frequence_libelle`) : le client lit celui-là d'abord.",
+            "readOnly": true,
+            "title": "Frequence Libelle",
+            "type": "string"
+          },
           "frequence_type": {
             "title": "Frequence Type",
             "type": [
@@ -15842,6 +17523,9 @@
           "id": {
             "title": "Id",
             "type": "integer"
+          },
+          "lecture": {
+            "$ref": "#/components/schemas/Lecture"
           },
           "lot_id": {
             "title": "Lot Id",
@@ -15920,6 +17604,11 @@
           "peut_changer_etat": {
             "default": false,
             "title": "Peut Changer Etat",
+            "type": "boolean"
+          },
+          "peut_corriger": {
+            "default": false,
+            "title": "Peut Corriger",
             "type": "boolean"
           },
           "peut_deplacer_au_kanban": {
@@ -16037,6 +17726,12 @@
               "null"
             ]
           },
+          "suivi_actualite_libelle": {
+            "description": "L'état du suivi d'une actualité en clair — vide sans suivi (#2633).",
+            "readOnly": true,
+            "title": "Suivi Actualite Libelle",
+            "type": "string"
+          },
           "suivi_kanban": {
             "default": false,
             "title": "Suivi Kanban",
@@ -16070,8 +17765,10 @@
           "urgente",
           "categorie_libelle",
           "statut_libelle",
+          "suivi_actualite_libelle",
           "close",
           "colonne_kanban",
+          "frequence_libelle",
           "nouveau",
           "nom_proprietaire"
         ],
@@ -16722,6 +18419,11 @@
               "null"
             ]
           },
+          "communaute_banni": {
+            "default": false,
+            "title": "Communaute Banni",
+            "type": "boolean"
+          },
           "communaute_interdit": {
             "default": false,
             "title": "Communaute Interdit",
@@ -16776,6 +18478,11 @@
             "title": "Email Verifie",
             "type": "boolean"
           },
+          "est_moderateur": {
+            "default": false,
+            "title": "Est Moderateur",
+            "type": "boolean"
+          },
           "etage": {
             "title": "Etage",
             "type": [
@@ -16813,12 +18520,24 @@
             "title": "Nom",
             "type": "string"
           },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
           "nom_aide": {
             "title": "Nom Aide",
             "type": [
               "string",
               "null"
             ]
+          },
+          "nom_aide_affiche": {
+            "description": "La personne aidée déclarée à l'inscription, « Prénom NOM » — `''` sans elle.",
+            "readOnly": true,
+            "title": "Nom Aide Affiche",
+            "type": "string"
           },
           "nom_proprietaire": {
             "title": "Nom Proprietaire",
@@ -16927,7 +18646,9 @@
           "onboarding_complete",
           "onboarding_etape",
           "preferences_notifications",
-          "cree_le"
+          "cree_le",
+          "nom_affiche",
+          "nom_aide_affiche"
         ],
         "title": "UserRead",
         "type": "object"
@@ -16965,6 +18686,11 @@
               "string",
               "null"
             ]
+          },
+          "communaute_banni": {
+            "default": false,
+            "title": "Communaute Banni",
+            "type": "boolean"
           },
           "communaute_interdit": {
             "default": false,
@@ -17020,6 +18746,11 @@
             "title": "Email Verifie",
             "type": "boolean"
           },
+          "est_moderateur": {
+            "default": false,
+            "title": "Est Moderateur",
+            "type": "boolean"
+          },
           "etage": {
             "title": "Etage",
             "type": [
@@ -17036,6 +18767,9 @@
               "string",
               "null"
             ]
+          },
+          "gestes_roles": {
+            "$ref": "#/components/schemas/GestesRoles"
           },
           "has_bail": {
             "title": "Has Bail",
@@ -17076,12 +18810,24 @@
             "title": "Nom",
             "type": "string"
           },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
           "nom_aide": {
             "title": "Nom Aide",
             "type": [
               "string",
               "null"
             ]
+          },
+          "nom_aide_affiche": {
+            "description": "La personne aidée déclarée à l'inscription, « Prénom NOM » — `''` sans elle.",
+            "readOnly": true,
+            "title": "Nom Aide Affiche",
+            "type": "string"
           },
           "nom_proprietaire": {
             "title": "Nom Proprietaire",
@@ -17195,9 +18941,57 @@
           "has_tc",
           "has_vigik",
           "has_bail",
-          "etiquettes"
+          "etiquettes",
+          "gestes_roles",
+          "nom_affiche",
+          "nom_aide_affiche"
         ],
         "title": "UtilisateurAdminRead",
+        "type": "object"
+      },
+      "UtilisateurTop": {
+        "properties": {
+          "batiment_id": {
+            "title": "Batiment Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "derniere_connexion": {
+            "format": "date-time",
+            "title": "Derniere Connexion",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "pages": {
+            "title": "Pages",
+            "type": "integer"
+          },
+          "statut": {
+            "title": "Statut",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "nom",
+          "total",
+          "pages"
+        ],
+        "title": "UtilisateurTop",
         "type": "object"
       },
       "VagueLue": {
@@ -17590,7 +19384,7 @@
             "type": "integer"
           },
           "contact": {
-            "$ref": "#/components/schemas/Contact"
+            "$ref": "#/components/schemas/app__routers__admin__inscription__ContactLu"
           },
           "dernier_rapport_le": {
             "title": "Dernier Rapport Le",
@@ -17746,6 +19540,15 @@
       "_ConsignesSaisies": {
         "description": "Le corps de l'enregistrement : les rubriques, rien d'autre.",
         "properties": {
+          "accueil": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Accueil",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "consignes": {
             "items": {
               "$ref": "#/components/schemas/Consigne"
@@ -17762,6 +19565,80 @@
         "title": "_ConsignesSaisies",
         "type": "object"
       },
+      "app__routers__admin__inscription__ContactLu": {
+        "description": "L'administrateur déclaré, LU : son « Prénom NOM » servi (#2633) — jamais rangé.",
+        "properties": {
+          "courriel": {
+            "title": "Courriel",
+            "type": "string"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "nom_affiche": {
+            "description": "« Jean-Baptiste FORT » (`utils/noms.nom_affiche`) — `''`, jamais `None`.",
+            "readOnly": true,
+            "title": "Nom Affiche",
+            "type": "string"
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": "string"
+          },
+          "telephone": {
+            "title": "Telephone",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "prenom",
+          "nom",
+          "courriel",
+          "nom_affiche"
+        ],
+        "title": "ContactLu",
+        "type": "object"
+      },
+      "app__routers__admin__installations__ContactLu": {
+        "properties": {
+          "courriel": {
+            "title": "Courriel",
+            "type": "string"
+          },
+          "mis_a_jour_le": {
+            "format": "date-time",
+            "title": "Mis A Jour Le",
+            "type": "string"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          },
+          "prenom": {
+            "title": "Prenom",
+            "type": "string"
+          },
+          "telephone": {
+            "title": "Telephone",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "prenom",
+          "nom",
+          "courriel",
+          "mis_a_jour_le"
+        ],
+        "title": "ContactLu",
+        "type": "object"
+      },
       "app__routers__tickets__messages_schemas__MessageRead": {
         "properties": {
           "auteur_id": {
@@ -17770,6 +19647,11 @@
               "integer",
               "null"
             ]
+          },
+          "auteur_nom": {
+            "default": "",
+            "title": "Auteur Nom",
+            "type": "string"
           },
           "auteur_qualite": {
             "title": "Auteur Qualite",
@@ -17786,6 +19668,11 @@
             "format": "date-time",
             "title": "Cree Le",
             "type": "string"
+          },
+          "est_auteur": {
+            "default": false,
+            "title": "Est Auteur",
+            "type": "boolean"
           },
           "fichiers_urls": {
             "default": [],
@@ -17837,7 +19724,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "1.14.0"
+    "version": "1.27.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -20143,7 +22030,13 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeProfilEnAttente"
+                  },
+                  "title": "Response Get Admin Demandes Profil",
+                  "type": "array"
+                }
               }
             },
             "description": "Successful Response"
@@ -20193,7 +22086,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeProfilTraitee"
+                }
               }
             },
             "description": "Successful Response"
@@ -20210,6 +22105,85 @@
           }
         },
         "summary": "Traiter Demande Profil",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/demandes-suppression": {
+      "get": {
+        "description": "Les demandes de suppression en cours, la plus ancienne d'abord.",
+        "operationId": "get_admin_demandes_suppression",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DemandeSuppressionEnAttente"
+                  },
+                  "title": "Response Get Admin Demandes Suppression",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lister Demandes Suppression",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/admin/demandes-suppression/{demande_id}/traiter": {
+      "post": {
+        "description": "Efface le compte qui l'a demandé (jamais en démonstration). 409 si elle n'est plus en cours.",
+        "operationId": "post_admin_demandes_suppression_demande_id_traiter",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "demande_id",
+            "required": true,
+            "schema": {
+              "title": "Demande Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeSuppressionTraitee"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Traiter Demande Suppression",
         "tags": [
           "admin"
         ]
@@ -21276,7 +23250,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/SanteMaintenance"
+                }
               }
             },
             "description": "Successful Response"
@@ -23196,6 +25172,101 @@
           }
         },
         "summary": "Change Password",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/auth/demande-suppression": {
+      "delete": {
+        "description": "Je retire ma demande, tant qu'elle n'a pas été traitée. 404 s'il n'y en a pas.",
+        "operationId": "delete_auth_demande_suppression",
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retirer Demande Suppression",
+        "tags": [
+          "auth"
+        ]
+      },
+      "get": {
+        "description": "Ma demande en cours (`demande` vide s'il n'y en a pas), le délai annoncé et ce qui sera effacé.",
+        "operationId": "get_auth_demande_suppression",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EtatDemandeSuppression"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Ma Demande Suppression",
+        "tags": [
+          "auth"
+        ]
+      },
+      "post": {
+        "description": "Demande la suppression de mon compte. 400 : mot de passe faux ; 409 : une demande est déjà en cours.",
+        "operationId": "post_auth_demande_suppression",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DemandeSuppressionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DemandeSuppressionRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demander Suppression",
         "tags": [
           "auth"
         ]
@@ -25475,8 +27546,24 @@
     },
     "/config/logo": {
       "delete": {
-        "description": "Revient au logo neutre : la clé disparaît, puis le fichier.",
+        "description": "Revient au logo neutre : la clé disparaît, puis le fichier.\n\nRetirer le logo retire AUSSI sa variante sombre : elle ne vit pas sans lui.",
         "operationId": "delete_config_logo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "variante",
+            "required": false,
+            "schema": {
+              "default": "clair",
+              "enum": [
+                "clair",
+                "sombre"
+              ],
+              "title": "Variante",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -25505,6 +27592,22 @@
       "post": {
         "description": "Remplace le logo. PNG ou JPEG (famille « logo »), lisible par Pillow.",
         "operationId": "post_config_logo",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "variante",
+            "required": false,
+            "schema": {
+              "default": "clair",
+              "enum": [
+                "clair",
+                "sombre"
+              ],
+              "title": "Variante",
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "multipart/form-data": {
@@ -25558,6 +27661,22 @@
               "minimum": 16,
               "title": "Taille",
               "type": "integer"
+            }
+          },
+          {
+            "description": "Le logo, ou son dessin du thème sombre",
+            "in": "query",
+            "name": "variante",
+            "required": false,
+            "schema": {
+              "default": "clair",
+              "description": "Le logo, ou son dessin du thème sombre",
+              "enum": [
+                "clair",
+                "sombre"
+              ],
+              "title": "Variante",
+              "type": "string"
             }
           }
         ],
@@ -27577,6 +29696,38 @@
         ]
       }
     },
+    "/faq/gestes": {
+      "get": {
+        "description": "Le droit de rédiger la FAQ, servi au lecteur (#2654) : le site et l'app iOS le\nLISENT, aucun ne le recompose depuis les rôles (`standards/09` §8, règle 1).\n\n🔒 `est_moderateur` est le prédicat que `require_cs_or_admin` refuse — appelé,\njamais recopié ; `test_gestes_faq_sondages_servis.py` joue les routes de\nrédaction pour chaque rôle et les confronte au champ servi.",
+        "operationId": "get_faq_gestes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GestesFaq"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Gestes Faq",
+        "tags": [
+          "faq"
+        ]
+      }
+    },
     "/faq/reorder": {
       "patch": {
         "description": "Met à jour l'ordre d'affichage de plusieurs entrées FAQ en une seule requête.",
@@ -28209,6 +30360,48 @@
         "summary": "Voter",
         "tags": [
           "idées"
+        ]
+      }
+    },
+    "/lectures/apercu": {
+      "post": {
+        "description": "Qui lirait cette saisie — la règle de l'objet enregistré, sur ce qu'elle dit.",
+        "operationId": "post_lectures_apercu",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApercuLectureEntree"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApercuLecture"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Apercu Lecture",
+        "tags": [
+          "lectures"
         ]
       }
     },
@@ -29290,6 +31483,48 @@
         ]
       }
     },
+    "/noms/affiche": {
+      "post": {
+        "description": "« Jean-Baptiste », « ForT » → « Jean-Baptiste FORT » — l'aperçu d'une saisie.",
+        "operationId": "post_noms_affiche",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NomSaisi"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NomRendu"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Nom D Une Saisie",
+        "tags": [
+          "noms"
+        ]
+      }
+    },
     "/notifications": {
       "get": {
         "operationId": "get_notifications",
@@ -29608,6 +31843,48 @@
           }
         },
         "summary": "Creer Perimetre",
+        "tags": [
+          "perimetres"
+        ]
+      }
+    },
+    "/perimetres/libelle": {
+      "post": {
+        "description": "Comment se nomme cette sélection (#2633) — l'aperçu d'une saisie : le\nformulaire ne compose plus le lieu, il le demande (arbitrage du 11/11/2026).",
+        "operationId": "post_perimetres_libelle",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LibellePerimetreEntree"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LibellePerimetre"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Nommer Une Selection",
         "tags": [
           "perimetres"
         ]
@@ -32828,6 +35105,39 @@
         ]
       }
     },
+    "/sondages/gestes": {
+      "get": {
+        "description": "Le droit de créer un sondage, servi au lecteur (#2654) : le site et l'app iOS\nle LISENT, aucun ne le recompose depuis les rôles (`standards/09` §8, règle 1).\n\n🔒 `est_moderateur` est le prédicat que `require_cs_or_admin` (`POST /sondages`)\nrefuse — appelé, jamais recopié ; `test_gestes_faq_sondages_servis.py` confronte\nla route au champ servi, rôle par rôle.",
+        "operationId": "get_sondages_gestes",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GestesSondages"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Gestes Sondages",
+        "tags": [
+          "sondages",
+          "sondages"
+        ]
+      }
+    },
     "/sondages/{sondage_id}": {
       "delete": {
         "description": "Supprimer un sondage et toutes ses données (auteur ou admin).",
@@ -33503,7 +35813,9 @@
           "200": {
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/TableauTelemetrie"
+                }
               }
             },
             "description": "Successful Response"

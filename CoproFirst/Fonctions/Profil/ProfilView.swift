@@ -41,6 +41,7 @@ struct ProfilView: View {
                         .listRowBackground(palette.surface)
                     }
                     SectionDroits(compte: compte, installation: ouverte) { self.compte = $0 }
+                    SectionSuppressionCompte(installation: ouverte)
                 }
                 sectionSortie(ouverte)
             }

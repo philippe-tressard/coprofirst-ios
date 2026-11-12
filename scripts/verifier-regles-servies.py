@@ -70,7 +70,8 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "le nom servi (`nom_affiche`, `locataire_nom_affiche`…) par `FormatsDuSite.nom(affiche:prenom:nom:)`"),
     (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
      "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
-    # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0).
+    # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0) ; `rolesCS` n'est
+    # plus généré depuis v3.89.0 — la règle reste, garde contre son retour.
     (re.compile(r"\bOngletsDuSite\.rolesCS\b"),
      "`est_moderateur` servi, lu par `DroitsOnglet.cs`"),
     # #138 : « le mien » est SERVI (`est_auteur`, contrat 1.26.0).
@@ -86,8 +87,6 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
 DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
-    "CoproFirst/Navigation/OngletsOuverts.swift":
-        "repli de `DroitsOnglet.cs` quand l'installation ne sert pas `est_moderateur` (contrat < 1.25.0, #136)",
     "CoproFirst/Commun/Detail/Affaire/MessageAffaire.swift":
         "repli de `MessageAffaire.lus` quand l'installation ne sert pas `est_auteur` (contrat < 1.26.0, #138)",
     "CoproFirst/Donnees/LieuServi.swift":
