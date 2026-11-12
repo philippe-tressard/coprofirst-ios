@@ -126,27 +126,24 @@ extension [Affaire] {
     var auKanban: [Affaire] { filter { $0.suiviKanban && !$0.archivee && $0.colonne != nil } }
 }
 
-/// Qui peut quoi, ici — le même rôle que la route accepte.
+/// Ce que le menu ouvre à ce compte : ses onglets, et eux seuls.
 ///
-/// « Modérer » = conseil syndical ou administration : `est_moderateur` du serveur
-/// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il ne garde
-/// plus qu'un conseil de saisie : glisser au Kanban et archiver se lisent sur l'affaire (`peut_*`,
-/// #83), les catégories offertes dans les référentiels (`permise`, #105).
+/// Aucun geste ne se déduit plus du profil ici : glisser au Kanban et archiver se lisent
+/// sur l'affaire (`peut_*`, #83) ; les catégories offertes, et ce que le serveur réserve au
+/// conseil syndical, dans les référentiels (`permise`, `ReferentielsAffaires.poseLesReservees`,
+/// #105).
 struct DroitsAffaires: Equatable, Sendable {
     /// La page du site que porte ce menu (`pages.ts`).
     static let page = "mes-demandes"
 
-    let moderateur: Bool
     /// Les onglets ouverts à ce compte (`OngletsDuSite.ouverts`, la règle du site).
     /// Profil pas encore lu : les seuls onglets sans réserve — un réservé reste caché.
     let onglets: [OngletDuSite]
 
     init(profil: ProfilResidence?) {
-        let droits = DroitsOnglet(profil: profil)
-        moderateur = profil != nil && droits.cs
         onglets =
             profil == nil
             ? (OngletsDuSite.parPage[Self.page] ?? []).filter { $0.reserve == nil }
-            : OngletsDuSite.ouverts(page: Self.page, droits: droits)
+            : OngletsDuSite.ouverts(page: Self.page, droits: DroitsOnglet(profil: profil))
     }
 }

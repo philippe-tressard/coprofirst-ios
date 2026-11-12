@@ -50,8 +50,9 @@ struct AffairesView: View {
         }
         .sheet(isPresented: $nouvelle) {
             NouvelleAffaireView(
-                installation: installation, droits: droits, categories: etat.referentiels?.permises,
-                erreurCategories: etat.erreurReferentiels, service: service, forme: forme
+                installation: installation, categories: etat.referentiels?.permises,
+                erreurCategories: etat.erreurReferentiels,
+                poseLesReservees: etat.referentiels?.poseLesReservees ?? false, service: service, forme: forme
             ) { creee in
                 etat.ajouter(creee)
                 onglet = "liste"

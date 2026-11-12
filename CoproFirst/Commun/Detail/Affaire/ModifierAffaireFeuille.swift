@@ -12,6 +12,8 @@ import SwiftUI
 /// détails », qui s'ouvre d'office si une section rangée porte une valeur. Les catégories
 /// permises et les sections essentielles sont servies avec l'affaire (`referentiels`,
 /// #105) : le formulaire s'ouvre composé, sans qu'une section change de place sous le pouce.
+/// Ce que ce lecteur peut poser est ce que le serveur lui PERMET
+/// (`ReferentielsAffaires.permises(enModifiant:)`) : rien ne se déduit plus de son profil.
 struct ModifierAffaireFeuille: View {
     let affaire: DetailAffaire
     let installation: Installation
@@ -45,8 +47,9 @@ struct ModifierAffaireFeuille: View {
                         .listRowBackground(Color.clear)
                 }
                 ChampsAffaire(
-                    saisie: $saisie, categories: categories, installation: installation,
-                    service: parcours.service as? any ServicePerimetres, prefixe: "modifier",
+                    saisie: $saisie, categories: affaire.referentiels.permises(enModifiant: affaire.categorie),
+                    installation: installation, service: parcours.service as? any ServicePerimetres,
+                    prefixe: "modifier",
                     descriptionFigee: affaire.descriptionSaisie == nil ? affaire.description : nil,
                     lieuModifiable: affaire.lieuModifiable, forme: forme)
             }
@@ -62,19 +65,6 @@ struct ModifierAffaireFeuille: View {
             }
             .interactiveDismissDisabled(!saisie.edition(depuis: affaire).vide)
         }
-    }
-
-    /// Les catégories que ce lecteur peut poser, telles que le serveur les PERMET (#105,
-    /// `FormulaireTicket` du site) : une actualité ne se convertit qu'au conseil — son auteur
-    /// ne voit que la sienne. Une catégorie qu'il ne pourrait pas reposer ne se propose pas :
-    /// elle resterait cochée sans se voir.
-    private var categories: [CategorieAffaire] {
-        let droits = DroitsAffaires(profil: parcours.ouverteAJour?.profil)
-        let servies = affaire.referentiels.permises
-        let permises =
-            affaire.estActualite && !droits.moderateur
-            ? servies.filter { $0.code == affaire.categorie } : servies
-        return permises.contains { $0.code == affaire.categorie } ? permises : []
     }
 
     private func envoyer() async {

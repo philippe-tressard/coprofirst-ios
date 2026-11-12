@@ -142,13 +142,24 @@ import Testing
 
 // MARK: - Droits
 
-@Test func modererEstLeConseilOuLAdministration() {
-    let resident = DroitsAffaires(profil: .init(statut: "copropriétaire_résident", roles: ["résident"]))
-    let conseil = DroitsAffaires(profil: .init(statut: "copropriétaire_résident", roles: ["conseil_syndical"]))
-    let admin = DroitsAffaires(profil: .init(statut: nil, roles: ["admin"]))
-    #expect(!resident.moderateur)
-    #expect(conseil.moderateur && admin.moderateur)
-    #expect(!DroitsAffaires(profil: nil).moderateur, "sans profil, rien n'est offert")
+/// « Est du conseil », pour la saisie, se LIT (#105) : c'est le compte à qui le serveur permet
+/// une catégorie qu'il réserve (`reservee` ET `permise`). Remplace
+/// `modererEstLeConseilOuLAdministration`, qui éprouvait le prédicat retiré
+/// (`DroitsAffaires.moderateur`, déduit des rôles du profil).
+@Test func poserLesReserveesSeLitDansLesCategoriesServies() throws {
+    #expect(try FixturesReferentielsAffaires.lus(moderateur: true).poseLesReservees)
+    #expect(try !FixturesReferentielsAffaires.lus(moderateur: false).poseLesReservees)
+    #expect(!ReferentielsAffaires.vides.poseLesReservees, "rien de servi : rien n'est offert")
+    // Le cas fautif : un serveur qui ouvre une catégorie réservée à un compte que ses rôles
+    // ne disent pas du conseil. Seul ce qu'il sert compte — aucun profil n'entre ici.
+    func servie(reservee: Bool, permise: Bool) -> ReferentielsAffaires {
+        let entretien = ReferentielsAffaires.Categorie(
+            code: "entretien", libelle: "Entretien", emoji: "", reservee: reservee, permise: permise)
+        return ReferentielsAffaires(colonnes: [], statuts: [], categories: [entretien])
+    }
+    #expect(servie(reservee: true, permise: true).poseLesReservees)
+    #expect(!servie(reservee: true, permise: false).poseLesReservees)
+    #expect(!servie(reservee: false, permise: true).poseLesReservees, "une catégorie ouverte à tous ne dit rien")
 }
 
 @Test func leKanbanEstFermeAuxLocatairesEtAuProfilInconnu() {

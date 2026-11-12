@@ -73,6 +73,19 @@ struct ModifierAffaireTests {
         #expect(servies.categorie(detail.categorie) != nil, "« \(detail.categorie) » : inconnue de la résidence")
     }
 
+    /// « Modifier » propose ce que le serveur PERMET (#105), sans lire le profil : une
+    /// actualité ne se convertit qu'à qui il la permet, et une catégorie que ce compte ne
+    /// pourrait pas reposer ne se propose pas — elle resterait cochée sans se voir.
+    @Test func lesCategoriesDeLEditionSontCellesQueLeServeurPermet() throws {
+        let conseil = try FixturesReferentielsAffaires.lus(moderateur: true)
+        let resident = try FixturesReferentielsAffaires.lus(moderateur: false)
+        #expect(conseil.permises(enModifiant: "actualite") == conseil.permises, "le conseil convertit une actualité")
+        #expect(resident.permises(enModifiant: "panne") == resident.permises)
+        #expect(resident.permises(enModifiant: "actualite").isEmpty, "non permise : la catégorie ne se choisit pas")
+        #expect(resident.permises(enModifiant: "etude_travaux").isEmpty)
+        #expect(ReferentielsAffaires.vides.permises(enModifiant: "panne").isEmpty, "rien de servi : rien n'est offert")
+    }
+
     @Test func laModificationSimuleeChangeLAffaire() async throws {
         let service = ServiceSimule(delai: .zero)
         var saisie = SaisieAffaire(modifiant: try service.detailSimule(38))
