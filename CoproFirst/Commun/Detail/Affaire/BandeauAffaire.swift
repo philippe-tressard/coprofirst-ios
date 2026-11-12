@@ -16,23 +16,20 @@ struct BandeauAffaire: ViewModifier {
     @State private var feuille: GesteAffaire?
     @State private var avis = AvisDuGeste()
     @State private var enCours = false
-    @Environment(\.horizontalSizeClass) private var largeur
 
     func body(content: Content) -> some View {
         let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs
         let gestes = GesteAffaire.offerts(pour: affaire, conseil: conseil)
         content
             .toolbar {
-                // iPhone : réparties sur la largeur, sous le pouce. iPad : réunies au centre en
-                // un seul groupe — étalées sur toute la largeur, chacune flottait seule sur le texte.
+                // Réparties sur la largeur, sous le pouce — la même mise en page sur tous les
+                // iPhone, l'iPhone Duo déplié compris : seule la taille de l'écran change.
                 ToolbarItemGroup(placement: .bottomBar) {
-                    if largeur == .regular { Spacer() }
                     ForEach(gestes) { geste in
-                        if geste != gestes.first, largeur != .regular { Spacer() }
+                        if geste != gestes.first { Spacer() }
                         bouton(geste)
                             .accessibilityIdentifier("affaire.\(geste.rawValue)")
                     }
-                    if largeur == .regular { Spacer() }
                 }
             }
             .sheet(item: $feuille, onDismiss: avis.feuilleFermee) { geste in
