@@ -40,9 +40,9 @@ struct ConseilCS: Hashable, Sendable {
 struct MembreConseil: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
-    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
-    /// n'est pas au client du plancher).
+    /// Changer le prénom ou le nom périme le nom servi : la feuille montre celui que le
+    /// serveur rend de la saisie (`NomDeLaSaisie`, `POST /noms/affiche`, #135), et
+    /// l'enregistrement rend le nom affiché neuf.
     var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
     var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var batimentId: Int?
@@ -79,9 +79,9 @@ struct SyndicCS: Hashable, Sendable {
 struct MembreSyndic: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
-    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
-    /// n'est pas au client du plancher).
+    /// Changer le prénom ou le nom périme le nom servi : la feuille montre celui que le
+    /// serveur rend de la saisie (`NomDeLaSaisie`, `POST /noms/affiche`, #135), et
+    /// l'enregistrement rend le nom affiché neuf.
     var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
     var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var fonction: String?

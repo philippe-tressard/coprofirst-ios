@@ -104,8 +104,9 @@ DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
     "CoproFirst/Fonctions/EspaceCS/Annuaire/ServiceAnnuaireCS.swift":
-        "une fiche de l'annuaire renommée, pas encore enregistrée, n'a plus de nom servi : le repli la nomme "
-        "jusqu'à l'écran de `POST /noms/affiche` (lot à part, #87)",
+        "une fiche de l'annuaire renommée n'a plus de nom servi : la feuille montre celui que le serveur rend "
+        "de la saisie (`NomDeLaSaisie`, `POST /noms/affiche`, #135) ; le repli ne nomme que l'annonce d'une "
+        "fiche que la relecture ne retrouve pas",
     "CoproFirst/Fonctions/Annuaire/ServiceAnnuaire.swift":
         "un annuaire gardé en cache avant #135 se relit sans `nom_affiche` : le repli le nomme",
 }

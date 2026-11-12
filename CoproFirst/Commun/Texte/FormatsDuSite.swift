@@ -152,8 +152,9 @@ enum FormatsDuSite {
     // MARK: Personnes
 
     /// Le nom d'une personne dont l'app ne tient PAS le nom du serveur : une fiche de
-    /// l'annuaire du conseil renommée et pas encore enregistrée (l'écran de
-    /// `POST /noms/affiche` est un lot à part), un annuaire gardé en cache avant #135.
+    /// l'annuaire du conseil renommée, que la relecture après l'enregistrement ne retrouve
+    /// pas (la feuille, elle, montre le nom que le serveur rend de la saisie,
+    /// `NomDeLaSaisie`), un annuaire gardé en cache avant #135.
     /// Servi, le nom fait foi ; sinon le repli, prénom puis nom, « — » sans l'un ni l'autre.
     ///
     /// 🔴 Partout ailleurs, « Prénom NOM » se LIT du type généré (`nom_affiche`,

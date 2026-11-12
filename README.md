@@ -63,6 +63,11 @@ connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 « Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
+Pendant la saisie, la résidence dit ce qu'elle en fera, à mesure qu'on écrit
+(coprofirst v3.88.1, contrat 1.26.0) : qui lira la nouvelle affaire, le lieu choisi en
+clair (dans l'affaire comme dans une affiche de hall), et le nom affiché d'une
+personne qu'on nomme (le Profil, une fiche de l'annuaire du conseil). Sans réseau, la
+dernière réponse reste et rien n'empêche de saisir.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
 (coprofirst v3.84.0, contrat 1.19.0).
