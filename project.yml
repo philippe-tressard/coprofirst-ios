@@ -37,6 +37,9 @@ targets:
     sources:
       # Tout le dossier, par motif : un dossier neuf (`Fonctions/<Menu>/`, #10) est
       # compilé sans toucher ce fichier — les sessions parallèles ne s'y croisent pas.
+      # Le manifeste de confidentialité (CoproFirst/PrivacyInfo.xcprivacy, #19) est embarqué
+      # par cette ligne, comme ressource à la racine de l'app : `ManifesteConfidentialiteTests`
+      # le relit dans l'app construite, scripts/verifier-confidentialite.py le tient au code.
       - path: CoproFirst
     dependencies:
       - package: ClientAPI
