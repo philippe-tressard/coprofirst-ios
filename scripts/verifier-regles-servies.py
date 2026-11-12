@@ -47,6 +47,11 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bTablesAffaires\.(categories|ordreDesStatuts)\b|\bstatic let (ordreDesStatuts|categories: \[CategorieAffaire\])"),
      "les catégories permises et les états proposables servis (`ReferentielsAffaires.permises`, `.proposables`)"),
     (re.compile(r"\.reserveCS\b"), "`permise` des référentiels (`categorie_permise` du serveur)"),
+    # « Modérer » déduit du profil (`DroitsAffaires.moderateur`) décidait encore des catégories de
+    # « Modifier » et d'une phrase de « Nouvelle affaire ». Le paramètre du serveur SIMULÉ
+    # (`lus(moderateur:)`), qui calcule `permise` comme le vrai, n'est pas visé.
+    (re.compile(r"\.moderateur\b|\b(let|var) moderateur\b"),
+     "ce que le serveur permet à CE compte (`ReferentielsAffaires.permises`, `.poseLesReservees`)"),
     (re.compile(r"\bStatutsAffaire\.parCode\b|\(libelle: String, pastille: String\)"),
      "le libellé servi (`statut_libelle`, `libelle_statut`, `ReferentielsAffaires.libelle(statut:)`)"),
 ]
@@ -95,6 +100,9 @@ def autotest() -> int:
         "        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }",
         "    static let ordreDesStatuts: [String] = [\"ouvert\", \"en_ag\"]",
         "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
+        "            affaire.estActualite && !droits.moderateur",
+        "        return droits.moderateur",
+        "    let moderateur: Bool",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
@@ -103,6 +111,9 @@ def autotest() -> int:
         '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.pastilles[statut] ?? "badge-gray")',
         '            "carnet": bool(c.get("carnet")), "reservee": bool(c.get("reserveCS")),',
         "        affaire.estActualite ? [] : affaire.referentiels.proposables",
+        "    static func lus(moderateur: Bool = true) throws -> ReferentielsAffaires {",
+        "            servie.permise = moderateur || !categorie.reservee",
+        "        poseLesReservees ? \"L'équipement aussi.\" : \"Le conseil syndical désigne l'équipement.\"",
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
