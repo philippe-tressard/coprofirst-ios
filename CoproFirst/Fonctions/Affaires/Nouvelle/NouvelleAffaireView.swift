@@ -69,6 +69,9 @@ struct NouvelleAffaireView: View {
                     }
                     .font(.footnote)
                     .foregroundStyle(palette.textMuted)
+                    // Un seul élément, lu d'un trait : sans lui, iOS 26 porte l'identifiant
+                    // sur l'icône seule, jamais touchable (SaisieAffaireUITests rouge en CI).
+                    .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("nouvelle.depuisLeSite")
                 } header: {
                     Text("Depuis le site")
