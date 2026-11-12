@@ -30,7 +30,7 @@ struct LigneAffaireSuivie: View {
                 }
                 if !affaire.apercu.isEmpty { apercu }
                 HStack(spacing: 8) {
-                    PastilleStatut(statut: affaire.statut)
+                    PastilleStatut(statut: affaire.statut, libelle: affaire.libelleStatut)
                     if entretien, let etat = affaire.etatVisite {
                         let visite = TablesReporting.etatsVisite[etat] ?? .brut(etat)
                         PastilleTeinte(libelle: visite.libelle, badge: visite.badge)

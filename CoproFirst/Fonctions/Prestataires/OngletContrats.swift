@@ -119,6 +119,10 @@ private struct CarteContrat: View {
                         PastilleTeinte(
                             libelle: TextesPrestataires.sansEcheanceCapsule, badge: "badge-gray", compacte: true)
                     }
+                    // Le rythme, tel que le serveur le sert (`frequence_libelle`) — vide : rien.
+                    if let frequence = contrat.frequenceLibelle?.nulSiVide {
+                        PastilleTeinte(libelle: frequence, badge: "badge-gray", compacte: true)
+                    }
                     if let documents, !documents.isEmpty {
                         PastilleTeinte(libelle: "📄 \(documents.count)", badge: "badge-gray", compacte: true)
                     }
@@ -138,6 +142,9 @@ private struct CarteContrat: View {
                 LigneFiche(
                     libelle: TextesPrestataires.dureeInitiale,
                     valeur: "\(FormatsDuSite.nombre(valeur)) \(contrat.dureeUnite ?? "")")
+            }
+            if let frequence = contrat.frequenceLibelle?.nulSiVide {
+                LigneFiche(libelle: TextesPrestataires.frequence, valeur: frequence)
             }
             if contrat.prochaineVisite != nil {
                 LigneFiche(

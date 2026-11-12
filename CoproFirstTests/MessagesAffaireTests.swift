@@ -23,13 +23,13 @@ struct MessagesAffaireTests {
         #expect(try FixturesMessagesAffaire.lus(pour: 38, conseil: true).isEmpty)
     }
 
-    @Test func laBulleDitVousPourLeCompteEtLaQualiteSinon() throws {
+    @Test func laBulleDitVousPourLeCompteEtLeNomServiSinon() throws {
         let lus = try FixturesMessagesAffaire.lus(pour: 41, conseil: false)
         #expect(lus.first?.deMoi == true && lus.first?.auteur == "Vous")
         #expect(lus.last?.deMoi == false && lus.last?.auteur == "Le conseil syndical")
         let servi = try Relecture.generee([MessageAffaire.Servi].self, json: FixturesMessagesAffaire.messages)
-        let sansCompte = servi.map { MessageAffaire($0, moi: nil) }
-        #expect(sansCompte.allSatisfy { !$0.deMoi }, "compte illisible : rien n'est à moi")
+        let sansCompte = MessageAffaire.lus(servi, corps: nil, moi: nil)
+        #expect(sansCompte.allSatisfy { !$0.deMoi }, "installation antérieure, compte illisible : rien n'est à moi")
     }
 
     @Test func uneActualiteNaPasDeFilDeMessages() throws {
@@ -53,10 +53,11 @@ struct MessagesAffaireTests {
 
     /// Le client généré lit le fil tel que le serveur le sert, puis le branchement du service.
     @Test func leFilServiSeLitParLeClientGenere() async throws {
-        let sortie = try await client(servant: FixturesMessagesAffaire.messages)
-            .getTicketsTicketIdMessages(path: .init(ticketId: 41))
-        let lus = try sortie.ok.body.json.map { MessageAffaire($0, moi: 7) }
+        let (sortie, corps) = try await filServi(FixturesMessagesAffaire.messages)
+        // `moi` n'y est pour rien : `est_auteur` est servi, il fait foi.
+        let lus = MessageAffaire.lus(try sortie.ok.body.json, corps: corps, moi: nil)
         #expect(lus.map(\.id) == [501, 502, 503] && lus[0].deMoi && lus[2].interne)
+        #expect(lus.map(\.nom) == ["Camille ESSAI", "Le conseil syndical", "Le conseil syndical"])
     }
 
     /// La route et le corps que « Répondre » envoie : POST …/messages, le texte de l'éditeur.
@@ -71,6 +72,16 @@ struct MessagesAffaireTests {
         #expect(enregistrement.adresse?.hasSuffix("/tickets/41/messages") == true)
         let corps = try JSONDecoder().decode([String: String].self, from: try #require(enregistrement.corps))
         #expect(corps == ["contenu": "<p>Merci<br>à demain</p>"])
+    }
+}
+
+/// GET /tickets/41/messages par le client généré, son corps servi gardé — hors de l'acteur
+/// principal, comme le service réel.
+private func filServi(
+    _ json: String
+) async throws -> (sortie: Operations.GetTicketsTicketIdMessages.Output, corps: Data?) {
+    try await CorpsServi.garder {
+        try await client(servant: json).getTicketsTicketIdMessages(path: .init(ticketId: 41))
     }
 }
 

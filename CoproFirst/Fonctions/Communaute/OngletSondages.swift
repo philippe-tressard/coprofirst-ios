@@ -62,7 +62,7 @@ struct OngletSondages: View {
     }
 }
 
-/// Un sondage : la question, son état, sa clôture et ses votants. Anonyme, comme sur
+/// Un sondage : la question, son état, sa clôture et ses votants, qui le lit et son lieu. Anonyme, comme sur
 /// le site : aucun auteur.
 private struct LigneSondage: View {
     let sondage: SondageResume
@@ -87,6 +87,8 @@ private struct LigneSondage: View {
                     Text("Clôture le \(FormatsDuSite.dateCourte(fin))")
                 }
                 Text(sondage.nbVotants == 1 ? "1 votant" : "\(sondage.nbVotants) votants")
+                PastilleLecture(lecture: sondage.lecture, masculin: true)
+                EtiquetteLieu(lieu: sondage.lieu)
             }
             .font(.caption)
             .foregroundStyle(palette.textMuted)

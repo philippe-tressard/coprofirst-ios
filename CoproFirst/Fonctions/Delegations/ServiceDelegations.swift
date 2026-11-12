@@ -66,6 +66,10 @@ struct ResidentDelegable: Hashable, Sendable, Identifiable {
     var nom: String?
     var email: String
     var actif: Bool
+    /// `nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    var nomServi: String?
+
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// La saisie de « Nouvelle délégation » (`DelegationCreate`).
@@ -84,7 +88,14 @@ struct SaisieDelegation: Hashable, Sendable {
 }
 
 extension ResidentDelegable {
-    init(_ lu: Components.Schemas.UtilisateurAdminRead) {
-        self.init(id: lu.id, prenom: lu.prenom, nom: lu.nom, email: lu.email, actif: lu.actif)
+    /// La liste servie, puis le nom affiché relu au-dessus du plancher — le MÊME
+    /// branchement pour le service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.UtilisateurAdminRead], corps: Data?) -> [ResidentDelegable] {
+        let personnes = PersonneServie.parLigne(corps)
+        return generes.map {
+            ResidentDelegable(
+                id: $0.id, prenom: $0.prenom, nom: $0.nom, email: $0.email, actif: $0.actif,
+                nomServi: personnes[$0.id]?.nomAffiche)
+        }
     }
 }

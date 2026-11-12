@@ -49,7 +49,11 @@ struct AffairesView: View {
             ToolbarItem(placement: .topBarLeading) { boutonNouvelle }
         }
         .sheet(isPresented: $nouvelle) {
-            NouvelleAffaireView(installation: installation, droits: droits, service: service, forme: forme) { creee in
+            NouvelleAffaireView(
+                installation: installation, categories: etat.referentiels?.permises,
+                erreurCategories: etat.erreurReferentiels,
+                poseLesReservees: etat.referentiels?.poseLesReservees ?? false, service: service, forme: forme
+            ) { creee in
                 etat.ajouter(creee)
                 onglet = "liste"
             }

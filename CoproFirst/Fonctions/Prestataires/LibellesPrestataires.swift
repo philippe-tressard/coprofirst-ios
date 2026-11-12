@@ -16,7 +16,8 @@ struct TypePrestataire: Hashable, Sendable {
 /// ⚠️ Aucune RÈGLE du site n'est recopiée (`frequenceLabel`, retard d'une visite,
 /// moyenne des avis, équipement d'un contrat, prochaine visite d'un prestataire —
 /// `standards/09` §8) : l'écran montre la donnée brute ou rien, et coprofirst#2507
-/// demande à l'API de les servir.
+/// demande à l'API de les servir. Servies depuis : la fréquence en clair
+/// (`frequence_libelle`) et les numéros d'une fiche (`telephones`, #125).
 enum LibellesPrestataires {
     static func type(_ code: String?) -> String {
         guard let code else { return FormatsDuSite.tiret }

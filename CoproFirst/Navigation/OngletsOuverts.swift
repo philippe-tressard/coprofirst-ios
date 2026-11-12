@@ -30,8 +30,9 @@ struct DroitsOnglet: Hashable, Sendable {
     var proprioOuCS = false
     var locataire = false
     var gestionnaire = false
-    /// Conseil syndical ou administration — `$isCS` du site, qui inclut l'administrateur.
-    /// Aucune réserve d'onglet ne l'emploie ; un écran le lit (le Règlement, #12).
+    /// Conseil syndical ou administration — `$estModerateur` du site : `est_moderateur`
+    /// SERVI (contrat 1.25.0, #136). Aucune réserve d'onglet ne l'emploie ; un écran le
+    /// lit (le Règlement, #12). Un geste fin servi avec l'objet (`peut_*`) prime toujours.
     var cs = false
     /// Le compte technique de l'installation : administrateur, sans lot ni conseil
     /// (`$isAdminOnly` du site). Il n'a pas les outils du conseil (`PagesOuvertes`).
@@ -53,8 +54,12 @@ struct DroitsOnglet: Hashable, Sendable {
     }
 
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
-    /// `aRole` du site) et `statut`.
-    init(roles: [String], role: String?, statut: String?) {
+    /// `aRole` du site), `statut`, et `est_moderateur` (contrat 1.25.0, #136).
+    ///
+    /// Modérer se LIT : `estModerateur` servi fait foi. Absent — une installation
+    /// antérieure — le repli d'avant, les rôles GÉNÉRÉS du site (`rolesCS`), écrit ici
+    /// seulement (`scripts/verifier-regles-servies.py` le refuse ailleurs).
+    init(roles: [String], role: String?, statut: String?, estModerateur: Bool? = nil) {
         let portes = Set(roles.isEmpty ? [role].compactMap { $0 } : roles)
         let statut = statut ?? ""
         self.init(
@@ -63,7 +68,7 @@ struct DroitsOnglet: Hashable, Sendable {
             proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprioOuCS),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
             gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
-            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS),
+            cs: estModerateur ?? !portes.isDisjoint(with: OngletsDuSite.rolesCS),
             adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)
                 && portes.isDisjoint(with: OngletsDuSite.rolesSansAdminSeul))
     }
@@ -102,7 +107,7 @@ extension DroitsOnglet {
     /// `roles` y compte, là où `aRole` l'ignorerait — sans effet tant que le serveur
     /// range le rôle principal dans `roles`, ce qu'il fait.
     init(profil: ProfilResidence?) {
-        self.init(roles: profil?.roles ?? [], role: nil, statut: profil?.statut)
+        self.init(roles: profil?.roles ?? [], role: nil, statut: profil?.statut, estModerateur: profil?.estModerateur)
         aidant = profil?.estAidant ?? false
     }
 }

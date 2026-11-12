@@ -111,11 +111,15 @@ struct Bail: Hashable, Sendable, Identifiable {
     var dateSortieReelle: String?
     var notes: String?
     var objets: [ObjetRemis]
+    /// `locataire_nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    var locataireNomServi: String?
 
     /// `bailEnCours`, `front/src/lib/bail.ts`.
     var enCours: Bool { statut == "actif" || statut == "en_cours_sortie" }
     var termine: Bool { statut == "termine" }
-    var nomLocataire: String { FormatsDuSite.nom(locatairePrenom, locataireNom) }
+    var nomLocataire: String {
+        FormatsDuSite.nom(affiche: locataireNomServi, prenom: locatairePrenom, nom: locataireNom)
+    }
     /// Le regroupement du site : un même locataire, ou ce bail seul (`ext_<id>`).
     var cleLocataire: String { locataireId.map { "\($0)" } ?? "ext_\(id)" }
 }
@@ -148,6 +152,19 @@ struct BailDuLocataire: Hashable, Sendable {
     var bailleurNom: String
     var bailleurEmail: String?
     var bailleurTelephone: String?
+    /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure : le nombre, comme avant.
+    var lotEtageLibelle: String?
+    /// `bailleur_nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    var bailleurNomServi: String?
+
+    var nomBailleur: String { FormatsDuSite.nom(affiche: bailleurNomServi, prenom: bailleurPrenom, nom: bailleurNom) }
+}
+
+/// Ce que GET /bailleur/mon-bail sert au-dessus du plancher, relu par
+/// `Relecture.auDessusDuPlancher`.
+struct BailAuDessusDuPlancher: Decodable {
+    var lotEtageLibelle: String?
 }
 
 /// Une demande d'accès (`CommandeAccesCreate`).

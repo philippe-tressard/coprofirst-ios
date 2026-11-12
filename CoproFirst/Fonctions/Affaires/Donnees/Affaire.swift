@@ -14,6 +14,10 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let creeLe: Date
     var misAJourLe: Date?
     var statut: String
+    /// « Chez le syndic » : l'état en clair que le serveur SERT (`statut_libelle`, au contrat
+    /// du plancher, jamais vide — #127, #105). Un geste fait ici (glisser au Kanban) y pose
+    /// le libellé de l'état servi par les référentiels : aucun repli sur une table.
+    var statutLibelle: String
     /// Close, au sens du SERVEUR (`TicketRead.close`, `utils/etat_affaire`) : l'app ne
     /// compare pas son statut à une liste d'états clos (#54).
     var close: Bool
@@ -45,6 +49,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutDeplacer: Bool
     /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
     var peutArchiver: Bool
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure : aucune pastille.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.
@@ -59,19 +66,20 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
 
     var id: String { code }
 
-    /// Les options offertes : celles des statuts PRÉSENTS parmi les affaires actives,
-    /// dans l'ordre du cycle, les statuts d'un groupe réunis — `statutsPresents` du site.
-    static func presentes(dans affaires: [Affaire]) -> [OptionDeSuivi] {
+    /// Les options offertes : celles des statuts PRÉSENTS parmi les affaires actives — les
+    /// états du cycle, dans l'ordre SERVI (`statuts` des référentiels, `proposable` : ni
+    /// `publie` d'une actualité ni `fermé`), les statuts d'un groupe réunis — `statutsPresents`
+    /// du site. Le libellé d'un statut seul est celui que les référentiels servent (#105).
+    static func presentes(dans affaires: [Affaire], servis: [ReferentielsAffaires.Statut]) -> [OptionDeSuivi] {
         let presents = Set(affaires.map(\.statut))
         var options: [OptionDeSuivi] = []
-        for statut in TablesAffaires.ordreDesStatuts where presents.contains(statut) {
-            if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut) }) {
+        for statut in servis where statut.proposable && presents.contains(statut.code) {
+            if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut.code) }) {
                 if !options.contains(where: { $0.code == groupe.code }) {
                     options.append(.init(code: groupe.code, libelle: groupe.libelle, statuts: Set(groupe.statuts)))
                 }
             } else {
-                let libelle = StatutsAffaire.parCode[statut]?.libelle ?? statut
-                options.append(.init(code: statut, libelle: libelle, statuts: [statut]))
+                options.append(.init(code: statut.code, libelle: statut.libelle, statuts: [statut.code]))
             }
         }
         return options
@@ -122,33 +130,24 @@ extension [Affaire] {
     var auKanban: [Affaire] { filter { $0.suiviKanban && !$0.archivee && $0.colonne != nil } }
 }
 
-/// Qui peut quoi, ici — le même rôle que la route accepte.
+/// Ce que le menu ouvre à ce compte : ses onglets, et eux seuls.
 ///
-/// « Modérer » = conseil syndical ou administration : `est_moderateur` du serveur
-/// (`auth/deps.py`), `isCS` du site, lu par `DroitsOnglet.cs` (rôles GÉNÉRÉS). Il ne garde
-/// plus que les catégories réservées et un conseil de saisie : glisser au Kanban et archiver se lisent sur
-/// l'affaire (`peut_*`, #83) ; `permise` des référentiels le remplacera (#105, après #95).
+/// Aucun geste ne se déduit plus du profil ici : glisser au Kanban et archiver se lisent
+/// sur l'affaire (`peut_*`, #83) ; les catégories offertes, et ce que le serveur réserve au
+/// conseil syndical, dans les référentiels (`permise`, `ReferentielsAffaires.poseLesReservees`,
+/// #105).
 struct DroitsAffaires: Equatable, Sendable {
     /// La page du site que porte ce menu (`pages.ts`).
     static let page = "mes-demandes"
 
-    let moderateur: Bool
     /// Les onglets ouverts à ce compte (`OngletsDuSite.ouverts`, la règle du site).
     /// Profil pas encore lu : les seuls onglets sans réserve — un réservé reste caché.
     let onglets: [OngletDuSite]
 
     init(profil: ProfilResidence?) {
-        let droits = DroitsOnglet(profil: profil)
-        moderateur = profil != nil && droits.cs
         onglets =
             profil == nil
             ? (OngletsDuSite.parPage[Self.page] ?? []).filter { $0.reserve == nil }
-            : OngletsDuSite.ouverts(page: Self.page, droits: droits)
-    }
-
-    /// Les catégories qu'il peut poser, dans l'ordre du site, « Actualité » en tête.
-    var categories: [CategorieAffaire] {
-        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }
-        return permises.filter(\.enTete) + permises.filter { !$0.enTete }
+            : OngletsDuSite.ouverts(page: Self.page, droits: DroitsOnglet(profil: profil))
     }
 }

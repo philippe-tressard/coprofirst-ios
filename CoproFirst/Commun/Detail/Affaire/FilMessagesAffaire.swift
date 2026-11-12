@@ -12,9 +12,9 @@ import SwiftUI
 /// Écarts déclarés avec le site (`standards/11` §14) :
 /// - un intitulé « Messages » le sépare de l'Historique, qui a le sien ; le site n'en
 ///   met pas, son fil suit la carte ;
-/// - l'auteur : le contrat ne sert que `auteur_id` et `auteur_qualite`. La bulle dit
-///   « Vous » pour le compte, la qualité servie sinon — le site, qui lit un `auteur`
-///   jamais servi, n'affiche aucun nom.
+/// - l'auteur : la bulle dit « Vous » pour le compte (`est_auteur` servi, contrat
+///   1.26.0, #138), le nom servi sinon (`auteur_nom`) ; d'une installation antérieure, la
+///   qualité servie (`auteur_qualite`).
 struct FilMessagesAffaire: View {
     let messages: [MessageAffaire]
     let installation: Installation
@@ -33,8 +33,8 @@ struct FilMessagesAffaire: View {
     }
 }
 
-/// Une bulle : à droite et teintée pour le compte, à gauche pour les autres ; une note
-/// interne, en jaune, porte sa pastille.
+/// Une bulle : à droite et teintée pour le compte (`deMoi`, servi), à gauche pour les
+/// autres ; une note interne, en jaune, porte sa pastille.
 private struct BulleMessage: View {
     let message: MessageAffaire
     let installation: Installation
@@ -43,28 +43,31 @@ private struct BulleMessage: View {
     var body: some View {
         HStack(spacing: 0) {
             if message.deMoi { Spacer(minLength: 32) }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    if let auteur = message.auteur {
-                        Text(auteur)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(palette.text)
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        if let auteur = message.auteur {
+                            Text(auteur)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(palette.text)
+                        }
+                        if message.interne { PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true) }
+                        Spacer(minLength: 8)
+                        Text(FormatsDuSite.dateHeure(message.date))
+                            .font(.caption)
+                            .foregroundStyle(palette.textMuted)
                     }
-                    if message.interne { PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true) }
-                    Spacer(minLength: 8)
-                    Text(FormatsDuSite.dateHeure(message.date))
-                        .font(.caption)
-                        .foregroundStyle(palette.textMuted)
+                    TexteRiche(html: message.contenu)
+                        .font(.body)
+                        .foregroundStyle(palette.text)
+                        .tint(palette.primary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                TexteRiche(html: message.contenu)
-                    .font(.body)
-                    .foregroundStyle(palette.text)
-                    .tint(palette.primary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                if !message.photos.isEmpty {
-                    GaleriePhotos(chemins: message.photos, installation: installation)
-                }
+                // Le texte se lit d'un trait ; chaque pièce, à part, s'ouvre.
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("affaire.message.\(message.id)")
+                PiecesJointesView(pieces: message.pieces, installation: installation, format: .compact)
             }
             .padding(12)
             .background(fond, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
@@ -72,8 +75,6 @@ private struct BulleMessage: View {
                 RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
                     .strokeBorder(bordure, lineWidth: 1)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("affaire.message.\(message.id)")
             if !message.deMoi { Spacer(minLength: 32) }
         }
     }

@@ -28,6 +28,13 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     /// Les natures de l'affaire que porte la carte (`meta.affaire.natures`, dérivées par
     /// le serveur) ; vide pour une rubrique qui n'en a pas — `NatureDeLaCarte` (#78).
     var natures: [String] = []
+    /// « Qui la lit » (`meta.affaire.lecture`, #129) ; `nil` hors affaire, ou d'une
+    /// installation antérieure.
+    var lecture: Lecture?
+    /// Le lieu de l'affaire (`meta.affaire.perimetre_libelle`, #130) ; `nil` pour le défaut.
+    var lieu: String?
+    /// Ses photos et documents (`meta.photos_urls`, `meta.fichiers_urls`), comme le site les lit.
+    var pieces: PiecesJointes = .aucune
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 
@@ -36,6 +43,17 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     var urgent: Bool {
         (type == "ticket_ouvert" && badges.contains("urgent"))
             || (type == "publication" && publicationUrgente && statut != "resolu")
+    }
+}
+
+extension ElementDuFil {
+    /// Ce que la carte relit de `meta.affaire` — le MÊME branchement pour le service réel
+    /// (`init(item:)`) et l'API simulée (`Apercu.fil`).
+    mutating func poser(_ meta: MetaDuFil?) {
+        natures = meta?.affaire?.natures ?? []
+        lecture = meta?.affaire?.lecture?.valeur
+        lieu = LieuServi.lieu(meta?.affaire?.perimetreLibelle)
+        pieces = meta?.pieces ?? .aucune
     }
 }
 

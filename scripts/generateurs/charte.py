@@ -4,7 +4,7 @@
 
 - les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément, lus
   dans la table `NATURES` de `front/src/lib/flux.ts` → `CoproFirst/Charte/NaturesDuFil.swift` ;
-- les STATUTS d'une affaire, libellé et pastille (`STATUTS_TICKET` et ses deux
+- les STATUTS d'une affaire, leur pastille seule — le libellé est servi, #105 (`STATUTS_TICKET` et ses deux
   compléments de `front/src/lib/tickets.ts`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
 - les RÔLES et STATUTS d'un utilisateur (`ROLE`, `STATUT`, `LIBELLES_HERITES` de
   `front/src/lib/roles.ts`) et les rôles que l'en-tête de l'accueil met en avant
@@ -81,9 +81,10 @@ def statuts(ctx) -> int:
     if len(trouves) < 6:
         raise SystemExit("❌ STATUTS_TICKET introuvable dans tickets.ts")
     corps = ctx.entete("front/src/lib/tickets.ts (STATUTS_TICKET et compléments)")
-    corps += "\n/// Le libellé et la pastille de chaque statut d'une affaire, comme le site les écrit.\n"
-    corps += "enum StatutsAffaire {\n    static let parCode: [String: (libelle: String, pastille: String)] = [\n"
-    corps += "".join(f'        "{v}": ("{l}", "{b}"),\n' for v, l, b in trouves)
+    # Le LIBELLÉ d'un statut est servi (`statut_libelle`, #105) : seule la teinte se génère.
+    corps += "\n/// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.\n"
+    corps += "enum StatutsAffaire {\n    static let pastilles: [String: String] = [\n"
+    corps += "".join(f'        "{v}": "{b}",\n' for v, _, b in trouves)
     corps += "    ]\n}\n"
     ctx.ecrire(CHARTE / "StatutsAffaire.swift", corps)
     return len(trouves)
