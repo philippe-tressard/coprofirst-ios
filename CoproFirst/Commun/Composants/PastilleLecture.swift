@@ -77,6 +77,12 @@ struct EtiquetteLieu: View {
     let lieu: String?
 
     var body: some View {
-        if let lieu { Label(lieu, systemImage: "mappin").accessibilityLabel("Lieu : \(lieu)") }
+        // Un seul élément, qui dit le lieu : sans lui, iOS 26 porte l'identifiant posé par
+        // l'appelant sur l'épingle seule, jamais touchable (SaisieAffaireUITests rouge en CI).
+        if let lieu {
+            Label(lieu, systemImage: "mappin")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Lieu : \(lieu)")
+        }
     }
 }
