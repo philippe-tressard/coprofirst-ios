@@ -13,8 +13,6 @@ import SwiftUI
 struct OngletBadgesCS: OngletDePage {
     let contexte: ContexteOnglet
     @State private var parc: [AccesDuParc]?
-    /// L'arbre servi, pour dire ce qu'un accès ouvre ; sans lui, rien plutôt qu'un code.
-    @State private var perimetres: [Perimetre] = []
     @State private var erreur: String?
     @State private var recherche = ""
     @State private var type: TypeAcces?
@@ -43,7 +41,7 @@ struct OngletBadgesCS: OngletDePage {
         } else {
             VStack(spacing: 12) {
                 ForEach(0..<3, id: \.self) { _ in
-                    CarteAccesDuParc(acces: TextesBadgesCS.exempleSquelette, perimetres: [])
+                    CarteAccesDuParc(acces: TextesBadgesCS.exempleSquelette)
                 }
             }
             .redacted(reason: .placeholder)
@@ -66,7 +64,7 @@ struct OngletBadgesCS: OngletDePage {
                     Text(TextesBadgesCS.aucunResultat).font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 LazyVStack(spacing: 10) {
-                    ForEach(filtres) { CarteAccesDuParc(acces: $0, perimetres: perimetres) }
+                    ForEach(filtres) { CarteAccesDuParc(acces: $0) }
                 }
                 Text(TextesBadgesCS.compte(filtres.count, sur: parc.count))
                     .font(.footnote)
@@ -87,9 +85,7 @@ struct OngletBadgesCS: OngletDePage {
 
     private func charger(_ service: any ServiceBadgesCS) async {
         do {
-            async let lus = service.parc(contexte.installation)
-            async let arbre = try? service.perimetres(contexte.installation)
-            (parc, perimetres) = try await (lus, arbre ?? perimetres)
+            parc = try await service.parc(contexte.installation)
             erreur = nil
         } catch {
             if parc == nil { erreur = ErreurService.phrase(error, sinon: TextesBadgesCS.erreurTitre) }
@@ -127,11 +123,10 @@ private struct FiltreTypes: View {
 /// et ce qu'il ouvre.
 private struct CarteAccesDuParc: View {
     let acces: AccesDuParc
-    let perimetres: [Perimetre]
     @Environment(\.palette) private var palette
 
     var body: some View {
-        let ouvre = acces.lieu(arbre: perimetres)
+        let ouvre = acces.lieu
         Carte {
             VStack(alignment: .leading, spacing: 6) {
                 ViewThatFits(in: .horizontal) {
@@ -186,6 +181,5 @@ enum TextesBadgesCS {
 
     static let exempleSquelette = AccesDuParc(
         type: .vigik, numero: 0, code: "0000", porteurNom: "Prénom Nom", porteurRang: 0, porteurId: nil,
-        lotLibelle: "Lot 00 — appartement",
-        perimetreCible: [], statut: "actif", chezLocataire: false)
+        lotLibelle: "Lot 00 — appartement", statut: "actif", chezLocataire: false)
 }

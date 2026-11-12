@@ -1,14 +1,17 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 #if DEBUG
 /// Le tableau de bord que l'API simulée sert à « Télémétrie », une vue par réponse — en
-/// JSON, à la forme de la route, que le contrat ne type pas (`ReponseNonTypee`).
+/// JSON, à la forme de la route, jugé contre son schéma (`TableauTelemetrie`).
 ///
 /// Tout est inventé : aucun nom de personne réelle, aucune fréquentation réelle.
 enum FixturesTelemetrie {
+    typealias Reponse = FixturesAcces.Reponse
+
     /// GET /telemetry/dashboard?scope=jour.
     static let jour = #"""
         {
@@ -49,8 +52,9 @@ enum FixturesTelemetrie {
          "performance": {"indicateurs": [], "pages": []},
          "gestes": [],
          "arrivees": [],
-         "adoption": null,
-         "retour": null,
+         "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
+          "arrivants": {"periode": "30 jours", "fenetre_jours": 30, "valides": 0, "revenus": 0, "jamais_revenus": 0,
+           "en_attente": 0, "taux": null}},
          "filtre_gestionnaire": {"propose": true, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -115,8 +119,9 @@ enum FixturesTelemetrie {
          "performance": {"indicateurs": [], "pages": []},
          "gestes": [],
          "arrivees": [],
-         "adoption": null,
-         "retour": null,
+         "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
+          "arrivants": {"periode": "30 jours", "fenetre_jours": 30, "valides": 0, "revenus": 0, "jamais_revenus": 0,
+           "en_attente": 0, "taux": null}},
          "filtre_gestionnaire": {"propose": true, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -155,8 +160,9 @@ enum FixturesTelemetrie {
          "performance": {"indicateurs": [], "pages": []},
          "gestes": [],
          "arrivees": [],
-         "adoption": null,
-         "retour": null,
+         "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
+          "arrivants": {"periode": "30 jours", "fenetre_jours": 30, "valides": 0, "revenus": 0, "jamais_revenus": 0,
+           "en_attente": 0, "taux": null}},
          "filtre_gestionnaire": {"propose": false, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -186,23 +192,31 @@ enum FixturesTelemetrie {
          "performance": {"indicateurs": [], "pages": []},
          "gestes": [],
          "arrivees": [],
-         "adoption": null,
-         "retour": null,
+         "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
+          "arrivants": {"periode": "30 jours", "fenetre_jours": 30, "valides": 0, "revenus": 0, "jamais_revenus": 0,
+           "en_attente": 0, "taux": null}},
          "filtre_gestionnaire": {"propose": false, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
         """#
 
-    static let reponses: [PorteeTelemetrie: ReponseNonTypee] = [
-        .jour: ReponseNonTypee(nom: "jour", route: "GET /telemetry/dashboard", json: jour),
-        .mois: ReponseNonTypee(nom: "mois", route: "GET /telemetry/dashboard", json: mois),
-        .annee: ReponseNonTypee(nom: "annee", route: "GET /telemetry/dashboard", json: annee),
-        .total: ReponseNonTypee(nom: "total", route: "GET /telemetry/dashboard", json: total),
+    /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
+    static let parSchema: [Reponse] = [
+        Reponse(nom: "jour", schema: "TableauTelemetrie", json: jour),
+        Reponse(nom: "mois", schema: "TableauTelemetrie", json: mois),
+        Reponse(nom: "annee", schema: "TableauTelemetrie", json: annee),
+        Reponse(nom: "total", schema: "TableauTelemetrie", json: total),
     ]
 
     static func tableau(_ portee: PorteeTelemetrie) throws -> TableauTelemetrie {
-        guard let reponse = reponses[portee] else { throw ErreurService.inattendue(404) }
-        return try reponse.lire(TableauTelemetrie.self)
+        let json =
+            switch portee {
+            case .jour: jour
+            case .mois: mois
+            case .annee: annee
+            case .total: total
+            }
+        return TableauTelemetrie(try Relecture.generee(Components.Schemas.TableauTelemetrie.self, json: json))
     }
 }
 #endif

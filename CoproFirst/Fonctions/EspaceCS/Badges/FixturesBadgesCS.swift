@@ -52,15 +52,11 @@ enum FixturesBadgesCS {
         Reponse(nom: "telecommandes", schema: "AccesAdminOut", json: telecommandes),
     ]
 
-    /// Le lieu de chaque accès, servi au-dessus du plancher (coprofirst v3.88.1, #130).
-    static let auDessus = AuDessusDuPlancher(schema: "AccesAdminOut", champs: ["perimetre_libelle"], contrat: "1.24.0")
-
     /// Lu comme le client généré le lit, branché comme le service réel.
     static func parcLu() throws -> [AccesDuParc] {
         typealias Parc = [Components.Schemas.AccesAdminOut]
-        return try AccesDuParc.lus(.vigik, Relecture.generee(Parc.self, json: vigiks), corps: Data(vigiks.utf8))
-            + AccesDuParc.lus(
-                .telecommande, Relecture.generee(Parc.self, json: telecommandes), corps: Data(telecommandes.utf8))
+        return try Relecture.generee(Parc.self, json: vigiks).map { AccesDuParc(.vigik, $0) }
+            + Relecture.generee(Parc.self, json: telecommandes).map { AccesDuParc(.telecommande, $0) }
     }
 }
 #endif

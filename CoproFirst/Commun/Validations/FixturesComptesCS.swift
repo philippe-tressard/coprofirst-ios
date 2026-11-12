@@ -74,16 +74,10 @@ enum FixturesComptesCS {
         Reponse(nom: "validationSansLot", schema: "CompteTraiteResult", json: validationSansLot),
     ]
 
-    /// Ce que `UserRead` sert au-dessus du plancher (contrat 1.25.0, coprofirst#2633) : le
-    /// nom affiché du compte et de la personne aidée (#135), et `est_moderateur` (#136).
-    static let auDessus = AuDessusDuPlancher(
-        schema: "UserRead", champs: ["nom_affiche", "nom_aide_affiche", "est_moderateur"], contrat: "1.25.0")
-
     // MARK: - Lues comme le client généré les lit, branchées comme le service réel
 
     static func comptesLus() throws -> [CompteEnAttente] {
-        CompteEnAttente.lus(
-            try Relecture.generee([Components.Schemas.UserRead].self, json: comptes), corps: Data(comptes.utf8))
+        try Relecture.generee([Components.Schemas.UserRead].self, json: comptes).map(CompteEnAttente.init)
     }
 
     static func commandesLues() throws -> [CommandeEnAttente] {

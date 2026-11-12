@@ -45,8 +45,8 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
     ///   divergence iOS déclarée) ; jamais sur une actualité ni une affaire fusionnée
     ///   (`gesteReponse` du site) ;
     /// - ✏️ et les options au lecteur qui peut CORRIGER l'affaire (`peut_corriger`, comme
-    ///   le site, #127) — l'auteur d'une affaire engagée le garde ; à défaut,
-    ///   `peut_modifier` (installation antérieure au contrat 1.21.0) ;
+    ///   le site, #127) — l'auteur d'une affaire engagée le garde ; jamais déduit de
+    ///   `peut_modifier` ;
     /// - 📦 tant que l'affaire n'est pas aux Archives.
     static func offerts(pour affaire: DetailAffaire, conseil: Bool) -> [GesteAffaire] {
         allCases.filter { geste in

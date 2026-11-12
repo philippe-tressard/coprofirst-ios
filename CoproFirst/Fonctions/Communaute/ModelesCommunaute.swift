@@ -12,8 +12,8 @@ struct MoiCommunaute: Hashable, Sendable {
     /// quand la Communauté est fermée à ce compte — profil de gestionnaire (l'Avis
     /// reste ouvert) ou suspension (tout est fermé). L'app ne recalcule pas la règle.
     let motifRefus: String?
-    /// `est_moderateur` servi (contrat 1.25.0, #136) ; `nil` d'une installation antérieure.
-    var estModerateur: Bool?
+    /// Conseil syndical ou administration, tel que le serveur le juge (`est_moderateur`, #136).
+    var estModerateur = false
 
     /// Ce que le compte est, pour juger des onglets — la règle GÉNÉRÉE du site ; modérer,
     /// tel que le serveur le sert.
@@ -49,9 +49,9 @@ struct SondageResume: Hashable, Sendable, Identifiable {
     let nbVotants: Int
     let archivee: Bool
     let creeLe: Date
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation antérieure.
+    /// « Qui la lit », servie (`lecture`, #129) ; `nil` : aucune pastille.
     var lecture: Lecture?
-    /// Son lieu (`perimetre_libelle`, contrat 1.24.0, #130) ; `nil` pour le défaut, ou non servi.
+    /// Son lieu, servi (`perimetre_libelle`, #130) ; `nil` pour le périmètre par défaut.
     var lieu: String?
 }
 
@@ -67,9 +67,9 @@ struct Idee: Codable, Hashable, Sendable, Identifiable {
     var monVote: Bool
     let archivee: Bool?
     var reponses: [ReponseCommunaute]?
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation antérieure.
+    /// « Qui la lit », servie (`lecture`, #129) ; `nil` : aucune pastille.
     var lecture: Lecture?
-    /// Son lieu (`perimetre_libelle`, contrat 1.24.0, #130) ; `nil` pour le défaut, ou non servi.
+    /// Son lieu, servi (`perimetre_libelle`, #130) ; `nil` pour le périmètre par défaut.
     var lieu: String?
 }
 
@@ -95,9 +95,9 @@ struct Annonce: Codable, Hashable, Sendable, Identifiable {
     let archivee: Bool?
     let creeLe: Date
     var reponses: [ReponseCommunaute]?
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation antérieure.
+    /// « Qui la lit », servie (`lecture`, #129) ; `nil` : aucune pastille.
     var lecture: Lecture?
-    /// Son lieu (`perimetre_libelle`, contrat 1.24.0, #130) ; `nil` pour le défaut, ou non servi.
+    /// Son lieu, servi (`perimetre_libelle`, #130) ; `nil` pour le périmètre par défaut.
     var lieu: String?
 }
 

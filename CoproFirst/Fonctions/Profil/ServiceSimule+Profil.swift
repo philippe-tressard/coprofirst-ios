@@ -15,7 +15,7 @@ extension ServiceSimule: ServiceProfil {
             fonction: nil, photo: nil, statut: profilSimule.statut ?? "", roles: profilSimule.roles, batimentNom: "A",
             actif: true, creeLe: Date.now.addingTimeInterval(-86_400 * 420),
             derniereConnexion: Date.now.addingTimeInterval(-3_600), preferences: #"{"mon_batiment_mail": true}"#,
-            restreindreAMesBatiments: false, refusTelemetrie: false, nomServi: "Résident EXEMPLE")
+            restreindreAMesBatiments: false, refusTelemetrie: false, nomAffiche: "Résident EXEMPLE")
     }
 
     func modifierIdentite(_ saisie: SaisieIdentite, ancienne: String, dans installation: Installation)

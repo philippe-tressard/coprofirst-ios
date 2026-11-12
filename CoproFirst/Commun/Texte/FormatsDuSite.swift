@@ -151,14 +151,15 @@ enum FormatsDuSite {
 
     // MARK: Personnes
 
-    /// Le nom d'une personne : « Prénom NOM » tel que le SERVEUR l'affiche (`nom_affiche`,
-    /// `locataire_nom_affiche`, `bailleur_nom_affiche`, `nom_aide_affiche` — contrat 1.25.0,
-    /// coprofirst#2633 lot 4, #135), jamais composé dans un écran.
+    /// Le nom d'une personne dont l'app ne tient PAS le nom du serveur : une fiche de
+    /// l'annuaire du conseil renommée et pas encore enregistrée (l'écran de
+    /// `POST /noms/affiche` est un lot à part), un annuaire gardé en cache avant #135.
+    /// Servi, le nom fait foi ; sinon le repli, prénom puis nom, « — » sans l'un ni l'autre.
     ///
-    /// Non servi ou vide — une installation antérieure, une saisie pas encore enregistrée
-    /// (`POST /noms/affiche` n'est pas au client généré du plancher) — : le repli d'avant,
-    /// prénom puis nom tels que servis, « — » sans l'un ni l'autre. Ce repli vit ICI
-    /// seulement : `scripts/verifier-regles-servies.py` refuse toute autre composition.
+    /// 🔴 Partout ailleurs, « Prénom NOM » se LIT du type généré (`nom_affiche`,
+    /// `locataire_nom_affiche`, `bailleur_nom_affiche`, `nom_aide_affiche` — coprofirst#2633
+    /// lot 4, #135), sans ce repli : `scripts/verifier-regles-servies.py` refuse cet appel
+    /// hors de ces deux fichiers, et toute autre composition.
     static func nom(affiche: String?, prenom: String?, nom: String?) -> String {
         if let servi = affiche?.trimmingCharacters(in: .whitespaces), !servi.isEmpty { return servi }
         let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }

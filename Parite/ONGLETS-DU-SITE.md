@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 # Les onglets du site
 
 GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
-Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), `front/src/lib/pages.ts` (`PAGES`) et `pages-roles.ts` (`PAGES_ROLES`).
+Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe `tables-clients.json` de la release (table `pages`).
 
 Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.
 
@@ -18,7 +18,7 @@ Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifi
 | `residence` | `reglement` | Règlement |
 | `mes-demandes` | `liste` | Liste |
 | `mes-demandes` | `kanban` | Kanban |
-| `mes-demandes` | `archives` | `TITRE_ARCHIVES` |
+| `mes-demandes` | `archives` | Archives |
 | `mon-lot` | `lots` | Mes lots |
 | `mon-lot` | `badges` | Mes badges d’accès (Vigik) |
 | `mon-lot` | `telecommandes` | Télécommandes de parking |
@@ -32,8 +32,6 @@ Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifi
 | `communaute` | `annonces` | Petites annonces |
 | `communaute` | `avis` | Avis |
 | `faq` | — | FAQ |
-| `profil` | — | Mon profil |
-| `notifications` | — | Notifications |
 | `espace-cs` | `validations` | Comptes & accès |
 | `espace-cs` | `badges` | Badges & télécommandes |
 | `espace-cs` | `reporting` | Reporting |
@@ -62,3 +60,5 @@ Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifi
 | `admin` | `maintenance` | Maintenance |
 | `admin` | `installations` | Installations |
 | `delegations` | — | Délégations aidant |
+| `profil` | — | Mon profil |
+| `notifications` | — | Notifications |

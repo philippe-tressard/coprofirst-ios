@@ -4,13 +4,13 @@
 import ClientAPI
 import Foundation
 
-/// « Maintenance » par le client GÉNÉRÉ. La santé des tâches n'est pas typée par le
-/// contrat (pas de `response_model`) : elle se relit par `Relecture`, le seul usage admis.
+/// « Maintenance » par le client GÉNÉRÉ : la santé des tâches se lit par son type
+/// (`SanteMaintenance`, contrat 1.16.0, #87).
 extension ServiceAPI: ServiceMaintenance {
     func santeTaches(_ installation: Installation) async throws -> SanteTaches {
         let sortie = try await appeler { try await client(installation.adresse).getAdminMaintenanceSante() }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire(SanteTaches.self, depuis: try ok.body.json)
+        case .ok(let ok): return SanteTaches(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

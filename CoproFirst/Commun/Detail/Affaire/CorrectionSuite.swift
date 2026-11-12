@@ -26,8 +26,8 @@ enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
     }
 
     /// Les gestes offerts sur cette entrée : ceux que le serveur a servis AVEC elle
-    /// (`DroitsServisSuite`), et aucun autre — une installation antérieure au contrat
-    /// 1.19.0 n'en sert pas, l'Historique s'y lit sans geste, comme avant.
+    /// (`DroitsServisSuite`), et aucun autre — sans droit servi, l'Historique se lit sans
+    /// geste, comme avant.
     static func offerts(pour suite: SuiteAffaire) -> [GesteSuite] {
         allCases.filter { geste in
             switch geste {

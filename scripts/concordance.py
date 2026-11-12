@@ -41,7 +41,7 @@ RACINE = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "scripts"))
 
 import generer  # noqa: E402
-from generateurs import _plancher  # noqa: E402
+from generateurs import _plancher, _tables  # noqa: E402
 from generateurs._commun import PROVENANCE, SIGNATURE  # noqa: E402
 from generateurs._source import SourceIllisible, Version, contrat_servi, derniere_version, versions_publiees  # noqa: E402
 from generateurs.contrat import CONTRAT  # noqa: E402
@@ -288,8 +288,9 @@ def autotest() -> None:
     if exigences(ancien, nouveau) != attendu or exigences(ancien, ancien):
         raise SystemExit(f"❌ autotest : exigences d'une montée ({exigences(ancien, nouveau)})")
     _autotest_mesure()
+    _tables.autotest()
     print("✅ autotest : cas zéro, version seule, écart posé exprès, orphelin, exigences d'une montée, "
-          "plancher mesuré")
+          "plancher mesuré, tables du site (absente, vide, forme fausse, source du front)")
 
 
 def _autotest_mesure() -> None:

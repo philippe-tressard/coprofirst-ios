@@ -24,9 +24,9 @@ struct MetaDuFil: Decodable {
         let echeance: EcheanceServie?
         /// Les natures que le serveur DÉRIVE (`utils/nature_affaire`) — jamais redérivées ici.
         let natures: [String]?
-        /// « Qui la lit », servie (contrat 1.22.0) — illisible, elle n'emporte pas le reste.
+        /// « Qui la lit », servie (#129) — illisible, elle n'emporte pas le reste.
         let lecture: Tolere<Lecture>?
-        /// Le lieu du badge 🔹 (contrat 1.24.0) : `""` pour le périmètre par défaut.
+        /// Le lieu du badge 🔹 (#130) : `""` pour le périmètre par défaut.
         let perimetreLibelle: String?
     }
 

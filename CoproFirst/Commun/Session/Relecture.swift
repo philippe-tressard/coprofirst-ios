@@ -49,7 +49,8 @@ enum Relecture {
     /// Une installation antérieure ne les sert pas : `nil`, et l'écran garde son geste
     /// d'avant. Un corps illisible vaut aussi `nil` — défaut FERMÉ : l'écran n'offre
     /// jamais un geste que le serveur n'a pas annoncé, et la lecture typée, elle, a déjà
-    /// réussi.
+    /// réussi. Au plancher v3.88.1 (contrat 1.26.0), plus aucun écran ne l'emploie : tout
+    /// champ lu est typé. Le mécanisme reste, avec ses tests (`AuDessusDuPlancherTests`).
     static func auDessusDuPlancher<T: Decodable>(_ type: T.Type, corps: Data?) -> T? {
         guard let corps else { return nil }
         return try? lire(type, json: corps)

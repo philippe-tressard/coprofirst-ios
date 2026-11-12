@@ -7,11 +7,11 @@ import Foundation
 #if DEBUG
 /// Les fiches que l'API simulée sert à « Prestataires » — en JSON, tel que GET
 /// /prestataires et /prestataires/archives les renvoient, lues par le type GÉNÉRÉ puis
-/// par le MÊME branchement que le service réel (`Prestataire.lus`), et jugées contre le
+/// par le MÊME branchement que le service réel (`Prestataire(_:)`), et jugées contre le
 /// contrat par `scripts/verifier-fixtures.py`.
 ///
-/// À la forme du serveur v3.88.1 : `telephones` (contrat 1.20.0, #125) — le contrôleur
-/// a saisi deux fois son numéro, le serveur n'en sert qu'un. Des entreprises inventées,
+/// `telephones` (#125) : le contrôleur a saisi deux fois son numéro, le serveur n'en sert
+/// qu'un. Des entreprises inventées,
 /// aucun nom de personne, des numéros de la plage réservée à la fiction (01 99 00 …).
 enum FixturesPrestataires {
     typealias Reponse = FixturesAcces.Reponse
@@ -24,7 +24,7 @@ enum FixturesPrestataires {
            "telephone": "01 99 00 00 11, 01 99 00 00 12", "telephones": ["01 99 00 00 11", "01 99 00 00 12"],
            "email": "contact@ascenseurs.exemple.fr", "adresse": "12 rue de l'Exemple, 75000 Paris",
            "description": "<p>Astreinte <strong>24 h/24</strong> pour les personnes bloquées en cabine.</p>",
-           "contacts": [{"fonction": "Astreinte", "telephone": "01 99 00 00 13"}]},
+           "contacts": [{"fonction": "Astreinte", "telephone": "01 99 00 00 13", "nom_affiche": ""}]},
           {"id": 2, "nom": "Contrôles Sécurité Exemple", "specialite": "incendie",
            "type_prestataire": "reglementaire", "actif": true,
            "telephone": "01 99 00 00 21,01 99 00 00 21", "telephones": ["01 99 00 00 21"],
@@ -44,8 +44,6 @@ enum FixturesPrestataires {
         ]
         """#
 
-    static let auDessus = AuDessusDuPlancher(schema: "PrestataireRead", champs: ["telephones"], contrat: "1.20.0")
-
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [
         Reponse(nom: "prestataires", schema: "PrestataireRead", json: prestataires),
@@ -54,8 +52,7 @@ enum FixturesPrestataires {
 
     static func lus(archives: Bool = false) throws -> [Prestataire] {
         let json = archives ? Self.archives : prestataires
-        return Prestataire.lus(
-            try Relecture.generee([Components.Schemas.PrestataireRead].self, json: json), corps: Data(json.utf8))
+        return try Relecture.generee([Components.Schemas.PrestataireRead].self, json: json).map(Prestataire.init)
     }
 }
 #endif

@@ -25,8 +25,8 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     var libelleCourt: String?
     /// Ce que le nœud implique (« notifie l'ensemble du conseil syndical ») : l'aide du choix.
     var description: String?
-    /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, contrat
-    /// 1.17.0, #88) ; `nil` d'une installation antérieure, qui ne le sert pas.
+    /// Combien de niveaux ce nœud peut encore porter sous lui (`niveaux_libres`, #88) ;
+    /// `nil` quand le serveur ne le dit pas : le nœud ne limite alors rien.
     var niveauxLibres: Int?
 
     var id: String { code }
@@ -50,25 +50,19 @@ struct Perimetre: Identifiable, Hashable, Sendable {
         self.init(
             code: lu.code, libelle: lu.libelle, profondeur: lu.profondeur, selectionnable: lu.selectionnable,
             parDefaut: lu.parDefaut ?? false, parent: lu.parent, libelleCourt: lu.libelleCourt,
-            description: lu.description)
+            description: lu.description, niveauxLibres: lu.niveauxLibres)
     }
 
-    /// L'arbre servi, ACTIFS seulement : le type généré, puis ce que le corps sert
-    /// au-dessus du plancher — le MÊME branchement pour le service réel et l'API simulée.
-    static func lus(_ generes: [Components.Schemas.PerimetreRead], corps: Data?) -> [Perimetre] {
-        let auDessus = Relecture.auDessusDuPlancher(parLigne: PerimetreAuDessusDuPlancher.self, corps: corps)
-        return generes.filter(\.actif).map { lu in
-            var perimetre = Perimetre(lu: lu)
-            perimetre.niveauxLibres = auDessus[lu.code]?.niveauxLibres
-            return perimetre
-        }
+    /// L'arbre servi, ACTIFS seulement, par son type GÉNÉRÉ — le même branchement pour le
+    /// service réel et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.PerimetreRead]) -> [Perimetre] {
+        generes.filter(\.actif).map(Perimetre.init(lu:))
     }
 
     /// Les lieux qu'un sélecteur propose (#88) : les nœuds sélectionnables, jusqu'au
     /// niveau 3 et jamais plus bas — un nœud écrit avant la règle sous un parent qui ne
     /// peut plus rien porter (`niveaux_libres` servi à 0) ne se propose pas. Le plafond
-    /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Une installation
-    /// antérieure au contrat 1.17.0 ne le sert pas : tout nœud sélectionnable, comme avant.
+    /// n'est pas recopié ici : il se lit sur ce que le serveur sert.
     ///
     /// `garder` : le lieu déjà enregistré d'un contenu qu'on modifie — proposé même trop
     /// profond, pour que le modifier ne le perde pas en silence.
@@ -85,14 +79,6 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     static func codeParDefaut(_ perimetres: [Perimetre]) -> String? { perimetres.first(where: \.parDefaut)?.code }
 }
 
-/// Ce que GET /perimetres sert au-dessus du plancher (contrat 1.17.0, #88), relu par
-/// `Relecture.auDessusDuPlancher` : `niveau` et `hauteur` ne servent pas à l'app.
-struct PerimetreAuDessusDuPlancher: Decodable, Identifiable {
-    let code: String
-    var niveauxLibres: Int?
-    var id: String { code }
-}
-
 /// GET /perimetres : les périmètres ACTIFS, dans l'ordre de l'arbre servi. Les menus
 /// qui en ont besoin en héritent (`ServiceResidence`, `ServiceAffaires`) : une seule
 /// lecture, un seul type de retour.
@@ -102,11 +88,8 @@ protocol ServicePerimetres: Sendable {
 
 extension ServiceAPI: ServicePerimetres {
     func perimetres(_ installation: Installation) async throws -> [Perimetre] {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getPerimetres() }
-        }
-        switch sortie {
-        case .ok(let ok): return Perimetre.lus(try ok.body.json, corps: corps)
+        switch try await appeler({ try await client(installation.adresse).getPerimetres() }) {
+        case .ok(let ok): return Perimetre.lus(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

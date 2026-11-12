@@ -4,8 +4,8 @@
 import ClientAPI
 import Foundation
 
-/// « Télémétrie » par le client GÉNÉRÉ. Le tableau n'est pas typé par le contrat (pas de
-/// `response_model`) : il se relit par `Relecture`, le seul usage admis.
+/// « Télémétrie » par le client GÉNÉRÉ : le tableau se lit par son type
+/// (`TableauTelemetrie`, contrat 1.16.0, #87).
 extension ServiceAPI: ServiceTelemetrie {
     func tableauTelemetrie(
         _ installation: Installation, portee: PorteeTelemetrie, sansGestionnaire: Bool
@@ -15,7 +15,7 @@ extension ServiceAPI: ServiceTelemetrie {
                 query: .init(scope: portee.rawValue, gestionnaire: sansGestionnaire ? "sans" : "avec"))
         }
         switch sortie {
-        case .ok(let ok): return try Relecture.lire(TableauTelemetrie.self, depuis: try ok.body.json)
+        case .ok(let ok): return TableauTelemetrie(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

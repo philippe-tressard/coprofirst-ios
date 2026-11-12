@@ -23,7 +23,7 @@ private func installation(contrat: String?) -> Installation {
 
 @Test func auPlancherOuAuDessusLaResidenceSOuvre() throws {
     try installation(contrat: VersionContrat.plancher.description).exigerLePlancher()
-    try installation(contrat: "1.18.0").exigerLePlancher()
+    try installation(contrat: "1.30.0").exigerLePlancher()
     try installation(contrat: "2.0.0").exigerLePlancher()
 }
 

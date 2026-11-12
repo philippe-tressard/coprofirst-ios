@@ -65,7 +65,7 @@ verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
-(coprofirst v3.84.0, contrat 1.19.0) ; une installation plus ancienne n'offre aucun geste.
+(coprofirst v3.84.0, contrat 1.19.0).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -103,7 +103,11 @@ Une seule règle de provenance : les générateurs lisent une **version publiée
 CoproFirst (l'archive de son étiquette et les pièces jointes de sa release), nommée
 dans l'en-tête « GÉNÉRÉ » de chaque fichier — jamais un clone ni une branche. Il y
 en a un par domaine dans `scripts/generateurs/`, que `generer.py` découvre et lance
-tous ; `--sources` liste les fichiers de CoproFirst qu'ils lisent.
+tous ; `--sources` liste les fichiers de l'archive de CoproFirst qu'ils lisent encore. Les
+tables du site (pages, rôles, statuts, natures, jetons de la charte et des palettes…) se
+lisent dans `tables-clients.json`, la pièce jointe des releases depuis v3.88.0 (#128) : par
+leur nom et à la forme attendue — une table absente ou d'une autre forme arrête la
+génération (`scripts/generateurs/_tables.py`).
 
 **Le plancher.** L'app parle à des installations de versions différentes : elle se
 génère sur la plus ancienne version servie par une installation connue, écrite à un
@@ -117,7 +121,7 @@ permettent de voir ce qu'une montée changerait.
 Un champ qu'une installation plus récente sert déjà, au-dessus du plancher, se lit en
 tolérant son absence — l'écran garde alors son geste d'avant — et l'API simulée le
 déclare au juge (`AuDessusDuPlancher`) ; la méthode est dans la skill
-`swiftui-patterns`.
+`swiftui-patterns`. À la montée, il passe au type généré et son repli se retire.
 
 **Concordance** (`scripts/concordance.py`) — deux verdicts, jamais confondus :
 
