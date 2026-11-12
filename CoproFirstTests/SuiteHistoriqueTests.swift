@@ -61,7 +61,10 @@ struct SuiteHistoriqueTests {
         let service = ServiceSimule(delai: .zero)
         switch compte {
         case "administrateur": service.profilSimule.roles.append("admin")
-        case "resident": service.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        // Comme `-compte resident` (`LancementSimule`) : `est_moderateur` servi à faux.
+        case "resident":
+            service.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+            service.profilSimule.estModerateur = false
         default: break
         }
         return service
