@@ -19,7 +19,7 @@ final class SaisieAffaireUITests: XCTestCase {
 
     private func ouvrirAffaires(_ app: XCUIApplication) {
         let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
-        XCTAssertTrue(onglet.waitForExistence(timeout: 8))
+        XCTAssertTrue(onglet.apparait())
         onglet.tap()
     }
 
@@ -27,18 +27,18 @@ final class SaisieAffaireUITests: XCTestCase {
         app.descendants(matching: .any).matching(identifier: identifiant).firstMatch
     }
 
-    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur), d'ici 8 s ?
+    /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur) ?
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String) -> Bool {
         let predicat = NSPredicate(
             format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.waitForExistence(timeout: 8)
+        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
     }
 
     /// L'élément ramené à l'écran ; `false` s'il n'y paraît pas. Un `Form` ne crée pas les
     /// lignes hors de l'écran : on défile tant qu'il n'est pas là, pas seulement tant qu'il est caché.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> Bool {
-        _ = element.waitForExistence(timeout: 3)
+        _ = element.sonde()
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {
             app.swipeUp()
@@ -50,7 +50,7 @@ final class SaisieAffaireUITests: XCTestCase {
     private func nouvelle(_ app: XCUIApplication, categorie: String) {
         el(app, "affaires.nouvelle").tap()
         let vignette = el(app, "nouvelle.categorie.\(categorie)")
-        XCTAssertTrue(vignette.waitForExistence(timeout: 8))
+        XCTAssertTrue(vignette.apparait())
         vignette.tap()
     }
 
@@ -67,10 +67,12 @@ final class SaisieAffaireUITests: XCTestCase {
 
         app.swipeDown()
         let panne = el(app, "nouvelle.categorie.panne")
-        XCTAssertTrue(panne.waitForExistence(timeout: 5))
+        XCTAssertTrue(panne.apparait())
         panne.tap()
         XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
-        XCTAssertFalse(el(app, "nouvelle.plusDeDetails").exists, "plus rien à ranger : pas de groupe")
+        // Le groupe se retire après le toucher : son absence s'attend, elle ne se lit pas
+        // par `.exists` dans la foulée (vu rouge au poste chargé, 11/11/2026).
+        XCTAssertTrue(el(app, "nouvelle.plusDeDetails").disparait(), "plus rien à ranger : pas de groupe")
         LancementCaptures.capturer("saisie-3-essentielle-panne")
     }
 
@@ -86,7 +88,7 @@ final class SaisieAffaireUITests: XCTestCase {
     func testLeChoixDuProfilVautAussitot() throws {
         let app = lancer()
         let plus = app.tabBars.buttons["Plus"]
-        XCTAssertTrue(plus.waitForExistence(timeout: 8))
+        XCTAssertTrue(plus.apparait())
         plus.tap()
         let profil = el(app, "plus.profil")
         XCTAssertTrue(atteindre(app, profil))

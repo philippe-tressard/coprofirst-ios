@@ -86,6 +86,20 @@ struct FormeDeSaisie: Equatable, Sendable {
     /// `nil` : pas encore lues, ou illisibles — rien ne se range, puisque rien ne le justifie.
     let essentielles: SectionsEssentielles?
 
+    /// La forme d'un compte : son mode tel que le serveur le sert (`saisie_affaire_effective`),
+    /// les sections lues des référentiels. `nil` : un serveur qui ne sert pas la saisie.
+    /// La Création (`AffairesView`) et l'Édition (`ModifierAffaireFeuille`) la composent
+    /// ici, une fois (#110).
+    init?(servi: String?, essentielles: SectionsEssentielles?) {
+        guard let mode = ModeSaisie(servi: servi) else { return nil }
+        self.init(mode: mode, essentielles: essentielles)
+    }
+
+    init(mode: ModeSaisie, essentielles: SectionsEssentielles?) {
+        self.mode = mode
+        self.essentielles = essentielles
+    }
+
     /// Le groupe « Plus de détails » existe-t-il pour ce compte ?
     var range: Bool { mode == .essentielle && essentielles != nil }
 

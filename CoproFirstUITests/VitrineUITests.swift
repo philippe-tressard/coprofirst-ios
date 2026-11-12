@@ -13,13 +13,13 @@ final class VitrineUITests: XCTestCase {
     func testEnSavoirPlusMontreLesRangeesDuSiteDansLOrdreDeLApp() throws {
         let app = LancementCaptures.lancer(ecran: "en-savoir-plus", taille: .parDefaut)
         let titre = element(app, "vitrine.titre")
-        XCTAssertTrue(titre.waitForExistence(timeout: 10), "le titre du site")
+        XCTAssertTrue(titre.apparait(), "le titre du site")
         XCTAssertFalse(titre.label.isEmpty)
         LancementCaptures.capturer("vitrine-1-haut")
         var bas = -CGFloat.infinity
         for id in rangees {
             let rangee = element(app, "vitrine.rangee.\(id)")
-            XCTAssertTrue(rangee.waitForExistence(timeout: 5), "la rangée \(id)")
+            XCTAssertTrue(rangee.apparait(), "la rangée \(id)")
             XCTAssertFalse(rangee.label.isEmpty, "la rangée \(id) a son texte")
             XCTAssertGreaterThan(rangee.frame.minY, bas, "\(id) vient après la précédente")
             bas = rangee.frame.minY

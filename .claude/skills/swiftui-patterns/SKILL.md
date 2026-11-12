@@ -161,6 +161,12 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   sert à la forme du serveur, et le `Fixtures*.swift` le déclare,
   `AuDessusDuPlancher(schema:champs:contrat:)` ; le juge le tolère dans ce schéma seulement,
   et échoue le jour où le contrat le déclare, ou quand plus aucune réponse ne le sert.
+- **Une borne que le contrat pose sur un corps** (`maxItems`) et que le client généré
+  n'expose pas : elle se GÉNÈRE du contrat (`generateurs/notifications.py` →
+  `LimitesNotifications`), jamais un nombre écrit dans un écran ; l'API simulée refuse
+  comme le serveur ce qui la dépasse (422), et le geste se découpe à sa taille — ce qui
+  est déjà fait ne revient pas si une requête échoue en route, et la phrase dit combien
+  (`EtatNotifications.supprimer`, `SuppressionInterrompue`, #118).
 
 ### Les composants communs — à réutiliser, pas à modifier
 
@@ -259,6 +265,15 @@ seule la CI le dit.
    qu'à un test rouge (#123). Un état autre que la présence — le focus du clavier, un
    onglet retenu — s'attend par `element.attendre("hasKeyboardFocus == true")`, la seule
    attente par prédicat : `verifier-depot.sh` refuse `expectation(for:` dans les tests.
+   Un état **passager** ne s'attend pas contre la montre, même avec un long délai :
+   l'avis qui suit un geste dure 4 s, et il est reparti avant d'être lu par un runner
+   qui met 30 s à une requête. Le test le rend durable (`-avis-durable`, lu par
+   `AvisEphemere` en Debug) et prouve le geste par l'état qui reste (la liste relue).
+   La présence elle-même s'attend par `element.apparait()` (et `disparait()`), jamais
+   par `waitForExistence(timeout: 8)` : aucun délai chiffré dans un test, le même
+   contrôle le refuse (#147). Ce qui peut légitimement manquer — une boucle qui fait
+   défiler, un chemin facultatif, une absence à prouver une fois l'écran posé — se
+   LIT par `element.sonde()` (`Attente.sonde`), et ne s'affirme pas par `XCTAssertTrue`.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test

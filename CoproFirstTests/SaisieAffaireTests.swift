@@ -58,6 +58,17 @@ private func essentiellesServies() async throws -> SectionsEssentielles {
     #expect(sansSections.phrase(rangees: 0) == "Saisie essentielle. À changer dans votre profil.")
 }
 
+@Test func laFormeDuCompteSeComposeDuModeServi() {
+    // La Création et l'Édition la composent par le même initialiseur (#110).
+    let servies = SectionsEssentielles(["question": ["titre"]])
+    #expect(
+        FormeDeSaisie(servi: "essentielle", essentielles: servies)
+            == FormeDeSaisie(mode: .essentielle, essentielles: servies))
+    #expect(FormeDeSaisie(servi: "complete", essentielles: nil)?.mode == .complete)
+    #expect(FormeDeSaisie(servi: nil, essentielles: servies) == nil, "un serveur qui ne sert pas la saisie")
+    #expect(FormeDeSaisie(servi: "role", essentielles: servies) == nil, "un mot inconnu ne range rien")
+}
+
 @Test func laPhraseEtLIntituleDisentCeQuiEstRange() {
     let forme = FormeDeSaisie(mode: .essentielle, essentielles: SectionsEssentielles(["question": ["titre"]]))
     #expect(

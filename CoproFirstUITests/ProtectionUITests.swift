@@ -12,7 +12,7 @@ final class ProtectionUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "faceid"] + arguments
         app.launch()
         let activer = app.buttons["faceid.activer"]
-        XCTAssertTrue(activer.waitForExistence(timeout: 5), "la proposition après la 1ʳᵉ connexion")
+        XCTAssertTrue(activer.apparait(), "la proposition après la 1ʳᵉ connexion")
         activer.tap()
         return app
     }
@@ -21,18 +21,18 @@ final class ProtectionUITests: XCTestCase {
     func testAvecFaceIDLEcranDitFaceID() throws {
         let app = activer()
         let protection = app.staticTexts["faceid.protection"]
-        XCTAssertTrue(protection.waitForExistence(timeout: 5))
+        XCTAssertTrue(protection.apparait())
         XCTAssertEqual(protection.label, "Protégée par Face ID")
         app.buttons["faceid.continuer"].tap()
         XCTAssertTrue(
-            app.buttons["faceid.continuer"].waitForNonExistence(timeout: 5), "la feuille se ferme, le fil reste")
+            app.buttons["faceid.continuer"].disparait(), "la feuille se ferme, le fil reste")
     }
 
     @MainActor
     func testSansBiometrieLEcranDitLeVerrouillageDeLAppareil() throws {
         let app = activer(["-protection", "appareil"])
         let protection = app.staticTexts["faceid.protection"]
-        XCTAssertTrue(protection.waitForExistence(timeout: 5))
+        XCTAssertTrue(protection.apparait())
         XCTAssertEqual(protection.label, "Protégée par le verrouillage de l'appareil")
         XCTAssertFalse(protection.label.contains("Face ID"), "le repli ne se dit pas Face ID")
     }

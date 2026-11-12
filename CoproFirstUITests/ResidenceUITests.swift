@@ -16,14 +16,14 @@ final class ResidenceUITests: XCTestCase {
         app.launch()
 
         app.tabBars.buttons["Résidence"].tap()
-        XCTAssertTrue(app.staticTexts["AA0-000-000"].waitForExistence(timeout: 5), "la Fiche s'ouvre d'abord")
+        XCTAssertTrue(app.staticTexts["AA0-000-000"].apparait(), "la Fiche s'ouvre d'abord")
 
         app.buttons["Carnet d’entretien"].tap()
-        XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].apparait())
 
         app.buttons["Règlement"].tap()
         let question = app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"]
-        XCTAssertTrue(question.waitForExistence(timeout: 5))
+        XCTAssertTrue(question.apparait())
         XCTAssertFalse(app.buttons["reglement.poser"].isEnabled, "question vide : rien à poser")
     }
 
@@ -35,12 +35,12 @@ final class ResidenceUITests: XCTestCase {
 
         app.tabBars.buttons["Résidence"].tap()
         let syndic = app.descendants(matching: .any).matching(identifier: "residence.syndic").firstMatch
-        XCTAssertTrue(syndic.waitForExistence(timeout: 5))
+        XCTAssertTrue(syndic.apparait())
         syndic.tap()
-        XCTAssertTrue(app.staticTexts["Gestionnaire de copropriété"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["Gestionnaire de copropriété"].apparait())
         // Par l'identifiant, pas par le type : un `Link` est un lien sous iOS 27, pas sous iOS 26.
         let appeler = app.descendants(matching: .any).matching(identifier: "annuaire.appeler")
             .matching(NSPredicate(format: "label CONTAINS '01 00 00 00 01'")).firstMatch
-        XCTAssertTrue(appeler.waitForExistence(timeout: 5))
+        XCTAssertTrue(appeler.apparait())
     }
 }
