@@ -208,6 +208,8 @@ struct ConnexionView: View {
             try await parcours.service.reprendre(installation)
             parcours.ouvrir(installation)
         } catch {
+            // Sans réseau, Face ID passé : la dernière lecture gardée, en consultation (#101).
+            if parcours.entrerHorsLigne(installation, apres: error) == .ouverte { return }
             champ = .email
         }
     }

@@ -50,6 +50,7 @@ struct PreferencesView: View {
         Form {
             Section {
                 Toggle("N'afficher que les contenus de mon ou mes bâtiments", isOn: $restreindre)
+                    .gesteEnLigne()
             } footer: {
                 Text("""
                     Décochée, vous voyez les actualités de toute la copropriété, sauf celles marquées \
@@ -70,6 +71,7 @@ struct PreferencesView: View {
                 }
                 .buttonStyle(.plein)
                 .disabled(envoi)
+                .gesteEnLigne()
                 .listRowBackground(Color.clear)
                 .listRowInsets(.init())
             } footer: {
@@ -197,6 +199,7 @@ struct DemandeModificationView: View {
                 .lineLimit(2...6)
             Button(envoi ? "Envoi…" : "Envoyer la demande") { Task { await envoyer() } }
                 .disabled(envoi || (statut == nil && batiment == nil))
+                .gesteEnLigne()
             if let phrase { Text(phrase.texte).foregroundStyle(phrase.reussi ? palette.successTexte : palette.danger) }
         } footer: {
             Text("""

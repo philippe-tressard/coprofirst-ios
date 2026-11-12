@@ -26,6 +26,7 @@ struct BoutonsFeuille: ToolbarContent {
                 Button(libelle) { Task { await envoyer() } }
                     .fontWeight(.semibold)
                     .disabled(!actif)
+                    .gesteEnLigne()
                     .accessibilityIdentifier(identifiant)
             }
         }

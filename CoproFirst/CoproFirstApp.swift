@@ -7,13 +7,14 @@ import SwiftUI
 struct CoproFirstApp: App {
     @UIApplicationDelegateAdaptor(DelegueApp.self) private var delegue
     @State private var parcours: Parcours
-    @State private var reseau = Reseau()
+    @State private var reseau: Reseau
     @State private var vitrine: Vitrine
 
     init() {
         let arguments = ProcessInfo.processInfo.arguments
         _parcours = State(initialValue: Lancement.parcours(arguments))
         _vitrine = State(initialValue: Lancement.vitrine(arguments))
+        _reseau = State(initialValue: Lancement.reseau(arguments))
     }
 
     var body: some Scene {
@@ -24,6 +25,8 @@ struct CoproFirstApp: App {
                 .environment(vitrine)
                 .environment(delegue.push)
                 .task {
+                    // Rien ne reste d'une lecture périmée, ni d'une résidence sans session gardée (#101).
+                    parcours.purgerLesLectures()
                     await delegue.push.attacher(parcours)
                     #if DEBUG
                     LancementSimule.toucherNotification(ProcessInfo.processInfo.arguments, delegue.push)
@@ -43,6 +46,14 @@ enum Lancement {
         if let vitrine = LancementSimule.vitrine(arguments) { return vitrine }
         #endif
         return .enLigne()
+    }
+
+    @MainActor
+    static func reseau(_ arguments: [String]) -> Reseau {
+        #if DEBUG
+        if let reseau = LancementSimule.reseau(arguments) { return reseau }
+        #endif
+        return Reseau()
     }
 
     @MainActor

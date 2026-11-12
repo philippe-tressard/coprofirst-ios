@@ -80,11 +80,14 @@ struct BandeauAffaire: ViewModifier {
                 icone
             }
             .disabled(enCours)
+            .gesteEnLigne()
         case .archiver:
             Button { Task { await archiver() } } label: { icone }
                 .disabled(enCours)
+                .gesteEnLigne()
         case .repondre, .suite, .modifier:
             Button { feuille = geste } label: { icone }
+                .gesteEnLigne()
         }
     }
 

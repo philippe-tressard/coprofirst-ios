@@ -17,6 +17,8 @@ struct RetourView: View {
     @State private var tente = false
     @State private var erreur: ErreurService?
     @State private var perdue = false
+    /// Sans réseau, la lecture gardée était trop ancienne : elle vient d'être effacée (#101).
+    @State private var lecturePerimee = false
     @State private var apparu = false
 
     var body: some View {
@@ -68,7 +70,11 @@ struct RetourView: View {
             .offset(y: apparu || mouvementReduit ? 0 : 12)
             Spacer(minLength: 24)
             VStack(spacing: 12) {
-                if let erreur { MessageErreur(texte: erreur.phrase) }
+                if lecturePerimee {
+                    MessageErreur(texte: TextesHorsLigne.perimee).accessibilityIdentifier("retour.lecturePerimee")
+                } else if let erreur {
+                    MessageErreur(texte: erreur.phrase)
+                }
                 Button {
                     Task { await ouvrir() }
                 } label: {
@@ -102,13 +108,17 @@ struct RetourView: View {
         guard !enCours, parcours.ouvertureLibre(installation) else { return }
         enCours = true
         defer { enCours = false }
-        withAnimation(.snappy) { erreur = nil }
+        withAnimation(.snappy) { (erreur, lecturePerimee) = (nil, false) }
         do {
             try await parcours.service.reprendre(installation)
             // Un lien arrivé pendant Face ID (lancement par le lien) passe devant.
             guard parcours.ouvertureLibre(installation) else { return }
             parcours.ouvrir(installation)
         } catch {
+            // Sans réseau, Face ID passé : la dernière lecture gardée s'ouvre, en consultation (#101).
+            let entree = parcours.entrerHorsLigne(installation, apres: error)
+            if entree == .ouverte { return }
+            if entree == .perimee { withAnimation(.snappy) { lecturePerimee = true } }
             if parcours.service.aUneSessionGardee(installation) {
                 // Face ID annulé, ou serveur injoignable : la session reste gardée.
                 // Une annulation ne se commente pas ; une panne se dit en une phrase.

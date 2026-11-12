@@ -13,11 +13,14 @@ final class ServiceAPI: ServiceCoproFirst {
     let sessions = SessionsParHote()
     /// LA porte du renouvellement de session, partagée par toutes les requêtes (#81).
     let renouvellement = Renouvellement()
+    /// Les lectures gardées pour la consultation hors ligne (#101) — `Session/LectureGardee/`.
+    let lectures: LecturesGardees
     /// Le transport d'un test (un serveur simulé) ; `nil` : la session HTTP de chaque hôte.
     private let transport: (@Sendable (URL) -> any ClientTransport)?
 
-    init(transport: (@Sendable (URL) -> any ClientTransport)? = nil) {
+    init(transport: (@Sendable (URL) -> any ClientTransport)? = nil, lectures: LecturesGardees = .appareil) {
         self.transport = transport
+        self.lectures = lectures
     }
 
     func decouvrir(_ adresse: URL) async throws -> Installation {
@@ -69,7 +72,8 @@ final class ServiceAPI: ServiceCoproFirst {
         poserCookie("refresh_token", valeur: jeton, installation)
         // La porte du 401 (`Renouvellement`) : le jeton neuf y remplace l'ancien au Trousseau.
         guard try await appeler({ try await renouveler(installation.adresse) }) else {
-            Trousseau.supprimer(pour: installation.hote)
+            // Session refusée : le jeton ET la lecture gardée s'effacent, par la même porte (#101).
+            oublierCeQuiEstGarde(installation)
             throw ErreurService.sessionExpiree
         }
     }
@@ -97,9 +101,11 @@ final class ServiceAPI: ServiceCoproFirst {
 
     // MARK: - Session HTTP de chaque installation
 
-    /// Le client généré de l'installation à cette adresse — un 401 s'y renouvelle (#81).
+    /// Le client généré de l'installation à cette adresse — un 401 s'y renouvelle (#81),
+    /// et ses lectures passent par LA porte des lectures gardées (#101), la plus
+    /// extérieure : elle voit la réponse finale, renouvellement compris.
     func client(_ adresse: URL) -> Client {
-        let renouveler = [renouvelerSurRefus(adresse)]
+        let renouveler: [any ClientMiddleware] = [garderLesLectures(adresse), renouvelerSurRefus(adresse)]
         if let transport {
             return ClientCoproFirst.client(
                 installation: adresse, transport: transport(adresse), middlewares: renouveler)

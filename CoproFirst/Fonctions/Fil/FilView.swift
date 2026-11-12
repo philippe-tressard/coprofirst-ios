@@ -8,7 +8,6 @@ struct FilView: View {
     let installation: Installation
     @Binding var chemin: NavigationPath
     @Environment(Parcours.self) private var parcours
-    @Environment(Reseau.self) private var reseau
     @Environment(\.palette) private var palette
     @State private var jours: [JourDuFil] = []
     @State private var phase = Phase.chargement
@@ -76,7 +75,7 @@ struct FilView: View {
                     parcours.ouverteAJour?.profil, dansLaBarre: logementDansLaBarre))
         }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !reseau.enLigne { BandeauHorsLigne() }
+            BandeauHorsLigne()
         }
         // Demandé fil déjà chargé : une notification touchée, l'app ouverte (#17).
         .onChange(of: parcours.aOuvrir) { if phase == .pret { ouvrirDemande() } }

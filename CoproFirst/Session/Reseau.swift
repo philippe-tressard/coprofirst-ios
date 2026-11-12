@@ -10,7 +10,13 @@ final class Reseau {
     private(set) var enLigne = true
     private let moniteur = NWPathMonitor()
 
-    init() {
+    /// `fige` : un état qui ne change pas — l'appareil sans réseau des tests d'interface
+    /// (`-hors-ligne`, Debug seul) ; `nil` : l'observateur du système.
+    init(fige: Bool? = nil) {
+        if let fige {
+            enLigne = fige
+            return
+        }
         moniteur.pathUpdateHandler = { [weak self] chemin in
             let enLigne = chemin.status == .satisfied
             Task { @MainActor in self?.enLigne = enLigne }
