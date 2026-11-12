@@ -77,15 +77,32 @@ enum Fichiers {
         return ext.isEmpty ? nom : String(nom.dropLast(ext.count + 1))
     }
 
-    /// Écrire un fichier lu dans `tmp/<dossiers…>/<nom>`, protégé tant que l'appareil est
+    /// La protection de TOUT fichier que l'app écrit : illisible tant que l'appareil est
+    /// verrouillé (`.complete`), et jamais à moitié écrit.
+    static let protection: Data.WritingOptions = [.atomic, .completeFileProtection]
+
+    /// Écrire un fichier lu dans `<racine>/<dossiers…>/<nom>` — `tmp/` par défaut, le
+    /// magasin des lectures gardées sinon (#101) —, protégé tant que l'appareil est
     /// verrouillé : la seule écriture sur disque d'un fichier servi.
-    static func ecrire(_ donnees: Data, sous dossiers: [String], nom: String) throws -> URL {
-        var dossier = FileManager.default.temporaryDirectory
+    static func ecrire(
+        _ donnees: Data, sous dossiers: [String], nom: String, racine: URL = FileManager.default.temporaryDirectory
+    ) throws -> URL {
+        var dossier = racine
         for sous in dossiers { dossier.append(path: nomSur(sous, defaut: "f"), directoryHint: .isDirectory) }
         try FileManager.default.createDirectory(at: dossier, withIntermediateDirectories: true)
         let fichier = dossier.appending(path: nomSur(nom, defaut: "fichier"))
-        try donnees.write(to: fichier, options: [.atomic, .completeFileProtection])
+        try donnees.write(to: fichier, options: protection)
         return fichier
+    }
+
+    /// Les copies temporaires des fichiers ouverts (documents, pièces jointes), pour
+    /// Coup d'œil : effacées à la déconnexion, avec la lecture gardée (#101).
+    static let copies = ["documents", "pieces"]
+
+    static func effacerLesCopies() {
+        for dossier in copies {
+            try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appending(path: dossier))
+        }
     }
 
     /// L'extension d'un nom (« pdf »), vide sans point ou pour un nom qui commence par un point.
