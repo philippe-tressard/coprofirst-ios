@@ -47,6 +47,7 @@ Ce que le site n'a pas, et qui se règle ici une fois.
 | Pattern | Règle | Où |
 |---|---|---|
 | **Permission du système** (notifications, et toute alerte d'autorisation à venir) | jamais au lancement ni au premier écran : une **offre** dans l'écran où l'usage se voit (les notifications : en tête de la cloche), qui dit ce que la personne y gagne et ce qui ne part pas ; l'alerte d'iOS ne s'ouvre qu'après « Activer » ; « Plus tard » tait l'offre quelques jours ; un refus ne se redemande pas — seuls les Réglages d'iOS le rendent. Aucun réglage « sur mon téléphone » dans le Profil (spec push de coprofirst, §10 décision 4) | `OffrePush` (#17) |
+| **Consultation hors ligne** (#101) | sans réseau, Face ID passé, la dernière lecture s'ouvre ; l'état se lit en haut (`BandeauHorsLigne` : « Hors ligne — à jour au 10/11/2026 à 14:32 », puis « Consultation seule »), jamais par une alerte ; chaque geste reste à sa place, grisé, sa raison lue par VoiceOver (`.gesteEnLigne()`) — rien ne disparaît, rien ne bouge ; le réseau revenu, la session reprend sans redemander Face ID et tout se relit ; une lecture de plus de 7 jours est effacée et l'écran de retour le dit. Les droits affichés datent peut-être : on n'offre pas un geste que le serveur pourrait refuser | `Session/LectureGardee/`, `Commun/Composants/` |
 
 ## Divergences iOS déclarées
 
