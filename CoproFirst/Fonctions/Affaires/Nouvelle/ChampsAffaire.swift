@@ -152,7 +152,7 @@ struct ChampsAffaire: View {
             } header: {
                 Text("Description")
             } footer: {
-                Text("Sa mise en forme (gras, listes, liens) se modifie depuis le site.")
+                Text(TexteDuSite.miseEnFormeAuSite)
             }
         } else {
             Section("Description") {

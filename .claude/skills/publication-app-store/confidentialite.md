@@ -179,6 +179,8 @@ Tous les appels d'écriture du client généré, et le type de donnée que chacu
 | `postTickets` | `OtherUserContent` |
 | `patchTicketsTicketId` | `OtherUserContent` |
 | `postTicketsTicketIdEvolutions` | `OtherUserContent` |
+| `patchTicketsTicketIdEvolutionsEvolId` | `OtherUserContent` |
+| `deleteTicketsTicketIdEvolutionsEvolId` | — |
 | `postTicketsTicketIdMessages` | `EmailsOrTextMessages` |
 | `postSignalements` | `OtherUserContent` |
 | `postReglementQuestions` | `OtherUserContent` |

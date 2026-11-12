@@ -93,16 +93,26 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(id) { _ in }
     }
 
+    /// Un geste sur l'affaire `id` du magasin de la session — aussi pour ceux de son
+    /// Historique (`ServiceSimule+Historique.swift`).
     @discardableResult
-    private func changerAffaireSimulee(
+    func changerAffaireSimulee(
         _ id: Int, _ geste: (inout DetailAffaire) throws -> Void
     ) throws -> DetailAffaire {
-        let conseil = DroitsOnglet(profil: profilSimule).cs
+        let lecteur = DroitsOnglet(profil: profilSimule)
+        let conseil = lecteur.cs
         return try modifierSimule(depuis: Self.aucuneChangee) { affaires in
             guard var detail = try affaires[id] ?? Self.affaires(id, conseil: conseil) else {
                 throw ErreurService.introuvable
             }
+            // Les gestes de chaque entrée, servis à CE compte : avant le geste, qui juge sur
+            // eux comme le serveur ; après, pour une suite qu'il vient d'ajouter.
+            let servir = { (affaire: inout DetailAffaire) in
+                affaire.suites = affaire.suites.map { Self.servie($0, a: lecteur, fusionnee: affaire.fusionnee) }
+            }
+            servir(&detail)
             try geste(&detail)
+            servir(&detail)
             // Servis à CE compte, comme le vrai serveur.
             detail.referentiels = try FixturesReferentielsAffaires.lus(moderateur: conseil)
             affaires[id] = detail

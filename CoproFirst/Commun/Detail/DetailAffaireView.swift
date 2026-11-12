@@ -21,6 +21,7 @@ struct DetailAffaireView: View {
             contenu: { affaire, recharger in
                 ContenuAffaire(affaire: affaire, installation: installation, recharger: recharger)
                     .bandeauAffaire(affaire, installation: installation, recharger: recharger)
+                    .gestesHistorique(affaire, installation: installation, recharger: recharger)
             },
             squelette: { ContenuAffaire(affaire: Self.squelette, installation: installation, recharger: {}) }
         )
@@ -151,7 +152,9 @@ private struct Historique: View {
             ForEach(suites) { suite in
                 Carte {
                     VStack(alignment: .leading, spacing: 10) {
+                        // Ses gestes (#91, #93) à sa droite, hors de l'élément lu d'un trait.
                         EntreeHistorique(suite: suite, referentiels: referentiels)
+                            .gestesSuite(suite)
                         // Hors de l'élément lu d'un trait : chaque pièce s'ouvre à part.
                         PiecesJointesView(pieces: suite.pieces, installation: installation, format: .compact)
                     }
