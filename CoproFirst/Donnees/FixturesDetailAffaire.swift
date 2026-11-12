@@ -81,32 +81,40 @@ enum FixturesDetailAffaire {
         """#
     // swiftlint:enable line_length
 
-    /// GET /tickets/41/evolutions → `[TicketEvolutionRead]` : l'Historique de l'affaire 41.
+    /// GET /tickets/41/evolutions → `[TicketEvolutionRead]` : l'Historique de l'affaire 41,
+    /// servi à un résident — aucune entrée qu'il corrige ou efface (`peut_modifier`,
+    /// `peut_supprimer`, contrat 1.19.0, #93). Le conseil et l'administrateur reçoivent
+    /// leurs gestes du faux serveur (`ServiceSimule.gestesServis`).
     static let evolutions = #"""
         [
           {"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
            "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "en_cours",
-           "nouveau_statut_libelle": "Chez le syndic"},
+           "statut_avant": "ouvert", "nouveau_statut_libelle": "Chez le syndic",
+           "peut_modifier": false, "peut_supprimer": false},
           {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
            "auteur_nom": "Le conseil syndical",
            "contenu": "<p>Le syndic est prévenu ; le plombier passe <strong>demain matin</strong>.</p>",
-           "nouveau_statut_libelle": ""},
+           "statut_avant": "en_cours", "nouveau_statut_libelle": "", "peut_modifier": false,
+           "peut_supprimer": false},
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
            "auteur_nom": "Le syndic",
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
-           "nouveau_statut_libelle": ""}
+           "statut_avant": "en_cours", "nouveau_statut_libelle": "", "peut_modifier": false,
+           "peut_supprimer": false}
         ]
         """#
 
-    /// Ce que le serveur sert au-dessus du plancher (contrats 1.20.0 et 1.21.0, #125, #127).
+    /// Ce que le serveur sert au-dessus du plancher (contrats 1.19.0 à 1.21.0, #93, #125, #127).
     static let auDessus = [
         AuDessusDuPlancher(
             schema: "TicketRead", champs: ["peut_corriger", "suivi_actualite_libelle", "frequence_libelle"],
             contrat: "1.21.0"),
         AuDessusDuPlancher(schema: "ContratDeLAffaire", champs: ["frequence_libelle"], contrat: "1.20.0"),
         AuDessusDuPlancher(schema: "TicketEvolutionRead", champs: ["nouveau_statut_libelle"], contrat: "1.21.0"),
+        AuDessusDuPlancher(
+            schema: "TicketEvolutionRead", champs: ["peut_modifier", "peut_supprimer"], contrat: "1.19.0"),
     ]
 
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).

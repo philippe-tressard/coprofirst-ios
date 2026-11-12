@@ -78,6 +78,9 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let type: String
     let date: Date
     let auteur: String?
+    /// Les gestes que la route accepte de CE lecteur sur CETTE entrée, servis avec elle
+    /// (`peut_modifier`, `peut_supprimer`) — aucun d'une installation qui ne les sert pas.
+    var droits = DroitsServisSuite()
     let contenu: String?
     let ancienStatut: String?
     let nouveauStatut: String?

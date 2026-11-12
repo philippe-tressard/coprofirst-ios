@@ -26,10 +26,14 @@ struct AffaireAuDessusDuPlancher: Decodable {
 }
 
 /// Ce que GET /tickets/{id}/evolutions sert au-dessus du plancher, par entrée :
-/// l'état qu'une Suite donne, en clair (`nouveau_statut_libelle`, contrat 1.21.0, #127).
+/// l'état qu'une Suite donne, en clair (`nouveau_statut_libelle`, contrat 1.21.0, #127) ;
+/// ce que CE lecteur peut faire de l'entrée (`peut_modifier`, `peut_supprimer`, contrat
+/// 1.19.0, #93).
 struct SuiteAuDessusDuPlancher: Decodable, Identifiable {
     let id: Int
     var nouveauStatutLibelle: String?
+    var peutModifier: Bool?
+    var peutSupprimer: Bool?
 }
 
 extension DetailAffaire {
@@ -45,6 +49,10 @@ extension DetailAffaire {
         let suites = evolutions.map { evolution in
             var suite = SuiteAffaire(evolution: evolution)
             suite.nouveauStatutLibelle = entrees[evolution.id]?.nouveauStatutLibelle
+            // Ses gestes, servis avec elle ; absents ou illisibles, aucun (défaut fermé).
+            suite.droits = DroitsServisSuite(
+                modifier: entrees[evolution.id]?.peutModifier ?? false,
+                supprimer: entrees[evolution.id]?.peutSupprimer ?? false)
             suite.perimetrePrecise = LieuServi.lieu(lieux[evolution.id]?.perimetrePreciseLibelle?.valeur)
             return suite
         }
