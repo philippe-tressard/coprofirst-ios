@@ -258,6 +258,49 @@ while IFS= read -r f; do
   [ -z "$trouve" ] || echec "$f : moteur web pour du HTML (${trouve%%:*}) — passer par TexteDuSite"
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
+# La consultation hors ligne (#101) : ce qu'une session laisse sur l'appareil (jeton,
+# lecture gardée, copies ouvertes) s'efface à UNE porte, `oublierCeQuiEstGarde` — un
+# `Trousseau.supprimer(` ailleurs effacerait le jeton en laissant la lecture lisible. Et
+# un fichier protégé se lit par `fichierConsultable` : un `fichierProtege(` appelé par
+# un écran partirait sur le réseau pendant la consultation.
+# $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
+refus_porte_session() {
+  local code
+  code=$(grep -vE '^[[:space:]]*///?' "$2")
+  case "$1" in
+    CoproFirst/Session/Trousseau.swift | CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift) ;;
+    *) grep -qE 'Trousseau\.supprimer\(' <<< "$code" &&
+      echo "Trousseau.supprimer( hors de oublierCeQuiEstGarde — le jeton partirait sans la lecture gardée" ;;
+  esac
+  case "$1" in
+    CoproFirst/Session/* | CoproFirst/Donnees/ServiceSimule*) ;;
+    *) grep -E 'fichierProtege\(' <<< "$code" | grep -qvE 'func fichierProtege\(' &&
+      echo "fichierProtege( lu par un écran — passer par fichierConsultable (consultation hors ligne)" ;;
+  esac
+}
+autotest_porte_session() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '        Trousseau.supprimer(pour: installation.hote)\n' > "$d/jeton"
+  printf '        let d = try await service.fichierProtege(chemin, dans: i)\n' > "$d/fichier"
+  printf '    /// pas de Trousseau.supprimer( ici : fichierProtege( non plus\n        x()\n' > "$d/commentaire"
+  printf '    func fichierProtege(_ chemin: String, dans i: Installation) async throws -> Data {\n' > "$d/definition"
+  [ -n "$(refus_porte_session CoproFirst/Session/ServiceAPI+Compte.swift "$d/jeton")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift "$d/jeton")" ] || ok=1
+  [ -n "$(refus_porte_session CoproFirst/Commun/PiecesJointes/X.swift "$d/fichier")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Session/LectureGardee/X.swift "$d/fichier")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Commun/X.swift "$d/commentaire")" ] || ok=1
+  [ -z "$(refus_porte_session CoproFirst/Commun/X.swift "$d/definition")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_porte_session || echec "verifier-depot.sh : autotest des portes de la session en échec"
+while IFS= read -r f; do
+  [ -f "$f" ] || continue
+  motif=$(refus_porte_session "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+
 # Les gestes qui envoient une version en revue chez Apple : soumission à l'App
 # Store, distribution aux testeurs externes de TestFlight. Ils n'ont pas de place
 # dans une automatisation — la soumission est manuelle, après validation du rendu.
@@ -375,4 +418,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
