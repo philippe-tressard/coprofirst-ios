@@ -21,6 +21,17 @@ Il exige :
   3. une version écrite en chiffres, dans l'une ou l'autre section, est celle de
      `Package.resolved` ; « transitive », `outillage.env` ou un autre renvoi restent permis.
 
+Et, depuis #168, que ce que l'app embarque d'autrui y soit accompagné de ses textes
+(`standards/14` §6.1 : l'avis et la licence suivent chaque copie) :
+  4. chaque licence de la colonne « Licence » des embarquées a son texte dans `LICENSES/` ;
+  5. chaque paquet embarqué est nommé dans l'écran « À propos › Composants tiers »
+     (`CoproFirst/Fonctions/APropos/ComposantsTiers.swift`) ;
+  6. un avis (`CoproFirst/Ressources/AvisTiers/NOTICE-<paquet>.txt`) est celui d'un paquet
+     embarqué que l'écran déclare `avis: true`, et réciproquement ;
+  7. quand les sources du paquet sont extraites ici à la révision épinglée, l'avis recopié
+     est le leur à l'octet, et un paquet qui en porte un a le sien dans l'app. Sinon :
+     dit « non relu ici », jamais conforme.
+
 La forme du tableau ne change pas : `scripts/verifier-app-ios.py` de coprofirst-site
 lit sa colonne « Licence ».
 
@@ -35,7 +46,9 @@ from __future__ import annotations
 
 import json
 import pathlib
+import os
 import re
+import subprocess
 import sys
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
@@ -44,6 +57,13 @@ FICHE = ".claude/skills/publication-app-store/confidentialite.md"
 RESOLU = "Paquets/ClientAPI/Package.resolved"
 EMBARQUEES = "Embarquées dans l'application"
 OUTILS = "Outils de construction (non embarqués)"
+ECRAN = "CoproFirst/Fonctions/APropos/ComposantsTiers.swift"
+AVIS = "CoproFirst/Ressources/AvisTiers"
+CONSTRUIT = "Paquets/ClientAPI/.build"
+#: `paquet("swift-http-types", role: "…", avis: true)` → (nom, avis).
+PAQUET = re.compile(r'paquet\(\s*"([\w.-]+)"[^)]*?avis:\s*(true|false)')
+#: « ISC, MIT (part issue de Feather) » → ISC, MIT : l'identifiant SPDX en tête de chaque part.
+LICENCE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.+-]*")
 
 CONFORME, ECART, INCONNU = 0, 1, 2
 VERSION = re.compile(r"^\d+\.\d+(\.\d+)?$")
@@ -126,6 +146,98 @@ def juger(dependances: str, fiche: str, resolu: str) -> tuple[list[str], str]:
     return fautes, bilan
 
 
+def juger_textes(
+    dependances: str, resolu: str, ecran: str, licences: set[str], avis: dict[str, str],
+    sources: dict[str, str | None] | None = None,
+) -> tuple[list[str], str]:
+    """Les textes qui accompagnent ce que l'app embarque (4 à 7).
+
+    `licences` : les identifiants de `LICENSES/` ; `avis` : paquet → avis recopié dans
+    l'app ; `sources` : paquet → son NOTICE à la révision épinglée (`None` : il n'en a
+    pas), pour les seuls paquets dont les sources sont extraites ici.
+    """
+    pins, sources = epingles(resolu), sources or {}
+    entete, rangs = section(dependances, EMBARQUEES)
+    if "Licence" not in entete:
+        raise Illisible(f"{DEPENDANCES} : colonne « Licence » absente de « {EMBARQUEES} » (forme changée ?)")
+    declares = dict(PAQUET.findall(ecran))
+    if not declares:
+        raise Illisible(f"{ECRAN} : aucun `paquet(\"…\", …, avis: …)` lu (forme changée ?)")
+    fautes: list[str] = []
+    embarques: set[str] = set()
+    for rang in rangs:
+        for part in rang[entete.index("Licence")].split(","):
+            lue = LICENCE.match(part.strip())
+            if lue and lue.group(0) not in licences:
+                fautes.append(f"LICENSES/{lue.group(0)}.txt manque : {rang[0]} est embarqué sous cette licence")
+        nom = identite(rang[0])
+        if nom in pins:
+            embarques.add(nom)
+    for nom in sorted(embarques - set(declares)):
+        fautes.append(f"{ECRAN} : {nom} est embarqué, « Composants tiers » ne le nomme pas")
+    for nom in sorted(set(declares) - embarques):
+        fautes.append(f"{ECRAN} : {nom} n'est pas un paquet embarqué de {DEPENDANCES}")
+    for nom in sorted(set(avis) | {n for n, a in declares.items() if a == "true"}):
+        if nom not in avis:
+            fautes.append(f"{AVIS}/NOTICE-{nom}.txt manque : l'écran le déclare `avis: true`")
+        elif declares.get(nom) != "true":
+            fautes.append(f"{AVIS}/NOTICE-{nom}.txt : aucun paquet de l'écran ne l'affiche (`avis: true`)")
+    for nom in sorted(embarques & set(sources)):
+        if sources[nom] is None and nom in avis:
+            fautes.append(f"{AVIS}/NOTICE-{nom}.txt : le paquet n'a pas de NOTICE à la révision épinglée")
+        elif sources[nom] is not None and avis.get(nom) != sources[nom]:
+            fautes.append(f"{AVIS}/NOTICE-{nom}.txt n'est pas le NOTICE.txt du paquet à la révision épinglée")
+    relus = len(embarques & set(sources))
+    return fautes, f"textes des composants tiers : {len(embarques)} paquets nommés à l'écran, {len(avis)} avis (relus aux sources ici : {relus}/{len(embarques)})"
+
+
+def lire_les_textes() -> tuple[str, set[str], dict[str, str], dict[str, str | None]]:
+    """L'écran, les licences, les avis recopiés, et les NOTICE des sources extraites ici."""
+    ecran = (RACINE / ECRAN).read_text(encoding="utf-8")
+    licences = {f.stem for f in (RACINE / "LICENSES").glob("*.txt")}
+    avis = {f.stem.removeprefix("NOTICE-"): f.read_text(encoding="utf-8") for f in (RACINE / AVIS).glob("NOTICE-*.txt")}
+    # Sans les GIT_* d'un hook : sous pre-commit, ils désignent CE dépôt, pas celui du paquet.
+    propre = {c: v for c, v in os.environ.items() if not c.startswith("GIT_")}
+    sources: dict[str, str | None] = {}
+    for epingle in json.loads((RACINE / RESOLU).read_text(encoding="utf-8"))["pins"]:
+        dossier = RACINE / CONSTRUIT / "checkouts" / epingle["location"].rstrip("/").removesuffix(".git").rsplit("/", 1)[-1]
+        tete = subprocess.run(["git", "-C", str(dossier), "rev-parse", "HEAD"], capture_output=True, text=True, env=propre)
+        if dossier.is_dir() and tete.stdout.strip() == epingle["state"]["revision"]:
+            notice = dossier / "NOTICE.txt"
+            sources[epingle["identity"].lower()] = notice.read_text(encoding="utf-8") if notice.is_file() else None
+    return ecran, licences, avis, sources
+
+
+def autotest_textes(deps: str, resolu: str) -> bool:
+    ecran = 'paquet("p-runtime", role: "Types.", avis: true),\n paquet("p-collections", role: "File.", avis: false),'
+    licences, avis = {"Apache-2.0", "ISC"}, {"p-runtime": "avis"}
+    cas = [
+        ("conforme", {}, CONFORME),
+        ("conforme, sources relues", {"sources": {"p-runtime": "avis", "p-collections": None}}, CONFORME),
+        ("licence sans texte", {"licences": {"ISC"}}, ECART),
+        ("paquet embarqué non nommé", {"ecran": ecran.replace("p-collections", "p-autre")}, ECART),
+        ("avis déclaré, fichier absent", {"avis": {}}, ECART),
+        ("avis que rien n'affiche", {"avis": {"p-runtime": "avis", "p-collections": "x"}}, ECART),
+        ("avis modifié", {"sources": {"p-runtime": "autre"}}, ECART),
+        ("avis manquant, le paquet en porte un", {"sources": {"p-collections": "avis"}}, ECART),
+        ("avis inventé", {"sources": {"p-runtime": None}}, ECART),
+        ("écran illisible", {"ecran": "rien"}, INCONNU),
+        ("colonne Licence absente", {"deps": deps.replace("| Licence | Rôle |", "| Droits | Rôle |")}, INCONNU),
+    ]
+    reussi = True
+    for nom, change, attendu in cas:
+        jeu = {"deps": deps, "ecran": ecran, "licences": licences, "avis": avis, "sources": None} | change
+        try:
+            fautes, _ = juger_textes(jeu["deps"], resolu, jeu["ecran"], jeu["licences"], jeu["avis"], jeu["sources"])
+            obtenu = ECART if fautes else CONFORME
+        except Illisible:
+            obtenu = INCONNU
+        if obtenu != attendu:
+            print(f"❌ autotest des textes « {nom} » : attendu {attendu}, obtenu {obtenu}")
+            reussi = False
+    return reussi
+
+
 def autotest() -> bool:
     deps = (
         "# Dépendances\n\n## Embarquées dans l'application\n\n| Paquet | Version | Licence | Rôle |\n|---|---|---|---|\n"
@@ -163,7 +275,7 @@ def autotest() -> bool:
         if obtenu != attendu:
             print(f"❌ autotest « {nom} » : attendu {attendu}, obtenu {obtenu}")
             reussi = False
-    return reussi
+    return autotest_textes(deps, resolu) and reussi
 
 
 def main(arguments: list[str]) -> int:
@@ -178,7 +290,9 @@ def main(arguments: list[str]) -> int:
     try:
         textes = [(RACINE / chemin).read_text(encoding="utf-8") for chemin in (DEPENDANCES, FICHE, RESOLU)]
         fautes, bilan = juger(*textes)
-    except (OSError, Illisible) as erreur:
+        fautes_textes, bilan_textes = juger_textes(textes[0], textes[2], *lire_les_textes())
+        fautes, bilan = fautes + fautes_textes, f"{bilan} ; {bilan_textes}"
+    except (OSError, ValueError, KeyError, Illisible) as erreur:
         print(f"❓ INCONNU : {erreur}")
         return INCONNU
     for faute in fautes:

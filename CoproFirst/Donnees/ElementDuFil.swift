@@ -31,6 +31,8 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     var lecture: Lecture?
     /// Le lieu de l'affaire (`meta.affaire.perimetre_libelle`, #130) ; `nil` pour le défaut.
     var lieu: String?
+    /// Ses photos et documents (`meta.photos_urls`, `meta.fichiers_urls`), comme le site les lit.
+    var pieces: PiecesJointes = .aucune
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 
@@ -49,6 +51,7 @@ extension ElementDuFil {
         natures = meta?.affaire?.natures ?? []
         lecture = meta?.affaire?.lecture?.valeur
         lieu = LieuServi.lieu(meta?.affaire?.perimetreLibelle)
+        pieces = meta?.pieces ?? .aucune
     }
 }
 

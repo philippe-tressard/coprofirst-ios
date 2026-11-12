@@ -365,7 +365,7 @@ grep '^❓' <<< "$CONFIDENTIALITE" || true
 
 # L'inventaire des dépendances tenu à Package.resolved (#143) : l'autotest d'abord.
 python3 -I scripts/verifier-dependances.py --autotest >/dev/null || echec "verifier-dependances.py : autotest en échec"
-DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCES"; echec "DEPENDANCES.md ≠ Package.resolved"; }
+DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCES"; echec "DEPENDANCES.md ≠ Package.resolved, ou un composant tiers sans ses textes"; }
 
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"

@@ -29,7 +29,10 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "syndic", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-09T09:00:00", "auteur_nom": "Un résident du bâtiment A",
            "perimetre_cible": ["parking"], "perimetre_libelle": "Parking",
-           "photos_urls": ["/uploads/tickets/41-1.jpg", "/uploads/tickets/41-2.jpg"],
+           "photos_urls": ["/uploads/tickets/41-1.jpg", "/uploads/tickets/41-2.jpg",
+                           "/uploads/tickets/41-3.jpg", "/uploads/tickets/41-4.jpg"],
+           "fichiers_urls": ["/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf",
+                             "/uploads/tickets/41-consignes.txt"],
            "peut_repondre": true, "peut_modifier": false, "peut_corriger": true,
            "frequence_libelle": "", "suivi_actualite_libelle": ""},
           {"id": 12, "numero": "A-0012", "titre": "Coupure d'eau jeudi de 9 h à 12 h",
@@ -93,6 +96,8 @@ enum FixturesDetailAffaire {
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
            "auteur_nom": "Le syndic",
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
+           "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
+                             "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
            "nouveau_statut_libelle": "", "perimetre_precise_libelle": ""}
         ]
         """#

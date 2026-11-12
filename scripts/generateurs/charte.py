@@ -5,9 +5,9 @@ publie (`tables-clients.json`) :
 
 - les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément
   (`naturesDuFil`) → `CoproFirst/Charte/NaturesDuFil.swift` ;
-- les STATUTS d'une affaire, libellé et pastille (`statutsTicket` et ses deux
-  compléments, `statutsTicketHistoriques` et `statutsTicketSansCycle`)
-  → `CoproFirst/Charte/StatutsAffaire.swift` ;
+- les STATUTS d'une affaire, leur pastille seule — le libellé est servi, #105
+  (`statutsTicket` et ses deux compléments, `statutsTicketHistoriques` et
+  `statutsTicketSansCycle`) → `CoproFirst/Charte/StatutsAffaire.swift` ;
 - les RÔLES et STATUTS d'un utilisateur (`attributsRole`, `attributsStatut`,
   `libellesHerites`) et les rôles que l'en-tête de l'accueil met en avant
   (`rolesMisEnAvant`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
@@ -34,8 +34,6 @@ SOURCES = ["api/app/utils/html_sur.py"]
 MESURES = {"radius": "rayon"}
 # 1 rem = 16 pt : la racine du site vaut 100 % de la taille du navigateur, 16 px par défaut.
 LONGUEUR = re.compile(r"^([0-9]*\.?[0-9]+)(rem|px)$")
-#: Un statut d'affaire hors de la table ordonnée : son libellé et sa pastille.
-COMPLEMENT = {str: {"label": str, "badge": str}}
 
 
 def natures_du_fil(ctx) -> list[tuple[str, str, str, str, str]]:
@@ -62,18 +60,19 @@ def natures(ctx) -> int:
 
 
 def statuts(ctx) -> int:
-    """Les statuts du cycle, dans leur ordre, puis ceux que le site garde hors du cycle."""
-    trouves = [(s["value"], s["label"], s["badge"])
-               for s in ctx.table("statutsTicket", [{"value": str, "label": str, "badge": str}])]
+    """La pastille des statuts du cycle, dans leur ordre, puis de ceux que le site garde hors
+    du cycle. Le LIBELLÉ d'un statut est servi (`statut_libelle`, #105) : seule la teinte se
+    génère."""
+    trouves = [(s["value"], s["badge"]) for s in ctx.table("statutsTicket", [{"value": str, "badge": str}])]
     for complement in ("statutsTicketHistoriques", "statutsTicketSansCycle"):
-        trouves += [(code, s["label"], s["badge"]) for code, s in ctx.table(complement, COMPLEMENT).items()]
-    codes = [code for code, _, _ in trouves]
+        trouves += [(code, s["badge"]) for code, s in ctx.table(complement, {str: {"badge": str}}).items()]
+    codes = [code for code, _ in trouves]
     if len(set(codes)) != len(codes):
         raise SystemExit(f"❌ un statut d'affaire est décrit deux fois dans les tables du site : {codes}")
     corps = ctx.entete(source("statutsTicket", "statutsTicketHistoriques", "statutsTicketSansCycle"))
-    corps += "\n/// Le libellé et la pastille de chaque statut d'une affaire, comme le site les écrit.\n"
-    corps += "enum StatutsAffaire {\n    static let parCode: [String: (libelle: String, pastille: String)] = [\n"
-    corps += "".join(f"        {chaine(v)}: ({chaine(l)}, {chaine(b)}),\n" for v, l, b in trouves)
+    corps += "\n/// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.\n"
+    corps += "enum StatutsAffaire {\n    static let pastilles: [String: String] = [\n"
+    corps += "".join(f"        {chaine(v)}: {chaine(b)},\n" for v, b in trouves)
     corps += "    ]\n}\n"
     ctx.ecrire(CHARTE / "StatutsAffaire.swift", corps)
     return len(trouves)

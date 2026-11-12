@@ -75,6 +75,10 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         #expect(detail.lieu == "Bât. 2 › Toit")
         #expect(detail.suites.map(\.perimetrePrecise) == ["Périmètre précisé : 🔹 Bât. 2", nil])
         #expect(detail.suites.first?.nouveauStatutLibelle == "Chez le syndic")
+        // Ce serveur ne sert pas `/tickets/referentiels` : l'affaire se lit quand même (#105) —
+        // rien de ce qu'ils ouvrent n'est offert, et l'état servi avec elle reste en clair.
+        #expect(detail.referentiels == .vides && SaisieSuite.etats(pour: detail).isEmpty)
+        #expect(detail.etat == EtatServi(code: "ouvert", libelle: "Ouvert"))
     }
 
     @Test func personneExcluRienNeSeMontre() throws {

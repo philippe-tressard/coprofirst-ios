@@ -41,7 +41,7 @@ struct FilView: View {
                 ForEach(jours) { jour in
                     Section {
                         ForEach(jour.elements) { element in
-                            CarteOuvrable(element: element, zoom: zoom) { resume = element }
+                            CarteOuvrable(element: element, installation: installation, zoom: zoom) { resume = element }
                                 .padding(.horizontal, Mise.marge)
                         }
                     } header: {

@@ -47,6 +47,16 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, « modère » servi (`est_moderateur`, `DroitsOnglet.cs`)"),
+    # #105 : les catégories offertes et les états d'une Suite sont servis.
+    (re.compile(r"\bTablesAffaires\.(categories|ordreDesStatuts)\b|\bstatic let (ordreDesStatuts|categories: \[CategorieAffaire\])"),
+     "les catégories permises et les états proposables servis (`ReferentielsAffaires.permises`, `.proposables`)"),
+    (re.compile(r"\.reserveCS\b"), "`permise` des référentiels (`categorie_permise` du serveur)"),
+    # « Modérer » déduit du profil (`DroitsAffaires.moderateur`) décidait encore des catégories de
+    # « Modifier » et d'une phrase de « Nouvelle affaire ». Le paramètre du serveur SIMULÉ
+    # (`lus(moderateur:)`), qui calcule `permise` comme le vrai, n'est pas visé — ni
+    # `estModerateur`, le champ SERVI du profil (#136).
+    (re.compile(r"\.moderateur\b|\b(let|var) moderateur\b"),
+     "ce que le serveur permet à CE compte (`ReferentielsAffaires.permises`, `.poseLesReservees`)"),
     # #127 : le crayon d'une affaire est `peut_corriger`, comme le site — `peut_modifier`
     # ne dit plus que le droit sur le CONTENU (`DetailAffaire.contenuFige`).
     (re.compile(r"\.modifier, \.options:\s*affaire\.droits\.modifier\b"),
@@ -55,11 +65,13 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     # antérieure au contrat 1.21.0 est retiré avec la montée du plancher à 1.26.0.
     (re.compile(r"\bpeutCorriger \?\? [\w.]*\b(modifier|peutModifier)\b"),
      "le crayon servi seul (`peut_corriger`) : non servi, il n'est pas offert"),
-    # #127 : l'état d'une affaire en clair est SERVI (`statut_libelle`, `nouveau_statut_libelle`,
-    # `suivi_actualite_libelle`) ; la table du site n'est qu'un repli, écrit une fois, dans
-    # `StatutsAffaire.libelle(_:servi:)` (`PastilleStatut.swift`).
-    (re.compile(r"\bStatutsAffaire\.parCode\[[^\]]*\]\?\.libelle\b"),
-     "l'état en clair servi (`StatutsAffaire.libelle(_:servi:)`)"),
+    # #127 et #105, réunis : l'état d'une affaire en clair est SERVI — avec l'objet
+    # (`statut_libelle`, `nouveau_statut_libelle`, `suivi_actualite_libelle`), sinon par ses
+    # référentiels (`statuts[].libelle`). UNE écriture : `StatutsAffaire.libelle(_:servi:dans:)`
+    # (`PastilleStatut.swift`). La table du site n'a plus de libellé, pas même en repli :
+    # seule la teinte se génère (`StatutsAffaire.pastilles`).
+    (re.compile(r"\bStatutsAffaire\.parCode\b|\(libelle: String, pastille: String\)"),
+     "l'état en clair servi (`StatutsAffaire.libelle(_:servi:dans:)`) ; la teinte : `StatutsAffaire.pastilles`"),
     # #135 : « Prénom NOM » est SERVI (`nom_affiche`…) et se lit du type généré. Le repli
     # `FormatsDuSite.nom(affiche:prenom:nom:)` ne sert plus qu'aux deux fichiers dispensés
     # (une fiche renommée pas encore enregistrée, un annuaire gardé en cache) : ailleurs,
@@ -133,8 +145,17 @@ def autotest() -> int:
         "        if DroitsAffaire.peutRepondre(moi: profil) {",
         '    var estConseil: Bool { roles.contains("conseil_syndical") || estAdmin }',
         '        return roles.contains("admin")',
+        "        affaire.estActualite ? [] : TablesAffaires.ordreDesStatuts",
+        "        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }",
+        "    static let ordreDesStatuts: [String] = [\"ouvert\", \"en_ag\"]",
+        "            affaire.estActualite && !droits.moderateur",
+        "        return droits.moderateur",
+        "    let moderateur: Bool",
         "            case .modifier, .options: affaire.droits.modifier",
         "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
+        "        servi?.nulSiVide ?? parCode[code]?.libelle ?? StatutsAffaire.parCode[code]?.libelle ?? code",
+        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.parCode[statut]?.pastille ?? "badge-gray")',
+        "    static let parCode: [String: (libelle: String, pastille: String)] = [",
         "        let nom = FormatsDuSite.nom(compte.prenom, compte.nom)",
         "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
         "        detail.droits.corriger = servi?.peutCorriger ?? detail.droits.modifier",
@@ -155,15 +176,22 @@ def autotest() -> int:
         '    for c in ctx.table("colonnesKanban", [{"id": str, "color": str}]):',
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.pastilles[statut] ?? "badge-gray")',
+        '            "carnet": bool(c.get("carnet")), "reservee": bool(c.get("reserveCS")),',
+        "        affaire.estActualite ? [] : affaire.referentiels.proposables",
+        "    static func lus(moderateur: Bool = true) throws -> ReferentielsAffaires {",
+        "            servie.permise = moderateur || !categorie.reservee",
+        "        poseLesReservees ? \"L'équipement aussi.\" : \"Le conseil syndical désigne l'équipement.\"",
         "            case .modifier, .options: affaire.droits.corriger",
         "        morceaux.append(StatutsAffaire.libelle(affaire.statut, servi: affaire.statutLibelle))",
-        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.parCode[statut]?.pastille ?? "badge-gray")',
         "            nomAffiche: lu.nomAffiche, nomAideAffiche: lu.nomAideAffiche.nulSiVide)",
         "                corriger: ticket.peutCorriger ?? false),",
         "            proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprietaire) || modere,",
         "            lieu: LieuServi.lieu(lue.perimetreLibelle), formatLabel: lue.formatLabel, images: lue.images,",
         "            telephones: lu.telephones)",
         "                banni: lu.communauteBanni ?? false),",
+        "        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle, dans: servis)",
+        "        servi?.nulSiVide ?? referentiels.statuts.first { $0.code == code }?.libelle ?? code",
         '            let cle = email.isEmpty ? "\\(bail.locatairePrenom ?? "")|\\(bail.locataireNom ?? "")" : email',
         "            id: message.id, contenu: message.contenu, date: message.creeLe, deMoi: message.estAuteur ?? false,",
         "        let ouvre = acces.lieu",
@@ -189,7 +217,7 @@ def main() -> int:
         print(f"❌ {r}")
     if refus:
         return 1
-    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83)")
+    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83, #105)")
     return 0
 
 

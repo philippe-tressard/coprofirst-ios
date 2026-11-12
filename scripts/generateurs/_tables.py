@@ -43,6 +43,8 @@ HORS_TABLES: dict[str, str] = {
     "front/src/lib/separateurs.ts": "le séparateur des repères d'un extrait (#71) : pas de table publiée",
     "front/src/lib/saisie-affaire.ts": "les choix et libellés de la saisie d'une affaire (#69) : pas de table publiée",
     "front/src/lib/entites/ticket.ts": "les sections du cadre d'une affaire (#69) : pas de table publiée",
+    "front/src/lib/fichiers.ts": "les extensions d'image, le préfixe d'un nom téléversé et les familles d'un "
+                                 "fichier (#159) : pas de table publiée (à demander à coprofirst#2634)",
 }
 
 

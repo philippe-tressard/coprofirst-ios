@@ -11,6 +11,7 @@ extension ServiceAPI {
         async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
         async let evolutions = appeler { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
+        async let servis = referentiels(installation)
 
         let lu: Components.Schemas.TicketRead
         switch try await ticket {
@@ -21,6 +22,10 @@ extension ServiceAPI {
         var lues: [Components.Schemas.TicketEvolutionRead] = []
         if case .ok(let ok) = try await evolutions { lues = try ok.body.json }
         var detail = DetailAffaire.lue(lu, evolutions: lues)
+        // Des référentiels illisibles n'empêchent pas de lire l'affaire : rien de ce qu'ils
+        // ouvrent n'est alors offert (états d'une Suite, catégories), et un état que l'objet
+        // ne met pas en clair se montre par son code.
+        detail.referentiels = (try? await servis) ?? .vides
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         switch try await messages {
@@ -94,9 +99,9 @@ extension ServiceAPI {
         }
     }
 
-    /// Une photo de `/uploads/` n'est pas une route de l'API : un fichier derrière la
-    /// session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
-    func photo(_ chemin: String, dans installation: Installation) async throws -> Data {
+    /// Un fichier de `/uploads/` (photo, pièce jointe) n'est pas une route de l'API : il est
+    /// derrière la session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
+    func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data {
         guard let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteURL,
             adresse.host() == installation.adresse.host()
         else { throw ErreurService.inattendue(400) }

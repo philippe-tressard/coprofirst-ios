@@ -72,11 +72,15 @@ struct AffaireServieTests {
                 + #""ancien_statut": "ouvert", "nouveau_statut": "en_cours", "perimetre_precise_libelle": "", "#
                 + #""nouveau_statut_libelle": "\#(libelle)"}]"#
         }
+        // L'ancien état, et un nouvel état que la Suite sert vide, se lisent dans les
+        // référentiels servis avec l'affaire (`statuts[].libelle`, #105) — plus dans une table.
+        let servis = try FixturesReferentielsAffaires.lus()
         let servie = try affaire("", evolutions: entree("Chez le syndic (servi)"))
-        #expect(servie.suites.first?.changementDEtat == "Ouvert → Chez le syndic (servi)")
-        // Un libellé servi vide : la table du site dit l'état, comme pour l'ancien statut.
+        #expect(servie.suites.first?.changementDEtat(servis) == "Ouvert → Chez le syndic (servi)")
         let vide = try affaire("", evolutions: entree(""))
-        #expect(vide.suites.first?.changementDEtat == "Ouvert → Chez le syndic")
+        #expect(
+            vide.suites.first?.changementDEtat(servis) == "Ouvert → Chez le syndic",
+            "servi vide avec la Suite : les référentiels servis")
     }
 
     // MARK: - #125 : le rythme, servi — celui du contrat d'abord

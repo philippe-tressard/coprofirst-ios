@@ -35,8 +35,8 @@ protocol ServiceCoproFirst: Sendable {
     func repondre(_ texte: String, a affaire: Int, dans installation: Installation) async throws
     /// GET /documents/{id}/télécharger : le fichier, écrit dans un dossier temporaire.
     func document(_ id: Int, nom: String?, dans installation: Installation) async throws -> URL
-    /// Une photo protégée (`/uploads/…`), lue avec la session de l'installation.
-    func photo(_ chemin: String, dans installation: Installation) async throws -> Data
+    /// Un fichier protégé (`/uploads/…`) — photo ou pièce jointe —, lu avec la session de l'installation.
+    func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data
     /// GET /auth/me : statut et rôles dans CETTE résidence.
     func profil(_ installation: Installation) async throws -> ProfilResidence
     /// Se déconnecter, à une seule porte : POST /auth/logout (le serveur révoque le

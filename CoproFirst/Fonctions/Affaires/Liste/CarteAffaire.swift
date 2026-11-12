@@ -86,7 +86,7 @@ struct CarteAffaire: View {
         var morceaux: [String] = []
         if affaire.urgente { morceaux.append("Urgente") }
         morceaux.append(affaire.titre)
-        morceaux.append(StatutsAffaire.libelle(affaire.statut, servi: affaire.statutLibelle))
+        morceaux.append(affaire.statutLibelle)
         if archive { morceaux.append("archivée") }
         morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
         if let lieu = affaire.lieu { morceaux.append(lieu) }

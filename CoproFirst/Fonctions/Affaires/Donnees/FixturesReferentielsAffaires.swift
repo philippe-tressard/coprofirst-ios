@@ -52,11 +52,18 @@ enum FixturesReferentielsAffaires {
         Reponse(nom: "referentiels", schema: "ReferentielsAffaires", json: referentiels)
     ]
 
-    /// Lus comme le client généré les lit, branchés comme le service réel.
-    static func lus() throws -> ReferentielsAffaires {
+    /// Lus comme le client généré les lit, branchés comme le service réel. Le serveur sert
+    /// à CE compte les catégories qu'il peut poser (`permise`) : la simulation fait comme lui
+    /// — une catégorie réservée n'est permise qu'à qui modère (`categorie_permise`, #105).
+    static func lus(moderateur: Bool = true) throws -> ReferentielsAffaires {
         var lu = try Relecture.generee(Components.Schemas.ReferentielsAffaires.self, json: referentiels)
         lu.categories = try Relecture.generee(
-            [Components.Schemas.CategorieServie].self, json: FixturesCategoriesServies.categories)
+            [Components.Schemas.CategorieServie].self, json: FixturesCategoriesServies.categories
+        ).map { categorie in
+            var servie = categorie
+            servie.permise = moderateur || !categorie.reservee
+            return servie
+        }
         return ReferentielsAffaires(lu: lu)
     }
 }

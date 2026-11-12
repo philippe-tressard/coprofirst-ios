@@ -5,25 +5,27 @@
 Le contrat d'API ne sert que des CODES (`CategorieTicket`, `StatutTicket`) : les
 libellés et l'ordre sont ceux que le site publie (`tables-clients.json`) :
 
-- les CATÉGORIES d'une affaire (`categoriesTicket`) et ses NATURES (`naturesAffaire`),
-  avec leur teinte (`teinteNature` : le `--nature-fort` de chaque `[data-nature]`,
-  rendu en classe `badge-*` de la `PastilleTeinte`, #78) ;
+- les NATURES d'une affaire (`naturesAffaire`), avec leur teinte (`teinteNature` : le
+  `--nature-fort` de chaque `[data-nature]`, rendu en classe `badge-*` de la
+  `PastilleTeinte`, #78). Les CATÉGORIES, et celles que chaque compte peut poser, sont
+  SERVIES (`GET /tickets/referentiels`, `permise`) : elles ne se génèrent plus dans l'app
+  (#105) — `categoriesTicket` ne sert qu'à la réponse simulée (`saisie_affaire.py`) ;
 - la TEINTE de chaque colonne du Kanban (`colonnesKanban`), un jeton `--kanban-*` de
   la `Palette` (#34) nommé ici par son chemin, et le mot d'une colonne vide
   (`motColonneVide`). Les colonnes elles-mêmes (ordre, libellés), la colonne de
-  chaque statut et les statuts clos sont SERVIS depuis le contrat 1.14.0
-  (`GET /tickets/referentiels`, `TicketRead.colonne_kanban`) : ils ne se génèrent plus
-  (#83, `scripts/verifier-regles-servies.py`) ;
-- l'ORDRE des statuts et leurs GROUPES de suivi (`statutsTicket`, `groupesSuivi`), et la
-  catégorie d'une actualité (`categorieActualite`).
+  chaque statut et les statuts clos sont SERVIS (`GET /tickets/referentiels`,
+  `TicketRead.colonne_kanban`) : ils ne se génèrent plus (#83,
+  `scripts/verifier-regles-servies.py`) ;
+- les GROUPES de suivi des statuts (`groupesSuivi`) et la catégorie d'une actualité
+  (`categorieActualite`). L'ordre des statuts, leurs libellés et ceux qu'une Suite
+  propose sont SERVIS (`statuts`, `proposable`) : ils ne se génèrent plus (#105).
 
 → `CoproFirst/Fonctions/Affaires/Genere/TablesAffaires.swift`.
 """
 
 from __future__ import annotations
 
-from generateurs._commun import (FONCTIONS, booleen, chaine, ecrire_table, jeton_de, propriete,
-                                 sans_pictogramme)
+from generateurs._commun import FONCTIONS, chaine, ecrire_table, jeton_de, propriete, sans_pictogramme
 from generateurs._tables import Facultatif, source
 
 SOURCES: list[str] = []
@@ -41,8 +43,8 @@ CATEGORIE = {"value": str, "label": str, "emoji": str, "description": str, "carn
 
 
 def categories_du_site(ctx) -> list[dict]:
-    """`categoriesTicket` — lue ici seulement : `saisie_affaire.py` en tire les catégories
-    que l'API simulée sert."""
+    """`categoriesTicket` — pour la seule réponse simulée des catégories servies
+    (`saisie_affaire.py`) : l'app lit les catégories du serveur (#105)."""
     return ctx.table("categoriesTicket", [CATEGORIE])
 
 
@@ -62,26 +64,17 @@ def badge_de_nature(code: str, teintes: dict[str, dict]) -> str:
     return BADGE_PAR_COULEUR[couleur]
 
 
-def categories(ctx) -> str:
-    lignes = [
-        f"        CategorieAffaire(code: {chaine(c['value'])}, libelle: {chaine(c['label'])}, "
-        f"emoji: {chaine(c['emoji'])}, description: {chaine(c['description'])}, "
-        f"carnet: {booleen(c.get('carnet'))}, reserveCS: {booleen(c.get('reserveCS'))}, "
-        f"enTete: {booleen(c.get('enTete'))}),\n"
-        for c in categories_du_site(ctx)
-    ]
+def natures(ctx) -> str:
     teintes = ctx.table("teinteNature", {str: {"--nature-fort": str}})
-    natures = [
+    lignes = [
         f"        NatureAffaire(code: {chaine(n['val'])}, libelle: {chaine(n['libelle'])}, "
         f"abrege: {chaine(n['abrege'])}, emoji: {chaine(n['emoji'])}, icone: {chaine(n['icone'])}, "
         f"badge: {chaine(badge_de_nature(n['val'], teintes))}),\n"
         for n in natures_d_affaire(ctx)
     ]
     return (
-        "    /// Les catégories, dans l'ordre du site (fréquence attendue) — `CATEGORIES_TICKET`.\n"
-        "    static let categories: [CategorieAffaire] = [\n" + "".join(lignes) + "    ]\n"
         "    /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.\n"
-        "    static let natures: [NatureAffaire] = [\n" + "".join(natures) + "    ]\n"
+        "    static let natures: [NatureAffaire] = [\n" + "".join(lignes) + "    ]\n"
     )
 
 
@@ -103,15 +96,14 @@ def kanban(ctx) -> str:
 
 
 def statuts(ctx) -> str:
-    ordre = [s["value"] for s in ctx.table("statutsTicket", [{"value": str}])]
+    # Les états du cycle, leurs libellés et ceux qu'une Suite propose sont SERVIS
+    # (`statuts`, `proposable`, #105) : `statutsTicket` n'est pas lu ici.
     groupes = [
         f"        GroupeDeSuivi(code: {chaine(g['value'])}, libelle: {chaine(sans_pictogramme(g['label']))}, "
         f"statuts: [{', '.join(chaine(s) for s in g['statuts'])}]),\n"
         for g in ctx.table("groupesSuivi", [{"value": str, "label": str, "statuts": [str]}])
     ]
     return (
-        "    /// Les statuts du cycle d'une affaire, dans l'ordre du site (`STATUTS_TICKET`).\n"
-        f"    static let ordreDesStatuts: [String] = [{', '.join(chaine(s) for s in ordre)}]\n"
         "    /// Des statuts que le filtre « Suivi » réunit sous une option (`GROUPES_SUIVI`).\n"
         "    static let groupesDeSuivi: [GroupeDeSuivi] = [\n" + "".join(groupes) + "    ]\n"
         "    /// La catégorie d'une actualité (`CATEGORIE_ACTUALITE`).\n"
@@ -120,9 +112,9 @@ def statuts(ctx) -> str:
 
 
 def generer(ctx) -> str:
-    corps = categories(ctx) + kanban(ctx) + statuts(ctx)
+    corps = natures(ctx) + kanban(ctx) + statuts(ctx)
     ecrire_table(ctx, FONCTIONS / "Affaires" / "Genere" / "TablesAffaires.swift",
-                 source("categoriesTicket", "naturesAffaire", "teinteNature", "colonnesKanban", "motColonneVide",
-                        "statutsTicket", "groupesSuivi", "categorieActualite"), "TablesAffaires",
+                 source("naturesAffaire", "teinteNature", "colonnesKanban", "motColonneVide", "groupesSuivi",
+                        "categorieActualite"), "TablesAffaires",
                  "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps, swiftui=True)
-    return "catégories, natures, teintes du Kanban et statuts des affaires"
+    return "natures, teintes du Kanban et groupes de suivi des affaires"

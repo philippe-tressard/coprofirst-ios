@@ -61,6 +61,8 @@ struct AffaireSuivie: Hashable, Sendable, Identifiable {
     var numero: String
     var titre: String
     var statut: String
+    /// « Chez le syndic » : le libellé que le serveur SERT (`libelle_statut`, #105).
+    var libelleStatut: String
     var libelleCategorie: String
     var ouverteLe: String
     var ageJours: Int

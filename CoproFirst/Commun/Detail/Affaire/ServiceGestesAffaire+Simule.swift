@@ -22,11 +22,11 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.messages.append(
                 MessageAffaire(
                     id: (detail.messages.map(\.id).max() ?? 500) + 1, contenu: contenu, date: .now, deMoi: true,
-                    nom: "Camille ESSAI", qualite: nil, interne: false, photos: []))
+                    nom: "Camille ESSAI", qualite: nil, interne: false, pieces: .aucune))
             detail.suites.append(
                 SuiteAffaire(
                     id: (detail.suites.map(\.id).max() ?? 0) + 1, type: "reponse", date: .now,
-                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil, photos: []))
+                    auteur: "Camille Essai", contenu: contenu, ancienStatut: nil, nouveauStatut: nil))
         }
     }
 
@@ -40,9 +40,9 @@ extension ServiceSimule: ServiceGestesAffaire {
                     auteur: "Le conseil syndical",
                     contenu: suite.texte.isEmpty ? nil : TexteDuSite.html(saisi: suite.texte),
                     ancienStatut: suite.changeEtat ? detail.statut : nil,
-                    nouveauStatut: suite.changeEtat ? suite.statut : nil, photos: []))
-            // Ce faux serveur ne tient pas les libellés : la table du site les dit.
-            if suite.changeEtat { detail.statutLibelle = nil }
+                    nouveauStatut: suite.changeEtat ? suite.statut : nil))
+            // Comme le vrai serveur, le simulé sert l'état en clair avec l'affaire.
+            if suite.changeEtat { detail.statutLibelle = MagasinAffairesSimule.libelle(statut: suite.statut) }
             detail.statut = suite.statut
         }
     }
@@ -103,6 +103,8 @@ extension ServiceSimule: ServiceGestesAffaire {
                 throw ErreurService.introuvable
             }
             try geste(&detail)
+            // Servis à CE compte, comme le vrai serveur.
+            detail.referentiels = try FixturesReferentielsAffaires.lus(moderateur: conseil)
             affaires[id] = detail
             return detail
         }

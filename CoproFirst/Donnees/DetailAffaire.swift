@@ -18,8 +18,8 @@ struct DetailAffaire: Hashable, Sendable {
     /// Le lieu lisible que le serveur SERT (`perimetre_libelle`) ; `nil` pour le périmètre
     /// par défaut, qu'il tait.
     var lieu: String?
-    /// Les chemins des photos (`/uploads/…`), servis derrière la session.
-    let photos: [String]
+    /// Ses photos et documents (`photos_urls`, `fichiers_urls`), servis derrière la session.
+    var pieces: PiecesJointes = .aucune
     var suites: [SuiteAffaire]
     /// Le fil des messages (`TicketMessage`), sous l'Historique — vide sur une actualité.
     var messages: [MessageAffaire] = []
@@ -32,7 +32,7 @@ struct DetailAffaire: Hashable, Sendable {
     /// Les codes de ses lieux (`perimetre_cible`) — ce que « Modifier l'affaire » part de.
     var perimetres: [String] = []
     /// L'état en clair, tel que le serveur le sert (`statut_libelle`) ; `nil` quand l'app
-    /// ne le tient pas du serveur (un geste simulé) : la table du site le dit alors.
+    /// ne le tient pas du serveur (un geste simulé) : ses référentiels le disent alors.
     var statutLibelle: String?
     /// Le suivi d'une actualité (`suivi_actualite`, un code) et son libellé servi
     /// (`suivi_actualite_libelle`, #127) — vide sans suivi.
@@ -43,23 +43,30 @@ struct DetailAffaire: Hashable, Sendable {
     var intervenant: String?
     /// « Qui la lit », servie (`lecture`, #129).
     var lecture: Lecture?
+    /// Les référentiels lus avec elle (`GET /tickets/referentiels`, #105) : les libellés des
+    /// états de son Historique, les états qu'une Suite propose, les catégories que
+    /// « Modifier » permet et les sections de sa saisie — servis, jamais recalculés ici.
+    var referentiels = ReferentielsAffaires.vides
 
     var estActualite: Bool { categorie == "actualite" }
 
     /// L'état que la fiche montre (`etatAffiche` du site) : le statut d'une affaire, le
     /// suivi d'une actualité — aucun pour une actualité sans suivi.
     var etat: EtatServi? {
-        guard estActualite else { return EtatServi(code: statut, libelle: statutLibelle) }
+        guard estActualite else {
+            return EtatServi(
+                code: statut, libelle: StatutsAffaire.libelle(statut, servi: statutLibelle, dans: referentiels))
+        }
         guard let suivi = suiviActualite, !suiviActualiteLibelle.isEmpty else { return nil }
         return EtatServi(code: suivi, libelle: suiviActualiteLibelle)
     }
 }
 
-/// Un état d'affaire : son CODE, qui choisit la teinte, et son libellé SERVI — `nil`
-/// quand le serveur ne l'a pas dit, et la table du site le dit (`PastilleStatut`).
+/// Un état d'affaire : son CODE, qui choisit la teinte, et son libellé EN CLAIR, servi
+/// (`StatutsAffaire.libelle(_:servi:dans:)`).
 struct EtatServi: Hashable, Sendable {
     let code: String
-    let libelle: String?
+    let libelle: String
 }
 
 /// Une entrée de l'Historique : une suite écrite, ou un changement d'état.
@@ -71,7 +78,8 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let contenu: String?
     let ancienStatut: String?
     let nouveauStatut: String?
-    let photos: [String]
+    /// Ce qu'elle joint (`fichiers_urls`) : photos et documents.
+    var pieces: PiecesJointes = .aucune
     /// L'état que l'entrée donne, en clair, tel que le serveur le sert
     /// (`nouveau_statut_libelle`, #127) ; `nil` quand l'app ne le tient pas du serveur (un
     /// geste simulé).
@@ -82,13 +90,13 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     var perimetrePrecise: String?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
-    /// lit tel que servi ; l'ancien, que le serveur ne met pas en clair, par la table du
-    /// site, comme sa `RubriqueHistorique`.
-    var changementDEtat: String? {
+    /// lit tel que servi avec elle ; l'ancien, que le serveur n'y met pas en clair, dans
+    /// les référentiels servis avec l'affaire (`statuts[].libelle`, #105).
+    func changementDEtat(_ servis: ReferentielsAffaires) -> String? {
         guard let nouveauStatut else { return nil }
-        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle)
+        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle, dans: servis)
         guard let ancienStatut else { return nouveau }
-        return "\(StatutsAffaire.libelle(ancienStatut, servi: nil)) → \(nouveau)"
+        return "\(StatutsAffaire.libelle(ancienStatut, servi: nil, dans: servis)) → \(nouveau)"
     }
 }
 

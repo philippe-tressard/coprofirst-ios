@@ -108,7 +108,8 @@ private func profil(roles: String, _ extra: String = "") throws -> ProfilResiden
     #expect(DroitsOnglet(profil: horsConseil).cs == false, "le serveur dit non : les rôles n'y changent rien")
     let moderateur = try profil(roles: #"["propriétaire"]"#, #", "est_moderateur": true"#)
     #expect(DroitsOnglet(profil: moderateur).cs == true)
-    #expect(DroitsAffaires(profil: moderateur).moderateur == true)
+    // `DroitsAffaires.moderateur` n'existe plus (#105) : ce qu'un compte pose dans une affaire
+    // se lit dans les référentiels (`permise`) — `poserLesReserveesSeLitDansLesCategoriesServies`.
 }
 
 /// Aucun rôle ne remplace `est_moderateur` : non servi, ou d'un profil gardé avant #136,
