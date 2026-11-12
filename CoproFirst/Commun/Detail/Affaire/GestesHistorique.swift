@@ -46,6 +46,7 @@ struct GestesHistorique: ViewModifier {
                 titleVisibility: .visible, presenting: choix.aSupprimer
             ) { suite in
                 Button(TextesSuite.confirmer, role: .destructive) { Task { await supprimer(suite) } }
+                    .gesteEnLigne()
                     .accessibilityIdentifier("historique.confirmerSuppression")
             } message: { suite in
                 Text(TextesSuite.question(suite))
@@ -118,6 +119,7 @@ private struct GestesSuite: ViewModifier {
                         .padding(-max(0, (Mise.cible - ligne) / 2))
                 }
                 .accessibilityLabel(TextesSuite.gestes)
+                .gesteEnLigne()
                 .accessibilityIdentifier("historique.gestes.\(suite.id)")
             }
         }

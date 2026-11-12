@@ -94,6 +94,7 @@ struct NouvelleAffaireView: View {
                 Button("Envoyer") { Task { await envoyer() } }
                     .fontWeight(.semibold)
                     .disabled(!prete)
+                    .gesteEnLigne()
                     .accessibilityIdentifier("nouvelle.envoyer")
             }
         }

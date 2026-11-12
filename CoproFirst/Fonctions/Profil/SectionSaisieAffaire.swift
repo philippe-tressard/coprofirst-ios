@@ -34,6 +34,7 @@ struct SectionSaisieAffaire: View {
                 }
                 .pickerStyle(.segmented)
                 .labelsHidden()
+                .gesteEnLigne()
                 .listRowBackground(palette.surface)
                 .accessibilityIdentifier("profil.saisie")
             } header: {
