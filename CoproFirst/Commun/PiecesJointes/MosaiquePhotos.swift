@@ -56,8 +56,11 @@ struct MosaiquePhotos: View {
         Button {
             ouvrir(rang)
         } label: {
-            PhotoProtegee(chemin: chemins[rang], installation: installation)
+            // La case d'abord, la photo par-dessus : une image qui REMPLIT impose sinon sa
+            // largeur à la rangée, et la colonne de droite sortait du cadre.
+            Color.clear
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay { PhotoProtegee(chemin: chemins[rang], installation: installation) }
                 .clipped()
                 .overlay {
                     if reste > 0 {

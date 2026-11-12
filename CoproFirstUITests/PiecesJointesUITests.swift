@@ -40,6 +40,11 @@ final class PiecesJointesUITests: XCTestCase {
         XCTAssertTrue(derniere.exists)
         XCTAssertTrue(derniere.label.contains("et 1 de plus"), derniere.label)
         XCTAssertFalse(app.elementAcces("pieces.photo.3").exists, "une quatrième tuile ferait sauter le cadre")
+        // La grande tuile fait deux fois la petite, et la colonne de droite tient dans l'écran :
+        // une photo qui remplit sa case lui imposait sa largeur (vu à l'écran le 12/11/2026).
+        let grande = app.elementAcces("pieces.photo.0").frame
+        XCTAssertLessThanOrEqual(derniere.frame.maxX, app.frame.maxX, "la colonne de droite sort de l'écran")
+        XCTAssertEqual(grande.width, 2 * derniere.frame.width, accuracy: 8, "la grande tuile fait les deux tiers")
         // Les documents, jetés avant ce lot : le type d'abord, le nom lisible ensuite.
         let devis = app.elementAcces("pieces.document.0")
         XCTAssertTrue(devis.exists)
@@ -49,10 +54,9 @@ final class PiecesJointesUITests: XCTestCase {
         // Une photo s'ouvre dans Coup d'œil, qui feuillette toutes celles de l'affaire.
         app.elementAcces("pieces.photo.0").tap()
         let apercu = app.otherElements["QLPreviewControllerView"].firstMatch
-        let ouvert = apercu.waitForExistence(timeout: Attente.plafond)
-            || app.navigationBars.matching(NSPredicate(format: "identifier CONTAINS %@", "41-1")).firstMatch
-                .waitForExistence(timeout: Attente.plafond)
+        XCTAssertTrue(apercu.waitForExistence(timeout: Attente.plafond), "Coup d'œil s'ouvre sur la photo touchée")
+        // Ouvert ne suffit pas : la photo doit s'y AFFICHER (un aperçu noir resterait vert sinon).
+        XCTAssertTrue(apercu.images.firstMatch.waitForExistence(timeout: Attente.plafond), "la photo s'affiche")
         capturer("3-coup-d-oeil")
-        XCTAssertTrue(ouvert, "Coup d'œil s'ouvre sur la photo touchée")
     }
 }
