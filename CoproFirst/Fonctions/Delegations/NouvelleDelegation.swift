@@ -93,7 +93,7 @@ struct NouvelleDelegation: View {
         Picker(titre, selection: valeur) {
             Text(TextesDelegations.choisir).tag(Int?.none)
             ForEach(comptes) { compte in
-                Text("\(FormatsDuSite.nom(compte.prenom, compte.nom)) (\(compte.email))").tag(Int?.some(compte.id))
+                Text("\(compte.nomAffiche) (\(compte.email))").tag(Int?.some(compte.id))
             }
         }
         .pickerStyle(.navigationLink)

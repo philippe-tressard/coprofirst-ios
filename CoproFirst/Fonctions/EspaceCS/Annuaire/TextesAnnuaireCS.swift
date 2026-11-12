@@ -21,9 +21,8 @@ enum TextesAnnuaireCS {
     static let retirerTitre = "Retirer cette fiche de l'annuaire ?"
     static let retirerMessage = "Elle disparaît de l'annuaire des résidents dès l'enregistrement."
 
-    static func enregistre(_ prenom: String?, _ nom: String?) -> String {
-        "\(FormatsDuSite.nom(prenom, nom)) enregistré"
-    }
+    /// `nom` : le nom affiché que le serveur sert avec la fiche enregistrée.
+    static func enregistre(_ nom: String) -> String { "\(nom) enregistré" }
 
     static func gestes(_ nom: String) -> String { "Gestes pour \(nom)" }
 

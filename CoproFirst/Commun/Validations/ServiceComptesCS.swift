@@ -40,6 +40,18 @@ struct CompteEnAttente: Hashable, Sendable, Identifiable {
     var prenomAide: String?
     var nomAide: String?
     var creeLe: Date
+    /// `nom_affiche` et `nom_aide_affiche` servis (contrat 1.25.0, #135) ; `nil` d'une
+    /// installation antérieure.
+    var nomServi: String?
+    var nomAideServi: String?
+
+    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
+    /// La personne aidée, nommée de même — `nil` sans elle.
+    var nomAideAffiche: String? {
+        guard prenomAide != nil || nomAide != nil else { return nil }
+        return FormatsDuSite.nom(affiche: nomAideServi, prenom: prenomAide, nom: nomAide)
+    }
 }
 
 /// Une demande de badge ou de télécommande en attente (`CommandeAccesEnAttente`).

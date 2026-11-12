@@ -48,6 +48,21 @@ private let propresAIOS: [String: MesurePropre] = [
         valeur: Mise.approcheLibelle, ecart: nil,
         raison: "l'approche des capitales sur le style `caption` ; le site écrit 0,06 em en dur (`.section-title`)",
         depuis: "02/11/2026"),
+    "mosaique": MesurePropre(
+        valeur: Mise.mosaique, ecart: nil,
+        raison: "la mosaïque des photos (à la Messages) n'existe pas au site, qui fait défiler une galerie "
+            + "de photos entières (`PiecesJointes.svelte`, format grand) ; retenue par l'utilisateur",
+        depuis: "11/11/2026"),
+    "mosaiqueCompacte": MesurePropre(
+        valeur: Mise.mosaiqueCompacte, ecart: nil,
+        raison: "la mosaïque sous une suite ou dans un message ; le site y met des vignettes de 72 px "
+            + "écrites en dur (`size`), sans jeton",
+        depuis: "11/11/2026"),
+    "vignette": MesurePropre(
+        valeur: Mise.vignette, ecart: nil,
+        raison: "la vignette d'une carte du fil : 56 px au site (`FluxVignette.svelte`, `size`), écrit en dur, "
+            + "sans jeton",
+        depuis: "11/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.

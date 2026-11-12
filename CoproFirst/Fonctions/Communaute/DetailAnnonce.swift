@@ -36,9 +36,7 @@ struct DetailAnnonce: View {
                     }
                     Text(TexteDuSite.riche(annonce.description))
                         .font(.body).foregroundStyle(palette.text).tint(palette.primary)
-                    if let photos = annonce.photos, !photos.isEmpty {
-                        GaleriePhotos(chemins: photos, installation: installation)
-                    }
+                    PiecesJointesView(pieces: PiecesJointes(urls: annonce.photos ?? []), installation: installation)
                     contact(annonce)
                 }
                 .listRowBackground(palette.surface)

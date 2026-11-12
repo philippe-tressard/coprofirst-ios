@@ -9,7 +9,15 @@ import SwiftUI
 /// compose selon la saisie du compte (`forme`, #69), comme le site.
 struct NouvelleAffaireView: View {
     let installation: Installation
-    let droits: DroitsAffaires
+    /// Les catégories que le serveur PERMET à ce compte (`ReferentielsAffaires.permises`,
+    /// #105) — `nil` tant que les référentiels ne sont pas lus.
+    let categories: [CategorieAffaire]?
+    /// Pourquoi elles n'ont pas pu être lues : la feuille le dit au lieu d'offrir une grille vide.
+    var erreurCategories: ErreurAffaires?
+    /// Ce compte pose ce que le serveur réserve au conseil syndical
+    /// (`ReferentielsAffaires.poseLesReservees`, servi) : la feuille lui dit ce qu'il
+    /// ajoutera lui-même depuis le site.
+    var poseLesReservees = false
     let service: (any ServiceAffaires)?
     var forme: FormeDeSaisie?
     let creee: (Affaire) -> Void
@@ -31,9 +39,19 @@ struct NouvelleAffaireView: View {
                     Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
                         .listRowBackground(Color.clear)
                 }
-                ChampsAffaire(
-                    saisie: $saisie, categories: droits.categories, installation: installation, service: service,
-                    prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                if let categories {
+                    ChampsAffaire(
+                        saisie: $saisie, categories: categories, installation: installation, service: service,
+                        prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                } else if let erreurCategories {
+                    Section { MessageErreur(texte: erreurCategories.phrase).listRowInsets(EdgeInsets()) }
+                        .listRowBackground(Color.clear)
+                } else {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
+                        .listRowBackground(Color.clear)
+                        .accessibilityLabel("Chargement des catégories")
+                }
                 Section {
                     Label {
                         Text(aPoserSurLeSite)
@@ -42,6 +60,7 @@ struct NouvelleAffaireView: View {
                     }
                     .font(.footnote)
                     .foregroundStyle(palette.textMuted)
+                    .accessibilityIdentifier("nouvelle.depuisLeSite")
                 } header: {
                     Text("Depuis le site")
                 }
@@ -80,10 +99,10 @@ struct NouvelleAffaireView: View {
         }
     }
 
-    /// Ce que cette feuille ne pose pas, selon qui la remplit.
+    /// Ce que cette feuille ne pose pas, selon ce que le serveur permet à qui la remplit.
     private var aPoserSurLeSite: String {
         let pieces = "Les photos et les documents s'ajoutent depuis le site."
-        return droits.moderateur
+        return poseLesReservees
             ? "\(pieces) L'équipement, la date, l'intervenant, les destinataires et les affaires liées aussi."
             : "\(pieces) Le conseil syndical désigne l'équipement, la date, l'intervenant et les destinataires."
     }

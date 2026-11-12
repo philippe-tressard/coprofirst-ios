@@ -73,6 +73,10 @@ enum TexteDuSite {
         return brut && texte == html.trimmingCharacters(in: .whitespacesAndNewlines) ? texte : nil
     }
 
+    /// Ce qu'une feuille dit sous un texte qu'elle montre sans le modifier (`saisi(html:)`
+    /// rend `nil`) : la description d'une affaire, le texte d'une suite.
+    static let miseEnFormeAuSite = "Sa mise en forme (gras, listes, liens) se modifie depuis le site."
+
     /// Un lien sûr : absolu, d'un schéma de la liste blanche, sans caractère de
     /// contrôle (`java\tscript:` ne passe pas) — sinon `nil`, et le texte reste inerte.
     static func lienSur(_ href: String) -> URL? {

@@ -5,16 +5,19 @@
 Le contrat d'API ne sert que des CODES (`CategorieTicket`, `StatutTicket`) : les
 libellés et l'ordre vivent dans le front du site :
 
-- les CATÉGORIES d'une affaire (`CATEGORIES_TICKET`, `tickets-categories.ts`) et
-  ses NATURES (`NATURES`, même fichier), avec leur teinte (`[data-nature=…]` de
-  `normes.css`, rendue en classe `badge-*` de la `PastilleTeinte`, #78) ;
+- les NATURES d'une affaire (`NATURES`, `tickets-categories.ts`), avec leur teinte
+  (`[data-nature=…]` de `normes.css`, rendue en classe `badge-*` de la `PastilleTeinte`,
+  #78). Les CATÉGORIES, et celles que chaque compte peut poser, sont SERVIES depuis le
+  contrat 1.14.0 (`GET /tickets/referentiels`, `permise`) : elles ne se génèrent plus (#105) ;
 - la TEINTE de chaque colonne du Kanban (`KANBAN_COLS` de `kanban.ts`), un jeton
   `--kanban-*` de la `Palette` (#34) nommé ici par son chemin, et le mot d'une colonne
   vide (`MOT_COLONNE_VIDE`). Les colonnes elles-mêmes (ordre, libellés), la colonne de
   chaque statut et les statuts clos sont SERVIS depuis le contrat 1.14.0
   (`GET /tickets/referentiels`, `TicketRead.colonne_kanban`) : ils ne se génèrent plus
   (#83, `scripts/verifier-regles-servies.py`) ;
-- l'ORDRE des statuts et leurs GROUPES de suivi (`tickets.ts`).
+- les GROUPES de suivi des statuts (`tickets.ts`). L'ordre des statuts, leurs libellés et
+  ceux qu'une Suite propose sont SERVIS (`statuts`, `proposable`) : ils ne se génèrent
+  plus (#105).
 
 → `CoproFirst/Fonctions/Affaires/Genere/TablesAffaires.swift`.
 """
@@ -24,7 +27,7 @@ from __future__ import annotations
 import re
 
 import lecture_ts
-from generateurs._commun import FONCTIONS, booleen, chaine, ecrire_table, propriete, sans_pictogramme
+from generateurs._commun import FONCTIONS, chaine, ecrire_table, propriete, sans_pictogramme
 
 SOURCES = [
     "front/src/lib/tickets-categories.ts",
@@ -66,15 +69,9 @@ def natures_d_affaire(ctx) -> list[dict]:
     return lecture_ts.table(ctx.lire(SOURCES[0]), "NATURES")
 
 
-def categories(ctx) -> str:
-    texte = ctx.lire(SOURCES[0])
-    lignes = [
-        f"        CategorieAffaire(code: {chaine(c['value'])}, libelle: {chaine(c['label'])}, "
-        f"emoji: {chaine(c['emoji'])}, description: {chaine(c['description'])}, "
-        f"carnet: {booleen(c.get('carnet'))}, reserveCS: {booleen(c.get('reserveCS'))}, "
-        f"enTete: {booleen(c.get('enTete'))}),\n"
-        for c in lecture_ts.table(texte, "CATEGORIES_TICKET")
-    ]
+def natures(ctx) -> str:
+    # Les catégories et ce que chaque compte peut poser sont SERVIS (`GET /tickets/referentiels`,
+    # `permise`, #105) : plus lus ici.
     teintes = {code: couleur for code, couleur in NATURE_FORT.findall(ctx.lire(SOURCES[3]))}
     natures = [
         f"        NatureAffaire(code: {chaine(n['val'])}, libelle: {chaine(n['libelle'])}, "
@@ -83,8 +80,6 @@ def categories(ctx) -> str:
         for n in natures_d_affaire(ctx)
     ]
     return (
-        "    /// Les catégories, dans l'ordre du site (fréquence attendue) — `CATEGORIES_TICKET`.\n"
-        "    static let categories: [CategorieAffaire] = [\n" + "".join(lignes) + "    ]\n"
         "    /// Les natures d'une affaire, dans l'ordre du filtre — `NATURES`.\n"
         "    static let natures: [NatureAffaire] = [\n" + "".join(natures) + "    ]\n"
     )
@@ -109,16 +104,15 @@ def kanban(ctx) -> str:
 
 
 def statuts(ctx) -> str:
+    # Les états du cycle, leurs libellés et ceux qu'une Suite propose sont SERVIS
+    # (`statuts`, `proposable`, #105) : `STATUTS_TICKET` n'est plus lu ici.
     texte = ctx.lire(SOURCES[2])
-    ordre = [s["value"] for s in lecture_ts.table(texte, "STATUTS_TICKET")]
     groupes = [
         f"        GroupeDeSuivi(code: {chaine(g['value'])}, libelle: {chaine(sans_pictogramme(g['label']))}, "
         f"statuts: [{', '.join(chaine(s) for s in g['statuts'])}]),\n"
         for g in lecture_ts.table(texte, "GROUPES_SUIVI")
     ]
     return (
-        "    /// Les statuts du cycle d'une affaire, dans l'ordre du site (`STATUTS_TICKET`).\n"
-        f"    static let ordreDesStatuts: [String] = [{', '.join(chaine(s) for s in ordre)}]\n"
         "    /// Des statuts que le filtre « Suivi » réunit sous une option (`GROUPES_SUIVI`).\n"
         "    static let groupesDeSuivi: [GroupeDeSuivi] = [\n" + "".join(groupes) + "    ]\n"
         "    /// La catégorie d'une actualité (`CATEGORIE_ACTUALITE`).\n"
@@ -127,8 +121,8 @@ def statuts(ctx) -> str:
 
 
 def generer(ctx) -> str:
-    corps = categories(ctx) + kanban(ctx) + statuts(ctx)
+    corps = natures(ctx) + kanban(ctx) + statuts(ctx)
     ecrire_table(ctx, FONCTIONS / "Affaires" / "Genere" / "TablesAffaires.swift",
                  "front/src/lib/tickets-categories.ts, kanban.ts, tickets.ts, styles/normes.css", "TablesAffaires",
                  "Ce que le site écrit des affaires et que le contrat ne sert pas.", corps, swiftui=True)
-    return "catégories, natures, teintes du Kanban et statuts des affaires"
+    return "natures, teintes du Kanban et groupes de suivi des affaires"

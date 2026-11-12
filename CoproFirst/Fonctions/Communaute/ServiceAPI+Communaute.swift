@@ -10,27 +10,34 @@ import OpenAPIRuntime
 /// coprofirst#2460 (déclarer leurs `response_model`).
 extension ServiceAPI: ServiceCommunaute {
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
-        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getAuthMe() }
+        }
         switch sortie {
         case .ok(let ok):
             let moi = try ok.body.json
             return MoiCommunaute(
                 id: moi.id, statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
-                motifRefus: moi.communauteMotifRefus.flatMap { $0.isEmpty ? nil : $0 })
+                motifRefus: moi.communauteMotifRefus.flatMap { $0.isEmpty ? nil : $0 },
+                estModerateur: PersonneServie.lue(corps)?.estModerateur)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
-        let sortie = try await appeler { try await client(installation.adresse).getSondages() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getSondages() }
+        }
         switch sortie {
         case .ok(let ok):
-            return try ok.body.json.map {
+            return ServiAuDessusDuPlancher.relire(try ok.body.json, corps: corps, id: \.id) {
                 SondageResume(
                     id: $0.id, question: $0.question, description: $0.description, clotureLe: $0.clotureLe,
                     cloture: $0.cloture ?? false, nbVotants: $0.nbVotants ?? 0, archivee: $0.archivee ?? false,
                     creeLe: $0.creeLe)
+            } poser: {
+                ($0.lecture, $0.lieu) = $1.lectureEtLieu
             }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
@@ -38,9 +45,11 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func idees(_ installation: Installation) async throws -> [Idee] {
-        let sortie = try await appeler { try await client(installation.adresse).getIdees() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getIdees() }
+        }
         switch sortie {
-        case .ok(let ok): return try ok.body.json.map(Idee.init)
+        case .ok(let ok): return Idee.lues(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -67,9 +76,11 @@ extension ServiceAPI: ServiceCommunaute {
     }
 
     func annonces(_ installation: Installation) async throws -> [Annonce] {
-        let sortie = try await appeler { try await client(installation.adresse).getAnnonces() }
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client(installation.adresse).getAnnonces() }
+        }
         switch sortie {
-        case .ok(let ok): return try ok.body.json.map(Annonce.init)
+        case .ok(let ok): return Annonce.lues(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -288,7 +299,8 @@ extension AvisResident {
 // Le contrat 1.5.0 type les idées et les annonces (`IdeeRead`, `AnnonceRead`) : elles se
 // lisent par leurs types générés — le client a déjà décodé leurs dates. Les relire par
 // `Relecture` réencodait ces dates en nombre (bogue du 06/11/2026). L'API simulée passe
-// par ces mêmes branchements (`FixturesCommunaute`).
+// par ces mêmes branchements (`FixturesCommunaute`). Qui les lit et leur lieu sont servis
+// au-dessus du plancher (#129, #130) : `lues(_:corps:)` les relit dans le corps servi.
 extension Idee {
     init(_ lue: Components.Schemas.IdeeRead) {
         self.init(
@@ -296,9 +308,24 @@ extension Idee {
             creeLe: lue.creeLe, nbVotes: lue.nbVotes ?? 0, monVote: lue.monVote ?? false, archivee: lue.archivee,
             reponses: lue.reponses?.map(ReponseCommunaute.init))
     }
+
+    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher —
+    /// le MÊME branchement pour le service réel et l'API simulée.
+    static func lues(_ generees: [Components.Schemas.IdeeRead], corps: Data?) -> [Idee] {
+        ServiAuDessusDuPlancher.relire(generees, corps: corps, id: \.id, en: Idee.init) {
+            ($0.lecture, $0.lieu) = $1.lectureEtLieu
+        }
+    }
 }
 
 extension Annonce {
+    /// Idem : `lues(_:corps:)` pour une liste servie.
+    static func lues(_ generees: [Components.Schemas.AnnonceRead], corps: Data?) -> [Annonce] {
+        ServiAuDessusDuPlancher.relire(generees, corps: corps, id: \.id, en: Annonce.init) {
+            ($0.lecture, $0.lieu) = $1.lectureEtLieu
+        }
+    }
+
     init(_ lue: Components.Schemas.AnnonceRead) {
         self.init(
             id: lue.id, titre: lue.titre, description: lue.description, typeAnnonce: lue.typeAnnonce.rawValue,

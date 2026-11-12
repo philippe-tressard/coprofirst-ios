@@ -31,7 +31,7 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// d'une affaire est le défaut du serveur sans choix — Essentielle pour tous (#2615).
     var profilSimule = ProfilResidence(
         statut: "copropriétaire_résident", roles: ["résident", "propriétaire", "conseil_syndical"],
-        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle")
+        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle", estModerateur: true)
 
     init(delai: Duration = .milliseconds(450)) {
         self.delai = delai

@@ -36,7 +36,9 @@ final class EtatAffaires {
     var avis: String?
 
     /// Les options « Suivi » : celles des statuts présents parmi les affaires actives.
-    var optionsDeSuivi: [OptionDeSuivi] { OptionDeSuivi.presentes(dans: affaires.filter { !$0.archivee }) }
+    var optionsDeSuivi: [OptionDeSuivi] {
+        OptionDeSuivi.presentes(dans: affaires.filter { !$0.archivee }, servis: referentiels?.statuts ?? [])
+    }
 
     var liste: [Affaire] {
         affaires.liste(filtres: filtres, options: optionsDeSuivi, trouvees: trouvees, avecArchives: avecArchives)
@@ -141,6 +143,8 @@ final class EtatAffaires {
         }
         remplacer(affaire.id) {
             $0.statut = statut.code
+            // Son libellé avec lui, tel que servi : la pastille de la liste ne garde pas l'ancien.
+            $0.statutLibelle = statut.libelle
             $0.colonne = statut.colonne
         }
         do {

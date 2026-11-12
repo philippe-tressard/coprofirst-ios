@@ -23,6 +23,10 @@ extension DetailAffaire {
     /// (`TexteDuSite.saisi(html:)`) — sinon `nil`, et elle se modifie depuis le site.
     var descriptionSaisie: String? { TexteDuSite.saisi(html: description) }
 
+    /// Le crayon servi (`peut_corriger`) sans le droit sur le contenu (`peut_modifier`) :
+    /// l'auteur d'une affaire engagée n'en règle plus que l'urgence (#127).
+    var contenuFige: Bool { !droits.modifier }
+
     /// Un lieu au plus : le choix de la feuille le porte. Plusieurs se corrigent depuis
     /// le site — les ramener à un seul en effacerait sans qu'on l'ait demandé.
     var lieuModifiable: Bool { perimetres.count <= 1 }
@@ -41,17 +45,18 @@ extension SaisieAffaire {
             urgente: affaire.urgente, perimetre: affaire.perimetres.first)
     }
 
-    /// Ce qui a changé depuis `affaire` — et rien d'autre.
+    /// Ce qui a changé depuis `affaire` — et rien d'autre ; d'un contenu figé, l'urgence seule.
     func edition(depuis affaire: DetailAffaire) -> EditionAffaire {
         let origine = SaisieAffaire(modifiant: affaire)
         var edition = EditionAffaire()
+        if urgente != origine.urgente { edition.urgente = urgente }
+        guard !affaire.contenuFige else { return edition }
         let titre = titre.trimmingCharacters(in: .whitespacesAndNewlines)
         if titre != origine.titre.trimmingCharacters(in: .whitespacesAndNewlines) { edition.titre = titre }
         if affaire.descriptionSaisie != nil, descriptionHTML != origine.descriptionHTML {
             edition.descriptionHTML = descriptionHTML
         }
         if categorie != origine.categorie { edition.categorie = categorie }
-        if urgente != origine.urgente { edition.urgente = urgente }
         let perimetre = estBogue ? nil : perimetre
         if affaire.lieuModifiable, perimetre != origine.perimetre { edition.perimetres = perimetre.map { [$0] } ?? [] }
         return edition

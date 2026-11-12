@@ -55,10 +55,10 @@ final class AccesUITests: XCTestCase {
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
         app.elementAcces("onglet.telecommandes").swipeLeft()
         app.elementAcces("onglet.location").tap()
-        XCTAssertTrue(app.libelleAcces("Locataire du lot 31").apparait(), "un bail actif")
+        XCTAssertTrue(app.libelleAcces("Locataire DU LOT 31").apparait(), "un bail actif")
         app.capturerAcces("acces-4-gestion-locative", dans: self)
         app.libelleAcces("📁 Archives").tap()
-        XCTAssertTrue(app.libelleAcces("Ancien locataire du lot 31").apparait(), "les archives")
+        XCTAssertTrue(app.libelleAcces("Ancien locataire DU LOT 31").apparait(), "les archives")
     }
 
     @MainActor

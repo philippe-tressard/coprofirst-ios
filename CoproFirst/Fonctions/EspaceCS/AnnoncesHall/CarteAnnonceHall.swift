@@ -83,7 +83,7 @@ struct CarteAnnonceHall: View {
         if annonce.archivee {
             PastilleTeinte(libelle: TextesAnnoncesHall.archivee, badge: "badge-gray", compacte: true)
         }
-        PastilleTeinte(libelle: annonce.perimetreLabel, badge: "badge-gray", compacte: true)
+        if let lieu = annonce.lieu { PastilleTeinte(libelle: lieu, badge: "badge-gray", compacte: true) }
         if annonce.ticketId != nil {
             PastilleTeinte(libelle: TextesAnnoncesHall.actualite, badge: "badge-gray", compacte: true)
         }

@@ -31,6 +31,25 @@ precedence = "override"
 SPDX-FileCopyrightText = ["2026 Lucide Icons and Contributors", "2013-present Cole Bemis"]
 SPDX-License-Identifier = "ISC AND MIT"
 
+# Les AVIS (NOTICE) des paquets Swift embarqués, recopiés À L'IDENTIQUE de leur dépôt à
+# la révision de Package.resolved : Apache-2.0 §4 d les fait suivre chaque copie. L'écran
+# « À propos › Composants tiers » les affiche (#168) ; scripts/verifier-dependances.py
+# tient la liste aux paquets embarqués, et l'identité aux sources quand elles sont là.
+[[annotations]]
+path = [
+  "CoproFirst/Ressources/AvisTiers/NOTICE-swift-openapi-runtime.txt",
+  "CoproFirst/Ressources/AvisTiers/NOTICE-swift-openapi-urlsession.txt",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2023 The SwiftOpenAPIGenerator Project"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "CoproFirst/Ressources/AvisTiers/NOTICE-swift-http-types.txt"
+precedence = "override"
+SPDX-FileCopyrightText = "2023 The Swift HTTP Types Project"
+SPDX-License-Identifier = "Apache-2.0"
+
 # Les descriptions des catalogues d'images : du JSON, sans en-tête possible.
 [[annotations]]
 path = ["CoproFirst/Ressources/Assets.xcassets/**/Contents.json", "CoproFirst/Ressources/Pictogrammes.xcassets/**/Contents.json"]

@@ -76,7 +76,9 @@ jobs:
           MONTEE: ${{ steps.montee.outputs.code }}
         run: |
           ouvert() {
-            gh issue list --repo "$GITHUB_REPOSITORY" --label "$1" --state open --json number --jq '.[0].number // empty'
+            # Au titre, pas au seul label : un ticket étiqueté par erreur n'est pas le sien (#93).
+            gh issue list --repo "$GITHUB_REPOSITORY" --label "$1" --state open --limit 100 --json number,title \
+              | python3 -I scripts/tickets_concordance.py choisir "$1"
           }
           ROUGE=$(ouvert concordance)
           A_MONTER=$(ouvert a-monter)
@@ -111,7 +113,7 @@ jobs:
               etiquette concordance D93F0B "Écart entre l'app et son plancher de coprofirst, ou version illisible (#20)"
               corps > "$RUNNER_TEMP/rouge.md"
               gh issue create --repo "$GITHUB_REPOSITORY" --label concordance --body-file "$RUNNER_TEMP/rouge.md" \
-                --title "Concordance avec CoproFirst : écart au plancher ou version illisible" ;;
+                --title "$(python3 -I scripts/tickets_concordance.py titre concordance)" ;;
             completer)
               corps > "$RUNNER_TEMP/rouge.md"
               gh issue comment "$TICKET" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/rouge.md" ;;
@@ -131,7 +133,7 @@ jobs:
             ouvrir)
               etiquette a-monter 0E8A16 "Une version de coprofirst publiée au-dessus du plancher de l'app (#20)"
               gh issue create --repo "$GITHUB_REPOSITORY" --label a-monter --body-file "$RUNNER_TEMP/montee.md" \
-                --title "CoproFirst : une version publiée au-dessus du plancher de l'app" ;;
+                --title "$(python3 -I scripts/tickets_concordance.py titre a-monter)" ;;
             rien) ;;
             *) echo "❓ décision illisible : « $A_MONTER »"; exit 1 ;;
           esac

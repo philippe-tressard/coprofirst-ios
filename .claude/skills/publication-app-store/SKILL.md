@@ -66,7 +66,14 @@ fait après le « oui ».
 - [ ] Politique de confidentialité (URL) et étiquettes « App Privacy » **saisies** dans
       App Store Connect par Philippe, à partir de ce fichier (§9) — après avoir relu les
       règles d'Apple en vigueur.
-- [ ] Suppression du compte **dans l'app**.
+- [ ] Suppression du compte **dans l'app** : une DEMANDE lancée depuis le Profil, traitée
+      par l'admin de la résidence sous un délai annoncé (arbitrage de Philippe, 12/11/2026) —
+      #166, bloqué par coprofirst#2699. À confronter à la règle d'Apple en vigueur.
+- [ ] Notes de revue : dire que la communauté est fermée (comptes validés par la résidence),
+      que tout contenu se signale au conseil syndical, qui modère — pas de blocage d'un
+      auteur (arbitrage du 12/11/2026, #167 ; à rouvrir si la revue le demande).
+- [x] Texte et avis d'Apache-2.0 des paquets embarqués dans « À propos » (#168), tenus par
+      `scripts/verifier-dependances.py`.
 - [ ] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception).
 - [ ] Compte de démonstration pour la revue, sur `demo.coprofirst.fr`, sans donnée réelle.
 - [ ] Aucune donnée personnelle dans une charge de notification — côté app, tenu

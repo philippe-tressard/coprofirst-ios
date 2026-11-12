@@ -18,14 +18,17 @@ enum FixturesComptesCS {
     static let comptes = #"""
         [
           {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@exemple.fr", "actif": false,
+           "nom_affiche": "Camille EXEMPLE", "nom_aide_affiche": "", "est_moderateur": false,
            "role": "propriétaire", "statut": "copropriétaire_résident", "batiment_nom": "Bâtiment A",
            "cree_le": "2026-11-06T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
            "preferences_notifications": "{}"},
           {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@exemple.fr", "actif": false,
+           "nom_affiche": "Dominique FICTIF", "nom_aide_affiche": "", "est_moderateur": false,
            "role": "résident", "statut": "locataire", "batiment_nom": "Bâtiment B",
            "cree_le": "2026-11-07T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
            "preferences_notifications": "{}"},
           {"id": 503, "prenom": "Alix", "nom": "Modèle", "email": "alix@exemple.fr", "actif": false,
+           "nom_affiche": "Alix MODÈLE", "nom_aide_affiche": "Claude FICTIF", "est_moderateur": false,
            "role": "externe", "statut": "aidant", "prenom_aide": "Claude", "nom_aide": "Fictif",
            "cree_le": "2026-11-08T07:00:00", "onboarding_complete": false, "onboarding_etape": 1,
            "preferences_notifications": "{}"}
@@ -47,6 +50,7 @@ enum FixturesComptesCS {
     /// POST /admin/comptes/{id}/traiter → `CompteTraiteResult` : un compte apparié.
     static let validation = #"""
         {"user": {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@exemple.fr",
+                  "nom_affiche": "Camille EXEMPLE", "nom_aide_affiche": "", "est_moderateur": false,
                   "actif": true, "role": "propriétaire", "statut": "copropriétaire_résident",
                   "cree_le": "2026-11-06T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
                   "preferences_notifications": "{}"},
@@ -56,6 +60,7 @@ enum FixturesComptesCS {
     /// …et un compte que l'import ne connaît pas : l'avertissement du serveur.
     static let validationSansLot = #"""
         {"user": {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@exemple.fr",
+                  "nom_affiche": "Dominique FICTIF", "nom_aide_affiche": "", "est_moderateur": false,
                   "actif": true, "role": "résident", "statut": "locataire", "cree_le": "2026-11-07T08:00:00",
                   "onboarding_complete": false, "onboarding_etape": 1, "preferences_notifications": "{}"},
          "annonce": {"ton": "warning", "texte": "Compte activé. ⚠️ Aucun lot trouvé dans l'import."}}
@@ -69,10 +74,16 @@ enum FixturesComptesCS {
         Reponse(nom: "validationSansLot", schema: "CompteTraiteResult", json: validationSansLot),
     ]
 
+    /// Ce que `UserRead` sert au-dessus du plancher (contrat 1.25.0, coprofirst#2633) : le
+    /// nom affiché du compte et de la personne aidée (#135), et `est_moderateur` (#136).
+    static let auDessus = AuDessusDuPlancher(
+        schema: "UserRead", champs: ["nom_affiche", "nom_aide_affiche", "est_moderateur"], contrat: "1.25.0")
+
     // MARK: - Lues comme le client généré les lit, branchées comme le service réel
 
     static func comptesLus() throws -> [CompteEnAttente] {
-        try Relecture.generee([Components.Schemas.UserRead].self, json: comptes).map(CompteEnAttente.init)
+        CompteEnAttente.lus(
+            try Relecture.generee([Components.Schemas.UserRead].self, json: comptes), corps: Data(comptes.utf8))
     }
 
     static func commandesLues() throws -> [CommandeEnAttente] {

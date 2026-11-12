@@ -58,7 +58,7 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) ; sur la fiche, une suite de l'Historique se corrige et s'efface depuis son entrée, selon le droit servi avec elle (#91, #93) |
 | `mes-demandes` | `kanban` | fait | #11 | Fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
@@ -84,7 +84,7 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 | `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
 | `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
 | `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
-| `prestataires` | `contrats` | fait | #13 | En lecture : résumé, échéances, documents |
+| `prestataires` | `contrats` | fait | #13, #125 | En lecture : résumé, échéances, fréquence servie, documents |
 | `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 
 ### #14 — Communauté, FAQ, Profil et Notifications

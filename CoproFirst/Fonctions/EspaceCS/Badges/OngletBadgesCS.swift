@@ -131,7 +131,7 @@ private struct CarteAccesDuParc: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)
+        let ouvre = acces.lieu(arbre: perimetres)
         Carte {
             VStack(alignment: .leading, spacing: 6) {
                 ViewThatFits(in: .horizontal) {
@@ -144,8 +144,8 @@ private struct CarteAccesDuParc: View {
                 if let lot = acces.lotLibelle {
                     Label(lot, systemImage: "house").font(.subheadline).foregroundStyle(palette.textMuted)
                 }
-                if !ouvre.isEmpty {
-                    Label(ouvre.joined(separator: ", "), systemImage: "door.left.hand.open")
+                if let ouvre {
+                    Label(ouvre, systemImage: "door.left.hand.open")
                         .font(.subheadline).foregroundStyle(palette.textMuted)
                 }
                 if acces.chezLocataire {

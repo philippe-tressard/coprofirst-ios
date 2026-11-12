@@ -79,7 +79,8 @@ struct OngletReporting: OngletDePage {
         affaires: (0..<3).map {
             AffaireSuivie(
                 id: -$0 - 1, numero: "TK-A00000", titre: "Une affaire de la résidence", statut: "ouvert",
-                libelleCategorie: "Catégorie", ouverteLe: "2026-01-01", ageJours: 10, anciennete: "recente",
+                libelleStatut: "Ouvert", libelleCategorie: "Catégorie", ouverteLe: "2026-01-01", ageJours: 10,
+                anciennete: "recente",
                 apercu: "L'aperçu de l'affaire arrive.", apercuIA: false, aEvolue: false, motifEvolution: nil,
                 etatVisite: nil)
         })

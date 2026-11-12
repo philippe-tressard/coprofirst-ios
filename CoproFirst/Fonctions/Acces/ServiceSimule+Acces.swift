@@ -15,7 +15,8 @@ extension ServiceSimule: ServiceAcces {
 
     func monBail(_ installation: Installation) async throws -> BailDuLocataire? {
         try await Task.sleep(for: .milliseconds(200))
-        return nil  // le compte simulé n'est pas locataire
+        // Le compte simulé n'est locataire que sous `-compte locataire`.
+        return DroitsOnglet(profil: profilSimule).locataire ? try FixturesAcces.monBailLu() : nil
     }
 
     func baux(_ installation: Installation, tous: Bool) async throws -> [Bail] {

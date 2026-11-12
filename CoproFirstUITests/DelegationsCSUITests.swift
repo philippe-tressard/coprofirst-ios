@@ -18,7 +18,7 @@ final class DelegationsCSUITests: XCTestCase {
         plus.tap()
         let entree = app.libelleAcces(libelle)
         // Aux grandes tailles, la ligne est sous le pli : la liste ne la crée qu'au défilement.
-        _ = entree.apparait()
+        _ = entree.sonde()
         for _ in 0..<6 where !(entree.exists && entree.isHittable) { app.swipeUp() }
         XCTAssertTrue(entree.exists, "« \(libelle) » dans Plus")
         entree.tap()

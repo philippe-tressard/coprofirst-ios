@@ -38,12 +38,15 @@ struct Annuaire: Codable, Hashable, Sendable {
         var email: String?
         var telephone: String?
         var estPrincipal: Bool?
+        /// « Prénom NOM », servi (`nom_affiche`, coprofirst#2505) — l'app ne le compose pas.
+        /// Facultatif : un annuaire gardé avant #135 se relit sans lui.
+        var nomServi: String?
 
-        /// La civilité, le prénom et le nom, tels que servis. La convention du site
-        /// (« Prénom NOM », `nomAffiche`) vit dans son front : l'app attend que l'API
-        /// serve le nom affiché (coprofirst#2505).
+        /// La civilité puis le nom affiché, comme la carte du site (`CarteContact.svelte`).
         var nomComplet: String {
-            [genre, prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }
+            let nomLu = FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom)
+            return [genre, nomLu == FormatsDuSite.tiret ? nil : nomLu]
+                .compactMap { $0?.trimmingCharacters(in: .whitespaces) }
                 .filter { !$0.isEmpty }.joined(separator: " ")
         }
 
@@ -159,14 +162,15 @@ extension Annuaire {
                     Membre(
                         id: $0.id, genre: $0.genre, prenom: $0.prenom, nom: $0.nom, batimentNom: $0.batimentNom,
                         estGestionnaireSite: $0.estGestionnaireSite, estPresident: $0.estPresident,
-                        photoUrl: $0.photoUrl)
+                        photoUrl: $0.photoUrl, nomServi: $0.nomAffiche)
                 }),
             syndic: Syndic(
                 nomSyndic: lu.syndic.nomSyndic, adresse: lu.syndic.adresse, siteWeb: lu.syndic.siteWeb,
                 membres: lu.syndic.membres.map {
                     Membre(
                         id: $0.id, genre: $0.genre, prenom: $0.prenom, nom: $0.nom, photoUrl: $0.photoUrl,
-                        fonction: $0.fonction, email: $0.email, telephone: $0.telephone, estPrincipal: $0.estPrincipal)
+                        fonction: $0.fonction, email: $0.email, telephone: $0.telephone, estPrincipal: $0.estPrincipal,
+                        nomServi: $0.nomAffiche)
                 }),
             whatsappUrl: lu.whatsappUrl)
     }

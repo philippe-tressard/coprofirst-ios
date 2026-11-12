@@ -29,10 +29,20 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     var porteurRang: Int
     var porteurId: Int?
     var lotLibelle: String?
-    /// Ce que l'accès ouvre : des CODES de périmètre — `Perimetre.libelles` les rend.
+    /// Ce que l'accès ouvre : des CODES de périmètre — nommés par l'arbre au seul repli
+    /// d'une installation antérieure au contrat 1.24.0 (`lieu(arbre:)`).
     var perimetreCible: [String]
     var statut: String
     var chezLocataire: Bool
+    /// Ce qu'il ouvre, nommé par le serveur (`perimetre_libelle`, contrat 1.24.0, #130) ;
+    /// `nil` d'une installation antérieure.
+    var perimetreLibelle: String?
+
+    /// Ce que l'accès ouvre, à montrer : le lieu servi (`""` → rien), sinon le repli au
+    /// plancher (`LieuServi`, le seul).
+    func lieu(arbre: [Perimetre]) -> String? {
+        LieuServi.lieu(perimetreLibelle, codes: perimetreCible, arbre: arbre)
+    }
 
     var id: String { "\(type.rawValue)-\(numero)" }
 
@@ -45,26 +55,29 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
 extension ServiceAPI: ServiceBadgesCS {
     func parc(_ installation: Installation) async throws -> [AccesDuParc] {
         let client = client(installation.adresse)
-        async let vigiks = appeler { try await client.getAccesAdminVigiks() }
-        async let telecommandes = appeler { try await client.getAccesAdminTelecommandes() }
+        // Corps gardés : le lieu servi est au-dessus du plancher (#130).
+        async let vigiks = appeler { try await CorpsServi.garder { try await client.getAccesAdminVigiks() } }
+        async let telecommandes = appeler {
+            try await CorpsServi.garder { try await client.getAccesAdminTelecommandes() }
+        }
         return try Self.lus(.vigik, await vigiks) + Self.lus(.telecommande, await telecommandes)
     }
 
     private static func lus(
-        _ type: TypeAcces, _ sortie: Operations.GetAccesAdminVigiks.Output
+        _ type: TypeAcces, _ servie: (Operations.GetAccesAdminVigiks.Output, Data?)
     ) throws -> [AccesDuParc] {
-        switch sortie {
-        case .ok(let ok): return try ok.body.json.map { AccesDuParc(type, $0) }
+        switch servie.0 {
+        case .ok(let ok): return AccesDuParc.lus(type, try ok.body.json, corps: servie.1)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     private static func lus(
-        _ type: TypeAcces, _ sortie: Operations.GetAccesAdminTelecommandes.Output
+        _ type: TypeAcces, _ servie: (Operations.GetAccesAdminTelecommandes.Output, Data?)
     ) throws -> [AccesDuParc] {
-        switch sortie {
-        case .ok(let ok): return try ok.body.json.map { AccesDuParc(type, $0) }
+        switch servie.0 {
+        case .ok(let ok): return AccesDuParc.lus(type, try ok.body.json, corps: servie.1)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -78,6 +91,16 @@ extension AccesDuParc {
             porteurRang: acces.porteurRang, porteurId: acces.porteurId, lotLibelle: acces.lotLibelle,
             perimetreCible: acces.perimetreCible ?? [], statut: acces.statut.rawValue,
             chezLocataire: acces.chezLocataire)
+    }
+
+    /// Une liste servie : le type généré, puis le lieu que le corps sert au-dessus du
+    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
+    static func lus(_ type: TypeAcces, _ generes: [Components.Schemas.AccesAdminOut], corps: Data?) -> [AccesDuParc] {
+        ServiAuDessusDuPlancher.relire(generes, corps: corps, id: \.id) {
+            AccesDuParc(type, $0)
+        } poser: {
+            $0.perimetreLibelle = $1?.perimetreLibelle?.valeur
+        }
     }
 }
 

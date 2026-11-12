@@ -10,13 +10,44 @@ import Testing
 /// réenregistrer qui perdrait ce que l'app ne sait pas écrire.
 @MainActor
 struct ModifierAffaireTests {
+    /// Une affaire dont le lecteur corrige le contenu (`peut_modifier`) — sauf `contenu: false`.
     private func affaire(
-        description: String = "<p>Une fuite.</p>", perimetres: [String] = ["parking"]
+        description: String = "<p>Une fuite.</p>", perimetres: [String] = ["parking"], contenu: Bool = true
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "Fuite", description: description, categorie: "sinistre",
-            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [],
-            perimetres: perimetres)
+            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [],
+            droits: DroitsServisAffaire(modifier: contenu, corriger: true), perimetres: perimetres)
+    }
+
+    /// Le crayon sans le contenu (#127) : l'auteur d'une affaire engagée n'en règle plus
+    /// que l'urgence — un titre, un lieu changés ne partent pas.
+    @Test func unContenuFigeNEnvoieQueLUrgence() {
+        let origine = affaire(contenu: false)
+        var saisie = SaisieAffaire(modifiant: origine)
+        saisie.titre = "Fuite au parking"
+        saisie.perimetre = "jardin"
+        #expect(origine.contenuFige && saisie.edition(depuis: origine).vide && !saisie.prete(depuis: origine))
+        saisie.urgente = true
+        #expect(saisie.edition(depuis: origine) == EditionAffaire(urgente: true) && saisie.prete(depuis: origine))
+        #expect(!affaire().contenuFige)
+    }
+
+    /// Le faux serveur refuse ce que le vrai refuse : un contenu sans `peut_modifier`.
+    @Test func leServeurSimuleRefuseUnContenuFige() async throws {
+        let service = ServiceSimule(delai: .zero)
+        // Un résident : ni le rôle, ni « modère » — que le serveur sert, et que `DroitsOnglet`
+        // lit avant les rôles (#136).
+        service.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        service.profilSimule.estModerateur = false
+        let residence = ServiceSimule.residence
+        let avant = try service.detailSimule(41)
+        #expect(avant.droits.corriger && avant.contenuFige, "l'auteur de 41, engagée, garde le crayon seul")
+        await #expect(throws: ErreurService.self) {
+            try await service.enregistrer(EditionAffaire(titre: "Autre"), de: 41, dans: residence)
+        }
+        try await service.enregistrer(EditionAffaire(urgente: false), de: 41, dans: residence)
+        #expect(try !service.detailSimule(41).urgente && service.detailSimule(41).titre == avant.titre)
     }
 
     @Test func uneSaisieIntacteNEnvoieRien() {
@@ -71,6 +102,19 @@ struct ModifierAffaireTests {
         let detail = try #require(try ServiceSimule.affaires(id, conseil: true))
         let servies = try FixturesReferentielsAffaires.lus()
         #expect(servies.categorie(detail.categorie) != nil, "« \(detail.categorie) » : inconnue de la résidence")
+    }
+
+    /// « Modifier » propose ce que le serveur PERMET (#105), sans lire le profil : une
+    /// actualité ne se convertit qu'à qui il la permet, et une catégorie que ce compte ne
+    /// pourrait pas reposer ne se propose pas — elle resterait cochée sans se voir.
+    @Test func lesCategoriesDeLEditionSontCellesQueLeServeurPermet() throws {
+        let conseil = try FixturesReferentielsAffaires.lus(moderateur: true)
+        let resident = try FixturesReferentielsAffaires.lus(moderateur: false)
+        #expect(conseil.permises(enModifiant: "actualite") == conseil.permises, "le conseil convertit une actualité")
+        #expect(resident.permises(enModifiant: "panne") == resident.permises)
+        #expect(resident.permises(enModifiant: "actualite").isEmpty, "non permise : la catégorie ne se choisit pas")
+        #expect(resident.permises(enModifiant: "etude_travaux").isEmpty)
+        #expect(ReferentielsAffaires.vides.permises(enModifiant: "panne").isEmpty, "rien de servi : rien n'est offert")
     }
 
     @Test func laModificationSimuleeChangeLAffaire() async throws {

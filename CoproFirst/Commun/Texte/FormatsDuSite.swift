@@ -151,9 +151,16 @@ enum FormatsDuSite {
 
     // MARK: Personnes
 
-    /// Un nom tel que l'API le sert, prénom puis nom ; « — » s'il n'y en a pas.
-    /// `nomAffiche` du site (nom en capitales) n'est pas recopié : coprofirst#2507.
-    static func nom(_ prenom: String?, _ nom: String?) -> String {
+    /// Le nom d'une personne : « Prénom NOM » tel que le SERVEUR l'affiche (`nom_affiche`,
+    /// `locataire_nom_affiche`, `bailleur_nom_affiche`, `nom_aide_affiche` — contrat 1.25.0,
+    /// coprofirst#2633 lot 4, #135), jamais composé dans un écran.
+    ///
+    /// Non servi ou vide — une installation antérieure, une saisie pas encore enregistrée
+    /// (`POST /noms/affiche` n'est pas au client généré du plancher) — : le repli d'avant,
+    /// prénom puis nom tels que servis, « — » sans l'un ni l'autre. Ce repli vit ICI
+    /// seulement : `scripts/verifier-regles-servies.py` refuse toute autre composition.
+    static func nom(affiche: String?, prenom: String?, nom: String?) -> String {
+        if let servi = affiche?.trimmingCharacters(in: .whitespaces), !servi.isEmpty { return servi }
         let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         return morceaux.isEmpty ? tiret : morceaux.joined(separator: " ")
     }

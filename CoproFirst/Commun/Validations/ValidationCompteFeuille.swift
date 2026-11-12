@@ -49,7 +49,7 @@ struct ValidationCompteFeuille: View {
             }
             .scrollContentBackground(.hidden)
             .background(palette.bg)
-            .navigationTitle(FormatsDuSite.nom(compte.prenom, compte.nom))
+            .navigationTitle(compte.nomAffiche)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { BoutonsFeuille(
                     envoi: envoi, libelle: TextesEspaceCS.approuver, identifiant: "cs.validation.enregistrer",

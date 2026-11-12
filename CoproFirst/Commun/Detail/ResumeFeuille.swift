@@ -32,6 +32,7 @@ struct ResumeFeuille: View {
                     detail.font(.body).foregroundStyle(palette.text).tint(palette.primary)
                         .textSelection(.enabled)
                 }
+                PiecesJointesView(pieces: element.pieces, installation: installation)
                 if case .resume(let lien?) = element.cible,
                     let page = URL(string: lien, relativeTo: installation.adresse)?.absoluteURL,
                     page.host() == installation.adresse.host()

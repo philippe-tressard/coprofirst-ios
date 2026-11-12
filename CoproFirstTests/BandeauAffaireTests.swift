@@ -16,11 +16,12 @@ struct BandeauAffaireTests {
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "T", description: "", categorie: categorie, statut: "en_cours",
-            urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [], droits: droits,
-            archivee: archivee, fusionnee: fusionnee)
+            urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [], droits: droits,
+            archivee: archivee, fusionnee: fusionnee, referentiels: (try? FixturesReferentielsAffaires.lus()) ?? .vides)
     }
 
-    private let tout = DroitsServisAffaire(repondre: true, changerEtat: true, modifier: true, archiver: true)
+    private let tout = DroitsServisAffaire(
+        repondre: true, changerEtat: true, modifier: true, archiver: true, corriger: true)
 
     @Test func leConseilSuitLAffaireSansRepondre() {
         #expect(
@@ -63,7 +64,11 @@ struct BandeauAffaireTests {
         saisie.contenu = ""
         saisie.statut = "résolu"
         #expect(saisie.prete && saisie.type == "etat", "un nouvel état suffit")
-        #expect(SaisieSuite.etats(pour: affaire(tout)) == TablesAffaires.ordreDesStatuts)
+        // Les états SERVIS proposables (#105) : le cycle, sans `fermé` ni `publie`.
+        #expect(
+            SaisieSuite.etats(pour: affaire(tout)).map(\.code)
+                == ["ouvert", "en_ag", "en_cours", "chez_prestataire", "résolu", "annulé"])
+        #expect(SaisieSuite.etats(pour: affaire(tout)).first { $0.code == "en_cours" }?.libelle == "Chez le syndic")
         #expect(SaisieSuite.etats(pour: affaire(tout, categorie: "actualite")).isEmpty)
     }
 
@@ -84,6 +89,7 @@ struct BandeauAffaireTests {
         try await service.archiverAffaire(41, dans: residence)
         let apres = try service.detailSimule(41)
         #expect(apres.statut == "résolu" && apres.archivee)
-        #expect(apres.suites.last?.changementDEtat == "Chez le syndic → Résolu")
+        #expect(apres.suites.last?.changementDEtat(apres.referentiels) == "Chez le syndic → Résolu")
+        #expect(apres.statutLibelle == "Résolu", "le libellé suit l'état, servi")
     }
 }

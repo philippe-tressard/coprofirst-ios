@@ -21,6 +21,7 @@ enum FixturesAnnoncesHall {
            "message": "<p>L'eau sera coupée <strong>jeudi de 8 h à 12 h</strong> pour le remplacement d'une vanne.</p>",
            "apercu": "L'eau sera coupée jeudi de 8 h à 12 h pour le remplacement d'une vanne.",
            "assiste_ia": false, "perimetre_cible": ["bat_a"], "perimetre_label": "Bâtiment A",
+           "perimetre_libelle": "Bât. A",
            "format_demande": "auto", "format_effectif": "A5", "format_label": "A5", "images": [],
            "destinataires": ["Lucie Exemple", "Marc Démo"], "envoye_le": "2026-11-06T09:00:00",
            "archivee": false, "archivee_manuellement": false, "ticket_id": null, "pdf_nom": "annonce-7.pdf",
@@ -30,6 +31,7 @@ enum FixturesAnnoncesHall {
            "message": "<p>Rendez-vous dans le jardin le 6 juin à 19 h. Chacun apporte un plat !</p>",
            "apercu": "Rendez-vous dans le jardin le 6 juin à 19 h. Chacun apporte un plat !",
            "assiste_ia": true, "perimetre_cible": [], "perimetre_label": "Toute la copropriété",
+           "perimetre_libelle": "",
            "format_demande": "A4", "format_effectif": "A4", "format_label": "A4", "images": [],
            "destinataires": [], "envoye_le": null, "archivee": false, "archivee_manuellement": false,
            "ticket_id": 31, "pdf_nom": "annonce-6.pdf", "taille_octets": 51877, "cree_le": "2026-10-30T18:30:00",
@@ -38,6 +40,7 @@ enum FixturesAnnoncesHall {
            "message": "<p>Les encombrants seront enlevés le 2 octobre au matin.</p>",
            "apercu": "Les encombrants seront enlevés le 2 octobre au matin.",
            "assiste_ia": false, "perimetre_cible": [], "perimetre_label": "Toute la copropriété",
+           "perimetre_libelle": "",
            "format_demande": "A5", "format_effectif": "A5", "format_label": "A5", "images": [],
            "destinataires": ["Lucie Exemple"], "envoye_le": "2026-09-25T08:00:00", "archivee": true,
            "archivee_manuellement": true, "ticket_id": null, "pdf_nom": "annonce-4.pdf", "taille_octets": 40112,
@@ -46,7 +49,8 @@ enum FixturesAnnoncesHall {
           {"id": 3, "titre": "Nettoyage du parking",
            "message": "<p>Merci de libérer vos places le 12 mars au matin.</p>",
            "apercu": "Merci de libérer vos places le 12 mars au matin.", "assiste_ia": false,
-           "perimetre_cible": ["parking"], "perimetre_label": "Parking", "format_demande": "A6",
+           "perimetre_cible": ["parking"], "perimetre_label": "Parking", "perimetre_libelle": "Parking",
+           "format_demande": "A6",
            "format_effectif": "A6", "format_label": "A6", "images": [], "destinataires": ["Lucie Exemple", "Marc Démo"],
            "envoye_le": "2026-03-05T10:00:00", "archivee": true, "archivee_manuellement": false, "ticket_id": null,
            "pdf_nom": "annonce-3.pdf", "taille_octets": 39004, "cree_le": "2026-03-05T10:00:00",
@@ -59,9 +63,15 @@ enum FixturesAnnoncesHall {
         Reponse(nom: "affiches", schema: "AnnonceHallRead", json: affiches)
     ]
 
+    /// Le lieu de chaque affiche, servi au-dessus du plancher (coprofirst v3.88.1, #130).
+    static let auDessus = AuDessusDuPlancher(
+        schema: "AnnonceHallRead", champs: ["perimetre_libelle"], contrat: "1.24.0")
+
     /// Lues comme le client généré les lit, branchées comme le service réel.
     static func affichesLues() throws -> [AnnonceHall] {
-        try Relecture.generee([Components.Schemas.AnnonceHallRead].self, json: affiches).map(AnnonceHall.init)
+        AnnonceHall.lues(
+            try Relecture.generee([Components.Schemas.AnnonceHallRead].self, json: affiches),
+            corps: Data(affiches.utf8))
     }
 }
 #endif
