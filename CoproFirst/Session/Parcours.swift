@@ -115,6 +115,8 @@ final class Parcours {
     /// Relit le profil de l'utilisateur dans la résidence ouverte (GET /auth/me).
     func rafraichirProfil() async {
         guard let installation = ouverte, let profil = try? await service.profil(installation) else { return }
+        // Une lecture partie avant la déconnexion ne redit pas le compte qu'elle a effacé (#94).
+        guard ouverte?.adresse == installation.adresse else { return }
         connues.noter(profil, pour: installation)
     }
 
@@ -133,6 +135,7 @@ final class Parcours {
     /// retour à la connexion, adresse pré-remplie, avec ce que l'écran doit dire.
     func revenirALaConnexion(_ installation: Installation, avis: String?) {
         connues.oublierFaceID(installation)
+        connues.oublierLeCompte(installation)
         changerDeResidence = false
         ouverte = nil
         reconnue = installation

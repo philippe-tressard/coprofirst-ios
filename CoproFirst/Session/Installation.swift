@@ -26,11 +26,16 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     var versionContrat: String?
     /// Une variante du logo pour le fond sombre (`site_logo_sombre` non vide, #70).
     var aUnLogoSombre: Bool?
+    /// L'opérateur de la plateforme est désigné par l'exploitant — une instance commune
+    /// (`operateur_par_exploitant` = `1`, clé CALCULÉE par le serveur, `utils/config_publique`) :
+    /// la fiche d'un compte opérateur le dit à la place du geste (#94). Absent d'une
+    /// résidence retenue avant #94, ou d'une installation qui ne le sert pas : rien n'est dit.
+    var operateurParExploitant: Bool?
 
     init(
         adresse: URL, nom: String, aUnLogo: Bool, codePalette: String? = nil,
         ordrePages: [String]? = nil, surchargesPages: [String: SurchargePage]? = nil,
-        versionContrat: String? = nil, aUnLogoSombre: Bool? = nil
+        versionContrat: String? = nil, aUnLogoSombre: Bool? = nil, operateurParExploitant: Bool? = nil
     ) {
         self.adresse = adresse
         self.nom = nom
@@ -40,6 +45,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
         self.surchargesPages = surchargesPages
         self.versionContrat = versionContrat
         self.aUnLogoSombre = aUnLogoSombre
+        self.operateurParExploitant = operateurParExploitant
     }
 
     var id: URL { adresse }
@@ -95,7 +101,8 @@ extension Installation {
             adresse: adresse, nom: nom, aUnLogo: !(cles["site_logo"] ?? "").isEmpty,
             codePalette: cles["site_palette"], ordrePages: OrdrePages.lire(cles["pages_order"]),
             surchargesPages: surcharges, versionContrat: cles["version_contrat"],
-            aUnLogoSombre: !(cles["site_logo_sombre"] ?? "").isEmpty)
+            aUnLogoSombre: !(cles["site_logo_sombre"] ?? "").isEmpty,
+            operateurParExploitant: cles["operateur_par_exploitant"] == "1")
     }
 }
 

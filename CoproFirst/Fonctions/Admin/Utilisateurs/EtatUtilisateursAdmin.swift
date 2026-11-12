@@ -172,10 +172,17 @@ enum TextesUtilisateursAdmin {
     static func actionRole(_ offert: GesteDeRole) -> String {
         "\(offert.geste == .ajouter ? "Ajouter" : "Retirer") le rôle \(RolesUtilisateur.libelleRole(offert.role))"
     }
-    static func confirmerRole(_ offert: GesteDeRole, _ nom: String) -> String {
-        "\(actionRole(offert)) \(offert.geste == .ajouter ? "à" : "de") \(nom) ?"
+    /// La question de la confirmation : le nom servi du compte, ou « votre compte » (`ConfirmationRole`).
+    static func confirmerRole(_ offert: GesteDeRole, _ destinataire: String) -> String {
+        "\(actionRole(offert)) \(offert.geste == .ajouter ? "à" : "de") \(destinataire) ?"
     }
     static let notifie = "Cette personne recevra une notification."
+    // Le compte du lecteur et l'instance commune (#94) — `OngletUtilisateurs.svelte` et
+    // `GestesRolesCompte.svelte` de coprofirst v3.88.1, absents de `tables-clients.json`.
+    static let votreCompte = "votre compte"
+    static let perdraLAdministration = "Vous perdrez aussitôt l'accès à l'administration."
+    static let garderaLaSupervision = "Vous n'y garderez que la supervision de la plateforme."
+    static let operateurParExploitant = "Opérateur désigné par l’exploitant"
     static let confirmer = "Confirmer"
 
     // Les annonces

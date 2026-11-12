@@ -109,9 +109,11 @@ enum LancementSimule {
     }
 
     /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
-    /// variante sombre, servis à ce contrat (#70).
+    /// variante sombre, servis à ce contrat (#70) ; avec `-instance-commune`, l'opérateur
+    /// désigné par l'exploitant (`operateur_par_exploitant`, #94).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
+        if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true

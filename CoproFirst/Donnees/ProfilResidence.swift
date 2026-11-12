@@ -28,6 +28,13 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// #136) : lu par `DroitsOnglet`. Facultatif : un profil gardé avant #136 se relit
     /// sans lui, et ne modère pas tant que `GET /auth/me` ne l'a pas redit (défaut fermé).
     var estModerateur: Bool?
+    /// L'identifiant du compte dans cette résidence (`id` de `GET /auth/me`) : il dit quel
+    /// compte de la liste d'« Utilisateurs » est celui du lecteur — la confirmation d'un
+    /// geste de rôle dit alors « votre compte », comme le site (`pourSoi`, #94). Gardé
+    /// avec le profil, au coffre ; la déconnexion l'efface (`oublierLeCompte`), le
+    /// prochain `GET /auth/me` le redit. Facultatif : un profil gardé avant #94 se relit
+    /// sans lui, et la confirmation dit alors « Cette personne recevra une notification. »
+    var idCompte: Int?
 
     /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
     /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
@@ -59,7 +66,7 @@ extension ProfilResidence {
         self.init(
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
             libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
-            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur ?? false)
+            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur ?? false, idCompte: moi.id)
     }
 }
 

@@ -16,7 +16,8 @@ enum FixturesUtilisateursAdmin {
     /// GET /admin/utilisateurs → `[UtilisateurAdminRead]` : le nom affiché, « Prénom NOM »
     /// (#135), et les gestes de rôle d'un administrateur qui lit la liste — Camille est le
     /// seul administrateur, son rôle Admin ne se retire pas ; un compte inactif n'a aucun
-    /// geste.
+    /// geste ; Sacha, le compte technique de l'opérateur, n'en a aucun non plus : son rôle
+    /// ne se retire pas d'ici (une instance commune, `-instance-commune`, #94).
     static let utilisateurs = #"""
         [
           {"id": 11, "prenom": "Camille", "nom": "Exemple", "nom_affiche": "Camille EXEMPLE",
@@ -59,7 +60,17 @@ enum FixturesUtilisateursAdmin {
            "onboarding_complete": false, "onboarding_etape": 0, "preferences_notifications": "{}",
            "communaute_banni": false,
            "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "derniere_connexion": null, "cree_le": "2026-11-08T21:00:00"}
+           "derniere_connexion": null, "cree_le": "2026-11-08T21:00:00"},
+          {"id": 15, "prenom": "Sacha", "nom": "Plateforme", "nom_affiche": "Sacha PLATEFORME",
+           "nom_aide_affiche": "", "est_moderateur": false, "email": "operateur@exemple.fr",
+           "statut": "admin_technique", "role": "externe", "roles": ["operateur"],
+           "actif": true, "email_verifie": true, "batiment_nom": null, "has_lots": false, "has_tc": false,
+           "has_vigik": false, "has_bail": false, "etiquettes": {"loti": "manque", "tc": "sans_objet",
+           "vigik": "sans_objet", "bail": "sans_objet"},
+           "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
+           "communaute_banni": false,
+           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
+           "derniere_connexion": "2026-11-10T07:30:00", "cree_le": "2025-01-15T10:00:00"}
         ]
         """#
 
