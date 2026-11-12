@@ -135,7 +135,10 @@ final class CartesDuFilUITests: XCTestCase {
             question.tap()
             let groupe = app.elementAcces("modifier.plusDeDetails")
             if essentielle {
-                XCTAssertTrue(groupe.apparait(), "l'urgence d'une question se range")
+                // Un `Form` ne crée pas ses lignes hors de l'écran : sur un petit écran (celui de
+                // la CI), le groupe est sous le pli — on défile jusqu'à lui (rouge du wagon #160).
+                for _ in 0..<6 where !groupe.sonde() { app.swipeUp() }
+                XCTAssertTrue(groupe.exists, "l'urgence d'une question se range")
                 let urgente = app.elementAcces("modifier.urgente")
                 for _ in 0..<6 where !(urgente.exists && urgente.isHittable) { app.swipeUp() }
                 XCTAssertTrue(urgente.exists, "le groupe s'ouvre d'office : l'urgence porte une valeur")
