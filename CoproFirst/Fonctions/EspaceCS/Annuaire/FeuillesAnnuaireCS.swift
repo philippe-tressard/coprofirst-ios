@@ -38,7 +38,7 @@ struct FeuilleEnteteConseil: View {
                     Picker(TextesAnnuaire.president, selection: $president) {
                         Text(TextesAnnuaireCS.aucun).tag(Int?.none)
                         ForEach(Array(conseil.membres.enumerated()), id: \.offset) { rang, membre in
-                            Text(FormatsDuSite.nom(membre.prenom, membre.nom)).tag(Int?.some(rang))
+                            Text(membre.nomAffiche).tag(Int?.some(rang))
                         }
                     }
                     .pickerStyle(.inline)
@@ -92,7 +92,8 @@ struct FeuilleMembreConseil: View {
             membre.batimentId = trouve.batimentId
             membre.batimentNom = trouve.batimentNom
             membre.etage = trouve.etage
-            membre.etageLibelle = nil
+            // L'étage en clair tel que le serveur le sert ; à défaut, rien jusqu'à la relecture.
+            membre.etageLibelle = trouve.etageLibelle
         }
         membre.userId = membre.userId ?? trouve.userId
     }
@@ -133,7 +134,7 @@ struct FeuilleEnteteSyndic: View {
                     Picker(TextesAnnuaire.principal, selection: $principal) {
                         Text(TextesAnnuaireCS.aucun).tag(Int?.none)
                         ForEach(Array(syndic.membres.enumerated()), id: \.offset) { rang, membre in
-                            Text(FormatsDuSite.nom(membre.prenom, membre.nom)).tag(Int?.some(rang))
+                            Text(membre.nomAffiche).tag(Int?.some(rang))
                         }
                     }
                     .pickerStyle(.inline)

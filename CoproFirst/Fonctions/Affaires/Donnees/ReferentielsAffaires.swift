@@ -46,9 +46,6 @@ struct ReferentielsAffaires: Hashable, Sendable {
 
     func categorie(_ code: String) -> Categorie? { categories.first { $0.code == code } }
 
-    /// « Chez le syndic » : le libellé servi d'un état ; le code, s'il est inconnu.
-    func libelle(statut code: String) -> String { statuts.first { $0.code == code }?.libelle ?? code }
-
     /// Les états qu'une Suite offre, dans l'ordre servi (`etatsDeLaSuite` du site).
     var proposables: [Statut] { statuts.filter(\.proposable) }
 

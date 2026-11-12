@@ -14,7 +14,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let creeLe: Date
     var misAJourLe: Date?
     var statut: String
-    /// « Chez le syndic » : le libellé que le serveur SERT (`statut_libelle`), jamais vide (#105).
+    /// « Chez le syndic » : l'état en clair que le serveur SERT (`statut_libelle`, au contrat
+    /// du plancher, jamais vide — #127, #105). Un geste fait ici (glisser au Kanban) y pose
+    /// le libellé de l'état servi par les référentiels : aucun repli sur une table.
     var statutLibelle: String
     /// Close, au sens du SERVEUR (`TicketRead.close`, `utils/etat_affaire`) : l'app ne
     /// compare pas son statut à une liste d'états clos (#54).
@@ -47,6 +49,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutDeplacer: Bool
     /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
     var peutArchiver: Bool
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
+    /// antérieure : aucune pastille.
+    var lecture: Lecture?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }
     /// La date qui range une affaire aux Archives : sa dernière activité.
@@ -64,18 +69,17 @@ struct OptionDeSuivi: Identifiable, Hashable, Sendable {
     /// Les options offertes : celles des statuts PRÉSENTS parmi les affaires actives — les
     /// états du cycle, dans l'ordre SERVI (`statuts` des référentiels, `proposable` : ni
     /// `publie` d'une actualité ni `fermé`), les statuts d'un groupe réunis — `statutsPresents`
-    /// du site. Le libellé d'un statut seul est celui que l'affaire sert (#105).
+    /// du site. Le libellé d'un statut seul est celui que les référentiels servent (#105).
     static func presentes(dans affaires: [Affaire], servis: [ReferentielsAffaires.Statut]) -> [OptionDeSuivi] {
         let presents = Set(affaires.map(\.statut))
         var options: [OptionDeSuivi] = []
-        for statut in servis.filter(\.proposable).map(\.code) where presents.contains(statut) {
-            if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut) }) {
+        for statut in servis where statut.proposable && presents.contains(statut.code) {
+            if let groupe = TablesAffaires.groupesDeSuivi.first(where: { $0.statuts.contains(statut.code) }) {
                 if !options.contains(where: { $0.code == groupe.code }) {
                     options.append(.init(code: groupe.code, libelle: groupe.libelle, statuts: Set(groupe.statuts)))
                 }
             } else {
-                let libelle = affaires.first { $0.statut == statut }?.statutLibelle ?? statut
-                options.append(.init(code: statut, libelle: libelle, statuts: [statut]))
+                options.append(.init(code: statut.code, libelle: statut.libelle, statuts: [statut.code]))
             }
         }
         return options

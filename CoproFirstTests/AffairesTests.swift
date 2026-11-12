@@ -191,8 +191,13 @@ import Testing
 @Test func lesEtatsEtLeursLibellesSontServis() throws {
     let servis = try FixturesReferentielsAffaires.lus()
     #expect(servis.proposables.map(\.code) == ["ouvert", "en_ag", "en_cours", "chez_prestataire", "résolu", "annulé"])
-    #expect(servis.libelle(statut: "en_cours") == "Chez le syndic")
-    #expect(servis.libelle(statut: "inconnu") == "inconnu", "un code inconnu se montre tel quel, jamais vide")
+    // L'état en clair, par sa seule écriture (#127, #105) : servi avec l'objet d'abord,
+    // sinon par les référentiels servis, sinon le code — plus aucune table du site.
+    #expect(StatutsAffaire.libelle("en_cours", servi: "En cours (servi)", dans: servis) == "En cours (servi)")
+    #expect(StatutsAffaire.libelle("en_cours", servi: nil, dans: servis) == "Chez le syndic")
+    #expect(StatutsAffaire.libelle("en_cours", servi: "", dans: servis) == "Chez le syndic", "vide : pas servi")
+    #expect(StatutsAffaire.libelle("inconnu", servi: nil, dans: servis) == "inconnu", "jamais vide")
+    #expect(StatutsAffaire.libelle("en_cours", servi: nil, dans: .vides) == "en_cours", "rien de servi : le code")
 }
 
 // MARK: - Création

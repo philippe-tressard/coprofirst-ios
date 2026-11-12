@@ -85,7 +85,10 @@ final class MagasinAffairesSimule: @unchecked Sendable {
     }
 
     static func libelle(_ categorie: String) -> String { referentiels?.categorie(categorie)?.libelle ?? categorie }
-    static func libelle(statut: String) -> String { referentiels?.libelle(statut: statut) ?? statut }
+    /// `statut_libelle`, tel que ce faux serveur le sert : celui de ses référentiels.
+    static func libelle(statut: String) -> String {
+        StatutsAffaire.libelle(statut, servi: nil, dans: referentiels ?? .vides)
+    }
 
     private var contenu = Apercu.affaires
     private let verrou = NSLock()

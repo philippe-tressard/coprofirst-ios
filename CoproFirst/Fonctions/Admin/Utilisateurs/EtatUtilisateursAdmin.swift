@@ -69,7 +69,7 @@ final class EtatUtilisateursAdmin {
         let interdire = !utilisateur.ban.banni()
         let ban = try await service.bannirCommunaute(utilisateur.id, interdit: interdire, dans: installation)
         if let rang = comptes.firstIndex(where: { $0.id == utilisateur.id }) { comptes[rang].ban = ban }
-        let nom = FormatsDuSite.nom(utilisateur.prenom, utilisateur.nom)
+        let nom = utilisateur.nomAffiche
         guard interdire else { return TextesUtilisateursAdmin.reautorise(nom) }
         return ban.interdit
             ? TextesUtilisateursAdmin.banniDefinitivement(nom) : TextesUtilisateursAdmin.banniUnMois(nom)
@@ -85,7 +85,7 @@ final class EtatUtilisateursAdmin {
         defer { enCours = nil }
         try await service.changerRole(utilisateur.id, role: offert.role, geste: offert.geste, dans: installation)
         await charger(service, installation)
-        return TextesUtilisateursAdmin.roleChange(offert, FormatsDuSite.nom(utilisateur.prenom, utilisateur.nom))
+        return TextesUtilisateursAdmin.roleChange(offert, utilisateur.nomAffiche)
     }
 
     func relancerRapprochement(
@@ -105,7 +105,7 @@ final class EtatUtilisateursAdmin {
         defer { enCours = nil }
         try await service.supprimerUtilisateur(utilisateur.id, dans: installation)
         comptes.removeAll { $0.id == utilisateur.id }
-        return TextesUtilisateursAdmin.supprime(FormatsDuSite.nom(utilisateur.prenom, utilisateur.nom))
+        return TextesUtilisateursAdmin.supprime(utilisateur.nomAffiche)
     }
 }
 

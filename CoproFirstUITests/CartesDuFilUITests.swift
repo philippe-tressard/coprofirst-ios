@@ -32,6 +32,14 @@ final class CartesDuFilUITests: XCTestCase {
         // Le fil des messages, sous l'Historique : la note interne du conseil n'y est pas.
         XCTAssertTrue(app.elementAcces("affaire.message.502").exists)
         XCTAssertFalse(app.elementAcces("affaire.message.503").exists, "une note interne est au conseil seul")
+        // « Le mien » et le nom de l'auteur sont SERVIS (`est_auteur`, `auteur_nom`, #138).
+        let bulle = { (id: Int, texte: String) in
+            app.descendants(matching: .any)
+                .matching(NSPredicate(format: "identifier == %@ AND label CONTAINS %@", "affaire.message.\(id)", texte))
+                .firstMatch.exists
+        }
+        XCTAssertTrue(bulle(501, "Vous"), "est_auteur servi : la bulle du compte")
+        XCTAssertTrue(bulle(502, "Le conseil syndical"), "auteur_nom servi")
         app.elementAcces("affaire.repondre").tap()
         let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.apparait())
@@ -46,6 +54,22 @@ final class CartesDuFilUITests: XCTestCase {
                     "Merci, je contourne la zone.")
             ).firstMatch
         XCTAssertTrue(message.apparait(), "la réponse rejoint le fil des messages")
+    }
+
+    /// L'auteur d'une affaire engagée garde le crayon (`peut_corriger`, #127), comme sur le
+    /// site : la feuille s'ouvre, son contenu se montre sans se modifier.
+    @MainActor
+    func testLAuteurDUneAffaireEngageeGardeLeCrayon() throws {
+        let app = lancer(["-compte", "resident"])
+        let carte = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(carte.apparait())
+        carte.tap()
+        XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
+        app.elementAcces("affaire.modifier").tap()
+        XCTAssertTrue(app.elementAcces("modifier.contenuFige").apparait())
+        let titreFige = NSPredicate(format: "identifier == %@ AND isEnabled == false", "modifier.titre")
+        XCTAssertTrue(
+            app.descendants(matching: .any).matching(titreFige).firstMatch.exists, "le titre ne se modifie plus")
     }
 
     /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
@@ -135,7 +159,10 @@ final class CartesDuFilUITests: XCTestCase {
             question.tap()
             let groupe = app.elementAcces("modifier.plusDeDetails")
             if essentielle {
-                XCTAssertTrue(groupe.apparait(), "l'urgence d'une question se range")
+                // Un `Form` ne crée pas ses lignes hors de l'écran : sur un petit écran (celui de
+                // la CI), le groupe est sous le pli — on défile jusqu'à lui (rouge du wagon #160).
+                for _ in 0..<6 where !groupe.sonde() { app.swipeUp() }
+                XCTAssertTrue(groupe.exists, "l'urgence d'une question se range")
                 let urgente = app.elementAcces("modifier.urgente")
                 for _ in 0..<6 where !(urgente.exists && urgente.isHittable) { app.swipeUp() }
                 XCTAssertTrue(urgente.exists, "le groupe s'ouvre d'office : l'urgence porte une valeur")

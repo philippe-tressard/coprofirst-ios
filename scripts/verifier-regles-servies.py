@@ -43,23 +43,56 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`peut_repondre` de l'affaire (`DroitsServisAffaire`)"),
     (re.compile(r"\bvar estConseil: Bool \{ roles\b|\.contains\(\"(conseil_syndical|admin)\"\)"),
      "un `peut_*` servi ; à défaut, la règle GÉNÉRÉE du site (`DroitsOnglet.cs`)"),
-    # #105 : les catégories offertes, les états d'une Suite et leurs libellés sont servis.
+    # #105 : les catégories offertes et les états d'une Suite sont servis.
     (re.compile(r"\bTablesAffaires\.(categories|ordreDesStatuts)\b|\bstatic let (ordreDesStatuts|categories: \[CategorieAffaire\])"),
      "les catégories permises et les états proposables servis (`ReferentielsAffaires.permises`, `.proposables`)"),
     (re.compile(r"\.reserveCS\b"), "`permise` des référentiels (`categorie_permise` du serveur)"),
     # « Modérer » déduit du profil (`DroitsAffaires.moderateur`) décidait encore des catégories de
     # « Modifier » et d'une phrase de « Nouvelle affaire ». Le paramètre du serveur SIMULÉ
-    # (`lus(moderateur:)`), qui calcule `permise` comme le vrai, n'est pas visé.
+    # (`lus(moderateur:)`), qui calcule `permise` comme le vrai, n'est pas visé — ni
+    # `estModerateur`, le champ SERVI du profil (#136).
     (re.compile(r"\.moderateur\b|\b(let|var) moderateur\b"),
      "ce que le serveur permet à CE compte (`ReferentielsAffaires.permises`, `.poseLesReservees`)"),
+    # #127 : le crayon d'une affaire est `peut_corriger`, comme le site — `peut_modifier`
+    # ne dit plus que le droit sur le CONTENU (`DetailAffaire.contenuFige`).
+    (re.compile(r"\.modifier, \.options:\s*affaire\.droits\.modifier\b"),
+     "le crayon servi (`DroitsServisAffaire.corriger`, `peut_corriger`)"),
+    # #127 et #105, réunis : l'état d'une affaire en clair est SERVI — avec l'objet
+    # (`statut_libelle`, `nouveau_statut_libelle`, `suivi_actualite_libelle`), sinon par ses
+    # référentiels (`statuts[].libelle`). UNE écriture : `StatutsAffaire.libelle(_:servi:dans:)`
+    # (`PastilleStatut.swift`). La table du site n'a plus de libellé, pas même en repli :
+    # seule la teinte se génère (`StatutsAffaire.pastilles`).
     (re.compile(r"\bStatutsAffaire\.parCode\b|\(libelle: String, pastille: String\)"),
-     "le libellé servi (`statut_libelle`, `libelle_statut`, `ReferentielsAffaires.libelle(statut:)`)"),
+     "l'état en clair servi (`StatutsAffaire.libelle(_:servi:dans:)`) ; la teinte : `StatutsAffaire.pastilles`"),
+    # #135 : « Prénom NOM » est SERVI (`nom_affiche`…, contrat 1.25.0) ; le repli d'une
+    # installation antérieure vit dans `FormatsDuSite.nom(affiche:prenom:nom:)`, seul.
+    (re.compile(r"\bFormatsDuSite\.nom\((?!affiche:)"),
+     "le nom servi (`nom_affiche`, `locataire_nom_affiche`…) par `FormatsDuSite.nom(affiche:prenom:nom:)`"),
+    (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
+     "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
+    # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0).
+    (re.compile(r"\bOngletsDuSite\.rolesCS\b"),
+     "`est_moderateur` servi, lu par `DroitsOnglet.cs`"),
+    # #138 : « le mien » est SERVI (`est_auteur`, contrat 1.26.0).
+    (re.compile(r"\bmessage\.auteurId == moi\b"),
+     "`est_auteur` servi (`MessageAffaire.lus`)"),
+    #  #130 : le lieu d'un contenu se LIT (`perimetre_libelle`, contrat 1.24.0) ; nommer
+    #  des codes par l'arbre recopie la règle du serveur (`utils/perimetres/libelles.py`).
+    (re.compile(r"\blibelles\([^)]*parmi:"),
+     "le lieu servi (`perimetre_libelle`) par `LieuServi.lieu` — le repli au plancher n'a qu'un endroit"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
 DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
+    "CoproFirst/Navigation/OngletsOuverts.swift":
+        "repli de `DroitsOnglet.cs` quand l'installation ne sert pas `est_moderateur` (contrat < 1.25.0, #136)",
+    "CoproFirst/Commun/Detail/Affaire/MessageAffaire.swift":
+        "repli de `MessageAffaire.lus` quand l'installation ne sert pas `est_auteur` (contrat < 1.26.0, #138)",
+    "CoproFirst/Donnees/LieuServi.swift":
+        "le SEUL repli au plancher (#130) : une installation antérieure au contrat 1.24.0 ne sert pas le lieu "
+        "d'un accès ; il se retire quand le plancher atteint 1.24.0",
 }
 
 
@@ -99,10 +132,20 @@ def autotest() -> int:
         "        affaire.estActualite ? [] : TablesAffaires.ordreDesStatuts",
         "        let permises = TablesAffaires.categories.filter { moderateur || !$0.reserveCS }",
         "    static let ordreDesStatuts: [String] = [\"ouvert\", \"en_ag\"]",
-        "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
         "            affaire.estActualite && !droits.moderateur",
         "        return droits.moderateur",
         "    let moderateur: Bool",
+        "            case .modifier, .options: affaire.droits.modifier",
+        "        morceaux.append(StatutsAffaire.parCode[affaire.statut]?.libelle ?? affaire.statut)",
+        "        servi?.nulSiVide ?? parCode[code]?.libelle ?? StatutsAffaire.parCode[code]?.libelle ?? code",
+        '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.parCode[statut]?.pastille ?? "badge-gray")',
+        "    static let parCode: [String: (libelle: String, pastille: String)] = [",
+        "        let nom = FormatsDuSite.nom(compte.prenom, compte.nom)",
+        '                Text("\\(compte.prenom) \\(compte.nom)").font(.headline)',
+        '        let nom = { residents.first { $0.id == id }.map { "\\($0.prenom ?? "") \\($0.nom ?? "")" } }',
+        "            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS),",
+        "            deMoi: moi != nil && message.auteurId == moi,",
+        "        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
@@ -114,6 +157,15 @@ def autotest() -> int:
         "    static func lus(moderateur: Bool = true) throws -> ReferentielsAffaires {",
         "            servie.permise = moderateur || !categorie.reservee",
         "        poseLesReservees ? \"L'équipement aussi.\" : \"Le conseil syndical désigne l'équipement.\"",
+        "            cs: estModerateur ?? !portes.isDisjoint(with: roles),",
+        "            case .modifier, .options: affaire.droits.corriger",
+        "        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle, dans: servis)",
+        "        servi?.nulSiVide ?? referentiels.statuts.first { $0.code == code }?.libelle ?? code",
+        "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
+        '            let cle = email.isEmpty ? "\\(bail.locatairePrenom ?? "")|\\(bail.locataireNom ?? "")" : email',
+        "                deMoi: servi?.estAuteur ?? false, nom: servi?.auteurNom,",
+        "        let ouvre = acces.lieu(arbre: perimetres)",
+        "            lieu: LieuServi.lieu(servi?.perimetreLibelle?.valeur))",
     ]
     echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]

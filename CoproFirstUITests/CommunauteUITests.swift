@@ -44,7 +44,7 @@ final class CommunauteUITests: XCTestCase {
     /// L'élément, ramené à l'écran : en très grand texte, il faut souvent défiler.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> XCUIElement {
-        _ = element.apparait()
+        _ = element.sonde()
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {
             app.swipeUp()
@@ -230,9 +230,11 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(texte(app, "Les 138 notifications lues").exists, "la confirmation dit ce qui part")
         capture("8d-notifications-confirmer-les-lues")
         confirmer.tap()
-        XCTAssertTrue(el(app, "notification.3").disparait(), "les lues sont parties")
-        XCTAssertTrue(texte(app, "Notifications lues supprimées").apparait(), "et l'app le dit")
+        // L'avis d'abord : il ne dure que 4 s. Cherché après la liste, il était déjà parti sur
+        // un runner où une requête d'accessibilité prend plusieurs secondes (CI du 12/11/2026).
+        XCTAssertTrue(texte(app, "Notifications lues supprimées").apparait(), "l'app le dit")
         capture("8e-notifications-lues-supprimees")
+        XCTAssertTrue(el(app, "notification.3").disparait(), "les lues sont parties")
         XCTAssertTrue(el(app, "notification.5").exists, "les non lues restent")
         XCTAssertTrue(lues.disparait(), "plus aucune lue : le geste n'est plus offert")
     }

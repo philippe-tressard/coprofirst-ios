@@ -10,13 +10,44 @@ import Testing
 /// réenregistrer qui perdrait ce que l'app ne sait pas écrire.
 @MainActor
 struct ModifierAffaireTests {
+    /// Une affaire dont le lecteur corrige le contenu (`peut_modifier`) — sauf `contenu: false`.
     private func affaire(
-        description: String = "<p>Une fuite.</p>", perimetres: [String] = ["parking"]
+        description: String = "<p>Une fuite.</p>", perimetres: [String] = ["parking"], contenu: Bool = true
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "Fuite", description: description, categorie: "sinistre",
-            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [],
-            perimetres: perimetres)
+            statut: "en_cours", urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [],
+            droits: DroitsServisAffaire(modifier: contenu, corriger: true), perimetres: perimetres)
+    }
+
+    /// Le crayon sans le contenu (#127) : l'auteur d'une affaire engagée n'en règle plus
+    /// que l'urgence — un titre, un lieu changés ne partent pas.
+    @Test func unContenuFigeNEnvoieQueLUrgence() {
+        let origine = affaire(contenu: false)
+        var saisie = SaisieAffaire(modifiant: origine)
+        saisie.titre = "Fuite au parking"
+        saisie.perimetre = "jardin"
+        #expect(origine.contenuFige && saisie.edition(depuis: origine).vide && !saisie.prete(depuis: origine))
+        saisie.urgente = true
+        #expect(saisie.edition(depuis: origine) == EditionAffaire(urgente: true) && saisie.prete(depuis: origine))
+        #expect(!affaire().contenuFige)
+    }
+
+    /// Le faux serveur refuse ce que le vrai refuse : un contenu sans `peut_modifier`.
+    @Test func leServeurSimuleRefuseUnContenuFige() async throws {
+        let service = ServiceSimule(delai: .zero)
+        // Un résident : ni le rôle, ni « modère » — que le serveur sert, et que `DroitsOnglet`
+        // lit avant les rôles (#136).
+        service.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
+        service.profilSimule.estModerateur = false
+        let residence = ServiceSimule.residence
+        let avant = try service.detailSimule(41)
+        #expect(avant.droits.corriger && avant.contenuFige, "l'auteur de 41, engagée, garde le crayon seul")
+        await #expect(throws: ErreurService.self) {
+            try await service.enregistrer(EditionAffaire(titre: "Autre"), de: 41, dans: residence)
+        }
+        try await service.enregistrer(EditionAffaire(urgente: false), de: 41, dans: residence)
+        #expect(try !service.detailSimule(41).urgente && service.detailSimule(41).titre == avant.titre)
     }
 
     @Test func uneSaisieIntacteNEnvoieRien() {

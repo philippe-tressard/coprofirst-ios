@@ -35,22 +35,26 @@ enum FixturesDelegations {
     /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, les champs que le contrat exige.
     static let utilisateurs = #"""
         [
-          {"id": 3, "prenom": "Lucie", "nom": "Exemple", "email": "lucie@exemple.fr", "actif": true,
+          {"id": 3, "prenom": "Lucie", "nom": "Exemple",
+           "nom_affiche": "Lucie EXEMPLE", "email": "lucie@exemple.fr", "actif": true,
            "role": "propriétaire", "statut": "copropriétaire_résident", "cree_le": "2025-03-02T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": true, "has_tc": false,
            "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "non"}},
-          {"id": 4, "prenom": "Marc", "nom": "Démo", "email": "marc@exemple.fr", "actif": true,
+          {"id": 4, "prenom": "Marc", "nom": "Démo",
+           "nom_affiche": "Marc DÉMO", "email": "marc@exemple.fr", "actif": true,
            "role": "propriétaire", "statut": "copropriétaire_résident", "cree_le": "2025-04-12T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": false, "has_tc": false,
            "etiquettes": {"loti": "oui", "bail": "non", "vigik": "non", "tc": "non"}},
-          {"id": 7, "prenom": "Camille", "nom": "Essai", "email": "camille@exemple.fr", "actif": true,
+          {"id": 7, "prenom": "Camille", "nom": "Essai",
+           "nom_affiche": "Camille ESSAI", "email": "camille@exemple.fr", "actif": true,
            "role": "conseil_syndical", "statut": "copropriétaire_résident", "cree_le": "2024-09-01T10:00:00",
            "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
            "has_lots": true, "has_bail": false, "has_vigik": true, "has_tc": true,
            "etiquettes": {"loti": "oui", "bail": "non", "vigik": "oui", "tc": "oui"}},
-          {"id": 9, "prenom": "Paul", "nom": "Fictif", "email": "paul@exemple.fr", "actif": false,
+          {"id": 9, "prenom": "Paul", "nom": "Fictif",
+           "nom_affiche": "Paul FICTIF", "email": "paul@exemple.fr", "actif": false,
            "role": "résident", "statut": "locataire", "cree_le": "2023-01-15T10:00:00",
            "onboarding_complete": false, "onboarding_etape": 1, "preferences_notifications": "{}",
            "has_lots": false, "has_bail": true, "has_vigik": false, "has_tc": false,
@@ -71,8 +75,9 @@ enum FixturesDelegations {
     }
 
     static func residentsLus() throws -> [ResidentDelegable] {
-        try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs)
-            .map(ResidentDelegable.init)
+        ResidentDelegable.lus(
+            try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs),
+            corps: Data(utilisateurs.utf8))
     }
 }
 #endif

@@ -16,11 +16,12 @@ struct BandeauAffaireTests {
     ) -> DetailAffaire {
         DetailAffaire(
             id: 41, numero: "A-0041", titre: "T", description: "", categorie: categorie, statut: "en_cours",
-            urgente: false, creeLe: .now, auteur: nil, lieu: nil, photos: [], suites: [], droits: droits,
+            urgente: false, creeLe: .now, auteur: nil, lieu: nil, suites: [], droits: droits,
             archivee: archivee, fusionnee: fusionnee, referentiels: (try? FixturesReferentielsAffaires.lus()) ?? .vides)
     }
 
-    private let tout = DroitsServisAffaire(repondre: true, changerEtat: true, modifier: true, archiver: true)
+    private let tout = DroitsServisAffaire(
+        repondre: true, changerEtat: true, modifier: true, archiver: true, corriger: true)
 
     @Test func leConseilSuitLAffaireSansRepondre() {
         #expect(

@@ -26,7 +26,7 @@ extension Apercu {
             _ id: Int, _ titre: String, _ apercu: String, _ cree: Double, _ statut: String, _ categorie: String,
             _ libelle: String, colonne: String?, close: Bool = false, urgente: Bool = false,
             meConcerne: Bool? = false, archivee: Bool = false, kanban: Bool = true, activite: Double? = nil,
-            prestataire: String? = nil, lieu: String? = nil, messages: Int? = nil
+            prestataire: String? = nil, lieu: String? = nil, messages: Int? = nil, lecture: String = "tous"
         ) -> Affaire {
             Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: titre, apercu: apercu, creeLe: jours(cree),
@@ -36,7 +36,7 @@ extension Apercu {
                 meConcerne: meConcerne, archivee: archivee, suiviKanban: kanban,
                 natures: [categorie == "actualite" ? "actualite" : "activite"], prestataire: prestataire,
                 perimetres: [], lieu: lieu, messages: messages, colonne: colonne,
-                peutDeplacer: kanban, peutArchiver: true)
+                peutDeplacer: kanban, peutArchiver: true, lecture: Apercu.lecture(lecture))
         }
         return [
             // Du HTML, comme l'API le sert (éditeur du site) : la simulation ne doit
@@ -46,14 +46,14 @@ extension Apercu {
                 "<p>Une infiltration goutte au niveau -1, place 12. Le sol est <strong>glissant</strong>"
                     + "&nbsp;: un seau a été posé en attendant le plombier.</p><p>Merci de contourner la zone.</p>",
                 0.2, "en_cours", "panne", "Panne", colonne: "syndic", urgente: true, meConcerne: true,
-                lieu: "Parking, niveau -1", messages: 6),
+                lieu: "Parking, niveau -1", messages: 6, lecture: "reserve"),
             affaire(
                 40, "Ascenseur du bâtiment B à l'arrêt",
                 "L'ascenseur reste bloqué au troisième étage depuis ce matin. Le prestataire est prévenu "
                     + "et doit passer dans la journée.",
                 1, "chez_prestataire", "panne", "Panne", colonne: "fournisseur", urgente: true,
                 prestataire: "Ascenseurs du Val",
-                lieu: "Bâtiment B", messages: 3),
+                lieu: "Bâtiment B", messages: 3, lecture: "reserve"),
             affaire(
                 39, "Coupure d'eau jeudi de 9 h à 12 h",
                 "<p>Remplacement d'une vanne dans la cave du bâtiment A.</p>", 2, "publie", "actualite", "Actualité",
@@ -64,12 +64,12 @@ extension Apercu {
                 "Le devis retenu en assemblée générale sera présenté au conseil syndical. Les échafaudages "
                     + "sont prévus au printemps, pour six semaines environ.",
                 6, "en_ag", "etude_travaux", "Étude & travaux", colonne: "ag", meConcerne: true, lieu: "Façade nord",
-                messages: 12),
+                messages: 12, lecture: "copros"),
             affaire(
                 35, "Éclairage du hall en panne",
                 "Deux plafonniers ne s'allument plus dans le hall d'entrée. Les ampoules ont été changées, "
                     + "le problème vient du minuteur.",
-                9, "ouvert", "panne", "Panne", colonne: "cs", lieu: "Hall A", messages: 2),
+                9, "ouvert", "panne", "Panne", colonne: "cs", lieu: "Hall A", messages: 2, lecture: "cs"),
             affaire(
                 33, "Haie du jardin à tailler", "La haie côté rue déborde sur le trottoir.", 12, "ouvert",
                 "espaces_verts", "Espaces verts", colonne: "cs", kanban: false),
@@ -80,7 +80,7 @@ extension Apercu {
                 lieu: "Garage", messages: 4),
             affaire(
                 27, "Nettoyage des parties communes", "Le contrat est reconduit à l'identique.", 40, "annulé",
-                "nuisance", "Nuisance & propreté", colonne: "annule", close: true, activite: 5),
+                "nuisance", "Nuisance & propreté", colonne: "annule", close: true, activite: 5, lecture: "concerne"),
             affaire(
                 22, "Interphone du bâtiment A remplacé",
                 "Le nouveau combiné est posé ; les noms ont été repris à l'identique.", 120, "résolu",

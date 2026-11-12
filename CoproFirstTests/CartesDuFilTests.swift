@@ -82,7 +82,7 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
 @Test func unChangementDEtatSeDitAvecLesLibellesServis() throws {
     let suite = SuiteAffaire(
         id: 1, type: "etat", date: .now, auteur: nil, contenu: nil, ancienStatut: "ouvert",
-        nouveauStatut: "en_cours", photos: [])
+        nouveauStatut: "en_cours")
     #expect(suite.changementDEtat(try FixturesReferentielsAffaires.lus()) == "Ouvert → Chez le syndic")
     // Un serveur qui renomme un état est suivi (#105) ; un code inconnu se montre tel quel.
     let renomme = ReferentielsAffaires(
