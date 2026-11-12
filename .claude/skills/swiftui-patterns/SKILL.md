@@ -134,7 +134,10 @@ extension, dans ce même dossier — modèle d'exemple : `Fonctions/Affaires/Don
   SERT se lit, jamais ne se recalcule — le périmètre par défaut (`par_defaut`,
   `Perimetre.codeParDefaut`), l'affaire close et urgente (`TicketRead.close`, `.urgente`),
   les gestes d'une délégation ou d'une affiche (`peut_accepter`, `peut_restaurer`…), le
-  rang d'un porteur, le rapprochement d'un nom, l'annonce d'une validation (#53-#56).
+  rang d'un porteur, le rapprochement d'un nom, l'annonce d'une validation (#53-#56),
+  les catégories qu'un compte peut poser et ce qui lui est ouvert du réservé au conseil
+  (`permise`, `reservee` : `ReferentielsAffaires.permises`, `.poseLesReservees` — jamais
+  « est du conseil » déduit du profil, #105 ; `verifier-regles-servies.py` le refuse).
   Un geste que le serveur n'ouvre pas ne s'affiche pas ; un champ absent vaut « non ».
 - **Les tables que le contrat ne sert pas** (libellés, ordre du front du site) se
   génèrent dans `Fonctions/<Menu>/Genere/`, par un module de `scripts/generateurs/`
