@@ -27,6 +27,8 @@ struct DetailAffaireView: View {
         )
         .background(palette.bg)
         .navigationBarTitleDisplayMode(.inline)
+        // Hors ligne : d'où vient ce qu'on lit, et pourquoi le bandeau du bas est grisé (#101).
+        .safeAreaInset(edge: .top, spacing: 0) { BandeauHorsLigne() }
         // Le bandeau occupe le bas : la barre d'onglets s'efface dès l'arrivée — squelette
         // compris, pour ne pas sauter — et revient au retour, comme Photos ou Fichiers.
         .toolbar(.hidden, for: .tabBar)
