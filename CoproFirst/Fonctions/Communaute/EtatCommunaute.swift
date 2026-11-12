@@ -34,6 +34,9 @@ final class EtatCommunaute {
     private(set) var moi: MoiCommunaute?
     var onglet = OngletCommunaute.sondages
     var sondages = ListeChargee<SondageResume>()
+    /// Créer un sondage : ce que la route accepte de CE lecteur (`peut_creer`, servi par
+    /// GET /sondages/gestes, #87). Tant qu'il n'est pas lu, ou illisible : non.
+    private(set) var peutCreerUnSondage = false
     var idees = ListeChargee<Idee>()
     var annonces = ListeChargee<Annonce>()
     var avis = ListeChargee<AvisResident>()
@@ -70,7 +73,10 @@ final class EtatCommunaute {
 
     func charger(_ onglet: OngletCommunaute, _ installation: Installation, avec service: any ServiceCommunaute) async {
         switch onglet {
-        case .sondages: await remplir(\.sondages) { try await service.sondagesCommunaute(installation) }
+        case .sondages:
+            async let creer = try? service.peutCreerUnSondage(installation)
+            await remplir(\.sondages) { try await service.sondagesCommunaute(installation) }
+            peutCreerUnSondage = await creer ?? false
         case .idees: await remplir(\.idees) { try await service.idees(installation) }
         case .annonces: await remplir(\.annonces) { try await service.annonces(installation) }
         case .avis: await chargerAvis(installation, avec: service)

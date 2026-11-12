@@ -29,9 +29,9 @@ struct PastilleStatut: View {
 
 extension StatutsAffaire {
     /// Un état en clair : tel que le serveur le SERT (`statut_libelle`,
-    /// `nouveau_statut_libelle`, `suivi_actualite_libelle`…, #127) ; à défaut — une
-    /// installation antérieure, un état que le serveur ne met pas en clair —, la table du
-    /// site, puis le code brut.
+    /// `nouveau_statut_libelle`, `suivi_actualite_libelle`…, #127) ; à défaut — un état
+    /// que le serveur ne met pas en clair (l'ancien état d'une entrée), un geste simulé —,
+    /// la table du site, puis le code brut.
     static func libelle(_ code: String, servi: String?) -> String {
         servi?.nulSiVide ?? parCode[code]?.libelle ?? code
     }

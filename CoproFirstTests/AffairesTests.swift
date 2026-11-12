@@ -119,11 +119,13 @@ import Testing
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
           "categorie_libelle": "Panne (servie)", "statut_libelle": "Ouvert", "close": false,
           "colonne_kanban": "ag", "nouveau": false, "nom_proprietaire": "Camille Essai",
-          "perimetre_libelle": "Bât. 2 › Toit", "peut_deplacer_au_kanban": true, "peut_archiver": true},
+          "perimetre_libelle": "Bât. 2 › Toit", "peut_deplacer_au_kanban": true, "peut_archiver": true,
+          "frequence_libelle": "", "suivi_actualite_libelle": ""},
          {"id": 10, "numero": "TK-10", "titre": "Essai", "description": "", "categorie": "panne", "statut": "ouvert",
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false, "categorie_libelle": "Panne",
           "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null, "nouveau": false,
-          "nom_proprietaire": "Camille Essai", "perimetre_libelle": ""}]
+          "nom_proprietaire": "Camille Essai", "perimetre_libelle": "",
+          "frequence_libelle": "", "suivi_actualite_libelle": ""}]
         """#
     let lues = try await client(servant: json).getTickets().ok.body.json.map(Affaire.init(ticket:))
     let servie = try #require(lues.first)
@@ -141,9 +143,12 @@ import Testing
 
 @Test func modererEstLeConseilOuLAdministration() {
     let resident = DroitsAffaires(profil: .init(statut: "copropriétaire_résident", roles: ["résident"]))
-    let conseil = DroitsAffaires(profil: .init(statut: "copropriétaire_résident", roles: ["conseil_syndical"]))
-    let admin = DroitsAffaires(profil: .init(statut: nil, roles: ["admin"]))
-    #expect(!resident.moderateur)
+    // « Modère » est servi (`est_moderateur`) : le rôle seul ne le dit pas.
+    let conseil = DroitsAffaires(
+        profil: .init(statut: "copropriétaire_résident", roles: ["conseil_syndical"], estModerateur: true))
+    let admin = DroitsAffaires(profil: .init(statut: nil, roles: ["admin"], estModerateur: true))
+    let roleSeul = DroitsAffaires(profil: .init(statut: nil, roles: ["conseil_syndical", "admin"]))
+    #expect(!resident.moderateur && !roleSeul.moderateur)
     #expect(conseil.moderateur && admin.moderateur)
     #expect(!DroitsAffaires(profil: nil).moderateur, "sans profil, rien n'est offert")
 }
@@ -163,7 +168,7 @@ import Testing
 
 @Test func lesCategoriesReserveesNeSontOffertesQuAuConseil() {
     let resident = DroitsAffaires(profil: .init(statut: "locataire", roles: ["résident"]))
-    let conseil = DroitsAffaires(profil: .init(statut: nil, roles: ["conseil_syndical"]))
+    let conseil = DroitsAffaires(profil: .init(statut: nil, roles: ["conseil_syndical"], estModerateur: true))
     #expect(!resident.categories.contains { $0.reserveCS })
     #expect(conseil.categories.count == TablesAffaires.categories.count)
     #expect(conseil.categories.first?.code == "actualite", "« Actualité » en tête")
@@ -264,7 +269,7 @@ import Testing
         [{"id": 9, "numero": "TK-9", "titre": "Essai", "description": "", "categorie": "panne", "statut": "fermé",
           "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": true, "categorie_libelle": "Panne",
           "statut_libelle": "Fermé", "close": false, "colonne_kanban": null, "nouveau": false,
-          "nom_proprietaire": "Camille Essai"}]
+          "nom_proprietaire": "Camille Essai", "frequence_libelle": "", "suivi_actualite_libelle": ""}]
         """#
     let lue = try #require(try await client(servant: json).getTickets().ok.body.json.first)
     let affaire = Affaire(ticket: lue)

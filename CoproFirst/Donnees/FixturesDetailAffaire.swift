@@ -10,8 +10,7 @@ import Foundation
 /// MÊME branchement que le service réel (`DetailAffaire.lue`), et jugées contre le
 /// contrat par `scripts/verifier-fixtures.py`.
 ///
-/// Les droits sont ceux d'un RÉSIDENT, à la forme du serveur v3.88.1 : l'auteur de
-/// l'affaire 41, engagée chez le syndic, garde le crayon (`peut_corriger`) sans plus
+/// Les droits sont ceux d'un RÉSIDENT : l'auteur de l'affaire 41, engagée chez le syndic, garde le crayon (`peut_corriger`) sans plus
 /// corriger le contenu (`peut_modifier`, #127). Le conseil syndical reçoit les siens de
 /// `ServiceSimule.affaires(_:conseil:)`. Tout est inventé : aucun nom de personne.
 enum FixturesDetailAffaire {
@@ -31,7 +30,8 @@ enum FixturesDetailAffaire {
            "cree_le": "2026-11-09T09:00:00", "auteur_nom": "Un résident du bâtiment A",
            "perimetre_cible": ["parking"], "perimetre_libelle": "Parking",
            "photos_urls": ["/uploads/tickets/41-1.jpg", "/uploads/tickets/41-2.jpg"],
-           "peut_repondre": true, "peut_modifier": false, "peut_corriger": true},
+           "peut_repondre": true, "peut_modifier": false, "peut_corriger": true,
+           "frequence_libelle": "", "suivi_actualite_libelle": ""},
           {"id": 12, "numero": "A-0012", "titre": "Coupure d'eau jeudi de 9 h à 12 h",
            "description": "Le remplacement d'une vanne dans la cave du bâtiment A impose de couper l'eau froide et l'eau chaude jeudi matin, de 9 h à 12 h. Pensez à faire une réserve.",
            "categorie": "actualite", "categorie_libelle": "Actualité", "statut": "publie",
@@ -39,21 +39,23 @@ enum FixturesDetailAffaire {
            "colonne_kanban": null, "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-10T08:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_a"], "perimetre_libelle": "Bâtiment A",
-           "suivi_actualite": "ouvert", "suivi_actualite_libelle": "Ouvert"},
+           "suivi_actualite": "ouvert", "suivi_actualite_libelle": "Ouvert", "frequence_libelle": ""},
           {"id": 38, "numero": "A-0038", "titre": "Ravalement de la façade côté rue",
            "description": "Le devis retenu en assemblée générale sera présenté au conseil syndical.",
            "categorie": "etude_travaux", "categorie_libelle": "Étude & travaux", "statut": "en_ag",
            "statut_libelle": "À l’AG", "priorite": "normale", "urgente": false, "close": false,
            "colonne_kanban": "ag", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-08T10:00:00", "auteur_nom": "Le conseil syndical",
-           "perimetre_cible": ["bat_a"], "perimetre_libelle": "Bâtiment A", "peut_repondre": true},
+           "perimetre_cible": ["bat_a"], "perimetre_libelle": "Bâtiment A", "peut_repondre": true,
+           "frequence_libelle": "", "suivi_actualite_libelle": ""},
           {"id": 31, "numero": "A-0031", "titre": "Portail du garage remis en service",
            "description": "La télécommande fonctionne de nouveau après le remplacement de la carte électronique.",
            "categorie": "panne", "categorie_libelle": "Panne", "statut": "résolu",
            "statut_libelle": "Résolu", "priorite": "normale", "urgente": false, "close": true,
            "colonne_kanban": "termine", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-06T18:00:00", "auteur_nom": "Le conseil syndical",
-           "perimetre_cible": ["parking"], "perimetre_libelle": "Parking"},
+           "perimetre_cible": ["parking"], "perimetre_libelle": "Parking",
+           "frequence_libelle": "", "suivi_actualite_libelle": ""},
           {"id": 44, "numero": "A-0044", "titre": "Ramonage des conduits de cheminée",
            "description": "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits.",
            "categorie": "entretien", "categorie_libelle": "Entretien", "statut": "en_cours",
@@ -62,7 +64,7 @@ enum FixturesDetailAffaire {
            "cree_le": "2026-11-11T00:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_b"], "perimetre_libelle": "Bâtiment B",
            "prestataire_nom": "Ramonage Exemple (fictif)", "frequence_type": "fois_par_an",
-           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an"},
+           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": ""},
           {"id": 45, "numero": "A-0045", "titre": "Contrôle annuel de l'ascenseur",
            "description": "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
            "categorie": "entretien", "categorie_libelle": "Entretien", "statut": "en_cours",
@@ -71,7 +73,7 @@ enum FixturesDetailAffaire {
            "cree_le": "2026-11-10T13:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_b"], "perimetre_libelle": "Bâtiment B",
            "prestataire_nom": "Ascenseurs du Parc (fictif)", "frequence_type": "fois_par_an",
-           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "contrat_id": 1,
+           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": "", "contrat_id": 1,
            "contrat": {"id": 1, "libelle": "Maintenance des deux ascenseurs", "numero_contrat": "ASC-2024-118",
                        "frequence_type": "mois", "frequence_valeur": 1, "frequence_libelle": "↺ Mensuel"}}
         ]
@@ -83,26 +85,17 @@ enum FixturesDetailAffaire {
         [
           {"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
            "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "en_cours",
-           "nouveau_statut_libelle": "Chez le syndic"},
+           "nouveau_statut_libelle": "Chez le syndic", "perimetre_precise_libelle": ""},
           {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
            "auteur_nom": "Le conseil syndical",
            "contenu": "<p>Le syndic est prévenu ; le plombier passe <strong>demain matin</strong>.</p>",
-           "nouveau_statut_libelle": ""},
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": ""},
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
            "auteur_nom": "Le syndic",
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
-           "nouveau_statut_libelle": ""}
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": ""}
         ]
         """#
-
-    /// Ce que le serveur sert au-dessus du plancher (contrats 1.20.0 et 1.21.0, #125, #127).
-    static let auDessus = [
-        AuDessusDuPlancher(
-            schema: "TicketRead", champs: ["peut_corriger", "suivi_actualite_libelle", "frequence_libelle"],
-            contrat: "1.21.0"),
-        AuDessusDuPlancher(schema: "ContratDeLAffaire", champs: ["frequence_libelle"], contrat: "1.20.0"),
-        AuDessusDuPlancher(schema: "TicketEvolutionRead", champs: ["nouveau_statut_libelle"], contrat: "1.21.0"),
-    ]
 
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [
@@ -110,18 +103,13 @@ enum FixturesDetailAffaire {
         Reponse(nom: "evolutions", schema: "TicketEvolutionRead", json: evolutions),
     ]
 
-    /// L'affaire `id` telle que le service réel la lirait : son corps servi seul, puis
-    /// ses évolutions.
+    /// L'affaire `id` telle que le service réel la lirait : son `TicketRead`, puis ses
+    /// évolutions.
     static func lue(_ id: Int) throws -> DetailAffaire? {
-        let objets = try JSONSerialization.jsonObject(with: Data(affaires.utf8)) as? [[String: Any]] ?? []
-        guard let objet = objets.first(where: { $0["id"] as? Int == id }) else { return nil }
-        let corps = try JSONSerialization.data(withJSONObject: objet)
-        guard let texte = String(bytes: corps, encoding: .utf8) else { return nil }
-        let ticket = try Relecture.generee(Components.Schemas.TicketRead.self, json: texte)
+        let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: affaires)
+        guard let ticket = tickets.first(where: { $0.id == id }) else { return nil }
         let suites = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: evolutions)
-        return DetailAffaire.lue(
-            ticket, corps: corps, evolutions: suites.filter { $0.ticketId == id },
-            corpsEvolutions: Data(evolutions.utf8))
+        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id })
     }
 }
 #endif

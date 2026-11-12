@@ -11,7 +11,7 @@ import Foundation
 /// (non ciblable) et ses bâtiments, deux lieux racines ; le carnet filtre sur `bat_a`.
 /// Sous le bâtiment A, trois espaces au niveau 3 (hall, toit, terrasses), et sous les
 /// terrasses un nœud écrit avant le plafond (niveau 4) qu'aucun sélecteur ne propose
-/// (#88). `niveau`, `niveaux_libres` et `hauteur` : servis par le contrat 1.17.0.
+/// (#88, `niveaux_libres`).
 ///
 /// 🔴 Ses CODES sont la référence de toute l'API simulée (#64) : `scripts/verifier-fixtures.py`
 /// refuse un `perimetre_cible` qui n'en cite pas un — un libellé (« Copropriété ») à la
@@ -80,13 +80,9 @@ enum FixturesPerimetres {
         Reponse(nom: "arbre", schema: "PerimetreRead", json: arbre)
     ]
 
-    static let auDessus = AuDessusDuPlancher(
-        schema: "PerimetreRead", champs: ["niveau", "niveaux_libres", "hauteur"], contrat: "1.17.0")
-
     /// Lu comme le client généré le lit, branché comme le service réel (actifs seulement).
     static func lus() throws -> [Perimetre] {
-        Perimetre.lus(
-            try Relecture.generee([Components.Schemas.PerimetreRead].self, json: arbre), corps: Data(arbre.utf8))
+        Perimetre.lus(try Relecture.generee([Components.Schemas.PerimetreRead].self, json: arbre))
     }
 }
 #endif

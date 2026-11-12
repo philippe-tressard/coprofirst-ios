@@ -14,12 +14,11 @@ struct MessageAffaire: Identifiable, Hashable, Sendable {
     /// Le texte riche du site (HTML de l'éditeur).
     let contenu: String
     let date: Date
-    /// Écrit par le compte qui lit — `est_auteur`, tel que le SERVEUR le juge (contrat
-    /// 1.26.0, #138) : sa bulle se range de son côté.
+    /// Écrit par le compte qui lit — `est_auteur`, tel que le SERVEUR le juge (#138) : sa
+    /// bulle se range de son côté. L'app ne compare aucun identifiant.
     let deMoi: Bool
-    /// Le nom affiché de l'auteur, servi (`auteur_nom`, contrat 1.26.0, #138) : « Prénom
-    /// NOM », la qualité d'un auteur détaché par la conservation, « Ancien résident ».
-    /// `nil` d'une installation antérieure.
+    /// Le nom affiché de l'auteur, servi (`auteur_nom`, #138) : « Prénom NOM », la qualité
+    /// d'un auteur détaché par la conservation, « Ancien résident ».
     let nom: String?
     /// « Un résident », « Le conseil syndical » — l'auteur détaché par la conservation
     /// (`auteur_qualite`, #2014) : ce que la bulle dit quand le nom n'est pas servi.
@@ -38,29 +37,12 @@ extension MessageAffaire {
     /// `MessageRead` (celui de la Communauté) existant à côté.
     typealias Servi = Components.Schemas.AppRoutersTicketsMessagesSchemasMessageRead
 
-    /// Le fil servi, puis ce que son corps sert au-dessus du plancher (`auteur_nom`,
-    /// `est_auteur`) — le MÊME branchement pour le service réel et l'API simulée.
-    ///
-    /// `moi` (l'identifiant du compte, `GET /auth/me`) ne sert qu'au REPLI d'une
-    /// installation antérieure à 1.26.0, qui ne sert pas `est_auteur` : la comparaison à
-    /// `auteur_id` d'avant, écrite ici seulement. Compte illisible : aucun message « à moi ».
-    static func lus(_ servis: [Servi], corps: Data?, moi: Int?) -> [MessageAffaire] {
-        let auDessus = Relecture.auDessusDuPlancher(parLigne: MessageAuDessusDuPlancher.self, corps: corps)
-        return servis.map { message in
-            let servi = auDessus[message.id]
-            return MessageAffaire(
-                id: message.id, contenu: message.contenu, date: message.creeLe,
-                deMoi: servi?.estAuteur ?? (moi != nil && message.auteurId == moi), nom: servi?.auteurNom,
-                qualite: message.auteurQualite, interne: message.interne,
-                photos: (message.fichiersUrls ?? []).filter(Fichiers.estImage))
-        }
+    /// Le message servi, par son type GÉNÉRÉ — le même branchement pour le service réel
+    /// et l'API simulée. `est_auteur` non servi vaut « non » (défaut fermé).
+    init(_ message: Servi) {
+        self.init(
+            id: message.id, contenu: message.contenu, date: message.creeLe, deMoi: message.estAuteur ?? false,
+            nom: message.auteurNom, qualite: message.auteurQualite, interne: message.interne,
+            photos: (message.fichiersUrls ?? []).filter(Fichiers.estImage))
     }
-}
-
-/// Ce que `MessageRead` des tickets sert au-dessus du plancher (contrat 1.26.0,
-/// coprofirst#2680) : tout est facultatif.
-struct MessageAuDessusDuPlancher: Decodable, Identifiable {
-    let id: Int
-    var auteurNom: String?
-    var estAuteur: Bool?
 }

@@ -19,13 +19,8 @@ extension ServiceAPI: ServiceAcces {
 
     func monBail(_ installation: Installation) async throws -> BailDuLocataire? {
         do {
-            // Le corps servi est gardé : l'étage en clair (`lot_etage_libelle`, #127) et le nom
-            // affiché du bailleur (`bailleur_nom_affiche`, #135) s'y relisent.
-            let (sortie, corps) = try await CorpsServi.garder {
-                try await client(installation.adresse).getBailleurMonBail()
-            }
-            switch sortie {
-            case .ok(let ok): return BailDuLocataire.lu(try ok.body.json, corps: corps)
+            switch try await client(installation.adresse).getBailleurMonBail() {
+            case .ok(let ok): return BailDuLocataire(try ok.body.json)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _):
                 if statut == 404 { return nil }
@@ -45,22 +40,15 @@ extension ServiceAPI: ServiceAcces {
 
     func baux(_ installation: Installation, tous: Bool) async throws -> [Bail] {
         let client = client(installation.adresse)
-        // Le corps servi est gardé : le nom affiché du locataire est au-dessus du plancher.
         if tous {
-            let (sortie, corps) = try await appeler {
-                try await CorpsServi.garder { try await client.getBailleurTousLesBaux() }
-            }
-            switch sortie {
-            case .ok(let ok): return Bail.lus(try ok.body.json, corps: corps)
+            switch try await appeler({ try await client.getBailleurTousLesBaux() }) {
+            case .ok(let ok): return try ok.body.json.map(Bail.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client.getBailleurMesBaux() }
-        }
-        switch sortie {
-        case .ok(let ok): return Bail.lus(try ok.body.json, corps: corps)
+        switch try await appeler({ try await client.getBailleurMesBaux() }) {
+        case .ok(let ok): return try ok.body.json.map(Bail.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -165,25 +153,16 @@ extension ServiceAPI: ServiceAcces {
 }
 
 extension Bail {
-    /// Les baux servis, puis le nom affiché du locataire relu au-dessus du plancher — le
-    /// MÊME branchement pour le service réel et l'API simulée.
-    static func lus(_ generes: [Components.Schemas.BailOut], corps: Data?) -> [Bail] {
-        let personnes = PersonneServie.parLigne(corps)
-        return generes.map {
-            var bail = Bail($0)
-            bail.locataireNomServi = personnes[$0.id]?.locataireNomAffiche
-            return bail
-        }
-    }
-
-    private init(_ bail: Components.Schemas.BailOut) {
+    /// Le bail servi, par son type GÉNÉRÉ — le même branchement pour le service réel et
+    /// l'API simulée.
+    init(_ bail: Components.Schemas.BailOut) {
         self.init(
             id: bail.id, lotId: bail.lotId, statut: bail.statut.rawValue, locataireId: bail.locataireId,
             locatairePrenom: bail.locatairePrenom, locataireNom: bail.locataireNom,
             locataireEmail: bail.locataireEmail, locataireTelephone: bail.locataireTelephone,
             dateEntree: bail.dateEntree, dateSortiePrevue: bail.dateSortiePrevue,
             dateSortieReelle: bail.dateSortieReelle, notes: bail.notes,
-            objets: (bail.objets ?? []).map(ObjetRemis.init))
+            objets: (bail.objets ?? []).map(ObjetRemis.init), locataireNomAffiche: bail.locataireNomAffiche)
     }
 }
 
@@ -226,23 +205,15 @@ extension AccesDetenu {
 }
 
 extension BailDuLocataire {
-    /// Le bail servi : le type généré, puis ce que le corps sert au-dessus du plancher —
-    /// l'étage en clair (#127) et le nom affiché du bailleur (#135) — le MÊME branchement
-    /// pour le service réel et l'API simulée.
-    static func lu(_ bail: Components.Schemas.BailLocataireOut, corps: Data?) -> BailDuLocataire {
-        var lu = BailDuLocataire(bail)
-        lu.lotEtageLibelle = Relecture.auDessusDuPlancher(BailAuDessusDuPlancher.self, corps: corps)?.lotEtageLibelle
-        lu.bailleurNomServi = PersonneServie.lue(corps)?.bailleurNomAffiche
-        return lu
-    }
-
+    /// Le bail servi, par son type GÉNÉRÉ — l'étage en clair (#127) et le nom affiché du
+    /// bailleur (#135) compris ; le même branchement pour le service réel et l'API simulée.
     init(_ bail: Components.Schemas.BailLocataireOut) {
         self.init(
             id: bail.id, statut: bail.statut.rawValue, lotBatimentNom: bail.lotBatimentNom,
             lotNumero: bail.lotNumero, lotType: bail.lotType, lotTypeAppartement: bail.lotTypeAppartement,
             lotEtage: bail.lotEtage, lotSuperficie: bail.lotSuperficie, dateEntree: bail.dateEntree,
-            dateSortiePrevue: bail.dateSortiePrevue, bailleurPrenom: bail.bailleurPrenom,
-            bailleurNom: bail.bailleurNom, bailleurEmail: bail.bailleurEmail,
-            bailleurTelephone: bail.bailleurTelephone)
+            dateSortiePrevue: bail.dateSortiePrevue, bailleurEmail: bail.bailleurEmail,
+            bailleurTelephone: bail.bailleurTelephone, lotEtageLibelle: bail.lotEtageLibelle,
+            nomBailleur: bail.bailleurNomAffiche)
     }
 }

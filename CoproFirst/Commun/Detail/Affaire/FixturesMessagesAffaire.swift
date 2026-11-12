@@ -6,18 +6,15 @@ import Foundation
 
 #if DEBUG
 /// Le fil des messages que l'API simulée sert — en JSON, tel que GET
-/// /tickets/{id}/messages le renvoie au compte simulé (`MessageRead` des tickets, contrat
-/// 1.26.0 : `auteur_nom`, `est_auteur`), lu par le type GÉNÉRÉ puis par le MÊME
-/// branchement que le service réel (`MessageAffaire.lus`).
+/// /tickets/{id}/messages le renvoie au compte simulé (`MessageRead` des tickets :
+/// `auteur_nom`, `est_auteur`, #138), lu par le type GÉNÉRÉ puis par le MÊME branchement
+/// que le service réel (`MessageAffaire(_:)`).
 /// `scripts/verifier-fixtures.py` le juge contre le schéma du serveur.
 ///
 /// L'affaire 41 : un message du compte simulé, la réponse du conseil, et une note
 /// interne que le serveur ne sert qu'au conseil. Tout est inventé : aucun nom de personne.
 enum FixturesMessagesAffaire {
     typealias Reponse = FixturesAcces.Reponse
-
-    /// L'identifiant du compte simulé (celui de `moiCommunaute`).
-    static let moi = FixturesSondage.moi
 
     /// GET /tickets/41/messages → `[MessageRead]`, dans l'ordre de `cree_le`.
     static let messages = #"""
@@ -42,17 +39,12 @@ enum FixturesMessagesAffaire {
         Reponse(nom: "messages", schema: "app__routers__tickets__messages_schemas__MessageRead", json: messages)
     ]
 
-    /// Le nom de l'auteur et « le mien », servis au-dessus du plancher (#138).
-    static let auDessus = AuDessusDuPlancher(
-        schema: "app__routers__tickets__messages_schemas__MessageRead", champs: ["auteur_nom", "est_auteur"],
-        contrat: "1.26.0")
-
     /// Les messages de cette affaire que le serveur servirait à ce lecteur : une note
     /// interne au conseil seulement (`lit_les_notes_internes`).
     static func lus(pour affaire: Int, conseil: Bool) throws -> [MessageAffaire] {
-        let servis = try Relecture.generee([MessageAffaire.Servi].self, json: messages)
+        try Relecture.generee([MessageAffaire.Servi].self, json: messages)
             .filter { $0.ticketId == affaire && (conseil || !$0.interne) }
-        return MessageAffaire.lus(servis, corps: Data(messages.utf8), moi: moi)
+            .map(MessageAffaire.init)
     }
 }
 #endif

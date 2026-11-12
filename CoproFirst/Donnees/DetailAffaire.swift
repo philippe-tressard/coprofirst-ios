@@ -35,28 +35,23 @@ struct DetailAffaire: Hashable, Sendable {
     /// ne le tient pas du serveur (un geste simulé) : la table du site le dit alors.
     var statutLibelle: String?
     /// Le suivi d'une actualité (`suivi_actualite`, un code) et son libellé servi
-    /// (`suivi_actualite_libelle`, contrat 1.21.0, #127) — vide sans suivi ; `nil` d'une
-    /// installation antérieure, qui ne le sert pas.
+    /// (`suivi_actualite_libelle`, #127) — vide sans suivi.
     var suiviActualite: String?
-    var suiviActualiteLibelle: String?
+    var suiviActualiteLibelle = ""
     /// L'intervenant, tel que la fiche du site l'écrit (`intervenantAffiche`) : le
-    /// prestataire, puis le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125).
+    /// prestataire, puis le rythme SERVI (`frequence_libelle`, #125).
     var intervenant: String?
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
-    /// antérieure.
+    /// « Qui la lit », servie (`lecture`, #129).
     var lecture: Lecture?
 
     var estActualite: Bool { categorie == "actualite" }
 
     /// L'état que la fiche montre (`etatAffiche` du site) : le statut d'une affaire, le
-    /// suivi d'une actualité — aucun pour une actualité sans suivi. D'une installation
-    /// antérieure au contrat 1.21.0 (pas de `suivi_actualite_libelle`), le statut, comme avant.
+    /// suivi d'une actualité — aucun pour une actualité sans suivi.
     var etat: EtatServi? {
-        guard estActualite, let libelle = suiviActualiteLibelle else {
-            return EtatServi(code: statut, libelle: statutLibelle)
-        }
-        guard let suivi = suiviActualite, !libelle.isEmpty else { return nil }
-        return EtatServi(code: suivi, libelle: libelle)
+        guard estActualite else { return EtatServi(code: statut, libelle: statutLibelle) }
+        guard let suivi = suiviActualite, !suiviActualiteLibelle.isEmpty else { return nil }
+        return EtatServi(code: suivi, libelle: suiviActualiteLibelle)
     }
 }
 
@@ -78,11 +73,12 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let nouveauStatut: String?
     let photos: [String]
     /// L'état que l'entrée donne, en clair, tel que le serveur le sert
-    /// (`nouveau_statut_libelle`, contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    /// (`nouveau_statut_libelle`, #127) ; `nil` quand l'app ne le tient pas du serveur (un
+    /// geste simulé).
     var nouveauStatutLibelle: String?
     /// « Périmètre précisé : 🔹 Bât. 2 » — le lieu que la Suite déclare, tel que servi
-    /// (`perimetre_precise_libelle`, contrat 1.24.0, #130), même par défaut ; `nil` quand
-    /// elle n'en déclare pas, ou d'une installation antérieure.
+    /// (`perimetre_precise_libelle`, #130), même par défaut ; `nil` quand elle n'en
+    /// déclare pas.
     var perimetrePrecise: String?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
@@ -106,8 +102,8 @@ struct DroitsServisAffaire: Hashable, Sendable {
     /// l'auteur le perd quand l'affaire est engagée, l'administration jamais.
     var modifier = false
     var archiver = false
-    /// ✏️ Le crayon : ouvrir la correction (`peut_corriger`, contrat 1.21.0, #127), plus
-    /// large que `modifier` — l'auteur d'une affaire engagée le garde (l'urgence, les
-    /// options passent encore). D'une installation antérieure : `modifier`, comme avant.
+    /// ✏️ Le crayon : ouvrir la correction (`peut_corriger`, #127), plus large que
+    /// `modifier` — l'auteur d'une affaire engagée le garde (l'urgence, les options
+    /// passent encore).
     var corriger = false
 }

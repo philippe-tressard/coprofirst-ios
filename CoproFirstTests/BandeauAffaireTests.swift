@@ -48,7 +48,8 @@ struct BandeauAffaireTests {
              "categorie_libelle": "Plomberie", "statut": "en_cours", "statut_libelle": "Chez le syndic",
              "close": false, "colonne_kanban": "en_cours", "cree_le": "2026-11-01T10:00:00",
              "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false,
-             "peut_repondre": true, "peut_archiver": true, "epingle": true}
+             "peut_repondre": true, "peut_archiver": true, "epingle": true,
+             "frequence_libelle": "", "suivi_actualite_libelle": ""}
             """#
         let lu = DetailAffaire(
             ticket: try Relecture.generee(Components.Schemas.TicketRead.self, json: json), suites: [])

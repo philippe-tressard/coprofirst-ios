@@ -10,8 +10,7 @@ import Foundation
 /// qu'au rôle que sa route accepte. Lancer une tâche, vérifier ou lancer un export
 /// restent au site. Réalisé par `ServiceAPI` (client généré) et `ServiceSimule`.
 protocol ServiceMaintenance: Sendable {
-    /// GET /admin/maintenance/sante — réponse NON TYPÉE au contrat 1.12.0 : relue par
-    /// `Relecture` (besoin noté : coprofirst#2618).
+    /// GET /admin/maintenance/sante → `SanteMaintenance` (typée depuis le contrat 1.16.0, #87).
     func santeTaches(_ installation: Installation) async throws -> SanteTaches
     /// GET /admin/export-copropriete/dernier → `DernierExport`.
     func dernierExport(_ installation: Installation) async throws -> DernierExport
@@ -24,27 +23,44 @@ extension ContexteOnglet {
 /// La santé des tâches planifiées, telle que le serveur la juge (`utils/etat_taches`) :
 /// une ligne par tâche, son statut, sa dernière exécution — et ce qui a échoué récemment.
 /// Les nœuds sont nommés par le SERVEUR : l'app n'en connaît aucun.
-struct SanteTaches: Decodable, Hashable, Sendable {
+struct SanteTaches: Hashable, Sendable {
     var taches: [Tache]
     var anomaliesRecentes: [Anomalie]
     var anomaliesFenetreJours: Int
 
-    struct Tache: Decodable, Hashable, Sendable, Identifiable {
+    struct Tache: Hashable, Sendable, Identifiable {
         var tache: String
         var statut: String
         var noeud: String?
-        var derniere: String?
+        var derniere: Date?
         var retardHeures: Double?
         var noeudEnRetard: String?
         var statutEnRetard: String?
         var id: String { tache }
     }
 
-    struct Anomalie: Decodable, Hashable, Sendable {
+    struct Anomalie: Hashable, Sendable {
         var tache: String
         var noeud: String?
-        var creeLe: String?
+        var creeLe: Date
         var erreur: String?
+    }
+}
+
+extension SanteTaches {
+    /// La santé servie, par son type GÉNÉRÉ — le même branchement pour le service réel et
+    /// l'API simulée.
+    init(_ lue: Components.Schemas.SanteMaintenance) {
+        self.init(
+            taches: lue.taches.map {
+                Tache(
+                    tache: $0.tache, statut: $0.statut, noeud: $0.noeud, derniere: $0.derniere,
+                    retardHeures: $0.retardHeures, noeudEnRetard: $0.noeudEnRetard, statutEnRetard: $0.statutEnRetard)
+            },
+            anomaliesRecentes: lue.anomaliesRecentes.map {
+                Anomalie(tache: $0.tache, noeud: $0.noeud, creeLe: $0.creeLe, erreur: $0.erreur)
+            },
+            anomaliesFenetreJours: lue.anomaliesFenetreJours)
     }
 }
 
