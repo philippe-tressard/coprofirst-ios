@@ -106,8 +106,9 @@ private struct CoffreQuiRefuse: CoffreDuCompte {
 
 /// Le Trousseau accepte-t-il d'écrire ? Non dans un build sans signature
 /// (`CODE_SIGNING_ALLOWED=NO`, `tests-simulateur.sh` et la CI) : l'app n'y a pas de
-/// trousseau à elle. Le test se déclare alors désactivé — INCONNU, jamais vert.
-private let trousseauAccessible: Bool = {
+/// trousseau à elle. Le test se déclare alors désactivé — INCONNU, jamais vert. Lu aussi
+/// par `ConsultationHorsLigneTests` (#101).
+let trousseauAccessible: Bool = {
     let sonde = "tests.sonde.\(UUID().uuidString)"
     defer { Trousseau.effacerCompte(sonde) }
     return Trousseau.rangerCompte(Data([1]), sonde)

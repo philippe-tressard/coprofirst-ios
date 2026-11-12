@@ -78,12 +78,7 @@ extension Parcours {
             if let push { await push.residenceOuverte(installation) }
         } catch {
             guard ErreurService.depuis(error) == .sessionExpiree, ouverte == installation else { return }
-            connues.oublierFaceID(installation)
-            changerDeResidence = false
-            ouverte = nil
-            reconnue = installation
-            chemin = []
-            avis = ErreurService.sessionExpiree.phrase
+            revenirALaConnexion(installation, avis: ErreurService.sessionExpiree.phrase)
         }
     }
 

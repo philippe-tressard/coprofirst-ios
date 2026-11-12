@@ -33,7 +33,7 @@ struct PhotoProtegee: View {
         .animation(.smooth(duration: 0.2), value: image != nil)
         .task(id: chemin) {
             do {
-                let donnees = try await parcours.service.fichierProtege(chemin, dans: installation)
+                let donnees = try await parcours.service.fichierConsultable(chemin, dans: installation)
                 image = UIImage(data: donnees)
                 echec = image == nil
             } catch {

@@ -30,27 +30,31 @@ private actor ServeurDeTest {
     func servir(_ statut: HTTPResponse.Status) { statutDesLectures = statut }
     func publier(_ nouveau: String) { titre = nouveau }
 
-    func repondre(_ operation: String) throws -> (HTTPResponse.Status, String, String) {
+    /// Une réponse du serveur : son statut, son type, son corps.
+    struct Reponse {
+        var statut = HTTPResponse.Status.ok
+        var type = "application/json"
+        var corps = "{}"
+    }
+
+    func repondre(_ operation: String) throws -> Reponse {
         guard enLigne else { throw URLError(.notConnectedToInternet) }
         recues.append(operation)
         switch operation {
         case Operations.PostAuthRefresh.id:
-            return refreshAccepte ? (.ok, "application/json", "{}") : Self.refus
+            return refreshAccepte ? Reponse() : Reponse(statut: .unauthorized, corps: #"{"detail": "refusé"}"#)
         case Operations.PostAuthLogout.id:
-            return (.ok, "application/json", "{}")
+            return Reponse()
         case Operations.GetDocumentsDocIdTélécharger.id:
-            return (statutDesLectures, "application/pdf", "%PDF-1.7 procès-verbal")
-        case Operations.GetFlux.id:
-            let fil =
-                #"{"delai_recent_jours": 7, "items": [{"type": "actualite", "id": "12", "#
-                + #""date": "2026-11-10T13:32:00Z", "titre": "\#(titre)"}]}"#
-            return statutDesLectures == .ok ? (.ok, "application/json", fil) : (statutDesLectures, "application/json", "{}")
+            return Reponse(statut: statutDesLectures, type: "application/pdf", corps: "%PDF-1.7 procès-verbal")
+        case Operations.GetFlux.id where statutDesLectures == .ok:
+            return Reponse(
+                corps: #"{"delai_recent_jours": 7, "items": [{"type": "actualite", "id": "12", "#
+                    + #""date": "2026-11-10T13:32:00Z", "titre": "\#(titre)"}]}"#)
         default:
-            return (statutDesLectures, "application/json", "{}")
+            return Reponse(statut: statutDesLectures)
         }
     }
-
-    private static let refus = (HTTPResponse.Status.unauthorized, "application/json", #"{"detail": "refusé"}"#)
 }
 
 private struct TransportDeTest: ClientTransport {
@@ -58,11 +62,11 @@ private struct TransportDeTest: ClientTransport {
 
     func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
         -> (HTTPResponse, HTTPBody?) {
-        let (statut, type, corps) = try await serveur.repondre(operationID)
-        var reponse = HTTPResponse(status: statut)
-        reponse.headerFields[.contentType] = type
+        let servie = try await serveur.repondre(operationID)
+        var reponse = HTTPResponse(status: servie.statut)
+        reponse.headerFields[.contentType] = servie.type
         reponse.headerFields[.setCookie] = "refresh_token=\(secret); HttpOnly; Secure"
-        return (reponse, HTTPBody(corps))
+        return (reponse, HTTPBody(servie.corps))
     }
 }
 
@@ -134,14 +138,16 @@ private struct Banc {
 
     // MARK: - Effacer
 
-    @Test func seDeconnecterEffaceLaLectureGardee() async throws {
+    @Test func seDeconnecterEffaceLaLectureGardeeEtLesCopiesOuvertes() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
         _ = try await banc.service.fil(residence)
+        let copie = try await banc.service.document(7, nom: "pv-deconnexion.pdf", dans: residence)
         #expect(!banc.disque.fichiers.isEmpty)
 
         _ = await banc.service.deconnecter(residence)
-        #expect(banc.disque.fichiers.isEmpty, "plus rien sur le disque")
+        #expect(banc.disque.tousLesFichiers.isEmpty, "plus rien dans le magasin")
+        #expect(!FileManager.default.fileExists(atPath: copie.path), "ni la copie du document ouvert")
         #expect(banc.service.consulterHorsLigne(residence) == .aucune, "plus rien de lisible sans réseau")
     }
 
@@ -157,7 +163,11 @@ private struct Banc {
         #expect(!banc.magasin.enConsultation(residence.hote))
     }
 
-    @Test func uneSessionRefuseeALaRepriseEffaceLeJetonEtLaLecture() async throws {
+    /// Sans Trousseau à elle (build non signé : `tests-simulateur.sh`, la CI), le test se
+    /// déclare désactivé — INCONNU, jamais vert. Le même effacement se prouve sans Trousseau
+    /// par `unRefusAuRetourDuReseauEffaceTout`.
+    @Test(.enabled(if: trousseauAccessible, "Trousseau inaccessible : build sans signature — INCONNU"))
+    func uneSessionRefuseeALaRepriseEffaceLeJetonEtLaLecture() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
         _ = try await banc.service.fil(residence)
@@ -253,7 +263,7 @@ private struct Banc {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
         _ = try await banc.service.fil(residence)
-        let fichiers = banc.disque.fichiers
+        let fichiers = banc.disque.tousLesFichiers
         #expect(!fichiers.isEmpty)
         for fichier in fichiers {
             let octets = try Data(contentsOf: fichier)
@@ -283,11 +293,11 @@ private struct Banc {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
         let photo = Data([0xFF, 0xD8, 0xFF])
-        banc.magasin.garder(photo, type: nil, cle: LectureGardee.clePhoto("/uploads/a.jpg"), de: residence.hote)
+        banc.magasin.garder(photo, type: nil, cle: LectureGardee.cleFichier("/uploads/a.jpg"), de: residence.hote)
         _ = banc.service.consulterHorsLigne(residence)
-        #expect(try await banc.service.photoConsultable("/uploads/a.jpg", dans: residence) == photo)
+        #expect(try await banc.service.fichierConsultable("/uploads/a.jpg", dans: residence) == photo)
         await #expect(throws: ErreurService.horsLigne) {
-            try await banc.service.photoConsultable("/uploads/b.jpg", dans: residence)
+            try await banc.service.fichierConsultable("/uploads/b.jpg", dans: residence)
         }
     }
 }

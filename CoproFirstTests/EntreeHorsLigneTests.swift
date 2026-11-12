@@ -20,7 +20,8 @@ private func habitue(_ lecture: LectureDisponible) -> (Parcours, ServiceSimule) 
     simule.garder(ServiceSimule.residence)
     simule.horsLigneSimule = true
     simule.lectureSimulee = lecture
-    let parcours = Parcours(service: simule, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
+    let connues = InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire())
+    let parcours = Parcours(service: simule, connues: connues)
     return (parcours, simule)
 }
 

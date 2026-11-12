@@ -124,15 +124,20 @@ final class Parcours {
         // L'appareil d'abord : sa route demande la session que la déconnexion va fermer.
         await push?.retirer(installation)
         let atteint = await service.deconnecter(installation)
+        let injoignable =
+            "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
+        revenirALaConnexion(installation, avis: atteint ? nil : injoignable)
+    }
+
+    /// La session de cette résidence est close (déconnexion, ou refusée par le serveur) :
+    /// retour à la connexion, adresse pré-remplie, avec ce que l'écran doit dire.
+    func revenirALaConnexion(_ installation: Installation, avis: String?) {
         connues.oublierFaceID(installation)
         changerDeResidence = false
         ouverte = nil
         reconnue = installation
         chemin = []
-        avis =
-            atteint
-            ? nil
-            : "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
+        self.avis = avis
     }
 
     /// « Oublier toutes les résidences » : chaque session fermée, la liste vidée,

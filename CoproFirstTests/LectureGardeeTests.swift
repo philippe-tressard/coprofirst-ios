@@ -19,13 +19,13 @@ final class HorlogeDeTest: @unchecked Sendable {
     func avancer(_ secondes: TimeInterval) { verrou.withLock { instant += secondes } }
 }
 
-/// Ce que le magasin a demandé au disque, écriture par écriture.
+/// Ce que le magasin a écrit, fichier par fichier.
 final class EcrituresDeTest: @unchecked Sendable {
     private let verrou = NSLock()
-    private var recues: [Data.WritingOptions] = []
+    private var recues: [String] = []
 
-    var options: [Data.WritingOptions] { verrou.withLock { recues } }
-    func noter(_ options: Data.WritingOptions) { verrou.withLock { recues.append(options) } }
+    var noms: [String] { verrou.withLock { recues } }
+    func noter(_ nom: String) { verrou.withLock { recues.append(nom) } }
 }
 
 /// Un magasin dans un dossier jetable, à l'horloge du test.
@@ -37,14 +37,17 @@ struct MagasinDeTest {
     func magasin(sessionGardee: Bool = true) -> LecturesGardees {
         LecturesGardees(
             racine: racine, horloge: { [horloge] in horloge.maintenant }, sessionGardee: { _ in sessionGardee },
-            ecrire: { [ecritures] donnees, fichier, options in
-                ecritures.noter(options)
-                try donnees.write(to: fichier, options: options)
+            ecrire: { [ecritures, racine] donnees, dossier, nom in
+                ecritures.noter(nom)
+                // LA porte des fichiers de l'app, comme le magasin réel.
+                _ = try Fichiers.ecrire(donnees, sous: [dossier], nom: nom, racine: racine)
             })
     }
 
-    /// Tous les fichiers du magasin, quel que soit l'hôte.
-    var fichiers: [URL] {
+    /// Les lectures du magasin, quel que soit l'hôte (l'index des dates n'en est pas une).
+    var fichiers: [URL] { tousLesFichiers.filter { $0.lastPathComponent != "dates" } }
+
+    var tousLesFichiers: [URL] {
         let parcours = FileManager.default.enumerator(at: racine, includingPropertiesForKeys: [.isRegularFileKey])
         return (parcours?.allObjects as? [URL] ?? []).filter {
             (try? $0.resourceValues(forKeys: [.isRegularFileKey]).isRegularFile) == true
@@ -93,18 +96,18 @@ private let jour: TimeInterval = 86_400
         magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
         magasin.garder(Data("les affaires".utf8), type: nil, cle: "get_tickets /tickets", de: "a.exemple")
 
-        // Ce que le magasin DEMANDE au disque : la protection complète, à chaque écriture.
-        #expect(banc.ecritures.options.count == 2)
-        #expect(banc.ecritures.options.allSatisfy { $0.contains(.completeFileProtection) })
-        #expect(LecturesGardees.options.contains(.completeFileProtection))
+        // Chaque écriture passe par LA porte des fichiers, sous la protection complète.
+        #expect(banc.ecritures.noms.count == 4, "deux lectures, et l'index des dates à chaque fois")
+        #expect(Fichiers.protection.contains(.completeFileProtection))
+        #expect(Fichiers.protection.contains(.atomic))
 
         // Ce que le disque en DIT : hors des sauvegardes, la racine comme le dossier de l'hôte.
         for dossier in [banc.racine, magasin.dossier("a.exemple")] {
             let valeurs = try dossier.resourceValues(forKeys: [.isExcludedFromBackupKey])
             #expect(valeurs.isExcludedFromBackup == true, "\(dossier.lastPathComponent) exclu des sauvegardes")
         }
-        let fichiers = banc.fichiers
-        #expect(fichiers.count == 2)
+        let fichiers = banc.tousLesFichiers
+        #expect(fichiers.count == 3, "deux lectures et l'index")
         // Le simulateur ne chiffre pas, mais il rend la classe demandée quand il la connaît :
         // jamais une classe plus faible que `.complete`.
         for fichier in fichiers {
@@ -120,7 +123,7 @@ private let jour: TimeInterval = 86_400
             racine: banc.racine, sessionGardee: { _ in true },
             ecrire: { _, _, _ in throw CocoaError(.fileWriteNoPermission) })
         magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        #expect(banc.fichiers.isEmpty)
+        #expect(banc.tousLesFichiers.isEmpty)
         #expect(magasin.consulter("a.exemple") == .aucune)
     }
 
@@ -129,7 +132,7 @@ private let jour: TimeInterval = 86_400
         defer { banc.nettoyer() }
         let magasin = banc.magasin(sessionGardee: false)
         magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        #expect(banc.fichiers.isEmpty, "sans Face ID pour la rouvrir, la lecture ne servirait à rien")
+        #expect(banc.tousLesFichiers.isEmpty, "sans Face ID pour la rouvrir, la lecture ne servirait à rien")
         #expect(!FileManager.default.fileExists(atPath: banc.racine.path))
     }
 
@@ -168,7 +171,7 @@ private let jour: TimeInterval = 86_400
         banc.horloge.avancer(7 * jour + 1)
         #expect(magasin.consulter("a.exemple") == .perimee)
         #expect(!magasin.enConsultation("a.exemple"), "rien ne s'ouvre")
-        #expect(banc.fichiers.isEmpty, "effacée du disque")
+        #expect(banc.tousLesFichiers.isEmpty, "effacée du disque, index compris")
         #expect(magasin.consulter("a.exemple") == .aucune, "dite une fois")
     }
 

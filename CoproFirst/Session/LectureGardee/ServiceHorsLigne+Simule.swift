@@ -29,8 +29,8 @@ extension ServiceSimule: ServiceHorsLigne {
 
     func purgerLesLectures(sauf gardees: [Installation]) {}
 
-    func photoGardee(_ chemin: String, dans installation: Installation) async throws -> Data {
-        try await photo(chemin, dans: installation)
+    func fichierGarde(_ chemin: String, dans installation: Installation) async throws -> Data {
+        try await fichierProtege(chemin, dans: installation)
     }
 }
 #endif

@@ -27,7 +27,7 @@ actor PiecesLocales {
                     continue
                 }
                 groupe.addTask {
-                    let donnees = try await service.fichierProtege(chemin, dans: installation)
+                    let donnees = try await service.fichierConsultable(chemin, dans: installation)
                     let fichier = try Fichiers.ecrire(
                         donnees, sous: ["pieces", cle], nom: Fichiers.nomAffiche(chemin))
                     return (rang, fichier)

@@ -39,19 +39,19 @@ struct LectureLue: Equatable, Sendable {
 ///
 /// - Un dossier par résidence (par hôte), nommé par l'empreinte de l'hôte : rien ne se
 ///   croise d'une résidence à l'autre, et `effacer` retire le dossier entier.
-/// - Chaque fichier est créé sous la protection `.complete` (illisible tant que
-///   l'appareil est verrouillé) et le magasin est exclu des sauvegardes (iCloud,
-///   Finder). Si l'une des deux ne peut pas être posée, rien n'est écrit.
+/// - Chaque fichier s'écrit par LA porte des fichiers de l'app (`Fichiers.ecrire`) :
+///   protection `.complete`, illisible tant que l'appareil est verrouillé. Le magasin est
+///   exclu des sauvegardes (iCloud, Finder) ; si l'exclusion ne tient pas, rien ne s'écrit.
+/// - La date de chaque lecture vit dans l'index du dossier (`dates`), écrit de même :
+///   aucune date de fichier n'est lue.
 /// - Rien n'est gardé pour une résidence dont la session n'est pas gardée au Trousseau
 ///   (`sessionGardee`) : sans Face ID pour la rouvrir, cette lecture ne servirait à rien.
 /// - Aucun jeton, aucun mot de passe, aucun cookie : le corps d'une réponse de LECTURE
 ///   (`LectureGardee.operations`) et son type, rien de ses en-têtes ni de la requête.
 final class LecturesGardees: @unchecked Sendable {
-    /// Écrire un fichier : `Data.write` en vrai ; un double, pour éprouver les options.
-    typealias Ecriture = @Sendable (Data, URL, Data.WritingOptions) throws -> Void
-
-    /// Les options de TOUTE écriture du magasin.
-    static let options: Data.WritingOptions = [.atomic, .completeFileProtection]
+    /// Écrire un fichier sous un dossier du magasin : `Fichiers.ecrire` en vrai ; un
+    /// double, pour éprouver un disque qui refuse.
+    typealias Ecriture = @Sendable (Data, _ dossier: String, _ nom: String) throws -> Void
 
     private let racine: URL
     private let horloge: @Sendable () -> Date
@@ -61,15 +61,17 @@ final class LecturesGardees: @unchecked Sendable {
     /// Les résidences ouvertes sans réseau (en mémoire : un lancement repart en ligne).
     private var consultations: Set<String> = []
 
+    /// Le nom de l'index des dates, dans le dossier d'un hôte.
+    private static let index = "dates"
+
     init(
         racine: URL, horloge: @escaping @Sendable () -> Date = { .now },
-        sessionGardee: @escaping @Sendable (String) -> Bool,
-        ecrire: @escaping Ecriture = { try $0.write(to: $1, options: $2) }
+        sessionGardee: @escaping @Sendable (String) -> Bool, ecrire: Ecriture? = nil
     ) {
         self.racine = racine
         self.horloge = horloge
         self.sessionGardee = sessionGardee
-        self.ecrire = ecrire
+        self.ecrire = ecrire ?? { _ = try Fichiers.ecrire($0, sous: [$1], nom: $2, racine: racine) }
     }
 
     /// Le magasin de l'app : `Application Support/LecturesGardees` — ni le dossier
@@ -89,11 +91,12 @@ final class LecturesGardees: @unchecked Sendable {
         guard garde(hote) else { return }
         verrou.withLock {
             do {
-                let dossier = try preparer(hote)
-                let fichier = dossier.appending(path: Self.empreinte(cle))
-                let enveloppe = try PropertyListEncoder().encode(Enveloppe(type: type, corps: corps))
-                try ecrire(enveloppe, fichier, Self.options)
-                try FileManager.default.setAttributes([.modificationDate: horloge()], ofItemAtPath: fichier.path)
+                try preparer(hote)
+                let nom = Self.empreinte(cle)
+                try ecrire(try PropertyListEncoder().encode(Enveloppe(type: type, corps: corps)), dossierDe(hote), nom)
+                var dates = lireIndex(hote)
+                dates[nom] = horloge()
+                try ecrireIndex(dates, hote)
             } catch {
                 // Écriture refusée (appareil verrouillé, disque plein) : rien n'est gardé.
             }
@@ -104,13 +107,13 @@ final class LecturesGardees: @unchecked Sendable {
     /// durée maximale (elle est alors effacée).
     func lire(_ cle: String, de hote: String) -> LectureLue? {
         verrou.withLock {
-            let fichier = dossier(hote).appending(path: Self.empreinte(cle))
-            guard let date = date(fichier) else { return nil }
+            let nom = Self.empreinte(cle)
+            guard let date = lireIndex(hote)[nom] else { return nil }
             guard !perime(date) else {
-                try? FileManager.default.removeItem(at: fichier)
+                oublier([nom], hote)
                 return nil
             }
-            guard let donnees = try? Data(contentsOf: fichier),
+            guard let donnees = try? Data(contentsOf: dossier(hote).appending(path: nom)),
                 let enveloppe = try? PropertyListDecoder().decode(Enveloppe.self, from: donnees)
             else { return nil }
             return LectureLue(corps: enveloppe.corps, type: enveloppe.type, date: date)
@@ -119,9 +122,7 @@ final class LecturesGardees: @unchecked Sendable {
 
     /// Retire UNE lecture : le serveur ne la sert plus à ce compte (403, 404).
     func retirer(_ cle: String, de hote: String) {
-        verrou.withLock {
-            try? FileManager.default.removeItem(at: dossier(hote).appending(path: Self.empreinte(cle)))
-        }
+        verrou.withLock { oublier([Self.empreinte(cle)], hote) }
     }
 
     // MARK: - Entrer sans réseau, en sortir
@@ -131,8 +132,7 @@ final class LecturesGardees: @unchecked Sendable {
     /// Une lecture périmée est effacée, et dite.
     func consulter(_ hote: String) -> LectureDisponible {
         verrou.withLock {
-            let dates = fichiers(hote).compactMap(date)
-            guard let derniere = dates.max() else { return .aucune }
+            guard let derniere = lireIndex(hote).values.max() else { return .aucune }
             guard !perime(derniere) else {
                 try? FileManager.default.removeItem(at: dossier(hote))
                 return .perimee
@@ -162,17 +162,18 @@ final class LecturesGardees: @unchecked Sendable {
     /// n'est plus gardée (`gardes`) — rien ne reste d'une résidence où l'on n'est pas connecté.
     func purger(sauf gardes: Set<String>) {
         verrou.withLock {
-            let attendus = Set(gardes.map(Self.empreinte))
+            let attendus = Dictionary(uniqueKeysWithValues: gardes.map { (Self.empreinte($0), $0) })
             let dossiers = try? FileManager.default.contentsOfDirectory(at: racine, includingPropertiesForKeys: nil)
             for dossier in dossiers ?? [] {
-                guard attendus.contains(dossier.lastPathComponent) else {
+                guard let hote = attendus[dossier.lastPathComponent] else {
                     try? FileManager.default.removeItem(at: dossier)
                     continue
                 }
-                let lectures = try? FileManager.default.contentsOfDirectory(at: dossier, includingPropertiesForKeys: nil)
-                for fichier in lectures ?? [] where date(fichier).map(perime) ?? true {
-                    try? FileManager.default.removeItem(at: fichier)
-                }
+                let dates = lireIndex(hote)
+                let presents = (try? FileManager.default.contentsOfDirectory(atPath: dossier.path)) ?? []
+                // Une lecture périmée, ou un fichier que l'index ne date pas : effacés.
+                let aOublier = presents.filter { $0 != Self.index && dates[$0].map(perime) ?? true }
+                oublier(aOublier + dates.keys.filter { !presents.contains($0) }, hote)
             }
         }
     }
@@ -186,8 +187,10 @@ final class LecturesGardees: @unchecked Sendable {
 
     /// Le dossier d'un hôte, par son empreinte (aucun nom de résidence dans un chemin).
     func dossier(_ hote: String) -> URL {
-        racine.appending(path: Self.empreinte(hote), directoryHint: .isDirectory)
+        racine.appending(path: dossierDe(hote), directoryHint: .isDirectory)
     }
+
+    private func dossierDe(_ hote: String) -> String { Self.empreinte(hote) }
 
     static func empreinte(_ texte: String) -> String {
         SHA256.hash(data: Data(texte.utf8)).map { String(format: "%02x", $0) }.joined()
@@ -195,7 +198,7 @@ final class LecturesGardees: @unchecked Sendable {
 
     /// Crée le dossier de l'hôte sous la protection `.complete`, et exclut le magasin
     /// des sauvegardes. Lève si l'une des deux ne tient pas : rien ne s'écrit alors.
-    private func preparer(_ hote: String) throws -> URL {
+    private func preparer(_ hote: String) throws {
         let dossier = dossier(hote)
         try FileManager.default.createDirectory(
             at: dossier, withIntermediateDirectories: true,
@@ -205,15 +208,31 @@ final class LecturesGardees: @unchecked Sendable {
         for var chemin in [racine, dossier] {
             try chemin.setResourceValues(exclue)
         }
-        return dossier
     }
 
-    private func fichiers(_ hote: String) -> [URL] {
-        (try? FileManager.default.contentsOfDirectory(at: dossier(hote), includingPropertiesForKeys: nil)) ?? []
+    private func lireIndex(_ hote: String) -> [String: Date] {
+        guard let donnees = try? Data(contentsOf: dossier(hote).appending(path: Self.index)) else { return [:] }
+        return (try? PropertyListDecoder().decode([String: Date].self, from: donnees)) ?? [:]
     }
 
-    private func date(_ fichier: URL) -> Date? {
-        (try? FileManager.default.attributesOfItem(atPath: fichier.path))?[.modificationDate] as? Date
+    private func ecrireIndex(_ dates: [String: Date], _ hote: String) throws {
+        try ecrire(try PropertyListEncoder().encode(dates), dossierDe(hote), Self.index)
+    }
+
+    /// Efface ces lectures et leurs dates ; un index vide emporte le dossier.
+    private func oublier(_ noms: [String], _ hote: String) {
+        guard !noms.isEmpty else { return }
+        var dates = lireIndex(hote)
+        for nom in noms {
+            try? FileManager.default.removeItem(at: dossier(hote).appending(path: nom))
+            dates[nom] = nil
+        }
+        if dates.isEmpty {
+            try? FileManager.default.removeItem(at: dossier(hote))
+        } else if (try? ecrireIndex(dates, hote)) == nil {
+            // L'index ne s'écrit plus : tout l'hôte s'efface plutôt qu'une lecture mal datée.
+            try? FileManager.default.removeItem(at: dossier(hote))
+        }
     }
 
     private func perime(_ date: Date) -> Bool { horloge().timeIntervalSince(date) > LectureGardee.dureeMax }

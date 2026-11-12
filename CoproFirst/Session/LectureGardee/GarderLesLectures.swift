@@ -48,8 +48,8 @@ extension LectureGardee {
         "\(operation) \(requete.path ?? "")"
     }
 
-    /// La clé d'une photo protégée (`/uploads/…`), lue hors du client généré.
-    static func clePhoto(_ chemin: String) -> String { "photo \(chemin)" }
+    /// La clé d'un fichier protégé (`/uploads/…` : photo, pièce jointe), lu hors du client généré.
+    static func cleFichier(_ chemin: String) -> String { "fichier \(chemin)" }
 }
 
 /// LA porte des lectures gardées, glissée entre le client généré et le transport :

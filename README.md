@@ -71,6 +71,13 @@ résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si l
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
 barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
+**Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
+rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
+l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
+(« Hors ligne — à jour au 10/11/2026 à 14:32 ») ; on consulte, on n'agit pas : les
+gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la session
+reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
+la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
 
 Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou réservé
 au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
@@ -81,12 +88,14 @@ Pour les essayer sans réseau, un build **Debug** accepte des arguments de lance
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
 (`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
 la session gardée sans biométrie ; `-saisie complete` : la saisie Complète d'une
-affaire, au lieu d'Essentielle). Un build Release ne compile pas la simulation
+affaire, au lieu d'Essentielle ; avec `-ecran retour`, `-hors-ligne gardee|perimee|sans-lecture` :
+l'appareil sans réseau, et une dernière lecture gardée, trop ancienne, ou absente). Un build Release ne compile pas la simulation
 (`scripts/verifier-simule.py`, #84).
 
 Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
 dernière connexion — va au Trousseau de l'appareil ; les réglages ne gardent que la
-résidence (adresse, nom, présentation).
+résidence (adresse, nom, présentation). La dernière lecture d'une résidence (hors
+ligne, #101) va dans `Application Support`, chiffrée et exclue des sauvegardes.
 
 ## Charte
 

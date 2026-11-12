@@ -81,9 +81,16 @@ relais de l'éditeur, puis par Apple (§4).
 | la date du report de l'offre de notifications | réglages | `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `private static let cleReport = "push-offre-reportee"` |
 | le thème choisi | réglages | `CoproFirst/Fonctions/Profil/ThemeChoisi.swift` › `@AppStorage(ThemeChoisi.cle)` |
 | la dernière lecture de la vitrine | cache de l'app | `CoproFirst/Entree/Contenu/Vitrine.swift` › `appendingPathComponent("contenu-vitrine.json")` |
-| un document ouvert | dossier temporaire, chiffré | `CoproFirst/Commun/Session/FichierServi.swift` › `try donnees.write(to: fichier, options: [.atomic, .completeFileProtection])` |
+| un document ou une pièce jointe ouverts | dossier temporaire, chiffré | `CoproFirst/Commun/Session/FichierServi.swift` › `static let protection: Data.WritingOptions = [.atomic, .completeFileProtection]` |
+| la dernière lecture de la résidence, **si** Face ID est activé (#101) : fil, affaires (liste et détail, messages, Historique), profil, annuaire, documents et photos déjà ouverts — rien de l'administration ni de l'Espace CS, aucun jeton ni cookie | `Application Support`, un dossier par résidence, chiffré (`.complete`), **exclu des sauvegardes** iCloud et Finder ; effacée au-delà de 7 jours sans lecture fraîche | `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `exclue.isExcludedFromBackup = true` ; `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `static let joursMax = 7` ; `CoproFirst/Session/LectureGardee/GarderLesLectures.swift` › `static let operations: Set<String> = [` |
 
-La déconnexion efface la session : `CoproFirst/Session/ServiceAPI+Compte.swift` › `Trousseau.supprimer(pour: installation.hote)`.
+La déconnexion efface la session — le jeton, la dernière lecture gardée et les copies des
+fichiers ouverts, à une seule porte : `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Trousseau.supprimer(pour: installation.hote)` ;
+`CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `lectures.effacer(installation.hote)` ;
+`CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Fichiers.effacerLesCopies()`.
+Une session que le serveur refuse efface de même. La lecture gardée ne quitte jamais
+l'appareil : elle ne change donc rien au §5 (rien de plus n'est « collecté »), mais elle se
+dit ici et dans la politique de confidentialité du site (`coprofirst-site`, à mettre à jour).
 « Oublier toutes les résidences » efface le courriel et le profil. La caméra lit le QR
 code sur l'appareil (`CoproFirst/Entree/Decouverte/ScannerQRView.swift` › `DataScannerViewController(`),
 aucune image n'est gardée ni envoyée ; Face ID est vérifié par iOS.
@@ -245,6 +252,7 @@ contrôle.
 | `Security` | Apple (iOS) | le Trousseau |
 | `LocalAuthentication` | Apple (iOS) | Face ID, vérifié par iOS |
 | `Network` | Apple (iOS) | savoir si l'appareil est en ligne |
+| `CryptoKit` | Apple (iOS) | nommer le dossier d'une lecture gardée par l'empreinte de son hôte, sur l'appareil |
 | `UserNotifications` | Apple (iOS) | autorisation et réception des notifications |
 | `VisionKit` | Apple (iOS) | lecture du QR code, sur l'appareil |
 | `QuickLook` | Apple (iOS) | aperçu d'un document téléchargé |
