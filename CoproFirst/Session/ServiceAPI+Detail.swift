@@ -111,9 +111,9 @@ extension ServiceAPI {
         }
     }
 
-    /// Une photo de `/uploads/` n'est pas une route de l'API : un fichier derrière la
-    /// session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
-    func photo(_ chemin: String, dans installation: Installation) async throws -> Data {
+    /// Un fichier de `/uploads/` (photo, pièce jointe) n'est pas une route de l'API : il est
+    /// derrière la session (forward_auth). La session HTTP de l'installation la lit, cookies compris.
+    func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data {
         guard let adresse = URL(string: chemin, relativeTo: installation.adresse)?.absoluteURL,
             adresse.host() == installation.adresse.host()
         else { throw ErreurService.inattendue(400) }

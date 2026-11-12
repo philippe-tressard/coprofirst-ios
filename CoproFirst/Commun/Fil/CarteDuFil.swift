@@ -6,9 +6,12 @@ import SwiftUI
 /// Un élément du fil : sa gouttière (`VignetteDeNature`), le titre, une ligne.
 /// Une urgence porte le liseré rouge à gauche, comme une affaire urgente ; une affaire
 /// datée, sa vignette d'échéance sous le classement (`VignetteEcheance`, #75) ; une
-/// affaire, qui la lit et son lieu sous le texte (#129, #130).
+/// affaire, qui la lit et son lieu sous le texte (#129, #130). Ses pièces
+/// jointes, une vignette à droite (`VignettePieces`, `FluxVignette` du site) : elle se lit
+/// avec la session de la résidence, et ne paraît donc pas sans elle (la vitrine).
 struct CarteDuFil: View {
     let element: ElementDuFil
+    var installation: Installation?
     @Environment(\.palette) private var palette
 
     var body: some View {
@@ -46,6 +49,9 @@ struct CarteDuFil: View {
                 }
             }
             Spacer(minLength: 0)
+            if let installation, !element.pieces.vide {
+                VignettePieces(pieces: element.pieces, installation: installation)
+            }
             // Une carte du fil s'ouvre TOUJOURS : le chevron le dit.
             Image(systemName: "chevron.right")
                 .font(.footnote.weight(.semibold))
@@ -86,6 +92,7 @@ struct CarteDuFil: View {
         if let lecture = Lecture.aMontrer(element.lecture) { morceaux.append(lecture.enClair()) }
         if let lieu = element.lieu { morceaux.append(lieu) }
         if let detail = element.detail { morceaux.append(TexteDuSite.apercu(detail)) }
+        if let pieces = element.pieces.enClair { morceaux.append(pieces) }
         return Text(morceaux.joined(separator: ", "))
     }
 }

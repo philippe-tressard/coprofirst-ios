@@ -28,10 +28,30 @@ extension ServiceSimule {
         return fichier
     }
 
-    func photo(_ chemin: String, dans installation: Installation) async throws -> Data {
+    /// Le devis joint à l'affaire 41, sous le nom que le serveur donne à un téléversement
+    /// (préfixe de 32 chiffres hexadécimaux) : l'écran doit montrer « Devis plombier ».
+    static let devisSimule = "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"
+
+    /// Un fichier de `/uploads/` inventé selon son extension : une « photo » dessinée (un
+    /// aplat de la charte et un pictogramme), un PDF d'une page, ou du texte.
+    func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data {
         try await Task.sleep(for: .milliseconds(250))
-        // Une « photo » dessinée : un aplat de la charte et un pictogramme.
-        let teinte = UIColor(chemin.hasSuffix("2.jpg") ? Palette.seine.filCyanFond : Palette.seine.filIndigoFond)
+        let nom = Fichiers.nomAffiche(chemin)
+        if Fichiers.estImage(chemin) { return Self.photoDessinee(chemin) }
+        if nom.lowercased().hasSuffix(".pdf") {
+            return UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842)).pdfData { contexte in
+                contexte.beginPage()
+                ("\(Fichiers.nomSansExtension(chemin))\n\nDocument fictif de l'API simulée." as NSString).draw(
+                    in: CGRect(x: 56, y: 72, width: 483, height: 700),
+                    withAttributes: [.font: UIFont.preferredFont(forTextStyle: .title2)])
+            }
+        }
+        return Data("\(Fichiers.nomSansExtension(chemin)) — texte fictif de l'API simulée.\n".utf8)
+    }
+
+    private static func photoDessinee(_ chemin: String) -> Data {
+        let teintes = [Palette.seine.filIndigoFond, Palette.seine.filCyanFond, Palette.seine.infoFond]
+        let teinte = UIColor(teintes[chemin.unicodeScalars.reduce(0) { $0 + Int($1.value) } % teintes.count])
         let image = UIGraphicsImageRenderer(size: CGSize(width: 640, height: 480)).image { contexte in
             teinte.setFill()
             contexte.fill(CGRect(x: 0, y: 0, width: 640, height: 480))

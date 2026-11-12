@@ -74,7 +74,7 @@ extension DetailAffaire {
             // déduit pas de la priorité.
             urgente: ticket.urgente, creeLe: ticket.creeLe,
             auteur: ticket.saisiPourAffichage ?? ticket.auteurNom, lieu: ticket.lieuServi,
-            photos: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? []).filter(Fichiers.estImage),
+            pieces: PiecesJointes(urls: (ticket.photosUrls ?? []) + (ticket.fichiersUrls ?? [])),
             suites: suites,
             droits: DroitsServisAffaire(
                 repondre: ticket.peutRepondre ?? false, changerEtat: ticket.peutChangerEtat ?? false,
@@ -91,6 +91,6 @@ extension SuiteAffaire {
             id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
-            photos: (evolution.fichiersUrls ?? []).filter(Fichiers.estImage))
+            pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []))
     }
 }

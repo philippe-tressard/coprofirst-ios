@@ -43,28 +43,31 @@ private struct BulleMessage: View {
     var body: some View {
         HStack(spacing: 0) {
             if message.deMoi { Spacer(minLength: 32) }
-            VStack(alignment: .leading, spacing: 6) {
-                HStack(spacing: 6) {
-                    if let auteur = message.auteur {
-                        Text(auteur)
-                            .font(.subheadline.weight(.semibold))
-                            .foregroundStyle(palette.text)
+            VStack(alignment: .leading, spacing: 10) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        if let auteur = message.auteur {
+                            Text(auteur)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(palette.text)
+                        }
+                        if message.interne { PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true) }
+                        Spacer(minLength: 8)
+                        Text(FormatsDuSite.dateHeure(message.date))
+                            .font(.caption)
+                            .foregroundStyle(palette.textMuted)
                     }
-                    if message.interne { PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true) }
-                    Spacer(minLength: 8)
-                    Text(FormatsDuSite.dateHeure(message.date))
-                        .font(.caption)
-                        .foregroundStyle(palette.textMuted)
+                    TexteRiche(html: message.contenu)
+                        .font(.body)
+                        .foregroundStyle(palette.text)
+                        .tint(palette.primary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                TexteRiche(html: message.contenu)
-                    .font(.body)
-                    .foregroundStyle(palette.text)
-                    .tint(palette.primary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                if !message.photos.isEmpty {
-                    GaleriePhotos(chemins: message.photos, installation: installation)
-                }
+                // Le texte se lit d'un trait ; chaque pièce, à part, s'ouvre.
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("affaire.message.\(message.id)")
+                PiecesJointesView(pieces: message.pieces, installation: installation, format: .compact)
             }
             .padding(12)
             .background(fond, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
@@ -72,8 +75,6 @@ private struct BulleMessage: View {
                 RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
                     .strokeBorder(bordure, lineWidth: 1)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityIdentifier("affaire.message.\(message.id)")
             if !message.deMoi { Spacer(minLength: 32) }
         }
     }

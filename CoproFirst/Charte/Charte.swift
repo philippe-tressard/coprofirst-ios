@@ -50,6 +50,12 @@ enum Mise {
     static let cible: CGFloat = 44
     /// L'approche des libellés en capitales (`styleLibelle`).
     static let approcheLibelle: CGFloat = 0.6
+    /// La hauteur de la mosaïque des photos d'un élément ouvert (`MosaiquePhotos`).
+    static let mosaique: CGFloat = 220
+    /// La même, sous une suite de l'Historique ou dans un message.
+    static let mosaiqueCompacte: CGFloat = 140
+    /// Le côté de la vignette d'une carte du fil (`VignettePieces`).
+    static let vignette: CGFloat = 56
 }
 
 extension Font {

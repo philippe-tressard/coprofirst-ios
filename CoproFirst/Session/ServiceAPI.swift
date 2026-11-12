@@ -165,6 +165,7 @@ final class SessionsParHote: @unchecked Sendable {
 extension ElementDuFil {
     init(item: Components.Schemas.FluxItem) {
         let meta = item.meta?.additionalProperties.value ?? [:]
+        let lu = MetaDuFil(meta: item.meta?.additionalProperties)
         // Un nombre JSON peut arriver entier ou flottant selon le décodeur.
         func entier(_ cle: String) -> Int? {
             (meta[cle] as? Int) ?? (meta[cle] as? Double).map { Int($0) }

@@ -26,8 +26,8 @@ struct MessageAffaire: Identifiable, Hashable, Sendable {
     let qualite: String?
     /// Une note du conseil : le serveur ne la sert qu'au conseil et à l'administration.
     let interne: Bool
-    /// Les photos jointes (`/uploads/…`).
-    let photos: [String]
+    /// Ce qu'il joint (`fichiers_urls`) : photos et documents.
+    let pieces: PiecesJointes
 
     /// Ce que la bulle dit de son auteur : « Vous », le nom servi, la qualité servie, ou rien.
     var auteur: String? { deMoi ? "Vous" : nom?.nulSiVide ?? qualite }
@@ -52,7 +52,7 @@ extension MessageAffaire {
                 id: message.id, contenu: message.contenu, date: message.creeLe,
                 deMoi: servi?.estAuteur ?? (moi != nil && message.auteurId == moi), nom: servi?.auteurNom,
                 qualite: message.auteurQualite, interne: message.interne,
-                photos: (message.fichiersUrls ?? []).filter(Fichiers.estImage))
+                pieces: PiecesJointes(urls: message.fichiersUrls ?? []))
         }
     }
 }

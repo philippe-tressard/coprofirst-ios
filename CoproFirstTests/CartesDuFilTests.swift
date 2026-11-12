@@ -82,6 +82,6 @@ func uneAffaireOuUneActualiteSOuvreSurSonDetail(type: String) {
 @Test func unChangementDEtatSeDitAvecLesLibellesDuSite() {
     let suite = SuiteAffaire(
         id: 1, type: "etat", date: .now, auteur: nil, contenu: nil, ancienStatut: "ouvert",
-        nouveauStatut: "en_cours", photos: [])
+        nouveauStatut: "en_cours")
     #expect(suite.changementDEtat == "Ouvert → Chez le syndic")
 }
