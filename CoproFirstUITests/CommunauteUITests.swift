@@ -152,9 +152,12 @@ final class CommunauteUITests: XCTestCase {
         capture("7b-cloche")
         cloche.tap()
         let tout = el(app, "notifications.toutMarquerLu")
+        // La feuille monte en glissant : « se touche » s'attend comme un état, pas une
+        // lecture unique (main 865eed4 rouge sur un runner lent, #123).
         XCTAssertTrue(tout.apparait())
-        XCTAssertTrue(tout.isHittable, "« Tout marquer lu » se voit et se touche, en haut")
-        XCTAssertTrue(el(app, "notifications.modifier").isHittable, "« Modifier » se voit et se touche, en haut")
+        XCTAssertTrue(tout.attendre("isHittable == true"), "« Tout marquer lu » se voit et se touche, en haut")
+        let modifier = el(app, "notifications.modifier")
+        XCTAssertTrue(modifier.attendre("isHittable == true"), "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
         tout.tap()
         XCTAssertTrue(tout.disparait(), "plus rien à marquer")
