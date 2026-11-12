@@ -65,7 +65,7 @@ verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
-(coprofirst v3.84.0, contrat 1.19.0) ; une installation plus ancienne n'offre aucun geste.
+(coprofirst v3.84.0, contrat 1.19.0).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

@@ -85,26 +85,26 @@ enum FixturesDetailAffaire {
 
     /// GET /tickets/41/evolutions → `[TicketEvolutionRead]` : l'Historique de l'affaire 41,
     /// servi à un résident — aucune entrée qu'il corrige ou efface (`peut_modifier`,
-    /// `peut_supprimer`, #93, typés au contrat 1.26.0). Le conseil et l'administrateur reçoivent
-    /// leurs gestes du faux serveur (`ServiceSimule.gestesServis`).
+    /// `peut_supprimer`, #93). Le conseil et l'administrateur reçoivent leurs gestes du
+    /// faux serveur (`ServiceSimule.servie`).
     static let evolutions = #"""
         [
           {"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
            "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "en_cours",
-           "statut_avant": "ouvert", "nouveau_statut_libelle": "Chez le syndic", "perimetre_precise_libelle": "",
-           "peut_modifier": false, "peut_supprimer": false},
+           "nouveau_statut_libelle": "Chez le syndic", "perimetre_precise_libelle": "",
+           "statut_avant": "ouvert", "peut_modifier": false, "peut_supprimer": false},
           {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
            "auteur_nom": "Le conseil syndical",
            "contenu": "<p>Le syndic est prévenu ; le plombier passe <strong>demain matin</strong>.</p>",
-           "statut_avant": "en_cours", "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
-           "peut_modifier": false, "peut_supprimer": false},
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false},
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
            "auteur_nom": "Le syndic",
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
-           "statut_avant": "en_cours", "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
-           "peut_modifier": false, "peut_supprimer": false}
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false}
         ]
         """#
 

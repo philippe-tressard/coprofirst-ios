@@ -55,15 +55,14 @@ extension SuiteAffaire {
     init(evolution: Components.Schemas.TicketEvolutionRead) {
         self.init(
             id: evolution.id, type: evolution._type, date: evolution.creeLe, auteur: evolution.auteurNom,
+            // Ce que CE lecteur peut faire de l'entrée, servi avec elle (#93) ; absent, « non ».
+            droits: DroitsServisSuite(
+                modifier: evolution.peutModifier ?? false, supprimer: evolution.peutSupprimer ?? false),
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
             pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []),
             nouveauStatutLibelle: evolution.nouveauStatutLibelle,
             // Le lieu qu'une Suite précise, tel que servi (`perimetre_precise_libelle`, #130).
             perimetrePrecise: LieuServi.lieu(evolution.perimetrePreciseLibelle))
-        // Ses gestes, servis avec elle (`peut_modifier`, `peut_supprimer`, #93) ; absents,
-        // aucun (défaut fermé).
-        droits = DroitsServisSuite(
-            modifier: evolution.peutModifier ?? false, supprimer: evolution.peutSupprimer ?? false)
     }
 }
