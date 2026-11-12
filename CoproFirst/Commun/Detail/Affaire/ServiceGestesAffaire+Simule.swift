@@ -77,6 +77,16 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(affaire) { $0.archivee = true }
     }
 
+    func corrigerSuite(
+        _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
+    ) async throws {
+        try await Task.sleep(for: .milliseconds(300))
+    }
+
+    func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(250))
+    }
+
     /// Au premier usage, aucune affaire n'a encore changé.
     private static func aucuneChangee() -> [Int: DetailAffaire] { [:] }
 

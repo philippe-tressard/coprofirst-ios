@@ -21,6 +21,7 @@ struct DetailAffaireView: View {
             contenu: { affaire, recharger in
                 ContenuAffaire(affaire: affaire, installation: installation, recharger: recharger)
                     .bandeauAffaire(affaire, installation: installation, recharger: recharger)
+                    .gestesHistorique(affaire, installation: installation, recharger: recharger)
             },
             squelette: { ContenuAffaire(affaire: Self.squelette, installation: installation, recharger: {}) }
         )
@@ -168,8 +169,10 @@ private struct Historique: View {
                                 .textSelection(.enabled)
                         }
                     }
+                    // L'entrée se lit d'un trait ; ses gestes (#91) restent à part, à sa droite.
+                    .accessibilityElement(children: .combine)
+                    .gestesSuite(suite)
                 }
-                .accessibilityElement(children: .combine)
             }
         }
     }

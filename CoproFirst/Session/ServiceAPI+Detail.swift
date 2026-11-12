@@ -10,7 +10,7 @@ extension ServiceAPI {
         let client = client(installation.adresse)
         async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
         async let evolutions = appeler {
-            try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id))
+            try await CorpsServi.garder { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let compte = appeler { try await client.getAuthMe() }
@@ -22,8 +22,11 @@ extension ServiceAPI {
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
         var suites: [SuiteAffaire] = []
-        if case .ok(let ok) = try await evolutions {
+        let (sortieSuites, corpsSuites) = try await evolutions
+        if case .ok(let ok) = sortieSuites {
             suites = try ok.body.json.map(SuiteAffaire.init(evolution:)).sorted { $0.date < $1.date }
+            // Les gestes de chaque entrée sont servis au-dessus du plancher (contrat 1.19.0, #93).
+            suites = suites.avecGestesServis(corps: corpsSuites)
         }
         var detail = DetailAffaire(ticket: lu, suites: suites)
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
