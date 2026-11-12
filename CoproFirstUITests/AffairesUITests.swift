@@ -42,15 +42,6 @@ final class AffairesUITests: XCTestCase {
 
     /// Aux très grandes tailles de texte, le champ est plus bas que l'écran.
     @MainActor
-    private func atteindre(_ element: XCUIElement, dans app: XCUIApplication) {
-        var essais = 0
-        while !(element.exists && element.isHittable), essais < 8 {
-            app.swipeUp()
-            essais += 1
-        }
-    }
-
-    @MainActor
     func testLesTroisOngletsEtLaCreation() throws {
         let app = lancer()
         let carte = element("affaires.carte.A-0041", dans: app)
@@ -75,11 +66,11 @@ final class AffairesUITests: XCTestCase {
         panne.tap()
         capturer("4-categories")
         let titre = element("nouvelle.titre", dans: app)
-        atteindre(titre, dans: app)
+        app.amener(titre)
         titre.tap()
         titre.typeText("Porte du local vélos bloquée")
         let description = element("nouvelle.description", dans: app)
-        atteindre(description, dans: app)
+        app.amener(description)
         description.tap()
         description.typeText("La serrure ne tourne plus depuis ce matin.")
         capturer("5-saisie")
