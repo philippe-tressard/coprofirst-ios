@@ -74,11 +74,17 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   l'énumération des installations est interdite (spec `multi-coproprietes.md`
   §4.1 bis de coprofirst).
 - **Contrôles** : `bash scripts/verifier-depot.sh` (500 lignes, encodage, modes,
-  syntaxe, LICENSE) et `reuse lint`, rejoués par le hook pre-commit (armé par
+  syntaxe, LICENSE, confidentialité déclarée = code, dépendances = `Package.resolved`)
+  et `reuse lint`, rejoués par le hook pre-commit (armé par
   `git config core.hooksPath .githooks`) et par la CI ; SwiftLint `--strict` ;
   tests `swift test` (ClientAPI) et `bash scripts/tests-simulateur.sh` au
   simulateur — requêtes d'accessibilité expirées au résumé du run, et une relance
   au plus, déclarée, sur les seules causes de `scripts/bilan_tests_ui.py` (#50) ;
   un seul passage à la fois sur le poste, tenu par le verrou du script (#108).
+- **Confidentialité** : le manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`), la
+  fiche à saisir dans App Store Connect (skill `publication-app-store`,
+  `confidentialite.md`) et le code disent la même chose — un envoi, un module, un droit
+  ou un paquet neuf se déclare dans les deux, sinon `scripts/verifier-confidentialite.py`
+  échoue (#19).
 - **Skills du projet** : `swiftui-patterns`, `ux-patterns-ios`,
   `publication-app-store` (`.claude/skills/`).
