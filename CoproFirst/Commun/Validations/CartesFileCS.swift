@@ -13,7 +13,7 @@ struct CarteCompte: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        let nom = FormatsDuSite.nom(compte.prenom, compte.nom)
+        let nom = compte.nomAffiche
         CarteDeFile(enCours: enCours, approuver: approuver, rejeter: rejeter, id: "cs.compte.\(compte.id)") {
             Text(nom).font(.headline).foregroundStyle(palette.text)
             Text(
@@ -21,8 +21,8 @@ struct CarteCompte: View {
                     .joined(separator: " — ")
             )
             .font(.subheadline).foregroundStyle(palette.textMuted)
-            if compte.nomAide != nil {
-                Label(TextesComptesCS.aide(FormatsDuSite.nom(compte.prenomAide, compte.nomAide)), systemImage: "person")
+            if let aide = compte.nomAideAffiche {
+                Label(TextesComptesCS.aide(aide), systemImage: "person")
                     .font(.subheadline).foregroundStyle(palette.textMuted)
             }
             Text(FormatsDuSite.dateCourte(compte.creeLe)).font(.footnote).foregroundStyle(palette.textMuted)

@@ -35,6 +35,7 @@ private func affaireSimulee(
 ) -> AffaireSuivie {
     var lue = AffaireSuivie(
         id: id, numero: String(format: "TK-A%05d", id), titre: titre, statut: "ouvert",
+        libelleStatut: "Ouvert",
         libelleCategorie: "Parties communes",
         ouverteLe: FormatsDuSite.jourISO(Date.now.addingTimeInterval(-Double(age) * 86_400)), ageJours: age,
         anciennete: age > 90 ? "ancienne" : age > 30 ? "moyenne" : "recente", apercu: "", apercuIA: false,
@@ -59,6 +60,7 @@ extension ServiceSimule {
         affaires: [
             affaireSimulee(12, "Fuite au plafond du parking", 143) {
                 $0.statut = "en_cours"
+                $0.libelleStatut = "Chez le syndic"
                 $0.apercu = "Le syndic a mandaté un étancheur ; l'intervention attend l'accord du conseil sur le devis."
                 $0.apercuIA = true
                 $0.aEvolue = true
@@ -66,6 +68,7 @@ extension ServiceSimule {
             },
             affaireSimulee(18, "Ascenseur du bâtiment B souvent à l'arrêt", 97) {
                 $0.statut = "chez_prestataire"
+                $0.libelleStatut = "Chez le prestataire"
                 $0.libelleCategorie = "Ascenseur"
                 $0.apercu = "Trois pannes en un mois ; le prestataire doit remplacer la carte de commande."
             },
@@ -80,6 +83,7 @@ extension ServiceSimule {
             },
             affaireSimulee(33, "Voyant d'alarme de l'ascenseur A", 4) {
                 $0.statut = "en_cours"
+                $0.libelleStatut = "Chez le syndic"
                 $0.libelleCategorie = "Ascenseur"
                 $0.apercu = "Signalé par plusieurs résidents ; le syndic a prévenu l'ascensoriste."
             },

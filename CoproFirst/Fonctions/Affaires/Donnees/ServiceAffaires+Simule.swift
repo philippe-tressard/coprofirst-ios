@@ -16,7 +16,7 @@ extension ServiceSimule: ServiceAffaires {
     }
 
     func referentiels(_ installation: Installation) async throws -> ReferentielsAffaires {
-        try FixturesReferentielsAffaires.lus()
+        try FixturesReferentielsAffaires.lus(moderateur: DroitsOnglet(profil: profilSimule).cs)
     }
 
     func rechercher(_ terme: String, dans installation: Installation) async throws -> [Int] {
@@ -43,6 +43,7 @@ extension ServiceSimule: ServiceAffaires {
         try await Task.sleep(for: .milliseconds(250))
         magasin.modifier(affaire.id) {
             $0.statut = statut
+            $0.statutLibelle = MagasinAffairesSimule.libelle(statut: statut)
             $0.close = MagasinAffairesSimule.close(statut)
             $0.colonne = MagasinAffairesSimule.colonne(statut)
         }
@@ -84,6 +85,10 @@ final class MagasinAffairesSimule: @unchecked Sendable {
     }
 
     static func libelle(_ categorie: String) -> String { referentiels?.categorie(categorie)?.libelle ?? categorie }
+    /// `statut_libelle`, tel que ce faux serveur le sert : celui de ses référentiels.
+    static func libelle(statut: String) -> String {
+        StatutsAffaire.libelle(statut, servi: nil, dans: referentiels ?? .vides)
+    }
 
     private var contenu = Apercu.affaires
     private let verrou = NSLock()
@@ -96,7 +101,8 @@ final class MagasinAffairesSimule: @unchecked Sendable {
             let actualite = saisie.categorie == TablesAffaires.categorieActualite
             let neuve = Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: saisie.titre, apercu: saisie.descriptionHTML,
-                creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert", close: false,
+                creeLe: .now, misAJourLe: nil, statut: actualite ? "publie" : "ouvert",
+                statutLibelle: Self.libelle(statut: actualite ? "publie" : "ouvert"), close: false,
                 categorie: saisie.categorie, categorieLibelle: Self.libelle(saisie.categorie),
                 urgente: saisie.urgente, meConcerne: true, archivee: false, suiviKanban: false,
                 natures: [actualite ? "actualite" : "activite"], prestataire: nil,

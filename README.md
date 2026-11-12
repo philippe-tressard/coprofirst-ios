@@ -63,6 +63,9 @@ connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 « Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
+Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
+rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
+quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

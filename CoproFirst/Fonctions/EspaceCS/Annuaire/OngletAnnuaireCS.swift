@@ -75,7 +75,8 @@ struct OngletAnnuaireCS: OngletDePage {
                         var nouveau = conseil
                         if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
                         try await etat.enregistrer(nouveau, service, installation)
-                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                        let retenu = Self.retenue(etat.conseil.valeur?.membres, rang, sinon: membre)
+                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(retenu.nomAffiche))
                     })
             }
         case .enteteSyndic:
@@ -94,10 +95,20 @@ struct OngletAnnuaireCS: OngletDePage {
                         var nouveau = syndic
                         if let rang { nouveau.membres[rang] = membre } else { nouveau.membres.append(membre) }
                         try await etat.enregistrer(nouveau, service, installation)
-                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(membre.prenom, membre.nom))
+                        let retenu = Self.retenue(etat.syndic.valeur?.membres, rang, sinon: membre)
+                        annoncerApresFermeture(TextesAnnuaireCS.enregistre(retenu.nomAffiche))
                     })
             }
         }
+    }
+
+    /// La fiche telle que le serveur l'a enregistrée — avec son nom affiché SERVI (#135) :
+    /// la même place, ou la dernière pour une fiche ajoutée ; à défaut, la saisie.
+    private static func retenue<Membre>(_ membres: [Membre]?, _ rang: Int?, sinon saisie: Membre) -> Membre {
+        guard let membres, let place = rang ?? membres.indices.last, membres.indices.contains(place) else {
+            return saisie
+        }
+        return membres[place]
     }
 
     private func retirer(_ quoi: FeuilleAnnuaireCS, _ service: any ServiceAnnuaireCS) {

@@ -46,10 +46,13 @@ struct AProposView: View {
             }
             .listRowBackground(palette.surface)
             Section("Composants tiers") {
-                NavigationLink {
-                    LicencesTiercesView()
-                } label: {
-                    LabeledContent(LicencesDesPictogrammes.composant, value: "ISC, MIT")
+                ForEach(ComposantsTiers.tous) { composant in
+                    NavigationLink {
+                        LicencesTiercesView(composant: composant)
+                    } label: {
+                        LabeledContent(composant.nom, value: composant.licences)
+                    }
+                    .accessibilityIdentifier("apropos.composant.\(composant.nom)")
                 }
             }
             .listRowBackground(palette.surface)
@@ -166,32 +169,6 @@ struct PageLegaleView: View {
         }
         .background(palette.bg)
         .navigationTitle(titre)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// Les composants tiers embarqués et leur licence, texte entier : l'avis doit accompagner
-/// chaque copie.
-private struct LicencesTiercesView: View {
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Les pictogrammes du fil d'activité sont ceux de \(LicencesDesPictogrammes.composant).")
-                    .font(.body).foregroundStyle(palette.text)
-                ForEach([LicencesDesPictogrammes.isc, LicencesDesPictogrammes.mit], id: \.self) { texte in
-                    Text(texte)
-                        .font(.footnote.monospaced())
-                        .foregroundStyle(palette.textMuted)
-                        .textSelection(.enabled)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(Mise.marge)
-        }
-        .background(palette.bg)
-        .navigationTitle(LicencesDesPictogrammes.composant)
         .navigationBarTitleDisplayMode(.inline)
     }
 }

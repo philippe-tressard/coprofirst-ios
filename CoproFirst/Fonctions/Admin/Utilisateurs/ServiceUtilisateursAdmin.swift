@@ -56,6 +56,11 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
     var purgeAvertieLe: Date?
     var derniereConnexion: Date?
     var creeLe: Date
+    /// `nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    var nomServi: String?
+
+    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// Ce que le serveur dit de l'accès d'un compte à la communauté.
@@ -118,10 +123,12 @@ extension UtilisateurAdmin {
     /// — le MÊME branchement pour le service réel et l'API simulée.
     static func lus(_ generes: [Components.Schemas.UtilisateurAdminRead], corps: Data?) -> [UtilisateurAdmin] {
         let auDessus = Relecture.auDessusDuPlancher(parLigne: UtilisateurAuDessusDuPlancher.self, corps: corps)
+        let personnes = PersonneServie.parLigne(corps)
         return generes.map { lu in
             var compte = UtilisateurAdmin(lu)
             compte.gestesRoles = auDessus[lu.id]?.gestes
             compte.ban.banniServi = auDessus[lu.id]?.communauteBanni
+            compte.nomServi = personnes[lu.id]?.nomAffiche
             return compte
         }
     }

@@ -4,19 +4,26 @@
 import ClientAPI
 import Foundation
 
-/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées.
+/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées. Les fiches
+/// gardent aussi leur corps servi, pour y relire ce que le plancher ne type pas encore
+/// (`telephones`, contrat 1.20.0, #125).
 extension ServiceAPI: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         let client = client(installation.adresse)
+        // Le corps servi est gardé : le nom affiché des contacts est au-dessus du plancher.
         if archives {
-            switch try await appeler({ try await client.getPrestatairesArchives() }) {
-            case .ok(let ok): return try ok.body.json.map(Prestataire.init)
+            let (sortie, corps) = try await appeler {
+                try await CorpsServi.garder { try await client.getPrestatairesArchives() }
+            }
+            switch sortie {
+            case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.getPrestataires() }) {
-        case .ok(let ok): return try ok.body.json.map(Prestataire.init)
+        let (sortie, corps) = try await appeler { try await CorpsServi.garder { try await client.getPrestataires() } }
+        switch sortie {
+        case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -117,7 +124,7 @@ extension Contrat {
             id: lu.id, prestataireId: lu.prestataireId, libelle: lu.libelle, typeEquipement: lu.typeEquipement,
             numeroContrat: lu.numeroContrat, dateDebut: lu.dateDebut, dureeValeur: lu.dureeInitialeValeur,
             dureeUnite: lu.dureeInitialeUnite, frequenceType: lu.frequenceType, frequenceValeur: lu.frequenceValeur,
-            prochaineVisite: lu.prochaineVisite, notes: lu.notes)
+            frequenceLibelle: lu.frequenceLibelle, prochaineVisite: lu.prochaineVisite, notes: lu.notes)
     }
 }
 

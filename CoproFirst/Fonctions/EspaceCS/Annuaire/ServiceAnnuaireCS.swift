@@ -40,8 +40,11 @@ struct ConseilCS: Hashable, Sendable {
 struct MembreConseil: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    var prenom: String?
-    var nom: String?
+    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
+    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
+    /// n'est pas au client du plancher).
+    var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
+    var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var batimentId: Int?
     var batimentNom: String?
     var etage: Int?
@@ -52,6 +55,10 @@ struct MembreConseil: Hashable, Sendable {
     var photoUrl: String?
     /// L'inscrit auquel la fiche est liée — conservé tel quel à chaque envoi.
     var userId: Int?
+    /// « Prénom NOM » servi (`nom_affiche`) ; `nil` tant que la fiche n'est pas enregistrée.
+    var nomServi: String?
+
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// Le syndic : son nom (le contrat de syndic fait foi s'il en désigne un), son
@@ -72,8 +79,11 @@ struct SyndicCS: Hashable, Sendable {
 struct MembreSyndic: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    var prenom: String?
-    var nom: String?
+    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
+    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
+    /// n'est pas au client du plancher).
+    var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
+    var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var fonction: String?
     var email: String?
     /// Un ou plusieurs numéros, séparés par des virgules — la forme que le serveur REÇOIT.
@@ -84,6 +94,10 @@ struct MembreSyndic: Hashable, Sendable {
     var estPrincipal: Bool?
     var photoUrl: String?
     var userId: Int?
+    /// « Prénom NOM » servi (`nom_affiche`) ; `nil` tant que la fiche n'est pas enregistrée.
+    var nomServi: String?
+
+    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
 }
 
 /// Ce qu'un nom saisi désigne (`Rapprochement`) : l'inscrit actif de même nom et, pour
@@ -94,6 +108,26 @@ struct Rapprochement: Hashable, Sendable {
     /// Le NUMÉRO du bâtiment (« A »).
     var batimentNom: String?
     var etage: Int?
+    /// L'étage en clair (« 1er étage »), tel que le serveur le sert (`etage_libelle`,
+    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    var etageLibelle: String?
+}
+
+/// Ce que GET /admin/annuaire/rapprochement sert au-dessus du plancher, relu par
+/// `Relecture.auDessusDuPlancher`.
+struct RapprochementAuDessusDuPlancher: Decodable {
+    var etageLibelle: String?
+}
+
+extension Rapprochement {
+    /// Le rapprochement servi : le type généré, puis ce que le corps sert au-dessus du
+    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
+    static func lu(_ lu: Components.Schemas.Rapprochement, corps: Data?) -> Rapprochement {
+        var trouve = Rapprochement(lu)
+        trouve.etageLibelle = Relecture.auDessusDuPlancher(RapprochementAuDessusDuPlancher.self, corps: corps)?
+            .etageLibelle?.nulSiVide
+        return trouve
+    }
 }
 
 extension ServiceAPI: ServiceAnnuaireCS {
@@ -145,12 +179,14 @@ extension ServiceAPI: ServiceAnnuaireCS {
     }
 
     func rapprochement(nom: String, localiser: Bool, dans installation: Installation) async throws -> Rapprochement {
-        let sortie = try await appeler {
-            try await client(installation.adresse).getAdminAnnuaireRapprochement(
-                query: .init(nom: nom, localiser: localiser))
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder {
+                try await client(installation.adresse).getAdminAnnuaireRapprochement(
+                    query: .init(nom: nom, localiser: localiser))
+            }
         }
         switch sortie {
-        case .ok(let ok): return Rapprochement(try ok.body.json)
+        case .ok(let ok): return Rapprochement.lu(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -211,7 +247,7 @@ extension MembreConseil {
             id: lu.id, genre: lu.genre, prenom: lu.prenom, nom: lu.nom, batimentId: lu.batimentId,
             batimentNom: lu.batimentNom, etage: lu.etage, etageLibelle: lu.etageLibelle.nulSiVide,
             estGestionnaireSite: lu.estGestionnaireSite, estPresident: lu.estPresident, photoUrl: lu.photoUrl,
-            userId: lu.userId)
+            userId: lu.userId, nomServi: lu.nomAffiche)
     }
 }
 
@@ -240,7 +276,7 @@ extension MembreSyndic {
         self.init(
             id: lu.id, genre: lu.genre, prenom: lu.prenom, nom: lu.nom, fonction: lu.fonction, email: lu.email,
             telephone: lu.telephone, telephones: lu.telephones, estPrincipal: lu.estPrincipal, photoUrl: lu.photoUrl,
-            userId: lu.userId)
+            userId: lu.userId, nomServi: lu.nomAffiche)
     }
 }
 

@@ -5,7 +5,8 @@ import SwiftUI
 
 /// Les formes que remplit `TablesAffaires` (généré par `scripts/generer.py`).
 
-/// Une catégorie d'affaire, comme le formulaire du site la propose.
+/// Une catégorie d'affaire que la grille de saisie propose — une catégorie SERVIE que ce
+/// compte peut poser (`ReferentielsAffaires.permises`, #105).
 struct CategorieAffaire: Identifiable, Hashable, Sendable {
     let code: String
     let libelle: String
@@ -13,8 +14,6 @@ struct CategorieAffaire: Identifiable, Hashable, Sendable {
     let description: String
     /// Une catégorie du bâti : une affaire résolue y alimente le carnet d'entretien.
     let carnet: Bool
-    /// Le serveur la refuse à qui ne modère pas (403, `categorie_reservee`).
-    let reserveCS: Bool
     /// Proposée en tête (« Actualité »).
     let enTete: Bool
 

@@ -221,17 +221,19 @@ private let toutes = PagesParDefaut.toutes
     #expect(parc.last?.porteurId == nil)
 }
 
-/// Ce qu'un accès ouvre se dit par le LIBELLÉ de l'arbre servi, le périmètre par défaut
-/// tu (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo, 08/11/2026, #64).
+/// Ce qu'un accès ouvre se dit par le lieu SERVI (`perimetre_libelle`, #130) ; d'une
+/// installation antérieure, par le LIBELLÉ de l'arbre servi, le périmètre par défaut tu
+/// (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo, 08/11/2026, #64).
 @Test func ceQuUnAccesOuvreSeDitParSonLibelle() async throws {
     let service = ServiceSimule(delai: .zero)
     let arbre = try await service.perimetres(ServiceSimule.residence)
     let parc = try await service.parc(ServiceSimule.residence)
     let premier = try #require(parc.first { $0.id == "vigik-1" })
     #expect(premier.perimetreCible == ["copropriete", "bat_a"], "des codes, comme le serveur")
-    #expect(Perimetre.libelles(premier.perimetreCible, parmi: arbre) == ["Bâtiment A"])
-    #expect(Perimetre.libelles(["bat:2"], parmi: arbre).isEmpty, "un code inconnu ne s'affiche pas brut")
-    #expect(Perimetre.libelles(["bat_b"], parmi: []).isEmpty, "sans arbre, rien plutôt qu'un code")
+    #expect(premier.lieu(arbre: arbre) == "Bât. A", "le lieu servi, pas celui de l'arbre")
+    #expect(LieuServi.libelles(premier.perimetreCible, parmi: arbre) == ["Bâtiment A"])
+    #expect(LieuServi.libelles(["bat:2"], parmi: arbre).isEmpty, "un code inconnu ne s'affiche pas brut")
+    #expect(LieuServi.libelles(["bat_b"], parmi: []).isEmpty, "sans arbre, rien plutôt qu'un code")
 }
 
 // MARK: - Annuaire CS & Syndic
@@ -279,11 +281,11 @@ private let toutes = PagesParDefaut.toutes
 @Test func unNomSaisiSeRapprocheParLeServeur() async throws {
     let service = ServiceSimule(delai: .zero)
     let trouve = try await service.rapprochement(nom: "Exemple", localiser: true, dans: ServiceSimule.residence)
-    #expect(trouve == Rapprochement(userId: 7, batimentId: 1, batimentNom: "A", etage: 2))
+    #expect(trouve == Rapprochement(userId: 7, batimentId: 1, batimentNom: "A", etage: 2, etageLibelle: "2ème étage"))
     let sansLogement = try await service.rapprochement(nom: "Exemple", localiser: false, dans: ServiceSimule.residence)
     #expect(sansLogement == Rapprochement(userId: 7), "un interlocuteur du syndic n'a pas de logement")
     #expect(try await service.rapprochement(nom: "Inconnu", localiser: true, dans: ServiceSimule.residence) == .init())
     let lu = try await client(servant: FixturesAnnuaireCS.rapprochementExemple)
         .getAdminAnnuaireRapprochement(query: .init(nom: "Exemple")).ok.body.json
-    #expect(Rapprochement(lu) == trouve)
+    #expect(Rapprochement.lu(lu, corps: Data(FixturesAnnuaireCS.rapprochementExemple.utf8)) == trouve)
 }

@@ -4,7 +4,7 @@
 import SwiftUI
 
 /// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
-/// Actualité : en-tête, description, photos, Historique, le fil des messages (pas sur
+/// Actualité : en-tête, description, pièces jointes, Historique, le fil des messages (pas sur
 /// une actualité), et le bandeau de ses gestes (`BandeauAffaire`), selon ce que le
 /// serveur ouvre au lecteur.
 struct DetailAffaireView: View {
@@ -36,7 +36,7 @@ struct DetailAffaireView: View {
         id: 0, numero: "A-0000", titre: "Une affaire de la résidence qui se charge",
         description: String(repeating: "Le détail de l'affaire arrive. ", count: 5), categorie: "",
         statut: "ouvert", urgente: false, creeLe: .now, auteur: "Le conseil syndical", lieu: "Bâtiment",
-        photos: [], suites: [])
+        suites: [])
 }
 
 private struct ContenuAffaire: View {
@@ -49,16 +49,8 @@ private struct ContenuAffaire: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 EnTeteAffaire(affaire: affaire)
-                TexteRiche(html: affaire.description)
-                    .font(.body)
-                    .foregroundStyle(palette.text)
-                    .tint(palette.primary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                if !affaire.photos.isEmpty {
-                    GaleriePhotos(chemins: affaire.photos, installation: installation)
-                }
-                Historique(suites: affaire.suites)
+                // La demande, la suite, les comptes rendus, la synthèse : le fil (#178).
+                FilAffaire(affaire: affaire, installation: installation)
                 // Pas de messages sur une actualité : elle informe, on n'y répond pas.
                 if !affaire.estActualite {
                     FilMessagesAffaire(messages: affaire.messages, installation: installation)
@@ -99,16 +91,14 @@ private struct EnTeteAffaire: View {
                         .foregroundStyle(palette.textMuted)
                 }
                 Spacer(minLength: 0)
-                PastilleStatut(statut: affaire.statut)
+                if let etat = affaire.etat { PastilleStatut(etat) }
             }
             Text(affaire.titre)
                 .font(.titre(.title))
                 .foregroundStyle(palette.text)
                 .accessibilityAddTraits(.isHeader)
             VStack(alignment: .leading, spacing: 4) {
-                if let lieu = affaire.lieu {
-                    Label(lieu, systemImage: "mappin")
-                }
+                EtiquetteLieu(lieu: affaire.lieu)
                 Label {
                     Text(affaire.creeLe, format: .dateTime.day().month(.wide).year().hour().minute())
                 } icon: {
@@ -117,60 +107,19 @@ private struct EnTeteAffaire: View {
                 if let auteur = affaire.auteur {
                     Label(auteur, systemImage: "person")
                 }
+                if let intervenant = affaire.intervenant {
+                    Label(intervenant, systemImage: "wrench.and.screwdriver")
+                        .accessibilityLabel("Intervenant : \(intervenant)")
+                        .accessibilityIdentifier("affaire.intervenant")
+                }
             }
             .font(.subheadline)
             .foregroundStyle(palette.textMuted)
+            LectureDetaillee(lecture: affaire.lecture)
         }
         .padding(.leading, affaire.urgente ? 12 : 0)
         .overlay(alignment: .leading) {
             if affaire.urgente { palette.danger.frame(width: 4).clipShape(.capsule) }
-        }
-    }
-}
-
-/// L'Historique, dans l'ordre : ce qui a été écrit, et ce qui a changé d'état.
-private struct Historique: View {
-    let suites: [SuiteAffaire]
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Historique")
-                .styleLibelle()
-                .accessibilityAddTraits(.isHeader)
-            if suites.isEmpty {
-                Text("Aucune suite pour l'instant.")
-                    .font(.subheadline)
-                    .foregroundStyle(palette.textMuted)
-            }
-            ForEach(suites) { suite in
-                Carte {
-                    VStack(alignment: .leading, spacing: 6) {
-                        HStack {
-                            Text(suite.auteur ?? "La résidence")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(palette.text)
-                            Spacer(minLength: 8)
-                            Text(suite.date, format: .relative(presentation: .named))
-                                .font(.caption)
-                                .foregroundStyle(palette.textMuted)
-                        }
-                        if let changement = suite.changementDEtat {
-                            Label(changement, systemImage: "arrow.triangle.2.circlepath")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(palette.primary)
-                        }
-                        if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
-                            contenu
-                                .font(.body)
-                                .foregroundStyle(palette.text)
-                                .tint(palette.primary)
-                                .textSelection(.enabled)
-                        }
-                    }
-                }
-                .accessibilityElement(children: .combine)
-            }
         }
     }
 }
