@@ -70,8 +70,10 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// clair dans ces deux cas : une version antérieure ignore le paramètre, et la
     /// 1.15.0 sans variante sert le logo téléversé (`utils/logo.logo_png`).
     ///
-    /// ⚠️ Le paramètre `variante` (1.15.0) est au-dessus du plancher (`.plancher`) : le
-    /// client généré ne peut pas l'écrire. L'adresse s'écrit donc ici, et ici seulement.
+    /// Le logo est un fichier, lu par son adresse comme une image (`ServiceAPI.logo`) :
+    /// l'adresse s'écrit donc ici, et ici seulement. La garde sur le contrat ne sert plus
+    /// qu'à une installation sous le plancher, que la découverte montre encore pour dire
+    /// qu'elle doit être mise à jour.
     func adresseLogo(sombre: Bool) -> URL? {
         guard aUnLogo else { return nil }
         let adresse = adresse.appending(path: "api/config/logo.png")

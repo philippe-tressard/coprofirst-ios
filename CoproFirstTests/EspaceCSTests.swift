@@ -12,14 +12,16 @@ import Testing
 
 // MARK: - Qui voit l'Espace CS (la barre du site, `Nav.svelte`)
 
-private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
-    DroitsOnglet(roles: roles, role: nil, statut: statut)
+/// `modere` : ce que le serveur sert (`est_moderateur`) — aucun rôle ne le dit.
+private func droits(_ roles: [String], statut: String? = nil, modere: Bool = false) -> DroitsOnglet {
+    DroitsOnglet(roles: roles, role: nil, statut: statut, estModerateur: modere)
 }
 
 private let toutes = PagesParDefaut.toutes
 
 @Test func leConseilVoitLEspaceCSEtLesPrestataires() {
-    let ids = PagesOuvertes.filtrer(toutes, droits: droits(["résident", "propriétaire", "conseil_syndical"])).map(\.id)
+    let conseil = droits(["résident", "propriétaire", "conseil_syndical"], modere: true)
+    let ids = PagesOuvertes.filtrer(toutes, droits: conseil).map(\.id)
     #expect(ids.contains("espace-cs"))
     #expect(ids.contains("prestataires"))
     #expect(!ids.contains("admin"), "un membre du conseil n'est pas administrateur")
@@ -34,15 +36,15 @@ private let toutes = PagesParDefaut.toutes
 }
 
 @Test func leCompteTechniqueNAPasLesOutilsDuConseil() {
-    let technique = droits(["admin"])
+    let technique = droits(["admin"], modere: true)
     #expect(technique.adminSeul)
-    #expect(technique.cs, "`$isCS` inclut l'administrateur…")
+    #expect(technique.cs, "le serveur dit que l'administrateur modère…")
     #expect(!PagesOuvertes.ouverte("espace-cs", droits: technique), "…mais pas le compte technique")
     #expect(PagesOuvertes.ouverte("admin", droits: technique))
 }
 
 @Test func unAdministrateurCoproprietaireALEspaceCS() {
-    let admin = droits(["propriétaire", "admin"])
+    let admin = droits(["propriétaire", "admin"], modere: true)
     #expect(!admin.adminSeul)
     #expect(PagesOuvertes.ouverte("espace-cs", droits: admin))
     #expect(PagesOuvertes.ouverte("admin", droits: admin))
@@ -88,7 +90,7 @@ private let toutes = PagesParDefaut.toutes
 }
 
 @Test func lesOngletsSuiventLOrdreDuSite() {
-    let ids = OngletsDuSite.ouverts(page: "espace-cs", droits: droits(["conseil_syndical"])).map(\.id)
+    let ids = OngletsDuSite.ouverts(page: "espace-cs", droits: droits(["conseil_syndical"], modere: true)).map(\.id)
     #expect(ids == ["validations", "badges", "reporting", "annonces-hall", "annuaire", "courriels"])
 }
 
@@ -221,19 +223,14 @@ private let toutes = PagesParDefaut.toutes
     #expect(parc.last?.porteurId == nil)
 }
 
-/// Ce qu'un accès ouvre se dit par le lieu SERVI (`perimetre_libelle`, #130) ; d'une
-/// installation antérieure, par le LIBELLÉ de l'arbre servi, le périmètre par défaut tu
-/// (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo, 08/11/2026, #64).
-@Test func ceQuUnAccesOuvreSeDitParSonLibelle() async throws {
-    let service = ServiceSimule(delai: .zero)
-    let arbre = try await service.perimetres(ServiceSimule.residence)
-    let parc = try await service.parc(ServiceSimule.residence)
+/// Ce qu'un accès ouvre se dit par le lieu SERVI (`perimetre_libelle`, #130), le périmètre
+/// par défaut tu (`BadgePerimetre` du site) — jamais un code brut (« bat:2 », démo,
+/// 08/11/2026, #64), jamais un libellé relu dans l'arbre des périmètres.
+@Test func ceQuUnAccesOuvreSeDitParSonLieuServi() async throws {
+    let parc = try await ServiceSimule(delai: .zero).parc(ServiceSimule.residence)
     let premier = try #require(parc.first { $0.id == "vigik-1" })
-    #expect(premier.perimetreCible == ["copropriete", "bat_a"], "des codes, comme le serveur")
-    #expect(premier.lieu(arbre: arbre) == "Bât. A", "le lieu servi, pas celui de l'arbre")
-    #expect(LieuServi.libelles(premier.perimetreCible, parmi: arbre) == ["Bâtiment A"])
-    #expect(LieuServi.libelles(["bat:2"], parmi: arbre).isEmpty, "un code inconnu ne s'affiche pas brut")
-    #expect(LieuServi.libelles(["bat_b"], parmi: []).isEmpty, "sans arbre, rien plutôt qu'un code")
+    #expect(premier.lieu == "Bât. A", "le lieu servi, pas le « Bâtiment A » de l'arbre")
+    #expect(parc.allSatisfy { $0.lieu?.contains(":") != true && $0.lieu?.contains("_") != true }, "aucun code brut")
 }
 
 // MARK: - Annuaire CS & Syndic
@@ -287,5 +284,5 @@ private let toutes = PagesParDefaut.toutes
     #expect(try await service.rapprochement(nom: "Inconnu", localiser: true, dans: ServiceSimule.residence) == .init())
     let lu = try await client(servant: FixturesAnnuaireCS.rapprochementExemple)
         .getAdminAnnuaireRapprochement(query: .init(nom: "Exemple")).ok.body.json
-    #expect(Rapprochement.lu(lu, corps: Data(FixturesAnnuaireCS.rapprochementExemple.utf8)) == trouve)
+    #expect(Rapprochement(lu) == trouve)
 }

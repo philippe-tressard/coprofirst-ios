@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py.
+// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe tables-clients.json de la release (statutsIdee, typesAnnonce, categoriesAnnonce, trisAnnonce, statutsAnnonce, teinteStatutAnnonce) ; api/app/utils/avis.py.
 
 /// Ce que le site écrit de la Communauté et que le contrat ne sert pas.
 enum TablesCommunaute {
@@ -38,7 +38,7 @@ enum TablesCommunaute {
         ("prix_asc", "Prix croissant"),
         ("prix_desc", "Prix décroissant"),
     ]
-    /// Les états d'une annonce et leur teinte (`STATUTS_ANNONCE`, `statutAnnonceClass`).
+    /// Les états d'une annonce et leur teinte (`STATUTS_ANNONCE`, `TEINTE_STATUT_ANNONCE`).
     static let statutsAnnonce: [EntreeStatut] = [
         EntreeStatut(code: "en_cours", libelle: "En cours", pastille: "badge-green"),
         EntreeStatut(code: "reserve", libelle: "Réservé", pastille: "badge-orange"),

@@ -46,10 +46,11 @@ import Testing
 }
 
 @Test func leConseilLitTousLesBauxSAilNEstPasCoproprietaire() {
-    let conseil = DroitsAcces(ProfilResidence(statut: nil, roles: ["conseil_syndical"]))
+    let conseil = DroitsAcces(ProfilResidence(statut: nil, roles: ["conseil_syndical"], estModerateur: true))
     #expect(conseil.baux == .tous)
     // Copropriétaire ET conseil : ses baux d'abord, comme `lireBaux` du site.
-    let lesDeux = DroitsAcces(ProfilResidence(statut: "copropriétaire_bailleur", roles: ["conseil_syndical"]))
+    let lesDeux = DroitsAcces(
+        ProfilResidence(statut: "copropriétaire_bailleur", roles: ["conseil_syndical"], estModerateur: true))
     #expect(lesDeux.baux == .siens)
 }
 

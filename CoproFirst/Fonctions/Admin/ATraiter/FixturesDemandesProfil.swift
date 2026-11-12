@@ -1,15 +1,19 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 #if DEBUG
 /// Les demandes de profil que l'API simulée sert à « À traiter » — en JSON, à la forme
-/// de la route, que le contrat ne type pas (`ReponseNonTypee`).
+/// de leurs routes, jugées contre leurs schémas (`DemandeProfilEnAttente`,
+/// `DemandeProfilTraitee`).
 ///
 /// Tout est inventé : aucun nom de personne réelle.
 enum FixturesDemandesProfil {
-    /// GET /admin/demandes-profil.
+    typealias Reponse = FixturesAcces.Reponse
+
+    /// GET /admin/demandes-profil → `[DemandeProfilEnAttente]`.
     static let demandes = #"""
         [
           {"id": 41, "utilisateur_id": 31, "statut_demande": "en_attente", "statut_souhaite": "copropriétaire_bailleur",
@@ -25,10 +29,8 @@ enum FixturesDemandesProfil {
         ]
         """#
 
-    static let reponse = ReponseNonTypee(nom: "demandes", route: "GET /admin/demandes-profil", json: demandes)
-
-    /// POST /admin/demandes-profil/{id}/traiter, tel que le sert le serveur v3.81.0 : le
-    /// statut, et l'annonce qu'il compose.
+    /// POST /admin/demandes-profil/{id}/traiter → `DemandeProfilTraitee` : le statut, et
+    /// l'annonce que le serveur compose.
     static let approuvee = #"""
         {"statut": "approuvee", "annonce": {"ton": "success", "texte": "Demande approuvée."}}
         """#
@@ -36,17 +38,22 @@ enum FixturesDemandesProfil {
         {"statut": "rejetee", "annonce": {"ton": "success", "texte": "Demande rejetée."}}
         """#
 
-    static let traitements = [
-        ReponseNonTypee(nom: "approuvee", route: "POST /admin/demandes-profil/{demande_id}/traiter", json: approuvee),
-        ReponseNonTypee(nom: "rejetee", route: "POST /admin/demandes-profil/{demande_id}/traiter", json: rejetee),
+    /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
+    static let parSchema: [Reponse] = [
+        Reponse(nom: "demandes", schema: "DemandeProfilEnAttente", json: demandes),
+        Reponse(nom: "approuvee", schema: "DemandeProfilTraitee", json: approuvee),
+        Reponse(nom: "rejetee", schema: "DemandeProfilTraitee", json: rejetee),
     ]
 
-    static func annonce(approuver: Bool) throws -> PhraseAvis? {
-        try traitements[approuver ? 0 : 1].lire(DemandeProfilTraitee.self).phrase
+    static func annonce(approuver: Bool) throws -> PhraseAvis {
+        PhraseAvis(
+            try Relecture.generee(Components.Schemas.DemandeProfilTraitee.self, json: approuver ? approuvee : rejetee)
+                .annonce)
     }
 
     static func lues() throws -> [DemandeProfil] {
-        try reponse.lire([DemandeProfil].self)
+        try Relecture.generee([Components.Schemas.DemandeProfilEnAttente].self, json: demandes)
+            .map(DemandeProfil.init)
     }
 }
 #endif

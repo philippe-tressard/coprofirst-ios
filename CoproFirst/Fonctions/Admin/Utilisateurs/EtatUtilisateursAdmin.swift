@@ -66,7 +66,7 @@ final class EtatUtilisateursAdmin {
     ) async throws -> String {
         enCours = utilisateur.id
         defer { enCours = nil }
-        let interdire = !utilisateur.ban.banni()
+        let interdire = !utilisateur.ban.banni
         let ban = try await service.bannirCommunaute(utilisateur.id, interdit: interdire, dans: installation)
         if let rang = comptes.firstIndex(where: { $0.id == utilisateur.id }) { comptes[rang].ban = ban }
         let nom = utilisateur.nomAffiche
@@ -154,10 +154,8 @@ enum TextesUtilisateursAdmin {
     static func confirmerSuppression(_ nom: String, _ email: String) -> String {
         "Le compte de \(nom) (\(email)) sera supprimé définitivement."
     }
-    static let surLeSite =
-        "Modifier la fiche, ajouter ou retirer un rôle et l'accueil d'un arrivant se font sur le site."
-    /// Quand l'installation sert les gestes de rôle (contrat 1.18.0) : ils sont ici.
-    static let surLeSiteSansRoles = "Modifier la fiche et l'accueil d'un arrivant se font sur le site."
+    /// Les gestes de rôle sont dans l'app, servis avec chaque compte : le reste est au site.
+    static let surLeSite = "Modifier la fiche et l'accueil d'un arrivant se font sur le site."
 
     // Les gestes de rôle (`GestesRolesCompte.svelte`, `OngletUtilisateurs.svelte`)
     static let gestesRoles = "Rôles"

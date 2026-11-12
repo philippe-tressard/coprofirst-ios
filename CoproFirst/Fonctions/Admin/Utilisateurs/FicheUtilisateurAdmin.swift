@@ -61,9 +61,7 @@ struct FicheUtilisateurAdmin: View {
             gestes(compte, nom)
             Section {
                 RenvoiAuSite(
-                    texte: compte.gestesRoles == nil
-                        ? TextesUtilisateursAdmin.surLeSite : TextesUtilisateursAdmin.surLeSiteSansRoles,
-                    onglet: "utilisateurs",
+                    texte: TextesUtilisateursAdmin.surLeSite, onglet: "utilisateurs",
                     adresse: contexte.installation.adresse)
             }
         }
@@ -122,7 +120,7 @@ struct FicheUtilisateurAdmin: View {
         Section(TextesUtilisateursAdmin.communaute) {
             ligne(TextesUtilisateursAdmin.communaute, etatCommunaute(compte.ban))
             if droits.administrateur {
-                let banni = compte.ban.banni()
+                let banni = compte.ban.banni
                 Button {
                     geste {
                         PhraseAvis(texte: try await etat.basculerCommunaute(compte, service, contexte.installation))
@@ -136,8 +134,8 @@ struct FicheUtilisateurAdmin: View {
                 .accessibilityIdentifier("admin.fiche.communaute")
             }
         }
-        if let roles = compte.gestesRoles, !roles.isEmpty {
-            GestesRolesCompte(gestes: roles) { roleAConfirmer = $0 }
+        if !compte.gestesRoles.isEmpty {
+            GestesRolesCompte(gestes: compte.gestesRoles) { roleAConfirmer = $0 }
         }
         if (droits.cs || droits.administrateur) && compte.actif && !compte.aDesLots {
             Section {
@@ -161,7 +159,7 @@ struct FicheUtilisateurAdmin: View {
 
     private func etatCommunaute(_ ban: BanCommunaute) -> String {
         if ban.interdit { return TextesUtilisateursAdmin.banniPourDeBon }
-        if ban.banni(), let fin = ban.jusquAu { return TextesUtilisateursAdmin.banniJusquAu(FormatsDuSite.date(fin)) }
+        if ban.banni, let fin = ban.jusquAu { return TextesUtilisateursAdmin.banniJusquAu(FormatsDuSite.date(fin)) }
         return TextesUtilisateursAdmin.autorisee
     }
 

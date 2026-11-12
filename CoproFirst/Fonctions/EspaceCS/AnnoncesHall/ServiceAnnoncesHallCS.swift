@@ -34,8 +34,9 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
     var assisteIa: Bool?
     /// Le texte simple, composé par le serveur pour une carte.
     var apercu: String
-    /// Le lieu d'avant #130 (« Toute la copropriété » pour le défaut) : le seul repli.
-    var perimetreLabel: String
+    /// Le lieu à montrer, tel que le serveur le sert (`perimetre_libelle`, #130) : rien
+    /// pour le périmètre par défaut, que le badge tait (`BadgePerimetre` du site).
+    var lieu: String?
     var formatLabel: String
     var images: [String]
     var destinataires: [String]
@@ -51,28 +52,15 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
     var peutArchiver = false
     var peutRestaurer = false
     var peutSupprimer = false
-    /// Le lieu servi (`perimetre_libelle`, contrat 1.24.0, #130) : `""` pour le défaut ;
-    /// `nil` d'une installation antérieure.
-    var perimetreLibelle: String?
-
-    /// Le lieu à montrer : servi, il fait foi (le défaut se tait, comme `BadgePerimetre`
-    /// du site) ; sinon `perimetre_label`, comme avant.
-    var lieu: String? { LieuServi.lieu(perimetreLibelle, repli: perimetreLabel) }
 }
 
 extension AnnonceHall {
-    /// Une liste servie : le type généré, puis le lieu que le corps sert au-dessus du
-    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
-    static func lues(_ generees: [Components.Schemas.AnnonceHallRead], corps: Data?) -> [AnnonceHall] {
-        ServiAuDessusDuPlancher.relire(generees, corps: corps, id: \.id, en: AnnonceHall.init) {
-            $0.perimetreLibelle = $1?.perimetreLibelle?.valeur
-        }
-    }
-
+    /// L'affiche servie, par son type GÉNÉRÉ — le même branchement pour le service réel
+    /// et l'API simulée.
     init(_ lue: Components.Schemas.AnnonceHallRead) {
         self.init(
             id: lue.id, titre: lue.titre, message: lue.message, assisteIa: lue.assisteIa, apercu: lue.apercu,
-            perimetreLabel: lue.perimetreLabel, formatLabel: lue.formatLabel, images: lue.images,
+            lieu: LieuServi.lieu(lue.perimetreLibelle), formatLabel: lue.formatLabel, images: lue.images,
             destinataires: lue.destinataires, envoyeLe: lue.envoyeLe, archivee: lue.archivee, ticketId: lue.ticketId,
             creeLe: lue.creeLe, auteurNom: lue.auteurNom, peutArchiver: lue.peutArchiver,
             peutRestaurer: lue.peutRestaurer, peutSupprimer: lue.peutSupprimer)

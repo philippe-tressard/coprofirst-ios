@@ -8,18 +8,19 @@ import Testing
 @testable import CoproFirst
 
 /// Corriger et effacer une Suite depuis l'Historique (#91, #93) : les gestes d'une
-/// entrée sont ceux que le serveur sert AVEC elle (contrat 1.19.0, au-dessus du
-/// plancher) — absents, aucun geste ; la correction n'envoie que ce qui a changé.
+/// entrée sont ceux que le serveur sert AVEC elle (contrat 1.19.0, typés au plancher
+/// v3.88.1) — absents, aucun geste ; la correction n'envoie que ce qui a changé.
 @MainActor
 struct SuiteHistoriqueTests {
     private let residence = ServiceSimule.residence
 
-    /// Une affaire servie, sans rien au-dessus du plancher.
+    /// Une affaire servie, avec les seuls champs que le contrat 1.26.0 exige.
     private let ticket = #"""
         {"id": 41, "numero": "A-0041", "titre": "T", "description": "", "categorie": "plomberie",
          "categorie_libelle": "Plomberie", "statut": "en_cours", "statut_libelle": "Chez le syndic",
          "close": false, "colonne_kanban": "en_cours", "cree_le": "2026-11-01T10:00:00",
-         "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false}
+         "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false,
+         "suivi_actualite_libelle": "", "frequence_libelle": ""}
         """#
 
     /// Trois entrées servies à un administrateur : un changement d'état et un commentaire,
@@ -34,14 +35,25 @@ struct SuiteHistoriqueTests {
         """#
 
     /// L'Historique lu par LA relecture du détail (`DetailAffaire.lue`), comme le service
-    /// réel le lit : le type généré, puis le corps servi (`corps`).
-    private func lues(_ json: String, corps: Data?) throws -> [SuiteAffaire] {
+    /// réel le lit : par le type généré (contrat 1.26.0, plancher v3.88.1).
+    private func lues(_ json: String) throws -> [SuiteAffaire] {
         let lu = try Relecture.generee(Components.Schemas.TicketRead.self, json: ticket)
-        let evolutions = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: json)
-        return DetailAffaire.lue(lu, corps: nil, evolutions: evolutions, corpsEvolutions: corps).suites
+        let evolutions = try Relecture.generee(
+            [Components.Schemas.TicketEvolutionRead].self, json: Self.auContrat(json))
+        return DetailAffaire.lue(lu, evolutions: evolutions).suites
     }
 
-    private func lues(_ json: String) throws -> [SuiteAffaire] { try lues(json, corps: Data(json.utf8)) }
+    /// Les entrées des tests, complétées des libellés que le contrat 1.26.0 exige de toute
+    /// entrée servie (vides : sans objet ici) — le geste, lui, reste tel que le test l'écrit.
+    private static func auContrat(_ json: String) throws -> String {
+        let requis = ["nouveau_statut_libelle", "perimetre_precise_libelle"]
+        var entrees = try #require(
+            try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [[String: Any]])
+        for rang in entrees.indices {
+            for cle in requis where entrees[rang][cle] == nil { entrees[rang][cle] = "" }
+        }
+        return try #require(String(bytes: try JSONSerialization.data(withJSONObject: entrees), encoding: .utf8))
+    }
 
     private func entree(
         _ type: String, contenu: String? = nil, avant: String? = "en_cours", nouveau: String? = nil
@@ -101,10 +113,17 @@ struct SuiteHistoriqueTests {
         #expect(try lues(json).first?.ancienStatut == "en_cours", "l'état d'avant, lui, est au plancher")
     }
 
-    @Test func unCorpsIllisibleOuAbsentNOffreRien() throws {
-        #expect(try lues(servies, corps: Data("<html>".utf8)).allSatisfy { GesteSuite.offerts(pour: $0).isEmpty })
-        let sansCorps = try lues(servies, corps: nil)
-        #expect(sansCorps.count == 3 && sansCorps.allSatisfy { $0.droits == DroitsServisSuite() })
+    /// Le défaut fermé, typé : un droit servi nul ou absent n'offre rien — le corps servi
+    /// ne se relit plus depuis que le plancher sert ces champs (v3.88.1).
+    @Test func unDroitNulOuAbsentNOffreRien() throws {
+        let json = #"""
+            [{"id": 1, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
+              "contenu": "Un mot.", "peut_modifier": null, "peut_supprimer": null},
+             {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T12:00:00",
+              "contenu": "Un autre."}]
+            """#
+        let lues = try lues(json)
+        #expect(lues.count == 2 && lues.allSatisfy { $0.droits == DroitsServisSuite() })
     }
 
     // MARK: - #91 : la correction part de l'entrée, et n'envoie que ce qui a changé

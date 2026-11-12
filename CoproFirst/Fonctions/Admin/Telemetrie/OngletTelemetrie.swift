@@ -71,7 +71,7 @@ struct OngletTelemetrie: OngletDePage {
         case .erreur(let phrase):
             MessageErreur(texte: phrase) { Task { await etat.charger(service, contexte.installation) } }
         case .pret:
-            if let tableau = etat.tableau, (tableau.kpi.vues ?? 0) > 0 || !tableau.chart.isEmpty {
+            if let tableau = etat.tableau, tableau.kpi.vues > 0 || !tableau.chart.isEmpty {
                 TableauDeFrequentation(tableau: tableau, portee: etat.portee)
                     .opacity(etat.enCours ? 0.5 : 1)
                     .animation(.smooth(duration: 0.2), value: etat.enCours)

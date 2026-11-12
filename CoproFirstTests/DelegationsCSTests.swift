@@ -25,7 +25,8 @@ import Testing
     #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aide)))
     let aidant = ProfilResidence(statut: "aidant", roles: [])
     #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aidant)))
-    let conseil = ProfilResidence(statut: "copropriétaire_résident", roles: ["propriétaire", "conseil_syndical"])
+    let conseil = ProfilResidence(
+        statut: "copropriétaire_résident", roles: ["propriétaire", "conseil_syndical"], estModerateur: true)
     #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: conseil)))
 }
 

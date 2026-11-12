@@ -4,8 +4,8 @@
 import Foundation
 
 #if DEBUG
-/// « Télémétrie » simulée : un tableau par vue (`FixturesTelemetrie`), lu par `Relecture`
-/// comme le service réel. Le filtre n'est appliqué que là où le serveur le propose.
+/// « Télémétrie » simulée : un tableau par vue (`FixturesTelemetrie`), lu par son type
+/// généré comme le service réel. Le filtre n'est appliqué que là où le serveur le propose.
 extension ServiceSimule: ServiceTelemetrie {
     func tableauTelemetrie(
         _ installation: Installation, portee: PorteeTelemetrie, sansGestionnaire: Bool
@@ -14,7 +14,7 @@ extension ServiceSimule: ServiceTelemetrie {
         var tableau = try FixturesTelemetrie.tableau(portee)
         if sansGestionnaire, tableau.filtreGestionnaire.propose {
             tableau.filtreGestionnaire.applique = "sans"
-            tableau.kpi.vues = tableau.kpi.vues.map { $0 * 9 / 10 }
+            tableau.kpi.vues = tableau.kpi.vues * 9 / 10
         }
         return tableau
     }

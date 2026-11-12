@@ -8,13 +8,11 @@ import Foundation
 /// (`AnnonceHallRead`, contrat 1.8.0 — coprofirst#2525).
 extension ServiceAPI: ServiceAnnoncesHallCS {
     func annoncesHall(archivees: Bool, dans installation: Installation) async throws -> [AnnonceHall] {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder {
-                try await client(installation.adresse).getAnnoncesHall(query: .init(archivees: archivees))
-            }
+        let sortie = try await appeler {
+            try await client(installation.adresse).getAnnoncesHall(query: .init(archivees: archivees))
         }
         switch sortie {
-        case .ok(let ok): return AnnonceHall.lues(try ok.body.json, corps: corps)
+        case .ok(let ok): return try ok.body.json.map(AnnonceHall.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

@@ -22,14 +22,12 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     let meConcerne: Bool
     /// Ce qu'ouvre un toucher sur la carte.
     let cible: CibleDuFil
-    /// Le délai et les dates d'une affaire datée (`meta.affaire`, coprofirst v3.79.0) ;
-    /// `nil` sans date, ou servi par une installation plus ancienne (#75).
+    /// Le délai et les dates d'une affaire datée (`meta.affaire`, #75) ; `nil` sans date.
     var echeance: EcheanceDuFil?
     /// Les natures de l'affaire que porte la carte (`meta.affaire.natures`, dérivées par
     /// le serveur) ; vide pour une rubrique qui n'en a pas — `NatureDeLaCarte` (#78).
     var natures: [String] = []
-    /// « Qui la lit » (`meta.affaire.lecture`, #129) ; `nil` hors affaire, ou d'une
-    /// installation antérieure.
+    /// « Qui la lit » (`meta.affaire.lecture`, #129) ; `nil` hors affaire.
     var lecture: Lecture?
     /// Le lieu de l'affaire (`meta.affaire.perimetre_libelle`, #130) ; `nil` pour le défaut.
     var lieu: String?
