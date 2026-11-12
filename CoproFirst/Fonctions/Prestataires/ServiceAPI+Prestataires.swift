@@ -4,26 +4,20 @@
 import ClientAPI
 import Foundation
 
-/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées. Les fiches
-/// gardent aussi leur corps servi, pour y relire ce que le plancher ne type pas encore
-/// (`telephones`, contrat 1.20.0, #125).
+/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées, numéros
+/// servis (`telephones`, #125) et nom affiché des contacts (#135) compris.
 extension ServiceAPI: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         let client = client(installation.adresse)
-        // Le corps servi est gardé : le nom affiché des contacts est au-dessus du plancher.
         if archives {
-            let (sortie, corps) = try await appeler {
-                try await CorpsServi.garder { try await client.getPrestatairesArchives() }
-            }
-            switch sortie {
-            case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
+            switch try await appeler({ try await client.getPrestatairesArchives() }) {
+            case .ok(let ok): return try ok.body.json.map(Prestataire.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        let (sortie, corps) = try await appeler { try await CorpsServi.garder { try await client.getPrestataires() } }
-        switch sortie {
-        case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
+        switch try await appeler({ try await client.getPrestataires() }) {
+        case .ok(let ok): return try ok.body.json.map(Prestataire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -107,14 +101,18 @@ extension ServiceAPI: ServicePrestataires {
 }
 
 extension Prestataire {
+    /// La fiche servie, par son type GÉNÉRÉ — le même branchement pour le service réel et
+    /// l'API simulée.
     init(_ lu: Components.Schemas.PrestataireRead) {
         self.init(
             id: lu.id, nom: lu.nom, specialite: lu.specialite, type: lu.typePrestataire?.rawValue,
             telephone: lu.telephone, email: lu.email, adresse: lu.adresse, description: lu.description,
             contacts: (lu.contacts ?? []).map {
                 ContactPrestataire(
-                    prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email)
-            })
+                    prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email,
+                    nomAffiche: $0.nomAffiche.nulSiVide)
+            },
+            telephones: lu.telephones)
     }
 }
 

@@ -8,45 +8,28 @@ import Foundation
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
-        // Les deux lectures gardent leur corps servi : ce que le plancher ne type pas encore
-        // s'y relit (`DetailAffaire.lue` : #125, #127, et `lecture`, le lieu d'une Suite, #129, #130).
-        async let ticket = appeler {
-            try await CorpsServi.garder { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
-        }
-        async let evolutions = appeler {
-            try await CorpsServi.garder { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
-        }
-        // Le corps servi est gardé : `auteur_nom` et `est_auteur` sont au-dessus du plancher (#138).
-        async let messages = appeler {
-            try await CorpsServi.garder { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
-        }
-        async let compte = appeler { try await client.getAuthMe() }
+        async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        async let evolutions = appeler { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
+        async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let servis = referentiels(installation)
 
         let lu: Components.Schemas.TicketRead
-        let (sortie, corps) = try await ticket
-        switch sortie {
+        switch try await ticket {
         case .ok(let ok): lu = try ok.body.json
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
         var lues: [Components.Schemas.TicketEvolutionRead] = []
-        let (suites, corpsSuites) = try await evolutions
-        if case .ok(let ok) = suites { lues = try ok.body.json }
-        var detail = DetailAffaire.lue(lu, corps: corps, evolutions: lues, corpsEvolutions: corpsSuites)
+        if case .ok(let ok) = try await evolutions { lues = try ok.body.json }
+        var detail = DetailAffaire.lue(lu, evolutions: lues)
         // Des référentiels illisibles n'empêchent pas de lire l'affaire : rien de ce qu'ils
         // ouvrent n'est alors offert (états d'une Suite, catégories), et un état que l'objet
         // ne met pas en clair se montre par son code.
         detail.referentiels = (try? await servis) ?? .vides
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
-        // `moi` ne sert qu'au repli d'une installation qui ne sert pas `est_auteur`. Le compte
-        // illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
-        var moi: Int?
-        if case .ok(let ok)? = try? await compte { moi = try? ok.body.json.id }
-        let (fil, corpsFil) = try await messages
-        switch fil {
-        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json, corps: corpsFil, moi: moi)
+        switch try await messages {
+        case .ok(let ok): detail.messages = try ok.body.json.map(MessageAffaire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

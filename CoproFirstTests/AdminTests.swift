@@ -9,8 +9,9 @@ import Testing
 // Le Paramétrage, en partie (#16) : qui l'ouvre, quels onglets, ce qui renvoie au site,
 // et ce que lisent les quatre onglets de l'app.
 
-private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
-    DroitsOnglet(roles: roles, role: nil, statut: statut)
+/// `modere` : ce que le serveur sert (`est_moderateur`) — aucun rôle ne le dit.
+private func droits(_ roles: [String], statut: String? = nil, modere: Bool = false) -> DroitsOnglet {
+    DroitsOnglet(roles: roles, role: nil, statut: statut, estModerateur: modere)
 }
 
 // MARK: - Le cadre et ses onglets
@@ -26,9 +27,9 @@ private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
 }
 
 @Test func lAdministrateurEtLOperateurOuvrentLeParametrage() {
-    #expect(PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "admin"])))
+    #expect(PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "admin"], modere: true)))
     #expect(PagesOuvertes.ouverte("admin", droits: droits(["operateur"], statut: "admin_technique")))
-    #expect(!PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "conseil_syndical"])))
+    #expect(!PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "conseil_syndical"], modere: true)))
 }
 
 /// L'opérateur qui n'est pas administrateur n'ouvre que l'Exploitation : dans l'app, la
@@ -132,12 +133,13 @@ func chaqueVueDeLaTelemetrieSeLit(portee: PorteeTelemetrie) throws {
     #expect(etat.membresDuConseil == 1)
 }
 
-@Test func unBannissementProbatoireExpire() {
-    let maintenant = Date(timeIntervalSince1970: 1_800_000_000)
-    #expect(BanCommunaute(interdit: true, jusquAu: nil).banni(maintenant: maintenant))
-    #expect(BanCommunaute(interdit: false, jusquAu: maintenant.addingTimeInterval(60)).banni(maintenant: maintenant))
-    #expect(!BanCommunaute(interdit: false, jusquAu: maintenant.addingTimeInterval(-60)).banni(maintenant: maintenant))
-    #expect(!BanCommunaute(interdit: false, jusquAu: nil).banni(maintenant: maintenant))
+/// Le ban de Dominique court jusqu'au 05/12/2026 et le serveur le dit banni ; l'app ne
+/// compare pas la date à son heure (`communaute_banni`, jugé à l'heure du serveur).
+@Test func leBannissementDesComptesSimulesEstCeluiQueLeServeurDit() throws {
+    let comptes = try FixturesUtilisateursAdmin.lus()
+    let dominique = try #require(comptes.first { $0.id == 12 })
+    #expect(dominique.ban.banni && dominique.ban.jusquAu != nil && !dominique.ban.interdit)
+    #expect(comptes.filter { $0.id != 12 }.allSatisfy { !$0.ban.banni })
 }
 
 /// Le premier bannissement simulé est probatoire, le suivant définitif — comme le serveur.
@@ -148,8 +150,8 @@ func chaqueVueDeLaTelemetrieSeLit(portee: PorteeTelemetrie) throws {
     await etat.charger(service, ServiceSimule.residence)
     let alix = try #require(etat.compte(13))
     #expect(try await etat.basculerCommunaute(alix, service, ServiceSimule.residence).contains("1 mois"))
-    #expect(etat.compte(13)?.ban.banni() == true)
+    #expect(etat.compte(13)?.ban.banni == true)
     let banni = try #require(etat.compte(13))
     #expect(try await etat.basculerCommunaute(banni, service, ServiceSimule.residence).contains("réautorisé"))
-    #expect(etat.compte(13)?.ban.banni() == false)
+    #expect(etat.compte(13)?.ban.banni == false)
 }

@@ -125,10 +125,13 @@ class Juge:
                 return [] if any(not b for b in branches) else min(branches, key=len)
         if "allOf" in schema:
             return [e for b in schema["allOf"] for e in self._noeud(valeur, b, chemin)]
-        if "enum" in schema and valeur not in schema["enum"]:
-            return [f"{chemin} : « {valeur} » hors de {nom or 'l’énumération'}"]
         types = schema.get("type")
         types = [types] if isinstance(types, str) else (types or [])
+        # Une énumération FACULTATIVE (`Optional[Literal[…]]` du serveur, écrite
+        # `type: [string, "null"]` avec son `enum`) sert `null` : il n'est pas « hors de
+        # l'énumération » (`gestes_roles`, contrat 1.18.0).
+        if "enum" in schema and valeur not in schema["enum"] and not (valeur is None and "null" in types):
+            return [f"{chemin} : « {valeur} » hors de {nom or 'l’énumération'}"]
         if types and not any(TYPES.get(t, lambda v: True)(valeur) for t in types):
             return [f"{chemin} : {json.dumps(valeur, ensure_ascii=False)[:40]} n'est pas {'|'.join(types)}"]
         if isinstance(valeur, list) and isinstance(schema.get("items"), dict):
@@ -249,6 +252,7 @@ def autotest() -> None:
             "id": {"type": "integer"}, "code": {"type": "string"},
             "statut": {"$ref": "#/components/schemas/Statut"},
             "lot": {"type": ["string", "null"]},
+            "geste": {"type": ["string", "null"], "enum": ["ajouter", "retirer"]},
             "objets": {"type": "array", "items": {"$ref": "#/components/schemas/Objet"}}}},
         "Objet": {"type": "object", "properties": {"libelle": {"type": "string"}}},
     }}}
@@ -258,6 +262,10 @@ def autotest() -> None:
         ({"id": 1, "code": "X", "type": "vigik"}, ["x.type : non servi par le serveur"]),
         ({"id": 1}, ["x.code : requis, absent"]),
         ({"id": 1, "code": "X", "statut": "volé"}, ["x.statut : « volé » hors de Statut"]),
+        ({"id": 1, "code": "X", "geste": None}, []),
+        ({"id": 1, "code": "X", "geste": "ajouter"}, []),
+        ({"id": 1, "code": "X", "geste": "promouvoir"}, ["x.geste : « promouvoir » hors de l’énumération"]),
+        ({"id": 1, "code": "X", "statut": None}, ["x.statut : « None » hors de Statut"]),
         ({"id": "1", "code": "X"}, ['x.id : "1" n\'est pas integer']),
         ({"id": 1, "code": "X", "objets": [{"libelle": "a", "type": "cle"}]}, ["x.objets[0].type : non servi par le serveur"]),
     ]
@@ -306,7 +314,8 @@ def autotest() -> None:
         ecarts, illisibles = juger(plancher, trouvees)
         if ecarts != attendu or illisibles:
             raise SystemExit(f"❌ autotest : champ au-dessus du plancher → {ecarts} {illisibles}, attendu {attendu}")
-    print("✅ autotest : champ de trop, requis absent, énumération, type, imbriqué, réponse non déclarée, "
+    print("✅ autotest : champ de trop, requis absent, énumération (facultative : null admis), type, imbriqué, "
+          "réponse non déclarée, "
           "code de périmètre, route non typée, champ au-dessus du plancher")
 
 

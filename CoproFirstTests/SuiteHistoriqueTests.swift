@@ -8,40 +8,42 @@ import Testing
 @testable import CoproFirst
 
 /// Corriger et effacer une Suite depuis l'Historique (#91, #93) : les gestes d'une
-/// entrée sont ceux que le serveur sert AVEC elle (contrat 1.19.0, au-dessus du
-/// plancher) — absents, aucun geste ; la correction n'envoie que ce qui a changé.
+/// entrée sont ceux que le serveur sert AVEC elle (`peut_modifier`, `peut_supprimer`,
+/// typés au plancher) — absents, aucun geste ; la correction n'envoie que ce qui a changé.
 @MainActor
 struct SuiteHistoriqueTests {
     private let residence = ServiceSimule.residence
 
-    /// Une affaire servie, sans rien au-dessus du plancher.
+    /// Une affaire servie.
     private let ticket = #"""
         {"id": 41, "numero": "A-0041", "titre": "T", "description": "", "categorie": "plomberie",
          "categorie_libelle": "Plomberie", "statut": "en_cours", "statut_libelle": "Chez le syndic",
          "close": false, "colonne_kanban": "en_cours", "cree_le": "2026-11-01T10:00:00",
-         "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false}
+         "nom_proprietaire": "", "nouveau": false, "priorite": "normale", "urgente": false,
+         "suivi_actualite_libelle": "", "frequence_libelle": ""}
         """#
 
     /// Trois entrées servies à un administrateur : un changement d'état et un commentaire,
     /// qu'il corrige et efface ; une réponse, qui appartient à son auteur.
     private let servies = #"""
-        [{"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
+        [{"id": 1, "ticket_id": 41, "type": "etat",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T10:00:00",
           "ancien_statut": "ouvert", "nouveau_statut": "en_cours", "peut_modifier": true, "peut_supprimer": true},
-         {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
+         {"id": 2, "ticket_id": 41, "type": "commentaire",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
           "contenu": "Un mot.", "statut_avant": "en_cours", "peut_modifier": true, "peut_supprimer": true},
-         {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
+         {"id": 3, "ticket_id": 41, "type": "reponse",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T13:00:00",
           "contenu": "Une réponse.", "peut_modifier": false, "peut_supprimer": false}]
         """#
 
     /// L'Historique lu par LA relecture du détail (`DetailAffaire.lue`), comme le service
-    /// réel le lit : le type généré, puis le corps servi (`corps`).
-    private func lues(_ json: String, corps: Data?) throws -> [SuiteAffaire] {
+    /// réel le lit : par le type généré.
+    private func lues(_ json: String) throws -> [SuiteAffaire] {
         let lu = try Relecture.generee(Components.Schemas.TicketRead.self, json: ticket)
         let evolutions = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: json)
-        return DetailAffaire.lue(lu, corps: nil, evolutions: evolutions, corpsEvolutions: corps).suites
+        return DetailAffaire.lue(lu, evolutions: evolutions).suites
     }
-
-    private func lues(_ json: String) throws -> [SuiteAffaire] { try lues(json, corps: Data(json.utf8)) }
 
     private func entree(
         _ type: String, contenu: String? = nil, avant: String? = "en_cours", nouveau: String? = nil
@@ -81,30 +83,27 @@ struct SuiteHistoriqueTests {
 
     @Test func unSeulGesteServiNOffreQueLui() throws {
         let json = #"""
-            [{"id": 1, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
+            [{"id": 1, "ticket_id": 41, "type": "commentaire",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
               "contenu": "Un mot.", "peut_modifier": true, "peut_supprimer": false},
-             {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T12:00:00",
+             {"id": 2, "ticket_id": 41, "type": "commentaire",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T12:00:00",
               "contenu": "Un autre.", "peut_modifier": null}]
             """#
         let servies = try lues(json)
         #expect(servies.map(GesteSuite.offerts) == [[.modifier], []], "le conseil corrige, l'administrateur efface")
     }
 
-    /// Le défaut FERMÉ : une installation antérieure au contrat 1.19.0 (la démonstration,
-    /// au plancher) ne sert pas ces champs — l'Historique s'y lit sans geste, comme avant.
-    @Test func uneInstallationAnterieureNOffreAucunGeste() throws {
+    /// Le défaut FERMÉ : une entrée servie sans ces champs (ils sont facultatifs au
+    /// contrat) se lit sans geste, comme avant.
+    @Test func desGestesAbsentsNOuvrentRien() throws {
         let json = #"""
-            [{"id": 1, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
+            [{"id": 1, "ticket_id": 41, "type": "commentaire",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
               "contenu": "Un mot.", "statut_avant": "en_cours"}]
             """#
         #expect(try lues(json).map(GesteSuite.offerts) == [[]])
         #expect(try lues(json).first?.ancienStatut == "en_cours", "l'état d'avant, lui, est au plancher")
-    }
-
-    @Test func unCorpsIllisibleOuAbsentNOffreRien() throws {
-        #expect(try lues(servies, corps: Data("<html>".utf8)).allSatisfy { GesteSuite.offerts(pour: $0).isEmpty })
-        let sansCorps = try lues(servies, corps: nil)
-        #expect(sansCorps.count == 3 && sansCorps.allSatisfy { $0.droits == DroitsServisSuite() })
     }
 
     // MARK: - #91 : la correction part de l'entrée, et n'envoie que ce qui a changé

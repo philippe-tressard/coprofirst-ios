@@ -22,11 +22,8 @@ struct Compte: Hashable, Sendable {
     var preferences: String
     var restreindreAMesBatiments: Bool
     var refusTelemetrie: Bool
-    /// `nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
-    var nomServi: String?
-
-    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
-    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
+    /// « Prénom NOM », tel que le serveur l'affiche (`nom_affiche`, #135).
+    var nomAffiche: String
 }
 
 /// Ce qu'on corrige de son identité (PATCH /auth/me). Changer d'adresse demande le

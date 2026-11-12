@@ -12,9 +12,8 @@ import SwiftUI
 /// Écarts déclarés avec le site (`standards/11` §14) :
 /// - un intitulé « Messages » le sépare de l'Historique, qui a le sien ; le site n'en
 ///   met pas, son fil suit la carte ;
-/// - l'auteur : la bulle dit « Vous » pour le compte (`est_auteur` servi, contrat
-///   1.26.0, #138), le nom servi sinon (`auteur_nom`) ; d'une installation antérieure, la
-///   qualité servie (`auteur_qualite`).
+/// - l'auteur : la bulle dit « Vous » pour le compte (`est_auteur` servi, #138), le nom
+///   servi sinon (`auteur_nom`) ; sans nom servi, la qualité servie (`auteur_qualite`).
 struct FilMessagesAffaire: View {
     let messages: [MessageAffaire]
     let installation: Installation

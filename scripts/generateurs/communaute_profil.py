@@ -2,18 +2,19 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Les tables de la Communauté et du Profil (#14).
 
-Le contrat d'API ne sert que des CODES : libellés, teintes et seuils vivent dans le
-code de coprofirst. Quand une règle vit des deux côtés, la source est le SERVEUR —
-c'est lui qui juge :
+Le contrat d'API ne sert que des CODES : libellés, teintes et seuils vivent dans
+coprofirst. Ce que le site AFFICHE se lit dans les tables qu'il publie
+(`tables-clients.json`) ; quand une règle vit des deux côtés, la source est le
+SERVEUR — c'est lui qui juge :
 
-- idées : `STATUTS_IDEE` (`front/src/lib/idees.ts`) ;
-- annonces : `TYPES_ANNONCE`, `CATEGORIES_ANNONCE`, `TRIS_ANNONCE`, `STATUTS_ANNONCE`
-  et la teinte de chaque statut (`statutAnnonceClass`, `front/src/lib/annonces.ts`) ;
+- idées : `statutsIdee` ;
+- annonces : `typesAnnonce`, `categoriesAnnonce`, `trisAnnonce`, `statutsAnnonce` et la
+  teinte de chaque statut (`teinteStatutAnnonce`) ;
 - avis : les bornes et les seuils de la note (`api/app/utils/avis.py`, serveur) ;
-- thème : `OPTIONS_THEME`, `COOKIE_THEME`, `THEME_PAR_DEFAUT` (`front/src/lib/theme.ts`) ;
+- thème : `optionsTheme`, `cookieTheme`, `themeParDefaut` ;
 - préférences de notification : les défauts (`DEFAUTS`, `api/app/utils/preferences_mail.py`,
-  serveur) et les deux canaux (`CANAUX_NOTIFS`, `front/src/lib/preferences.ts`) ;
-- profils demandables (`STATUTS_DEMANDABLES`, `front/src/lib/roles.ts`) ;
+  serveur) et les deux canaux (`canauxNotifications`) ;
+- profils demandables (`statutsDemandables`) ;
 - longueur minimale d'un mot de passe (`verifier_robustesse`, `api/app/utils/mots_de_passe.py`).
 
 → `CoproFirst/Fonctions/Communaute/Genere/TablesCommunaute.swift` et
@@ -24,42 +25,23 @@ from __future__ import annotations
 
 import re
 
-import lecture_ts
-from generateurs._commun import FONCTIONS, chaine, ecrire_table
+from generateurs._commun import FONCTIONS, OPTION, chaine, couples, ecrire_table
+from generateurs._tables import source
 
+# Les fichiers Python de l'API : le site ne les publie pas en table (#128).
 SOURCES = [
-    "front/src/lib/idees.ts",
-    "front/src/lib/annonces.ts",
-    "front/src/lib/theme.ts",
-    "front/src/lib/preferences.ts",
-    "front/src/lib/roles.ts",
     "api/app/utils/avis.py",
     "api/app/utils/preferences_mail.py",
     "api/app/utils/mots_de_passe.py",
 ]
-LIB = "front/src/lib/"
 API = "api/app/utils/"
 
 
-def entier(texte: str, motif: str, source: str) -> int:
+def entier(texte: str, motif: str, source_lue: str) -> int:
     m = re.search(motif, texte)
     if not m:
-        raise SystemExit(f"❌ {source} : « {motif} » introuvable — la source a changé")
+        raise SystemExit(f"❌ {source_lue} : « {motif} » introuvable — la source a changé")
     return int(m.group(1))
-
-
-def chaine_ts(texte: str, nom: str) -> str:
-    m = re.search(rf"\bconst {nom}\b[^=]*=\s*'([^']*)'", texte)
-    if not m:
-        raise SystemExit(f"❌ {nom} introuvable")
-    return m.group(1)
-
-
-def teintes_annonce(texte: str) -> dict[str, str]:
-    """Le dictionnaire littéral de `statutAnnonceClass` : statut → `badge-*`."""
-    corps = texte[texte.index("function statutAnnonceClass"):]
-    corps = corps[: corps.index("}", corps.index("badge-")) + 1]
-    return dict(re.findall(r"(\w+):\s*'(badge-[a-z]+)'", corps))
 
 
 def defauts_preferences(texte: str) -> dict[str, bool]:
@@ -88,37 +70,28 @@ def statut(code: str, libelle: str, pastille: str) -> str:
     return element("EntreeStatut", code=code, libelle=libelle, pastille=pastille)
 
 
-def libelles(table: list, cle: str = "val") -> str:
-    return "".join(f"        ({chaine(e[cle])}, {chaine(e['label'])}),\n" for e in table)
+def options(ctx, table: str) -> list[tuple[str, str]]:
+    return [(e["val"], e["label"]) for e in ctx.table(table, [OPTION])]
 
 
 def communaute(ctx) -> str:
-    idees = ctx.lire(LIB + "idees.ts")
-    annonces = ctx.lire(LIB + "annonces.ts")
     avis = ctx.lire(API + "avis.py")
-    teintes = teintes_annonce(annonces)
-    statuts_annonce = lecture_ts.table(annonces, "STATUTS_ANNONCE")
+    teintes = ctx.table("teinteStatutAnnonce", {str: str})
+    statuts_annonce = ctx.table("statutsAnnonce", [OPTION])
     manquantes = [s["val"] for s in statuts_annonce if s["val"] not in teintes]
     if manquantes:
-        raise SystemExit(f"❌ statutAnnonceClass ne teinte pas : {manquantes}")
+        raise SystemExit(f"❌ teinteStatutAnnonce ne teinte pas : {manquantes}")
     return (
         "    /// Les états d'une idée, dans l'ordre du cycle de vie (`STATUTS_IDEE`).\n"
         "    static let statutsIdee: [EntreeStatut] = [\n"
-        + "".join(statut(s["value"], s["label"], s["badge"]) for s in lecture_ts.table(idees, "STATUTS_IDEE"))
+        + "".join(statut(s["value"], s["label"], s["badge"])
+                  for s in ctx.table("statutsIdee", [{"value": str, "label": str, "badge": str}]))
         + "    ]\n"
-        "    /// Les types d'annonce (`TYPES_ANNONCE`).\n"
-        "    static let typesAnnonce: [(code: String, libelle: String)] = [\n"
-        + libelles(lecture_ts.table(annonces, "TYPES_ANNONCE"))
-        + "    ]\n"
-        "    /// Les catégories d'annonce (`CATEGORIES_ANNONCE`).\n"
-        "    static let categoriesAnnonce: [(code: String, libelle: String)] = [\n"
-        + libelles(lecture_ts.table(annonces, "CATEGORIES_ANNONCE"))
-        + "    ]\n"
-        "    /// Les tris des annonces (`TRIS_ANNONCE`).\n"
-        "    static let trisAnnonce: [(code: String, libelle: String)] = [\n"
-        + libelles(lecture_ts.table(annonces, "TRIS_ANNONCE"))
-        + "    ]\n"
-        "    /// Les états d'une annonce et leur teinte (`STATUTS_ANNONCE`, `statutAnnonceClass`).\n"
+        + couples("typesAnnonce", "Les types d'annonce (`TYPES_ANNONCE`).", options(ctx, "typesAnnonce"))
+        + couples("categoriesAnnonce", "Les catégories d'annonce (`CATEGORIES_ANNONCE`).",
+                  options(ctx, "categoriesAnnonce"))
+        + couples("trisAnnonce", "Les tris des annonces (`TRIS_ANNONCE`).", options(ctx, "trisAnnonce"))
+        + "    /// Les états d'une annonce et leur teinte (`STATUTS_ANNONCE`, `TEINTE_STATUT_ANNONCE`).\n"
         "    static let statutsAnnonce: [EntreeStatut] = [\n"
         + "".join(statut(s["val"], s["label"], teintes[s["val"]]) for s in statuts_annonce)
         + "    ]\n"
@@ -132,25 +105,21 @@ def communaute(ctx) -> str:
 
 
 def profil(ctx) -> str:
-    theme = ctx.lire(LIB + "theme.ts")
-    preferences = ctx.lire(LIB + "preferences.ts")
-    constantes = dict(re.findall(r"\bconst ([A-Z_]+)\s*=\s*'([a-z_]+)'", preferences))
     defauts = defauts_preferences(ctx.lire(API + "preferences_mail.py"))
-    canaux = lecture_ts.table(preferences, "CANAUX_NOTIFS")
+    canaux = ctx.table("canauxNotifications", [{"titre": str, "mon": str, "autres": str}])
     for canal in canaux:
         for cle in ("mon", "autres"):
-            canal[cle] = constantes.get(str(canal[cle]), str(canal[cle]))
             if canal[cle] not in defauts:
-                raise SystemExit(f"❌ CANAUX_NOTIFS : {canal[cle]} n'a pas de défaut côté serveur")
+                raise SystemExit(f"❌ canauxNotifications : {canal[cle]} n'a pas de défaut côté serveur")
     longueur = entier(ctx.lire(API + "mots_de_passe.py"), r"len\(password\)\s*<\s*(\d+)", "mots_de_passe.py")
     return (
         "    /// Le thème : une préférence de l'APPAREIL (le cookie du site), ses choix (`OPTIONS_THEME`).\n"
-        f"    static let cleTheme = {chaine(chaine_ts(theme, 'COOKIE_THEME'))}\n"
-        f"    static let themeParDefaut = {chaine(chaine_ts(theme, 'THEME_PAR_DEFAUT'))}\n"
+        f"    static let cleTheme = {chaine(ctx.table('cookieTheme', str))}\n"
+        f"    static let themeParDefaut = {chaine(ctx.table('themeParDefaut', str))}\n"
         "    static let optionsTheme: [OptionTheme] = [\n"
         + "".join(
             element("OptionTheme", code=o["val"], libelle=o["label"], detail=o["desc"])
-            for o in lecture_ts.table(theme, "OPTIONS_THEME"))
+            for o in ctx.table("optionsTheme", [{**OPTION, "desc": str}]))
         + "    ]\n"
         "    /// Les défauts d'une préférence jamais réglée — ceux du SERVEUR (`DEFAUTS`).\n"
         "    static let defautsPreferences: [String: Bool] = [\n"
@@ -162,7 +131,7 @@ def profil(ctx) -> str:
         + "    ]\n"
         "    /// Les profils qu'on peut demander depuis son profil (`STATUTS_DEMANDABLES`).\n"
         "    static let statutsDemandables: [String] = [\n"
-        + "".join(f"        {chaine(s)},\n" for s in lecture_ts.table(ctx.lire(LIB + "roles.ts"), "STATUTS_DEMANDABLES"))
+        + "".join(f"        {chaine(s)},\n" for s in ctx.table("statutsDemandables", [str]))
         + "    ]\n"
         "    /// La longueur minimale d'un nouveau mot de passe (`verifier_robustesse`, serveur).\n"
         f"    static let longueurMinimaleMotDePasse = {longueur}\n"
@@ -171,10 +140,11 @@ def profil(ctx) -> str:
 
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Communaute" / "Genere" / "TablesCommunaute.swift",
-                 "front/src/lib/idees.ts et annonces.ts ; api/app/utils/avis.py", "TablesCommunaute",
+                 source("statutsIdee", "typesAnnonce", "categoriesAnnonce", "trisAnnonce", "statutsAnnonce",
+                        "teinteStatutAnnonce") + " ; api/app/utils/avis.py", "TablesCommunaute",
                  "Ce que le site écrit de la Communauté et que le contrat ne sert pas.", communaute(ctx))
     ecrire_table(ctx, FONCTIONS / "Profil" / "Genere" / "TablesProfil.swift",
-                 "front/src/lib/theme.ts, preferences.ts et roles.ts ; "
-                 "api/app/utils/preferences_mail.py et mots_de_passe.py", "TablesProfil",
+                 source("cookieTheme", "themeParDefaut", "optionsTheme", "canauxNotifications", "statutsDemandables")
+                 + " ; api/app/utils/preferences_mail.py et mots_de_passe.py", "TablesProfil",
                  "Ce que le site écrit du Profil et que le contrat ne sert pas.", profil(ctx))
     return "idées, annonces, avis, thème, préférences et profils"

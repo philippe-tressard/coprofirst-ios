@@ -17,7 +17,7 @@ extension ServiceSimule: ServiceCommunaute {
         try await Task.sleep(for: .milliseconds(150))
         return MoiCommunaute(
             id: 7, statut: profilSimule.statut ?? "", roles: profilSimule.roles, motifRefus: nil,
-            estModerateur: profilSimule.estModerateur)
+            estModerateur: profilSimule.estModerateur ?? false)
     }
 
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
@@ -37,6 +37,10 @@ extension ServiceSimule: ServiceCommunaute {
                 clotureLe: Self.dans(jours: -20), cloture: true, nbVotants: 41, archivee: true,
                 creeLe: Self.dans(jours: -40)),
         ]
+    }
+
+    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool {
+        try FixturesGestesServis.peutCreerUnSondage(moderateur: profilSimule.estModerateur ?? false)
     }
 
     func idees(_ installation: Installation) async throws -> [Idee] {

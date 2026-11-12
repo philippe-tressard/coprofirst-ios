@@ -27,8 +27,11 @@
 #      et le registre des menus dit vrai (scripts/verifier-parite.py, #10) ;
 #  11. un générateur ne lit coprofirst qu'à une version PUBLIÉE, et coprofirst-site
 #      qu'à un commit épinglé (#51), par scripts/generateurs/_source.py seul : ni
-#      clone, ni arbre de travail, ni branche (#34, #20) ; le logo, lui, se compare
-#      et se recopie à l'étiquette du plancher (scripts/plancher.sh, #133) ;
+#      clone, ni arbre de travail, ni branche (#34, #20) ; une table du site se lit
+#      dans la pièce jointe tables-clients.json, par son nom et à la forme attendue,
+#      jamais par motif dans une source du front — autotest de scripts/concordance.py
+#      (#128) ; le logo, lui, se compare et se recopie à l'étiquette du plancher
+#      (scripts/plancher.sh, #133) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. les tests au simulateur : relance bornée et déclarée (#50), un passage qui ne
@@ -199,6 +202,11 @@ autotest_lecture() {
   return $ok
 }
 autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofirst en échec"
+# Les tables du site se lisent dans tables-clients.json (#128) : l'autotest prouve qu'une
+# table absente, vide ou d'une autre forme arrête la génération, et qu'un module ne peut
+# plus déclarer une source du front que le site publie. Il découvre aussi chaque module.
+python3 -I scripts/concordance.py --autotest >/dev/null || echec "concordance.py : autotest en échec (comparaison, tables du site)"
+python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare une source du front que le site publie en table"
 grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
 while IFS= read -r f; do
   [ -f "$f" ] || continue

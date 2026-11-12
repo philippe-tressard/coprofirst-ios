@@ -34,8 +34,9 @@ import Testing
 
 // MARK: - Onglets réservés (la table générée du site, #30)
 
-private func droits(statut: String?, _ roles: String...) -> DroitsOnglet {
-    DroitsOnglet(profil: ProfilResidence(statut: statut, roles: roles, libelleLogement: nil))
+/// `modere` : ce que le serveur sert (`est_moderateur`) — aucun rôle ne le dit.
+private func droits(statut: String?, modere: Bool = false, _ roles: String...) -> DroitsOnglet {
+    DroitsOnglet(profil: ProfilResidence(statut: statut, roles: roles, libelleLogement: nil, estModerateur: modere))
 }
 
 private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
@@ -55,7 +56,7 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 /// Chaque onglet ouvert a son écran : un onglet que l'app ne sait pas rendre ne
 /// s'affiche pas, plutôt que d'ouvrir la Fiche sous un autre nom.
 @Test func chaqueOngletDuSiteASonEcran() {
-    let cs = droits(statut: nil, "conseil_syndical")
+    let cs = droits(statut: nil, modere: true, "conseil_syndical")
     #expect(cs.cs && cs.proprioOuCS)
     for onglet in OngletsResidence.ouverts(cs, accesReglement: true) {
         #expect(OngletResidence(rawValue: onglet.id) != nil, "« \(onglet.id) » sans écran")

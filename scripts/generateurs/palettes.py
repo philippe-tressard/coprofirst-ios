@@ -1,14 +1,15 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Les PALETTES : la charte (`socle.css`, `palette-sombre.css`, palette `seine`) et
-chaque palette de `palettes.css`, au clair et au sombre, selon la cascade du site — un
-jeton que la palette ne redéfinit pas garde celui de la charte
+"""Les PALETTES : la charte (`jetonsCharte`, `jetonsCharteSombre` — la palette `seine`)
+et chaque palette (`palettesClaires`, `palettesSombres`), au clair et au sombre, selon
+la cascade du site — un jeton que la palette ne redéfinit pas garde celui de la charte
 → `CoproFirst/Charte/Palette.swift` et `Palette+<code>.swift`.
 
-Une propriété par jeton `--color-*`, `--fil-*`, `--kanban-*` (les teintes des
-colonnes du Kanban, #34), `--serie-*` et `--palier-*` (les tranches des répartitions du
-Reporting, #15) ; les autres jetons (`--teinte-*`…) ne servent qu'à résoudre
-un `var(--…)`.
+Le site publie ces jetons avec leur TEXTE (`var(--…)`, `color-mix(…)`) dans
+`tables-clients.json` : la cascade et la résolution restent ici. Une propriété par jeton
+`--color-*`, `--fil-*`, `--kanban-*` (les teintes des colonnes du Kanban, #34),
+`--serie-*` et `--palier-*` (les tranches des répartitions du Reporting, #15) ; les
+autres jetons (`--teinte-*`…) ne servent qu'à résoudre un `var(--…)`.
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul : l'app,
 qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -18,20 +19,18 @@ from __future__ import annotations
 
 import re
 
-from generateurs._commun import CHARTE, bloc_css, jetons_css, jetons_du_socle, propriete
+from generateurs._commun import CHARTE, VAR_JETON, jetons, jetons_de_la_charte, propriete
+from generateurs._tables import source
 
-SOURCES = [
-    "front/src/styles/socle.css",
-    "front/src/styles/palette-sombre.css",
-    "front/src/styles/palettes.css",
-]
+SOURCES: list[str] = []
 
 # Tout jeton se lit (un `var(--teinte-6)` doit se résoudre) ; seuls ces préfixes deviennent
 # des propriétés de `Palette`.
 EXPOSES = ("color-", "fil-", "kanban-", "serie-", "palier-")
+# La charte elle-même : la palette que le site applique sans `data-palette`.
+CHARTE_DU_SITE = "seine"
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 RGBA = re.compile(r"^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$")
-VAR = re.compile(r"^var\(--([a-z][a-z0-9-]*)\)$")
 
 
 def resoudre(nom: str, table: dict[str, str], vus=()) -> tuple | None:
@@ -44,7 +43,7 @@ def resoudre(nom: str, table: dict[str, str], vus=()) -> tuple | None:
         return (h >> 16 & 0xFF, h >> 8 & 0xFF, h & 0xFF, 1.0)
     if m := RGBA.match(valeur):
         return (int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4)))
-    if m := VAR.match(valeur):
+    if m := VAR_JETON.match(valeur):
         return resoudre(m.group(1), table, (*vus, nom))
     return None
 
@@ -54,21 +53,27 @@ def litteral(c: tuple) -> str:
     return f"RVBA(0x{r:02X}, 0x{v:02X}, 0x{b:02X}, {a:g})"
 
 
-def generer(ctx) -> str:
-    socle = jetons_du_socle(ctx)
-    sombre = jetons_css(bloc_css((ctx.front / "src" / "styles" / "palette-sombre.css").read_text(encoding="utf-8"), ":root[data-theme='dark']"))
-    texte = (ctx.front / "src" / "styles" / "palettes.css").read_text(encoding="utf-8")
-    codes = ["seine"] + sorted(set(re.findall(r":root\[data-palette='([a-z]+)'\]", texte)))
-
-    # La cascade du site : au clair, la palette sur la charte ; au sombre, la charte
-    # sombre par-dessus la palette claire, puis la palette sombre par-dessus tout.
-    tables = {}
-    for code in codes:
-        clair_p = sombre_p = {}
-        if code != "seine":
-            clair_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'],"))
-            sombre_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'][data-theme='dark']"))
+def cascades(ctx) -> tuple[dict[str, str], dict[str, tuple[dict, dict]]]:
+    """La charte, et pour chaque palette ses jetons au clair et au sombre, selon la cascade
+    du site : au clair, la palette sur la charte ; au sombre, la charte sombre par-dessus
+    la palette claire, puis la palette sombre par-dessus tout."""
+    socle = jetons_de_la_charte(ctx)
+    sombre = jetons(ctx.table("jetonsCharteSombre", {str: str}))
+    claires = ctx.table("palettesClaires", {str: {str: str}})
+    sombres = ctx.table("palettesSombres", {str: {str: str}})
+    if CHARTE_DU_SITE in claires or set(sombres) != set(claires):
+        raise SystemExit("❌ palettesClaires et palettesSombres ne nomment pas les mêmes palettes "
+                         f"(hors « {CHARTE_DU_SITE} », la charte) : {sorted(claires)} / {sorted(sombres)}")
+    tables = {CHARTE_DU_SITE: (socle, {**socle, **sombre})}
+    for code in sorted(claires):
+        clair_p, sombre_p = jetons(claires[code]), jetons(sombres[code])
         tables[code] = ({**socle, **clair_p}, {**socle, **clair_p, **sombre, **sombre_p})
+    return socle, tables
+
+
+def generer(ctx) -> str:
+    socle, tables = cascades(ctx)
+    codes = list(tables)
 
     # Un jeton n'entre que s'il se résout partout : la structure est la même pour toutes.
     portables = [
@@ -77,7 +82,7 @@ def generer(ctx) -> str:
     ]
     ecartes = sorted(j for j in set(socle) - set(portables) if j.startswith(EXPOSES))
 
-    struct = ctx.entete("front/src/styles/socle.css")
+    struct = ctx.entete(source("jetonsCharte"))
     struct += "// Jetons non portés (color-mix, valeur non littérale) :\n"
     struct += "".join(f"//   --{e}: {socle[e]}\n" for e in ecartes)
     struct += "\nimport SwiftUI\n\n"
@@ -94,7 +99,7 @@ def generer(ctx) -> str:
 
     for code in codes:
         clair, fonce = tables[code]
-        corps = ctx.entete("front/src/styles/socle.css, palette-sombre.css, palettes.css")
+        corps = ctx.entete(source("jetonsCharte", "jetonsCharteSombre", "palettesClaires", "palettesSombres"))
         corps += f"\nimport SwiftUI\n\nextension Palette {{\n    static let {code} = Palette(\n"
         corps += f'        code: "{code}",\n'
         corps += ",\n".join(

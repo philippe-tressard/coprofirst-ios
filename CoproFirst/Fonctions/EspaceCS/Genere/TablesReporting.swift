@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.76.0 (commit 92633e233a414f3d20d189055d71ea62a0b36b41), front/src/lib/entretien-periodique.ts, reporting.ts, components/reporting/ (TableauAffaires, VueSuiviAffaires, BarresCroisees).
+// Source : philippe-tressard/coprofirst v3.88.1 (commit e13d52923f0429fd082c92e60893e2605a3d6d27), pièce jointe tables-clients.json de la release (teinteAge, modesSuivi, etatsVisite, motifsEvolution, motifEvolutionParDefaut, tranchesRepartition).
 
 import SwiftUI
 
@@ -15,7 +15,7 @@ enum TablesReporting {
         "moyenne": "badge-orange",
         "recente": "badge-gray",
     ]
-    /// Les modes du Suivi des affaires, dans l'ordre du site (`MODES`).
+    /// Les modes du Suivi des affaires, dans l'ordre du site (`MODES_SUIVI`).
     static let modes: [(code: String, libelle: String)] = [
         ("suivi", "Suivi affaires"),
         ("entretien", "Suivi entretiens périodiques"),
@@ -37,10 +37,10 @@ enum TablesReporting {
         "reponse": "Nouveau message depuis le dernier résumé",
         "relance": "Relance envoyée depuis le dernier résumé",
     ]
-    /// Un motif inconnu ou absent (`motifEvolution`).
+    /// Un motif inconnu ou absent (`MOTIF_EVOLUTION_PAR_DEFAUT`).
     static let motifEvolutionParDefaut = "Du nouveau depuis le dernier résumé"
     /// La couleur de chaque tranche d'une répartition, selon la teinte que le serveur
-    /// lui choisit (`BarresCroisees.svelte`) : une couleur, un aplat ; deux, des hachures.
+    /// lui choisit (`tranchesRepartition`) : une couleur, un aplat ; deux, des hachures.
     static let tranches: [String: [CouleurDeTranche]] = [
         "s1": [.palette(\.serie1)],
         "s2": [.palette(\.serie2)],

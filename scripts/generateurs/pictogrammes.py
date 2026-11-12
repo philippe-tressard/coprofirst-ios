@@ -3,14 +3,14 @@
 """Les PICTOGRAMMES de la gouttière du fil, au trait, tels que le site les dessine.
 
 Le site dessine ses pictogrammes depuis un catalogue de tracés Lucide
-(`front/src/lib/icones-svg.json`, rendu par `Icon.svelte` : grille de 24, trait de
-1,5, bouts ronds). L'app les traduisait en SF Symbols pleins — une autre famille, un
+(`front/src/lib/icones-svg.json`, rendu avec les attributs de la table `attributsTrace` :
+grille de 24, trait de 1,5, bouts ronds). L'app les traduisait en SF Symbols pleins — une autre famille, un
 autre dessin (demande du 11/11/2026 : « les icônes du web sont à reprendre pour
 cette gouttière »).
 
 Ce module en extrait ceux que la gouttière d'une carte du fil peut montrer : le
-pictogramme de chaque rubrique (`NATURES` de `flux.ts`) et celui de chaque nature
-d'affaire (`NATURES` de `tickets-categories.ts`, `classeDuFlux` du site). Chacun
+pictogramme de chaque rubrique (table `naturesDuFil`) et celui de chaque nature
+d'affaire (table `naturesAffaire`, `classeDuFlux` du site). Chacun
 devient une image vectorielle du catalogue `Pictogrammes.xcassets`, dans l'espace de
 noms `Lucide` (`Image("Lucide/wrench")`), rendue en modèle : la carte la teinte.
 
@@ -24,23 +24,20 @@ from __future__ import annotations
 
 import json
 import pathlib
-import re
 
 from generateurs import affaires, charte
 from generateurs._commun import SIGNATURE
 
+# Le catalogue des tracés est déjà un JSON, hors des tables publiées (`_tables.HORS_TABLES`).
 SOURCES = [
     "front/src/lib/icones-svg.json",
-    "front/src/lib/components/Icon.svelte",
-    "front/src/lib/flux.ts",
-    "front/src/lib/tickets-categories.ts",
     "LICENSES/ISC.txt",
     "LICENSES/MIT.txt",
 ]
 
 CATALOGUE = pathlib.Path("CoproFirst/Ressources/Pictogrammes.xcassets")
 ESPACE = "Lucide"
-#: Les attributs du <svg> d'`Icon.svelte`, lus et non recopiés : le trait suit le site.
+#: Les attributs du <svg> du site (`attributsTrace`), lus et non recopiés : le trait suit le site.
 ATTRIBUTS = ("viewBox", "fill", "stroke-width", "stroke-linecap", "stroke-linejoin")
 
 
@@ -50,15 +47,12 @@ def _json(objet: dict) -> str:
 
 
 def attributs_du_site(ctx) -> str:
-    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels qu'`Icon.svelte` les pose."""
-    texte = ctx.lire(SOURCES[1])
-    lus = []
-    for nom in ATTRIBUTS:
-        m = re.search(rf'\s{nom}="([^"{{}}]+)"', texte)
-        if not m:
-            raise SystemExit(f"❌ Icon.svelte : l'attribut {nom} du <svg> est introuvable")
-        lus.append(f'{nom}="{m.group(1)}"')
-    return " ".join(lus)
+    """`viewBox="0 0 24 24" fill="none" stroke-width="1.5" …`, tels que le site les pose."""
+    lus = ctx.table("attributsTrace", {nom: str for nom in ATTRIBUTS})
+    illisibles = [nom for nom in ATTRIBUTS if not lus[nom] or any(c in lus[nom] for c in '"<>{}')]
+    if illisibles:
+        raise SystemExit(f"❌ attributsTrace : valeur inattendue pour {', '.join(illisibles)}")
+    return " ".join(f'{nom}="{lus[nom]}"' for nom in ATTRIBUTS)
 
 
 def noms(ctx) -> list[str]:

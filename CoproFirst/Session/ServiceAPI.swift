@@ -188,6 +188,6 @@ extension ElementDuFil {
                 lien: item.lien),
             echeance: EcheanceDuFil(meta: item.meta?.additionalProperties)
         )
-        poser(MetaDuFil(meta: item.meta?.additionalProperties))
+        poser(lu)
     }
 }

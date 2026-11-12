@@ -4,30 +4,25 @@
 import ClientAPI
 import Foundation
 
-/// « Utilisateurs » par le client GÉNÉRÉ : chaque réponse se lit par son type ; la liste
-/// et l'état d'un bannissement gardent aussi leur corps servi, pour y relire ce que le
-/// plancher ne type pas encore (`gestes_roles`, `communaute_banni` : contrat 1.18.0, #89).
+/// « Utilisateurs » par le client GÉNÉRÉ : chaque réponse se lit par son type, gestes de
+/// rôle et bannissement compris (`gestes_roles`, `communaute_banni`, #89).
 extension ServiceAPI: ServiceUtilisateursAdmin {
     func utilisateurs(_ installation: Installation) async throws -> [UtilisateurAdmin] {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getAdminUtilisateurs() }
-        }
+        let sortie = try await appeler { try await client(installation.adresse).getAdminUtilisateurs() }
         switch sortie {
-        case .ok(let ok): return UtilisateurAdmin.lus(try ok.body.json, corps: corps)
+        case .ok(let ok): return try ok.body.json.map(UtilisateurAdmin.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     func bannirCommunaute(_ id: Int, interdit: Bool, dans installation: Installation) async throws -> BanCommunaute {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder {
-                try await client(installation.adresse).patchAdminUtilisateursUserIdBanCommunaute(
-                    path: .init(userId: id), body: .json(.init(interdit: interdit)))
-            }
+        let sortie = try await appeler {
+            try await client(installation.adresse).patchAdminUtilisateursUserIdBanCommunaute(
+                path: .init(userId: id), body: .json(.init(interdit: interdit)))
         }
         switch sortie {
-        case .ok(let ok): return BanCommunaute(try ok.body.json, corps: corps)
+        case .ok(let ok): return BanCommunaute(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

@@ -115,23 +115,14 @@ enum FixturesCommunaute {
         Reponse(nom: "annonces", schema: "AnnonceRead", json: annonces),
     ]
 
-    /// Qui les lit et leur lieu, servis au-dessus du plancher (coprofirst v3.88.1, #129, #130).
-    static let auDessus = [
-        AuDessusDuPlancher(schema: "IdeeRead", champs: ["lecture"], contrat: "1.22.0"),
-        AuDessusDuPlancher(schema: "IdeeRead", champs: ["perimetre_libelle"], contrat: "1.24.0"),
-        AuDessusDuPlancher(schema: "AnnonceRead", champs: ["lecture"], contrat: "1.22.0"),
-        AuDessusDuPlancher(schema: "AnnonceRead", champs: ["perimetre_libelle"], contrat: "1.24.0"),
-    ]
-
     // MARK: - Lues comme le client généré les lit, branchées comme le service réel
 
     static func ideesLues() throws -> [Idee] {
-        Idee.lues(try Relecture.generee([Components.Schemas.IdeeRead].self, json: idees), corps: Data(idees.utf8))
+        try Relecture.generee([Components.Schemas.IdeeRead].self, json: idees).map(Idee.init)
     }
 
     static func annoncesLues() throws -> [Annonce] {
-        Annonce.lues(
-            try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces), corps: Data(annonces.utf8))
+        try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces).map(Annonce.init)
     }
 }
 #endif

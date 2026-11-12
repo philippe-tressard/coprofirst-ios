@@ -80,7 +80,7 @@ enum TextesTelemetrie {
     static func indicateurs(
         _ kpi: TableauTelemetrie.Indicateurs, _ portee: PorteeTelemetrie
     ) -> [(valeur: String, libelle: String)] {
-        var liste: [(String, String)] = [(FormatsDuSite.nombre(kpi.vues ?? 0), vuesDe(portee))]
+        var liste: [(String, String)] = [(FormatsDuSite.nombre(kpi.vues), vuesDe(portee))]
         if let utilisateurs = kpi.utilisateurs {
             liste.append(
                 (
@@ -88,7 +88,7 @@ enum TextesTelemetrie {
                     portee == .jour ? "Utilisateurs actifs aujourd'hui" : "Utilisateurs uniques (pic)"
                 ))
         }
-        liste.append((FormatsDuSite.nombre(kpi.pages ?? 0), "Pages distinctes visitées"))
+        liste.append((FormatsDuSite.nombre(kpi.pages), "Pages distinctes visitées"))
         if let heure = kpi.heurePointe { liste.append((heure, "Heure de pointe")) }
         let moyennes: [(Double?, String)] = [
             (kpi.moyVuesUtilisateur, "Moy. vues / utilisateur"), (kpi.moyVuesJour, "Moy. vues / jour"),

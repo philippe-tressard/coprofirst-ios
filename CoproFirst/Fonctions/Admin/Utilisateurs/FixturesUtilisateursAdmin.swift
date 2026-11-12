@@ -13,11 +13,10 @@ import Foundation
 enum FixturesUtilisateursAdmin {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, avec ce que le serveur v3.88.1
-    /// sert au-dessus du plancher (`auDessus`, `nomsServis`) : le nom affiché, « Prénom NOM »
-    /// (#135), et les gestes de rôle d'un administrateur
-    /// qui lit la liste — Camille est le seul administrateur, son rôle Admin ne se retire
-    /// pas ; un compte inactif n'a aucun geste.
+    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]` : le nom affiché, « Prénom NOM »
+    /// (#135), et les gestes de rôle d'un administrateur qui lit la liste — Camille est le
+    /// seul administrateur, son rôle Admin ne se retire pas ; un compte inactif n'a aucun
+    /// geste.
     static let utilisateurs = #"""
         [
           {"id": 11, "prenom": "Camille", "nom": "Exemple", "nom_affiche": "Camille EXEMPLE",
@@ -70,22 +69,14 @@ enum FixturesUtilisateursAdmin {
          "annonce": {"ton": "warning", "texte": "Aucun lot trouvé dans l'import pour ce compte."}}
         """#
 
-    static let auDessus = AuDessusDuPlancher(
-        schema: "UtilisateurAdminRead", champs: ["communaute_banni", "gestes_roles"], contrat: "1.18.0")
-
-    static let nomsServis = AuDessusDuPlancher(
-        schema: "UtilisateurAdminRead", champs: ["nom_affiche", "nom_aide_affiche", "est_moderateur"],
-        contrat: "1.25.0")
-
     static let parSchema: [Reponse] = [
         Reponse(nom: "utilisateurs", schema: "UtilisateurAdminRead", json: utilisateurs),
         Reponse(nom: "rapprochement", schema: "AutoMatchRelance", json: rapprochement),
     ]
 
     static func lus() throws -> [UtilisateurAdmin] {
-        UtilisateurAdmin.lus(
-            try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs),
-            corps: Data(utilisateurs.utf8))
+        try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs)
+            .map(UtilisateurAdmin.init)
     }
 
     static func annonceDuRapprochement() throws -> PhraseAvis {
