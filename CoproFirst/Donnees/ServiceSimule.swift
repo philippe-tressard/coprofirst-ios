@@ -29,9 +29,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     private let verrou = NSLock()
     /// Le profil servi par la résidence inventée (un compte du conseil syndical). Sa saisie
     /// d'une affaire est le défaut du serveur sans choix — Essentielle pour tous (#2615).
+    /// Son compte est Camille (`FixturesUtilisateursAdmin`, `id` 11) : « Utilisateurs » y
+    /// reconnaît le lecteur (#94).
     var profilSimule = ProfilResidence(
         statut: "copropriétaire_résident", roles: ["résident", "propriétaire", "conseil_syndical"],
-        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle", estModerateur: true)
+        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle", estModerateur: true, idCompte: 11)
 
     init(delai: Duration = .milliseconds(450)) {
         self.delai = delai
@@ -94,8 +96,17 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         verrou.withLock { _ = gardees.insert(installation.hote) }
     }
 
+    /// L'appareil sans réseau (`-hors-ligne`) : Face ID passe, la reprise échoue (#101).
+    var horsLigneSimule = false
+    /// Ce que l'appareil « garde » de la résidence pour la consultation hors ligne — les
+    /// lectures inventées en tiennent lieu (`Session/LectureGardee/ServiceHorsLigne+Simule`).
+    var lectureSimulee = LectureDisponible.aucune
+    /// Au retour du réseau, le serveur refuse la session (un compte révoqué).
+    var repriseRefusee = false
+
     func reprendre(_ installation: Installation) async throws {
         guard aUneSessionGardee(installation), !refuserFaceID else { throw ErreurService.sessionExpiree }
+        if horsLigneSimule { throw ErreurService.horsLigne }
         _ = verrou.withLock { deconnectes.remove(installation.hote) }
     }
 
@@ -115,8 +126,10 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         verrou.withLock {
             deconnectes.insert(installation.hote)
             gardees.remove(installation.hote)
+            // Comme `oublierCeQuiEstGarde` : le jeton et la lecture gardée partent ensemble.
+            lectureSimulee = .aucune
         }
-        return true
+        return !horsLigneSimule
     }
 
     private func exigerSession(_ installation: Installation) throws {

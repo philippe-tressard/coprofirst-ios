@@ -63,6 +63,14 @@ connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 « Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
+Pendant la saisie, la résidence dit ce qu'elle en fera, à mesure qu'on écrit
+(coprofirst v3.88.1, contrat 1.26.0) : qui lira la nouvelle affaire, le lieu choisi en
+clair (dans l'affaire comme dans une affiche de hall), et le nom affiché d'une
+personne qu'on nomme (le Profil, une fiche de l'annuaire du conseil). Sans réseau, la
+dernière réponse reste et rien n'empêche de saisir.
+Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
+l'administrateur — depuis son entrée, quand la résidence en sert le droit
+(coprofirst v3.84.0, contrat 1.19.0).
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
@@ -71,6 +79,13 @@ résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si l
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
 barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
+**Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
+rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
+l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
+(« Hors ligne — à jour au 10/11/2026 à 14:32 ») ; on consulte, on n'agit pas : les
+gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la session
+reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
+la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
 
 Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou réservé
 au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
@@ -81,12 +96,16 @@ Pour les essayer sans réseau, un build **Debug** accepte des arguments de lance
 `-ecran en-savoir-plus|connexion|faceid|demo|fil|affaires|retour|retour-mot-de-passe`
 (`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
 la session gardée sans biométrie ; `-saisie complete` : la saisie Complète d'une
-affaire, au lieu d'Essentielle). Un build Release ne compile pas la simulation
+affaire, au lieu d'Essentielle ; avec `-ecran retour`, `-hors-ligne gardee|perimee|sans-lecture` :
+l'appareil sans réseau, et une dernière lecture gardée, trop ancienne, ou absente). Un build Release ne compile pas la simulation
 (`scripts/verifier-simule.py`, #84).
 
 Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
-dernière connexion — va au Trousseau de l'appareil ; les réglages ne gardent que la
-résidence (adresse, nom, présentation).
+dernière connexion — va au Trousseau de l'appareil ; l'identifiant du compte, gardé avec
+le profil le temps d'une session (« votre compte » dans Utilisateurs, #94), s'efface à
+la déconnexion ; les réglages ne gardent que la
+résidence (adresse, nom, présentation). La dernière lecture d'une résidence (hors
+ligne, #101) va dans `Application Support`, chiffrée et exclue des sauvegardes.
 
 ## Charte
 

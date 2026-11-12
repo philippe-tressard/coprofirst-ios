@@ -87,6 +87,17 @@ final class InstallationsConnues {
         }
     }
 
+    /// À la fin d'une session (déconnexion, ou session refusée) : l'identifiant du compte
+    /// quitte le profil gardé (#94) — il ne sert qu'à une session ouverte, et le prochain
+    /// `GET /auth/me` le redit. Le reste du profil demeure, comme le courriel.
+    func oublierLeCompte(_ installation: Installation) {
+        guard let rang = liste.firstIndex(where: { $0.adresse == installation.adresse }),
+            var profil = liste[rang].profil, profil.idCompte != nil
+        else { return }
+        profil.idCompte = nil
+        noter(profil, pour: installation)
+    }
+
     /// « Oublier toutes les résidences » : comme une app neuve.
     func vider() {
         for installation in liste {

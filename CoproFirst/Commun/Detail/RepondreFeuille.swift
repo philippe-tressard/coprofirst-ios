@@ -46,6 +46,7 @@ struct RepondreFeuille: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Envoyer") { Task { await envoyer() } }
                         .disabled(texte.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || enCours)
+                        .gesteEnLigne()
                         .accessibilityIdentifier("repondre.envoyer")
                 }
             }

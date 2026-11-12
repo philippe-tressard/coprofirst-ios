@@ -36,6 +36,30 @@ final class AdminUITests: XCTestCase {
         surLeSite(app, attendus: ["imports", "copropriete", "smtp"])
     }
 
+    /// #94 : sur une instance commune, la fiche du compte opérateur dit « Opérateur désigné
+    /// par l'exploitant » ; sur son propre compte, la confirmation dit « votre compte ».
+    @MainActor
+    func testLaFicheDitLExploitantEtVotreCompte() throws {
+        let app = ouvrirLeParametrage(["-compte", "administrateur", "-instance-commune"])
+        toucherLOnglet("utilisateurs", app)
+        let parExploitant = app.elementAcces("admin.fiche.operateur-exploitant")
+        ouvrirLaFiche("sacha", 15, app)
+        for _ in 0..<6 where !parExploitant.sonde() { app.swipeUp() }
+        XCTAssertTrue(parExploitant.exists, "le texte, à la place du geste")
+        XCTAssertFalse(app.elementAcces("admin.fiche.role.operateur").exists, "aucun geste non servi")
+        LancementCaptures.capturer("admin-3-fiche-operateur-exploitant")
+        app.elementAcces("admin.fiche.fermer").tap()
+
+        ouvrirLaFiche("camille", 11, app)
+        let retirerCS = app.elementAcces("admin.fiche.role.conseil_syndical")
+        for _ in 0..<6 where !retirerCS.sonde() { app.swipeUp() }
+        retirerCS.tap()
+        XCTAssertTrue(
+            app.libelleAcces("Retirer le rôle Conseil syndical de votre compte").apparait(),
+            "la confirmation dit « votre compte »")
+        LancementCaptures.capturer("admin-3-fiche-votre-compte")
+    }
+
     @MainActor
     func testLaMaintenanceDeLOperateur() throws {
         let app = ouvrirLeParametrage(["-compte", "operateur"])
@@ -136,6 +160,19 @@ final class AdminUITests: XCTestCase {
     }
 
     // MARK: - Aides
+
+    /// La fiche du compte `id`, trouvée par la recherche.
+    @MainActor
+    private func ouvrirLaFiche(_ recherche: String, _ id: Int, _ app: XCUIApplication) {
+        let champ = app.elementAcces("admin.utilisateurs.recherche")
+        XCTAssertTrue(champ.apparait(), "la liste des comptes")
+        champ.tap()
+        champ.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 12) + recherche)
+        let ligne = app.elementAcces("admin.utilisateur.\(id)")
+        XCTAssertTrue(ligne.apparait())
+        ligne.tap()
+        XCTAssertTrue(app.elementAcces("admin.fiche.fermer").apparait(), "la fiche")
+    }
 
     @MainActor
     private func ouvrirLeParametrage(_ arguments: [String]) -> XCUIApplication {

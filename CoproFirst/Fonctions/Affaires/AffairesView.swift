@@ -12,7 +12,6 @@ struct AffairesView: View {
     @Binding var chemin: NavigationPath
     @Environment(\.palette) private var palette
     @Environment(Parcours.self) private var parcours
-    @Environment(Reseau.self) private var reseau
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
     @State private var etat = EtatAffaires()
     @State private var onglet = "liste"
@@ -100,7 +99,7 @@ struct AffairesView: View {
     /// Le choix de l'onglet, sur la matière de la barre : le contenu défile dessous.
     private var enTete: some View {
         VStack(spacing: 0) {
-            if !reseau.enLigne { BandeauHorsLigne() }
+            BandeauHorsLigne()
             if onglets.count > 1 {
                 Picker("Onglet", selection: $onglet.animation(mouvementReduit ? nil : .snappy)) {
                     ForEach(onglets) { onglet in
@@ -127,6 +126,7 @@ struct AffairesView: View {
         .buttonBorderShape(.circle)
         .tint(palette.primaryPlein)
         .accessibilityLabel("Nouvelle affaire")
+        .gesteEnLigne()
         .accessibilityIdentifier("affaires.nouvelle")
     }
 }

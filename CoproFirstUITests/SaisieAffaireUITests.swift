@@ -29,22 +29,7 @@ final class SaisieAffaireUITests: XCTestCase {
 
     /// Un élément de cet identifiant dit-il `texte` (libellé ou valeur) ?
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String) -> Bool {
-        let predicat = NSPredicate(
-            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
-    }
-
-    /// L'élément ramené à l'écran ; `false` s'il n'y paraît pas. Un `Form` ne crée pas les
-    /// lignes hors de l'écran : on défile tant qu'il n'est pas là, pas seulement tant qu'il est caché.
-    @discardableResult
-    private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> Bool {
-        _ = element.sonde()
-        var essais = 0
-        while !(element.exists && element.isHittable), essais < 8 {
-            app.swipeUp()
-            essais += 1
-        }
-        return element.exists
+        app.elementDisant(identifiant, texte).apparait()
     }
 
     private func nouvelle(_ app: XCUIApplication, categorie: String) {
@@ -58,18 +43,18 @@ final class SaisieAffaireUITests: XCTestCase {
         let app = lancer()
         nouvelle(app, categorie: "question")
         XCTAssertTrue(lu(app, "nouvelle.modeSaisie", contient: "Saisie essentielle"), "la phrase dit la saisie")
-        XCTAssertTrue(atteindre(app, el(app, "nouvelle.plusDeDetails")), "l'urgence d'une question est rangée")
+        XCTAssertTrue(app.amener(el(app, "nouvelle.plusDeDetails")), "l'urgence d'une question est rangée")
         XCTAssertFalse(el(app, "nouvelle.urgente").exists, "plié, le groupe ne montre pas l'urgence")
         LancementCaptures.capturer("saisie-1-essentielle-question")
         el(app, "nouvelle.plusDeDetails").tap()
-        XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "déplié, l'urgence se règle")
+        XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "déplié, l'urgence se règle")
         LancementCaptures.capturer("saisie-2-plus-de-details")
 
         app.swipeDown()
         let panne = el(app, "nouvelle.categorie.panne")
         XCTAssertTrue(panne.apparait())
         panne.tap()
-        XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
+        XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
         // Le groupe se retire après le toucher : son absence s'attend, elle ne se lit pas
         // par `.exists` dans la foulée (vu rouge au poste chargé, 11/11/2026).
         XCTAssertTrue(el(app, "nouvelle.plusDeDetails").disparait(), "plus rien à ranger : pas de groupe")
@@ -80,7 +65,7 @@ final class SaisieAffaireUITests: XCTestCase {
         let app = lancer(["-saisie", "complete"])
         nouvelle(app, categorie: "question")
         XCTAssertTrue(lu(app, "nouvelle.modeSaisie", contient: "Saisie complète"))
-        XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")), "en Complète, l'urgence est à son rang")
+        XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "en Complète, l'urgence est à son rang")
         XCTAssertFalse(el(app, "nouvelle.plusDeDetails").exists)
         LancementCaptures.capturer("saisie-4-complete")
     }
@@ -95,12 +80,30 @@ final class SaisieAffaireUITests: XCTestCase {
             XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait(), "la grille est servie")
             // La grille est posée : « Actualité », sa première vignette, y est ou n'y est pas.
             XCTAssertEqual(el(app, "nouvelle.categorie.actualite").exists, duConseil, "réservée au conseil")
-            XCTAssertTrue(atteindre(app, el(app, "nouvelle.depuisLeSite")))
+            XCTAssertTrue(app.amener(el(app, "nouvelle.depuisLeSite")))
             let phrase = duConseil ? "les affaires liées aussi" : "Le conseil syndical désigne"
             XCTAssertTrue(lu(app, "nouvelle.depuisLeSite", contient: phrase), "la phrase de ce compte")
             LancementCaptures.capturer(duConseil ? "saisie-6-grille-conseil" : "saisie-7-grille-resident")
             app.terminate()
         }
+    }
+
+    /// #129, #130 : « Qui la lira » attend la catégorie, puis dit ce que le serveur rend de
+    /// la saisie ; le lieu posé par défaut se dit en clair, nommé par le serveur.
+    func testQuiLaLiraEtLeLieuSontServis() throws {
+        let app = lancer()
+        el(app, "affaires.nouvelle").tap()
+        XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait())
+        XCTAssertTrue(app.amener(el(app, "nouvelle.quiLaLira")))
+        XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "catégorie choisie"), "rien à demander sans catégorie")
+        let panne = el(app, "nouvelle.categorie.panne")
+        for _ in 0..<6 where !(panne.exists && panne.isHittable) { app.swipeDown() }
+        panne.tap()
+        XCTAssertTrue(app.amener(el(app, "nouvelle.lieuServi")))
+        XCTAssertTrue(lu(app, "nouvelle.lieuServi", contient: "Toute la copropriété"), "le défaut, en clair")
+        XCTAssertTrue(app.amener(el(app, "nouvelle.quiLaLira")))
+        XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "Copropriétaires et locataires"), "la pastille servie")
+        LancementCaptures.capturer("apercus-1-qui-la-lira")
     }
 
     func testLeChoixDuProfilVautAussitot() throws {
@@ -109,10 +112,10 @@ final class SaisieAffaireUITests: XCTestCase {
         XCTAssertTrue(plus.apparait())
         plus.tap()
         let profil = el(app, "plus.profil")
-        XCTAssertTrue(atteindre(app, profil))
+        XCTAssertTrue(app.amener(profil))
         profil.tap()
         let complete = el(app, "profil.saisie").buttons["Complète"]
-        XCTAssertTrue(atteindre(app, complete), "le réglage est au Profil")
+        XCTAssertTrue(app.amener(complete), "le réglage est au Profil")
         XCTAssertTrue(el(app, "profil.saisie").buttons["Essentielle"].isSelected, "le défaut servi est coché")
         LancementCaptures.capturer("saisie-5-profil")
         complete.tap()
@@ -121,6 +124,6 @@ final class SaisieAffaireUITests: XCTestCase {
         ouvrirAffaires(app)
         nouvelle(app, categorie: "question")
         XCTAssertTrue(lu(app, "nouvelle.modeSaisie", contient: "Saisie complète"), "la feuille suit le Profil")
-        XCTAssertTrue(atteindre(app, el(app, "nouvelle.urgente")))
+        XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")))
     }
 }
