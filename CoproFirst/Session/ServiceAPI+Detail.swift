@@ -34,7 +34,10 @@ extension ServiceAPI {
         let (suites, corpsSuites) = try await evolutions
         if case .ok(let ok) = suites { lues = try ok.body.json }
         var detail = DetailAffaire.lue(lu, corps: corps, evolutions: lues, corpsEvolutions: corpsSuites)
-        detail.referentiels = try await servis
+        // Des référentiels illisibles n'empêchent pas de lire l'affaire : rien de ce qu'ils
+        // ouvrent n'est alors offert (états d'une Suite, catégories), et un état que l'objet
+        // ne met pas en clair se montre par son code.
+        detail.referentiels = (try? await servis) ?? .vides
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
         // `moi` ne sert qu'au repli d'une installation qui ne sert pas `est_auteur`. Le compte
