@@ -44,7 +44,7 @@ final class CommunauteUITests: XCTestCase {
     /// L'élément, ramené à l'écran : en très grand texte, il faut souvent défiler.
     @discardableResult
     private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> XCUIElement {
-        _ = element.apparait()
+        _ = element.sonde()
         var essais = 0
         while !(element.exists && element.isHittable), essais < 8 {
             app.swipeUp()
