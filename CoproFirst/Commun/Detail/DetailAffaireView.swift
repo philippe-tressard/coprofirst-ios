@@ -49,14 +49,8 @@ private struct ContenuAffaire: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 EnTeteAffaire(affaire: affaire)
-                TexteRiche(html: affaire.description)
-                    .font(.body)
-                    .foregroundStyle(palette.text)
-                    .tint(palette.primary)
-                    .textSelection(.enabled)
-                    .fixedSize(horizontal: false, vertical: true)
-                PiecesJointesView(pieces: affaire.pieces, installation: installation)
-                Historique(suites: affaire.suites, referentiels: affaire.referentiels, installation: installation)
+                // La demande, la suite, les comptes rendus, la synthèse : le fil (#178).
+                FilAffaire(affaire: affaire, installation: installation)
                 // Pas de messages sur une actualité : elle informe, on n'y répond pas.
                 if !affaire.estActualite {
                     FilMessagesAffaire(messages: affaire.messages, installation: installation)
@@ -127,76 +121,5 @@ private struct EnTeteAffaire: View {
         .overlay(alignment: .leading) {
             if affaire.urgente { palette.danger.frame(width: 4).clipShape(.capsule) }
         }
-    }
-}
-
-/// L'Historique, dans l'ordre : ce qui a été écrit, et ce qui a changé d'état.
-private struct Historique: View {
-    let suites: [SuiteAffaire]
-    /// Les libellés des états, servis avec l'affaire (#105).
-    let referentiels: ReferentielsAffaires
-    let installation: Installation
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Historique")
-                .styleLibelle()
-                .accessibilityAddTraits(.isHeader)
-            if suites.isEmpty {
-                Text("Aucune suite pour l'instant.")
-                    .font(.subheadline)
-                    .foregroundStyle(palette.textMuted)
-            }
-            ForEach(suites) { suite in
-                Carte {
-                    VStack(alignment: .leading, spacing: 10) {
-                        EntreeHistorique(suite: suite, referentiels: referentiels)
-                        // Hors de l'élément lu d'un trait : chaque pièce s'ouvre à part.
-                        PiecesJointesView(pieces: suite.pieces, installation: installation, format: .compact)
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// Ce qu'une suite dit : son auteur, sa date, le changement d'état, son texte — lu d'un trait.
-private struct EntreeHistorique: View {
-    let suite: SuiteAffaire
-    let referentiels: ReferentielsAffaires
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(suite.auteur ?? "La résidence")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(palette.text)
-                Spacer(minLength: 8)
-                Text(suite.date, format: .relative(presentation: .named))
-                    .font(.caption)
-                    .foregroundStyle(palette.textMuted)
-            }
-            if let changement = suite.changementDEtat(referentiels) {
-                Label(changement, systemImage: "arrow.triangle.2.circlepath")
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(palette.primary)
-            }
-            // La phrase servie telle quelle, son 🔹 compris (#130).
-            if let precise = suite.perimetrePrecise {
-                Text(precise)
-                    .font(.subheadline)
-                    .foregroundStyle(palette.textMuted)
-            }
-            if let contenu = suite.contenu.map(TexteRiche.init(html:)), !contenu.vide {
-                contenu
-                    .font(.body)
-                    .foregroundStyle(palette.text)
-                    .tint(palette.primary)
-                    .textSelection(.enabled)
-            }
-        }
-        .accessibilityElement(children: .combine)
     }
 }

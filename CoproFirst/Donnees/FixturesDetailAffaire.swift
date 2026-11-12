@@ -96,7 +96,13 @@ enum FixturesDetailAffaire {
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
-           "nouveau_statut_libelle": ""}
+           "nouveau_statut_libelle": ""},
+          {"id": 4, "ticket_id": 31, "type": "etat", "cree_le": "2026-11-07T09:30:00",
+           "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "résolu",
+           "nouveau_statut_libelle": "Résolu",
+           "contenu": "La carte électronique du portail a été remplacée."},
+          {"id": 5, "ticket_id": 31, "type": "synthese", "cree_le": "2026-11-08T10:00:00",
+           "auteur_nom": "Le conseil syndical", "nouveau_statut_libelle": ""}
         ]
         """#
 

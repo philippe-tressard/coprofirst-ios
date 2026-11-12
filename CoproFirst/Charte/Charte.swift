@@ -56,6 +56,12 @@ enum Mise {
     static let mosaiqueCompacte: CGFloat = 140
     /// Le côté de la vignette d'une carte du fil (`VignettePieces`).
     static let vignette: CGFloat = 56
+    /// La pastille d'une section du fil d'une affaire (`RailDuFil`, #178).
+    static let jalon: CGFloat = 16
+    /// Celle d'un élément sous une section.
+    static let jalonSecondaire: CGFloat = 10
+    /// Le trait du rail qui relie les pastilles.
+    static let filetRail: CGFloat = 2
 }
 
 extension Font {
