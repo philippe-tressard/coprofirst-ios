@@ -54,7 +54,9 @@
 #      envois, modules, droits, paquets (scripts/verifier-confidentialite.py, #19) ;
 #  19. DEPENDANCES.md dit ce que Package.resolved épingle : chaque paquet embarqué de
 #      la fiche y est listé embarqué, et chaque version écrite est l'épinglée
-#      (scripts/verifier-dependances.py, #143).
+#      (scripts/verifier-dependances.py, #143) ;
+#  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
+#      #135) : ni ses trois routes, ni son service, ni son délai ailleurs.
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -295,9 +297,49 @@ autotest_porte_session() {
   return $ok
 }
 autotest_porte_session || echec "verifier-depot.sh : autotest des portes de la session en échec"
+
+# L'aperçu servi d'une saisie (#129, #130, #135) passe par UNE porte, `ApercuServi` : le
+# délai, la réponse périmée ignorée et le hors ligne y sont écrits une fois. Un écran
+# qui appellerait la route ou le service lui-même recopierait le mécanisme, ou s'en
+# passerait. $1 : chemin dans le dépôt ; $2 : le fichier à lire.
+refus_porte_apercu() {
+  local code
+  code=$(grep -vE '^[[:space:]]*///?' "$2")
+  case "$1" in
+    CoproFirst/Donnees/ServiceApercus.swift) ;;
+    *) grep -qE 'post(LecturesApercu|PerimetresLibelle|NomsAffiche)\(' <<< "$code" &&
+      echo "route d'aperçu appelée hors de ServiceApercus — poser ApercuServi" ;;
+  esac
+  case "$1" in
+    CoproFirst/Commun/Apercu/* | CoproFirst/Donnees/ServiceApercus.swift | CoproFirst/Donnees/FixturesApercus.swift) ;;
+    *) grep -qE '\.apercus\b|ServiceApercus\b|EtatApercu\b|ApercuSaisie\.delai' <<< "$code" &&
+      echo "aperçu demandé hors d'ApercuServi (délai, réponse périmée, hors ligne) — poser QuiLaLira, LieuDeLaSaisie ou NomDeLaSaisie" ;;
+  esac
+}
+autotest_porte_apercu() {
+  local d ok=0
+  d=$(mktemp -d) || return 1
+  printf '        let r = try await client(i.adresse).postNomsAffiche(body: .json(corps))\n' > "$d/route"
+  printf '            let nom = try? await parcours.service.apercus?.nomAffiche(s, dans: i)\n' > "$d/service"
+  printf '            try await Task.sleep(for: ApercuSaisie.delai)\n' > "$d/delai"
+  printf '    /// jamais .apercus ni postNomsAffiche( ici : ApercuServi\n        x()\n' > "$d/commentaire"
+  printf '        NomDeLaSaisie(saisie: s, identifiant: "profil.nom")\n' > "$d/ecran"
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/route")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Donnees/ServiceApercus.swift "$d/route")" ] || ok=1
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/service")" ] || ok=1
+  [ -n "$(refus_porte_apercu CoproFirst/Fonctions/Affaires/X.swift "$d/delai")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Commun/Apercu/X.swift "$d/service")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/commentaire")" ] || ok=1
+  [ -z "$(refus_porte_apercu CoproFirst/Fonctions/Profil/X.swift "$d/ecran")" ] || ok=1
+  rm -rf "${d:?}"
+  return $ok
+}
+autotest_porte_apercu || echec "verifier-depot.sh : autotest de la porte des aperçus en échec"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
   motif=$(refus_porte_session "$f" "$f")
+  [ -z "$motif" ] || echec "$f : $motif"
+  motif=$(refus_porte_apercu "$f" "$f")
   [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
 
@@ -418,4 +460,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

@@ -169,6 +169,10 @@ Address » s'applique.
 
 Tous les appels d'écriture du client généré, et le type de donnée que chacun porte
 (« — » : un geste sur un objet existant, sans donnée saisie).
+Les trois aperçus d'une saisie (`postLecturesApercu`, `postPerimetresLibelle`,
+`postNomsAffiche`, #129, #130, #135) envoient ce qui est en train d'être saisi pour que
+la résidence le nomme ; elle ne le garde pas (« Rien n'est lu ni écrit en base », lu
+dans coprofirst à la version du plancher, non contrôlé ici).
 
 <!-- table:envois -->
 | Envoi | Type de donnée |
@@ -190,6 +194,9 @@ Tous les appels d'écriture du client généré, et le type de donnée que chacu
 | `deleteTicketsTicketIdEvolutionsEvolId` | — |
 | `postTicketsTicketIdMessages` | `EmailsOrTextMessages` |
 | `postSignalements` | `OtherUserContent` |
+| `postLecturesApercu` | `OtherUserContent` |
+| `postPerimetresLibelle` | `OtherUserContent` |
+| `postNomsAffiche` | `Name` |
 | `postReglementQuestions` | `OtherUserContent` |
 | `postAnnonces` | `OtherUserContent` |
 | `patchAnnoncesAnnonceIdStatut` | — |
