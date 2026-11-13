@@ -77,9 +77,15 @@ extension ServiceSimule {
         if detail.close { detail.synthese = try FixturesFilAffaire.synthese(id) }
         if conseil {
             detail.droits = DroitsServisAffaire(
-                repondre: !detail.estActualite, changerEtat: true, modifier: true, archiver: true, corriger: true)
+                repondre: !detail.estActualite, changerEtat: true, modifier: true, archiver: true, corriger: true,
+                changerPrestataires: affairesDuBati.contains(id) && !detail.close)
         }
         return detail
     }
+
+    /// Les affaires du bâti que ce faux serveur sert à la forme du contrat 1.28.0 (leurs
+    /// prestataires, #181) : le conseil y ajoute et retire un prestataire tant qu'elles
+    /// sont ouvertes — `peut_changer_prestataires`, calculé ici comme le vrai serveur.
+    static let affairesDuBati: Set<Int> = [41, 45]
 }
 #endif

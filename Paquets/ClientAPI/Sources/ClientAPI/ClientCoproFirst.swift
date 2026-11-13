@@ -20,7 +20,8 @@ public enum ClientCoproFirst {
     /// le transport (une session de l'app, un transport de test). `middlewares` : ce que
     /// l'app glisse entre le client et le transport (le renouvellement de session, #81),
     /// APRÈS l'intercepteur qui garde un corps servi à la demande (`CorpsServi.garder`) :
-    /// le plus extérieur, il garde le corps de la réponse finale, renouvellement compris.
+    /// le plus extérieur, il garde le corps de la réponse finale, renouvellement compris ;
+    /// puis celui qui ajoute au corps envoyé un champ au-dessus du plancher (`CorpsEnvoye`).
     public static func client(
         installation: URL,
         transport: any ClientTransport = URLSessionTransport(),
@@ -29,7 +30,7 @@ public enum ClientCoproFirst {
         Client(
             serverURL: adresseAPI(installation: installation),
             configuration: Configuration(dateTranscoder: TranscodeurDates()),
-            transport: transport, middlewares: [IntercepteurCorpsServi()] + middlewares)
+            transport: transport, middlewares: [IntercepteurCorpsServi(), IntercepteurCorpsEnvoye()] + middlewares)
     }
 }
 

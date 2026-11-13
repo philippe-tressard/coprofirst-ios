@@ -73,6 +73,11 @@ l'administrateur — depuis son entrée, quand la résidence en sert le droit
 (coprofirst v3.84.0, contrat 1.19.0). Quand l'affaire ne suit pas la correction —
 une suite plus récente a changé son état —, une alerte le dit avec la phrase de la
 résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
+Une affaire peut faire intervenir **plusieurs prestataires** (coprofirst v3.90.0,
+contrat 1.28.0, #181) : la fiche les dit un par ligne, la carte du Kanban montre le
+premier puis « +N », et « Modifier l'affaire » en ajoute, en retire et les réordonne
+quand la résidence en sert le droit — d'une résidence plus ancienne, le seul
+prestataire qu'elle sert, comme avant.
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).

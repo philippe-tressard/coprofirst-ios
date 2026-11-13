@@ -105,7 +105,7 @@ final class MagasinAffairesSimule: @unchecked Sendable {
                 statutLibelle: Self.libelle(statut: actualite ? "publie" : "ouvert"), close: false,
                 categorie: saisie.categorie, categorieLibelle: Self.libelle(saisie.categorie),
                 urgente: saisie.urgente, meConcerne: true, archivee: false, suiviKanban: false,
-                natures: [actualite ? "actualite" : "activite"], prestataire: nil,
+                natures: [actualite ? "actualite" : "activite"], prestataires: [],
                 perimetres: saisie.perimetre.map { [$0] } ?? [], lieu: nil, messages: nil,
                 colonne: Self.colonne(actualite ? "publie" : "ouvert"), peutDeplacer: false, peutArchiver: true)
             contenu.insert(neuve, at: 0)

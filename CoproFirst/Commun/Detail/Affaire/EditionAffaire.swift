@@ -13,6 +13,9 @@ struct EditionAffaire: Hashable, Sendable {
     var urgente: Bool?
     /// `[]` : plus aucun lieu désigné — le serveur pose alors son défaut.
     var perimetres: [String]?
+    /// La liste ENTIÈRE des prestataires, dans l'ordre (`prestataire_ids`, contrat 1.28.0,
+    /// #181) — seulement si elle a changé.
+    var prestataires: [Int]?
 
     /// Rien n'a changé : « Enregistrer » reste éteint.
     var vide: Bool { self == EditionAffaire() }
@@ -42,7 +45,7 @@ extension SaisieAffaire {
     init(modifiant affaire: DetailAffaire) {
         self.init(
             categorie: affaire.categorie, titre: affaire.titre, description: affaire.descriptionSaisie ?? "",
-            urgente: affaire.urgente, perimetre: affaire.perimetres.first)
+            urgente: affaire.urgente, perimetre: affaire.perimetres.first, prestataires: affaire.prestataires)
     }
 
     /// Ce qui a changé depuis `affaire` — et rien d'autre ; d'un contenu figé, l'urgence seule.
@@ -50,6 +53,11 @@ extension SaisieAffaire {
         let origine = SaisieAffaire(modifiant: affaire)
         var edition = EditionAffaire()
         if urgente != origine.urgente { edition.urgente = urgente }
+        // Les prestataires suivent LEUR droit servi, pas celui sur le contenu (#181).
+        let ids = prestataires.compactMap(\.id)
+        if affaire.droits.changerPrestataires, ids != origine.prestataires.compactMap(\.id) {
+            edition.prestataires = ids
+        }
         guard !affaire.contenuFige else { return edition }
         let titre = titre.trimmingCharacters(in: .whitespacesAndNewlines)
         if titre != origine.titre.trimmingCharacters(in: .whitespacesAndNewlines) { edition.titre = titre }

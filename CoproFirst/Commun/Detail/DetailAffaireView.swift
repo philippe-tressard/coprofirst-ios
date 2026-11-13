@@ -111,10 +111,20 @@ private struct EnTeteAffaire: View {
                 if let auteur = affaire.auteur {
                     Label(auteur, systemImage: "person")
                 }
+                // Une ligne par prestataire, le rythme après le dernier (#181).
                 if let intervenant = affaire.intervenant {
-                    Label(intervenant, systemImage: "wrench.and.screwdriver")
-                        .accessibilityLabel("Intervenant : \(intervenant)")
-                        .accessibilityIdentifier("affaire.intervenant")
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(Array(affaire.intervenants.enumerated()), id: \.offset) { Text($0.element) }
+                        }
+                    } icon: {
+                        Image(systemName: "wrench.and.screwdriver")
+                    }
+                    // Un seul élément : sous iOS 26, l'identifiant d'un Label se résout en son image (#183).
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(
+                        TextesPrestatairesAffaire.intervenant(intervenant, nombre: affaire.prestataires.count))
+                    .accessibilityIdentifier("affaire.intervenant")
                 }
             }
             .font(.subheadline)

@@ -68,7 +68,7 @@ import Testing
             id: id, numero: "A-\(id)", titre: "", apercu: "", creeLe: date, misAJourLe: date, statut: "résolu",
             statutLibelle: "Résolu", close: true, categorie: "panne", categorieLibelle: "Panne", urgente: false,
             meConcerne: false,
-            archivee: true, suiviKanban: false, natures: [], prestataire: nil, perimetres: [], lieu: nil,
+            archivee: true, suiviKanban: false, natures: [], prestataires: [], perimetres: [], lieu: nil,
             messages: nil, colonne: "termine", peutDeplacer: false, peutArchiver: false)
     }
     let affaires = [archivee(1, 2025, 3), archivee(2, 2026, 2), archivee(3, 2026, 9), archivee(4, 2022, 1)]
@@ -130,7 +130,7 @@ import Testing
           "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null, "nouveau": false,
           "nom_proprietaire": "Camille Essai", "perimetre_libelle": ""}]
         """#
-    let lues = try await client(servant: json).getTickets().ok.body.json.map(Affaire.init(ticket:))
+    let lues = try await client(servant: json).getTickets().ok.body.json.map { Affaire(ticket: $0) }
     let servie = try #require(lues.first)
     #expect(servie.colonne == "ag", "la colonne servie, pas celle d'une table")
     #expect(servie.categorieLibelle == "Panne (servie)")

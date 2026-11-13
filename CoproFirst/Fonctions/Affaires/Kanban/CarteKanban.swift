@@ -3,7 +3,7 @@
 
 import SwiftUI
 
-/// Une affaire au Kanban : son prestataire, son titre, sa catégorie et son numéro —
+/// Une affaire au Kanban : son premier prestataire (« +N » pour les autres), son titre, sa catégorie et son numéro —
 /// la carte du site (`VueKanbanAffaires`), sans l'aperçu : la colonne dit l'état.
 struct CarteKanban: View {
     let affaire: Affaire
@@ -13,8 +13,10 @@ struct CarteKanban: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            if let prestataire = affaire.prestataire {
-                Text(prestataire)
+            // Le premier prestataire, et combien d'autres : « Ascenseurs du Parc +1 » (#181).
+            if let prestataires = TextesPrestatairesAffaire.carte(affaire.prestataires) {
+                Text(prestataires)
+                    .lineLimit(1)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(palette.textMuted)
             }
@@ -48,7 +50,8 @@ struct CarteKanban: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(
             Text(
-                [affaire.urgente ? "Urgente" : nil, affaire.titre, affaire.prestataire, pied]
+                // VoiceOver lit la liste entière, là où l'œil lit « +N ».
+                ([affaire.urgente ? "Urgente" : nil, affaire.titre] + affaire.prestataires + [pied])
                     .compactMap { $0 }.joined(separator: ", ")))
     }
 

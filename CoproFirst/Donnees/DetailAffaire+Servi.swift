@@ -7,8 +7,11 @@ import Foundation
 extension DetailAffaire {
     /// L'affaire servie et ses suites, par les types générés — le MÊME branchement pour le
     /// service réel et l'API simulée.
+    /// `corps` : le corps servi de GET /tickets/{id}, gardé (`CorpsServi.garder`) pour y
+    /// relire ce qui est servi au-dessus du plancher — les prestataires (contrat 1.28.0, #181).
     static func lue(
-        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead]
+        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead],
+        corps: Data? = nil
     ) -> DetailAffaire {
         let suites = evolutions.map { evolution in
             var suite = SuiteAffaire(evolution: evolution)
@@ -24,18 +27,23 @@ extension DetailAffaire {
         // Le suivi d'une actualité en clair (1.21.0) ; le rythme qui fait foi : celui du contrat
         // sous contrat, celui de l'affaire sinon (`intervenantAffiche` du site, 1.20.0, #125).
         detail.suiviActualiteLibelle = ticket.suiviActualiteLibelle
-        detail.intervenant = intervenant(
-            ticket.prestataireNom, rythme: ticket.contrat?.frequenceLibelle ?? ticket.frequenceLibelle)
+        // Ses prestataires, servis (1.28.0, #181) ; d'une installation antérieure, le seul servi.
+        let servis = Relecture.auDessusDuPlancher(PrestatairesServis.self, corps: corps)
+        detail.prestataires = PrestatairesServis.liste(servis, ticket: ticket)
+        detail.droits.changerPrestataires = servis?.peutChangerPrestataires ?? false
+        detail.rythme = ticket.contrat?.frequenceLibelle ?? ticket.frequenceLibelle
         // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
         detail.lecture = ticket.lecture.map(Lecture.init)
         return detail
     }
 
-    /// « Ascenseurs du Parc · ↺ Mensuel » : rien sans prestataire. Le cadre « sous
-    /// contrat n° … » du site n'est pas servi : l'app ne le compose pas.
-    static func intervenant(_ prestataire: String?, rythme: String?) -> String? {
-        guard let prestataire = prestataire?.nulSiVide else { return nil }
-        return [prestataire, rythme?.nulSiVide].compactMap(\.self).joined(separator: " · ")
+    /// Une ligne par prestataire, le rythme après le dernier : « Ascenseurs du Parc ·
+    /// ↺ Mensuel » pour un seul ; rien sans prestataire. Le cadre « sous contrat n° … » du
+    /// site n'est pas servi : l'app ne le compose pas.
+    static func intervenants(_ noms: [String], rythme: String?) -> [String] {
+        var lignes = noms.compactMap(\.nulSiVide)
+        guard let dernier = lignes.popLast() else { return [] }
+        return lignes + [[dernier, rythme?.nulSiVide].compactMap(\.self).joined(separator: " · ")]
     }
 
     init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire]) {
