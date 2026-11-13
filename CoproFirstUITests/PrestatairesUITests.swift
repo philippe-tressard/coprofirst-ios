@@ -44,10 +44,17 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertTrue(app.libelleAcces("↺ Mensuel").exists, "la fréquence servie (`frequence_libelle`, #125)")
         app.capturerAcces("prestataires-3-contrats", dans: self)
 
-        // 🔁 Le remplacement servi (#185, contrat 1.29.0), sur les deux cartes.
+        // 🔁 Le remplacement servi (#185, contrat 1.29.0), sur les deux cartes — la
+        // première repliée, pour que la capture les montre.
+        contrat.tap()
+        XCTAssertTrue(app.libelleAcces("Le contrat").disparait(), "la carte repliée")
         let remplace = app.elementAcces("contrat.2.remplacement.0")
         XCTAssertTrue(remplace.apparait(), "l'ancien contrat dit par qui il est remplacé")
         XCTAssertEqual(remplace.label, "🔁 Remplacé par Protection Incendie Exemple ·\u{00A0}dès le 01/12/2026")
+        // Plus longue qu'une rangée de capsules, elle passe à la ligne au lieu de déborder
+        // de la carte (capture du 13/11/2026, #191) : elle ne dépasse pas le titre du contrat.
+        let titre = app.elementAcces("contrat.2")
+        XCTAssertLessThanOrEqual(remplace.frame.maxX, titre.frame.maxX + 1, "la pastille tient dans la carte")
         let remplacant = app.elementAcces("contrat.4.remplacement.0")
         XCTAssertTrue(remplacant.apparait(), "le nouveau dit qui il remplace")
         XCTAssertEqual(remplacant.label, "🔁 Remplace Contrôles Sécurité Exemple (résilié au 30/11/2026)")

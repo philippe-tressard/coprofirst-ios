@@ -105,42 +105,55 @@ private struct CarteContrat: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityIdentifier("contrat.\(contrat.id)")
-                FlowCapsules {
-                    if let prestataire {
-                        PastilleTeinte(libelle: prestataire.nom, badge: "badge-gray", compacte: true)
-                    } else {
-                        PastilleTeinte(
-                            libelle: TextesPrestataires.sansIntervenant, badge: "badge-orange", compacte: true)
-                    }
-                    if let numero = contrat.numeroContrat, !numero.isEmpty {
-                        PastilleTeinte(libelle: "🔖 \(numero)", badge: "badge-gray", compacte: true)
-                    }
-                    // 🔁 La résiliation et le remplacement, tels que servis (#185) — sur les
-                    // DEUX cartes : l'ancien dit par qui, le nouveau qui il remplace.
-                    ForEach(Array(contrat.remplacement.pastilles.enumerated()), id: \.offset) { rang, libelle in
-                        PastilleTeinte(libelle: libelle, badge: "badge-gray", compacte: true)
-                            // Un seul élément, nommé par son libellé : l'identifiant ne se
-                            // pose pas sur une partie de la pastille (le piège de #183).
-                            .accessibilityElement(children: .ignore)
-                            .accessibilityLabel(libelle)
-                            .accessibilityIdentifier("contrat.\(contrat.id).remplacement.\(rang)")
-                    }
-                    if contrat.prochaineVisite == nil && !contrat.remplacement.estDatee {
-                        PastilleTeinte(
-                            libelle: TextesPrestataires.sansEcheanceCapsule, badge: "badge-gray", compacte: true)
-                    }
-                    // Le rythme, tel que le serveur le sert (`frequence_libelle`) — vide : rien.
-                    if let frequence = contrat.frequenceLibelle?.nulSiVide {
-                        PastilleTeinte(libelle: frequence, badge: "badge-gray", compacte: true)
-                    }
-                    if let documents, !documents.isEmpty {
-                        PastilleTeinte(libelle: "📄 \(documents.count)", badge: "badge-gray", compacte: true)
-                    }
-                }
+                capsules
                 if deplie { detail.transition(.opacity) }
             }
         }
         .task { documents = try? await service.documents(contrat: contrat.id, dans: installation) }
+    }
+
+    /// Les capsules de la carte, comme celles du site (`CarteContrat.svelte`).
+    private var capsules: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            FlowCapsules {
+                if let prestataire {
+                    PastilleTeinte(libelle: prestataire.nom, badge: "badge-gray", compacte: true)
+                } else {
+                    PastilleTeinte(
+                        libelle: TextesPrestataires.sansIntervenant, badge: "badge-orange", compacte: true)
+                }
+                if let numero = contrat.numeroContrat, !numero.isEmpty {
+                    PastilleTeinte(libelle: "🔖 \(numero)", badge: "badge-gray", compacte: true)
+                }
+            }
+            // 🔁 La résiliation et le remplacement, tels que servis (#185) — sur les DEUX
+            // cartes : l'ancien dit par qui, le nouveau qui il remplace. Hors de la
+            // rangée de capsules : plus longues qu'elle, elles y débordaient de la carte
+            // (`RangeesQuiPassent` ne propose pas sa largeur, #191) ; ici, elles passent
+            // à la ligne.
+            ForEach(Array(contrat.remplacement.pastilles.enumerated()), id: \.offset) { rang, libelle in
+                PastilleTeinte(libelle: libelle, badge: "badge-gray", compacte: true)
+                    .fixedSize(horizontal: false, vertical: true)
+                    // Un seul élément, nommé par son libellé : l'identifiant ne se pose
+                    // pas sur une partie de la pastille (le piège de #183).
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(libelle)
+                    .accessibilityIdentifier("contrat.\(contrat.id).remplacement.\(rang)")
+            }
+            FlowCapsules {
+                if contrat.prochaineVisite == nil && !contrat.remplacement.estDatee {
+                    PastilleTeinte(
+                        libelle: TextesPrestataires.sansEcheanceCapsule, badge: "badge-gray", compacte: true)
+                }
+                // Le rythme, tel que le serveur le sert (`frequence_libelle`) — vide : rien.
+                if let frequence = contrat.frequenceLibelle?.nulSiVide {
+                    PastilleTeinte(libelle: frequence, badge: "badge-gray", compacte: true)
+                }
+                if let documents, !documents.isEmpty {
+                    PastilleTeinte(libelle: "📄 \(documents.count)", badge: "badge-gray", compacte: true)
+                }
+            }
+        }
     }
 
     private var detail: some View {
