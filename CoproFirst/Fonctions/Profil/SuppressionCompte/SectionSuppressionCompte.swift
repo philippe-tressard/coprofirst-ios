@@ -32,6 +32,14 @@ struct SectionSuppressionCompte: View {
                     Label("Demander la suppression de mon compte", systemImage: "person.crop.circle.badge.xmark")
                 }
                 .accessibilityIdentifier("profil.suppression.demander")
+                // La feuille tient au BOUTON, pas à la `Section` : posée sur une section de `List`,
+                // SwiftUI la présentait à chaque rangée et le toucher n'ouvrait rien (constaté au
+                // simulateur le 13/11/2026, `SuppressionCompteUITests`).
+                .sheet(isPresented: $formulaire) {
+                    DemandeSuppressionFeuille(etat: etat) { motDePasse, motif in
+                        await demander(motDePasse: motDePasse, motif: motif)
+                    }
+                }
             } else {
                 ProgressView().frame(maxWidth: .infinity)
             }
@@ -41,13 +49,6 @@ struct SectionSuppressionCompte: View {
         }
         .listRowBackground(palette.surface)
         .task(id: installation.adresse) { await lire() }
-        .sheet(isPresented: $formulaire) {
-            if let etat {
-                DemandeSuppressionFeuille(etat: etat) { motDePasse, motif in
-                    await demander(motDePasse: motDePasse, motif: motif)
-                }
-            }
-        }
     }
 
     private func demandeEnvoyee(_ demande: DemandeSuppressionCompte) -> String {
