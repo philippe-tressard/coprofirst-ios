@@ -40,9 +40,9 @@ struct ConseilCS: Hashable, Sendable {
 struct MembreConseil: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
-    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
-    /// n'est pas au client du plancher).
+    /// Changer le prénom ou le nom périme le nom servi : la feuille montre celui que le
+    /// serveur rend de la saisie (`NomDeLaSaisie`, `POST /noms/affiche`, #135), et
+    /// l'enregistrement rend le nom affiché neuf.
     var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
     var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var batimentId: Int?
@@ -79,9 +79,9 @@ struct SyndicCS: Hashable, Sendable {
 struct MembreSyndic: Hashable, Sendable {
     var id: Int?
     var genre: String?
-    /// Changer le prénom ou le nom périme le nom servi : la saisie se nomme par le repli
-    /// jusqu'à l'enregistrement, qui rend le nom affiché neuf (`POST /noms/affiche`
-    /// n'est pas au client du plancher).
+    /// Changer le prénom ou le nom périme le nom servi : la feuille montre celui que le
+    /// serveur rend de la saisie (`NomDeLaSaisie`, `POST /noms/affiche`, #135), et
+    /// l'enregistrement rend le nom affiché neuf.
     var prenom: String? { didSet { if prenom != oldValue { nomServi = nil } } }
     var nom: String? { didSet { if nom != oldValue { nomServi = nil } } }
     var fonction: String?
@@ -109,25 +109,8 @@ struct Rapprochement: Hashable, Sendable {
     var batimentNom: String?
     var etage: Int?
     /// L'étage en clair (« 1er étage »), tel que le serveur le sert (`etage_libelle`,
-    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    /// contrat 1.21.0, #127) ; `nil` quand il est vide (aucun logement).
     var etageLibelle: String?
-}
-
-/// Ce que GET /admin/annuaire/rapprochement sert au-dessus du plancher, relu par
-/// `Relecture.auDessusDuPlancher`.
-struct RapprochementAuDessusDuPlancher: Decodable {
-    var etageLibelle: String?
-}
-
-extension Rapprochement {
-    /// Le rapprochement servi : le type généré, puis ce que le corps sert au-dessus du
-    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
-    static func lu(_ lu: Components.Schemas.Rapprochement, corps: Data?) -> Rapprochement {
-        var trouve = Rapprochement(lu)
-        trouve.etageLibelle = Relecture.auDessusDuPlancher(RapprochementAuDessusDuPlancher.self, corps: corps)?
-            .etageLibelle?.nulSiVide
-        return trouve
-    }
 }
 
 extension ServiceAPI: ServiceAnnuaireCS {
@@ -179,14 +162,12 @@ extension ServiceAPI: ServiceAnnuaireCS {
     }
 
     func rapprochement(nom: String, localiser: Bool, dans installation: Installation) async throws -> Rapprochement {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder {
-                try await client(installation.adresse).getAdminAnnuaireRapprochement(
-                    query: .init(nom: nom, localiser: localiser))
-            }
+        let sortie = try await appeler {
+            try await client(installation.adresse).getAdminAnnuaireRapprochement(
+                query: .init(nom: nom, localiser: localiser))
         }
         switch sortie {
-        case .ok(let ok): return Rapprochement.lu(try ok.body.json, corps: corps)
+        case .ok(let ok): return Rapprochement(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -282,6 +263,8 @@ extension MembreSyndic {
 
 extension Rapprochement {
     init(_ lu: Components.Schemas.Rapprochement) {
-        self.init(userId: lu.userId, batimentId: lu.batimentId, batimentNom: lu.batimentNom, etage: lu.etage)
+        self.init(
+            userId: lu.userId, batimentId: lu.batimentId, batimentNom: lu.batimentNom, etage: lu.etage,
+            etageLibelle: lu.etageLibelle.nulSiVide)
     }
 }

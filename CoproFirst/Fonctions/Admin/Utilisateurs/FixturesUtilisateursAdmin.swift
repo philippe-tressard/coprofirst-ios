@@ -13,11 +13,11 @@ import Foundation
 enum FixturesUtilisateursAdmin {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, avec ce que le serveur v3.88.1
-    /// sert au-dessus du plancher (`auDessus`, `nomsServis`) : le nom affiché, « Prénom NOM »
-    /// (#135), et les gestes de rôle d'un administrateur
-    /// qui lit la liste — Camille est le seul administrateur, son rôle Admin ne se retire
-    /// pas ; un compte inactif n'a aucun geste.
+    /// GET /admin/utilisateurs → `[UtilisateurAdminRead]`, à la forme du serveur v3.89.0 :
+    /// le nom affiché, « Prénom NOM » (#135), et les gestes de rôle d'un administrateur qui lit la liste — Camille est le
+    /// seul administrateur, son rôle Admin ne se retire pas ; un compte inactif n'a aucun
+    /// geste ; Sacha, le compte technique de l'opérateur, n'en a aucun non plus : son rôle
+    /// ne se retire pas d'ici (une instance commune, `-instance-commune`, #94).
     static let utilisateurs = #"""
         [
           {"id": 11, "prenom": "Camille", "nom": "Exemple", "nom_affiche": "Camille EXEMPLE",
@@ -60,7 +60,17 @@ enum FixturesUtilisateursAdmin {
            "onboarding_complete": false, "onboarding_etape": 0, "preferences_notifications": "{}",
            "communaute_banni": false,
            "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
-           "derniere_connexion": null, "cree_le": "2026-11-08T21:00:00"}
+           "derniere_connexion": null, "cree_le": "2026-11-08T21:00:00"},
+          {"id": 15, "prenom": "Sacha", "nom": "Plateforme", "nom_affiche": "Sacha PLATEFORME",
+           "nom_aide_affiche": "", "est_moderateur": false, "email": "operateur@exemple.fr",
+           "statut": "admin_technique", "role": "externe", "roles": ["operateur"],
+           "actif": true, "email_verifie": true, "batiment_nom": null, "has_lots": false, "has_tc": false,
+           "has_vigik": false, "has_bail": false, "etiquettes": {"loti": "manque", "tc": "sans_objet",
+           "vigik": "sans_objet", "bail": "sans_objet"},
+           "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
+           "communaute_banni": false,
+           "gestes_roles": {"conseil_syndical": null, "admin": null, "operateur": null},
+           "derniere_connexion": "2026-11-10T07:30:00", "cree_le": "2025-01-15T10:00:00"}
         ]
         """#
 
@@ -70,22 +80,14 @@ enum FixturesUtilisateursAdmin {
          "annonce": {"ton": "warning", "texte": "Aucun lot trouvé dans l'import pour ce compte."}}
         """#
 
-    static let auDessus = AuDessusDuPlancher(
-        schema: "UtilisateurAdminRead", champs: ["communaute_banni", "gestes_roles"], contrat: "1.18.0")
-
-    static let nomsServis = AuDessusDuPlancher(
-        schema: "UtilisateurAdminRead", champs: ["nom_affiche", "nom_aide_affiche", "est_moderateur"],
-        contrat: "1.25.0")
-
     static let parSchema: [Reponse] = [
         Reponse(nom: "utilisateurs", schema: "UtilisateurAdminRead", json: utilisateurs),
         Reponse(nom: "rapprochement", schema: "AutoMatchRelance", json: rapprochement),
     ]
 
     static func lus() throws -> [UtilisateurAdmin] {
-        UtilisateurAdmin.lus(
-            try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs),
-            corps: Data(utilisateurs.utf8))
+        try Relecture.generee([Components.Schemas.UtilisateurAdminRead].self, json: utilisateurs)
+            .map(UtilisateurAdmin.init)
     }
 
     static func annonceDuRapprochement() throws -> PhraseAvis {

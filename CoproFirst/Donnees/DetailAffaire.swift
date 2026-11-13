@@ -49,6 +49,13 @@ struct DetailAffaire: Hashable, Sendable {
     /// états de son Historique, les états qu'une Suite propose, les catégories que
     /// « Modifier » permet et les sections de sa saisie — servis, jamais recalculés ici.
     var referentiels = ReferentielsAffaires.vides
+    /// Close au sens du SERVEUR (`TicketRead.close`) : sa suite est finie, sa synthèse se lit.
+    var close = false
+    /// Les comptes rendus où elle a été abordée (#178) ; `nil` quand la lecture a échoué —
+    /// l'écran le DIT, au lieu d'une rubrique vide.
+    var comptesRendus: [CompteRenduAffaire]? = []
+    /// Sa synthèse, d'une affaire close seulement (#178).
+    var synthese: SyntheseAffaire?
 
     var estActualite: Bool { categorie == "actualite" }
 
@@ -78,6 +85,9 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     let type: String
     let date: Date
     let auteur: String?
+    /// Les gestes que la route accepte de CE lecteur sur CETTE entrée, servis avec elle
+    /// (`peut_modifier`, `peut_supprimer`, #93) — aucun quand ils ne sont pas servis.
+    var droits = DroitsServisSuite()
     let contenu: String?
     let ancienStatut: String?
     let nouveauStatut: String?

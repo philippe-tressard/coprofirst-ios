@@ -9,9 +9,8 @@ import Testing
 
 @testable import CoproFirst
 
-// « Qui la lit » (#129) et le lieu (#130), servis au-dessus du plancher : chaque route LIT ce
-// que le serveur sert — par le client généré puis le corps gardé (`CorpsServi`) —, et une
-// installation antérieure garde le rendu d'avant. Rien n'est recomposé ici.
+// « Qui la lit » (#129) et le lieu (#130), au contrat depuis 1.22.0 et 1.24.0 : chaque route
+// LIT ce que le serveur sert, par le client généré. Rien n'est recomposé ici.
 
 /// Un serveur qui sert un corps par chemin (sous `/api`, sans requête) ; 404 ailleurs.
 private struct TransportParRoute: ClientTransport {
@@ -42,7 +41,8 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
     {"id": \#(id), "numero": "TK-\#(id)", "titre": "Essai", "description": "", "categorie": "panne",
      "statut": "ouvert", "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
      "categorie_libelle": "Panne", "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null,
-     "nouveau": false, "nom_proprietaire": "Camille Essai", "perimetre_libelle": "Bât. 2 › Toit"
+     "nouveau": false, "nom_proprietaire": "Camille Essai", "perimetre_libelle": "Bât. 2 › Toit",
+     "suivi_actualite_libelle": "", "frequence_libelle": ""
     """# + extra + "}"
 }
 
@@ -61,10 +61,10 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
     @Test func leDetailLitLaPastilleEtLeLieuPreciseDUneSuite() async throws {
         let suites = #"""
             [{"id": 1, "type": "etat", "cree_le": "2026-11-02T10:00:00", "ticket_id": 9,
-              "nouveau_statut": "en_cours", "perimetre_precise_libelle": "Périmètre précisé : 🔹 Bât. 2"},
+              "nouveau_statut": "en_cours", "perimetre_precise_libelle": "Périmètre précisé : 🔹 Bât. 2",
+              "nouveau_statut_libelle": "En cours"},
              {"id": 2, "type": "commentaire", "cree_le": "2026-11-02T11:00:00", "ticket_id": 9,
-              "perimetre_precise_libelle": ""},
-             {"id": 3, "type": "commentaire", "cree_le": "2026-11-02T12:00:00", "ticket_id": 9}]
+              "perimetre_precise_libelle": "", "nouveau_statut_libelle": ""}]
             """#
         let detail = try await service([
             "/tickets/9": ticket(9, ", \"lecture\": " + lectureCS),
@@ -72,7 +72,7 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         ]).affaire(9, dans: residence)
         #expect(detail.lecture?.cle == "cs")
         #expect(detail.lieu == "Bât. 2 › Toit")
-        #expect(detail.suites.map(\.perimetrePrecise) == ["Périmètre précisé : 🔹 Bât. 2", nil, nil])
+        #expect(detail.suites.map(\.perimetrePrecise) == ["Périmètre précisé : 🔹 Bât. 2", nil])
         // Ce serveur ne sert pas `/tickets/referentiels` : l'affaire se lit quand même (#105) —
         // rien de ce qu'ils ouvrent n'est offert, et l'état servi avec elle reste en clair.
         #expect(detail.referentiels == .vides && SaisieSuite.etats(pour: detail).isEmpty)
@@ -90,15 +90,6 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
     @Test func unSondageSeDitAuMasculin() throws {
         let cs = try #require(Apercu.lecture("cs"))
         #expect(cs.enClair(masculin: true).hasPrefix("Qui le lit : "))
-    }
-
-    /// Une pastille illisible n'emporte pas le lieu : chaque champ est `Tolere`.
-    @Test func unePastilleIllisibleNEmportePasLeLieu() throws {
-        let corps = Data(#"[{"id": 3, "lecture": {"cle": 12}, "perimetre_libelle": "Jardin"}]"#.utf8)
-        let ligne = try #require(ServiAuDessusDuPlancher.parLigne(corps)[3])
-        #expect(ligne.lecture?.valeur == nil)
-        let (lecture, lieu) = Optional(ligne).lectureEtLieu
-        #expect(lecture == nil && lieu == "Jardin")
     }
 
     @Test func chaquePictogrammeDesPastillesServiesASonSymbole() {
@@ -119,7 +110,7 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         #expect(LieuServi.lieu(nil, repli: "") == nil)
     }
 
-    @Test func unAccesDuParcLitSonLieuServiSinonLArbre() async throws {
+    @Test func unAccesDuParcLitSonLieuServi() async throws {
         let arbre = try FixturesPerimetres.lus()
         // Un vigik d'`AccesAdminOut`, avec `servi` ajouté tel quel au JSON.
         func parc(_ servi: String) async throws -> AccesDuParc? {
@@ -133,7 +124,6 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         }
         #expect(try await parc(#", "perimetre_libelle": "Bât. A › Hall""#)?.lieu(arbre: arbre) == "Bât. A › Hall")
         #expect(try await parc(", \"perimetre_libelle\": \"\"")?.lieu(arbre: arbre) == nil, "servi vide : le défaut")
-        #expect(try await parc("")?.lieu(arbre: arbre) == "Bâtiment A", "installation antérieure : l'arbre")
     }
 
     @Test func lesIdeesEtLesAnnoncesLisentQuiEtOu() throws {

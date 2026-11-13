@@ -9,7 +9,6 @@ struct ResidenceView: View {
     let installation: Installation
     let titre: String
     @Environment(Parcours.self) private var parcours
-    @Environment(Reseau.self) private var reseau
     @Environment(\.palette) private var palette
     @Environment(\.dynamicTypeSize) private var taille
     @State private var onglet = OngletResidence.fiche.rawValue
@@ -37,7 +36,7 @@ struct ResidenceView: View {
         .titreDeMenu()
         .barreDuHaut {
             VStack(spacing: 0) {
-                if !reseau.enLigne { BandeauHorsLigne() }
+                BandeauHorsLigne()
                 if ouverts.count > 1 { choixOnglet }
             }
         }

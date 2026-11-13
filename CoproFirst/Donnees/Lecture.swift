@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// « Qui la lit » : la pastille de lecture d'un contenu, telle que le serveur la SERT
@@ -9,8 +10,8 @@ import Foundation
 ///
 /// 🔴 L'app ne la recompose pas : qui lit dépend de la catégorie, de l'état, des
 /// Destinataires, du périmètre et de son arbre — la règle de `ticket_visible`, écrite
-/// au serveur seul (`standards/09` §8). Une installation antérieure ne la sert pas :
-/// aucune pastille, comme avant.
+/// au serveur seul (`standards/09` §8). Non servie (le champ est facultatif) : aucune
+/// pastille.
 struct Lecture: Codable, Hashable, Sendable {
     /// `tous`, `residents`, `coproprietaires`, `cs`, `concerne`, ou des codes joints par « + ».
     let cle: String
@@ -28,6 +29,9 @@ struct Lecture: Codable, Hashable, Sendable {
     let exclus: String
     /// Personne n'est exclu : rien sur la carte (`PastilleLecture` du site).
     let parDefaut: Bool
+    /// Ce qu'un formulaire doit dire en plus (`avertissement`, #129) ; `nil` ou vide : rien.
+    /// Le `meta` du fil ne le sert pas toujours.
+    var avertissement: String?
 
     /// Ce que dit la bulle du site, et ce que VoiceOver lit : « Qui la lit : CS. Lue par
     /// le conseil syndical seul. » — « Qui le lit » pour un sondage.
@@ -43,53 +47,13 @@ struct Lecture: Codable, Hashable, Sendable {
     static func aMontrer(_ lecture: Lecture?) -> Lecture? { lecture.flatMap { $0.parDefaut ? nil : $0 } }
 }
 
-/// Ce qu'un contenu sert au-dessus du plancher sur QUI le lit et OÙ il se trouve (#129,
-/// #130) — relu dans le corps servi (`Relecture.auDessusDuPlancher`), une ligne par `id`.
-/// Tous facultatifs : une installation antérieure n'en sert aucun, et l'écran garde
-/// alors son rendu d'avant (défaut fermé).
-///
-/// Une `lecture` illisible ne fait pas perdre le lieu, ni l'inverse : chacun est `Tolere`.
-struct ServiAuDessusDuPlancher: Decodable, Identifiable, Sendable {
-    let id: Int
-    /// La pastille de lecture (contrat 1.22.0).
-    var lecture: Tolere<Lecture>?
-    /// Le lieu du badge 🔹 (contrat 1.24.0) : `""` pour le périmètre par défaut.
-    var perimetreLibelle: Tolere<String>?
-    /// Le lieu qu'une Suite déclare, phrase comprise (« Périmètre précisé : 🔹 … »), même
-    /// par défaut ; `""` quand elle n'en déclare pas (contrat 1.24.0).
-    var perimetrePreciseLibelle: Tolere<String>?
-
-    /// Les lignes d'une liste servie, par `id` — vide d'une installation antérieure.
-    static func parLigne(_ corps: Data?) -> [Int: ServiAuDessusDuPlancher] {
-        Relecture.auDessusDuPlancher(parLigne: Self.self, corps: corps)
-    }
-
-    /// Un seul objet servi — `nil` d'une installation antérieure.
-    static func un(_ corps: Data?) -> ServiAuDessusDuPlancher? {
-        Relecture.auDessusDuPlancher(Self.self, corps: corps)
-    }
-
-    /// Une liste servie, relue : chaque ligne du type GÉNÉRÉ devient son modèle, puis
-    /// `poser` y range ce que le corps sert pour son `id` — le MÊME branchement pour le
-    /// service réel et l'API simulée.
-    static func relire<Genere, Modele>(
-        _ generes: [Genere], corps: Data?, id: (Genere) -> Int, en modele: (Genere) -> Modele,
-        poser: (inout Modele, ServiAuDessusDuPlancher?) -> Void
-    ) -> [Modele] {
-        let servis = parLigne(corps)
-        return generes.map { genere in
-            var relu = modele(genere)
-            poser(&relu, servis[id(genere)])
-            return relu
-        }
-    }
-}
-
-extension ServiAuDessusDuPlancher? {
-    /// La pastille et le lieu à montrer d'un contenu — `(nil, nil)` d'une installation
-    /// antérieure. Le lieu passe par `LieuServi` : `""` (le défaut) ne se montre pas.
-    var lectureEtLieu: (Lecture?, String?) {
-        (self?.lecture?.valeur, LieuServi.lieu(self?.perimetreLibelle?.valeur))
+extension Lecture {
+    /// La pastille SERVIE, lue par le type généré (au plancher depuis le contrat 1.22.0).
+    init(_ servie: Components.Schemas.Lecture) {
+        self.init(
+            cle: servie.cle, icones: servie.icones, court: servie.court, titre: servie.titre,
+            perimetreReserve: servie.perimetreReserve, phrase: servie.phrase, exclus: servie.exclus,
+            parDefaut: servie.parDefaut, avertissement: servie.avertissement)
     }
 }
 

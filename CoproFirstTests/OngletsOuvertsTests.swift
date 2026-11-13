@@ -13,7 +13,8 @@ private func ouverts(_ page: String, _ droits: DroitsOnglet) -> [String] {
 }
 
 private let conseilSyndical = DroitsOnglet(
-    roles: ["conseil_syndical", "propriétaire"], role: "propriétaire", statut: "copropriétaire_résident")
+    roles: ["conseil_syndical", "propriétaire"], role: "propriétaire", statut: "copropriétaire_résident",
+    estModerateur: true)
 private let coproprietaire = DroitsOnglet(
     roles: ["propriétaire"], role: "propriétaire", statut: "copropriétaire_bailleur")
 private let locataire = DroitsOnglet(roles: ["résident"], role: "résident", statut: "locataire")
@@ -25,9 +26,9 @@ private let locataire = DroitsOnglet(roles: ["résident"], role: "résident", st
     #expect(DroitsOnglet(roles: [], role: "admin", statut: nil).administrateur, "`role` seul quand `roles` est vide")
     #expect(DroitsOnglet(roles: [], role: nil, statut: "syndic").gestionnaire)
     // `$isCS` du site inclut l'administrateur ; le copropriétaire n'en est pas.
-    #expect(DroitsOnglet(roles: ["admin"], role: "admin", statut: nil).cs)
+    #expect(DroitsOnglet(roles: ["admin"], role: "admin", statut: nil, estModerateur: true).cs)
     #expect(!coproprietaire.cs)
-    #expect(OngletsDuSite.rolesCS == ["conseil_syndical", "admin"], "lu dans isCS de stores/auth.ts")
+    #expect(OngletsDuSite.rolesProprietaire == ["propriétaire"], "lu dans isProprioOuCS de stores/auth.ts")
 }
 
 @Test func leLocataireNeVoitNiCarnetNiReglementNiKanban() {

@@ -54,8 +54,6 @@ enum FixturesAnnuaireCS {
         {"user_id": 7, "batiment_id": 1, "batiment_nom": "A", "etage": 2, "etage_libelle": "2ème étage"}
         """#
 
-    static let auDessus = AuDessusDuPlancher(schema: "Rapprochement", champs: ["etage_libelle"], contrat: "1.21.0")
-
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [
         Reponse(nom: "conseil", schema: "CompositionConseil", json: conseil),
@@ -76,9 +74,7 @@ enum FixturesAnnuaireCS {
     static func rapprochementLu(_ nom: String) throws -> Rapprochement {
         guard nom.trimmingCharacters(in: .whitespaces).localizedCaseInsensitiveCompare("Exemple") == .orderedSame
         else { return Rapprochement() }
-        return Rapprochement.lu(
-            try Relecture.generee(Components.Schemas.Rapprochement.self, json: rapprochementExemple),
-            corps: Data(rapprochementExemple.utf8))
+        return Rapprochement(try Relecture.generee(Components.Schemas.Rapprochement.self, json: rapprochementExemple))
     }
 }
 #endif

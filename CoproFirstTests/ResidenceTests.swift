@@ -55,7 +55,8 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 /// Chaque onglet ouvert a son écran : un onglet que l'app ne sait pas rendre ne
 /// s'affiche pas, plutôt que d'ouvrir la Fiche sous un autre nom.
 @Test func chaqueOngletDuSiteASonEcran() {
-    let cs = droits(statut: nil, "conseil_syndical")
+    let cs = DroitsOnglet(
+        profil: ProfilResidence(statut: nil, roles: ["conseil_syndical"], libelleLogement: nil, estModerateur: true))
     #expect(cs.cs && cs.proprioOuCS)
     for onglet in OngletsResidence.ouverts(cs, accesReglement: true) {
         #expect(OngletResidence(rawValue: onglet.id) != nil, "« \(onglet.id) » sans écran")

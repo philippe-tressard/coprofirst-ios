@@ -1,18 +1,22 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Les PAGES et leurs ONGLETS, lus dans `PAGES` (`front/src/lib/pages.ts`) et
-`PAGES_ROLES` (`pages-roles.ts`) :
+"""Les PAGES et leurs ONGLETS, lus dans `tables-clients.json` de la release (#128) :
 
-- le TITRE du fil d'activité, la section du tableau de bord que l'app ouvre en premier
-  (`.titre-fil` de `tableau-de-bord/+page.svelte`) → `PagesParDefaut.titreDuFil` ;
-- l'ordre par défaut des pages, que `pages_order` de GET /config réordonne — celles de
-  `PAGES`, puis celles de `PAGES_ROLES` (Espace CS, Admin, Délégations), comme `PAGES`
-  les étale : `PagesOuvertes` (Navigation/) décide ensuite qui les voit (#15)
+- `pages` (`PAGES` de `front/src/lib/pages.ts`, `PAGES_ROLES` étalées à leur place,
+  libellés résolus) : l'ordre par défaut des pages, que `pages_order` de GET /config
+  réordonne — `PagesOuvertes` (Navigation/) décide ensuite qui les voit (#15)
   → `CoproFirst/Navigation/PagesParDefaut.swift` ;
+- `titreFil` (`TITRE_FIL` de `flux.ts`) : le TITRE du fil d'activité, la section du
+  tableau de bord que l'app ouvre en premier → `PagesParDefaut.titreDuFil` ;
 - chaque onglet, une ligne, que la table de parité doit classer
   → `Parite/ONGLETS-DU-SITE.md` (scripts/verifier-parite.py) ;
-- chaque onglet, sa RÉSERVE et qui porte chaque droit (`stores/auth.ts`, `roles.ts`)
-  → `CoproFirst/Charte/OngletsDuSite.swift` (#29).
+- chaque onglet, sa RÉSERVE, et qui porte chaque droit : `rolesDuDroit`
+  (`ROLES_DU_DROIT` de `roles.ts`, que lisent les dérivées de `stores/auth.ts`),
+  `statutsDuProfil` (`STATUTS_DU_PROFIL`) → `CoproFirst/Charte/OngletsDuSite.swift` (#29).
+
+Le modérateur (conseil syndical ou administration) n'est plus une liste de rôles : le
+serveur le SERT (`est_moderateur`, coprofirst#2633), et `isProprioOuCS` du site est
+« un rôle de `proprietaire`, ou modérateur servi ». L'app le lit de même.
 
 La règle qui combine réserves et droits (`reserveAdmise`, `ongletsOuverts` de
 `#lib/onglets-ouverts.ts`) est du code : elle vit, écrite une fois, dans
@@ -25,80 +29,45 @@ from __future__ import annotations
 import pathlib
 import re
 
-import lecture_ts
-from generateurs._commun import CHARTE, NAVIGATION, SIGNATURE, tables_des_pages
+from generateurs._commun import CHARTE, NAVIGATION, SIGNATURE
 
-SOURCES = [
-    "front/src/lib/pages.ts",
-    "front/src/lib/pages-roles.ts",
-    "front/src/lib/archives.ts",
-    "front/src/lib/stores/auth.ts",
-    "front/src/lib/roles.ts",
-    "front/src/routes/(app)/tableau-de-bord/+page.svelte",
-]
+SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas dans les sources
 
 RESERVES = ("proprioOuCS", "nonLocataire", "operateur", "nonGestionnaire")
 
 
-def _bloc(texte: str, debut: str) -> str:
-    """Le texte d'une déclaration, de `debut` jusqu'au premier `;` hors chaîne."""
-    i = texte.index(debut)
-    return texte[i : texte.index(";", i)]
+def _pages(ctx) -> list[dict]:
+    """`pages` publiée : une liste de pages, chacune avec son `id`."""
+    pages = ctx.table("pages")
+    if not isinstance(pages, list) or not all(isinstance(p, dict) and "id" in p for p in pages):
+        raise SystemExit("❌ tables-clients.json : « pages » n'est pas une liste de pages — l'app doit l'apprendre")
+    return pages
 
 
-def _roles(auth: str, derivee: str) -> list[str]:
-    """Les rôles qu'une dérivée de `stores/auth.ts` passe à `aRole`."""
-    bloc = _bloc(auth, f"export const {derivee} = derived(")
-    m = re.search(r"aRole\(\$u,([^)]*)\)", bloc)
-    if not m:
-        raise SystemExit(f"❌ {derivee} : appel à aRole introuvable dans stores/auth.ts")
-    return re.findall(r"'([^']+)'", m.group(1))
+def _liste(ctx, table: str, cle: str) -> list[str]:
+    """`table[cle]` publiée, une liste de chaînes non vide."""
+    valeur = ctx.table(table)
+    liste = valeur.get(cle) if isinstance(valeur, dict) else None
+    if not isinstance(liste, list) or not liste or not all(isinstance(v, str) for v in liste):
+        raise SystemExit(f"❌ tables-clients.json : {table}.{cle} absente ou de forme inattendue — l'app doit l'apprendre")
+    return liste
 
 
-def _statuts(roles_ts: str, fonction: str) -> list[str]:
-    """Les statuts qu'une fonction de `roles.ts` compare par `statutDe(p) === '…'`."""
-    bloc = _bloc(roles_ts, f"export const {fonction} = ")
-    statuts = re.findall(r"statutDe\(p\) === '([^']+)'", bloc)
-    if not statuts:
-        raise SystemExit(f"❌ {fonction} : comparaison de statut introuvable dans roles.ts")
-    return statuts
+def _sans_picto(label: str | None) -> str:
+    """Le libellé d'un onglet sans son pictogramme de tête."""
+    return re.sub(r"^[^\w«(]+", "", label or "").strip()
 
 
-def _constante(lib: pathlib.Path, nom: str) -> str:
-    """Le texte d'une constante de libellé (`TITRE_ARCHIVES`), pictogramme retiré."""
-    for fichier in sorted(lib.glob("*.ts")):
-        m = re.search(rf"export const {nom} = [`'](.*?)[`'];", fichier.read_text(encoding="utf-8"))
-        if m:
-            return re.sub(r"^\$\{[A-Z_]+\}\s*", "", m.group(1))
-    raise SystemExit(f"❌ constante de libellé {nom} introuvable dans front/src/lib")
-
-
-def _libelle(lib: pathlib.Path, label) -> str:
-    if isinstance(label, lecture_ts.Identifiant):
-        label = _constante(lib, label)
-    return re.sub(r"^[^\w«(]+", "", label or "").strip().replace('"', '\\"')
-
-
-def _admin_seul(auth: str) -> tuple[list[str], list[str]]:
-    """`isAdminOnly` de `stores/auth.ts` : les rôles qu'il exige (`aRole`), puis ceux qui
-    l'annulent (`!aRole`, réunis) — « le compte technique de l'installation »."""
-    bloc = _bloc(auth, "export const isAdminOnly = derived(")
-    exiges = re.findall(r"(?<!!)aRole\(\$u,([^)]*)\)", bloc)
-    annules = re.findall(r"!aRole\(\$u,([^)]*)\)", bloc)
-    if len(exiges) != 1 or not annules:
-        raise SystemExit("❌ isAdminOnly : forme inattendue dans stores/auth.ts — l'app doit l'apprendre")
-    return re.findall(r"'([^']+)'", exiges[0]), [r for a in annules for r in re.findall(r"'([^']+)'", a)]
+def _swift_texte(texte: str) -> str:
+    return texte.replace('"', '\\"')
 
 
 def _ensemble(valeurs: list[str]) -> str:
     return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
 
 
-def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
+def _swift(ctx, pages: list[dict]) -> tuple[str, int]:
     """Le corps Swift (sans en-tête) et le nombre d'onglets."""
-    lib = front / "src" / "lib"
-    auth = (lib / "stores" / "auth.ts").read_text(encoding="utf-8")
-    roles_ts = (lib / "roles.ts").read_text(encoding="utf-8")
     lignes, reservees, n = [], [], 0
     for page in pages:
         if page.get("reserveeAdmin"):
@@ -113,7 +82,7 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
                 raise SystemExit(f"❌ réserve inconnue « {reserve} » ({page['id']}/{o['id']}) — l'app doit l'apprendre")
             r = f".{reserve}" if reserve else "nil"
             lignes.append(
-                f'            OngletDuSite(id: "{o["id"]}", libelle: "{_libelle(lib, o.get("label"))}", '
+                f'            OngletDuSite(id: "{o["id"]}", libelle: "{_swift_texte(_sans_picto(o.get("label")))}", '
                 f"reserve: {r}, ouvertOperateur: {'true' if o.get('ouvertOperateur') else 'false'}),\n"
             )
             n += 1
@@ -125,42 +94,41 @@ def _swift(front: pathlib.Path, pages: list[dict]) -> tuple[str, int]:
     corps += "    /// Les pages de l'administration : un non-administrateur n'y ouvre que les onglets\n"
     corps += "    /// `ouvertOperateur`, s'il est opérateur.\n"
     corps += f"    static let pagesReserveesAdmin: Set<String> = {_ensemble(reservees)}\n\n"
-    corps += "    /// Qui porte chaque droit : rôles (`aRole` de `stores/auth.ts`), statuts (`roles.ts`).\n"
-    corps += f"    static let rolesAdministrateur: Set<String> = {_ensemble(_roles(auth, 'isAdmin'))}\n"
-    corps += f"    static let rolesOperateur: Set<String> = {_ensemble(_roles(auth, 'isOperateur'))}\n"
-    corps += f"    static let rolesProprioOuCS: Set<String> = {_ensemble(_roles(auth, 'isProprioOuCS'))}\n"
-    corps += f"    static let rolesCS: Set<String> = {_ensemble(_roles(auth, 'isCS'))}\n"
-    exiges, annules = _admin_seul(auth)
+    corps += "    /// Qui porte chaque droit : rôles (`ROLES_DU_DROIT`, que lit `aRole` de `stores/auth.ts`),\n"
+    corps += "    /// statuts (`STATUTS_DU_PROFIL` de `roles.ts`). Le modérateur n'y est pas : il est servi\n"
+    corps += "    /// (`est_moderateur`) ; `isProprioOuCS` = un de `rolesProprietaire`, ou modérateur.\n"
+    corps += f"    static let rolesAdministrateur: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'admin'))}\n"
+    corps += f"    static let rolesOperateur: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'operateur'))}\n"
+    corps += f"    static let rolesProprietaire: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'proprietaire'))}\n"
     corps += "    /// `isAdminOnly` : un de ces rôles, et aucun des suivants (le compte technique).\n"
-    corps += f"    static let rolesAdminSeul: Set<String> = {_ensemble(exiges)}\n"
-    corps += f"    static let rolesSansAdminSeul: Set<String> = {_ensemble(annules)}\n"
-    corps += f"    static let statutsLocataire: Set<String> = {_ensemble(_statuts(roles_ts, 'estLocataire'))}\n"
-    corps += f"    static let statutsGestionnaire: Set<String> = {_ensemble(_statuts(roles_ts, 'estGestionnaire'))}\n"
+    corps += f"    static let rolesAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'adminSeul'))}\n"
+    corps += f"    static let rolesSansAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'sansAdminSeul'))}\n"
+    statuts_locataire = _liste(ctx, "statutsDuProfil", "locataire")
+    corps += f"    static let statutsLocataire: Set<String> = {_ensemble(statuts_locataire)}\n"
+    statuts_gestionnaire = _liste(ctx, "statutsDuProfil", "gestionnaire")
+    corps += f"    static let statutsGestionnaire: Set<String> = {_ensemble(statuts_gestionnaire)}\n"
     corps += "}\n"
     return corps, n
 
 
 def titre_du_fil(ctx) -> str:
     """« Fil d'activité » : le titre de la section du fil, au tableau de bord du site."""
-    texte = ctx.lire(SOURCES[5])
-    m = re.search(r'class="section-title titre-fil">\s*(?:<Icon[^>]*/>)?\s*([^<{]+?)\s*</h2>', texte)
-    if not m:
-        raise SystemExit("❌ tableau-de-bord/+page.svelte : le titre du fil (.titre-fil) est introuvable")
-    return m.group(1).replace('"', '\\"')
+    titre = ctx.table("titreFil")
+    if not isinstance(titre, str) or not titre.strip():
+        raise SystemExit(f"❌ tables-clients.json : titreFil n'est pas un titre : {titre!r}")
+    return _swift_texte(titre.strip())
 
 
 def pages(ctx) -> int:
     lignes = []
-    table, roles = tables_des_pages(ctx.front)
-    for p in table + roles:
+    for p in _pages(ctx):
         if p.get("href") is None:
             continue  # sans entrée de navigation : ni ordonnée, ni dans la barre
         lignes.append(
             f'        PageDeNavigation(id: "{p["id"]}", route: "{p["href"]}", '
             f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}"),\n'
         )
-    corps = ctx.entete("front/src/lib/pages.ts (PAGES), pages-roles.ts (PAGES_ROLES) et le titre du fil "
-                       "(routes/(app)/tableau-de-bord/+page.svelte)")
+    corps = ctx.entete(f"{ctx.source_table('pages')} et {ctx.source_table('titreFil')} (tables-clients.json)")
     corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"
     corps += "enum PagesParDefaut {\n    static let toutes: [PageDeNavigation] = [\n" + "".join(lignes) + "    ]\n"
     corps += "    /// Le titre de la section du tableau de bord que le fil de l'app reprend (`.titre-fil`).\n"
@@ -169,31 +137,22 @@ def pages(ctx) -> int:
     return len(lignes)
 
 
-def libelle_lisible(label) -> str:
-    """Le libellé d'un onglet sans son pictogramme ; une constante garde son nom."""
-    if isinstance(label, lecture_ts.Identifiant):
-        return f"`{label}`"
-    return re.sub(r"^[^\w«(]+", "", label or "").strip()
-
-
 # REUSE-IgnoreStart
 def parite(ctx) -> int:
     """Chaque onglet de chaque page du site, une ligne : ce que la table de parité classe."""
-    table, roles = tables_des_pages(ctx.front)
     lignes = []
-    for p in table + roles:
+    for p in _pages(ctx):
         onglets = p.get("onglets") or []
         if not onglets:
             lignes.append(f"| `{p['id']}` | — | {p.get('titre') or p.get('nom')} |\n")
         for o in onglets:
-            lignes.append(f"| `{p['id']}` | `{o['id']}` | {libelle_lisible(o.get('label'))} |\n")
+            lignes.append(f"| `{p['id']}` | `{o['id']}` | {_sans_picto(o.get('label'))} |\n")
     corps = (
         "<!--\nSPDX-FileCopyrightText: 2026 Philippe TRESSARD\n"
         "SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore\n-->\n\n"
         "# Les onglets du site\n\n"
         f"{SIGNATURE}\n"
-        f"Source : {ctx.provenance}, `front/src/lib/pages.ts` (`PAGES`) et "
-        "`pages-roles.ts` (`PAGES_ROLES`).\n\n"
+        f"Source : {ctx.provenance}, `{ctx.source_table('pages')}` (tables-clients.json).\n\n"
         "Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — "
         "`scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.\n\n"
         "| Page | Onglet | Libellé sur le site |\n|---|---|---|\n" + "".join(lignes)
@@ -204,10 +163,9 @@ def parite(ctx) -> int:
 
 
 def onglets_du_site(ctx) -> int:
-    table, roles = tables_des_pages(ctx.front)
-    corps, n = _swift(ctx.front, table + roles)
-    source = "front/src/lib/pages.ts, pages-roles.ts, stores/auth.ts et roles.ts"
-    ctx.ecrire(CHARTE / "OngletsDuSite.swift", ctx.entete(source) + corps)
+    corps, n = _swift(ctx, _pages(ctx))
+    source = ", ".join(ctx.source_table(t) for t in ("pages", "rolesDuDroit", "statutsDuProfil"))
+    ctx.ecrire(CHARTE / "OngletsDuSite.swift", ctx.entete(f"{source} (tables-clients.json)") + corps)
     return n
 
 

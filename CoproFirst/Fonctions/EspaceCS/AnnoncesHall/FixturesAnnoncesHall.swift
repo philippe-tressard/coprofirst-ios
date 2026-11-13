@@ -63,15 +63,9 @@ enum FixturesAnnoncesHall {
         Reponse(nom: "affiches", schema: "AnnonceHallRead", json: affiches)
     ]
 
-    /// Le lieu de chaque affiche, servi au-dessus du plancher (coprofirst v3.88.1, #130).
-    static let auDessus = AuDessusDuPlancher(
-        schema: "AnnonceHallRead", champs: ["perimetre_libelle"], contrat: "1.24.0")
-
     /// Lues comme le client généré les lit, branchées comme le service réel.
     static func affichesLues() throws -> [AnnonceHall] {
-        AnnonceHall.lues(
-            try Relecture.generee([Components.Schemas.AnnonceHallRead].self, json: affiches),
-            corps: Data(affiches.utf8))
+        try Relecture.generee([Components.Schemas.AnnonceHallRead].self, json: affiches).map(AnnonceHall.init)
     }
 }
 #endif

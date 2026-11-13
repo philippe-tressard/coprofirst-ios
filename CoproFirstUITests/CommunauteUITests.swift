@@ -18,9 +18,7 @@ final class CommunauteUITests: XCTestCase {
     /// `firstMatch` rendrait — sans le libellé ni la valeur du bouton.
     private func lu(_ app: XCUIApplication, _ identifiant: String, contient texte: String, sonde: Bool = false)
         -> Bool {
-        let predicat = NSPredicate(
-            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        let element = app.descendants(matching: .any).matching(predicat).firstMatch
+        let element = app.elementDisant(identifiant, texte)
         return sonde ? element.sonde() : element.apparait()
     }
 
@@ -39,18 +37,6 @@ final class CommunauteUITests: XCTestCase {
     /// Le premier élément dont le libellé contient `texte`, quel que soit son type.
     private func texte(_ app: XCUIApplication, _ texte: String) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", texte)).firstMatch
-    }
-
-    /// L'élément, ramené à l'écran : en très grand texte, il faut souvent défiler.
-    @discardableResult
-    private func atteindre(_ app: XCUIApplication, _ element: XCUIElement) -> XCUIElement {
-        _ = element.sonde()
-        var essais = 0
-        while !(element.exists && element.isHittable), essais < 8 {
-            app.swipeUp()
-            essais += 1
-        }
-        return element
     }
 
     /// Une rubrique de la Communauté : la barre défile jusqu'à elle (très grand texte).
@@ -93,7 +79,8 @@ final class CommunauteUITests: XCTestCase {
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.apparait())
         plus.tap()
-        let ligne = atteindre(app, el(app, libelle))
+        let ligne = el(app, libelle)
+        app.amener(ligne)
         XCTAssertTrue(ligne.exists, "« \(libelle) » dans Plus")
         ligne.tap()
     }
@@ -106,7 +93,8 @@ final class CommunauteUITests: XCTestCase {
         capture("1-communaute-sondages")
 
         rubrique(app, "idees")
-        let coeur = atteindre(app, el(app, "idee.5.voter"))
+        let coeur = el(app, "idee.5.voter")
+        app.amener(coeur)
         XCTAssertTrue(coeur.exists)
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
         coeur.tap()
@@ -114,17 +102,20 @@ final class CommunauteUITests: XCTestCase {
             lu(app, "idee.5.voter", contient: "Retirer mon vote"), "le cœur se remplit, le vote se voit")
         capture("2-communaute-idees")
 
-        atteindre(app, el(app, "idee.3")).tap()
-        XCTAssertTrue(atteindre(app, texte(app, "Excellente idée, je veux bien m'en occuper.")).exists)
+        let cible = el(app, "idee.3")
+        app.amener(cible)
+        cible.tap()
+        XCTAssertTrue(app.amener(texte(app, "Excellente idée, je veux bien m'en occuper.")))
         capture("3-idee-et-reponses")
         app.navigationBars.buttons.firstMatch.tap()
 
         rubrique(app, "annonces")
-        let annonce = atteindre(app, el(app, "annonce.21"))
+        let annonce = el(app, "annonce.21")
+        app.amener(annonce)
         XCTAssertTrue(annonce.exists)
         capture("4-communaute-annonces")
         annonce.tap()
-        XCTAssertTrue(atteindre(app, el(app, "annonce.contact")).exists, "le contact est un lien")
+        XCTAssertTrue(app.amener(el(app, "annonce.contact")), "le contact est un lien")
         capture("5-annonce")
         app.navigationBars.buttons.firstMatch.tap()
 
@@ -303,18 +294,22 @@ final class CommunauteUITests: XCTestCase {
     func testLaFAQEtLeProfilSOuvrent() throws {
         let app = lancer()
         ouvrirDansPlus(app, "FAQ")
-        let question = atteindre(app, app.descendants(matching: .any)["faq.2"])
+        let question = app.descendants(matching: .any)["faq.2"]
+        app.amener(question)
         XCTAssertTrue(question.exists)
         question.tap()
         let reponse = texte(app, "Pas de gravats")
-        XCTAssertTrue(atteindre(app, reponse).exists, "la réponse s'est dépliée")
+        XCTAssertTrue(app.amener(reponse), "la réponse s'est dépliée")
         capture("9-faq")
         app.navigationBars.buttons.firstMatch.tap()
 
-        atteindre(app, el(app, "plus.profil")).tap()
-        XCTAssertTrue(atteindre(app, texte(app, "resident@exemple.fr")).exists)
+        let cible = el(app, "plus.profil")
+        app.amener(cible)
+        cible.tap()
+        XCTAssertTrue(app.amener(texte(app, "resident@exemple.fr")))
         capture("10-profil")
-        let sombre = atteindre(app, el(app, "profil.theme").buttons["Sombre"])
+        let sombre = el(app, "profil.theme").buttons["Sombre"]
+        app.amener(sombre)
         XCTAssertTrue(sombre.exists)
         sombre.tap()
         XCTAssertTrue(sombre.isSelected, "le thème choisi est retenu")

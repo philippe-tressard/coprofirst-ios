@@ -14,10 +14,13 @@ struct PastilleLecture: View {
     let lecture: Lecture?
     /// Un sondage : « Qui le lit ».
     var masculin = false
+    /// Une SAISIE (« Qui la lira », #129) : la pastille se montre même quand personne
+    /// n'est exclu — le badge de la section Destinataires du site.
+    var memeParDefaut = false
     @Environment(\.palette) private var palette
 
     var body: some View {
-        if let lecture = Lecture.aMontrer(lecture) {
+        if let lecture = memeParDefaut ? lecture : Lecture.aMontrer(lecture) {
             let (texte, fond) = PastilleTeinte.teintes("badge-blue")
             HStack(spacing: 3) {
                 ForEach(Array(lecture.icones.enumerated()), id: \.offset) { _, nom in
@@ -74,6 +77,12 @@ struct EtiquetteLieu: View {
     let lieu: String?
 
     var body: some View {
-        if let lieu { Label(lieu, systemImage: "mappin").accessibilityLabel("Lieu : \(lieu)") }
+        // Un seul élément, qui dit le lieu : sans lui, iOS 26 porte l'identifiant posé par
+        // l'appelant sur l'épingle seule, jamais touchable (SaisieAffaireUITests rouge en CI).
+        if let lieu {
+            Label(lieu, systemImage: "mappin")
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Lieu : \(lieu)")
+        }
     }
 }

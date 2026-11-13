@@ -7,13 +7,10 @@ import Foundation
 /// Le compte dans une résidence : qui l'on y est, et en sortir.
 extension ServiceAPI {
     func profil(_ installation: Installation) async throws -> ProfilResidence {
-        // Le corps servi est gardé : `est_moderateur` est au-dessus du plancher (#136).
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getAuthMe() }
-        }
+        let sortie = try await appeler { try await client(installation.adresse).getAuthMe() }
         switch sortie {
         case .ok(let ok):
-            return ProfilResidence(try ok.body.json, corps: corps)
+            return ProfilResidence(try ok.body.json)
         case .unprocessableContent:
             throw ErreurService.inattendue(422)
         case .undocumented(let statut, _):
@@ -31,8 +28,9 @@ extension ServiceAPI {
         } catch {
             atteint = false
         }
-        // L'effacement local se fait TOUJOURS, serveur joint ou non.
-        Trousseau.supprimer(pour: installation.hote)
+        // L'effacement local se fait TOUJOURS, serveur joint ou non : le jeton et la
+        // lecture gardée pour la consultation hors ligne, par la même porte (#101).
+        oublierCeQuiEstGarde(installation)
         sessions.oublier(installation.adresse)
         return atteint
     }

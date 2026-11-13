@@ -8,9 +8,13 @@ import SwiftUI
 /// plus (`GestesRolesCompte.svelte`). La teinte est celle du site : le conseil en
 /// information, l'administration en orange, l'opérateur en violet, un retrait en danger.
 ///
+/// Sur une instance commune, un compte opérateur sans geste servi dit « Opérateur désigné
+/// par l'exploitant » à la place du geste (`parExploitant`, #94) : un texte, rien à toucher.
+///
 /// Le geste lui-même — la confirmation, puis l'appel — reste à la fiche (`demander`).
 struct GestesRolesCompte: View {
     let gestes: [GesteDeRole]
+    var parExploitant = false
     let demander: (GesteDeRole) -> Void
     @Environment(\.palette) private var palette
 
@@ -25,6 +29,11 @@ struct GestesRolesCompte: View {
                 .tint(teinte(offert))
                 .accessibilityLabel(TextesUtilisateursAdmin.actionRole(offert))
                 .accessibilityIdentifier("admin.fiche.role.\(offert.role)")
+            }
+            if parExploitant {
+                Text(TextesUtilisateursAdmin.operateurParExploitant)
+                    .foregroundStyle(palette.textMuted)
+                    .accessibilityIdentifier("admin.fiche.operateur-exploitant")
             }
         }
     }

@@ -16,11 +16,9 @@ extension ServiceAPI: ServiceDelegations {
     }
 
     func residentsDelegables(_ installation: Installation) async throws -> [ResidentDelegable] {
-        let (sortie, corps) = try await appeler {
-            try await CorpsServi.garder { try await client(installation.adresse).getAdminUtilisateurs() }
-        }
+        let sortie = try await appeler { try await client(installation.adresse).getAdminUtilisateurs() }
         switch sortie {
-        case .ok(let ok): return ResidentDelegable.lus(try ok.body.json, corps: corps)
+        case .ok(let ok): return try ok.body.json.map(ResidentDelegable.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

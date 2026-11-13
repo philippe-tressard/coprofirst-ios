@@ -6,8 +6,7 @@ import Foundation
 
 #if DEBUG
 /// Ce que l'API simulée sert à « Maintenance » — en JSON, à la forme des routes : la
-/// santé (non typée par le contrat, `ReponseNonTypee`) et le dernier export (typé, jugé
-/// contre son schéma).
+/// santé et le dernier export, chacun jugé contre son schéma.
 ///
 /// Tout est inventé : les nœuds s'appellent « nœud-a » et « nœud-b », aucune adresse,
 /// aucun nom de machine réel.
@@ -52,14 +51,13 @@ enum FixturesMaintenance {
          "octets": 48234496, "tables": 64, "lignes": 152340, "fichiers": 318}
         """#
 
-    static let reponseSante = ReponseNonTypee(nom: "sante", route: "GET /admin/maintenance/sante", json: sante)
-
     static let parSchema: [Reponse] = [
+        Reponse(nom: "sante", schema: "SanteMaintenance", json: sante),
         Reponse(nom: "dernier", schema: "DernierExport", json: dernier),
     ]
 
     static func santeLue() throws -> SanteTaches {
-        try reponseSante.lire(SanteTaches.self)
+        SanteTaches(try Relecture.generee(Components.Schemas.SanteMaintenance.self, json: sante))
     }
 
     static func dernierExportLu() throws -> DernierExport {

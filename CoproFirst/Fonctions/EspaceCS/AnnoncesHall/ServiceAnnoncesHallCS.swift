@@ -51,8 +51,7 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
     var peutArchiver = false
     var peutRestaurer = false
     var peutSupprimer = false
-    /// Le lieu servi (`perimetre_libelle`, contrat 1.24.0, #130) : `""` pour le défaut ;
-    /// `nil` d'une installation antérieure.
+    /// Le lieu servi (`perimetre_libelle`, contrat 1.24.0, #130) : `""` pour le défaut.
     var perimetreLibelle: String?
 
     /// Le lieu à montrer : servi, il fait foi (le défaut se tait, comme `BadgePerimetre`
@@ -61,21 +60,13 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
 }
 
 extension AnnonceHall {
-    /// Une liste servie : le type généré, puis le lieu que le corps sert au-dessus du
-    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
-    static func lues(_ generees: [Components.Schemas.AnnonceHallRead], corps: Data?) -> [AnnonceHall] {
-        ServiAuDessusDuPlancher.relire(generees, corps: corps, id: \.id, en: AnnonceHall.init) {
-            $0.perimetreLibelle = $1?.perimetreLibelle?.valeur
-        }
-    }
-
     init(_ lue: Components.Schemas.AnnonceHallRead) {
         self.init(
             id: lue.id, titre: lue.titre, message: lue.message, assisteIa: lue.assisteIa, apercu: lue.apercu,
             perimetreLabel: lue.perimetreLabel, formatLabel: lue.formatLabel, images: lue.images,
             destinataires: lue.destinataires, envoyeLe: lue.envoyeLe, archivee: lue.archivee, ticketId: lue.ticketId,
             creeLe: lue.creeLe, auteurNom: lue.auteurNom, peutArchiver: lue.peutArchiver,
-            peutRestaurer: lue.peutRestaurer, peutSupprimer: lue.peutSupprimer)
+            peutRestaurer: lue.peutRestaurer, peutSupprimer: lue.peutSupprimer, perimetreLibelle: lue.perimetreLibelle)
     }
 }
 
