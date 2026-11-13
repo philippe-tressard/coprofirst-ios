@@ -22,7 +22,13 @@
 #     relance se déclare au résumé et en annotation ; jamais une relance muette ;
 #   - un passage sorti en 0 n'est vert que s'il a JOUÉ des tests : le compte se lit au
 #     résumé de xcresult et se dit au résumé du run ; zéro test, ou un résumé qui ne
-#     se lit pas, c'est INCONNU, sortie 2 (#96) ;
+#     se lit pas, c'est INCONNU, sortie 2 (#96). Et CHAQUE filtre `-only-testing:` doit
+#     avoir joué au moins un test, compté dans l'arbre du xcresult : deux filtres dont
+#     l'un ne vise rien sortaient verts sur les tests de l'autre (#170) ;
+#   - un fichier de test que le projet Xcode ne connaît pas (créé après
+#     `generer-projet.sh`) arrête tout AVANT le build : INCONNU, avec la commande à
+#     lancer. Le script ne régénère pas le projet lui-même : XcodeGen réécrit un projet
+#     qu'Xcode peut tenir ouvert, et en CI la génération est une étape à part (#170) ;
 #   - UN SEUL passage à la fois sur le poste (#108) : le script prend le verrou
 #     `simulateur.verrou` du répertoire git commun — celui que partagent tous les
 #     worktrees —, attend son tour en disant qui le tient et depuis quand, et le rend
@@ -37,7 +43,7 @@
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
 # `--autotest` rejoue tout cela avec un faux xcodebuild
 # (scripts/autotest-tests-simulateur.sh) : relance permise, refusée, ratée, INCONNU,
-# passage vide, deux passages en même temps, verrou orphelin, arrêt par le pid. Lancé
+# passage vide, filtre vide, fichier de test hors projet, deux passages en même temps, verrou orphelin, arrêt par le pid. Lancé
 # par verifier-depot.sh (CI et pre-commit).
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -46,6 +52,8 @@ XCODEBUILD=${XCODEBUILD:-xcodebuild}
 XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
+PROJET=${PROJET:-CoproFirst.xcodeproj}
+SOURCES_TESTS=${SOURCES_TESTS:-CoproFirstTests CoproFirstUITests}
 A_ETEINDRE=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
 source scripts/verrou-simulateur.sh
@@ -92,6 +100,54 @@ demarrer_simulateur() {
   echo "Simulateur $udid démarré avant le build ($(date -u +%H:%M:%S) UTC)."
 }
 
+# Un fichier de test que le projet ne référence pas ne se compile pas : ses tests ne
+# jouent pas, et le filtre qui les vise resterait vide (#170). Comparé par le nom du
+# fichier, tel que XcodeGen l'écrit au projet (« /* AccesUITests.swift */ »).
+hors_projet() {
+  local pbx=$PROJET/project.pbxproj f manquants=""
+  if [ ! -f "$pbx" ]; then
+    echo "INCONNU : $pbx absent — bash scripts/generer-projet.sh, puis relancer."
+    return 2
+  fi
+  # shellcheck disable=SC2086 # SOURCES_TESTS : des dossiers, séparés par des espaces.
+  while IFS= read -r f; do
+    grep -qF "/* ${f##*/} */" "$pbx" || manquants="$manquants $f"
+  done < <(find $SOURCES_TESTS -name '*.swift' 2>/dev/null | sort)
+  [ -z "$manquants" ] && return 0
+  echo "INCONNU : fichier(s) de test absent(s) du projet Xcode :$manquants — bash scripts/generer-projet.sh, puis relancer. Aucun test joué."
+  return 2
+}
+
+# Les filtres -only-testing de la ligne de commande, un par ligne (`:X` ou `X` à part).
+filtres_de() {
+  local arg suivant=""
+  for arg in "$@"; do
+    if [ -n "$suivant" ]; then
+      echo "$arg"; suivant=""
+    elif [ "$arg" = -only-testing ]; then
+      suivant=1
+    elif [[ $arg == -only-testing:* ]]; then
+      echo "${arg#-only-testing:}"
+    fi
+  done
+}
+
+# Chaque filtre a-t-il joué ? Le compte par filtre se lit dans l'arbre du xcresult (#170).
+verifier_filtres() {
+  local filtres=() ligne
+  while IFS= read -r ligne; do [ -z "$ligne" ] || filtres+=("$ligne"); done < <(filtres_de "$@")
+  [ "${#filtres[@]}" -gt 0 ] || return 0
+  if ! "$XCRUN" xcresulttool get test-results tests --path "$RESULTATS/tests.xcresult" --compact \
+      > "$RESULTATS/arbre.json" 2>/dev/null; then
+    echo "Filtres : INCONNU — l'arbre des tests de xcresult ne se lit pas, rien ne prouve que chaque filtre a joué."
+    return 2
+  fi
+  ligne=$(python3 -I scripts/bilan_tests_ui.py filtres "$RESULTATS/arbre.json" "${filtres[@]}")
+  local sortie=$?
+  echo "Filtres : $ligne"
+  return "$sortie"
+}
+
 mesurer() {
   [ "$MESURER" = 1 ] || { echo "Mesure du runner : sautée (MESURER=0)."; return; }
   local fin
@@ -129,19 +185,25 @@ resumer() {
 }
 
 passer() {
-  local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md}
+  local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
     DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1
   fi
+  if ! motif=$(hors_projet); then
+    echo "❌ $motif" >&2
+    echo "## Tests au simulateur" >> "$RESUME"
+    echo "Projet : $motif" >> "$RESUME"
+    return 2
+  fi
   echo "Destination : $DESTINATION"
   demarrer_simulateur || return 1
   local communs=(
-    -project CoproFirst.xcodeproj -scheme CoproFirst -destination "$DESTINATION"
+    -project "$PROJET" -scheme CoproFirst -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
     -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO
   )
-  local debut=$SECONDS code seuls motif decision
+  local debut=$SECONDS code seuls decision
   lancer "$RESULTATS/tests.log" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
   code=$?
   echo "## Tests au simulateur" >> "$RESUME"
@@ -155,7 +217,9 @@ passer() {
     motif=$(python3 -I scripts/bilan_tests_ui.py joues "$RESULTATS/resume.json")
     decision=$?
     echo "Tests joués : $motif" >> "$RESUME"
-    return "$decision"
+    [ "$decision" -eq 0 ] || return "$decision"
+    verifier_filtres "$@" >> "$RESUME"
+    return $?
   fi
 
   mesurer $((SECONDS - debut)) >> "$RESUME"

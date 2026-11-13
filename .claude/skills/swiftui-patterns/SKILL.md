@@ -296,5 +296,10 @@ seule la CI le dit.
    worktrees, attend son tour et dit qui le tient (#108) — on le lance nu, sans lanceur.
    Un passage s'arrête par le pid de la fiche du verrou (l'en-tête du script donne la
    commande), jamais par son nom. Un passage filtré donne **un filtre par argument** :
-   s'il ne joue aucun test il sort INCONNU, pas vert (#96). Sans `DESTINATION`, le
+   s'il ne joue aucun test il sort INCONNU, pas vert (#96) — et **chaque** filtre doit
+   avoir joué au moins un test, compté dans l'arbre du xcresult : un filtre vide sort
+   INCONNU en se nommant, même si l'autre a joué ses 397 tests (#170). Un fichier de test
+   neuf n'est compilé qu'après `bash scripts/generer-projet.sh` : absent du projet
+   Xcode, il arrête le passage AVANT le build, INCONNU, avec cette commande (le script
+   ne régénère pas lui-même). Sans `DESTINATION`, le
    simulateur est choisi et nommé par `scripts/destination-simulateur.sh` (#112).
