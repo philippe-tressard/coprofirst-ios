@@ -7,11 +7,14 @@ import Foundation
 /// Le menu Affaires par le client GÉNÉRÉ — aucune route écrite à la main.
 extension ServiceAPI: ServiceAffaires {
     func affaires(_ installation: Installation) async throws -> [Affaire] {
+        // Le corps se garde : les prestataires y sont servis au-dessus du plancher (1.28.0, #181).
         let (sortie, corps) = try await appeler {
             try await CorpsServi.garder { try await client(installation.adresse).getTickets() }
         }
         switch sortie {
-        case .ok(let ok): return Affaire.lues(try ok.body.json, corps: corps)
+        case .ok(let ok):
+            let servis = Relecture.auDessusDuPlancher(parLigne: PrestatairesServis.self, corps: corps)
+            return try ok.body.json.map { Affaire(ticket: $0, servis: servis[$0.id]) }
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -83,22 +86,17 @@ extension ServiceAPI: ServiceAffaires {
         var archivee = Affaire(
             ticket: try await modifierAffaire(
                 affaire.id, .init(archiveManuel: true), dans: installation, siInvalide: ErreurAffaires.saisieRefusee))
-        // La réponse du geste se lit sans son corps : la pastille reste celle qu'on lisait.
+        // La réponse du geste se lit sans son corps : la pastille et les prestataires
+        // restent ceux qu'on lisait.
         archivee.lecture = affaire.lecture
+        archivee.prestataires = affaire.prestataires
         return archivee
     }
 }
 
 extension Affaire {
-    /// La liste servie : le type généré, puis ce que le corps sert au-dessus du plancher
-    /// (`lecture`, #129) — le MÊME branchement pour le service réel et les tests.
-    static func lues(_ generes: [Components.Schemas.TicketRead], corps: Data?) -> [Affaire] {
-        ServiAuDessusDuPlancher.relire(generes, corps: corps, id: \.id, en: Affaire.init(ticket:)) {
-            $0.lecture = $1?.lecture?.valeur
-        }
-    }
-
-    init(ticket: Components.Schemas.TicketRead) {
+    /// `servis` : ce que le corps servi porte au-dessus du plancher (#181) ; `nil`, le repli.
+    init(ticket: Components.Schemas.TicketRead, servis: PrestatairesServis? = nil) {
         self.init(
             id: ticket.id, numero: ticket.numero, titre: ticket.titre, apercu: ticket.description,
             creeLe: ticket.creeLe, misAJourLe: ticket.misAJourLe, statut: ticket.statut,
@@ -106,9 +104,12 @@ extension Affaire {
             categorie: ticket.categorie, categorieLibelle: ticket.categorieLibelle, urgente: ticket.urgente,
             meConcerne: ticket.meConcerne, archivee: ticket.archivee ?? false,
             suiviKanban: ticket.suiviKanban ?? false, natures: ticket.natures ?? [],
-            prestataire: ticket.prestataireNom, perimetres: ticket.perimetreCible ?? [],
+            prestataires: PrestatairesServis.liste(servis, ticket: ticket).map(\.nom),
+            perimetres: ticket.perimetreCible ?? [],
             lieu: ticket.lieuServi, messages: nil, colonne: ticket.colonneKanban,
             peutDeplacer: ticket.peutDeplacerAuKanban ?? false, peutArchiver: ticket.peutArchiver ?? false)
+        // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
+        lecture = ticket.lecture.map(Lecture.init)
     }
 }
 

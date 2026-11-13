@@ -23,9 +23,7 @@ final class SondageUITests: XCTestCase {
     /// prédicat sur TOUS les éléments de l'identifiant : un conteneur peut le porter aussi.
     @MainActor
     private func dit(_ app: XCUIApplication, _ identifiant: String, _ texte: String) -> Bool {
-        let predicat = NSPredicate(
-            format: "identifier == %@ AND (label CONTAINS %@ OR value CONTAINS %@)", identifiant, texte, texte)
-        return app.descendants(matching: .any).matching(predicat).firstMatch.apparait()
+        app.elementDisant(identifiant, texte).apparait()
     }
 
     /// `dit`, après avoir ramené l'élément à l'écran : une liste ne garde que ses rangées visibles.

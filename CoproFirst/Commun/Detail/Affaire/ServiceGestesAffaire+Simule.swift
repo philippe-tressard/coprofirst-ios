@@ -50,6 +50,7 @@ extension ServiceSimule: ServiceGestesAffaire {
     func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
         let lieux = try FixturesPerimetres.lus()
+        let annuaire = try FixturesPrestataires.lus(archives: false)
         try changerAffaireSimulee(affaire) { detail in
             // Les deux refus du serveur (`update_ticket`) : sans crayon, rien ; un contenu
             // touché sans le droit sur le contenu, son refus à lui.
@@ -62,6 +63,16 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.description = edition.descriptionHTML ?? detail.description
             detail.categorie = edition.categorie ?? detail.categorie
             detail.urgente = edition.urgente ?? detail.urgente
+            // La liste entière remplace l'ancienne ; sans le droit, elle est ignorée, comme
+            // le serveur l'ignore (#181) ; un prestataire inconnu, son refus (404).
+            if let ids = edition.prestataires, detail.droits.changerPrestataires {
+                detail.prestataires = try ids.map { id in
+                    guard let connu = annuaire.first(where: { $0.id == id }) else {
+                        throw ErreurService.refus(.init(phrase: "Prestataire introuvable"))
+                    }
+                    return PrestataireAffaire(id: id, nom: connu.nom)
+                }
+            }
             if let codes = edition.perimetres {
                 // Sans lieu, le serveur pose le défaut qu'il désigne.
                 let code = codes.first ?? Perimetre.codeParDefaut(lieux)
@@ -93,16 +104,26 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(id) { _ in }
     }
 
+    /// Un geste sur l'affaire `id` du magasin de la session — aussi pour ceux de son
+    /// Historique (`ServiceSimule+Historique.swift`).
     @discardableResult
-    private func changerAffaireSimulee(
+    func changerAffaireSimulee(
         _ id: Int, _ geste: (inout DetailAffaire) throws -> Void
     ) throws -> DetailAffaire {
-        let conseil = DroitsOnglet(profil: profilSimule).cs
+        let lecteur = DroitsOnglet(profil: profilSimule)
+        let conseil = lecteur.cs
         return try modifierSimule(depuis: Self.aucuneChangee) { affaires in
             guard var detail = try affaires[id] ?? Self.affaires(id, conseil: conseil) else {
                 throw ErreurService.introuvable
             }
+            // Les gestes de chaque entrée, servis à CE compte : avant le geste, qui juge sur
+            // eux comme le serveur ; après, pour une suite qu'il vient d'ajouter.
+            let servir = { (affaire: inout DetailAffaire) in
+                affaire.suites = affaire.suites.map { Self.servie($0, a: lecteur, fusionnee: affaire.fusionnee) }
+            }
+            servir(&detail)
             try geste(&detail)
+            servir(&detail)
             // Servis à CE compte, comme le vrai serveur.
             detail.referentiels = try FixturesReferentielsAffaires.lus(moderateur: conseil)
             affaires[id] = detail

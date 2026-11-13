@@ -56,19 +56,20 @@ struct DroitsOnglet: Hashable, Sendable {
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
     /// `aRole` du site), `statut`, et `est_moderateur` (contrat 1.25.0, #136).
     ///
-    /// Modérer se LIT : `estModerateur` servi fait foi. Absent — une installation
-    /// antérieure — le repli d'avant, les rôles GÉNÉRÉS du site (`rolesCS`), écrit ici
-    /// seulement (`scripts/verifier-regles-servies.py` le refuse ailleurs).
+    /// Modérer se LIT : `estModerateur` servi fait foi, comme le site (`isCS`) ; non servi
+    /// (le champ est facultatif au contrat), il vaut « non ». Aucun repli par les rôles
+    /// (`scripts/verifier-regles-servies.py` le refuse). « Propriétaire ou CS » : un des
+    /// rôles GÉNÉRÉS `rolesProprietaire`, ou modérateur (`isProprioOuCS` du site).
     init(roles: [String], role: String?, statut: String?, estModerateur: Bool? = nil) {
         let portes = Set(roles.isEmpty ? [role].compactMap { $0 } : roles)
         let statut = statut ?? ""
         self.init(
             administrateur: !portes.isDisjoint(with: OngletsDuSite.rolesAdministrateur),
             operateur: !portes.isDisjoint(with: OngletsDuSite.rolesOperateur),
-            proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprioOuCS),
+            proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprietaire) || (estModerateur ?? false),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
             gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
-            cs: estModerateur ?? !portes.isDisjoint(with: OngletsDuSite.rolesCS),
+            cs: estModerateur ?? false,
             adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)
                 && portes.isDisjoint(with: OngletsDuSite.rolesSansAdminSeul))
     }

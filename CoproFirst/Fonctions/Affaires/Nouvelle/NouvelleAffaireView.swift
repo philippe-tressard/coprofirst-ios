@@ -32,6 +32,14 @@ struct NouvelleAffaireView: View {
     private var prete: Bool { service != nil && !saisie.categorie.isEmpty && saisie.complete && !envoi }
     private var entamee: Bool { !saisie.categorie.isEmpty || !saisie.titre.isEmpty || !saisie.description.isEmpty }
 
+    /// Ce que la saisie dit de ses lecteurs (#129) : sa catégorie et son lieu — sans
+    /// Destinataires choisis, que cette feuille ne pose pas. Le serveur dit le reste.
+    private var aLire: SaisieLecture? {
+        guard !saisie.categorie.isEmpty else { return nil }
+        let lieu = saisie.estBogue ? nil : saisie.perimetre
+        return SaisieLecture(categorie: saisie.categorie, perimetreCible: lieu.map { [$0] } ?? [])
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -43,6 +51,7 @@ struct NouvelleAffaireView: View {
                     ChampsAffaire(
                         saisie: $saisie, categories: categories, installation: installation, service: service,
                         prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                    QuiLaLira(saisie: aLire, identifiant: "nouvelle.quiLaLira")
                 } else if let erreurCategories {
                     Section { MessageErreur(texte: erreurCategories.phrase).listRowInsets(EdgeInsets()) }
                         .listRowBackground(Color.clear)
@@ -60,6 +69,9 @@ struct NouvelleAffaireView: View {
                     }
                     .font(.footnote)
                     .foregroundStyle(palette.textMuted)
+                    // Un seul élément, lu d'un trait : sans lui, iOS 26 porte l'identifiant
+                    // sur l'icône seule, jamais touchable (SaisieAffaireUITests rouge en CI).
+                    .accessibilityElement(children: .combine)
                     .accessibilityIdentifier("nouvelle.depuisLeSite")
                 } header: {
                     Text("Depuis le site")
@@ -94,6 +106,7 @@ struct NouvelleAffaireView: View {
                 Button("Envoyer") { Task { await envoyer() } }
                     .fontWeight(.semibold)
                     .disabled(!prete)
+                    .gesteEnLigne()
                     .accessibilityIdentifier("nouvelle.envoyer")
             }
         }

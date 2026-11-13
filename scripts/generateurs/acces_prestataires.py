@@ -3,13 +3,14 @@
 """Les tables de « Mes lots & accès » et de « Prestataires » (#13).
 
 Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
-`TypePrestataire`) : les libellés et les teintes vivent dans le front du site :
+`TypePrestataire`) : les libellés et les teintes vivent dans le front du site, qui les
+publie dans `tables-clients.json` de chaque release (#128) :
 
-- le descriptif des onglets de `mon-lot` et `prestataires` (`pages.ts`) — les onglets
+- le descriptif des onglets de `mon-lot` et `prestataires` (`pages`) — les onglets
   eux-mêmes sont dans `Charte/OngletsDuSite.swift` (#30) ;
-- `STATUTS_ACCES` et `TYPES_ACCES` (`types-acces.ts`) ;
-- l'état d'un bail (`parAttribut` de `bail.ts`) ;
-- `TYPES_PRESTATAIRE` et `FILTRES_CONTRAT` (`prestataires.ts`).
+- `statutsAcces` et `typesAcces` (`types-acces.ts`) ;
+- l'état d'un bail (`etatsBail`, `ETATS_BAIL` de `bail.ts`) ;
+- `typesPrestataire` et `filtresContrat` (`prestataires.ts`).
 
 → `CoproFirst/Fonctions/Acces/Genere/TablesAcces.swift` et
 `CoproFirst/Fonctions/Prestataires/Genere/TablesPrestataires.swift`.
@@ -17,27 +18,17 @@ Le contrat d'API ne sert que des CODES (`StatutAcces`, `StatutBail`,
 
 from __future__ import annotations
 
-import lecture_ts
-from generateurs._commun import FONCTIONS, chaine, ecrire_table, objet
+from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-SOURCES = [
-    "front/src/lib/pages.ts",
-    "front/src/lib/types-acces.ts",
-    "front/src/lib/bail.ts",
-    "front/src/lib/prestataires.ts",
-]
-
-
-def lire(ctx, nom: str) -> str:
-    return ctx.lire(f"front/src/lib/{nom}")
+SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas dans les sources
 
 
 def page(ctx, identifiant: str) -> dict:
-    return next(p for p in lecture_ts.table(lire(ctx, "pages.ts"), "PAGES") if p["id"] == identifiant)
+    return next(p for p in ctx.table("pages") if p["id"] == identifiant)
 
 
 def descriptifs(ctx, identifiant: str) -> str:
-    """Le descriptif de chaque onglet de la page (`pages.ts`). Les onglets eux-mêmes —
+    """Le descriptif de chaque onglet de la page (`pages`). Les onglets eux-mêmes —
     libellé, ordre, réserve — sont générés une fois pour toute l'app :
     `Charte/OngletsDuSite.swift` (#30)."""
     lignes = "".join(
@@ -54,29 +45,25 @@ def teintes(nom: str, entrees: list[tuple[str, str, str]], doc: str) -> str:
 
 
 def acces(ctx) -> str:
-    texte = lire(ctx, "types-acces.ts")
-    statuts = [(s["val"], s["label"], s["badge"]) for s in lecture_ts.table(texte, "STATUTS_ACCES")]
-    types = "".join(
-        f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in lecture_ts.table(texte, "TYPES_ACCES"))
-    bail = objet(lire(ctx, "bail.ts"), r"\bconst ETAT\s*=\s*parAttribut\(")
+    statuts = [(s["val"], s["label"], s["badge"]) for s in ctx.table("statutsAcces")]
+    types = "".join(f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in ctx.table("typesAcces"))
+    bail = ctx.table("etatsBail")
     return (
         descriptifs(ctx, "mon-lot")
         + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
         + "    /// Les deux familles d'accès, dans l'ordre du site (`TYPES_ACCES`).\n"
         "    static let typesAcces: [(code: String, libelle: String)] = [\n" + types + "    ]\n"
         + teintes("statutsBail", [(c, v["libelle"], v["badge"]) for c, v in bail.items()],
-                  "L'état d'un bail (`ETAT` de `bail.ts`).")
+                  "L'état d'un bail (`ETATS_BAIL`).")
     )
 
 
 def prestataires(ctx) -> str:
-    texte = lire(ctx, "prestataires.ts")
     types = "".join(
         f"        TypePrestataire(code: {chaine(t['val'])}, libelle: {chaine(t['label'])}, "
         f"description: {chaine(t['desc'])}),\n"
-        for t in lecture_ts.table(texte, "TYPES_PRESTATAIRE"))
-    filtres = "".join(
-        f"        ({chaine(f['val'])}, {chaine(f['label'])}),\n" for f in lecture_ts.table(texte, "FILTRES_CONTRAT"))
+        for t in ctx.table("typesPrestataire"))
+    filtres = "".join(f"        ({chaine(f['val'])}, {chaine(f['label'])}),\n" for f in ctx.table("filtresContrat"))
     return (
         descriptifs(ctx, "prestataires")
         + "    /// Les catégories de prestataires, dans l'ordre du site (`TYPES_PRESTATAIRE`).\n"
@@ -88,9 +75,9 @@ def prestataires(ctx) -> str:
 
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Acces" / "Genere" / "TablesAcces.swift",
-                 "front/src/lib/pages.ts, types-acces.ts, bail.ts", "TablesAcces",
+                 ctx.provenance_tables("pages", "statutsAcces", "typesAcces", "etatsBail"), "TablesAcces",
                  "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx))
     ecrire_table(ctx, FONCTIONS / "Prestataires" / "Genere" / "TablesPrestataires.swift",
-                 "front/src/lib/pages.ts, prestataires.ts", "TablesPrestataires",
+                 ctx.provenance_tables("pages", "typesPrestataire", "filtresContrat"), "TablesPrestataires",
                  "Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.", prestataires(ctx))
     return "accès, baux et prestataires"

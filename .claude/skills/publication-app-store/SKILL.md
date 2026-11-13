@@ -43,7 +43,7 @@ fait après le « oui ».
 | Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
 | Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; la liste des domaines et l'ouverture dans l'app : #18 |
 | Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive). Côté app livré par #17 : autorisation demandée dans la cloche, jamais au lancement ; appareil enregistré à l'ouverture d'une résidence, retiré à la déconnexion (`Fonctions/Notifications/Push/`). Droit `time-sensitive` (avis urgents, décision du 03/11/2026) ajouté par #17 ; capacité « Time Sensitive Notifications » **acceptée par Philippe le 11/11/2026**, enregistrée au compte à la prochaine compilation signée au poste. Réception réelle **INCONNUE** tant que le relais (coprofirst#2494) n'a pas sa clé `.p8` |
-| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; la **saisie** dans App Store Connect reste à faire (Philippe) |
+| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; la **saisie** dans App Store Connect reste à faire (Philippe). La consultation hors ligne (#101) garde la dernière lecture **sur l'appareil** : rien ne part, la déclaration ne change pas, mais la fiche (§3) et la politique de confidentialité du site le disent |
 
 ## Ce qui reste un geste de Philippe
 
@@ -66,10 +66,12 @@ fait après le « oui ».
 - [ ] Politique de confidentialité (URL) et étiquettes « App Privacy » **saisies** dans
       App Store Connect par Philippe, à partir de ce fichier (§9) — après avoir relu les
       règles d'Apple en vigueur.
-- [ ] Suppression du compte **dans l'app** : une DEMANDE lancée depuis le Profil, traitée
+- [x] Suppression du compte **dans l'app** : une DEMANDE lancée depuis le Profil, traitée
       par l'admin de la résidence sous un délai annoncé (arbitrage de Philippe, 12/11/2026) —
-      #166, bloqué par coprofirst#2699. À confronter à la règle d'Apple en vigueur.
-- [ ] Notes de revue : dire que la communauté est fermée (comptes validés par la résidence),
+      livrée par #166 (PR #182), route coprofirst#2699 en production. **À rejouer sur la
+      démo avant de soumettre** (jamais vue à l'écran) ; à confronter à la règle d'Apple en vigueur.
+- [x] Notes de revue : le texte est prêt dans [`notes-revue.md`](notes-revue.md), suppression
+      du compte comprise (à relire contre l'app de la version soumise). Il dit que la communauté est fermée (comptes validés par la résidence),
       que tout contenu se signale au conseil syndical, qui modère — pas de blocage d'un
       auteur (arbitrage du 12/11/2026, #167 ; à rouvrir si la revue le demande).
 - [x] Texte et avis d'Apache-2.0 des paquets embarqués dans « À propos » (#168), tenus par

@@ -20,7 +20,10 @@ enum LancementCaptures {
     @MainActor
     static func lancer(ecran: String = "fil", taille: Taille? = nil, arguments: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", ecran] + arguments
+        // L'avis qui suit un geste dure 4 s dans l'app : sous les tests, il reste jusqu'au
+        // suivant (`-avis-durable`), sinon il repart avant d'être lu par un runner qui met
+        // 30 s à une requête — SondageUITests rouge en CI le 12/11/2026, comme Accès (#123).
+        app.launchArguments = ["-api-simulee", "-ecran", ecran, "-avis-durable"] + arguments
         app.launchArguments += ["-theme", environnement["THEME"] ?? "auto"]
         if let taille = taille ?? (environnement["GRAND_TEXTE"] != nil ? .ax5 : nil) {
             app.launchArguments += ["-UIPreferredContentSizeCategoryName", taille.rawValue]

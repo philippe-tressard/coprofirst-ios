@@ -37,7 +37,14 @@ final class Parcours {
     }
     /// La résidence dont l'adresse vient d'être reconnue : sa palette colore l'écran.
     var reconnue: Installation?
-    private(set) var ouverte: Installation?
+    private(set) var ouverte: Installation? {
+        // Sortir de la résidence, par quelque chemin que ce soit, sort de la consultation.
+        didSet { if ouverte == nil { consultation = nil } }
+    }
+    /// La résidence est ouverte SANS réseau, sur sa dernière lecture gardée (#101) :
+    /// on consulte, on n'agit pas (`Session/LectureGardee/Consultation.swift`).
+    var consultation: ConsultationHorsLigne?
+    @ObservationIgnored var repriseEnCours = false
     /// La feuille « Ouvrir avec Face ID ? », proposée une fois après la 1ʳᵉ connexion.
     var proposerFaceID = false
     var changerDeResidence = false
@@ -71,15 +78,19 @@ final class Parcours {
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.
     var palette: Palette { (ouverte ?? reconnue)?.palette ?? .seine }
 
-    func ouvrir(_ installation: Installation, premiereConnexion: Bool = false) {
+    func ouvrir(
+        _ installation: Installation, premiereConnexion: Bool = false, consultation: ConsultationHorsLigne? = nil
+    ) {
         connues.retenir(installation)
         reconnue = installation
         ouverte = installation
+        self.consultation = consultation
         onglet = OrdrePages.idFil
         avis = nil
         chemin = []
         clocheOuverte = false
-        if let push { Task { await push.residenceOuverte(installation) } }
+        // Sans réseau, l'appareil s'enregistrera à la reprise de la session.
+        if let push, consultation == nil { Task { await push.residenceOuverte(installation) } }
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
             proposerFaceID = true
@@ -104,6 +115,8 @@ final class Parcours {
     /// Relit le profil de l'utilisateur dans la résidence ouverte (GET /auth/me).
     func rafraichirProfil() async {
         guard let installation = ouverte, let profil = try? await service.profil(installation) else { return }
+        // Une lecture partie avant la déconnexion ne redit pas le compte qu'elle a effacé (#94).
+        guard ouverte?.adresse == installation.adresse else { return }
         connues.noter(profil, pour: installation)
     }
 
@@ -113,15 +126,21 @@ final class Parcours {
         // L'appareil d'abord : sa route demande la session que la déconnexion va fermer.
         await push?.retirer(installation)
         let atteint = await service.deconnecter(installation)
+        let injoignable =
+            "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
+        revenirALaConnexion(installation, avis: atteint ? nil : injoignable)
+    }
+
+    /// La session de cette résidence est close (déconnexion, ou refusée par le serveur) :
+    /// retour à la connexion, adresse pré-remplie, avec ce que l'écran doit dire.
+    func revenirALaConnexion(_ installation: Installation, avis: String?) {
         connues.oublierFaceID(installation)
+        connues.oublierLeCompte(installation)
         changerDeResidence = false
         ouverte = nil
         reconnue = installation
         chemin = []
-        avis =
-            atteint
-            ? nil
-            : "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
+        self.avis = avis
     }
 
     /// « Oublier toutes les résidences » : chaque session fermée, la liste vidée,

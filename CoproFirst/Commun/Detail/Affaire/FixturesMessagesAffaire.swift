@@ -42,17 +42,12 @@ enum FixturesMessagesAffaire {
         Reponse(nom: "messages", schema: "app__routers__tickets__messages_schemas__MessageRead", json: messages)
     ]
 
-    /// Le nom de l'auteur et « le mien », servis au-dessus du plancher (#138).
-    static let auDessus = AuDessusDuPlancher(
-        schema: "app__routers__tickets__messages_schemas__MessageRead", champs: ["auteur_nom", "est_auteur"],
-        contrat: "1.26.0")
-
     /// Les messages de cette affaire que le serveur servirait à ce lecteur : une note
     /// interne au conseil seulement (`lit_les_notes_internes`).
     static func lus(pour affaire: Int, conseil: Bool) throws -> [MessageAffaire] {
         let servis = try Relecture.generee([MessageAffaire.Servi].self, json: messages)
             .filter { $0.ticketId == affaire && (conseil || !$0.interne) }
-        return MessageAffaire.lus(servis, corps: Data(messages.utf8), moi: moi)
+        return MessageAffaire.lus(servis, moi: moi)
     }
 }
 #endif

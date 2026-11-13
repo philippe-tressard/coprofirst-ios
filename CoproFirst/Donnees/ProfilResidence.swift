@@ -25,9 +25,16 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// #69 se relit sans lui.
     var saisieAffaire: String?
     /// Conseil syndical ou administration, tel que le SERVEUR le juge (`est_moderateur`,
-    /// contrat 1.25.0, #136) : lu par `DroitsOnglet`. `nil` d'une installation antérieure
-    /// ou d'un profil gardé avant #136 — les rôles en décident alors, comme avant.
+    /// contrat 1.25.0, #136) : lu par `DroitsOnglet`. `nil` (non servi, ou profil gardé
+    /// avant #136, jusqu'à sa relecture) vaut « non », comme au site.
     var estModerateur: Bool?
+    /// L'identifiant du compte dans cette résidence (`id` de `GET /auth/me`) : il dit quel
+    /// compte de la liste d'« Utilisateurs » est celui du lecteur — la confirmation d'un
+    /// geste de rôle dit alors « votre compte », comme le site (`pourSoi`, #94). Gardé
+    /// avec le profil, au coffre ; la déconnexion l'efface (`oublierLeCompte`), le
+    /// prochain `GET /auth/me` le redit. Facultatif : un profil gardé avant #94 se relit
+    /// sans lui, et la confirmation dit alors « Cette personne recevra une notification. »
+    var idCompte: Int?
 
     /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
     /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
@@ -51,15 +58,15 @@ struct ProfilResidence: Codable, Hashable, Sendable {
 }
 
 extension ProfilResidence {
-    /// Le compte servi par `GET /auth/me`, et ce que son corps sert au-dessus du plancher
-    /// (`est_moderateur`) — le MÊME branchement pour toute lecture du profil.
-    init(_ moi: Components.Schemas.UserRead, corps: Data?) {
+    /// Le compte servi par `GET /auth/me`, `est_moderateur` compris (contrat 1.25.0, #136)
+    /// — le MÊME branchement pour toute lecture du profil.
+    init(_ moi: Components.Schemas.UserRead) {
         // Le libellé du logement, composé par le serveur (contrat ≥ 1.2.0, coprofirst#2500) :
         // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
         self.init(
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
             libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
-            saisieAffaire: moi.saisieAffaireEffective, estModerateur: PersonneServie.lue(corps)?.estModerateur)
+            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id)
     }
 }
 

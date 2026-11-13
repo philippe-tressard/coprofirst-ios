@@ -60,6 +60,10 @@ struct ModifierAffaireFeuille: View {
                     prefixe: "modifier",
                     descriptionFigee: affaire.descriptionSaisie == nil ? affaire.description : nil,
                     lieuModifiable: affaire.lieuModifiable, contenuFige: affaire.contenuFige, forme: forme)
+                // Ajouter, retirer un prestataire : selon le droit servi seul (#181).
+                if affaire.droits.changerPrestataires {
+                    SectionPrestataires(choisis: $saisie.prestataires, installation: installation)
+                }
             }
             .scrollContentBackground(.hidden)
             .background(palette.bg)

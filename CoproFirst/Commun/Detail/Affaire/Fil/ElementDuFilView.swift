@@ -21,7 +21,9 @@ struct ElementDuFilView: View {
         let ouvert = depliage.estOuvert(element.id)
         let garde = depliage.estGarde(element.id)
         VStack(alignment: .leading, spacing: 8) {
+            // Les gestes d'une entrée de la suite (#91, #93) à sa droite, hors du résumé lu d'un trait.
             resume(ouvert: ouvert, garde: garde)
+                .gestesSuite(element.suite)
             if ouvert {
                 VStack(alignment: .leading, spacing: 8) {
                     if let precise = element.precise {

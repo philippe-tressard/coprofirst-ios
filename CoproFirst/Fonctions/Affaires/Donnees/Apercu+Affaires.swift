@@ -26,7 +26,7 @@ extension Apercu {
             _ id: Int, _ titre: String, _ apercu: String, _ cree: Double, _ statut: String, _ categorie: String,
             _ libelle: String, colonne: String?, close: Bool = false, urgente: Bool = false,
             meConcerne: Bool? = false, archivee: Bool = false, kanban: Bool = true, activite: Double? = nil,
-            prestataire: String? = nil, lieu: String? = nil, messages: Int? = nil, lecture: String = "tous"
+            prestataires: [String] = [], lieu: String? = nil, messages: Int? = nil, lecture: String = "tous"
         ) -> Affaire {
             Affaire(
                 id: id, numero: String(format: "A-%04d", id), titre: titre, apercu: apercu, creeLe: jours(cree),
@@ -34,7 +34,7 @@ extension Apercu {
                 close: close,
                 categorie: categorie, categorieLibelle: libelle, urgente: urgente,
                 meConcerne: meConcerne, archivee: archivee, suiviKanban: kanban,
-                natures: [categorie == "actualite" ? "actualite" : "activite"], prestataire: prestataire,
+                natures: [categorie == "actualite" ? "actualite" : "activite"], prestataires: prestataires,
                 perimetres: [], lieu: lieu, messages: messages, colonne: colonne,
                 peutDeplacer: kanban, peutArchiver: true, lecture: Apercu.lecture(lecture))
         }
@@ -52,7 +52,7 @@ extension Apercu {
                 "L'ascenseur reste bloqué au troisième étage depuis ce matin. Le prestataire est prévenu "
                     + "et doit passer dans la journée.",
                 1, "chez_prestataire", "panne", "Panne", colonne: "fournisseur", urgente: true,
-                prestataire: "Ascenseurs du Val",
+                prestataires: ["Ascenseurs du Val", "Dépannages Exemple"],
                 lieu: "Bâtiment B", messages: 3, lecture: "reserve"),
             affaire(
                 39, "Coupure d'eau jeudi de 9 h à 12 h",
@@ -88,7 +88,7 @@ extension Apercu {
             affaire(
                 18, "Infiltration en toiture", "<p>Reprise de l'étanchéité au-dessus du 5ᵉ étage.</p>", 300,
                 "résolu", "sinistre", "Sinistre", colonne: "termine", close: true, archivee: true, activite: 280,
-                prestataire: "Toitures Dupuis"),
+                prestataires: ["Toitures Dupuis"]),
             affaire(
                 9, "Élagage des tilleuls", "Les quatre tilleuls de la cour ont été élagués.", 520, "résolu",
                 "espaces_verts", "Espaces verts", colonne: "termine", close: true, archivee: true, activite: 500),

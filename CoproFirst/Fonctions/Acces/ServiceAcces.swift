@@ -111,7 +111,7 @@ struct Bail: Hashable, Sendable, Identifiable {
     var dateSortieReelle: String?
     var notes: String?
     var objets: [ObjetRemis]
-    /// `locataire_nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    /// `locataire_nom_affiche` servi (contrat 1.25.0, #135).
     var locataireNomServi: String?
 
     /// `bailEnCours`, `front/src/lib/bail.ts`.
@@ -155,16 +155,10 @@ struct BailDuLocataire: Hashable, Sendable {
     /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`,
     /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure : le nombre, comme avant.
     var lotEtageLibelle: String?
-    /// `bailleur_nom_affiche` servi (contrat 1.25.0, #135) ; `nil` d'une installation antérieure.
+    /// `bailleur_nom_affiche` servi (contrat 1.25.0, #135).
     var bailleurNomServi: String?
 
     var nomBailleur: String { FormatsDuSite.nom(affiche: bailleurNomServi, prenom: bailleurPrenom, nom: bailleurNom) }
-}
-
-/// Ce que GET /bailleur/mon-bail sert au-dessus du plancher, relu par
-/// `Relecture.auDessusDuPlancher`.
-struct BailAuDessusDuPlancher: Decodable {
-    var lotEtageLibelle: String?
 }
 
 /// Une demande d'accès (`CommandeAccesCreate`).

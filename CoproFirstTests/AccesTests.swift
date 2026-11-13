@@ -46,10 +46,11 @@ import Testing
 }
 
 @Test func leConseilLitTousLesBauxSAilNEstPasCoproprietaire() {
-    let conseil = DroitsAcces(ProfilResidence(statut: nil, roles: ["conseil_syndical"]))
+    let conseil = DroitsAcces(ProfilResidence(statut: nil, roles: ["conseil_syndical"], estModerateur: true))
     #expect(conseil.baux == .tous)
     // Copropriétaire ET conseil : ses baux d'abord, comme `lireBaux` du site.
-    let lesDeux = DroitsAcces(ProfilResidence(statut: "copropriétaire_bailleur", roles: ["conseil_syndical"]))
+    let lesDeux = DroitsAcces(
+        ProfilResidence(statut: "copropriétaire_bailleur", roles: ["conseil_syndical"], estModerateur: true))
     #expect(lesDeux.baux == .siens)
 }
 
@@ -132,9 +133,9 @@ import Testing
     #expect(!LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "ascenseur"))
 }
 
-@Test func lesContratsSeRangentParEcheance() {
-    let ranges = PrestatairesSimules.contrats.sorted(by: LibellesPrestataires.parEcheance).map(\.id)
-    #expect(ranges == [2, 1, 3], "la visite la plus proche d'abord, sans échéance à la fin")
+@Test func lesContratsSeRangentParEcheance() throws {
+    let ranges = try FixturesPrestataires.contratsLus().sorted(by: LibellesPrestataires.parEcheance).map(\.id)
+    #expect(ranges == [2, 1, 4, 3], "la visite la plus proche d'abord, sans échéance à la fin")
 }
 
 // MARK: - Les onglets viennent de `OngletsDuSite` (#30)

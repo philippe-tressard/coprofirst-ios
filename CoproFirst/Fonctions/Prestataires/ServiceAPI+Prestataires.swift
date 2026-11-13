@@ -4,42 +4,45 @@
 import ClientAPI
 import Foundation
 
-/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées. Les fiches
-/// gardent aussi leur corps servi, pour y relire ce que le plancher ne type pas encore
-/// (`telephones`, contrat 1.20.0, #125).
+/// « Prestataires » par le client GÉNÉRÉ : toutes ces réponses sont typées.
 extension ServiceAPI: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         let client = client(installation.adresse)
-        // Le corps servi est gardé : le nom affiché des contacts est au-dessus du plancher.
         if archives {
-            let (sortie, corps) = try await appeler {
-                try await CorpsServi.garder { try await client.getPrestatairesArchives() }
-            }
+            let sortie = try await appeler { try await client.getPrestatairesArchives() }
             switch sortie {
-            case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
+            case .ok(let ok): return try ok.body.json.map(Prestataire.init)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        let (sortie, corps) = try await appeler { try await CorpsServi.garder { try await client.getPrestataires() } }
+        let sortie = try await appeler { try await client.getPrestataires() }
         switch sortie {
-        case .ok(let ok): return Prestataire.lus(try ok.body.json, corps: corps)
+        case .ok(let ok): return try ok.body.json.map(Prestataire.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
     }
 
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat] {
+        // Le corps est gardé : la résiliation et le remplacement se servent au-dessus du
+        // plancher (contrat 1.29.0, #185), et le type généré les jetterait.
         let client = client(installation.adresse)
         if archives {
-            switch try await appeler({ try await client.getPrestatairesContratsArchives() }) {
-            case .ok(let ok): return try ok.body.json.map(Contrat.init)
+            let (sortie, corps) = try await appeler {
+                try await CorpsServi.garder { try await client.getPrestatairesContratsArchives() }
+            }
+            switch sortie {
+            case .ok(let ok): return Contrat.lus(try ok.body.json, corps: corps)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
             }
         }
-        switch try await appeler({ try await client.getPrestatairesContrats() }) {
-        case .ok(let ok): return try ok.body.json.map(Contrat.init)
+        let (sortie, corps) = try await appeler {
+            try await CorpsServi.garder { try await client.getPrestatairesContrats() }
+        }
+        switch sortie {
+        case .ok(let ok): return Contrat.lus(try ok.body.json, corps: corps)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -113,8 +116,9 @@ extension Prestataire {
             telephone: lu.telephone, email: lu.email, adresse: lu.adresse, description: lu.description,
             contacts: (lu.contacts ?? []).map {
                 ContactPrestataire(
-                    prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email)
-            })
+                    prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email,
+                    nomServi: $0.nomAffiche)
+            }, telephones: lu.telephones)
     }
 }
 

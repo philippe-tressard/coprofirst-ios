@@ -58,8 +58,8 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) |
-| `mes-demandes` | `kanban` | fait | #11 | Fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) ; sur la fiche, une suite de l'Historique se corrige et s'efface depuis son entrée, selon le droit servi avec elle (#91, #93) ; une correction que l'affaire n'a pas suivie se dit, et l'état servi se propose (#187) ; plusieurs prestataires (#181) : un par ligne sur la fiche, ajoutés, retirés et réordonnés dans « Modifier » selon le droit servi — la Suite n'en pose pas (site) |
+| `mes-demandes` | `kanban` | fait | #11, #181 | Le premier prestataire, puis « +N » ; fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
 ### #12 — Ma résidence et Annuaire
@@ -84,7 +84,7 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 | `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
 | `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
 | `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
-| `prestataires` | `contrats` | fait | #13, #125 | En lecture : résumé, échéances, fréquence servie, documents |
+| `prestataires` | `contrats` | fait | #13, #125, #185 | En lecture : résumé, échéances, fréquence servie, documents, résiliation et remplacement servis (contrat ≥ 1.29.0) ; la saisie reste au site |
 | `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 
 ### #14 — Communauté, FAQ, Profil et Notifications
@@ -98,7 +98,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
-| `profil` | — | fait | #14 | Sous « Plus », saisie d'une affaire comprise (#69) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
+| `profil` | — | fait | #14, #166 | Sous « Plus », saisie d'une affaire comprise (#69), demande de suppression du compte (#166) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
 | `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations
@@ -122,7 +122,7 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
 | `admin` | `a_traiter` | fait | #16 | La file des comptes et des commandes, la même que l'Espace CS ; les demandes de profil (approuver, rejeter avec motif) |
-| `admin` | `utilisateurs` | fait | #16, #89 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
+| `admin` | `utilisateurs` | fait | #16, #89, #94 | Recherche, type, compte ; la fiche : communauté (bannissement servi), rôles (les gestes que le serveur sert, contrat ≥ 1.18.0 ; « Opérateur désigné par l'exploitant » sur une instance commune, « votre compte » dans la confirmation), auto-match, suppression. Modifier et l'accueil d'un arrivant restent au site, comme les rôles d'une installation antérieure |
 | `admin` | `audit_lots` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `telemetry` | fait | #16 | Quatre vues, filtre gestionnaire, nombres clés, graphe, pages, utilisateurs actifs ; les six autres sections restent au site |
 | `admin` | `imports` | site seulement | #16 | Paramétrage : l'app renvoie au site |

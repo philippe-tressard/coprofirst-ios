@@ -34,7 +34,6 @@ struct AnnuaireView: View {
     let titre: String
     var ancre: Ancre?
     @Environment(Parcours.self) private var parcours
-    @Environment(Reseau.self) private var reseau
     @Environment(\.palette) private var palette
 
     enum Ancre: Hashable { case syndic }
@@ -67,7 +66,7 @@ struct AnnuaireView: View {
         .titreDeMenu()
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         .safeAreaInset(edge: .top, spacing: 0) {
-            if !reseau.enLigne { BandeauHorsLigne() }
+            BandeauHorsLigne()
         }
     }
 

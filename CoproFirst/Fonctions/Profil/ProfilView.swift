@@ -41,6 +41,7 @@ struct ProfilView: View {
                         .listRowBackground(palette.surface)
                     }
                     SectionDroits(compte: compte, installation: ouverte) { self.compte = $0 }
+                    SectionSuppressionCompte(installation: ouverte)
                 }
                 sectionSortie(ouverte)
             }
@@ -49,6 +50,7 @@ struct ProfilView: View {
         .background(palette.bg)
         .navigationTitle("Profil")
         .titreDeMenu()
+        .safeAreaInset(edge: .top, spacing: 0) { BandeauHorsLigne() }
         .confirmationDeSortie($geste, parcours: parcours)
         .sheet(isPresented: $identite) {
             if let compte, let ouverte = parcours.ouverteAJour {
@@ -128,6 +130,7 @@ struct ProfilView: View {
                 if let societe = compte.societe { LabeledContent("Société", value: societe) }
                 if let fonction = compte.fonction { LabeledContent("Fonction", value: fonction) }
                 Button("Modifier mes informations") { identite = true }
+                    .gesteEnLigne()
                     .accessibilityIdentifier("profil.modifierIdentite")
             }
             .listRowBackground(palette.surface)
@@ -217,6 +220,7 @@ private struct SectionDroits: View {
                 "Politique de confidentialité",
                 destination: installation.adresse.appending(path: "politique-de-confidentialite"))
             Toggle("Refuser la collecte de statistiques de navigation", isOn: refus)
+                .gesteEnLigne()
             if let export {
                 ShareLink(item: export) { Label("Partager l'export", systemImage: "square.and.arrow.up") }
             } else {
@@ -224,10 +228,12 @@ private struct SectionDroits: View {
                     Label("Exporter mes données de navigation", systemImage: "square.and.arrow.down")
                 }
                 .disabled(enCours)
+                .gesteEnLigne()
             }
             Button(role: .destructive) { effacer = true } label: {
                 Label("Effacer mes données de navigation", systemImage: "trash")
             }
+            .gesteEnLigne()
             if let phrase { Text(phrase).font(.footnote).foregroundStyle(palette.textMuted) }
         } header: {
             Text("Vos droits (RGPD)").styleLibelle()

@@ -34,7 +34,9 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let suiviKanban: Bool
     /// Les natures que le serveur pose : actualité, calendrier, activité.
     let natures: [String]
-    let prestataire: String?
+    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181) ; d'une
+    /// installation antérieure, le seul qu'elle sert (`prestataire_nom`).
+    var prestataires: [String]
     /// Les codes de périmètre visés (`perimetre_cible`).
     let perimetres: [String]
     /// Le lieu lisible (« Bât. 2 › Toit ») que le serveur SERT (`perimetre_libelle`) ;

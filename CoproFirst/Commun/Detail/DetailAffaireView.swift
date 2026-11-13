@@ -4,7 +4,8 @@
 import SwiftUI
 
 /// Le détail d'une affaire — et d'une actualité, qui en est une de catégorie
-/// Actualité : en-tête, description, pièces jointes, Historique, le fil des messages (pas sur
+/// Actualité : en-tête, le fil de l'affaire (la demande, la suite, les comptes rendus, la
+/// synthèse — `FilAffaire`), le fil des messages (pas sur
 /// une actualité), et le bandeau de ses gestes (`BandeauAffaire`), selon ce que le
 /// serveur ouvre au lecteur.
 struct DetailAffaireView: View {
@@ -21,11 +22,14 @@ struct DetailAffaireView: View {
             contenu: { affaire, recharger in
                 ContenuAffaire(affaire: affaire, installation: installation, recharger: recharger)
                     .bandeauAffaire(affaire, installation: installation, recharger: recharger)
+                    .gestesHistorique(affaire, installation: installation, recharger: recharger)
             },
             squelette: { ContenuAffaire(affaire: Self.squelette, installation: installation, recharger: {}) }
         )
         .background(palette.bg)
         .navigationBarTitleDisplayMode(.inline)
+        // Hors ligne : d'où vient ce qu'on lit, et pourquoi le bandeau du bas est grisé (#101).
+        .safeAreaInset(edge: .top, spacing: 0) { BandeauHorsLigne() }
         // Le bandeau occupe le bas : la barre d'onglets s'efface dès l'arrivée — squelette
         // compris, pour ne pas sauter — et revient au retour, comme Photos ou Fichiers.
         .toolbar(.hidden, for: .tabBar)
@@ -107,10 +111,20 @@ private struct EnTeteAffaire: View {
                 if let auteur = affaire.auteur {
                     Label(auteur, systemImage: "person")
                 }
+                // Une ligne par prestataire, le rythme après le dernier (#181).
                 if let intervenant = affaire.intervenant {
-                    Label(intervenant, systemImage: "wrench.and.screwdriver")
-                        .accessibilityLabel("Intervenant : \(intervenant)")
-                        .accessibilityIdentifier("affaire.intervenant")
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            ForEach(Array(affaire.intervenants.enumerated()), id: \.offset) { Text($0.element) }
+                        }
+                    } icon: {
+                        Image(systemName: "wrench.and.screwdriver")
+                    }
+                    // Un seul élément : sous iOS 26, l'identifiant d'un Label se résout en son image (#183).
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(
+                        TextesPrestatairesAffaire.intervenant(intervenant, nombre: affaire.prestataires.count))
+                    .accessibilityIdentifier("affaire.intervenant")
                 }
             }
             .font(.subheadline)

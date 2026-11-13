@@ -3,8 +3,9 @@
 
 import Foundation
 
-/// Ce que le bandeau d'une affaire demande au serveur, au-delà de « Répondre »
-/// (`ServiceCoproFirst.repondre`). Les deux services le réalisent par extension, ici.
+/// Ce que le bandeau d'une affaire et les entrées de son Historique demandent au
+/// serveur, au-delà de « Répondre » (`ServiceCoproFirst.repondre`). Les deux services le
+/// réalisent par extension, ici.
 protocol ServiceGestesAffaire: Sendable {
     /// POST /tickets/{id}/evolutions : une Suite — un commentaire, ou un nouvel état.
     func ajouterSuite(_ suite: SaisieSuite, a affaire: Int, dans installation: Installation) async throws
@@ -16,6 +17,15 @@ protocol ServiceGestesAffaire: Sendable {
     ) async throws
     /// PATCH /tickets/{id} `archive_manuel` : archiver, jamais supprimer.
     func archiverAffaire(_ affaire: Int, dans installation: Installation) async throws
+    /// PATCH /tickets/{id}/evolutions/{evol_id} : « Modifier la suite », depuis
+    /// l'Historique — les seuls champs changés (#91). Rend ce que l'affaire en a fait
+    /// quand elle ne l'a pas suivie (#187), `nil` sinon.
+    @discardableResult
+    func corrigerSuite(
+        _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
+    ) async throws -> IssueCorrection?
+    /// DELETE /tickets/{id}/evolutions/{evol_id} : effacer une entrée de l'Historique.
+    func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws
 }
 
 extension ServiceCoproFirst {

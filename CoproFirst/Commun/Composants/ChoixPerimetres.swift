@@ -65,6 +65,9 @@ struct ChoixPerimetres: View {
             {
                 Text(aide).font(.footnote).foregroundStyle(palette.textMuted)
             }
+            // Le lieu retenu, nommé par le serveur (#130) — sous les pastilles : rien ne
+            // bouge sous le doigt quand il arrive.
+            LieuDeLaSaisie(codes: choix.codes, identifiant: "\(identifiant).lieu")
         }
         .sensoryFeedback(.selection, trigger: choix)
     }
