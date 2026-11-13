@@ -115,7 +115,17 @@ private struct CarteContrat: View {
                     if let numero = contrat.numeroContrat, !numero.isEmpty {
                         PastilleTeinte(libelle: "🔖 \(numero)", badge: "badge-gray", compacte: true)
                     }
-                    if contrat.prochaineVisite == nil {
+                    // 🔁 La résiliation et le remplacement, tels que servis (#185) — sur les
+                    // DEUX cartes : l'ancien dit par qui, le nouveau qui il remplace.
+                    ForEach(Array(contrat.remplacement.pastilles.enumerated()), id: \.offset) { rang, libelle in
+                        PastilleTeinte(libelle: libelle, badge: "badge-gray", compacte: true)
+                            // Un seul élément, nommé par son libellé : l'identifiant ne se
+                            // pose pas sur une partie de la pastille (le piège de #183).
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityLabel(libelle)
+                            .accessibilityIdentifier("contrat.\(contrat.id).remplacement.\(rang)")
+                    }
+                    if contrat.prochaineVisite == nil && !contrat.remplacement.estDatee {
                         PastilleTeinte(
                             libelle: TextesPrestataires.sansEcheanceCapsule, badge: "badge-gray", compacte: true)
                     }
@@ -150,6 +160,15 @@ private struct CarteContrat: View {
                 LigneFiche(
                     libelle: TextesPrestataires.prochaineVisite,
                     valeur: "🗓 \(FormatsDuSite.dateCourte(contrat.prochaineVisite))")
+            }
+            if let resilieLe = contrat.remplacement.resilieLe {
+                LigneFiche(libelle: TextesPrestataires.libelleResilieLe, valeur: FormatsDuSite.dateCourte(resilieLe))
+            }
+            if let remplacePar = contrat.remplacement.remplacePar {
+                LigneFiche(libelle: TextesPrestataires.libelleRemplacePar, valeur: TextesPrestataires.lie(remplacePar))
+            }
+            ForEach(contrat.remplacement.remplace, id: \.id) { ancien in
+                LigneFiche(libelle: TextesPrestataires.libelleRemplace, valeur: TextesPrestataires.lie(ancien))
             }
             if let notes = contrat.notes, !notes.isEmpty {
                 Text(TextesPrestataires.description).styleLibelle().padding(.top, 4)
