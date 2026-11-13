@@ -71,6 +71,11 @@ dernière réponse reste et rien n'empêche de saisir.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
 (coprofirst v3.84.0, contrat 1.19.0).
+Une affaire peut faire intervenir **plusieurs prestataires** (coprofirst v3.90.0,
+contrat 1.28.0, #181) : la fiche les dit un par ligne, la carte du Kanban montre le
+premier puis « +N », et « Modifier l'affaire » en ajoute, en retire et les réordonne
+quand la résidence en sert le droit — d'une résidence plus ancienne, le seul
+prestataire qu'elle sert, comme avant.
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
