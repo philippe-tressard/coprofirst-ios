@@ -70,7 +70,9 @@ personne qu'on nomme (le Profil, une fiche de l'annuaire du conseil). Sans rése
 dernière réponse reste et rien n'empêche de saisir.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
-(coprofirst v3.84.0, contrat 1.19.0).
+(coprofirst v3.84.0, contrat 1.19.0). Quand l'affaire ne suit pas la correction —
+une suite plus récente a changé son état —, une alerte le dit avec la phrase de la
+résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
