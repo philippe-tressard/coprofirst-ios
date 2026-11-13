@@ -10,6 +10,16 @@ import SwiftUI
 final class ChoixDeSuite {
     var aCorriger: SuiteAffaire?
     var aSupprimer: SuiteAffaire?
+    /// Une correction que l'affaire n'a pas suivie (#187) : remise par la feuille, dite
+    /// une fois la feuille fermée (`aDire`) — une alerte ne s'ouvre pas sur une feuille
+    /// qui se ferme.
+    var nonSuivie: IssueCorrection?
+    var aDire: IssueCorrection?
+
+    func feuilleFermee() {
+        aDire = nonSuivie
+        nonSuivie = nil
+    }
 
     func choisir(_ geste: GesteSuite, _ suite: SuiteAffaire) {
         switch geste {
@@ -23,6 +33,12 @@ final class ChoixDeSuite {
 /// (`RubriqueHistorique.svelte`) : « Modifier la suite » ouvre la feuille de la Suite
 /// partie de l'entrée (`SuiteFeuille`), « Supprimer cette entrée » se confirme. Chacun
 /// s'annonce par l'avis du geste, puis l'affaire se relit.
+///
+/// Une correction que l'affaire n'a pas suivie (#187) s'annonce par une ALERTE, la
+/// feuille fermée : la phrase du serveur telle que servie et, si le compte peut changer
+/// l'état, l'état qu'il propose — appliqué par le geste de toujours, une Suite qui
+/// change l'état (`ajouterSuite`). L'affaire n'a pas pris l'état choisi : un avis
+/// éphémère passerait sans qu'on le lise.
 struct GestesHistorique: ViewModifier {
     let affaire: DetailAffaire
     let installation: Installation
@@ -35,10 +51,13 @@ struct GestesHistorique: ViewModifier {
         @Bindable var choix = choix
         content
             .environment(choix)
-            .sheet(item: $choix.aCorriger, onDismiss: avis.feuilleFermee) { suite in
-                SuiteFeuille(affaire: affaire, installation: installation, corrigee: suite, envoyee: corrigee)
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
+            .sheet(item: $choix.aCorriger, onDismiss: feuilleFermee) { suite in
+                SuiteFeuille(
+                    affaire: affaire, installation: installation, corrigee: suite, envoyee: corrigee,
+                    nonSuivie: { choix.nonSuivie = $0 }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
             }
             .confirmationDialog(
                 TextesSuite.supprimer,
@@ -51,13 +70,50 @@ struct GestesHistorique: ViewModifier {
             } message: { suite in
                 Text(TextesSuite.question(suite))
             }
+            .alert(
+                TextesSuite.corrigee,
+                isPresented: Binding(get: { choix.aDire != nil }, set: { if !$0 { choix.aDire = nil } }),
+                presenting: choix.aDire
+            ) { issue in
+                if let saisie = issue.proposition(pour: affaire),
+                    let libelle = issue.libelleProposition(pour: affaire)
+                {
+                    Button(libelle) { Task { await appliquer(saisie) } }
+                    Button(TextesSuite.laisser, role: .cancel) {}
+                } else {
+                    Button(TextesSuite.compris, role: .cancel) {}
+                }
+            } message: { issue in
+                Text(issue.phrase)
+            }
             .avisEphemere(avis)
     }
 
+    private func feuilleFermee() {
+        avis.feuilleFermee()
+        choix.feuilleFermee()
+    }
+
+    /// L'alerte dit déjà « Entrée corrigée » quand l'affaire n'a pas suivi : pas d'avis en plus.
     private func corrigee(_ phrase: String) {
-        avis.direApresFermeture(phrase)
+        if choix.nonSuivie == nil { avis.direApresFermeture(phrase) }
         choix.aCorriger = nil
         recharger()
+    }
+
+    /// L'état que le serveur propose, appliqué à l'affaire par une Suite qui change l'état.
+    private func appliquer(_ saisie: SaisieSuite) async {
+        guard let service = parcours.service.gestesAffaire else {
+            avis.dire(TextesSuite.indisponible, ton: .error)
+            return
+        }
+        do {
+            try await service.ajouterSuite(saisie, a: affaire.id, dans: installation)
+            avis.dire(TextesSuite.statutMisAJour)
+            recharger()
+        } catch {
+            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+        }
     }
 
     private func supprimer(_ suite: SuiteAffaire) async {

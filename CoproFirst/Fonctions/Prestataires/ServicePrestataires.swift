@@ -80,6 +80,9 @@ struct Contrat: Hashable, Sendable, Identifiable {
     var frequenceLibelle: String?
     var prochaineVisite: String?
     var notes: String?
+    /// La résiliation et le remplacement servis (contrat 1.29.0, #185) — vides d'une
+    /// installation antérieure.
+    var remplacement = RemplacementContrat()
 }
 
 struct AvisPrestataire: Hashable, Sendable, Identifiable {

@@ -70,7 +70,9 @@ personne qu'on nomme (le Profil, une fiche de l'annuaire du conseil). Sans rése
 dernière réponse reste et rien n'empêche de saisir.
 Une suite de l'Historique d'une affaire se corrige — et s'efface, pour
 l'administrateur — depuis son entrée, quand la résidence en sert le droit
-(coprofirst v3.84.0, contrat 1.19.0).
+(coprofirst v3.84.0, contrat 1.19.0). Quand l'affaire ne suit pas la correction —
+une suite plus récente a changé son état —, une alerte le dit avec la phrase de la
+résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
 Une affaire peut faire intervenir **plusieurs prestataires** (coprofirst v3.90.0,
 contrat 1.28.0, #181) : la fiche les dit un par ligne, la carte du Kanban montre le
 premier puis « +N », et « Modifier l'affaire » en ajoute, en retire et les réordonne
@@ -79,6 +81,9 @@ prestataire qu'elle sert, comme avant.
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
+Un contrat résilié dit, sur sa carte, par qui il est remplacé et dès quand ; celui qui
+prend la suite dit qui il remplace (coprofirst v3.91.0, contrat 1.29.0, #185) — rien de
+plus d'une installation antérieure. La saisie d'un contrat reste au site.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

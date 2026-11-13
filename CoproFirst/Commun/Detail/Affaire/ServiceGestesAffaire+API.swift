@@ -48,16 +48,21 @@ extension ServiceAPI: ServiceGestesAffaire {
         try await modifierAffaire(affaire, .init(archiveManuel: true), dans: installation)
     }
 
+    /// La réponse se garde (`CorpsServi.garder`) : ce que l'affaire a fait de la correction
+    /// y est servi au-dessus du plancher (contrat 1.30.0, #187).
+    @discardableResult
     func corrigerSuite(
         _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
-    ) async throws {
+    ) async throws -> IssueCorrection? {
         let corps = try Self.corpsCorrection(correction)
-        let sortie = try await appeler {
-            try await client(installation.adresse).patchTicketsTicketIdEvolutionsEvolId(
-                path: .init(ticketId: affaire, evolId: suite), body: .json(corps))
+        let (sortie, servi) = try await appeler {
+            try await CorpsServi.garder {
+                try await client(installation.adresse).patchTicketsTicketIdEvolutionsEvolId(
+                    path: .init(ticketId: affaire, evolId: suite), body: .json(corps))
+            }
         }
         switch sortie {
-        case .ok: return
+        case .ok: return IssueCorrection.lue(corps: servi)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

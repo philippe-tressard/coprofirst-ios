@@ -46,6 +46,8 @@ enum TextesSuite {
     static let supprimer = "Supprimer cette entrée"
     static let confirmer = "Supprimer"
     static let corrigee = "Entrée corrigée"
+    /// L'avis d'une Suite qui change l'état (`affaires-en-liste.ts` du site).
+    static let statutMisAJour = "Statut mis à jour"
     static let supprimee = "Entrée supprimée"
     static let indisponible = "Ce geste n'est pas disponible ici."
     /// Le titre de la feuille : le mot du geste — « Modifier la suite » se tronquait
@@ -53,6 +55,12 @@ enum TextesSuite {
     static let titreCorrection = "Modifier"
     static let etatDonne = "L'entrée porte ce changement d'état, à sa date."
     static let etatDAvant = "L'état d'avant l'entrée : elle reste un commentaire."
+    /// Quand l'affaire n'a pas suivi la correction (#187) : laisser l'affaire dans son état.
+    static let laisser = "Laisser ainsi"
+    static let compris = "OK"
+
+    /// Appliquer à l'affaire l'état que le serveur propose (`etat_propose`, #187).
+    static func appliquer(_ etat: String) -> String { "Appliquer « \(etat) » à l’affaire" }
 
     /// La question posée avant d'effacer : ce qui disparaît, et ce qui ne change pas.
     static func question(_ suite: SuiteAffaire) -> String {

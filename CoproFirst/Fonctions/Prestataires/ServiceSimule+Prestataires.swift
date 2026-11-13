@@ -14,7 +14,7 @@ extension ServiceSimule: ServicePrestataires {
 
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat] {
         try await Task.sleep(for: .milliseconds(300))
-        return archives ? [] : PrestatairesSimules.contrats
+        return archives ? [] : try FixturesPrestataires.contratsLus()
     }
 
     func avis(_ installation: Installation) async throws -> [AvisPrestataire] {
@@ -53,24 +53,8 @@ extension ServiceSimule: ServicePrestataires {
     }
 }
 
-/// Les contrats, avis et équipements simulés (les fiches : `FixturesPrestataires`). Une
-/// fréquence en clair est celle que le serveur servirait (`frequence_libelle`).
+/// Les avis et équipements simulés (les fiches et les contrats : `FixturesPrestataires`).
 enum PrestatairesSimules {
-    static let contrats: [Contrat] = [
-        Contrat(
-            id: 1, prestataireId: 1, libelle: "Maintenance des deux ascenseurs", typeEquipement: "ascenseur",
-            numeroContrat: "ASC-2024-118", dateDebut: "2024-01-01", dureeValeur: 3, dureeUnite: "ans",
-            frequenceType: "mois", frequenceValeur: 1, frequenceLibelle: "↺ Mensuel", prochaineVisite: "2026-11-18",
-            notes: "<p>Visite mensuelle ; remplacement des câbles prévu en 2027.</p>"),
-        Contrat(
-            id: 2, prestataireId: 2, libelle: "Vérification des extincteurs", typeEquipement: "incendie",
-            dateDebut: "2023-06-01", frequenceType: "fois_par_an", frequenceValeur: 1, frequenceLibelle: "↺ 1×/an",
-            prochaineVisite: "2026-09-30"),
-        Contrat(
-            id: 3, prestataireId: 3, libelle: "Abonnement eau froide", typeEquipement: "autre",
-            dateDebut: "2020-01-01"),
-    ]
-
     static let avis: [AvisPrestataire] = [
         AvisPrestataire(
             id: 1, prestataireId: 1, note: 4, commentaire: "Intervention rapide lors de la dernière panne.",

@@ -24,15 +24,18 @@ extension ServiceSimule {
         return servie
     }
 
+    @discardableResult
     func corrigerSuite(
         _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
-    ) async throws {
+    ) async throws -> IssueCorrection? {
         try await Task.sleep(for: .milliseconds(300))
+        var servi: Data?
         try changerAffaireSimulee(affaire) { detail in
             guard let rang = detail.suites.firstIndex(where: { $0.id == suite }), detail.suites[rang].droits.modifier
             else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
-            Self.corriger(&detail, rang, correction)
+            servi = try Self.corriger(&detail, rang, correction)
         }
+        return IssueCorrection.lue(corps: servi)
     }
 
     func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws {
@@ -48,10 +51,14 @@ extension ServiceSimule {
     }
 
     /// La correction, comme `suite_sections.corriger_suivi` : l'entrée garde sa date et
-    /// son auteur ; son Suivi se déduit de l'état d'avant elle, et l'affaire ne le suit que
-    /// si l'entrée est sa dernière transition et qu'elle en porte encore l'état
-    /// (`utils/suivi_fil.py`).
-    private static func corriger(_ detail: inout DetailAffaire, _ rang: Int, _ correction: CorrectionSuite) {
+    /// son auteur ; son Suivi se déduit de l'état d'avant elle. L'affaire suit si elle est
+    /// déjà dans l'état que l'entrée donne, ou si aucune transition ne suit l'entrée et que
+    /// l'affaire porte encore son ancien état — ou que l'entrée en donne un
+    /// (`utils/suivi_fil.py`, coprofirst#2715). Sinon rien n'est écrasé : la réponse le dit
+    /// (`FixturesCorrectionSuite`), et c'est elle que la fonction rend.
+    private static func corriger(
+        _ detail: inout DetailAffaire, _ rang: Int, _ correction: CorrectionSuite
+    ) throws -> Data? {
         let entree = detail.suites[rang]
         let avant = entree.ancienStatut ?? detail.statut
         let resultatAvant = entree.nouveauStatut ?? avant
@@ -68,14 +75,26 @@ extension ServiceSimule {
         corrigee.pieces = entree.pieces
         corrigee.perimetrePrecise = entree.perimetrePrecise
         detail.suites[rang] = corrigee
-        let suivantes = detail.suites[(rang + 1)...]
         let resultatApres = nouveau ?? avant
-        if resultatApres != resultatAvant, !suivantes.contains(where: { $0.type == "etat" }),
-            detail.statut == resultatAvant
-        {
+        guard correction.suivi != nil, (type, nouveau) != (entree.type, entree.nouveauStatut),
+            resultatApres != detail.statut
+        else { return nil }
+        let suivie = detail.suites[(rang + 1)...].contains { $0.type == "etat" }
+        if !suivie, detail.statut == resultatAvant || type == "etat" {
             detail.statut = resultatApres
             detail.statutLibelle = MagasinAffairesSimule.libelle(statut: resultatApres)
+            return nil
         }
+        // La phrase du faux serveur, à l'image de celle du vrai : l'app la montre sans la lire.
+        let reste = MagasinAffairesSimule.libelle(statut: detail.statut)
+        let raison =
+            suivie
+            ? "une Suite plus récente a changé son état depuis."
+            : "son état a été corrigé depuis, hors de l'Historique."
+        return try FixturesCorrectionSuite.servie(
+            phrase: "L'affaire est restée « \(reste) » : \(raison)",
+            etatPropose: detail.estActualite ? nil : resultatApres,
+            libelle: MagasinAffairesSimule.libelle(statut: resultatApres))
     }
 }
 #endif

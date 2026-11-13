@@ -133,9 +133,9 @@ import Testing
     #expect(!LibellesPrestataires.correspond(fiche, equipement: "Sécurité incendie", recherche: "ascenseur"))
 }
 
-@Test func lesContratsSeRangentParEcheance() {
-    let ranges = PrestatairesSimules.contrats.sorted(by: LibellesPrestataires.parEcheance).map(\.id)
-    #expect(ranges == [2, 1, 3], "la visite la plus proche d'abord, sans échéance à la fin")
+@Test func lesContratsSeRangentParEcheance() throws {
+    let ranges = try FixturesPrestataires.contratsLus().sorted(by: LibellesPrestataires.parEcheance).map(\.id)
+    #expect(ranges == [2, 1, 4, 3], "la visite la plus proche d'abord, sans échéance à la fin")
 }
 
 // MARK: - Les onglets viennent de `OngletsDuSite` (#30)
