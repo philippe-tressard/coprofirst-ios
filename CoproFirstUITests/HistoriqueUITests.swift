@@ -118,6 +118,47 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(app.libelleAcces("Entrée supprimée").apparait(), "l'avis du geste")
     }
 
+    /// Choisit un état dans le Suivi de la feuille ouverte (le menu du sélecteur).
+    @MainActor
+    private func choisirLEtat(_ etat: String, dans app: XCUIApplication) {
+        let suivi = app.elementAcces("suite.etat")
+        XCTAssertTrue(suivi.apparait(), "le Suivi de la feuille")
+        suivi.tap()
+        let choix = app.descendants(matching: .any)[etat].firstMatch
+        XCTAssertTrue(choix.apparait(), "« \(etat) » parmi les états")
+        choix.tap()
+    }
+
+    /// Une Suite plus récente a changé l'état : corriger la première ne l'écrase pas (#187).
+    /// L'alerte dit la phrase du serveur et propose l'état ; l'appliquer ajoute une Suite.
+    @MainActor
+    func testUneCorrectionQueLAffaireNAPasSuivieSeDitEtProposeLEtat() throws {
+        let app = ouvrirLAffaire()
+        app.elementAcces("affaire.suite").tap()
+        choisirLEtat("Résolu", dans: app)
+        app.elementAcces("suite.enregistrer").tap()
+        XCTAssertTrue(entree("Chez le syndic → Résolu", dans: app).apparait(), "la Suite plus récente")
+
+        ouvrirLesGestes(1, dans: app)
+        let modifier = app.elementAcces("historique.geste.modifier")
+        XCTAssertTrue(modifier.apparait())
+        modifier.tap()
+        choisirLEtat("Chez le prestataire", dans: app)
+        app.elementAcces("suite.enregistrer").tap()
+
+        // La phrase du serveur, telle que servie, dans l'alerte « Entrée corrigée ».
+        XCTAssertTrue(app.libelleAcces("L'affaire est restée « Résolu »").apparait(), "la phrase servie")
+        let appliquer = app.descendants(matching: .any)["Appliquer « Chez le prestataire » à l’affaire"].firstMatch
+        XCTAssertTrue(appliquer.apparait(), "l'état proposé")
+        XCTAssertTrue(app.descendants(matching: .any)["Laisser ainsi"].firstMatch.exists)
+        LancementCaptures.capturer("historique-5-affaire-non-suivie")
+        appliquer.tap()
+
+        XCTAssertTrue(
+            entree("Résolu → Chez le prestataire", dans: app).apparait(), "l'état appliqué par une Suite, relue")
+        XCTAssertTrue(entree("Ouvert → Chez le prestataire", dans: app).exists, "l'entrée corrigée")
+    }
+
     /// Un résident lit l'Historique sans geste : le serveur ne lui en sert aucun.
     @MainActor
     func testUnResidentLitLHistoriqueSansGeste() throws {
