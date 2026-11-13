@@ -24,7 +24,7 @@ recopie dans les champs « Sign-In Information » d'App Store Connect, pas ici.
 | Les notifications se demandent après un geste, jamais au lancement | `Fonctions/Notifications/Push/` (`OffrePush`) |
 | Aucune donnée personnelle dans une notification | skill `publication-app-store`, liste d'avant soumission ; charge composée par le relais (coprofirst#2494) |
 | Contenu d'utilisateurs : signalement au conseil syndical | `Commun/Composants/SignalementAuConseil.swift` ; arbitrage du 12/11/2026 (#167) : pas de blocage d'un auteur |
-| Suppression du compte | **à écrire quand #166 est livré** — ne pas soumettre avant |
+| Suppression du compte : une demande lancée depuis le Profil, traitée par l'administration de la résidence | `Fonctions/Profil/SuppressionCompte/` (#166) ; route `/auth/demande-suppression` du contrat 1.27.0 ; la démo accepte la demande sans jamais effacer son compte — **lu dans le code serveur v3.89.0, pas rejoué sur la démo : à jouer avant de soumettre** |
 | Ni suivi, ni publicité, ni achat intégré | `PrivacyInfo.xcprivacy` (`NSPrivacyTracking` faux), `scripts/verifier-confidentialite.py` |
 | Code source ouvert, lien dans l'app | Plus › À propos › « Code source de l'app » (AGPL §13) |
 
@@ -47,8 +47,12 @@ HOW TO REVIEW
 ACCOUNTS
 Accounts are opened by each residence's administrators, who check that the person
 lives there; the app itself only links to the residence's web sign-up form.
-Account deletion: [TO COMPLETE when issue #166 ships — where the request is made in
-the app, and that the residence's administrator processes it].
+Account deletion: in the app, More > Profile > "Supprimer mon compte" (below "Vos droits
+(RGPD)"). The user reads what will be erased, confirms with their password and may give
+a reason; the request is sent to the residence's administrators, who process it within
+the delay shown on screen (30 days at most). The user can withdraw the request until it is
+processed. The demo accounts accept the request but are never erased, so you can try the
+whole flow with them.
 
 USER-GENERATED CONTENT
 Residents can post requests, community announcements, comments and replies, visible
