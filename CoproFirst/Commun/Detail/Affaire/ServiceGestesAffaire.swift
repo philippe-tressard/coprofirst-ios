@@ -18,10 +18,12 @@ protocol ServiceGestesAffaire: Sendable {
     /// PATCH /tickets/{id} `archive_manuel` : archiver, jamais supprimer.
     func archiverAffaire(_ affaire: Int, dans installation: Installation) async throws
     /// PATCH /tickets/{id}/evolutions/{evol_id} : « Modifier la suite », depuis
-    /// l'Historique — les seuls champs changés (#91).
+    /// l'Historique — les seuls champs changés (#91). Rend ce que l'affaire en a fait
+    /// quand elle ne l'a pas suivie (#187), `nil` sinon.
+    @discardableResult
     func corrigerSuite(
         _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
-    ) async throws
+    ) async throws -> IssueCorrection?
     /// DELETE /tickets/{id}/evolutions/{evol_id} : effacer une entrée de l'Historique.
     func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws
 }

@@ -16,6 +16,9 @@ struct SuiteFeuille: View {
     /// L'entrée que la feuille corrige ; `nil` : elle en ajoute une.
     let corrigee: SuiteAffaire?
     let envoyee: (String) -> Void
+    /// Une correction que l'affaire n'a pas suivie (#187) : ce que la réponse en dit,
+    /// remis AVANT `envoyee`, à l'écran qui le présentera la feuille fermée.
+    let nonSuivie: (IssueCorrection) -> Void
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var saisie: SaisieSuite
@@ -25,12 +28,13 @@ struct SuiteFeuille: View {
 
     init(
         affaire: DetailAffaire, installation: Installation, corrigee: SuiteAffaire? = nil,
-        envoyee: @escaping (String) -> Void
+        envoyee: @escaping (String) -> Void, nonSuivie: @escaping (IssueCorrection) -> Void = { _ in }
     ) {
         self.affaire = affaire
         self.installation = installation
         self.corrigee = corrigee
         self.envoyee = envoyee
+        self.nonSuivie = nonSuivie
         _saisie = State(
             initialValue: corrigee.map { SaisieSuite(corrigeant: $0, de: affaire) } ?? SaisieSuite(affaire: affaire))
     }
@@ -122,11 +126,13 @@ struct SuiteFeuille: View {
             // Les mots de l'avis du site (`affaires-en-liste.ts`).
             if let corrigee {
                 let correction = saisie.correction(depuis: corrigee, de: affaire)
-                try await service.corrigerSuite(correction, corrigee.id, de: affaire.id, dans: installation)
+                let issue = try await service.corrigerSuite(
+                    correction, corrigee.id, de: affaire.id, dans: installation)
+                if let issue { nonSuivie(issue) }
                 envoyee(TextesSuite.corrigee)
             } else {
                 try await service.ajouterSuite(saisie, a: affaire.id, dans: installation)
-                envoyee(saisie.changeEtat ? "Statut mis à jour" : "Commentaire ajouté")
+                envoyee(saisie.changeEtat ? TextesSuite.statutMisAJour : "Commentaire ajouté")
             }
         } catch {
             withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
