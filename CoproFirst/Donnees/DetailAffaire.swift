@@ -39,9 +39,17 @@ struct DetailAffaire: Hashable, Sendable {
     /// installation antérieure, qui ne le sert pas.
     var suiviActualite: String?
     var suiviActualiteLibelle: String?
-    /// L'intervenant, tel que la fiche du site l'écrit (`intervenantAffiche`) : le
-    /// prestataire, puis le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125).
-    var intervenant: String?
+    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181) ;
+    /// d'une installation antérieure, le seul qu'elle sert (`prestataire_nom`).
+    var prestataires: [PrestataireAffaire] = []
+    /// Le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125) : celui du contrat sous
+    /// contrat, celui de l'affaire sinon.
+    var rythme: String?
+    /// L'intervenant, tel que la fiche du site l'écrit (`intervenantAffiche`) : une ligne
+    /// par prestataire, puis le rythme.
+    var intervenants: [String] { Self.intervenants(prestataires.map(\.nom), rythme: rythme) }
+    /// « A, B · ↺ Mensuel » : l'intervenant en une phrase, celle que VoiceOver lit.
+    var intervenant: String? { intervenants.isEmpty ? nil : intervenants.joined(separator: ", ") }
     /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
     /// antérieure.
     var lecture: Lecture?
@@ -126,4 +134,7 @@ struct DroitsServisAffaire: Hashable, Sendable {
     /// large que `modifier` — l'auteur d'une affaire engagée le garde (l'urgence, les
     /// options passent encore). D'une installation antérieure : `modifier`, comme avant.
     var corriger = false
+    /// Ajouter, retirer un prestataire (`peut_changer_prestataires`, contrat 1.28.0, #181) :
+    /// le conseil, sur une affaire du bâti encore ouverte. Non servi : non.
+    var changerPrestataires = false
 }

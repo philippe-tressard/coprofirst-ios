@@ -39,6 +39,9 @@ struct SaisieAffaire: Hashable, Sendable {
     var description: String
     var urgente: Bool
     var perimetre: String?
+    /// Ses prestataires, dans l'ordre — « Modifier l'affaire » seulement, selon le droit
+    /// servi (`peut_changer_prestataires`, #181) ; la Création n'en pose pas.
+    var prestataires: [PrestataireAffaire] = []
 
     /// La description saisie, en HTML de l'éditeur du site (`TexteDuSite.html(saisi:)`).
     var descriptionHTML: String { TexteDuSite.html(saisi: description) }

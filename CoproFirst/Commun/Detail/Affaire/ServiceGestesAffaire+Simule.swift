@@ -50,6 +50,7 @@ extension ServiceSimule: ServiceGestesAffaire {
     func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(300))
         let lieux = try FixturesPerimetres.lus()
+        let annuaire = try FixturesPrestataires.lus(archives: false)
         try changerAffaireSimulee(affaire) { detail in
             // Les deux refus du serveur (`update_ticket`) : sans crayon, rien ; un contenu
             // touché sans le droit sur le contenu, son refus à lui.
@@ -62,6 +63,16 @@ extension ServiceSimule: ServiceGestesAffaire {
             detail.description = edition.descriptionHTML ?? detail.description
             detail.categorie = edition.categorie ?? detail.categorie
             detail.urgente = edition.urgente ?? detail.urgente
+            // La liste entière remplace l'ancienne ; sans le droit, elle est ignorée, comme
+            // le serveur l'ignore (#181) ; un prestataire inconnu, son refus (404).
+            if let ids = edition.prestataires, detail.droits.changerPrestataires {
+                detail.prestataires = try ids.map { id in
+                    guard let connu = annuaire.first(where: { $0.id == id }) else {
+                        throw ErreurService.refus(.init(phrase: "Prestataire introuvable"))
+                    }
+                    return PrestataireAffaire(id: id, nom: connu.nom)
+                }
+            }
             if let codes = edition.perimetres {
                 // Sans lieu, le serveur pose le défaut qu'il désigne.
                 let code = codes.first ?? Perimetre.codeParDefaut(lieux)

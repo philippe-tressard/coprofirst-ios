@@ -35,6 +35,7 @@ enum FixturesDetailAffaire {
            "fichiers_urls": ["/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf",
                              "/uploads/tickets/41-consignes.txt"],
            "peut_repondre": true, "peut_modifier": false, "peut_corriger": true,
+           "prestataires": [], "peut_changer_prestataires": false,
            "suivi_actualite_libelle": "", "frequence_libelle": ""},
           {"id": 12, "numero": "A-0012", "titre": "Coupure d'eau jeudi de 9 h à 12 h",
            "description": "Le remplacement d'une vanne dans la cave du bâtiment A impose de couper l'eau froide et l'eau chaude jeudi matin, de 9 h à 12 h. Pensez à faire une réserve.",
@@ -76,7 +77,10 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "syndic", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-10T13:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_b"], "perimetre_libelle": "Bâtiment B",
-           "prestataire_nom": "Ascenseurs du Parc (fictif)", "frequence_type": "fois_par_an",
+           "prestataire_id": 1, "prestataire_nom": "Ascenseurs du Parc (fictif)",
+           "prestataires": [{"id": 1, "nom": "Ascenseurs du Parc (fictif)"},
+                            {"id": 2, "nom": "Contrôles Sécurité Exemple"}],
+           "peut_changer_prestataires": false, "frequence_type": "fois_par_an",
            "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": "", "contrat_id": 1,
            "contrat": {"id": 1, "libelle": "Maintenance des deux ascenseurs", "numero_contrat": "ASC-2024-118",
                        "frequence_type": "mois", "frequence_valeur": 1, "frequence_libelle": "↺ Mensuel"}}
@@ -123,12 +127,23 @@ enum FixturesDetailAffaire {
         Reponse(nom: "evolutions", schema: "TicketEvolutionRead", json: evolutions),
     ]
 
+    /// Ce que le serveur sert au-dessus du plancher : les prestataires d'une affaire et le
+    /// droit d'en changer (contrat 1.28.0, #181). L'affaire 44 n'en sert pas : elle est
+    /// lue comme d'une installation antérieure, par `prestataire_nom`.
+    static let auDessus = [
+        AuDessusDuPlancher(
+            schema: "TicketRead", champs: ["prestataires", "peut_changer_prestataires"], contrat: "1.28.0"),
+    ]
+
     /// L'affaire `id` telle que le service réel la lirait, puis ses évolutions.
     static func lue(_ id: Int) throws -> DetailAffaire? {
         let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: affaires)
         guard let ticket = tickets.first(where: { $0.id == id }) else { return nil }
         let suites = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: evolutions)
-        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id })
+        // Le corps de CETTE affaire, tel que GET /tickets/{id} le servirait.
+        let corps = try JSONSerialization.jsonObject(with: Data(affaires.utf8)) as? [[String: Any]]
+        let servi = try corps?.first { $0["id"] as? Int == id }.map { try JSONSerialization.data(withJSONObject: $0) }
+        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id }, corps: servi)
     }
 }
 #endif

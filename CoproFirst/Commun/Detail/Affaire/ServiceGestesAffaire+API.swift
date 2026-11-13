@@ -25,7 +25,15 @@ extension ServiceAPI: ServiceGestesAffaire {
         let corps = Components.Schemas.TicketUpdate(
             categorie: edition.categorie, description: edition.descriptionHTML,
             perimetreCible: edition.perimetres, titre: edition.titre, urgente: edition.urgente)
-        try await modifierAffaire(affaire, corps, dans: installation)
+        guard let prestataires = edition.prestataires else {
+            try await modifierAffaire(affaire, corps, dans: installation)
+            return
+        }
+        // `prestataire_ids` est au-dessus du plancher (contrat 1.28.0, #181) : ajouté au
+        // corps généré, le temps de CET appel. Le droit qui l'offre n'est servi qu'à partir de là.
+        try await CorpsEnvoye.completer(avec: ChampsPrestataires(prestataireIds: prestataires)) {
+            try await modifierAffaire(affaire, corps, dans: installation)
+        }
     }
 
     func regler(
