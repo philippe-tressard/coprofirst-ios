@@ -23,7 +23,8 @@ settings:
     # (CODE_SIGNING_ALLOWED=NO dans .github/workflows/ci.yml).
     DEVELOPMENT_TEAM: GUX8KASNTG
     CODE_SIGN_STYLE: Automatic
-    MARKETING_VERSION: "0.1.0"
+    # 1.0 : la version que portait l'archive jusqu'ici (le plist l'écrivait en dur).
+    MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
     LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
     SWIFT_EMIT_LOC_STRINGS: "YES"
@@ -52,6 +53,11 @@ targets:
       properties:
         CFBundleDisplayName: CoproFirst
         CFBundleDevelopmentRegion: fr
+        # Une seule source de la version : les réglages du projet (MARKETING_VERSION,
+        # CURRENT_PROJECT_VERSION). XcodeGen écrirait sinon « 1.0 » et « 1 » en dur, et
+        # l'archive dirait autre chose que le projet.
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Français seul : aucune autre langue n'est proposée (CLAUDE.md).
         CFBundleLocalizations: [fr]
         ITSAppUsesNonExemptEncryption: false
@@ -89,6 +95,10 @@ targets:
         # En changer après la création de l'app dans App Store Connect est impossible.
         PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app
         PRODUCT_NAME: CoproFirst
+        # iPhone seul (CLAUDE.md). Le réglage du projet ne suffit pas : XcodeGen pose « 1,2 » sur la
+        # cible, et l'archive devenait une app iPad — captures iPad et multitâche exigés par Apple
+        # pour une app qui n'a qu'une orientation.
+        TARGETED_DEVICE_FAMILY: "1"
         GENERATE_INFOPLIST_FILE: "NO"
   CoproFirstTests:
     type: bundle.unit-test

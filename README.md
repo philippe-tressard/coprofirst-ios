@@ -76,6 +76,9 @@ résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
 Une affaire ouverte se lit en fil, sur un rail : la demande, la suite, les comptes
 rendus, la synthèse — pastille pleine pour le réalisé ; un toucher ouvre une entrée
 quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
+Un contrat résilié dit, sur sa carte, par qui il est remplacé et dès quand ; celui qui
+prend la suite dit qui il remplace (coprofirst v3.91.0, contrat 1.29.0, #185) — rien de
+plus d'une installation antérieure. La saisie d'un contrat reste au site.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
