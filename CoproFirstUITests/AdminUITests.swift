@@ -127,13 +127,15 @@ final class AdminUITests: XCTestCase {
         toucherLOnglet("telemetry", app)
         XCTAssertTrue(app.elementAcces("admin.telemetrie.indicateurs").apparait(), "les nombres clés")
         XCTAssertTrue(app.elementAcces("admin.telemetrie.filtre").exists, "le filtre que le serveur propose")
-        // L'accès, site ou application, servi au-dessus du plancher (coprofirst#2726).
-        XCTAssertTrue(app.elementAcces("admin.telemetrie.acces.ios").exists, "les vues de l'app, servies")
         LancementCaptures.capturer("admin-4-telemetrie-jour")
         app.elementAcces("admin.telemetrie.vue.annee").tap()
         XCTAssertTrue(app.elementAcces("admin.telemetrie.graphe").apparait(), "le graphe")
         XCTAssertFalse(app.elementAcces("admin.telemetrie.filtre").exists, "rien à écarter sur douze mois")
         LancementCaptures.capturer("admin-5-telemetrie-annee")
+        // L'accès, site ou application, servi au-dessus du plancher (coprofirst#2726), sous le graphe.
+        let accesApp = app.elementAcces("admin.telemetrie.acces.ios")
+        for _ in 0..<6 where !accesApp.exists { app.swipeUp() }
+        XCTAssertTrue(accesApp.exists, "les vues de l'app, servies")
     }
 
     /// L'opérateur lit la santé des tâches, l'administrateur le dernier export : chacun ce

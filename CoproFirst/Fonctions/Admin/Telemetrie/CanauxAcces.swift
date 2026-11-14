@@ -29,7 +29,8 @@ struct CanauxAcces: View {
                 }
             }
         }
-        .accessibilityIdentifier("admin.telemetrie.acces")
+        // Pas d'identifiant sur la carte : posé sur un conteneur, SwiftUI le donne à chaque
+        // ligne, et celui de chaque canal (`admin.telemetrie.acces.<canal>`) se perdrait.
     }
 
     private func ligne(_ canal: PartCanal) -> some View {
