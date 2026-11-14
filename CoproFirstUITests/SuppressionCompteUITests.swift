@@ -27,15 +27,18 @@ final class SuppressionCompteUITests: XCTestCase {
     func testLaDemandeSeFaitAvecLeMotDePasseEtSeRetire() throws {
         let app = ouvrirLeProfil()
         let demander = app.elementAcces("profil.suppression.demander")
-        XCTAssertTrue(app.amener(demander), "le geste, sous « Vos droits »")
+        XCTAssertTrue(app.amener(demander, essais: 40), "le geste, sous « Vos droits »")
         LancementCaptures.capturer("suppression-1-invitation")
         demander.tap()
 
         // La feuille dit ce qui sera effacé (phrases servies) avant de demander quoi que ce soit.
         let motDePasse = app.elementAcces("suppression.motDePasse")
-        XCTAssertTrue(motDePasse.apparait(), "la confirmation demande le mot de passe")
-        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Ancien résident"))
-            .firstMatch.sonde(), "ce que la personne perd et ce qui reste, dit avant de confirmer")
+        // Aux grandes tailles, la feuille défile : les phrases d'abord, le champ plus bas.
+        let perte = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Ancien résident"))
+            .firstMatch
+        XCTAssertTrue(app.amener(perte, essais: 40), "ce que la personne perd et ce qui reste, dit avant de confirmer")
+        LancementCaptures.capturer("suppression-2a-ce-qui-reste")
+        XCTAssertTrue(app.amener(motDePasse, essais: 40), "la confirmation demande le mot de passe")
         let confirmer = app.elementAcces("suppression.confirmer")
         XCTAssertTrue(
             app.descendants(matching: .any)
@@ -45,6 +48,7 @@ final class SuppressionCompteUITests: XCTestCase {
         LancementCaptures.capturer("suppression-2-confirmation")
 
         // Un mot de passe refusé par le serveur : la phrase du serveur, la feuille reste.
+        XCTAssertTrue(app.amener(motDePasse, essais: 40))
         motDePasse.tap()
         motDePasse.typeText("refuse")
         confirmer.tap()
@@ -53,6 +57,7 @@ final class SuppressionCompteUITests: XCTestCase {
         LancementCaptures.capturer("suppression-3-refus")
 
         // Le bon mot de passe : la demande part, la feuille se ferme.
+        XCTAssertTrue(app.amener(motDePasse, essais: 40))
         motDePasse.tap()
         // Efface « refuse » touche par touche : le menu « Tout sélectionner » dépend de la langue.
         motDePasse.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "refuse".count))
