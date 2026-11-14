@@ -33,6 +33,7 @@ struct DetailAffaireView: View {
         // Le bandeau occupe le bas : la barre d'onglets s'efface dès l'arrivée — squelette
         // compris, pour ne pas sauter — et revient au retour, comme Photos ou Fichiers.
         .toolbar(.hidden, for: .tabBar)
+        .pageVue(CheminDuSite.affaire(id))
     }
 
     /// La forme d'une affaire, le temps qu'elle arrive.

@@ -27,6 +27,7 @@ enum PorteeTelemetrie: String, CaseIterable, Identifiable, Sendable {
 
 /// Le tableau de bord, tel que le serveur le sert (`utils/telemetrie_tableau`) — ce que
 /// l'app en montre : les nombres clés, le graphe, les pages et les utilisateurs actifs.
+/// Et, depuis le contrat 1.31.0, la répartition par canal d'accès (`CanauxTelemetrie`).
 /// Le reste (erreurs, « Qui vient », retour des comptes, gestes, arrivées, durées) se
 /// lit sur le site.
 struct TableauTelemetrie: Hashable, Sendable {
@@ -37,6 +38,9 @@ struct TableauTelemetrie: Hashable, Sendable {
     var topPages: [PageVue]
     var topUsers: [UtilisateurActif]
     var filtreGestionnaire: FiltreGestionnaire
+    /// Les vues par canal d'accès — seuls ceux qui en ont ; vide d'une installation
+    /// antérieure au contrat 1.31.0 (`CanauxTelemetrie`).
+    var canaux: [PartCanal] = []
 
     /// Les nombres clés : ils changent avec la vue, chacun se lit seul.
     struct Indicateurs: Hashable, Sendable {
@@ -74,6 +78,8 @@ struct TableauTelemetrie: Hashable, Sendable {
         var page: String
         var total: Int
         var uniques: Int
+        /// Ses vues par canal (contrat 1.31.0) — seuls ceux qui en ont.
+        var canaux: [VuesCanal] = []
         var id: String { page }
     }
 

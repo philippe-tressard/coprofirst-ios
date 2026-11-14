@@ -127,6 +127,8 @@ final class AdminUITests: XCTestCase {
         toucherLOnglet("telemetry", app)
         XCTAssertTrue(app.elementAcces("admin.telemetrie.indicateurs").apparait(), "les nombres clés")
         XCTAssertTrue(app.elementAcces("admin.telemetrie.filtre").exists, "le filtre que le serveur propose")
+        // L'accès, site ou application, servi au-dessus du plancher (coprofirst#2726).
+        XCTAssertTrue(app.elementAcces("admin.telemetrie.acces.ios").exists, "les vues de l'app, servies")
         LancementCaptures.capturer("admin-4-telemetrie-jour")
         app.elementAcces("admin.telemetrie.vue.annee").tap()
         XCTAssertTrue(app.elementAcces("admin.telemetrie.graphe").apparait(), "le graphe")

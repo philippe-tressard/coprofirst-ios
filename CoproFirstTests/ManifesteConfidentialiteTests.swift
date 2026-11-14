@@ -35,6 +35,20 @@ struct ManifesteConfidentialiteTests {
         }
     }
 
+    /// Les écrans vus (coprofirst#2726) : l'interaction avec l'app, liée au compte, pour la
+    /// mesure d'audience de la résidence — sans traçage, pour cette seule finalité.
+    @Test func lesEcransVusSontDeclaresPourLaMesureDAudience() throws {
+        let donnees = try #require(try manifeste()["NSPrivacyCollectedDataTypes"] as? [[String: Any]])
+        let ecrans = try #require(
+            donnees.first {
+                $0["NSPrivacyCollectedDataType"] as? String == "NSPrivacyCollectedDataTypeProductInteraction"
+            })
+        #expect(ecrans["NSPrivacyCollectedDataTypeLinked"] as? Bool == true)
+        #expect(ecrans["NSPrivacyCollectedDataTypeTracking"] as? Bool == false)
+        #expect(
+            ecrans["NSPrivacyCollectedDataTypePurposes"] as? [String] == ["NSPrivacyCollectedDataTypePurposeAnalytics"])
+    }
+
     /// Les réglages (`UserDefaults`) sont la seule API à raison requise que l'app appelle.
     @Test func lesReglagesSontDeclares() throws {
         let acces = try #require(try manifeste()["NSPrivacyAccessedAPITypes"] as? [[String: Any]])

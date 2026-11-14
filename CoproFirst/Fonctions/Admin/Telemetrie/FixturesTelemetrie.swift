@@ -32,11 +32,20 @@ enum FixturesTelemetrie {
          ],
          "chart_label": "Vues par heure",
          "top_pages": [
-          {"page": "/tableau-de-bord", "total": 58, "uniques": 21},
-          {"page": "/mes-demandes", "total": 31, "uniques": 12},
-          {"page": "/residence", "total": 18, "uniques": 9},
-          {"page": "/communaute", "total": 12, "uniques": 7},
-          {"page": "/annuaire", "total": 7, "uniques": 5}
+          {"page": "/tableau-de-bord", "total": 58, "uniques": 21,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 36},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 22}]},
+          {"page": "/mes-demandes", "total": 31, "uniques": 12,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 22},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 9}]},
+          {"page": "/residence", "total": 18, "uniques": 9,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 14},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 4}]},
+          {"page": "/communaute", "total": 12, "uniques": 7,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 12}]},
+          {"page": "/annuaire", "total": 7, "uniques": 5,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 5},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 2}]}
          ],
          "top_users": [
           {"nom": "Camille Exemple", "derniere_connexion": "2026-11-10T18:42:00",
@@ -53,6 +62,10 @@ enum FixturesTelemetrie {
          "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
           "arrivants": {"periode": "", "valides": 0, "en_attente": 0, "revenus": 0, "jamais_revenus": 0,
            "fenetre_jours": 0, "taux": null}},
+         "canaux": [
+          {"canal": "site", "libelle": "Site web", "vues": 109, "part": 75, "visiteurs": 19},
+          {"canal": "ios", "libelle": "App iPhone", "vues": 37, "part": 25, "visiteurs": 8}
+         ],
          "filtre_gestionnaire": {"propose": true, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -99,11 +112,20 @@ enum FixturesTelemetrie {
          ],
          "chart_label": "Vues par jour (30 j)",
          "top_pages": [
-          {"page": "/tableau-de-bord", "total": 58, "uniques": 21},
-          {"page": "/mes-demandes", "total": 31, "uniques": 12},
-          {"page": "/residence", "total": 18, "uniques": 9},
-          {"page": "/communaute", "total": 12, "uniques": 7},
-          {"page": "/annuaire", "total": 7, "uniques": 5}
+          {"page": "/tableau-de-bord", "total": 58, "uniques": 21,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 36},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 22}]},
+          {"page": "/mes-demandes", "total": 31, "uniques": 12,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 22},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 9}]},
+          {"page": "/residence", "total": 18, "uniques": 9,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 14},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 4}]},
+          {"page": "/communaute", "total": 12, "uniques": 7,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 12}]},
+          {"page": "/annuaire", "total": 7, "uniques": 5,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 5},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 2}]}
          ],
          "top_users": [
           {"nom": "Camille Exemple", "derniere_connexion": "2026-11-10T18:42:00",
@@ -120,6 +142,10 @@ enum FixturesTelemetrie {
          "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
           "arrivants": {"periode": "", "valides": 0, "en_attente": 0, "revenus": 0, "jamais_revenus": 0,
            "fenetre_jours": 0, "taux": null}},
+         "canaux": [
+          {"canal": "site", "libelle": "Site web", "vues": 913, "part": 76, "visiteurs": 15},
+          {"canal": "ios", "libelle": "App iPhone", "vues": 288, "part": 24, "visiteurs": 6}
+         ],
          "filtre_gestionnaire": {"propose": true, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -147,11 +173,20 @@ enum FixturesTelemetrie {
          ],
          "chart_label": "Vues par mois (12 mois)",
          "top_pages": [
-          {"page": "/tableau-de-bord", "total": 58, "uniques": 21},
-          {"page": "/mes-demandes", "total": 31, "uniques": 12},
-          {"page": "/residence", "total": 18, "uniques": 9},
-          {"page": "/communaute", "total": 12, "uniques": 7},
-          {"page": "/annuaire", "total": 7, "uniques": 5}
+          {"page": "/tableau-de-bord", "total": 58, "uniques": 21,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 36},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 22}]},
+          {"page": "/mes-demandes", "total": 31, "uniques": 12,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 22},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 9}]},
+          {"page": "/residence", "total": 18, "uniques": 9,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 14},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 4}]},
+          {"page": "/communaute", "total": 12, "uniques": 7,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 12}]},
+          {"page": "/annuaire", "total": 7, "uniques": 5,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 5},
+            {"canal": "ios", "libelle": "App iPhone", "vues": 2}]}
          ],
          "top_users": [],
          "erreurs": [],
@@ -161,6 +196,10 @@ enum FixturesTelemetrie {
          "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
           "arrivants": {"periode": "", "valides": 0, "en_attente": 0, "revenus": 0, "jamais_revenus": 0,
            "fenetre_jours": 0, "taux": null}},
+         "canaux": [
+          {"canal": "site", "libelle": "Site web", "vues": 8483, "part": 93, "visiteurs": null},
+          {"canal": "ios", "libelle": "App iPhone", "vues": 672, "part": 7, "visiteurs": null}
+         ],
          "filtre_gestionnaire": {"propose": false, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
@@ -179,11 +218,16 @@ enum FixturesTelemetrie {
          ],
          "chart_label": "Vues par année (10 ans)",
          "top_pages": [
-          {"page": "/tableau-de-bord", "total": 58, "uniques": 21},
-          {"page": "/mes-demandes", "total": 31, "uniques": 12},
-          {"page": "/residence", "total": 18, "uniques": 9},
-          {"page": "/communaute", "total": 12, "uniques": 7},
-          {"page": "/annuaire", "total": 7, "uniques": 5}
+          {"page": "/tableau-de-bord", "total": 58, "uniques": 21,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 58}]},
+          {"page": "/mes-demandes", "total": 31, "uniques": 12,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 31}]},
+          {"page": "/residence", "total": 18, "uniques": 9,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 18}]},
+          {"page": "/communaute", "total": 12, "uniques": 7,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 12}]},
+          {"page": "/annuaire", "total": 7, "uniques": 5,
+           "canaux": [{"canal": "site", "libelle": "Site web", "vues": 7}]}
          ],
          "top_users": [],
          "erreurs": [],
@@ -193,12 +237,22 @@ enum FixturesTelemetrie {
          "retour": {"comptes_mesures": 0, "refus": 0, "dormants": [], "liste_dormants": [],
           "arrivants": {"periode": "", "valides": 0, "en_attente": 0, "revenus": 0, "jamais_revenus": 0,
            "fenetre_jours": 0, "taux": null}},
+         "canaux": [
+          {"canal": "site", "libelle": "Site web", "vues": 18405, "part": 100, "visiteurs": null}
+         ],
          "filtre_gestionnaire": {"propose": false, "gestionnaire_designe": true, "applique": "avec",
           "non_distingue_jusqu_au": null}
         }
         """#
 
     typealias Reponse = FixturesAcces.Reponse
+
+    /// La répartition par canal d'accès, servie au-dessus du plancher (contrat 1.31.0,
+    /// coprofirst#2726). Le Total n'a qu'un canal : ni colonne « Accès » ni utilisateurs.
+    static let auDessus = [
+        AuDessusDuPlancher(schema: "TableauTelemetrie", champs: ["canaux"], contrat: "1.31.0"),
+        AuDessusDuPlancher(schema: "PageTop", champs: ["canaux"], contrat: "1.31.0"),
+    ]
 
     static let reponses: [PorteeTelemetrie: Reponse] = [
         .jour: Reponse(nom: "jour", schema: "TableauTelemetrie", json: jour),
@@ -210,7 +264,9 @@ enum FixturesTelemetrie {
     /// Lu comme le client généré le lit, branché comme le service réel.
     static func tableau(_ portee: PorteeTelemetrie) throws -> TableauTelemetrie {
         guard let reponse = reponses[portee] else { throw ErreurService.inattendue(404) }
-        return TableauTelemetrie(try Relecture.generee(Components.Schemas.TableauTelemetrie.self, json: reponse.json))
+        return TableauTelemetrie(
+            try Relecture.generee(Components.Schemas.TableauTelemetrie.self, json: reponse.json),
+            corps: Data(reponse.json.utf8))
     }
 }
 #endif
