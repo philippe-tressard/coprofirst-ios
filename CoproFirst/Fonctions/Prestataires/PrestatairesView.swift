@@ -71,11 +71,11 @@ struct PrestatairesView: View {
 extension PrestatairesView: EcranDeMenu {}
 
 /// Ce que les trois onglets partagent, chargé une fois : les fiches, les contrats en
-/// cours, les avis, les équipements (libellés et ordre, servis par l'API).
+/// cours, les équipements (libellés et ordre, servis par l'API). Les avis d'un prestataire
+/// se lisent quand sa fiche s'ouvre (`RecapitulatifAvis`).
 struct DonneesPrestataires: Sendable {
     var prestataires: [Prestataire]
     var contrats: [Contrat]
-    var avis: [AvisPrestataire]
     var equipements: [Equipement]
 
     static func lire(
@@ -83,22 +83,16 @@ struct DonneesPrestataires: Sendable {
     ) async throws -> DonneesPrestataires {
         async let prestataires = service.prestataires(installation, archives: false)
         async let contrats = service.contrats(installation, archives: false)
-        async let avis = service.avis(installation)
         async let equipements = service.equipements(installation)
-        // Les avis et les équipements ne bloquent pas : sans eux, l'écran reste lisible.
+        // Les équipements ne bloquent pas : sans eux, l'écran reste lisible.
         return try await DonneesPrestataires(
-            prestataires: prestataires, contrats: contrats, avis: (try? await avis) ?? [],
-            equipements: (try? await equipements) ?? [])
+            prestataires: prestataires, contrats: contrats, equipements: (try? await equipements) ?? [])
     }
 
     /// `equipLabel` : le libellé servi, ou le code brut s'il est inconnu.
     func equipement(_ code: String) -> String { equipements.first { $0.code == code }?.libelle ?? code }
 
     func contrats(de prestataire: Prestataire) -> [Contrat] { contrats.filter { $0.prestataireId == prestataire.id } }
-
-    func avis(de prestataire: Prestataire) -> [AvisPrestataire] {
-        avis.filter { $0.prestataireId == prestataire.id }.sorted { $0.creeLe > $1.creeLe }
-    }
 }
 
 private struct SquelettePrestataires: View {
