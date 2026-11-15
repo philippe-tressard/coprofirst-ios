@@ -27,13 +27,16 @@ struct SuiteHistoriqueTests {
     /// qu'il corrige et efface ; une réponse, qui appartient à son auteur.
     private let servies = #"""
         [{"id": 1, "ticket_id": 41, "type": "etat",
-           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T10:00:00",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "", "cree_le": "2026-11-09T10:00:00",
           "ancien_statut": "ouvert", "nouveau_statut": "en_cours", "peut_modifier": true, "peut_supprimer": true},
          {"id": 2, "ticket_id": 41, "type": "commentaire",
-           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "", "cree_le": "2026-11-09T11:00:00",
           "contenu": "Un mot.", "statut_avant": "en_cours", "peut_modifier": true, "peut_supprimer": true},
          {"id": 3, "ticket_id": 41, "type": "reponse",
-           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T13:00:00",
+           "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "", "cree_le": "2026-11-09T13:00:00",
           "contenu": "Une réponse.", "peut_modifier": false, "peut_supprimer": false}]
         """#
 
@@ -84,10 +87,12 @@ struct SuiteHistoriqueTests {
     @Test func unSeulGesteServiNOffreQueLui() throws {
         let json = #"""
             [{"id": 1, "ticket_id": 41, "type": "commentaire",
-              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+              "etat_propose_libelle": "", "cree_le": "2026-11-09T11:00:00",
               "contenu": "Un mot.", "peut_modifier": true, "peut_supprimer": false},
              {"id": 2, "ticket_id": 41, "type": "commentaire",
-              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T12:00:00",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+              "etat_propose_libelle": "", "cree_le": "2026-11-09T12:00:00",
               "contenu": "Un autre.", "peut_modifier": null}]
             """#
         let servies = try lues(json)
@@ -99,7 +104,8 @@ struct SuiteHistoriqueTests {
     @Test func desGestesAbsentsNOuvrentRien() throws {
         let json = #"""
             [{"id": 1, "ticket_id": 41, "type": "commentaire",
-              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "cree_le": "2026-11-09T11:00:00",
+              "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+              "etat_propose_libelle": "", "cree_le": "2026-11-09T11:00:00",
               "contenu": "Un mot.", "statut_avant": "en_cours"}]
             """#
         #expect(try lues(json).map(GesteSuite.offerts) == [[]])

@@ -247,13 +247,6 @@ enum FixturesTelemetrie {
 
     typealias Reponse = FixturesAcces.Reponse
 
-    /// La répartition par canal d'accès, servie au-dessus du plancher (contrat 1.31.0,
-    /// coprofirst#2726). Le Total n'a qu'un canal : ni colonne « Accès » ni utilisateurs.
-    static let auDessus = [
-        AuDessusDuPlancher(schema: "TableauTelemetrie", champs: ["canaux"], contrat: "1.31.0"),
-        AuDessusDuPlancher(schema: "PageTop", champs: ["canaux"], contrat: "1.31.0"),
-    ]
-
     static let reponses: [PorteeTelemetrie: Reponse] = [
         .jour: Reponse(nom: "jour", schema: "TableauTelemetrie", json: jour),
         .mois: Reponse(nom: "mois", schema: "TableauTelemetrie", json: mois),
@@ -264,9 +257,7 @@ enum FixturesTelemetrie {
     /// Lu comme le client généré le lit, branché comme le service réel.
     static func tableau(_ portee: PorteeTelemetrie) throws -> TableauTelemetrie {
         guard let reponse = reponses[portee] else { throw ErreurService.inattendue(404) }
-        return TableauTelemetrie(
-            try Relecture.generee(Components.Schemas.TableauTelemetrie.self, json: reponse.json),
-            corps: Data(reponse.json.utf8))
+        return TableauTelemetrie(try Relecture.generee(Components.Schemas.TableauTelemetrie.self, json: reponse.json))
     }
 }
 #endif

@@ -22,18 +22,12 @@ extension ServiceAPI: ServiceGestesAffaire {
     }
 
     func enregistrer(_ edition: EditionAffaire, de affaire: Int, dans installation: Installation) async throws {
+        // `prestataire_ids` (#181) ne part que si l'édition les touche : `nil`, il n'est pas envoyé.
         let corps = Components.Schemas.TicketUpdate(
             categorie: edition.categorie, description: edition.descriptionHTML,
-            perimetreCible: edition.perimetres, titre: edition.titre, urgente: edition.urgente)
-        guard let prestataires = edition.prestataires else {
-            try await modifierAffaire(affaire, corps, dans: installation)
-            return
-        }
-        // `prestataire_ids` est au-dessus du plancher (contrat 1.28.0, #181) : ajouté au
-        // corps généré, le temps de CET appel. Le droit qui l'offre n'est servi qu'à partir de là.
-        try await CorpsEnvoye.completer(avec: ChampsPrestataires(prestataireIds: prestataires)) {
-            try await modifierAffaire(affaire, corps, dans: installation)
-        }
+            perimetreCible: edition.perimetres, prestataireIds: edition.prestataires, titre: edition.titre,
+            urgente: edition.urgente)
+        try await modifierAffaire(affaire, corps, dans: installation)
     }
 
     func regler(
@@ -55,14 +49,12 @@ extension ServiceAPI: ServiceGestesAffaire {
         _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation
     ) async throws -> IssueCorrection? {
         let corps = try Self.corpsCorrection(correction)
-        let (sortie, servi) = try await appeler {
-            try await CorpsServi.garder {
-                try await client(installation.adresse).patchTicketsTicketIdEvolutionsEvolId(
-                    path: .init(ticketId: affaire, evolId: suite), body: .json(corps))
-            }
+        let sortie = try await appeler {
+            try await client(installation.adresse).patchTicketsTicketIdEvolutionsEvolId(
+                path: .init(ticketId: affaire, evolId: suite), body: .json(corps))
         }
         switch sortie {
-        case .ok: return IssueCorrection.lue(corps: servi)
+        case .ok(let ok): return IssueCorrection.lue(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

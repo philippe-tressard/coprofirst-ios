@@ -7,9 +7,8 @@ import Testing
 
 @testable import CoproFirst
 
-// La résiliation et le remplacement d'un contrat (#185, coprofirst#2712, contrat 1.29.0) :
-// servis au-dessus du plancher, relus dans le corps — rien n'est recalculé ; absents d'une
-// installation antérieure, la carte ne montre rien de plus.
+// La résiliation et le remplacement d'un contrat (#185, coprofirst#2712) : lus par le type
+// généré — rien n'est recalculé ; non servis, la carte ne montre rien de plus.
 
 private func pastilles(_ id: Int) throws -> [String] {
     try #require(try FixturesPrestataires.contratsLus().first { $0.id == id }).remplacement.pastilles
@@ -28,18 +27,16 @@ private func pastilles(_ id: Int) throws -> [String] {
     #expect(try pastilles(3).isEmpty, "les champs absents : rien")
 }
 
-/// Une installation sous le contrat 1.29.0 : le corps ne sert aucun des champs.
-@Test func uneInstallationAnterieureNeMontreRienDePlus() throws {
+/// Un contrat dont la réponse ne porte aucun des champs (leurs défauts du contrat).
+@Test func unContratSansCesChampsNeMontreRienDePlus() throws {
     let servi = #"""
         [{"id": 2, "copropriete_id": 1, "prestataire_id": 2, "type_equipement": "incendie",
           "libelle": "Vérification des extincteurs", "date_debut": "2023-06-01", "actif": true}]
         """#
     let generes = try Relecture.generee([Components.Schemas.ContratRead].self, json: servi)
-    for corps in [Data(servi.utf8), nil] {
-        let contrat = try #require(Contrat.lus(generes, corps: corps).first)
-        #expect(contrat.remplacement == RemplacementContrat())
-        #expect(!contrat.remplacement.estDatee, "« Sans échéance » reste affiché")
-    }
+    let contrat = try #require(Contrat.lus(generes).first)
+    #expect(contrat.remplacement == RemplacementContrat())
+    #expect(!contrat.remplacement.estDatee, "« Sans échéance » reste affiché")
 }
 
 @Test func uneResiliationSansSuiteSeDitAuOuLeSelonQuElleEstPassee() {

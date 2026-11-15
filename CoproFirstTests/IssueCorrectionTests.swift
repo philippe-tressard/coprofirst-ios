@@ -7,9 +7,9 @@ import Testing
 @testable import CoproFirst
 
 /// Une correction du Suivi que l'affaire n'a pas suivie (#187, coprofirst#2715) : la
-/// réponse le dit (`affaire_suivie`, `affaire_suivie_libelle`, `etat_propose`, contrat
-/// 1.30.0, au-dessus du plancher). L'app montre la phrase servie et propose l'état servi,
-/// selon le droit servi — rien de composé ; rien de servi, rien de plus qu'avant.
+/// réponse le dit (`affaire_suivie`, `affaire_suivie_libelle`, `etat_propose`). L'app montre
+/// la phrase servie et propose l'état servi, selon le droit servi — rien de composé ; rien de
+/// servi, rien de plus.
 @MainActor
 struct IssueCorrectionTests {
     private let residence = ServiceSimule.residence
@@ -19,8 +19,13 @@ struct IssueCorrectionTests {
         Data(
             (#"""
             {"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
-             "nouveau_statut_libelle": "", "perimetre_precise_libelle": ""
+             "nouveau_statut_libelle": "", "perimetre_precise_libelle": "", "etat_propose_libelle": ""
             """# + extra + "}").utf8)
+    }
+
+    /// La réponse servie, lue comme le service réel la lit (le type généré) ; illisible : `nil`.
+    private func lue(_ servie: Data?) -> IssueCorrection? {
+        servie.flatMap { try? FixturesCorrectionSuite.lue($0) }.flatMap(IssueCorrection.lue)
     }
 
     private func affaire(changerEtat: Bool = true) throws -> DetailAffaire {
@@ -37,33 +42,33 @@ struct IssueCorrectionTests {
     // MARK: - La lecture : la réponse, telle que servie
 
     @Test func laFixtureSeLitTelleQueServie() throws {
-        let issue = try #require(IssueCorrection.lue(corps: Data(FixturesCorrectionSuite.nonSuivie.utf8)))
+        let issue = try #require(lue(Data(FixturesCorrectionSuite.nonSuivie.utf8)))
         #expect(issue.phrase.hasPrefix("L'affaire est restée « Résolu »"))
         #expect(issue.etatPropose == "chez_prestataire" && issue.etatProposeLibelle == "Chez le prestataire")
     }
 
-    /// Une installation antérieure au contrat 1.30.0 ne sert rien : rien de plus qu'avant.
+    /// Rien de servi, ou illisible : rien de plus.
     @Test func rienDeServiNeDitRien() {
-        #expect(IssueCorrection.lue(corps: corps("")) == nil, "installation antérieure")
-        #expect(IssueCorrection.lue(corps: nil) == nil)
-        #expect(IssueCorrection.lue(corps: Data("<html>".utf8)) == nil, "illisible : défaut fermé")
+        #expect(lue(corps("")) == nil, "rien de servi")
+        #expect(lue(nil) == nil)
+        #expect(lue(Data("<html>".utf8)) == nil, "illisible : défaut fermé")
     }
 
     @Test func uneAffaireQuiASuiviNeDitRien() {
-        #expect(IssueCorrection.lue(corps: corps(#", "affaire_suivie": true, "affaire_suivie_libelle": """#)) == nil)
-        #expect(IssueCorrection.lue(corps: corps(#", "affaire_suivie": null, "affaire_suivie_libelle": """#)) == nil)
+        #expect(lue(corps(#", "affaire_suivie": true, "affaire_suivie_libelle": """#)) == nil)
+        #expect(lue(corps(#", "affaire_suivie": null, "affaire_suivie_libelle": """#)) == nil)
     }
 
     /// Sans phrase servie, l'app n'en compose pas.
     @Test func sansPhraseServieRienNeSeDit() {
         let muette = corps(#", "affaire_suivie": false, "affaire_suivie_libelle": "", "etat_propose": "ouvert""#)
-        #expect(IssueCorrection.lue(corps: muette) == nil)
+        #expect(lue(muette) == nil)
     }
 
     // MARK: - La proposition : l'état servi, selon le droit servi
 
     @Test func lEtatProposeSOffreAQuiPeutChangerLEtat() throws {
-        let issue = try #require(IssueCorrection.lue(corps: Data(FixturesCorrectionSuite.nonSuivie.utf8)))
+        let issue = try #require(lue(Data(FixturesCorrectionSuite.nonSuivie.utf8)))
         let saisie = try #require(issue.proposition(pour: try affaire()))
         #expect(saisie.statut == "chez_prestataire" && saisie.changeEtat && saisie.type == "etat")
         #expect(issue.libelleProposition(pour: try affaire()) == "Appliquer « Chez le prestataire » à l’affaire")
@@ -80,7 +85,7 @@ struct IssueCorrectionTests {
     /// Le suivi d'une actualité : le serveur ne propose rien, la phrase seule se dit.
     @Test func sansEtatProposeLaPhraseSeule() throws {
         let servi = corps(#", "affaire_suivie": false, "affaire_suivie_libelle": "Restée.", "etat_propose": null"#)
-        let issue = try #require(IssueCorrection.lue(corps: servi))
+        let issue = try #require(lue(servi))
         let servie = try affaire()
         #expect(issue.phrase == "Restée." && issue.proposition(pour: servie) == nil)
     }
@@ -98,10 +103,10 @@ struct IssueCorrectionTests {
             .corrigerSuite(CorrectionSuite(suivi: .init(type: "etat", statut: "chez_prestataire")), 1, de: 41,
                            dans: residence)
         #expect(issue?.etatPropose == "chez_prestataire")
-        let anterieure = try #require(String(bytes: corps(""), encoding: .utf8))
-        let rien = try await ServiceAPI(transport: { _ in TransportFixe(corps: anterieure) })
+        let sansIssue = try #require(String(bytes: corps(""), encoding: .utf8))
+        let rien = try await ServiceAPI(transport: { _ in TransportFixe(corps: sansIssue) })
             .corrigerSuite(CorrectionSuite(contenuHTML: "<p>Un mot.</p>"), 1, de: 41, dans: residence)
-        #expect(rien == nil, "une installation antérieure : rien de plus")
+        #expect(rien == nil, "rien de servi : rien de plus")
     }
 
     // MARK: - Le faux serveur : la règle de coprofirst#2715
