@@ -82,10 +82,10 @@ struct AffaireServieTests {
         // avec l'affaire (`statuts[].libelle`, #105) — plus dans une table.
         let servis = try FixturesReferentielsAffaires.lus()
         let servie = try affaire("", evolutions: entree(#""Chez le syndic (servi)""#))
-        #expect(servie.suites.first?.changementDEtat(servis) == "Ouvert → Chez le syndic (servi)")
+        #expect(servie.suites.first?.changementDEtat(servis) == "Ouvert →\u{00A0}Chez le syndic (servi)")
         let vide = try affaire("", evolutions: entree(String(repeating: "\"", count: 2)))
         #expect(
-            vide.suites.first?.changementDEtat(servis) == "Ouvert → Chez le syndic",
+            vide.suites.first?.changementDEtat(servis) == "Ouvert →\u{00A0}Chez le syndic",
             "servi vide avec la Suite : les référentiels servis")
     }
 
@@ -94,9 +94,9 @@ struct AffaireServieTests {
     @Test func lIntervenantPorteLeRythmeDuContratDAbord() throws {
         let seul = #", "prestataires": [{"id": 1, "nom": "Ascenseurs (fictif)"}]"#
         let prestataire = seul + #", "frequence_libelle": "↺ 1×/an""#
-        #expect(try affaire(prestataire).intervenant == "Ascenseurs (fictif) · ↺ 1×/an")
+        #expect(try affaire(prestataire).intervenant == "Ascenseurs (fictif) ·\u{00A0}↺ 1×/an")
         let sousContrat = try affaire(prestataire + #", "contrat": {"id": 1, "frequence_libelle": "↺ Mensuel"}"#)
-        #expect(sousContrat.intervenant == "Ascenseurs (fictif) · ↺ Mensuel")
+        #expect(sousContrat.intervenant == "Ascenseurs (fictif) ·\u{00A0}↺ Mensuel")
         #expect(try affaire(seul).intervenant == "Ascenseurs (fictif)")
         #expect(try affaire(#", "frequence_libelle": "↺ Mensuel""#).intervenant == nil, "sans prestataire : rien")
     }

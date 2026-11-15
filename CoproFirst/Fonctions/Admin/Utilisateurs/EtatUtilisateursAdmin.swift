@@ -127,7 +127,7 @@ enum TextesUtilisateursAdmin {
             affiches == total
             ? "\(FormatsDuSite.nombre(total)) comptes"
             : "\(FormatsDuSite.nombre(affiches)) sur \(FormatsDuSite.nombre(total))"
-        return "\(base) · \(FormatsDuSite.nombre(conseil)) au conseil syndical"
+        return "\(base)\(Separateur.point)\(FormatsDuSite.nombre(conseil)) au conseil syndical"
     }
     static func bailleur(_ nom: String) -> String { "Bailleur : \(nom)" }
     static func purgeAvertie(_ date: String) -> String { "Inactif, averti le \(date)" }

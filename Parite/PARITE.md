@@ -83,7 +83,7 @@ Session parallèle. Dossiers : `Fonctions/Acces`, `Fonctions/Prestataires`.
 | `mon-lot` | `badges` | fait | #13 | Détenus, signaler perdu, nouvel accès, déclarer ; accès confiés (locataire), vue par locataire (bailleur) |
 | `mon-lot` | `telecommandes` | fait | #13 | Comme les badges |
 | `mon-lot` | `location` | fait | #13 | En lecture (baux actifs, archives, inventaire) ; créer, terminer, l'inventaire : sur le site, et l'app le dit |
-| `prestataires` | `prestataires` | fait | #13 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches, avis ; les gestes du conseil : sur le site |
+| `prestataires` | `prestataires` | fait | #13, #207 | `Fonctions/Prestataires`, en lecture : recherche, filtres, fiches ; avis en trois états, badge de moyenne, récapitulatif servi par exercice et par intervention, avis dépliables ; noter, corriger et retirer un avis : sur le site (#207, lot suivant) |
 | `prestataires` | `contrats` | fait | #13, #125, #185 | En lecture : résumé, échéances, fréquence servie, documents, résiliation et remplacement servis (contrat ≥ 1.29.0) ; la saisie reste au site |
 | `prestataires` | `consommations` | fait | #13 | En lecture : compteurs, relevés par année, photos |
 

@@ -203,6 +203,6 @@ struct ExtraitReglement: Hashable, Sendable {
     /// `AvisReglement`), ou la référence donnée à défaut.
     var origine: String? {
         let morceaux = [acte, rubrique, page].compactMap { $0 }.filter { !$0.isEmpty }
-        return morceaux.isEmpty ? reference : morceaux.joined(separator: TablesReglement.tiret)
+        return morceaux.isEmpty ? reference : morceaux.joined(separator: Separateur.tiret)
     }
 }

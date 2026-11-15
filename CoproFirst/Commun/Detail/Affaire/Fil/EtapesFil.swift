@@ -85,7 +85,8 @@ extension EtapeFil {
     }
 
     static func demande(_ affaire: DetailAffaire) -> EtapeFil {
-        let meta = [FormatsDuSite.date(affaire.creeLe), affaire.auteur].compactMap(\.self).joined(separator: " · ")
+        let meta = [FormatsDuSite.date(affaire.creeLe), affaire.auteur].compactMap(\.self)
+            .joined(separator: Separateur.point)
         return EtapeFil(cle: .demande, titre: TextesFil.demande, etat: .realise, meta: meta)
     }
 
@@ -111,7 +112,7 @@ extension EtapeFil {
                 "\(StatutsAffaire.libelle($0, servi: suite.nouveauStatutLibelle, dans: referentiels)) le \(date)"
             } ?? date
         guard let texte = suite.contenu.map(TexteDuSite.apercu), !texte.isEmpty else { return tete }
-        return "\(tete) — \(texte)"
+        return "\(tete)\(Separateur.tiret)\(texte)"
     }
 
     static func element(_ suite: SuiteAffaire, referentiels: ReferentielsAffaires) -> ElementFil {
@@ -119,7 +120,7 @@ extension EtapeFil {
         let auteur = suite.auteur ?? "La résidence"
         let ligne = [changement == nil ? nil : auteur, FormatsDuSite.dateHeure(suite.date)].compactMap(\.self)
         return ElementFil(
-            id: "suite.\(suite.id)", titre: changement ?? auteur, ligne: ligne.joined(separator: " · "),
+            id: "suite.\(suite.id)", titre: changement ?? auteur, ligne: ligne.joined(separator: Separateur.point),
             apercu: suite.contenu.map(TexteDuSite.apercu).flatMap(\.nulSiVide), html: suite.contenu,
             precise: suite.perimetrePrecise, pieces: suite.pieces, suite: suite)
     }
@@ -142,7 +143,7 @@ extension EtapeFil {
             ElementFil(
                 id: "cr.\(cr.id)", titre: TextesFil.point(cr.debut),
                 ligne: [cr.ou, cr.conseilSeul ? TextesFil.csEtPresents : nil].compactMap(\.self)
-                    .joined(separator: " · "),
+                    .joined(separator: Separateur.point),
                 apercu: TexteDuSite.apercu(cr.contenu).nulSiVide, html: cr.contenu)
         }
         return etape

@@ -113,7 +113,7 @@ struct TableauDeFrequentation: View {
                                 [
                                     utilisateur.statut.map(RolesUtilisateur.libelleStatut),
                                     TextesTelemetrie.vuesEtPages(utilisateur.total, utilisateur.pages),
-                                ].compactMap { $0 }.joined(separator: " · ")
+                                ].compactMap { $0 }.joined(separator: Separateur.point)
                             )
                             .font(.footnote).foregroundStyle(palette.textMuted)
                             if let derniere = utilisateur.derniereConnexion {

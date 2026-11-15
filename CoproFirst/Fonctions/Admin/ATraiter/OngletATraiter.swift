@@ -176,7 +176,7 @@ private struct LigneDemandeProfil: View {
         }
         Text(
             [demande.statutActuel.map(RolesUtilisateur.libelleStatut), demande.batimentActuel]
-                .compactMap { $0 }.joined(separator: " — ")
+                .compactMap { $0 }.joined(separator: Separateur.tiret)
         )
         .font(.subheadline).foregroundStyle(palette.textMuted)
         if let statut = demande.statutSouhaite {
