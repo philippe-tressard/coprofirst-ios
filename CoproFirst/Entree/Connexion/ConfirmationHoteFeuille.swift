@@ -122,7 +122,7 @@ struct ConfirmationHoteFeuille: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(palette.successTexte)
                 .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("confirmationHote.reconnue")
+                .elementIdentifie("confirmationHote.reconnue", lu: ConfirmationHote.reconnue)
                 .transition(.opacity)
         case .some:
             avertissement.transition(.opacity)
@@ -135,7 +135,7 @@ struct ConfirmationHoteFeuille: View {
                 .font(.headline)
                 .foregroundStyle(palette.warningTexte)
                 .fixedSize(horizontal: false, vertical: true)
-                .accessibilityIdentifier("confirmationHote.avertissement")
+                .elementIdentifie("confirmationHote.avertissement", lu: ConfirmationHote.avertissement)
             Text(ConfirmationHote.detailAvertissement)
                 .font(.subheadline)
                 .foregroundStyle(palette.text)

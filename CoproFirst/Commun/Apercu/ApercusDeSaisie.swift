@@ -57,9 +57,8 @@ private struct LectureDeLaSaisie: View {
             }
         }
         .contentTransition(.opacity)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(lecture.map { "\($0.enClair()) \($0.exclus)" } ?? TextesApercus.selonLaCategorie)
-        .accessibilityIdentifier(identifiant)
+        .elementIdentifie(
+            identifiant, lu: lecture.map { "\($0.enClair()) \($0.exclus)" } ?? TextesApercus.selonLaCategorie)
     }
 }
 

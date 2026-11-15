@@ -221,11 +221,12 @@ private struct RapprochementServi: View {
             Section {
                 if lie {
                     Label(TextesAnnuaireCS.inscritLie, systemImage: "link")
-                        .accessibilityIdentifier("cs.feuille.inscrit-lie")
+                        .elementIdentifie("cs.feuille.inscrit-lie", lu: TextesAnnuaireCS.inscritLie)
                 }
                 if let batiment = batiment?.nulSiVide {
-                    Label(TextesAnnuaireCS.batiment(batiment), systemImage: "building.2")
-                        .accessibilityIdentifier("cs.feuille.logement")
+                    let logement = TextesAnnuaireCS.batiment(batiment)
+                    Label(logement, systemImage: "building.2")
+                        .elementIdentifie("cs.feuille.logement", lu: logement)
                 }
             }
             .font(.subheadline)
