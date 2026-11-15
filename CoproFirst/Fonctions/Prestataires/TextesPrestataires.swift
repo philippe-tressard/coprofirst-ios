@@ -41,10 +41,8 @@ enum TextesPrestataires {
     static func documents(_ n: Int) -> String { "Documents (\(n))" }
 
     // Résiliation et remplacement (`CarteContrat.svelte`, contrat 1.29.0, #185)
-    /// `SEPARATEUR.point` du site : une espace, le point, une espace insécable.
-    static let point = " ·\u{00A0}"
     static func remplacePar(_ prestataire: String, des debut: String) -> String {
-        "🔁 Remplacé par \(prestataire)\(point)dès le \(FormatsDuSite.dateCourte(debut))"
+        "🔁 Remplacé par \(prestataire)\(Separateur.point)dès le \(FormatsDuSite.dateCourte(debut))"
     }
     static func resilie(_ date: String, passe: Bool) -> String {
         "\(passe ? libelleResilieLe : "Résilié au") \(FormatsDuSite.dateCourte(date))"
@@ -56,7 +54,9 @@ enum TextesPrestataires {
     static let libelleRemplacePar = "Remplacé par"
     static let libelleRemplace = "Remplace"
     /// La ligne du détail : « Contrat — Prestataire » (`SEPARATEUR.tiret`).
-    static func lie(_ contrat: ContratLie) -> String { "\(contrat.libelle) —\u{00A0}\(contrat.prestataireNom)" }
+    static func lie(_ contrat: ContratLie) -> String {
+        "\(contrat.libelle)\(Separateur.tiret)\(contrat.prestataireNom)"
+    }
     static let aucunDocument = "Aucun document."
 
     // Consommations

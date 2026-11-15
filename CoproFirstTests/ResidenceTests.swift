@@ -76,9 +76,9 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 
 @Test func laFicheDitLeMandatEchuEtLaReconduction() throws {
     let jour = try #require(FormatsDuSite.lire("2026-06-30"))
-    #expect(TextesResidence.mandat(jour, echu: true) == " — mandat échu depuis le 30/06/2026")
-    #expect(TextesResidence.mandat(jour, echu: false) == " — mandat jusqu'au 30/06/2026")
-    #expect(TextesResidence.echeance(jour, reconduit: true) == " — échéance 30/06/2026 (reconduit tacitement)")
+    #expect(TextesResidence.mandat(jour, echu: true) == " —\u{00A0}mandat échu depuis le 30/06/2026")
+    #expect(TextesResidence.mandat(jour, echu: false) == " —\u{00A0}mandat jusqu'au 30/06/2026")
+    #expect(TextesResidence.echeance(jour, reconduit: true) == " —\u{00A0}échéance 30/06/2026 (reconduit tacitement)")
     #expect(TextesResidence.echeance(nil, reconduit: true).isEmpty)
 }
 

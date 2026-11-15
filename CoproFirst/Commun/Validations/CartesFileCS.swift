@@ -18,7 +18,7 @@ struct CarteCompte: View {
             Text(nom).font(.headline).foregroundStyle(palette.text)
             Text(
                 [RolesUtilisateur.libelleStatut(compte.statut), compte.batimentNom].compactMap { $0 }
-                    .joined(separator: " — ")
+                    .joined(separator: Separateur.tiret)
             )
             .font(.subheadline).foregroundStyle(palette.textMuted)
             if let aide = compte.nomAideAffiche {
@@ -45,7 +45,7 @@ struct CarteCommande: View {
                 [
                     commande.batiment, commande.lot, LibellesAcces.typeAcces(commande.type),
                     FormatsDuSite.nombre(commande.quantite),
-                ].compactMap { $0 }.joined(separator: " · ")
+                ].compactMap { $0 }.joined(separator: Separateur.point)
             )
             .font(.subheadline).foregroundStyle(palette.textMuted)
             Text(FormatsDuSite.dateCourte(commande.creeLe)).font(.footnote).foregroundStyle(palette.textMuted)

@@ -114,7 +114,7 @@ final class HistoriqueUITests: XCTestCase {
         confirmer.tap()
 
         XCTAssertTrue(entree("Le syndic est prévenu", dans: app).disparait(), "l'entrée a quitté l'Historique")
-        XCTAssertTrue(entree("Ouvert → Chez le syndic", dans: app).exists, "les autres entrées restent")
+        XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le syndic", dans: app).exists, "les autres entrées restent")
         XCTAssertTrue(app.libelleAcces("Entrée supprimée").apparait(), "l'avis du geste")
     }
 
@@ -137,7 +137,7 @@ final class HistoriqueUITests: XCTestCase {
         app.elementAcces("affaire.suite").tap()
         choisirLEtat("Résolu", dans: app)
         app.elementAcces("suite.enregistrer").tap()
-        XCTAssertTrue(entree("Chez le syndic → Résolu", dans: app).apparait(), "la Suite plus récente")
+        XCTAssertTrue(entree("Chez le syndic →\u{00A0}Résolu", dans: app).apparait(), "la Suite plus récente")
 
         ouvrirLesGestes(1, dans: app)
         let modifier = app.elementAcces("historique.geste.modifier")
@@ -155,15 +155,15 @@ final class HistoriqueUITests: XCTestCase {
         appliquer.tap()
 
         XCTAssertTrue(
-            entree("Résolu → Chez le prestataire", dans: app).apparait(), "l'état appliqué par une Suite, relue")
-        XCTAssertTrue(entree("Ouvert → Chez le prestataire", dans: app).exists, "l'entrée corrigée")
+            entree("Résolu →\u{00A0}Chez le prestataire", dans: app).apparait(), "l'état appliqué par une Suite, relue")
+        XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le prestataire", dans: app).exists, "l'entrée corrigée")
     }
 
     /// Un résident lit l'Historique sans geste : le serveur ne lui en sert aucun.
     @MainActor
     func testUnResidentLitLHistoriqueSansGeste() throws {
         let app = ouvrirLAffaire(["-compte", "resident"])
-        XCTAssertTrue(entree("Ouvert → Chez le syndic", dans: app).exists)
+        XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le syndic", dans: app).exists)
         for id in 1...3 {
             XCTAssertFalse(app.elementAcces("historique.gestes.\(id)").exists, "aucun geste servi sur l'entrée \(id)")
         }

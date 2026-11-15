@@ -208,8 +208,9 @@ struct ChampsAffaire: View {
             // Ce que dit l'avertissement du site : l'app trace, elle n'alerte pas.
             Text(
                 "Une affaire urgente laisse une trace de votre signalement ; elle n'alerte pas les "
-                    + "secours. En cas de danger : 15 (SAMU) · 17 (Police secours) · 18 (Sapeurs-pompiers) · "
-                    + "112 (urgences)."
+                    + "secours. En cas de danger : "
+                    + ["15 (SAMU)", "17 (Police secours)", "18 (Sapeurs-pompiers)", "112 (urgences)"]
+                    .joined(separator: Separateur.point) + "."
             )
             .font(.footnote)
             .foregroundStyle(palette.danger)

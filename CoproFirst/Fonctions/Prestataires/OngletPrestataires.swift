@@ -74,7 +74,7 @@ struct OngletPrestataires: View {
 
     private func carte(_ prestataire: Prestataire, compact: Bool) -> some View {
         CartePrestataire(
-            prestataire: prestataire, donnees: donnees, compact: compact,
+            prestataire: prestataire, donnees: donnees, installation: installation, service: service, compact: compact,
             deplie: Binding(
                 get: { deplie == prestataire.id }, set: { deplie = $0 ? prestataire.id : nil }))
     }

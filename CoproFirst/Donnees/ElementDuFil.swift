@@ -85,12 +85,12 @@ enum Chronologie {
         let numero = quantieme == 1 ? "1ᵉʳ" : String(quantieme)
         let jourSemaine = jour.formatted(.dateTime.weekday(.wide).locale(Locale(identifier: "fr_FR")))
         if calendrier.isDate(jour, inSameDayAs: maintenant) {
-            return "Aujourd'hui · \(jourSemaine) \(numero)".uppercased()
+            return "Aujourd'hui\(Separateur.point)\(jourSemaine) \(numero)".uppercased()
         }
         if let hier = calendrier.date(byAdding: .day, value: -1, to: maintenant),
             calendrier.isDate(jour, inSameDayAs: hier)
         {
-            return "Hier · \(jourSemaine) \(numero)".uppercased()
+            return "Hier\(Separateur.point)\(jourSemaine) \(numero)".uppercased()
         }
         let memeAnnee = calendrier.isDate(jour, equalTo: maintenant, toGranularity: .year)
         let mois = jour.formatted(.dateTime.month(.wide).locale(Locale(identifier: "fr_FR")))

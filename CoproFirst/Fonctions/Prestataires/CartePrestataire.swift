@@ -8,13 +8,14 @@ import SwiftUI
 struct CartePrestataire: View {
     let prestataire: Prestataire
     let donnees: DonneesPrestataires
+    let installation: Installation
+    let service: any ServicePrestataires
     /// Au-delà de sept fiches, les contacts ne s'affichent que dépliés.
     let compact: Bool
     @Binding var deplie: Bool
     @Environment(\.palette) private var palette
 
     var body: some View {
-        let avis = donnees.avis(de: prestataire)
         let contrats = donnees.contrats(de: prestataire)
         Carte {
             VStack(alignment: .leading, spacing: 10) {
@@ -38,23 +39,30 @@ struct CartePrestataire: View {
                 .buttonStyle(.plain)
                 .accessibilityHint(deplie ? "Replie la fiche" : "Déplie la fiche")
                 .accessibilityIdentifier("prestataire.\(prestataire.id)")
-                capsules(avis: avis, contrats: contrats)
+                capsules(contrats: contrats)
                 if !compact || deplie { apercuContacts }
                 if deplie {
                     detail(contrats: contrats)
-                    if !avis.isEmpty { AvisDuConseil(avis: avis) }
+                    RecapitulatifAvis(prestataire: prestataire, installation: installation, service: service)
                 }
             }
         }
     }
 
-    private func capsules(avis: [AvisPrestataire], contrats: [Contrat]) -> some View {
+    private func capsules(contrats: [Contrat]) -> some View {
         FlowCapsules {
             PastilleTeinte(libelle: LibellesPrestataires.type(prestataire.type), badge: "badge-gray", compacte: true)
             PastilleTeinte(libelle: donnees.equipement(prestataire.specialite), badge: "badge-blue", compacte: true)
             if !contrats.isEmpty {
                 PastilleTeinte(
                     libelle: TextesPrestataires.sousContrat(contrats.count), badge: "badge-green", compacte: true)
+            }
+            // La moyenne SERVIE, dite par l'état du site (`etatDeMoyenne`, généré) : « Excellent · 4,33/5 ».
+            if let moyenne = prestataire.noteMoyenne {
+                PastilleTeinte(
+                    libelle: TextesAvisPrestataire.moyenne(moyenne),
+                    badge: EtatAvis.teinte(EtatAvis.deMoyenne(moyenne)), compacte: true)
+                .accessibilityLabel(TextesAvisPrestataire.moyenneEnClair(moyenne, nombre: prestataire.nbNotations))
             }
         }
     }
@@ -67,8 +75,9 @@ struct CartePrestataire: View {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
                     let nom = contact.nomAffiche ?? ""
                     let fonction = contact.fonction.map { " (\($0))" } ?? ""
+                    let qui = nom.isEmpty ? "" : "\(Separateur.tiret)\(nom)\(fonction)"
                     lien(
-                        "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(nom.isEmpty ? "" : " — \(nom)\(fonction)")",
+                        "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(qui)",
                         tel: contact.telephone)
                 }
             } else {
@@ -102,35 +111,5 @@ struct CartePrestataire: View {
             }
         }
         .transition(.opacity)
-    }
-}
-
-/// Les avis du conseil syndical (`NotationsPrestataire.svelte`), du plus récent au plus ancien.
-private struct AvisDuConseil: View {
-    let avis: [AvisPrestataire]
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(TextesPrestataires.avisDuConseil(avis.count)).styleLibelle()
-            ForEach(avis) { un in
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 8) {
-                        Text("\(un.note)/5")
-                            .font(.subheadline.weight(.semibold))
-                            .monospacedDigit()
-                            .foregroundStyle(palette.text)
-                            .accessibilityLabel("\(un.note) sur 5")
-                        Text(un.auteurNom ?? FormatsDuSite.tiret).font(.subheadline.weight(.medium))
-                        Text(FormatsDuSite.date(un.creeLe)).font(.caption).foregroundStyle(palette.textMuted)
-                    }
-                    if let commentaire = un.commentaire, !commentaire.isEmpty {
-                        Text(commentaire).font(.subheadline).foregroundStyle(palette.text)
-                    }
-                }
-                .accessibilityElement(children: .combine)
-            }
-        }
-        .padding(.top, 4)
     }
 }

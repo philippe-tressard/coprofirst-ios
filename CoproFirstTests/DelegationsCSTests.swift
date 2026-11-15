@@ -41,7 +41,7 @@ import Testing
     #expect(enAttente.mandantNom == "Lucie Exemple" && enAttente.aidantId == 7)
     #expect(TextesDelegations.periode(enAttente) == "Du 06/11/2026 au 04/02/2027")
     let active = try #require(lues.first { $0.statut == "active" })
-    #expect(active.dateFin == nil && TextesDelegations.periode(active) == "Du 11/07/2026 — illimité")
+    #expect(active.dateFin == nil && TextesDelegations.periode(active) == "Du 11/07/2026 —\u{00A0}illimité")
     // La simulation lit les mêmes octets par le même branchement.
     #expect(try await ServiceSimule(delai: .zero).delegations(ServiceSimule.residence) == lues)
 }
@@ -158,7 +158,9 @@ func leJourEtLaDateHeureCourteSontCeuxDuSite(iso: String, courte: String, jour: 
     #expect(lu.diagnosticsParAnnee.first?.diagnostics.map(\.urgence) == ["depasse", "annee"])
     #expect(lu.diagnosticsPermanents.map(\.id) == [1])
     let ascenseurs = try #require(lu.contrats.first)
-    #expect(TextesRenouvellements.periode(ascenseurs) == "1 déc. 2023 → 30 nov. 2026 · préavis dès 31 août 2026")
+    #expect(
+        TextesRenouvellements.periode(ascenseurs)
+            == "1 déc. 2023 →\u{00A0}30 nov. 2026 ·\u{00A0}préavis dès 31 août 2026")
     #expect(TextesRenouvellements.note(ascenseurs) == "★ 2,5 (4 avis)")
     #expect(TextesRenouvellements.note(lu.contrats[3]) == nil, "sans note, rien")
     #expect(try await ServiceSimule(delai: .zero).renouvellements(ServiceSimule.residence) == lu)

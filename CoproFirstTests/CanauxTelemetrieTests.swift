@@ -65,12 +65,12 @@ struct CanauxTelemetrieTests {
         #expect(TextesTelemetrie.piedAcces(annee.canaux) == nil)
         let jour = try FixturesTelemetrie.tableau(.jour)
         #expect(TextesTelemetrie.piedAcces(jour.canaux) == TextesTelemetrie.utilisateursParAcces)
-        #expect(TextesTelemetrie.vuesEtPart(jour.canaux[1]) == "37 vues · 25 %")
+        #expect(TextesTelemetrie.vuesEtPart(jour.canaux[1]) == "37 vues ·\u{00A0}25 %")
     }
 
     @Test func lAccesDUnePageSeLitCommeAuSite() throws {
         let jour = try FixturesTelemetrie.tableau(.jour)
-        #expect(TextesTelemetrie.accesDe(jour.topPages[0]) == "Site web\u{00A0}36 · App iPhone\u{00A0}22")
+        #expect(TextesTelemetrie.accesDe(jour.topPages[0]) == "Site web\u{00A0}36 ·\u{00A0}App iPhone\u{00A0}22")
         #expect(TextesTelemetrie.accesDe(jour.topPages[3]) == "Site web\u{00A0}12", "seuls les canaux qui ont des vues")
     }
 }

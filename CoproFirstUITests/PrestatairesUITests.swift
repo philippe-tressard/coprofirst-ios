@@ -11,6 +11,30 @@ final class PrestatairesUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// Le récapitulatif servi des avis (#207) : l'exercice le plus récent ouvert, un badge
+    /// d'avis qui se voit dépliable et dit, déplié, l'auteur et le commentaire.
+    @MainActor
+    func testLesAvisDUnPrestataireSeDeplient() throws {
+        // Sombre et très grand texte selon l'environnement (`LancementCaptures`).
+        let app = LancementCaptures.lancer()
+        let barre = app.tabBars.firstMatch
+        XCTAssertTrue(barre.apparait())
+        barre.buttons["Plus"].tap()
+        app.libelleAcces("Prestataires").tap()
+        let fiche = app.elementAcces("prestataire.1")
+        XCTAssertTrue(fiche.apparait())
+        fiche.tap()
+        XCTAssertTrue(app.elementAcces("avis.exercice.2026").apparait(), "l'exercice le plus récent")
+        LancementCaptures.capturer("prestataires-2a-recapitulatif")
+        let badge = app.elementAcces("avis.11")
+        app.amener(badge)
+        badge.tap()
+        let detail = app.elementAcces("avis.11.detail")
+        XCTAssertTrue(detail.apparait(), "l'avis déplié")
+        XCTAssertTrue(detail.label.contains("délai respecté"), detail.label)
+        LancementCaptures.capturer("prestataires-2b-avis")
+    }
+
     @MainActor
     func testLesTroisOngletsSOuvrent() throws {
         let app = XCUIApplication()
@@ -26,7 +50,7 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertTrue(fiche.apparait(), "les fiches")
         app.capturerAcces("prestataires-1-liste", dans: self)
         fiche.tap()
-        XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (2)").apparait(), "la fiche dépliée")
+        XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (3)").apparait(), "la fiche dépliée")
         app.capturerAcces("prestataires-2-fiche", dans: self)
 
         let recherche = app.elementAcces("prestataires.recherche")

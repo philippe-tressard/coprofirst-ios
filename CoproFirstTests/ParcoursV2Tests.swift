@@ -44,8 +44,8 @@ private func page(_ id: String) -> PageDeNavigation {
     let hier = try #require(cal.date(byAdding: .day, value: -1, to: maintenant))
     let avant = try #require(cal.date(byAdding: .day, value: -2, to: maintenant))
     let anneeDerniere = try #require(cal.date(from: DateComponents(year: 2025, month: 12, day: 24)))
-    #expect(Chronologie.entete(maintenant, maintenant: maintenant) == "AUJOURD'HUI · LUNDI 2")
-    #expect(Chronologie.entete(hier, maintenant: maintenant) == "HIER · DIMANCHE 1ᵉʳ")
+    #expect(Chronologie.entete(maintenant, maintenant: maintenant) == "AUJOURD'HUI ·\u{00A0}LUNDI 2")
+    #expect(Chronologie.entete(hier, maintenant: maintenant) == "HIER ·\u{00A0}DIMANCHE 1ᵉʳ")
     #expect(Chronologie.entete(avant, maintenant: maintenant) == "SAMEDI 31 OCTOBRE")
     #expect(Chronologie.entete(anneeDerniere, maintenant: maintenant) == "MERCREDI 24 DÉCEMBRE 2025")
 }
@@ -89,7 +89,7 @@ private func page(_ id: String) -> PageDeNavigation {
     let maintenant = try #require(cal.date(from: DateComponents(year: 2026, month: 11, day: 2, hour: 10)))
     let premier = try #require(cal.date(from: DateComponents(year: 2026, month: 11, day: 1, hour: 9)))
     let affiche = Chronologie.enteteAffiche(premier, maintenant: maintenant)
-    #expect(String(affiche.characters) == "HIER · DIMANCHE 1er")
+    #expect(String(affiche.characters) == "HIER ·\u{00A0}DIMANCHE 1er")
     let exposant = try #require(affiche.range(of: "er"))
     for run in affiche[exposant].runs {
         #expect((run.baselineOffset ?? 0) > 0, "« er » en exposant")
@@ -102,7 +102,7 @@ private func page(_ id: String) -> PageDeNavigation {
         let rendu = ImageRenderer(content: Text(texte).font(.caption.weight(.semibold)).fixedSize())
         return rendu.uiImage?.size.width ?? 0
     }
-    var sansExposant = Chronologie.espacer("HIER · DIMANCHE 1")
+    var sansExposant = Chronologie.espacer("HIER ·\u{00A0}DIMANCHE 1")
     let chiffre = try #require(sansExposant.range(of: "1"))
     sansExposant[chiffre].tracking = 0
     var er = AttributedString("er")

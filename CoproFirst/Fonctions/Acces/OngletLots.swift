@@ -209,7 +209,7 @@ private struct CarteLocataire: View {
                 ForEach(groupe.baux) { bail in
                     VStack(alignment: .leading, spacing: 2) {
                         if let lot = lots.first(where: { $0.id == bail.lotId }) {
-                            Text("\(lot.intitule) · \(lot.typeLu)")
+                            Text("\(lot.intitule)\(Separateur.point)\(lot.typeLu)")
                                 .font(.subheadline.weight(.medium))
                         }
                         Text(periode(bail)).font(.subheadline).foregroundStyle(palette.textMuted)
@@ -222,7 +222,7 @@ private struct CarteLocataire: View {
     private func periode(_ bail: Bail) -> String {
         var texte = "Depuis le \(FormatsDuSite.dateCourte(bail.dateEntree))"
         if bail.dateSortiePrevue != nil {
-            texte += " · Sortie prévue \(FormatsDuSite.dateCourte(bail.dateSortiePrevue))"
+            texte += "\(Separateur.point)Sortie prévue \(FormatsDuSite.dateCourte(bail.dateSortiePrevue))"
         }
         return texte
     }

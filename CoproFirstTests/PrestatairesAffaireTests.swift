@@ -19,15 +19,15 @@ struct PrestatairesAffaireTests {
     @Test func laFicheLitLaListeServieUneLigneParPrestataire() throws {
         let affaire = try #require(try FixturesDetailAffaire.lue(45))
         #expect(affaire.prestataires == [parc, controles])
-        #expect(affaire.intervenants == [parc.nom, "\(controles.nom) · ↺ Mensuel"], "le rythme après le dernier")
-        #expect(affaire.intervenant == "\(parc.nom), \(controles.nom) · ↺ Mensuel")
+        #expect(affaire.intervenants == [parc.nom, "\(controles.nom) ·\u{00A0}↺ Mensuel"], "le rythme après le dernier")
+        #expect(affaire.intervenant == "\(parc.nom), \(controles.nom) ·\u{00A0}↺ Mensuel")
         #expect(!affaire.droits.changerPrestataires, "servi à un résident : non")
     }
 
     @Test func uneAffaireAUnSeulPrestataireLeDitAvecSonRythme() throws {
         let affaire = try #require(try FixturesDetailAffaire.lue(44))
         #expect(affaire.prestataires == [PrestataireAffaire(id: 9, nom: "Ramonage Exemple (fictif)")])
-        #expect(affaire.intervenant == "Ramonage Exemple (fictif) · ↺ 1×/an")
+        #expect(affaire.intervenant == "Ramonage Exemple (fictif) ·\u{00A0}↺ 1×/an")
         #expect(!affaire.droits.changerPrestataires)
     }
 

@@ -58,7 +58,7 @@ struct ChoixCategorie: View {
             .contentShape(forme)
         }
         .buttonStyle(StyleCarte())
-        .accessibilityLabel("\(categorie.libelle) — \(categorie.description)")
+        .accessibilityLabel("\(categorie.libelle)\(Separateur.tiret)\(categorie.description)")
         .accessibilityAddTraits(retenue ? [.isSelected] : [])
         .accessibilityIdentifier("nouvelle.categorie.\(categorie.code)")
     }
