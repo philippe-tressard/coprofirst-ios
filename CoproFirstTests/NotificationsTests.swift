@@ -103,13 +103,13 @@ private func alerte(_ id: Int, ilYA heures: Double, lue: Bool = false, maintenan
 }
 
 @Test func changerDAdresseDemandeLeMotDePasse() {
-    var saisie = SaisieIdentite(prenom: "A", nom: "B", email: " Moi@Exemple.fr ")
-    #expect(!saisie.changeAdresse("moi@exemple.fr"), "sans casse ni espaces : la même adresse")
-    #expect(saisie.complete("moi@exemple.fr"))
-    saisie.email = "autre@exemple.fr"
-    #expect(!saisie.complete("moi@exemple.fr"), "une nouvelle adresse sans mot de passe")
+    var saisie = SaisieIdentite(prenom: "A", nom: "B", email: " Moi@Example.com ")
+    #expect(!saisie.changeAdresse("moi@example.com"), "sans casse ni espaces : la même adresse")
+    #expect(saisie.complete("moi@example.com"))
+    saisie.email = "autre@example.com"
+    #expect(!saisie.complete("moi@example.com"), "une nouvelle adresse sans mot de passe")
     saisie.motDePasseActuel = "secret"
-    #expect(saisie.complete("moi@exemple.fr"))
+    #expect(saisie.complete("moi@example.com"))
 }
 
 @Test func leThemeSuitLeChoixEtRetombeSurAutomatique() {

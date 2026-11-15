@@ -15,7 +15,7 @@ final class ParcoursUITests: XCTestCase {
         let residence = app.textFields["connexion.residence"]
         XCTAssertTrue(residence.apparait())
         residence.tap()
-        residence.typeText("inconnue.exemple.fr")
+        residence.typeText("inconnue.example.com")
         XCTAssertTrue(
             app.staticTexts[
                 "Cette adresse répond, mais aucune résidence n'y est installée. "
@@ -23,19 +23,19 @@ final class ParcoursUITests: XCTestCase {
             ].apparait(),
             "un hôte inconnu (421) se dit en une phrase")
 
-        residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "ancienne.exemple.fr")
+        residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "ancienne.example.com")
         XCTAssertTrue(
             app.staticTexts[
                 "Cette résidence doit être mise à jour pour s'ouvrir dans l'app. Prévenez son administrateur."
             ].apparait(),
             "une résidence sous le plancher le dit (#83)")
 
-        residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "tilleuls.exemple.fr")
+        residence.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 30) + "tilleuls.example.com")
         XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].apparait(), "reconnue")
 
         let email = app.textFields["connexion.email"]
         email.tap()
-        email.typeText("resident@exemple.fr\n")
+        email.typeText("resident@example.com\n")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
         motDePasse.typeText("refuse\n")
         // Saisie à la main, jamais vue : l'adresse se confirme avant le mot de passe (#82).
@@ -114,7 +114,7 @@ final class ParcoursUITests: XCTestCase {
 
         let adresse = app.textFields["connexion.residence"]
         XCTAssertTrue(adresse.apparait(), "retour à la connexion")
-        XCTAssertEqual(adresse.value as? String, "tilleuls.exemple.fr", "adresse pré-remplie")
+        XCTAssertEqual(adresse.value as? String, "tilleuls.example.com", "adresse pré-remplie")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "le fil n'est plus affiché")
     }
 

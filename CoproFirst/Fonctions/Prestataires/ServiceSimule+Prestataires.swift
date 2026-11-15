@@ -5,7 +5,7 @@ import Foundation
 
 #if DEBUG
 /// « Prestataires » simulé : des entreprises inventées, aucun nom de personne, des
-/// numéros de la plage réservée à la fiction (01 99 00 …), des adresses `exemple.fr`.
+/// numéros de la plage réservée à la fiction (01 99 00 …), des adresses `example.com`.
 extension ServiceSimule: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         try await Task.sleep(for: .milliseconds(300))

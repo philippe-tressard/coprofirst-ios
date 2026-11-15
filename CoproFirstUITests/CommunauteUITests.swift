@@ -306,7 +306,7 @@ final class CommunauteUITests: XCTestCase {
         let cible = el(app, "plus.profil")
         app.amener(cible)
         cible.tap()
-        XCTAssertTrue(app.amener(texte(app, "resident@exemple.fr")))
+        XCTAssertTrue(app.amener(texte(app, "resident@example.com")))
         capture("10-profil")
         let sombre = el(app, "profil.theme").buttons["Sombre"]
         app.amener(sombre)

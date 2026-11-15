@@ -15,7 +15,7 @@ import Testing
 /// `gestes_roles` dans `extra`, aucun geste.
 private func compte(_ extra: String) -> String {
     #"""
-    [{"id": 21, "prenom": "Alex", "nom": "Témoin", "email": "alex@exemple.fr",
+    [{"id": 21, "prenom": "Alex", "nom": "Témoin", "email": "alex@example.com",
       "statut": "copropriétaire_résident", "role": "propriétaire", "roles": ["propriétaire"], "actif": true,
       "has_lots": true, "has_tc": false, "has_vigik": false, "has_bail": false,
       "etiquettes": {"loti": "ok", "tc": "sans_objet", "vigik": "sans_objet", "bail": "sans_objet"},

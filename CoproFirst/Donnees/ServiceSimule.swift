@@ -9,7 +9,7 @@ import Foundation
 final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Une résidence inventée, à sa palette (bouteille), avec la barre par défaut du site.
     static let residence = Installation(
-        adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
+        adresse: URL(string: "https://tilleuls.example.com")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
         codePalette: "bouteille", versionContrat: VersionContrat.plancher.description)
     /// La démonstration, telle que la simule l'app (sans requête) — au contrat qu'elle sert.
     static let demo = Installation(
@@ -42,9 +42,9 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     func decouvrir(_ adresse: URL) async throws -> Installation {
         try await Task.sleep(for: delai)
         switch adresse.host() {
-        case "inconnue.exemple.fr": throw ErreurService.hoteInconnu
-        case "injoignable.exemple.fr": throw ErreurService.injoignable
-        case "ancienne.exemple.fr":
+        case "inconnue.example.com": throw ErreurService.hoteInconnu
+        case "injoignable.example.com": throw ErreurService.injoignable
+        case "ancienne.example.com":
             // Une installation sous le plancher (#83) : la découverte doit le dire.
             var ancienne = residenceServie
             (ancienne.adresse, ancienne.versionContrat) = (adresse, "1.12.0")
@@ -68,13 +68,13 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     var adressesAyantRecuUnMotDePasse: [URL] { verrou.withLock { motsDePasseRecus } }
     private var motsDePasseRecus: [URL] = []
 
-    /// La résidence inventée et la démo déclarent l'app ; `sans-app.exemple.fr` sert un
+    /// La résidence inventée et la démo déclarent l'app ; `sans-app.example.com` sert un
     /// fichier qui ne la déclare pas ; tout autre hôte n'en sert aucun (#82).
     func preuve(_ adresse: URL) async -> PreuveHote {
         try? await Task.sleep(for: delai)
         switch adresse.host() {
         case residenceServie.hote, Self.demo.hote: return .declaree
-        case "sans-app.exemple.fr": return .sansLApp
+        case "sans-app.example.com": return .sansLApp
         default: return .absente
         }
     }

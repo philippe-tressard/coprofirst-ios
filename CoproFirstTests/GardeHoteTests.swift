@@ -31,11 +31,11 @@ struct GardeHoteTests {
     }
 
     private func connecter(_ installation: Installation, _ origine: OrigineAdresse = .saisie) async throws -> Bool {
-        try await garde.connecter(installation, origine: origine, email: "resident@exemple.fr", motDePasse: "secret")
+        try await garde.connecter(installation, origine: origine, email: "resident@example.com", motDePasse: "secret")
     }
 
     @Test func unHoteInconnuNeRecoitAucuneRequeteDAuthentificationAvantLaConfirmation() async throws {
-        let inconnue = try installation("tilleuls.exemple.fr")
+        let inconnue = try installation("tilleuls.example.com")
         #expect(try await connecter(inconnue) == false, "la connexion s'arrête à la garde")
         #expect(service.adressesAyantRecuUnMotDePasse.isEmpty, "aucun mot de passe n'est parti")
         #expect(garde.aConfirmer == inconnue, "l'écran de confirmation s'ouvre")
@@ -53,7 +53,7 @@ struct GardeHoteTests {
     }
 
     @Test func renoncerNeConfirmeRien() async throws {
-        let inconnue = try installation("tilleuls.exemple.fr")
+        let inconnue = try installation("tilleuls.example.com")
         _ = try await connecter(inconnue)
         await garde.verifier()
         garde.renoncer()
@@ -64,7 +64,7 @@ struct GardeHoteTests {
 
     @Test(arguments: [PreuveHote.absente, .sansLApp])
     func sansPreuveLaConnexionAttendUnSecondAccord(preuve: PreuveHote) async throws {
-        let hote = preuve == .absente ? "imitation.exemple.fr" : "sans-app.exemple.fr"
+        let hote = preuve == .absente ? "imitation.example.com" : "sans-app.example.com"
         let suspecte = try installation(hote)
         _ = try await connecter(suspecte)
         await garde.verifier()
@@ -80,7 +80,7 @@ struct GardeHoteTests {
     }
 
     @Test func uneResidenceConnueSaisieNeSeConfirmePas() async throws {
-        let connue = try installation("tilleuls.exemple.fr")
+        let connue = try installation("tilleuls.example.com")
         connues.retenir(connue)
         #expect(try await connecter(connue))
         #expect(garde.aConfirmer == nil)
@@ -88,21 +88,21 @@ struct GardeHoteTests {
     }
 
     @Test func unHoteVoisinDUneResidenceConnueSeConfirme() async throws {
-        connues.retenir(try installation("tilleuls.exemple.fr"))
-        #expect(try await connecter(try installation("tilleuls.exemple.fr:8443")) == false, "un autre port")
-        #expect(try await connecter(try installation("ti1leuls.exemple.fr")) == false, "un « l » devenu « 1 »")
+        connues.retenir(try installation("tilleuls.example.com"))
+        #expect(try await connecter(try installation("tilleuls.example.com:8443")) == false, "un autre port")
+        #expect(try await connecter(try installation("ti1leuls.example.com")) == false, "un « l » devenu « 1 »")
         #expect(service.adressesAyantRecuUnMotDePasse.isEmpty)
     }
 
     @Test func apresUnScanLaConfirmationEstToujoursDemandee() async throws {
-        let connue = try installation("tilleuls.exemple.fr")
+        let connue = try installation("tilleuls.example.com")
         connues.retenir(connue)
         #expect(try await connecter(connue, .scan) == false, "même une résidence connue")
         #expect(service.adressesAyantRecuUnMotDePasse.isEmpty)
     }
 
     @Test func apresUnLienLaConfirmationEstToujoursDemandee() async throws {
-        let connue = try installation("tilleuls.exemple.fr")
+        let connue = try installation("tilleuls.example.com")
         connues.retenir(connue)
         #expect(try await connecter(connue, .lien) == false, "même une résidence connue (#18)")
         #expect(service.adressesAyantRecuUnMotDePasse.isEmpty)
@@ -152,8 +152,8 @@ private func aasa(_ json: String, statut: Int = 200) -> PreuveHote {
 
 @Test func laPreuveSeLitALAdresseDeLHote() throws {
     #expect(
-        PreuveAASA.adresse(de: try adresse("residence.exemple.fr:8443")).absoluteString
-            == "https://residence.exemple.fr:8443/.well-known/apple-app-site-association")
+        PreuveAASA.adresse(de: try adresse("residence.example.com:8443")).absoluteString
+            == "https://residence.example.com:8443/.well-known/apple-app-site-association")
 }
 
 @Test func lIdentifiantDeLaPreuveEstCeluiDeLApp() throws {
@@ -164,15 +164,15 @@ private func aasa(_ json: String, statut: Int = 200) -> PreuveHote {
 // MARK: - L'hôte affiché
 
 @Test func lHoteSAfficheEnEntierPortCompris() throws {
-    #expect(ConfirmationHote.hote(try adresse("tilleuls.exemple.fr")) == "tilleuls.exemple.fr")
-    #expect(ConfirmationHote.hote(try adresse("https://tilleuls.exemple.fr:8443/x")) == "tilleuls.exemple.fr:8443")
+    #expect(ConfirmationHote.hote(try adresse("tilleuls.example.com")) == "tilleuls.example.com")
+    #expect(ConfirmationHote.hote(try adresse("https://tilleuls.example.com:8443/x")) == "tilleuls.example.com:8443")
 }
 
 @Test func unHoteInternationalNeSeDeguisePas() {
     // « і » cyrillique à la place du « i » latin : refusé, ou montré sous sa forme encodée.
-    guard let adresse = AdresseInstallation.normaliser("t\u{0456}lleuls.exemple.fr") else { return }
+    guard let adresse = AdresseInstallation.normaliser("t\u{0456}lleuls.example.com") else { return }
     let affiche = ConfirmationHote.hote(adresse)
     let ascii = affiche.allSatisfy { $0.isASCII }
     #expect(ascii, "« \(affiche) » imite un hôte latin")
-    #expect(affiche != "tilleuls.exemple.fr")
+    #expect(affiche != "tilleuls.example.com")
 }

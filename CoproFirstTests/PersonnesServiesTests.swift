@@ -18,7 +18,7 @@ private func compte(
     _ id: Int, roles: String, nomAffiche: String = "Jean-Baptiste FORT", _ extra: String = ""
 ) -> String {
     #"""
-    {"id": \#(id), "prenom": "Jean-Baptiste", "nom": "Fort", "email": "jb@exemple.fr",
+    {"id": \#(id), "prenom": "Jean-Baptiste", "nom": "Fort", "email": "jb@example.com",
      "statut": "copropriétaire_résident", "role": "propriétaire", "roles": \#(roles), "actif": true,
      "onboarding_complete": true, "onboarding_etape": 4, "preferences_notifications": "{}",
      "cree_le": "2026-01-01T10:00:00", "nom_affiche": "\#(nomAffiche)", "nom_aide_affiche": ""

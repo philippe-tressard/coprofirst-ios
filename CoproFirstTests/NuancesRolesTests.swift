@@ -58,7 +58,7 @@ private let ajouterCS = GesteDeRole(role: "conseil_syndical", geste: .ajouter)
 @Test func leProfilGardeLIdentifiantServiDuCompte() throws {
     let json = #"""
         {"id": 11, "prenom": "Camille", "nom": "Exemple", "nom_affiche": "Camille EXEMPLE",
-         "nom_aide_affiche": "", "email": "camille.exemple@exemple.fr", "statut": "copropriétaire_résident",
+         "nom_aide_affiche": "", "email": "camille.exemple@example.com", "statut": "copropriétaire_résident",
          "role": "propriétaire", "roles": ["admin"], "actif": true, "onboarding_complete": true,
          "onboarding_etape": 4, "preferences_notifications": "{}", "cree_le": "2026-01-01T10:00:00"}
         """#
@@ -93,7 +93,7 @@ private let ajouterCS = GesteDeRole(role: "conseil_syndical", geste: .ajouter)
 // MARK: - « Opérateur désigné par l'exploitant »
 
 @Test func lInstanceCommuneSeLitDansLaConfigServie() throws {
-    let adresse = try #require(URL(string: "https://tilleuls.exemple.fr"))
+    let adresse = try #require(URL(string: "https://tilleuls.example.com"))
     let commune = Installation(adresse: adresse, config: ["site_nom": "Les Tilleuls", "operateur_par_exploitant": "1"])
     #expect(commune?.operateurParExploitant == true)
     let propre = Installation(adresse: adresse, config: ["site_nom": "Les Tilleuls", "operateur_par_exploitant": "0"])
