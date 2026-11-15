@@ -31,7 +31,7 @@ fait après le « oui ».
 > `standards/14` §3 bis ; les **règles d'Apple en vigueur** se relisent avant
 > chaque soumission — cette skill dit où en est CoproFirst-iOS, pas ce qu'Apple exige.
 
-## État au 01/11/2026
+## Fondations (posées du 01 au 11/11/2026)
 
 | Étape | État |
 |---|---|
@@ -43,7 +43,7 @@ fait après le « oui ».
 | Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
 | Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; la liste des domaines et l'ouverture dans l'app : #18 |
 | Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive). Côté app livré par #17 : autorisation demandée dans la cloche, jamais au lancement ; appareil enregistré à l'ouverture d'une résidence, retiré à la déconnexion (`Fonctions/Notifications/Push/`). Droit `time-sensitive` (avis urgents, décision du 03/11/2026) ajouté par #17 ; capacité « Time Sensitive Notifications » **acceptée par Philippe le 11/11/2026**, enregistrée au compte à la prochaine compilation signée au poste. Réception réelle **INCONNUE** tant que le relais (coprofirst#2494) n'a pas sa clé `.p8` |
-| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; la **saisie** dans App Store Connect reste à faire (Philippe). La consultation hors ligne (#101) garde la dernière lecture **sur l'appareil** : rien ne part, la déclaration ne change pas, mais la fiche (§3) et la politique de confidentialité du site le disent |
+| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; **saisis** dans App Store Connect par Philippe pour la 1.0 (voir « Fiche » plus bas), à tenir à jour à chaque version. La consultation hors ligne (#101) garde la dernière lecture **sur l'appareil** : rien ne part, la déclaration ne change pas, mais la fiche (§3) et la politique de confidentialité du site le disent |
 
 ## Ce qui reste un geste de Philippe
 
@@ -51,9 +51,11 @@ fait après le « oui ».
   s'identifie, au poste. Je ne saisis, ne demande ni ne lis jamais un mot de
   passe Apple, un code de double authentification, une clé `.p8` ou un
   certificat — ni dans le dépôt, ni dans une conversation (`standards/03` §3).
-- Créer l'app dans App Store Connect, accepter les contrats d'Apple.
-- Saisir la politique de confidentialité, les étiquettes « App Privacy » et la note de
-  revue : le pas à pas (Où / Quoi) et les réponses exactes sont dans
+- Envoyer l'archive à App Store Connect (Organizer › Distribute App) et la soumettre à
+  la revue — après son « oui » écrit pour cette version. L'app et les contrats d'Apple
+  existent depuis la 1.0.
+- Tenir à jour, à chaque version, la politique de confidentialité, les étiquettes
+  « App Privacy » et la note de revue : le pas à pas (Où / Quoi) et les réponses exactes sont dans
   [`confidentialite.md`](confidentialite.md) §9 et §5.
 - Le jour où la CI devra signer ou envoyer sur TestFlight : une clé d'API App
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
