@@ -124,10 +124,10 @@ COULEURS_MAIN='Color\(red:|UIColor\(red:|colorLiteral|RVBA\(0x|Color\.(red|blue|
 # Les seuls fichiers qui en portent : chaque palette générée (`Palette+<code>.swift`).
 # Une dispense qui ne couvre plus de couleur échoue : une exception sans objet se retire.
 DISPENSES_COULEUR='^CoproFirst/Charte/Palette\+[A-Z][a-z]+\.swift$'
-# Un fichier qu'un générateur écrit dans le dossier d'un menu (`Fonctions/<Menu>/Genere/`)
+# Un fichier qu'un générateur écrit dans le dossier d'un menu (`Fonctions/<Menu>/Genere/`, ou `Commun/<Domaine>/Genere/`)
 # dit en 1re ligne qu'il est généré ; ses teintes, il les nomme dans la `Palette` (#34).
 EN_TETE_GENERE='^// GÉNÉRÉ par scripts/generer\.py — NE PAS MODIFIER'
-GENERE='^CoproFirst/Fonctions/[^/]+/Genere/[^/]+\.swift$'
+GENERE='^CoproFirst/(Fonctions|Commun)/[^/]+/Genere/[^/]+\.swift$'
 # $1 : chemin dans le dépôt ; $2 : le fichier à lire. Rend le motif du refus, ou rien.
 refus_couleur() {
   local couleur
@@ -441,6 +441,10 @@ python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "ticket
 python3 -I scripts/verifier-simule.py --autotest >/dev/null || echec "verifier-simule.py : autotest en échec"
 SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simulation hors de #if DEBUG"; }
 
+# Les séparateurs du site se lisent dans la table générée (#188) : aucun ne finit une ligne.
+python3 -I scripts/verifier-separateurs.py --autotest >/dev/null || echec "verifier-separateurs.py : autotest en échec"
+SEPARATEURS=$(python3 -I scripts/verifier-separateurs.py) || { echo "$SEPARATEURS"; echec "séparateur sécable ou recopié"; }
+
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
 # passage — la ligne s'affiche, elle ne compte pas pour conforme.
@@ -460,4 +464,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
