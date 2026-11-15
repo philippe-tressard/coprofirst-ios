@@ -4,15 +4,14 @@
 import ClientAPI
 import Foundation
 
-/// La mesure d'audience par le client GÉNÉRÉ : le lot est typé (`LotAudience`, au
-/// plancher) ; son canal, au-dessus du plancher (contrat 1.31.0), s'ajoute au corps.
+/// La mesure d'audience par le client GÉNÉRÉ : le lot est typé (`LotAudience`), canal compris.
+/// `ios` range ses vues sous « App iPhone » ; une valeur hors de la liste du serveur serait
+/// refusée (422) — elle ne s'écrit pas, elle se choisit dans l'énumération générée.
 extension ServiceAPI: ServiceAudience {
     func envoyer(_ pages: [String], a installation: Installation) async throws {
         let lot = Components.Schemas.LotAudience(
-            events: pages.map { .init(action: MesureAudience.action, page: $0) })
-        let sortie = try await CorpsEnvoye.completer(avec: CanalAudience.app) {
-            try await appeler { try await client(installation.adresse).postTelemetryCollect(body: .json(lot)) }
-        }
+            canal: .ios, events: pages.map { .init(action: MesureAudience.action, page: $0) })
+        let sortie = try await appeler { try await client(installation.adresse).postTelemetryCollect(body: .json(lot)) }
         switch sortie {
         case .noContent: return
         case .unprocessableContent: throw ErreurService.inattendue(422)

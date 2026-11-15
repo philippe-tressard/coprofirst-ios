@@ -6,7 +6,7 @@ import Foundation
 
 /// Le contrat à l'autre bout d'un remplacement (`ContratLie`, contrat 1.29.0,
 /// coprofirst#2712) : un nom, une date, de quoi le nommer.
-struct ContratLie: Hashable, Sendable, Decodable {
+struct ContratLie: Hashable, Sendable {
     let id: Int
     var libelle: String
     var prestataireId: Int
@@ -19,9 +19,6 @@ struct ContratLie: Hashable, Sendable, Decodable {
 /// serveur les SERT (contrat 1.29.0, coprofirst#2712, #185) : la date, « la résiliation
 /// est passée » et les deux bouts du remplacement — le sens inverse (`remplace`) est
 /// déduit par l'API, l'app ne recalcule rien.
-///
-/// Une installation sous le contrat 1.29.0 ne les sert pas : tout est vide, et la carte
-/// ne montre rien de plus.
 struct RemplacementContrat: Hashable, Sendable {
     var resilieLe: String?
     var resilie = false
@@ -45,29 +42,29 @@ struct RemplacementContrat: Hashable, Sendable {
     var estDatee: Bool { resilieLe != nil }
 }
 
-/// Ce que GET /prestataires/contrats sert au-dessus du plancher (contrat 1.29.0, #185),
-/// relu par `Relecture.auDessusDuPlancher` : tout est facultatif.
-struct ContratAuDessusDuPlancher: Decodable, Identifiable {
-    let id: Int
-    var resilieLe: String?
-    var resilie: Bool?
-    var remplacePar: ContratLie?
-    var remplace: [ContratLie]?
+extension ContratLie {
+    init(_ lu: Components.Schemas.ContratLie) {
+        self.init(
+            id: lu.id, libelle: lu.libelle, prestataireId: lu.prestataireId, prestataireNom: lu.prestataireNom,
+            dateDebut: lu.dateDebut, resilieLe: lu.resilieLe)
+    }
+}
 
-    var remplacement: RemplacementContrat {
-        RemplacementContrat(
-            resilieLe: resilieLe, resilie: resilie ?? false, remplacePar: remplacePar, remplace: remplace ?? [])
+extension RemplacementContrat {
+    init(_ lu: Components.Schemas.ContratRead) {
+        self.init(
+            resilieLe: lu.resilieLe, resilie: lu.resilie ?? false, remplacePar: lu.remplacePar.map(ContratLie.init),
+            remplace: (lu.remplace ?? []).map(ContratLie.init))
     }
 }
 
 extension Contrat {
-    /// Les contrats servis : le type généré, puis ce que le corps sert au-dessus du
-    /// plancher — le MÊME branchement pour le service réel et l'API simulée.
-    static func lus(_ generes: [Components.Schemas.ContratRead], corps: Data?) -> [Contrat] {
-        let auDessus = Relecture.auDessusDuPlancher(parLigne: ContratAuDessusDuPlancher.self, corps: corps)
-        return generes.map { lu in
+    /// Les contrats servis, par le type généré — le MÊME branchement pour le service réel
+    /// et l'API simulée.
+    static func lus(_ generes: [Components.Schemas.ContratRead]) -> [Contrat] {
+        generes.map { lu in
             var contrat = Contrat(lu)
-            contrat.remplacement = auDessus[lu.id]?.remplacement ?? RemplacementContrat()
+            contrat.remplacement = RemplacementContrat(lu)
             return contrat
         }
     }

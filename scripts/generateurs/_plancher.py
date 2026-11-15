@@ -25,11 +25,11 @@ AU-DESSUS, le ticket « a-monter » dit jusqu'où le plancher peut monter.
 # aucun, et n'en lit aucun (spec multi-coproprietes §4.1 bis de coprofirst).
 INSTALLATIONS = ("demo.coprofirst.fr", "5hostachy.fr")
 
-VERSION = "v3.89.0"
+VERSION = "v3.101.0"
 RAISON = (
-    "contrat 1.27.0 : la plus ancienne version servie par une installation connue — "
-    "demo.coprofirst.fr et 5hostachy.fr, mesurées le 12/11/2026 ; v3.89.0 est la première "
-    "release qui le porte (la demande de suppression de compte, coprofirst#2699, exigée par "
-    "Apple). Montée décidée par Philippe le 12/11/2026, montée minimale : seul ce que le "
-    "contrat impose (#166, #87 reste à faire)"
+    "contrat 2.0.0 : la notation des prestataires (trois états, récapitulatif par exercice "
+    "et par intervention, modifier son avis — coprofirst#2728 à #2745, coprofirst-ios#207). "
+    "Montée décidée le 15/11/2026 par le coordinateur des sessions, sur délégation écrite de "
+    "Philippe (« demande au coordinateur ») ; fusionnée quand demo.coprofirst.fr et "
+    "5hostachy.fr servent le contrat 2.0.0"
 )

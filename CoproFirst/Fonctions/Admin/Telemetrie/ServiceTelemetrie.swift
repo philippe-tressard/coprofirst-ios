@@ -38,8 +38,7 @@ struct TableauTelemetrie: Hashable, Sendable {
     var topPages: [PageVue]
     var topUsers: [UtilisateurActif]
     var filtreGestionnaire: FiltreGestionnaire
-    /// Les vues par canal d'accès — seuls ceux qui en ont ; vide d'une installation
-    /// antérieure au contrat 1.31.0 (`CanauxTelemetrie`).
+    /// Les vues par canal d'accès — seuls ceux qui en ont (`CanauxTelemetrie`).
     var canaux: [PartCanal] = []
 
     /// Les nombres clés : ils changent avec la vue, chacun se lit seul.
@@ -78,7 +77,7 @@ struct TableauTelemetrie: Hashable, Sendable {
         var page: String
         var total: Int
         var uniques: Int
-        /// Ses vues par canal (contrat 1.31.0) — seuls ceux qui en ont.
+        /// Ses vues par canal — seuls ceux qui en ont.
         var canaux: [VuesCanal] = []
         var id: String { page }
     }
@@ -109,7 +108,8 @@ extension TableauTelemetrie {
         self.init(
             scope: lu.scope, kpi: Indicateurs(lu.kpi), chart: lu.chart.map(Baton.init), chartLabel: lu.chartLabel,
             topPages: lu.topPages.map(PageVue.init), topUsers: lu.topUsers.map(UtilisateurActif.init),
-            filtreGestionnaire: FiltreGestionnaire(lu.filtreGestionnaire))
+            filtreGestionnaire: FiltreGestionnaire(lu.filtreGestionnaire),
+            canaux: (lu.canaux ?? []).map(PartCanal.init))
     }
 }
 
@@ -134,7 +134,9 @@ extension TableauTelemetrie.Baton {
 }
 
 extension TableauTelemetrie.PageVue {
-    init(_ lu: Components.Schemas.PageTop) { self.init(page: lu.page, total: lu.total, uniques: lu.uniques) }
+    init(_ lu: Components.Schemas.PageTop) {
+        self.init(page: lu.page, total: lu.total, uniques: lu.uniques, canaux: (lu.canaux ?? []).map(VuesCanal.init))
+    }
 }
 
 extension TableauTelemetrie.UtilisateurActif {
