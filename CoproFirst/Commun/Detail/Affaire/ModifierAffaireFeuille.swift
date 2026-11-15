@@ -51,7 +51,7 @@ struct ModifierAffaireFeuille: View {
                         Label(Self.contenuFige, systemImage: "lock")
                             .font(.subheadline)
                             .foregroundStyle(palette.textMuted)
-                            .accessibilityIdentifier("modifier.contenuFige")
+                            .elementIdentifie("modifier.contenuFige", lu: Self.contenuFige)
                     }
                 }
                 ChampsAffaire(

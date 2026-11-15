@@ -134,11 +134,7 @@ private struct CarteContrat: View {
             ForEach(Array(contrat.remplacement.pastilles.enumerated()), id: \.offset) { rang, libelle in
                 PastilleTeinte(libelle: libelle, badge: "badge-gray", compacte: true)
                     .fixedSize(horizontal: false, vertical: true)
-                    // Un seul élément, nommé par son libellé : l'identifiant ne se pose
-                    // pas sur une partie de la pastille (le piège de #183).
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(libelle)
-                    .accessibilityIdentifier("contrat.\(contrat.id).remplacement.\(rang)")
+                    .elementIdentifie("contrat.\(contrat.id).remplacement.\(rang)", lu: libelle)
             }
             FlowCapsules {
                 if contrat.prochaineVisite == nil && !contrat.remplacement.estDatee {

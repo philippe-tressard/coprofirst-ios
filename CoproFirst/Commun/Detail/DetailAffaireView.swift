@@ -121,11 +121,9 @@ private struct EnTeteAffaire: View {
                     } icon: {
                         Image(systemName: "wrench.and.screwdriver")
                     }
-                    // Un seul élément : sous iOS 26, l'identifiant d'un Label se résout en son image (#183).
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(
-                        TextesPrestatairesAffaire.intervenant(intervenant, nombre: affaire.prestataires.count))
-                    .accessibilityIdentifier("affaire.intervenant")
+                    .elementIdentifie(
+                        "affaire.intervenant",
+                        lu: TextesPrestatairesAffaire.intervenant(intervenant, nombre: affaire.prestataires.count))
                 }
             }
             .font(.subheadline)
