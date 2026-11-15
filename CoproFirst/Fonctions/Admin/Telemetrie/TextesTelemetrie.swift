@@ -4,7 +4,7 @@
 import Foundation
 
 /// Les mots de « Télémétrie », repris du site (`OngletTelemetrie.svelte`,
-/// `FrequentationTelemetrie.svelte`, `TopPages.svelte`).
+/// `FrequentationTelemetrie.svelte`, `TopPages.svelte`, `CanauxAcces.svelte`).
 enum TextesTelemetrie {
     static let chargement = "Chargement des statistiques…"
     static let erreur = "Impossible d’afficher les statistiques"
@@ -14,9 +14,12 @@ enum TextesTelemetrie {
     static let aucunGestionnaire =
         "Aucun gestionnaire du site n’est désigné (Copropriété › Fonctionnement) : le filtre « sans le "
         + "gestionnaire du site » n’a donc rien à écarter."
-    static func filtreApplique(jusquAu: String?) -> String {
+    /// `avecAcces` : la résidence sert la répartition par accès (contrat 1.31.0), que le
+    /// filtre écarte aussi.
+    static func filtreApplique(jusquAu: String?, avecAcces: Bool = false) -> String {
         let base =
-            "Les vues du gestionnaire du site sont écartées des indicateurs, du graphe, des pages, des "
+            "Les vues du gestionnaire du site sont écartées des indicateurs, du graphe, "
+            + (avecAcces ? "de la répartition par accès, " : "") + "des pages, des "
             + "utilisateurs, de « Qui vient » et des arrivées par notification. Les erreurs, les gestes et "
             + "les durées d’affichage, sans compte, ne changent pas."
         guard let jusquAu else { return base }
@@ -24,6 +27,34 @@ enum TextesTelemetrie {
             + "gestionnaire : ses vues y restent comptées."
     }
     static let pagesVues = "Pages les plus vues"
+    static let acces = "Accès : site ou application"
+    static let unSeulAcces = "L’application ne compte ses pages vues que depuis la version qui les envoie."
+    static let utilisateursParAcces =
+        "Un utilisateur qui passe par le site et par l’application compte dans les deux lignes : les "
+        + "utilisateurs ne s’additionnent pas."
+
+    /// « 37 vues · 25 % » : la part servie, jamais recalculée.
+    static func vuesEtPart(_ canal: PartCanal) -> String {
+        "\(FormatsDuSite.nombre(canal.vues)) vues · \(FormatsDuSite.nombre(canal.part)) %"
+    }
+
+    /// Les comptes venus par ce canal ; « — » quand le serveur ne les connaît pas.
+    static func utilisateurs(_ canal: PartCanal) -> String {
+        canal.visiteurs.map { "\(FormatsDuSite.nombre($0)) utilisateurs" } ?? "—"
+    }
+
+    /// Le pied du bloc : un seul canal, ou des utilisateurs qui ne s'additionnent pas.
+    static func piedAcces(_ canaux: [PartCanal]) -> String? {
+        if canaux.count == 1, let seul = canaux.first {
+            return "Toutes les vues de la période viennent de : \(seul.libelle). " + unSeulAcces
+        }
+        return canaux.contains { $0.visiteurs != nil } ? utilisateursParAcces : nil
+    }
+
+    /// L'accès d'une page du palmarès : « Site web 12 · App iPhone 3 ».
+    static func accesDe(_ page: TableauTelemetrie.PageVue) -> String {
+        page.canaux.map { "\($0.libelle)\u{00A0}\(FormatsDuSite.nombre($0.vues))" }.joined(separator: " · ")
+    }
     static let utilisateursActifs = "Utilisateurs actifs"
     static let periode = "Période"
     static let vuesAxe = "Vues"

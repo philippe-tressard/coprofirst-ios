@@ -33,6 +33,7 @@ struct CommunauteView: View {
                     .presentationDragIndicator(.visible)
             }
             .sensoryFeedback(.selection, trigger: etat.onglet)
+            .pageVue(CheminDuSite.page(OngletCommunaute.page).map { CheminDuSite.onglet(etat.onglet.rawValue, de: $0) })
             .task { await etat.ouvrir(installation, avec: parcours.serviceCommunaute) }
     }
 

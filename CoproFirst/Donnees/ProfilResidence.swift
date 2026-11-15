@@ -35,6 +35,10 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// prochain `GET /auth/me` le redit. Facultatif : un profil gardé avant #94 se relit
     /// sans lui, et la confirmation dit alors « Cette personne recevra une notification. »
     var idCompte: Int?
+    /// Le compte a refusé la mesure d'audience (`opt_out_telemetrie` de `GET /auth/me`) :
+    /// l'app ne note alors aucune page vue (`MesureAudience`, coprofirst#2726). `nil` (profil
+    /// gardé avant, jusqu'à sa relecture à l'ouverture) : refus inconnu, rien ne se note.
+    var refusMesure: Bool?
 
     /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
     /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
@@ -66,7 +70,8 @@ extension ProfilResidence {
         self.init(
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
             libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
-            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id)
+            saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id,
+            refusMesure: moi.optOutTelemetrie ?? false)
     }
 }
 

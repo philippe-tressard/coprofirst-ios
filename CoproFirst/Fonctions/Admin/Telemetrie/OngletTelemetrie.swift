@@ -57,7 +57,9 @@ struct OngletTelemetrie: OngletDePage {
                     aide(TextesTelemetrie.aucunGestionnaire)
                 }
                 if filtre.applique == "sans" {
-                    aide(TextesTelemetrie.filtreApplique(jusquAu: filtre.nonDistingueJusquAu))
+                    aide(
+                        TextesTelemetrie.filtreApplique(
+                            jusquAu: filtre.nonDistingueJusquAu, avecAcces: !(etat.tableau?.canaux.isEmpty ?? true)))
                 }
             }
         }

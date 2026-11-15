@@ -95,6 +95,8 @@ struct CadreAOnglets: View {
         }
         .refreshable { actualisation += 1 }
         .avisEphemere(avis)
+        // Un onglet se note comme le site (`trackTabView`) ; « Sur le site » n'en est pas un.
+        .pageVue(actif == .surLeSite ? nil : CheminDuSite.onglet(actif.id, de: contexte.page.route))
     }
 
     @ViewBuilder

@@ -97,6 +97,15 @@ gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la sess
 reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
 la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
 
+**Mesure d'audience** (coprofirst#2726, #198, contrat 1.31.0) : chaque écran vu part à la
+résidence sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`)
+et le canal « App iPhone », par lots de 20 au plus, toutes les 30 s et au passage en
+arrière-plan — comme le site, que le tableau de bord mêle alors à l'app. Rien ne part si le
+compte l'a refusée au Profil, ni vers une résidence antérieure au contrat 1.31.0 (elle
+compterait l'app comme le site), ni hors ligne ; aucun identifiant d'appareil. L'onglet
+Télémétrie montre la répartition servie : « Accès : site ou application », et l'accès de
+chaque page quand la période en a plusieurs.
+
 Où en est chaque onglet du site — fait, prévu (et par quel ticket), ou réservé
 au site — et la feuille de route : [`Parite/PARITE.md`](Parite/PARITE.md),
 jugé en CI.

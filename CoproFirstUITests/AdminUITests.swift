@@ -132,6 +132,10 @@ final class AdminUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("admin.telemetrie.graphe").apparait(), "le graphe")
         XCTAssertFalse(app.elementAcces("admin.telemetrie.filtre").exists, "rien à écarter sur douze mois")
         LancementCaptures.capturer("admin-5-telemetrie-annee")
+        // L'accès, site ou application, servi au-dessus du plancher (coprofirst#2726), sous le graphe.
+        let accesApp = app.elementAcces("admin.telemetrie.acces.ios")
+        for _ in 0..<6 where !accesApp.exists { app.swipeUp() }
+        XCTAssertTrue(accesApp.exists, "les vues de l'app, servies")
     }
 
     /// L'opérateur lit la santé des tâches, l'administrateur le dernier export : chacun ce

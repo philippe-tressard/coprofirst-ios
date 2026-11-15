@@ -43,4 +43,8 @@ struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     /// GET /config/logo.png?variante=sombre — la variante du logo pour un fond sombre
     /// (coprofirst v3.77.0, #70).
     static let logoSombre = VersionContrat(1, 15, 0)
+
+    /// Le canal d'accès d'une page vue (`canal` de POST /telemetry/collect, coprofirst#2726) :
+    /// une installation antérieure l'ignorerait, et rangerait les vues de l'app sous « Site web ».
+    static let canalAudience = VersionContrat(1, 31, 0)
 }

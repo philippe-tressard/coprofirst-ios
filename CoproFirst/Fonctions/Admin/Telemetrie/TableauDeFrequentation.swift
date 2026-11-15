@@ -5,7 +5,8 @@ import Charts
 import SwiftUI
 
 /// « Indicateurs et fréquentation » (`FrequentationTelemetrie.svelte`) : les nombres clés
-/// de la vue, ses records, le graphe titré par le serveur, les pages et les utilisateurs.
+/// de la vue, ses records, le graphe titré par le serveur, l'accès (site ou application),
+/// les pages et les utilisateurs.
 struct TableauDeFrequentation: View {
     let tableau: TableauTelemetrie
     let portee: PorteeTelemetrie
@@ -21,10 +22,19 @@ struct TableauDeFrequentation: View {
             }
             .accessibilityIdentifier("admin.telemetrie.indicateurs")
             graphe
+            if !tableau.canaux.isEmpty {
+                Section {
+                    CanauxAcces(canaux: tableau.canaux)
+                } header: {
+                    titre(TextesTelemetrie.acces)
+                }
+            }
             if !tableau.topPages.isEmpty { pages }
             if !tableau.topUsers.isEmpty { utilisateurs }
         }
     }
+
+    private var accesParPage: Bool { tableau.plusieursCanauxParPage }
 
     private var colonnes: [GridItem] {
         taille.isAccessibilitySize ? [GridItem(.flexible())] : [GridItem(.adaptive(minimum: 150), spacing: 10)]
@@ -67,14 +77,22 @@ struct TableauDeFrequentation: View {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(Array(tableau.topPages.enumerated()), id: \.element.id) { rang, page in
                         if rang > 0 { Divider().overlay(palette.border) }
-                        LabeledContent {
-                            Text(TextesTelemetrie.vuesEtUniques(page.total, page.uniques))
-                                .monospacedDigit()
-                                .foregroundStyle(palette.textMuted)
-                        } label: {
-                            Text(page.page).font(.subheadline.monospaced()).foregroundStyle(palette.text)
+                        VStack(alignment: .leading, spacing: 2) {
+                            LabeledContent {
+                                Text(TextesTelemetrie.vuesEtUniques(page.total, page.uniques))
+                                    .monospacedDigit()
+                                    .foregroundStyle(palette.textMuted)
+                            } label: {
+                                Text(page.page).font(.subheadline.monospaced()).foregroundStyle(palette.text)
+                            }
+                            // La colonne « Accès » du site, quand la période a plusieurs canaux.
+                            if accesParPage {
+                                Text(TextesTelemetrie.accesDe(page))
+                                    .font(.footnote).foregroundStyle(palette.textMuted)
+                            }
                         }
                         .padding(.vertical, 8)
+                        .accessibilityElement(children: .combine)
                     }
                 }
             }
