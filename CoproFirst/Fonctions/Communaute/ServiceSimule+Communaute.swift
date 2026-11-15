@@ -20,6 +20,10 @@ extension ServiceSimule: ServiceCommunaute {
             estModerateur: profilSimule.estModerateur)
     }
 
+    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool {
+        try FixturesGestesServis.peutCreerUnSondage(moderateur: profilSimule.estModerateur ?? false)
+    }
+
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
         try await Task.sleep(for: .milliseconds(400))
         return [

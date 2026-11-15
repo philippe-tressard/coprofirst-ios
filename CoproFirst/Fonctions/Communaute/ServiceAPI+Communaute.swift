@@ -23,6 +23,14 @@ extension ServiceAPI: ServiceCommunaute {
         }
     }
 
+    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool {
+        switch try await appeler({ try await client(installation.adresse).getSondagesGestes() }) {
+        case .ok(let ok): return try ok.body.json.peutCreer
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+        }
+    }
+
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] {
         let sortie = try await appeler { try await client(installation.adresse).getSondages() }
         switch sortie {
