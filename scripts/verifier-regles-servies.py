@@ -81,6 +81,10 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     #  des codes par l'arbre recopie la règle du serveur (`utils/perimetres/libelles.py`).
     (re.compile(r"\blibelles\([^)]*parmi:"),
      "le lieu servi (`perimetre_libelle`) par `LieuServi.lieu` — le repli au plancher n'a qu'un endroit"),
+    # #87 : qui rédige la FAQ et qui crée un sondage est SERVI (contrat 1.20.0), plus la
+    # règle du site (`$isCS`) lue par `DroitsOnglet`.
+    (re.compile(r"\bvar estConseil: Bool \{ DroitsOnglet\b|\betat\.moi\?\.droits\.cs\b"),
+     "`peut_rediger` et `peut_creer` servis (GET /faq/gestes, GET /sondages/gestes)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -145,11 +149,15 @@ def autotest() -> int:
         "            cs: !portes.isDisjoint(with: OngletsDuSite.rolesCS),",
         "            deMoi: moi != nil && message.auteurId == moi,",
         "        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)",
+        "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        "                    if etat.moi?.droits.cs == true {",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
-        "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
+        "            if lue.peutRediger {",
+        "                    if etat.peutCreerUnSondage {",
+        "        let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs",
         '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.pastilles[statut] ?? "badge-gray")',
         '            "carnet": bool(c.get("carnet")), "reservee": bool(c.get("reserveCS")),',
         "        affaire.estActualite ? [] : affaire.referentiels.proposables",

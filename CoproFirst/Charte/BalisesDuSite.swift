@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.89.0 (commit 10b85f3356d538254bfdca6f54270063c9008d4b), front/src/lib/sanitize.ts#ALLOWED_TAGS, front/src/lib/sanitize.ts#ALLOWED_ATTR (tables-clients.json) et api/app/utils/html_sur.py.
+// Source : philippe-tressard/coprofirst v3.101.0 (commit e6e8ecdbbd269ccb2b25081a0c12828176047a5c), front/src/lib/sanitize.ts#ALLOWED_TAGS, front/src/lib/sanitize.ts#ALLOWED_ATTR (tables-clients.json) et api/app/utils/html_sur.py.
 
 /// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).
 enum BalisesDuSite {

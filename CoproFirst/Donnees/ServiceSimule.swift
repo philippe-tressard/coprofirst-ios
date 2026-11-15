@@ -10,11 +10,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Une résidence inventée, à sa palette (bouteille), avec la barre par défaut du site.
     static let residence = Installation(
         adresse: URL(string: "https://tilleuls.exemple.fr")!, nom: "Résidence Les Tilleuls", aUnLogo: false,
-        codePalette: "bouteille", versionContrat: "1.27.0")
+        codePalette: "bouteille", versionContrat: VersionContrat.plancher.description)
     /// La démonstration, telle que la simule l'app (sans requête) — au contrat qu'elle sert.
     static let demo = Installation(
         adresse: URL(string: "https://demo.coprofirst.fr")!, nom: "Résidence Les Glycines", aUnLogo: false,
-        versionContrat: "1.27.0")
+        versionContrat: VersionContrat.plancher.description)
 
     /// La résidence que sert la découverte (GET /config simulé) : `residence`, ou celle
     /// qu'un argument de lancement a changée (`-logo-residence`, #70).

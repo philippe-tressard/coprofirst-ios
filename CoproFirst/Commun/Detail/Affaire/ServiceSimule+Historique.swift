@@ -35,7 +35,7 @@ extension ServiceSimule {
             else { throw ErreurService.refus(.init(phrase: "Accès refusé")) }
             servi = try Self.corriger(&detail, rang, correction)
         }
-        return IssueCorrection.lue(corps: servi)
+        return try servi.flatMap { IssueCorrection.lue(try FixturesCorrectionSuite.lue($0)) }
     }
 
     func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws {

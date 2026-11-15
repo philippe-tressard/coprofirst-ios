@@ -35,8 +35,8 @@ struct CanauxTelemetrieTests {
         #expect(tableau.plusieursCanauxParPage)
     }
 
-    @Test func uneInstallationAnterieureNeMontreNiBlocNiColonne() async throws {
-        // La réponse d'une installation au contrat 1.30.0 : sans `canaux`, nulle part.
+    @Test func sansCanauxServisNiBlocNiColonne() async throws {
+        // Une réponse sans `canaux`, nulle part : leur défaut du contrat (vide).
         var json = try #require(
             try JSONSerialization.jsonObject(with: Data(FixturesTelemetrie.jour.utf8)) as? [String: Any])
         json["canaux"] = nil

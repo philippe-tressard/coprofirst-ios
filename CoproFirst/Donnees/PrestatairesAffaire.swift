@@ -5,37 +5,15 @@ import ClientAPI
 import Foundation
 
 /// Un prestataire d'une affaire, tel que le serveur le sert (`TicketRead.prestataires`,
-/// contrat 1.28.0, #181) : l'affaire en porte plusieurs, dans l'ordre de saisie.
-struct PrestataireAffaire: Identifiable, Hashable, Sendable, Decodable {
-    /// `nil` d'une installation antérieure qui ne sert que le nom (`prestataire_nom`).
+/// `PrestataireDeLAffaire`, #181) : l'affaire en porte plusieurs, dans l'ordre de saisie.
+struct PrestataireAffaire: Identifiable, Hashable, Sendable {
     let id: Int?
     let nom: String
-}
 
-/// Ce que `TicketRead` sert au-dessus du plancher sur les prestataires (contrat 1.28.0) —
-/// relu dans le corps servi (`Relecture.auDessusDuPlancher`), tous champs facultatifs.
-struct PrestatairesServis: Identifiable, Decodable, Sendable {
-    let id: Int
-    /// La liste servie ; absente d'une installation antérieure.
-    let prestataires: [PrestataireAffaire]?
-    /// Ajouter, retirer un prestataire (`peut_changer_prestataires`) ; absent : non.
-    let peutChangerPrestataires: Bool?
-
-    /// Les prestataires de l'affaire : la liste servie ; d'une installation antérieure,
-    /// le seul qu'elle sert (`prestataire_id`, `prestataire_nom`), comme avant.
-    static func liste(
-        _ servis: PrestatairesServis?, ticket: Components.Schemas.TicketRead
-    ) -> [PrestataireAffaire] {
-        if let liste = servis?.prestataires { return liste }
-        guard let nom = ticket.prestataireNom?.nulSiVide else { return [] }
-        return [PrestataireAffaire(id: ticket.prestataireId, nom: nom)]
+    /// Les prestataires servis d'une affaire.
+    static func liste(_ ticket: Components.Schemas.TicketRead) -> [PrestataireAffaire] {
+        (ticket.prestataires ?? []).map { PrestataireAffaire(id: $0.id, nom: $0.nom) }
     }
-}
-
-/// Ce que « Modifier l'affaire » ajoute au corps du PATCH quand la liste a changé
-/// (`prestataire_ids`, contrat 1.28.0) : la liste ENTIÈRE, qui remplace l'ancienne.
-struct ChampsPrestataires: Encodable, Sendable {
-    let prestataireIds: [Int]
 }
 
 enum TextesPrestatairesAffaire {

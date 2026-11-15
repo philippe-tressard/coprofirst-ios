@@ -12,6 +12,8 @@ protocol ServiceCommunaute: ServiceSignalements {
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute
     /// GET /sondages.
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume]
+    /// GET /sondages/gestes → `GestesSondages.peut_creer` : ce lecteur crée-t-il un sondage (#87) ?
+    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool
     /// GET /idees ; POST /idees ; POST /idees/{id}/voter (une bascule : le serveur rend sa phrase).
     func idees(_ installation: Installation) async throws -> [Idee]
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws

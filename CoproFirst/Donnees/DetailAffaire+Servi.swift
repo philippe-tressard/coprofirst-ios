@@ -7,11 +7,8 @@ import Foundation
 extension DetailAffaire {
     /// L'affaire servie et ses suites, par les types générés — le MÊME branchement pour le
     /// service réel et l'API simulée.
-    /// `corps` : le corps servi de GET /tickets/{id}, gardé (`CorpsServi.garder`) pour y
-    /// relire ce qui est servi au-dessus du plancher — les prestataires (contrat 1.28.0, #181).
     static func lue(
-        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead],
-        corps: Data? = nil
+        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead]
     ) -> DetailAffaire {
         let suites = evolutions.map { evolution in
             var suite = SuiteAffaire(evolution: evolution)
@@ -27,10 +24,9 @@ extension DetailAffaire {
         // Le suivi d'une actualité en clair (1.21.0) ; le rythme qui fait foi : celui du contrat
         // sous contrat, celui de l'affaire sinon (`intervenantAffiche` du site, 1.20.0, #125).
         detail.suiviActualiteLibelle = ticket.suiviActualiteLibelle
-        // Ses prestataires, servis (1.28.0, #181) ; d'une installation antérieure, le seul servi.
-        let servis = Relecture.auDessusDuPlancher(PrestatairesServis.self, corps: corps)
-        detail.prestataires = PrestatairesServis.liste(servis, ticket: ticket)
-        detail.droits.changerPrestataires = servis?.peutChangerPrestataires ?? false
+        // Ses prestataires et le droit d'en changer, servis (#181).
+        detail.prestataires = PrestataireAffaire.liste(ticket)
+        detail.droits.changerPrestataires = ticket.peutChangerPrestataires ?? false
         detail.rythme = ticket.contrat?.frequenceLibelle ?? ticket.frequenceLibelle
         // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
         detail.lecture = ticket.lecture.map(Lecture.init)

@@ -572,6 +572,45 @@
         "title": "Adoption",
         "type": "object"
       },
+      "AffaireAvis": {
+        "description": "Une affaire qu'on peut juger — `intervient` dit si le prestataire y figure déjà.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "intervenants": {
+            "title": "Intervenants",
+            "type": "string"
+          },
+          "intervient": {
+            "title": "Intervient",
+            "type": "boolean"
+          },
+          "numero": {
+            "title": "Numero",
+            "type": "string"
+          },
+          "statut": {
+            "title": "Statut",
+            "type": "string"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "numero",
+          "titre",
+          "statut",
+          "intervient",
+          "intervenants"
+        ],
+        "title": "AffaireAvis",
+        "type": "object"
+      },
       "AffaireCiteeRead": {
         "properties": {
           "id": {
@@ -593,6 +632,37 @@
           "titre"
         ],
         "title": "AffaireCiteeRead",
+        "type": "object"
+      },
+      "AffaireExercice": {
+        "description": "Une affaire close d'un exercice, listée sous lui (R3d).",
+        "properties": {
+          "cloture": {
+            "title": "Cloture",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "issue": {
+            "title": "Issue",
+            "type": "string"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "titre",
+          "issue"
+        ],
+        "title": "AffaireExercice",
         "type": "object"
       },
       "AffaireLieeLue": {
@@ -5138,6 +5208,37 @@
             "title": "Reconduit",
             "type": "boolean"
           },
+          "remplace": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ContratLie"
+            },
+            "title": "Remplace",
+            "type": "array"
+          },
+          "remplace_par": {
+            "$ref": "#/components/schemas/ContratLie"
+          },
+          "remplace_par_id": {
+            "title": "Remplace Par Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "resilie": {
+            "default": false,
+            "title": "Resilie",
+            "type": "boolean"
+          },
+          "resilie_le": {
+            "format": "date",
+            "title": "Resilie Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "synthese_disponible": {
             "default": false,
             "title": "Synthese Disponible",
@@ -5333,6 +5434,21 @@
               "null"
             ]
           },
+          "remplace_par_id": {
+            "title": "Remplace Par Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "resilie_le": {
+            "format": "date",
+            "title": "Resilie Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "type_equipement": {
             "default": "autre",
             "title": "Type Equipement",
@@ -5393,6 +5509,49 @@
           "id"
         ],
         "title": "ContratDeLAffaire",
+        "type": "object"
+      },
+      "ContratLie": {
+        "description": "Le contrat à l'autre bout d'un remplacement — ce que la pastille a besoin de dire.\n\n« Remplacé par Sécurité Alpha · dès le 18/11/2026 », « Remplace Sécurité Beta (résilié\nau 17/11/2026) » : un nom, une date, et de quoi ouvrir la fiche (12/11/2026).",
+        "properties": {
+          "date_debut": {
+            "format": "date",
+            "title": "Date Debut",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "prestataire_id": {
+            "title": "Prestataire Id",
+            "type": "integer"
+          },
+          "prestataire_nom": {
+            "title": "Prestataire Nom",
+            "type": "string"
+          },
+          "resilie_le": {
+            "format": "date",
+            "title": "Resilie Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "libelle",
+          "prestataire_id",
+          "prestataire_nom",
+          "date_debut"
+        ],
+        "title": "ContratLie",
         "type": "object"
       },
       "ContratRead": {
@@ -5541,6 +5700,37 @@
             "default": false,
             "title": "Reconduit",
             "type": "boolean"
+          },
+          "remplace": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ContratLie"
+            },
+            "title": "Remplace",
+            "type": "array"
+          },
+          "remplace_par": {
+            "$ref": "#/components/schemas/ContratLie"
+          },
+          "remplace_par_id": {
+            "title": "Remplace Par Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "resilie": {
+            "default": false,
+            "title": "Resilie",
+            "type": "boolean"
+          },
+          "resilie_le": {
+            "format": "date",
+            "title": "Resilie Le",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "synthese_disponible": {
             "default": false,
@@ -8362,6 +8552,59 @@
         "title": "ExerciceBorne",
         "type": "object"
       },
+      "ExerciceInterventions": {
+        "description": "Un exercice comptable : ses interventions, ses avis sans affaire, le compte des états.",
+        "properties": {
+          "annee": {
+            "title": "Annee",
+            "type": "integer"
+          },
+          "avis_generaux": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/NotationRead"
+            },
+            "title": "Avis Generaux",
+            "type": "array"
+          },
+          "compte": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "default": {},
+            "title": "Compte",
+            "type": "object"
+          },
+          "interventions": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Intervention"
+            },
+            "title": "Interventions",
+            "type": "array"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "nb_interventions": {
+            "default": 0,
+            "title": "Nb Interventions",
+            "type": "integer"
+          },
+          "nb_notees": {
+            "default": 0,
+            "title": "Nb Notees",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "annee",
+          "libelle"
+        ],
+        "title": "ExerciceInterventions",
+        "type": "object"
+      },
       "ExerciceLu": {
         "description": "Un exercice comptable : l'année où il commence, et son nom (« 2025-2026 »).",
         "properties": {
@@ -9691,6 +9934,44 @@
         "title": "InfoSyndicAdmin",
         "type": "object"
       },
+      "Intervention": {
+        "description": "Une affaire du prestataire, et les avis portés sur ce couple (aucun : « non notée »).",
+        "properties": {
+          "avis": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/NotationRead"
+            },
+            "title": "Avis",
+            "type": "array"
+          },
+          "date": {
+            "format": "date-time",
+            "title": "Date",
+            "type": "string"
+          },
+          "numero": {
+            "title": "Numero",
+            "type": "string"
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": "integer"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticket_id",
+          "numero",
+          "titre",
+          "date"
+        ],
+        "title": "Intervention",
+        "type": "object"
+      },
       "JournalCourriels": {
         "properties": {
           "limite": {
@@ -10179,6 +10460,16 @@
       },
       "LotAudience": {
         "properties": {
+          "canal": {
+            "default": "site",
+            "enum": [
+              "site",
+              "ios",
+              "android"
+            ],
+            "title": "Canal",
+            "type": "string"
+          },
           "events": {
             "items": {
               "$ref": "#/components/schemas/EvenementAudience"
@@ -11169,6 +11460,30 @@
         "title": "MessageCreate",
         "type": "object"
       },
+      "MessageUpdate": {
+        "description": "Corriger son message (#2722) : le texte, et les pièces si on les renvoie.",
+        "properties": {
+          "contenu": {
+            "title": "Contenu",
+            "type": "string"
+          },
+          "fichiers_urls": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Fichiers Urls",
+            "type": [
+              "array",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "contenu"
+        ],
+        "title": "MessageUpdate",
+        "type": "object"
+      },
       "MetriquesPrestataire": {
         "description": "L'ensemble des affaires closes du prestataire, puis chaque exercice (le plus récent d'abord).",
         "properties": {
@@ -11281,6 +11596,11 @@
               "null"
             ]
           },
+          "confirmer_ajout": {
+            "default": false,
+            "title": "Confirmer Ajout",
+            "type": "boolean"
+          },
           "contrat_id": {
             "title": "Contrat Id",
             "type": [
@@ -11288,18 +11608,39 @@
               "null"
             ]
           },
+          "etat": {
+            "enum": [
+              "mauvais",
+              "neutre",
+              "excellent"
+            ],
+            "title": "Etat",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "note": {
             "title": "Note",
-            "type": "integer"
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "prestataire_id": {
             "title": "Prestataire Id",
             "type": "integer"
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": [
+              "integer",
+              "null"
+            ]
           }
         },
         "required": [
-          "prestataire_id",
-          "note"
+          "prestataire_id"
         ],
         "title": "NotationCreate",
         "type": "object"
@@ -11339,6 +11680,25 @@
             "title": "Cree Le",
             "type": "string"
           },
+          "etat": {
+            "default": "",
+            "title": "Etat",
+            "type": "string"
+          },
+          "exercice_annee": {
+            "title": "Exercice Annee",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "exercice_libelle": {
+            "title": "Exercice Libelle",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "title": "Id",
             "type": "integer"
@@ -11347,9 +11707,28 @@
             "title": "Note",
             "type": "integer"
           },
+          "peut_modifier": {
+            "default": false,
+            "title": "Peut Modifier",
+            "type": "boolean"
+          },
           "prestataire_id": {
             "title": "Prestataire Id",
             "type": "integer"
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "ticket_titre": {
+            "title": "Ticket Titre",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -11359,6 +11738,43 @@
           "cree_le"
         ],
         "title": "NotationRead",
+        "type": "object"
+      },
+      "NotationUpdate": {
+        "properties": {
+          "commentaire": {
+            "title": "Commentaire",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "confirmer_ajout": {
+            "default": false,
+            "title": "Confirmer Ajout",
+            "type": "boolean"
+          },
+          "etat": {
+            "enum": [
+              "mauvais",
+              "neutre",
+              "excellent"
+            ],
+            "title": "Etat",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ticket_id": {
+            "title": "Ticket Id",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "title": "NotationUpdate",
         "type": "object"
       },
       "NotificationRead": {
@@ -11746,6 +12162,14 @@
       },
       "PageTop": {
         "properties": {
+          "canaux": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/VuesCanal"
+            },
+            "title": "Canaux",
+            "type": "array"
+          },
           "page": {
             "title": "Page",
             "type": "string"
@@ -11798,6 +12222,42 @@
           "fond"
         ],
         "title": "PaletteRead",
+        "type": "object"
+      },
+      "PartCanal": {
+        "description": "Un canal d'accès dans la répartition de la portée (`utils/telemetrie_canaux`).\n\n`part` : en pour cent des vues, calculée par le serveur. `visiteurs` : les comptes\nvenus par ce canal — ne s'additionnent pas d'un canal à l'autre ; `null` au-delà\ndes 30 jours d'évènements (Année, Total).",
+        "properties": {
+          "canal": {
+            "title": "Canal",
+            "type": "string"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "part": {
+            "title": "Part",
+            "type": "integer"
+          },
+          "visiteurs": {
+            "title": "Visiteurs",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "vues": {
+            "title": "Vues",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "canal",
+          "libelle",
+          "vues",
+          "part"
+        ],
+        "title": "PartCanal",
         "type": "object"
       },
       "PartDuLot": {
@@ -13178,6 +13638,25 @@
           "specialite"
         ],
         "title": "PrestataireCreate",
+        "type": "object"
+      },
+      "PrestataireDeLAffaire": {
+        "description": "Un prestataire de l'affaire, tel qu'on le lit (#2704) — dans l'ordre de saisie.",
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "nom": {
+            "title": "Nom",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "nom"
+        ],
+        "title": "PrestataireDeLAffaire",
         "type": "object"
       },
       "PrestataireLent": {
@@ -14898,8 +15377,16 @@
         "type": "object"
       },
       "ResumeExercice": {
-        "description": "Les moyennes d'un exercice comptable.",
+        "description": "Les moyennes d'un exercice comptable, et ses affaires (la plus récente d'abord).",
         "properties": {
+          "affaires": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/AffaireExercice"
+            },
+            "title": "Affaires",
+            "type": "array"
+          },
           "annee": {
             "title": "Annee",
             "type": "integer"
@@ -16481,6 +16968,14 @@
             "title": "Arrivees",
             "type": "array"
           },
+          "canaux": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PartCanal"
+            },
+            "title": "Canaux",
+            "type": "array"
+          },
           "chart": {
             "items": {
               "$ref": "#/components/schemas/Baton"
@@ -16747,6 +17242,16 @@
               "null"
             ]
           },
+          "prestataire_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Prestataire Ids",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "public_cible": {
             "items": {
               "type": "string"
@@ -17001,6 +17506,16 @@
               "null"
             ]
           },
+          "prestataire_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Prestataire Ids",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "public_cible": {
             "items": {
               "type": "string"
@@ -17038,6 +17553,18 @@
       },
       "TicketEvolutionRead": {
         "properties": {
+          "affaire_suivie": {
+            "title": "Affaire Suivie",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "affaire_suivie_libelle": {
+            "default": "",
+            "title": "Affaire Suivie Libelle",
+            "type": "string"
+          },
           "ancien_statut": {
             "title": "Ancien Statut",
             "type": [
@@ -17081,6 +17608,19 @@
           "cree_le": {
             "format": "date-time",
             "title": "Cree Le",
+            "type": "string"
+          },
+          "etat_propose": {
+            "title": "Etat Propose",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "etat_propose_libelle": {
+            "description": "L'état proposé à l'affaire, en clair — vide sans proposition (#2715).",
+            "readOnly": true,
+            "title": "Etat Propose Libelle",
             "type": "string"
           },
           "fichiers_urls": {
@@ -17155,6 +17695,7 @@
           "type",
           "cree_le",
           "ticket_id",
+          "etat_propose_libelle",
           "nouveau_statut_libelle",
           "perimetre_precise_libelle"
         ],
@@ -17272,6 +17813,16 @@
             "title": "Prestataire Id",
             "type": [
               "integer",
+              "null"
+            ]
+          },
+          "prestataire_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Prestataire Ids",
+            "type": [
+              "array",
               "null"
             ]
           },
@@ -17606,6 +18157,11 @@
             "title": "Peut Changer Etat",
             "type": "boolean"
           },
+          "peut_changer_prestataires": {
+            "default": false,
+            "title": "Peut Changer Prestataires",
+            "type": "boolean"
+          },
           "peut_corriger": {
             "default": false,
             "title": "Peut Corriger",
@@ -17649,6 +18205,14 @@
               "string",
               "null"
             ]
+          },
+          "prestataires": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PrestataireDeLAffaire"
+            },
+            "title": "Prestataires",
+            "type": "array"
           },
           "priorite": {
             "title": "Priorite",
@@ -17969,6 +18533,16 @@
             "title": "Prestataire Id",
             "type": [
               "integer",
+              "null"
+            ]
+          },
+          "prestataire_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Prestataire Ids",
+            "type": [
+              "array",
               "null"
             ]
           },
@@ -19260,6 +19834,16 @@
               "null"
             ]
           },
+          "prestataire_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "title": "Prestataire Ids",
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "titre": {
             "title": "Titre",
             "type": "string"
@@ -19488,6 +20072,30 @@
           "registre_url"
         ],
         "title": "VueInscription",
+        "type": "object"
+      },
+      "VuesCanal": {
+        "description": "Les vues d'une page par un canal d'accès (`utils/canaux_audience`).",
+        "properties": {
+          "canal": {
+            "title": "Canal",
+            "type": "string"
+          },
+          "libelle": {
+            "title": "Libelle",
+            "type": "string"
+          },
+          "vues": {
+            "title": "Vues",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "canal",
+          "libelle",
+          "vues"
+        ],
+        "title": "VuesCanal",
         "type": "object"
       },
       "WhatsAppScheduledUpdate": {
@@ -19724,7 +20332,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "1.27.0"
+    "version": "2.0.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -33190,6 +33798,54 @@
         ]
       }
     },
+    "/prestataires/affaires-a-noter": {
+      "get": {
+        "description": "Toutes les affaires de la copropriété : d'abord celles où le prestataire intervient,\npuis les autres, chaque groupe de la plus récente à la plus ancienne (15/11/2026).\n\nPour noter le couple prestataire / affaire, même quand il n'y figure pas encore : ce\nchoix-là exige la confirmation de l'ajout. La recherche détaillée (suivi, messages,\npièces) est celle de la page Affaires, `GET /tickets/recherche` : elle n'est pas\nrefaite ici, et l'écran la croise avec cette liste.",
+        "operationId": "get_prestataires_affaires_a_noter",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "prestataire_id",
+            "required": true,
+            "schema": {
+              "title": "Prestataire Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AffaireAvis"
+                  },
+                  "title": "Response Get Prestataires Affaires A Noter",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lire Affaires A Noter",
+        "tags": [
+          "prestataires",
+          "prestataires"
+        ]
+      }
+    },
     "/prestataires/archives": {
       "get": {
         "operationId": "get_prestataires_archives",
@@ -33676,6 +34332,7 @@
         },
         "summary": "List Notations",
         "tags": [
+          "prestataires",
           "prestataires"
         ]
       },
@@ -33715,6 +34372,7 @@
         },
         "summary": "Create Notation",
         "tags": [
+          "prestataires",
           "prestataires"
         ]
       }
@@ -33750,6 +34408,59 @@
         },
         "summary": "Delete Notation",
         "tags": [
+          "prestataires",
+          "prestataires"
+        ]
+      },
+      "patch": {
+        "description": "L'auteur corrige son avis — l'état, le commentaire, l'affaire (15/11/2026).\n\nSeul l'auteur : un autre membre ne réécrit pas l'avis d'un collègue (il peut le retirer).",
+        "operationId": "patch_prestataires_notations_n_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "n_id",
+            "required": true,
+            "schema": {
+              "title": "N Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotationUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotationRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Notation",
+        "tags": [
+          "prestataires",
           "prestataires"
         ]
       }
@@ -34163,6 +34874,54 @@
         },
         "summary": "Archiver Prestataire",
         "tags": [
+          "prestataires"
+        ]
+      }
+    },
+    "/prestataires/{p_id}/interventions": {
+      "get": {
+        "description": "Les interventions du prestataire rangées par exercice, le plus récent d'abord (R3d).\n\nUne intervention est une affaire où il est intervenant désigné — ou qu'un avis juge :\nretiré de l'affaire ensuite, il garde l'avis qu'on y a porté. Elle se range dans\nl'exercice de son OUVERTURE ; un avis sans affaire, dans celui de sa date. La règle de\nl'exercice est celle des métriques (`exercice_de`) : l'écran ne la recopie pas.",
+        "operationId": "get_prestataires_p_id_interventions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "p_id",
+            "required": true,
+            "schema": {
+              "title": "P Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ExerciceInterventions"
+                  },
+                  "title": "Response Get Prestataires P Id Interventions",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lire Interventions",
+        "tags": [
+          "prestataires",
           "prestataires"
         ]
       }
@@ -36779,6 +37538,111 @@
           }
         },
         "summary": "Add Message",
+        "tags": [
+          "tickets",
+          "tickets"
+        ]
+      }
+    },
+    "/tickets/{ticket_id}/messages/{msg_id}": {
+      "delete": {
+        "operationId": "delete_tickets_ticket_id_messages_msg_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "title": "Ticket Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "msg_id",
+            "required": true,
+            "schema": {
+              "title": "Msg Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Message",
+        "tags": [
+          "tickets",
+          "tickets"
+        ]
+      },
+      "patch": {
+        "operationId": "patch_tickets_ticket_id_messages_msg_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "title": "Ticket Id",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "path",
+            "name": "msg_id",
+            "required": true,
+            "schema": {
+              "title": "Msg Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__routers__tickets__messages_schemas__MessageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Message",
         "tags": [
           "tickets",
           "tickets"

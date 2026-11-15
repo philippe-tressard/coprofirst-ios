@@ -62,9 +62,10 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         let suites = #"""
             [{"id": 1, "type": "etat", "cree_le": "2026-11-02T10:00:00", "ticket_id": 9,
               "nouveau_statut": "en_cours", "perimetre_precise_libelle": "Périmètre précisé : 🔹 Bât. 2",
+              "etat_propose_libelle": "",
               "nouveau_statut_libelle": "En cours"},
              {"id": 2, "type": "commentaire", "cree_le": "2026-11-02T11:00:00", "ticket_id": 9,
-              "perimetre_precise_libelle": "", "nouveau_statut_libelle": ""}]
+              "perimetre_precise_libelle": "", "etat_propose_libelle": "", "nouveau_statut_libelle": ""}]
             """#
         let detail = try await service([
             "/tickets/9": ticket(9, ", \"lecture\": " + lectureCS),

@@ -7,9 +7,8 @@ import Testing
 
 @testable import CoproFirst
 
-/// Plusieurs prestataires par affaire (#181, coprofirst#2704, contrat 1.28.0) : la liste
-/// servie au-dessus du plancher, le repli sur le seul prestataire d'une installation
-/// antérieure, « +N » au Kanban, et `prestataire_ids` envoyé seulement s'il a changé.
+/// Plusieurs prestataires par affaire (#181, coprofirst#2704) : la liste servie, lue par le
+/// type généré, « +N » au Kanban, et `prestataire_ids` envoyé seulement s'il a changé.
 @MainActor
 struct PrestatairesAffaireTests {
     private let parc = PrestataireAffaire(id: 1, nom: "Ascenseurs du Parc (fictif)")
@@ -25,22 +24,14 @@ struct PrestatairesAffaireTests {
         #expect(!affaire.droits.changerPrestataires, "servi à un résident : non")
     }
 
-    /// Une installation antérieure au contrat 1.28.0 ne sert pas la liste : le seul
-    /// prestataire qu'elle sert, comme avant — et aucun droit d'en changer.
-    @Test func sansListeServieLeSeulPrestataireCommeAvant() throws {
-        let ancienne = try #require(try FixturesDetailAffaire.lue(44))
-        #expect(ancienne.prestataires == [PrestataireAffaire(id: nil, nom: "Ramonage Exemple (fictif)")])
-        #expect(ancienne.intervenant == "Ramonage Exemple (fictif) · ↺ 1×/an")
-        #expect(!ancienne.droits.changerPrestataires)
-        let ticket = try Relecture.generee([Components.Schemas.TicketRead].self, json: FixturesDetailAffaire.affaires)
-            .first { $0.id == 45 }
-        let sansCorps = DetailAffaire.lue(try #require(ticket), evolutions: [])
-        #expect(sansCorps.prestataires == [parc], "corps absent : `prestataire_id` et `prestataire_nom`")
-        let illisible = DetailAffaire.lue(try #require(ticket), evolutions: [], corps: Data("{".utf8))
-        #expect(illisible.prestataires == [parc] && !illisible.droits.changerPrestataires, "illisible : défaut fermé")
+    @Test func uneAffaireAUnSeulPrestataireLeDitAvecSonRythme() throws {
+        let affaire = try #require(try FixturesDetailAffaire.lue(44))
+        #expect(affaire.prestataires == [PrestataireAffaire(id: 9, nom: "Ramonage Exemple (fictif)")])
+        #expect(affaire.intervenant == "Ramonage Exemple (fictif) · ↺ 1×/an")
+        #expect(!affaire.droits.changerPrestataires)
     }
 
-    @Test func uneListeServieVideNeRetombePasSurLeRepli() throws {
+    @Test func uneListeServieVideNeMontreAucunPrestataire() throws {
         let affaire = try #require(try FixturesDetailAffaire.lue(41))
         #expect(affaire.prestataires.isEmpty && affaire.intervenant == nil)
     }
@@ -53,11 +44,12 @@ struct PrestatairesAffaireTests {
         #expect(TextesPrestatairesAffaire.carte(["A", "B", "C"]) == "A +2")
     }
 
-    @Test func laListeLitLesPrestatairesParLigne() throws {
-        let json = #"[{"id": 40, "prestataires": [{"id": 3, "nom": "X"}, {"id": 4, "nom": "Y"}]}, {"id": 41}]"#
-        let servis = Relecture.auDessusDuPlancher(parLigne: PrestatairesServis.self, corps: Data(json.utf8))
-        #expect(servis[40]?.prestataires?.map(\.nom) == ["X", "Y"])
-        #expect(servis[41]?.prestataires == nil, "ligne sans la liste : le repli")
+    @Test func laListeLitLesPrestatairesDeChaqueAffaire() throws {
+        let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: FixturesDetailAffaire.affaires)
+        let lues = tickets.map(Affaire.init(ticket:))
+        #expect(
+            lues.first { $0.id == 45 }?.prestataires == ["Ascenseurs du Parc (fictif)", "Contrôles Sécurité Exemple"])
+        #expect(lues.first { $0.id == 41 }?.prestataires == [], "sans liste servie : aucun")
     }
 
     @Test func lApercuDuKanbanPorteUneAffaireADeuxPrestataires() {
