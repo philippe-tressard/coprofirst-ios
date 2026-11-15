@@ -56,7 +56,7 @@ struct EcheanceDuFil: Hashable, Sendable {
     func dates(maintenant: Date = .now) -> String {
         let premier = FormatsDuSite.jourCourt(debut, maintenant: maintenant)
         guard let fin else { return premier }
-        return premier + Textes.fleche + FormatsDuSite.jourCourt(fin, semaine: false, maintenant: maintenant)
+        return premier + Separateur.fleche + FormatsDuSite.jourCourt(fin, semaine: false, maintenant: maintenant)
     }
 
     /// Ce que VoiceOver lit, comme le titre de la vignette du site : « J-8, prévu le
@@ -69,8 +69,6 @@ struct EcheanceDuFil: Hashable, Sendable {
     }
 
     enum Textes {
-        /// `SEPARATEUR.fleche` du site : une espace, la flèche, une espace insécable.
-        static let fleche = " →\u{00A0}"
         static let prevu = "prévu"
     }
 }

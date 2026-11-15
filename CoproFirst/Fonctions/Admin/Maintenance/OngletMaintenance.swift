@@ -84,7 +84,7 @@ private struct SectionSanteTaches: View {
                                     [
                                         TextesMaintenance.tache(anomalie.tache), anomalie.noeud,
                                         FormatsDuSite.dateHeure(anomalie.creeLe),
-                                    ].compactMap { $0 }.joined(separator: " · ")
+                                    ].compactMap { $0 }.joined(separator: Separateur.point)
                                 )
                                 .font(.footnote.weight(.semibold)).foregroundStyle(palette.text)
                                 if let erreur = anomalie.erreur {
@@ -119,7 +119,7 @@ private struct LigneTache: View {
                 }
                 Text(
                     [TextesMaintenance.dernierRapport(FormatsDuSite.dateHeure(tache.derniere)), tache.noeud]
-                        .compactMap { $0 }.joined(separator: " · ")
+                        .compactMap { $0 }.joined(separator: Separateur.point)
                 )
                 .font(.footnote).foregroundStyle(palette.textMuted)
                 if let noeud = tache.noeudEnRetard {

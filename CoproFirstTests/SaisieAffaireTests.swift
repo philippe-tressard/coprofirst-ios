@@ -73,7 +73,8 @@ private func essentiellesServies() async throws -> SectionsEssentielles {
     let forme = FormeDeSaisie(mode: .essentielle, essentielles: SectionsEssentielles(["question": ["titre"]]))
     #expect(
         forme.phrase(rangees: 1)
-            == "Saisie essentielle — les autres sections sont dans « Plus de détails ». À changer dans votre profil.")
+            == "Saisie essentielle —\u{00A0}les autres sections sont dans « Plus de détails »."
+            + " À changer dans votre profil.")
     #expect(FormeDeSaisie.intitule(1) == "Plus de détails (1 section)")
     #expect(FormeDeSaisie.intitule(2) == "Plus de détails (2 sections)")
 }

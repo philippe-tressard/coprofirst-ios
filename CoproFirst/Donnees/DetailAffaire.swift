@@ -116,7 +116,7 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
         guard let nouveauStatut else { return nil }
         let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle, dans: servis)
         guard let ancienStatut else { return nouveau }
-        return "\(StatutsAffaire.libelle(ancienStatut, servi: nil, dans: servis)) → \(nouveau)"
+        return "\(StatutsAffaire.libelle(ancienStatut, servi: nil, dans: servis))\(Separateur.fleche)\(nouveau)"
     }
 }
 

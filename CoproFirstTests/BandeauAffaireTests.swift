@@ -90,7 +90,7 @@ struct BandeauAffaireTests {
         try await service.archiverAffaire(41, dans: residence)
         let apres = try service.detailSimule(41)
         #expect(apres.statut == "résolu" && apres.archivee)
-        #expect(apres.suites.last?.changementDEtat(apres.referentiels) == "Chez le syndic → Résolu")
+        #expect(apres.suites.last?.changementDEtat(apres.referentiels) == "Chez le syndic →\u{00A0}Résolu")
         #expect(apres.statutLibelle == "Résolu", "le libellé suit l'état, servi")
     }
 }

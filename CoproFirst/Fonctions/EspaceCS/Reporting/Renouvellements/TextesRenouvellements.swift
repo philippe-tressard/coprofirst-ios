@@ -31,7 +31,7 @@ enum TextesRenouvellements {
 
     static func aucuneEcheance(_ annee: Int) -> String { "Aucune échéance de contrat en \(String(annee))" }
     static func diagnosticsTitre(_ annee: Int) -> String {
-        "Diagnostics et Contrôles Réglementaires — \(String(annee))–\(String(annee + 10))"
+        "Diagnostics et Contrôles Réglementaires\(Separateur.tiret)\(String(annee))–\(String(annee + 10))"
     }
 
     static func aFaireEn(_ annee: Int) -> String { "À faire en \(String(annee))" }
@@ -40,15 +40,15 @@ enum TextesRenouvellements {
 
     /// « 01/12/2023 → 30/11/2026 · préavis dès 31/08/2026 ».
     static func periode(_ contrat: ContratARenouveler) -> String {
-        let dates = "\(FormatsDuSite.date(contrat.dateDebut)) → \(FormatsDuSite.date(contrat.dateFin))"
+        let dates = "\(FormatsDuSite.date(contrat.dateDebut))\(Separateur.fleche)\(FormatsDuSite.date(contrat.dateFin))"
         guard contrat.datePreavis != nil else { return dates }
-        return dates + " · préavis dès \(FormatsDuSite.date(contrat.datePreavis))"
+        return dates + "\(Separateur.point)préavis dès \(FormatsDuSite.date(contrat.datePreavis))"
     }
 
     /// « Ascenseurs Exemple · N° ASC-2023-07 · ★ 2,5 (4 avis) ».
     static func prestataire(_ contrat: ContratARenouveler) -> String {
         [contrat.prestataireNom, contrat.numeroContrat.map { "N° \($0)" }, note(contrat)]
-            .compactMap(\.self).joined(separator: " · ")
+            .compactMap(\.self).joined(separator: Separateur.point)
     }
 
     /// « ★ 2,5 (4 avis) », ou rien sans note.

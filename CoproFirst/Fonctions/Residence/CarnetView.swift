@@ -123,7 +123,7 @@ private struct EncartAlerte: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("⚠️ **\(TextesCarnet.visitesAttendues(entrees.count))** \(TextesCarnet.echeanceDepassee)")
             ForEach(entrees) { entree in
-                Text("• \(entree.libelle)" + (entree.alerte.map { " — \($0)" } ?? ""))
+                Text("• \(entree.libelle)" + (entree.alerte.map { "\(Separateur.tiret)\($0)" } ?? ""))
                     .font(.subheadline)
             }
         }

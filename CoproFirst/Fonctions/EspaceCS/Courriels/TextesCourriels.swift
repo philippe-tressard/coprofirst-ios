@@ -19,7 +19,7 @@ enum TextesCourriels {
     /// « Cabinet Syndic · envoyé le 10/04/2026 14:30 ».
     static func sousTitre(_ message: CourrielReleve) -> String {
         guard let envoye = message.envoyeLe else { return message.expediteur }
-        return "\(message.expediteur) · envoyé le \(FormatsDuSite.dateHeureCourte(envoye))"
+        return "\(message.expediteur)\(Separateur.point)envoyé le \(FormatsDuSite.dateHeureCourte(envoye))"
     }
 
     static func affaire(_ numero: String?) -> String { "Affaire #\(numero ?? "")" }

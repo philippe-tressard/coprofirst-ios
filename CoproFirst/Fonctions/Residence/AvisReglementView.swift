@@ -16,14 +16,14 @@ enum TextesAvis {
     /// « Renvoi sans extrait — à vérifier : R3. » (`renvois_sans_extrait`, servi).
     static func sansExtrait(_ renvois: [String]) -> String {
         let pluriel = renvois.count > 1 ? "s" : ""
-        return "Renvoi sans extrait\(pluriel)\(TablesReglement.tiret)à vérifier\u{00A0}: "
+        return "Renvoi sans extrait\(pluriel)\(Separateur.tiret)à vérifier\u{00A0}: "
             + renvois.joined(separator: ", ") + "."
     }
 
     /// Un extrait que le code n'a pas retrouvé le dit en clair, avec la référence donnée.
     static func nonRetrouve(_ extrait: ExtraitReglement) -> String {
         let reference = extrait.reference.flatMap { $0.isEmpty ? nil : " (référence donnée : \($0))" } ?? ""
-        return "⚠️ Non retrouvé mot pour mot dans le texte\(TablesReglement.tiret)à vérifier\(reference)"
+        return "⚠️ Non retrouvé mot pour mot dans le texte\(Separateur.tiret)à vérifier\(reference)"
     }
 }
 

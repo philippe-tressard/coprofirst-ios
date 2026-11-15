@@ -36,7 +36,7 @@ enum TextesMaintenance {
     static func dernierExport(_ export: DernierExport) -> String {
         guard let archive = export.archive else { return "Aucun export dans le volume des sauvegardes." }
         let date = export.creeLe.map { ", le \(FormatsDuSite.dateHeure($0))" } ?? ""
-        return "Dernier export : \(archive) — \(FormatsDuSite.octets(export.octets)), "
+        return "Dernier export : \(archive)\(Separateur.tiret)\(FormatsDuSite.octets(export.octets)), "
             + "\(FormatsDuSite.nombre(export.lignes)) lignes, \(FormatsDuSite.nombre(export.fichiers)) fichiers\(date)."
     }
 }

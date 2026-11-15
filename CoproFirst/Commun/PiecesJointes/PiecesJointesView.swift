@@ -37,7 +37,7 @@ struct PiecesJointesView: View {
         if !pieces.vide {
             VStack(alignment: .leading, spacing: 10) {
                 if format == .grand {
-                    Text("Pièces jointes · \(pieces.photos.count + pieces.documents.count)")
+                    Text("Pièces jointes\(Separateur.point)\(pieces.photos.count + pieces.documents.count)")
                         .styleLibelle()
                         .accessibilityAddTraits(.isHeader)
                 }

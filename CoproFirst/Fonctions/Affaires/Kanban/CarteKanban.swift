@@ -59,6 +59,6 @@ struct CarteKanban: View {
     /// Le libellé est celui que le serveur SERT (`categorie_libelle`), jamais vide.
     private var pied: String {
         let categorie = [emoji, affaire.categorieLibelle].compactMap { $0 }.joined(separator: " ")
-        return [categorie, affaire.numero].joined(separator: " · ")
+        return [categorie, affaire.numero].joined(separator: Separateur.point)
     }
 }
