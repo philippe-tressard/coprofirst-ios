@@ -43,10 +43,13 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
   fusionne : champ `fusion` du registre. **Décision du 11/11/2026** (Philippe :
   « tu es plus à même de fusionner et de voir les conséquences ») : je fusionne
-  mes PR moi-même — branche à jour de `main` (la protection l'exige), contrôles
-  rejoués au poste, puis fusion automatique `--squash` une fois la CI verte. Je
-  suis ensuite `main` : sa CI après la fusion, et les PR ouvertes qu'elle oblige
-  à rebaser. **Contrepartie** : un compte rendu après chaque fusion (ce qui est
+  mes PR moi-même — contrôles rejoués au poste, puis fusion automatique
+  `--squash` une fois la CI verte. Depuis le 15/11/2026, `main` n'exige plus
+  d'être à jour (`strict` désactivé, arbitrage de Philippe) : pas de
+  `update-branch` sauf conflit, une PR empilée fusionne après sa base, et un
+  `main` rouge passe avant tout autre lot ; la cohérence maximale se fait à la
+  soumission (#205). Je suis ensuite `main` : sa CI après la fusion.
+  **Contrepartie** : un compte rendu après chaque fusion (ce qui est
   entré, l'état de la CI de `main`). Philippe oriente par la **priorité** des
   tickets, pas par la fusion. Fusionner n'est pas soumettre : TestFlight externe
   et App Store restent suspendus à la validation du rendu.
