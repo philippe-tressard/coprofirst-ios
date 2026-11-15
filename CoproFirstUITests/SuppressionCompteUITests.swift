@@ -36,7 +36,9 @@ final class SuppressionCompteUITests: XCTestCase {
         // Aux grandes tailles, la feuille défile : les phrases d'abord, le champ plus bas.
         let perte = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Ancien résident"))
             .firstMatch
-        XCTAssertTrue(app.amener(perte, essais: 40), "ce que la personne perd et ce qui reste, dit avant de confirmer")
+        XCTAssertTrue(
+            app.amener(perte, essais: 40, pourLire: true),
+            "ce que la personne perd et ce qui reste, dit avant de confirmer")
         LancementCaptures.capturer("suppression-2a-ce-qui-reste")
         XCTAssertTrue(app.amener(motDePasse, essais: 40), "la confirmation demande le mot de passe")
         let confirmer = app.elementAcces("suppression.confirmer")
