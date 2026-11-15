@@ -441,6 +441,11 @@ python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "ticket
 python3 -I scripts/verifier-simule.py --autotest >/dev/null || echec "verifier-simule.py : autotest en échec"
 SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simulation hors de #if DEBUG"; }
 
+# Un Label identifié est lu en un élément (#183) : sous iOS 26, son identifiant se
+# résout en son image, et la requête du test tourne jusqu'au délai.
+python3 -I scripts/verifier-identifiants.py --autotest >/dev/null || echec "verifier-identifiants.py : autotest en échec"
+IDENTIFIANTS=$(python3 -I scripts/verifier-identifiants.py) || { echo "$IDENTIFIANTS"; echec "Label identifié lu en plusieurs éléments"; }
+
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
 # passage — la ligne s'affiche, elle ne compte pas pour conforme.
@@ -460,4 +465,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, Label identifiés lus en un élément ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
