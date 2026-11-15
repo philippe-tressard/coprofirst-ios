@@ -114,7 +114,7 @@ struct FormeDeSaisie: Equatable, Sendable {
 
     /// La phrase discrète en tête du formulaire : la saisie en cours, et où la changer.
     func phrase(rangees: Int) -> String {
-        let renvoi = rangees > 0 ? " — les autres sections sont dans « Plus de détails »" : ""
+        let renvoi = rangees > 0 ? "\(Separateur.tiret)les autres sections sont dans « Plus de détails »" : ""
         return "\(mode.libelle)\(renvoi). À changer dans votre profil."
     }
 

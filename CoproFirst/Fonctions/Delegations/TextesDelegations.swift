@@ -35,7 +35,7 @@ enum TextesDelegations {
     /// « Du 02/04/2026 au 30/06/2026 », ou « Du 02/04/2026 — illimité ».
     static func periode(_ delegation: Delegation) -> String {
         let debut = "Du \(FormatsDuSite.dateCourte(delegation.dateDebut))"
-        guard let fin = delegation.dateFin else { return debut + " — illimité" }
+        guard let fin = delegation.dateFin else { return debut + "\(Separateur.tiret)illimité" }
         return debut + " au \(FormatsDuSite.dateCourte(fin))"
     }
 }

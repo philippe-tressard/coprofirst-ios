@@ -56,7 +56,7 @@ enum TextesResidence {
     /// « — échéance 12/03/2027 (reconduit tacitement) » (`echeance`, FicheResidence).
     static func echeance(_ date: Date?, reconduit: Bool) -> String {
         guard let date else { return "" }
-        return " — échéance \(FormatsDuSite.dateCourte(date))"
+        return "\(Separateur.tiret)échéance \(FormatsDuSite.dateCourte(date))"
             + (reconduit ? " (reconduit tacitement)" : "")
     }
 
@@ -65,6 +65,6 @@ enum TextesResidence {
     static func mandat(_ date: Date?, echu: Bool) -> String {
         guard let date else { return "" }
         let jour = FormatsDuSite.dateCourte(date)
-        return echu ? " — mandat échu depuis le \(jour)" : " — mandat jusqu'au \(jour)"
+        return echu ? "\(Separateur.tiret)mandat échu depuis le \(jour)" : "\(Separateur.tiret)mandat jusqu'au \(jour)"
     }
 }

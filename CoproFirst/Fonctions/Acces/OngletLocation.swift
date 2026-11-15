@@ -135,7 +135,7 @@ private struct Inventaire: View {
                 Spacer(minLength: 0)
                 PastilleTeinte(libelle: statut.libelle, badge: statut.badge, compacte: true)
             }
-            Text(details.joined(separator: " · ")).font(.caption).foregroundStyle(palette.textMuted)
+            Text(details.joined(separator: Separateur.point)).font(.caption).foregroundStyle(palette.textMuted)
         }
         .accessibilityElement(children: .combine)
     }

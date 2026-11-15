@@ -40,9 +40,12 @@ extension ServiceAPI: ServicePrestataires {
         }
     }
 
-    func avis(_ installation: Installation) async throws -> [AvisPrestataire] {
-        switch try await appeler({ try await client(installation.adresse).getPrestatairesNotations() }) {
-        case .ok(let ok): return try ok.body.json.map(AvisPrestataire.init)
+    func interventions(de prestataire: Int, dans installation: Installation) async throws -> [ExerciceAvis] {
+        let sortie = try await appeler {
+            try await client(installation.adresse).getPrestatairesPIdInterventions(path: .init(pId: prestataire))
+        }
+        switch sortie {
+        case .ok(let ok): return try ok.body.json.map(ExerciceAvis.init)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
@@ -110,7 +113,7 @@ extension Prestataire {
                 ContactPrestataire(
                     prenom: $0.prenom, nom: $0.nom, fonction: $0.fonction, telephone: $0.telephone, email: $0.email,
                     nomServi: $0.nomAffiche)
-            }, telephones: lu.telephones)
+            }, noteMoyenne: lu.noteMoyenne, nbNotations: lu.nbNotations ?? 0, telephones: lu.telephones)
     }
 }
 
@@ -121,13 +124,5 @@ extension Contrat {
             numeroContrat: lu.numeroContrat, dateDebut: lu.dateDebut, dureeValeur: lu.dureeInitialeValeur,
             dureeUnite: lu.dureeInitialeUnite, frequenceType: lu.frequenceType, frequenceValeur: lu.frequenceValeur,
             frequenceLibelle: lu.frequenceLibelle, prochaineVisite: lu.prochaineVisite, notes: lu.notes)
-    }
-}
-
-extension AvisPrestataire {
-    init(_ lu: Components.Schemas.NotationRead) {
-        self.init(
-            id: lu.id, prestataireId: lu.prestataireId, note: lu.note, commentaire: lu.commentaire,
-            auteurNom: lu.auteurNom, creeLe: lu.creeLe)
     }
 }

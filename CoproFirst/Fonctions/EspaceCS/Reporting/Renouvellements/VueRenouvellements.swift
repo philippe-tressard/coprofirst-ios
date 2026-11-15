@@ -173,7 +173,7 @@ private struct LigneDiagnostic: View {
                     Spacer(minLength: 8)
                     etat
                 }
-                Text([diagnostic.code, diagnostic.frequence].compactMap(\.self).joined(separator: " · "))
+                Text([diagnostic.code, diagnostic.frequence].compactMap(\.self).joined(separator: Separateur.point))
                     .font(.subheadline).foregroundStyle(palette.textMuted)
                 Text(TextesRenouvellements.dernierRapport(diagnostic.dernierRapportLe))
                     .font(.footnote).foregroundStyle(palette.textMuted)

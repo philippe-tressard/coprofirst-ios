@@ -14,8 +14,9 @@ protocol ServicePrestataires: Sendable {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire]
     /// GET /prestataires/contrats, ou /prestataires/contrats/archives.
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat]
-    /// GET /prestataires/notations : les avis du conseil syndical.
-    func avis(_ installation: Installation) async throws -> [AvisPrestataire]
+    /// GET /prestataires/{id}/interventions : le récapitulatif de ses avis, par exercice et
+    /// par intervention (#207) — regroupé et compté par l'API.
+    func interventions(de prestataire: Int, dans installation: Installation) async throws -> [ExerciceAvis]
     /// GET /equipements : les équipements (libellés et ordre) — des données, pas une table.
     func equipements(_ installation: Installation) async throws -> [Equipement]
     /// GET /documents?contrat_id= : les documents d'un contrat.
@@ -59,6 +60,10 @@ struct Prestataire: Hashable, Sendable, Identifiable {
     var adresse: String?
     var description: String?
     var contacts: [ContactPrestataire] = []
+    /// La moyenne de ses avis et leur nombre, SERVIS (`note_moyenne`, `nb_notations`) —
+    /// `nil` sans avis, jamais 0.
+    var noteMoyenne: Double?
+    var nbNotations = 0
     /// Les numéros, un lien d'appel chacun : ceux que le serveur SERT, découpés et
     /// dédoublonnés (`telephones`, contrat 1.20.0, #125).
     var telephones: [String] = []
@@ -83,15 +88,6 @@ struct Contrat: Hashable, Sendable, Identifiable {
     /// La résiliation et le remplacement servis (contrat 1.29.0, #185) — vides d'une
     /// installation antérieure.
     var remplacement = RemplacementContrat()
-}
-
-struct AvisPrestataire: Hashable, Sendable, Identifiable {
-    let id: Int
-    var prestataireId: Int
-    var note: Int
-    var commentaire: String?
-    var auteurNom: String?
-    var creeLe: Date
 }
 
 struct Equipement: Hashable, Sendable {
