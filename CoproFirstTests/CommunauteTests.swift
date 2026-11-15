@@ -18,6 +18,8 @@ import Testing
 private struct Factice: ServiceCommunaute {
     var statut = "copropriétaire_résident"
     var motif: String?
+    /// `peut_creer` servi ; `nil` : la route répond mal.
+    var peutCreer: Bool? = false
 
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute {
         MoiCommunaute(id: 1, statut: statut, roles: ["résident"], motifRefus: motif)
@@ -26,6 +28,10 @@ private struct Factice: ServiceCommunaute {
         ListeAvis(avis: [], gestionnaire: false, monAvisId: nil)
     }
     func sondagesCommunaute(_ installation: Installation) async throws -> [SondageResume] { [] }
+    func peutCreerUnSondage(_ installation: Installation) async throws -> Bool {
+        guard let peutCreer else { throw ErreurService.inattendue(500) }
+        return peutCreer
+    }
     func idees(_ installation: Installation) async throws -> [Idee] { [] }
     func proposerIdee(titre: String, description: String, dans installation: Installation) async throws {}
     func voterIdee(_ id: Int, dans installation: Installation) async throws -> String? {
@@ -130,4 +136,26 @@ private struct Factice: ServiceCommunaute {
         """#
     let lues = try await client(servant: json).getAnnonces().ok.body.json.map(Annonce.init)
     #expect(lues.map(\.peutSupprimer) == [true, false])
+}
+
+@MainActor
+@Test func lIndicationDeCreationSuitLeDroitServiEtSeTaitSiIlEstIllisible() async {
+    let residence = ServiceSimule.residence
+    for (servi, attendu) in [(true, true), (false, false), (nil, false)] as [(Bool?, Bool)] {
+        let etat = EtatCommunaute()
+        await etat.charger(.sondages, residence, avec: Factice(peutCreer: servi))
+        #expect(etat.peutCreerUnSondage == attendu, "peut_creer servi : \(String(describing: servi))")
+        #expect(etat.sondages.phase == .pret, "la liste se lit même quand le droit ne se lit pas")
+    }
+}
+
+@Test func lesGestesSimulesSuiventLeModerateurServi() async throws {
+    let simule = ServiceSimule(delai: .zero)
+    let residence = ServiceSimule.residence
+    simule.profilSimule.estModerateur = true
+    #expect(try await simule.peutCreerUnSondage(residence))
+    #expect(try await simule.peutRedigerLaFAQ(residence))
+    simule.profilSimule.estModerateur = false
+    #expect(try await !simule.peutCreerUnSondage(residence))
+    #expect(try await !simule.peutRedigerLaFAQ(residence))
 }
