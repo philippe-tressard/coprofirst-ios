@@ -435,6 +435,9 @@ done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
 python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
+# Une PR de documentation seule n'occupe pas les exécutants macOS (#204) : la détection
+# prouve qu'un fichier .swift relance bien le build et les tests.
+python3 -I scripts/ci_documentation_seule.py --autotest >/dev/null || echec "ci_documentation_seule.py : autotest en échec"
 
 # La simulation reste aux builds Debug (#84) : l'autotest prouve que le juge refuse
 # un symbole hors de `#if DEBUG`, puis le juge lit l'app. INCONNU (2) est un échec.
@@ -465,4 +468,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, Label identifiés lus en un élément ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, détection « documentation seule », simulation sous #if DEBUG, règles servies lues, Label identifiés lus en un élément ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
