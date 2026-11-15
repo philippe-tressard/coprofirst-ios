@@ -16,6 +16,10 @@ ensemble.
 Les données ci-dessous partent vers l'installation que l'utilisateur a choisie (le
 site de sa résidence), jamais vers l'éditeur de l'app ; elles se déclarent quand
 même, parce qu'elles quittent l'appareil et y sont gardées (la fiche dit pourquoi).
+
+Les écrans vus (ProductInteraction, coprofirst#2726) partent pour la mesure d'audience de
+la résidence, liés au compte, sauf refus dans le Profil : finalité Analytics, pas de
+traçage.
 -->
 <plist version="1.0">
 <dict>
@@ -119,6 +123,18 @@ même, parce qu'elles quittent l'appareil et y sont gardées (la fiche dit pourq
 			<key>NSPrivacyCollectedDataTypePurposes</key>
 			<array>
 				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypeProductInteraction</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<true/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
 			</array>
 		</dict>
 	</array>

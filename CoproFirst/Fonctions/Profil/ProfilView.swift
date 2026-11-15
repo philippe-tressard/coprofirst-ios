@@ -255,6 +255,8 @@ private struct SectionDroits: View {
                     do {
                         try await parcours.serviceProfil.refuserTelemetrie(valeur, dans: installation)
                         phrase = valeur ? "Collecte de statistiques désactivée." : "Collecte de statistiques réactivée."
+                        // La mesure de l'app lit le refus dans le profil de la session.
+                        await parcours.rafraichirProfil()
                     } catch {
                         modifie(compte)
                         phrase = ErreurService.phrase(error, sinon: "Erreur lors de la mise à jour.")

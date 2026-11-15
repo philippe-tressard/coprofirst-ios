@@ -55,12 +55,14 @@ enum RegistreDesMenus {
         "admin": AdminView.self,
     ]
 
-    /// L'écran natif de la page, ou « Bientôt » tant qu'aucun n'est inscrit.
+    /// L'écran natif de la page, ou « Bientôt » tant qu'aucun n'est inscrit. Un écran
+    /// natif se note comme la page du site qu'il porte (`pageVue`, coprofirst#2726) ;
+    /// « Bientôt » ne montre rien de la page, il ne se note pas.
     static func ecran(_ contexte: ContexteDeMenu) -> AnyView {
         guard let type = ecrans[contexte.page.id] else {
             return AnyView(Bientot(page: contexte.page, installation: contexte.installation))
         }
-        return AnyView(type.init(contexte: contexte))
+        return AnyView(AnyView(type.init(contexte: contexte)).pageVue(contexte.page.route))
     }
 }
 

@@ -59,7 +59,30 @@ fait après le « oui ».
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
   la CI la lit, personne ne la voit passer.
 
-## À faire avant la première soumission
+## État au 14/11/2026 — la version 1.0 est publiée
+
+**CoproFirst 1.0 (build 1) est en ligne dans l'App Store français** (approuvée par la revue
+le 14/11/2026 à 00:27, mise en ligne le 13/11 à 23:26 UTC) :
+<https://apps.apple.com/fr/app/coprofirst/id6834326392>. Se relit sans compte :
+`curl "https://itunes.apple.com/lookup?bundleId=fr.coprofirst.app&country=fr"`.
+
+Fait pour cette première version, à ne pas refaire — et à reprendre pour la suivante :
+
+| Sujet | Ce qui a été fait, et ce qu'il faut savoir |
+|---|---|
+| **Archive** | `bash scripts/generer-projet.sh`, puis `xcodebuild archive -configuration Release -destination 'generic/platform=iOS' -archivePath "~/Library/Developer/Xcode/Archives/<date>/CoproFirst <jj-mm-aa hh.mm>.xcarchive"` depuis un **worktree épinglé sur le commit voulu** : Xcode › Window › Organizer la voit. La signature est automatique ; Philippe clique « Distribute App › App Store Connect › Distribute » (c'est lui qui crée le certificat de distribution). **Le numéro de build doit monter à chaque envoi** (`CURRENT_PROJECT_VERSION`). |
+| **Contrôler l'app construite, pas `project.yml`** | Le 12/11/2026, l'archive Release sortait **iPhone et iPad** (XcodeGen posait `1,2` sur la cible) et une version écrite en dur. `ConformiteAppStoreTests` lit le plist de l'app construite ; relire aussi `codesign -d --entitlements` et la présence des symboles de simulation (aucun). |
+| **Jouer le geste exigé par la revue** | La feuille « Supprimer mon compte » **ne s'ouvrait pas** (attachée à la `Section` d'une `List`) et aucun test ne le voyait. `SuppressionCompteUITests` joue le parcours. Toute règle d'Apple qui demande un geste dans l'app se joue **à l'écran** avant l'envoi. |
+| **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. Pas de captures iPad (app iPhone seule) ni iPhone Duo (#119). |
+| **Fiche** | Textes, notes de revue (`notes-revue.md`), compte de démonstration `user-copro@demo.coprofirst.fr`, confidentialité (`confidentialite.md`, 8 types, tous « Fonctionnement de l'app », liés à l'identité, sans suivi), classification **4+** (contenu généré par les utilisateurs : Oui ; réseaux sociaux et messagerie : Non), gratuite, 175 pays, **Mac et Vision décochés**. |
+| **Publication** | Le choix « manuelle » du 13/11 n'a **pas** tenu : l'app est sortie dès l'approbation. **Vérifier le bouton radio avant « Ajouter pour vérification »** si l'on veut garder la main. |
+| **UE (DSA)** | Statut **non-commerçant** déclaré le 13/11/2026 (Business › Conformité) : app gratuite, libre, à titre personnel. À revoir si l'offre hébergée payante démarre — ticket #194. |
+
+Reste ouvert : les notifications push n'ont jamais été reçues pour de vrai (clé `.p8` du
+relais, coprofirst#2494) ; le geste de suppression n'a été joué que sur l'API simulée ;
+la suppression est une **demande** traitée par l'administration (arbitrage du 12/11/2026).
+
+## À faire avant la première soumission (historique : tout est livré ou noté ci-dessus)
 
 - [x] Manifeste de confidentialité, et texte de la fiche confronté à ce que l'app **et
       chaque paquet** transmettent : [`confidentialite.md`](confidentialite.md) (#19).

@@ -10,6 +10,7 @@ struct OngletsView: View {
     let installation: Installation
     @Environment(\.palette) private var palette
     @Environment(Parcours.self) private var parcours
+    @Environment(\.scenePhase) private var phase
 
     /// Les onglets qui tiennent dans la barre ; au-delà, « Plus » (`Aiguillage.idPlus`).
     static let visibles = 4
@@ -46,6 +47,10 @@ struct OngletsView: View {
         .feuilleNotifications(installation, ouverte: $parcours.clocheOuverte)
         // La barre dépend des rôles : ils se relisent à l'ouverture de la résidence.
         .task { await parcours.rafraichirProfil() }
+        // Les pages vues partent au passage en arrière-plan, comme au `visibilitychange` du site.
+        .onChange(of: phase) { _, phase in
+            if phase == .background { parcours.audience.viderEnArrierePlan() }
+        }
     }
 }
 
@@ -85,7 +90,7 @@ private struct PlusView: View {
                 // Le profil n'a pas d'entrée de menu sur le site (pages.ts : href null) :
                 // il vit ici, avec la déconnexion.
                 NavigationLink {
-                    ProfilView()
+                    ProfilView().pageVue(CheminDuSite.profil)
                 } label: {
                     EntreeDePlus(libelle: "Profil", symbole: "person.crop.circle")
                 }

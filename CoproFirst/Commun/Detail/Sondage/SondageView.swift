@@ -26,6 +26,7 @@ struct SondageView: View {
         .background(palette.bg)
         .navigationTitle(TextesSondage.titre)
         .navigationBarTitleDisplayMode(.inline)
+        .pageVue(CheminDuSite.sondage(id))
     }
 
     static let squelette = DetailSondage(

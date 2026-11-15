@@ -33,8 +33,9 @@ choisie** (le site de sa résidence), qui garde ce qu'il y écrit. Apple défini
 ses partenaires. Une app cliente d'un serveur tenu par un tiers peut soutenir qu'elle ne
 collecte rien.
 
-**Ce dépôt déclare quand même** ces données, liées à la personne, pour la seule finalité
-« fonctionnement de l'app » :
+**Ce dépôt déclare quand même** ces données, liées à la personne, pour la finalité
+« fonctionnement de l'app » — et les écrans vus pour la mesure d'audience de la résidence
+(§5) :
 
 - l'éditeur tient lui-même des installations (la démonstration, sa propre résidence), et
   une offre hébergée est à l'étude : « rien n'est collecté » y serait faux ;
@@ -133,9 +134,10 @@ version du plancher) :
 
 ## 5. Le questionnaire « App Privacy » : les réponses
 
-**« Collectez-vous des données depuis cette app ? » → Oui** (§1). Puis cocher ces huit
-types, et eux seuls. Pour **chacun** : finalité **App Functionality** seule ; lié à
-l'identité de l'utilisateur : **Oui** ; utilisé pour le suivi (*tracking*) : **Non**.
+**« Collectez-vous des données depuis cette app ? » → Oui** (§1). Puis cocher ces neuf
+types, et eux seuls. Pour **chacun** : lié à l'identité de l'utilisateur : **Oui** ;
+utilisé pour le suivi (*tracking*) : **Non** ; finalité **App Functionality** seule — sauf
+*Product Interaction*, finalité **Analytics** seule.
 
 <!-- table:donnees -->
 | Type (manifeste) | Case d'App Store Connect | Ce que c'est | Preuve |
@@ -148,12 +150,13 @@ l'identité de l'utilisateur : **Oui** ; utilisé pour le suivi (*tracking*) : *
 | `NSPrivacyCollectedDataTypeUserID` | Identifiers › User ID | le compte et sa session (cookies posés par la résidence) | `CoproFirst/Session/ServiceAPI.swift` › `poserCookie("refresh_token", valeur: jeton, installation)` |
 | `NSPrivacyCollectedDataTypeDeviceID` | Identifiers › Device ID | le jeton d'appareil d'APNs et l'abonnement | `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `abonnement: appareil.abonnement` |
 | `NSPrivacyCollectedDataTypeOtherDataTypes` | Other Data › Other Data Types | mot de passe à la connexion, société, fonction, statut et bâtiment demandés, réglages du compte, rôles donnés par un administrateur | `CoproFirst/Fonctions/Profil/ServiceAPI+Profil.swift` › `societe: saisie.societe.nulSiVide` |
+| `NSPrivacyCollectedDataTypeProductInteraction` | Usage Data › Product Interaction | les écrans vus, sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`), et le canal « App iPhone » : la mesure d'audience de la résidence (coprofirst#2726), liée au compte comme celle du site, **jamais** si le compte l'a refusée au Profil ; ni identifiant d'appareil ni modèle | `CoproFirst/Session/Audience/ServiceAudience+API.swift` › `postTelemetryCollect(body: .json(lot))` ; `CoproFirst/Session/Audience/MesureAudience.swift` › `return installation.profil?.refusMesure == false` |
 
 **Ce qui n'est PAS coché, et pourquoi :**
 
-- *Usage Data*, *Diagnostics* : l'app n'envoie aucune mesure d'usage, aucun rapport de
-  plantage. La collecte de statistiques de la résidence est une route que seul le site
-  appelle (`/telemetry/collect`) ; le contrôle échoue si l'app se met à l'appeler ;
+- *Usage Data › Other Usage Data*, *Diagnostics* : l'app n'envoie que les écrans vus
+  (*Product Interaction*, ci-dessus) — ni durée, ni geste, ni erreur, aucun rapport de
+  plantage ;
 - *Search History* : le terme d'une recherche part à la résidence pour y répondre
   (`CoproFirst/Fonctions/Affaires/Donnees/ServiceAffaires+API.swift` › `getTicketsRecherche(query: .init(q: terme))`),
   qui ne le garde pas (lu dans coprofirst à la version du plancher, non contrôlé ici) ;
@@ -191,6 +194,7 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `patchAuthMeOptOutTelemetrie` | `OtherDataTypes` |
 | `deleteAuthMeTelemetrie` | — |
 | `postAppareils` | `DeviceID` |
+| `postTelemetryCollect` | `ProductInteraction` |
 | `deleteAppareilsAbonnement` | `DeviceID` |
 | `postTickets` | `OtherUserContent` |
 | `patchTicketsTicketId` | `OtherUserContent` |
@@ -324,8 +328,8 @@ changé.
 |---|---|
 | App Store Connect › Apps › CoproFirst › *App Privacy* › *Privacy Policy* › *Edit* | *Privacy Policy URL* : `https://coprofirst.fr/confidentialite.html` — laisser *User Privacy Choices URL* vide |
 | même page › *Get Started* | « Do you or your third-party partners collect data from this app? » → **Yes, we collect data from this app** |
-| l'écran des types de données | cocher les huit cases de la colonne « Case d'App Store Connect » du §5, aucune autre |
-| chaque type, l'un après l'autre | usage : **App Functionality** seule ; *linked to the user's identity* : **Yes** ; *used for tracking* : **No** |
+| l'écran des types de données | cocher les neuf cases de la colonne « Case d'App Store Connect » du §5, aucune autre |
+| chaque type, l'un après l'autre | usage : **App Functionality** seule — **Analytics** seule pour *Product Interaction* ; *linked to the user's identity* : **Yes** ; *used for tracking* : **No** |
 | même page › *Publish* | publier les réponses ; relire l'étiquette affichée : « Data Linked to You », aucune ligne « Data Used to Track You » |
 | la version › *App Information* / fiche › *Description* | ajouter le paragraphe « Confidentialité » ci-dessous |
 | la version › *App Review Information* › *Notes* | coller la note ci-dessous |
@@ -337,8 +341,9 @@ L'adresse de la politique est celle que l'app affiche déjà :
 
 > Confidentialité. CoproFirst se connecte au site de votre résidence, dont vous saisissez
 > l'adresse ou scannez le QR code. Ce que vous y lisez et y écrivez est gardé par votre
-> résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur, aucune
-> mesure d'audience. Les notifications ne contiennent aucune information personnelle : le
+> résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur. Comme
+> sur son site, votre résidence compte les pages consultées pour ses statistiques de
+> fréquentation ; vous pouvez le refuser dans votre profil. Les notifications ne contiennent aucune information personnelle : le
 > message est toujours « Vous avez une nouvelle notification. », et le détail se lit dans
 > l'application. Un avis urgent (une fuite, un ascenseur bloqué) est signalé comme urgent
 > à iOS pour traverser le mode Concentration : Apple apprend qu'il est urgent, pas ce

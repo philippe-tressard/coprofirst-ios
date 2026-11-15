@@ -8,7 +8,8 @@
 #
 #   - la décision d'un passage, rejouée dans ce processus (`scenario`) : relance
 #     permise, refusée, ratée, INCONNU (#50) ; simulateur démarré avant le build
-#     (#48) ; passage qui ne joue rien (#96) ;
+#     (#48) ; passage qui ne joue rien (#96) ; filtre qui ne joue rien quand un autre
+#     joue, fichier de test absent du projet Xcode (#170) ;
 #   - de vrais passages, chacun dans son processus (`passage`) : deux en même temps,
 #     verrou orphelin ou sans fiche, arrêt par le pid, CI, lanceur, extinction du
 #     simulateur (#108).
@@ -39,7 +40,11 @@ case "$1" in
     esac
     exit 0 ;;
   xcresulttool)
-    case "$*" in *relance.xcresult*) f=resume-relance.json ;; *) f=resume.json ;; esac
+    case "$*" in
+      *"test-results tests"*) f=arbre.json ;;
+      *relance.xcresult*) f=resume-relance.json ;;
+      *) f=resume.json ;;
+    esac
     [ -f "$FAUX_DOSSIER/$f" ] && cat "$FAUX_DOSSIER/$f" ;;
   *) exit 1 ;;
 esac
@@ -52,10 +57,16 @@ FAUX
   local vide='{"result":"Passed","failedTests":0,"passedTests":0,"testFailures":[]}'
   # Le résumé réel d'un passage qui n'a rien joué (11/11/2026, deux filtres en un argument).
   local rien='{"result":"unknown","failedTests":0,"passedTests":0,"skippedTests":0,"totalTestCount":0,"testFailures":[]}'
+  # Un projet Xcode et ses sources de test, factices : le contrôle « hors projet » (#170).
+  mkdir -p "$d/projet" "$d/sources/CoproFirstTests"
+  touch "$d/sources/CoproFirstTests/AccesTests.swift"
+  echo '7E7 /* AccesTests.swift */ = {isa = PBXFileReference; path = AccesTests.swift; };' > "$d/projet/project.pbxproj"
+  # Les arguments de `passer` : les filtres d'un passage partiel (vide par défaut).
+  local args=()
   # $1 nom, $2 sortie du 1er passage, $3 résumé JSON (vide : illisible), $4 sortie de
   # la relance, $5 sortie attendue, $6 relance attendue (oui/non), $7 résumé de la relance
   scenario() {
-    rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json"
+    rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json" "$d/resume.md"
     [ -z "${7:-}" ] || echo "$7" > "$d/resume-relance.json"
     printf "Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' started.\n" > "$d/journal"
     echo "$2" > "$d/sortie-test"
@@ -63,7 +74,8 @@ FAUX
     [ -z "$3" ] || echo "$3" > "$d/resume.json"
     local sortie relancee=non
     FAUX_DOSSIER=$d XCODEBUILD=$d/faux XCRUN=$d/faux MESURER=0 DESTINATION='platform=iOS Simulator,id=X' \
-      RESULTATS=$d/r GITHUB_STEP_SUMMARY=$d/resume.md passer > "$d/sortie.txt" 2>&1
+      RESULTATS=$d/r GITHUB_STEP_SUMMARY=$d/resume.md PROJET=$d/projet SOURCES_TESTS=$d/sources \
+      passer ${args[@]+"${args[@]}"} > "$d/sortie.txt" 2>&1
     sortie=$?
     grep -q '^test-without-building' "$d/appels" 2>/dev/null && relancee=oui
     if [ "$sortie" != "$5" ] || [ "$relancee" != "$6" ]; then
@@ -78,6 +90,35 @@ FAUX
   grep -q '^Tests joués : INCONNU : aucun test joué' "$d/resume.md" \
     || { echo "❌ le passage vide ne se dit pas au résumé"; rate=$((rate + 1)); }
   scenario "passage vert au résumé illisible : INCONNU" 0 "" 0 2 non
+  # CHAQUE filtre doit avoir joué : le passage du 11/11/2026, une classe d'interface absente
+  # du projet, verte sur les tests unitaires de l'autre filtre (#170).
+  local unitaire='{"name":"CoproFirstTests","nodeType":"Unit test bundle","children":[{"name":"lesDeuxMenusSontInscrits()","nodeIdentifier":"lesDeuxMenusSontInscrits()","nodeType":"Test Case","result":"Passed"}]}'
+  local pieces='{"name":"CoproFirstUITests","nodeType":"UI test bundle","children":[{"name":"PiecesJointesUITests","nodeType":"Test Suite","children":[{"name":"testX()","nodeIdentifier":"PiecesJointesUITests/testX()","nodeType":"Test Case","result":"Passed"}]}]}'
+  args=(-only-testing:CoproFirstTests -only-testing:CoproFirstUITests/PiecesJointesUITests)
+  echo '{"testNodes":[{"name":"CoproFirst","nodeType":"Test Plan","children":['"$unitaire"']}]}' > "$d/arbre.json"
+  scenario "un filtre sur deux reste vide : INCONNU" 0 "$vert" 0 2 non
+  grep -q '^Filtres : INCONNU : 1 filtre(s) sur 2 .*CoproFirstUITests/PiecesJointesUITests' "$d/resume.md" \
+    || { echo "❌ le filtre resté vide ne se nomme pas au résumé"; rate=$((rate + 1)); }
+  args=(-only-testing CoproFirstTests -only-testing CoproFirstUITests/PiecesJointesUITests)
+  scenario "un filtre sur deux reste vide, filtres en deux arguments : INCONNU" 0 "$vert" 0 2 non
+  echo '{"testNodes":[{"name":"CoproFirst","nodeType":"Test Plan","children":['"$unitaire,$pieces"']}]}' > "$d/arbre.json"
+  scenario "chaque filtre a joué : vert" 0 "$vert" 0 0 non
+  grep -q '^Filtres : chaque filtre a joué' "$d/resume.md" \
+    || { echo "❌ le compte par filtre ne se dit pas au résumé"; rate=$((rate + 1)); }
+  rm -f "$d/arbre.json"
+  scenario "filtres et arbre illisible : INCONNU" 0 "$vert" 0 2 non
+  args=()
+  # Un fichier de test absent du projet Xcode : rien ne se construit ni ne joue (#170).
+  touch "$d/sources/CoproFirstTests/PiecesJointesTests.swift"
+  scenario "fichier de test hors projet : INCONNU" 0 "$vert" 0 2 non
+  if grep -q '^test' "$d/appels" 2>/dev/null \
+      || ! grep -q 'absent(s) du projet Xcode : .*PiecesJointesTests.swift' "$d/resume.md"; then
+    echo "❌ un fichier hors projet laisse jouer les tests, ou ne se nomme pas"; rate=$((rate + 1))
+  fi
+  rm -f "$d/sources/CoproFirstTests/PiecesJointesTests.swift"
+  mv "$d/projet" "$d/projet-cache"
+  scenario "projet Xcode absent : INCONNU" 0 "$vert" 0 2 non
+  mv "$d/projet-cache" "$d/projet"
   scenario "perte de connexion, relance verte" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 0 oui "$vert"
   if ! grep -q -- '-only-testing:CoproFirstUITests/AccesUITests/testSignalerPerduPuisDeclarer' "$d/appels" \
       || ! grep -q 'Relance déclarée' "$d/resume.md" || ! grep -q '::warning' "$d/sortie.txt"; then
@@ -110,7 +151,7 @@ FAUX
     shift
     exec env FAUX_DOSSIER="$d" XCODEBUILD="$d/faux" XCRUN="$d/faux" MESURER=0 \
       DESTINATION='platform=iOS Simulator,id=X' RESULTATS="$d/r-$nom" GITHUB_STEP_SUMMARY="$d/resume-$nom.md" \
-      GITHUB_ACTIONS= VERROU="$d/verrou" VERROU_PAS=0.1 VERROU_QUI="$nom" "$@" \
+      PROJET="$d/projet" SOURCES_TESTS="$d/sources" GITHUB_ACTIONS= VERROU="$d/verrou" VERROU_PAS=0.1 VERROU_QUI="$nom" "$@" \
       "$BASH" scripts/tests-simulateur.sh > "$d/$nom.txt" 2>&1
   }
   # Attendre qu'une commande réussisse, 10 s au plus.

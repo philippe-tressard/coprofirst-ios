@@ -62,6 +62,9 @@ final class Parcours {
     /// Les notifications push (#17) : enregistrer l'appareil à l'ouverture d'une
     /// résidence, le retirer à la déconnexion. Absentes des aperçus.
     var push: NotificationsPush?
+    /// La mesure d'audience (coprofirst#2726) : les écrans vus partent à la résidence
+    /// ouverte, avec le canal de l'app (`Session/Audience/`).
+    @ObservationIgnored let audience: MesureAudience
     let service: any ServiceCoproFirst
     let connues: InstallationsConnues
     /// Le seul chemin du mot de passe : la confirmation d'un hôte jamais vu (#82).
@@ -71,8 +74,11 @@ final class Parcours {
         self.service = service
         self.connues = connues
         garde = GardeHote(service: service, connues: { connues.liste })
+        audience = MesureAudience(service: service.serviceAudience)
         // Au retour, la palette de la dernière résidence s'applique dès le 1er écran.
         reconnue = connues.derniere
+        // En consultation hors ligne, rien ne se note : rien ne partirait.
+        audience.courante = { [weak self] in self?.consultation == nil ? self?.ouverteAJour : nil }
     }
 
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.
@@ -100,6 +106,7 @@ final class Parcours {
 
     /// Changer de résidence : retour à la connexion, adresse pré-remplie ou vide.
     func changer(pour installation: Installation?) {
+        Task { [audience] in await audience.vider() }
         changerDeResidence = false
         ouverte = nil
         reconnue = installation
@@ -123,6 +130,8 @@ final class Parcours {
     /// Quitter CETTE résidence : retour à la connexion, adresse et courriel pré-remplis —
     /// le premier écran (`EntreeView`), puisqu'elle reste la dernière ouverte.
     func deconnecter(_ installation: Installation) async {
+        // Les pages vues partent tant que la session les rattache au compte.
+        await audience.vider()
         // L'appareil d'abord : sa route demande la session que la déconnexion va fermer.
         await push?.retirer(installation)
         let atteint = await service.deconnecter(installation)
@@ -136,6 +145,7 @@ final class Parcours {
     func revenirALaConnexion(_ installation: Installation, avis: String?) {
         connues.oublierFaceID(installation)
         connues.oublierLeCompte(installation)
+        audience.oublier()
         changerDeResidence = false
         ouverte = nil
         reconnue = installation
@@ -146,6 +156,7 @@ final class Parcours {
     /// « Oublier toutes les résidences » : chaque session fermée, la liste vidée,
     /// retour à l'accueil — comme une app neuve.
     func oublierTout() async {
+        await audience.vider()
         var injoignables = 0
         for installation in connues.liste {
             await push?.retirer(installation)

@@ -22,8 +22,13 @@ Appelé par `scripts/tests-simulateur.sh` (#50). Deux lectures :
 - `joues <résumé.json>` — un passage sorti en 0 n'est vert que s'il a joué des tests :
   le compte s'imprime (sortie 0) ; zéro test joué, ou un résumé qui se contredit ou ne
   se lit pas, rend INCONNU (sortie 2), jamais vert (#96).
+- `filtres <arbre.json> <filtre>…` — l'arbre de `xcresulttool get test-results tests`.
+  CHAQUE filtre `-only-testing:` doit avoir joué au moins un test : un passage à deux
+  filtres dont l'un ne vise rien sortait vert sur les tests de l'autre (#170). Le
+  compte par filtre s'imprime (sortie 0) ; un filtre vide, ou un arbre illisible,
+  rend INCONNU (sortie 2) en nommant le filtre.
 
-`--autotest` rejoue les deux lectures sur des extraits de journaux réels (runs
+`--autotest` rejoue ces lectures sur des extraits de journaux réels (runs
 42066224812 et 41940166154) : un contrôle qui ne refuse rien ne prouve rien.
 """
 
@@ -121,6 +126,62 @@ def joues(resume: dict) -> tuple[int, str]:
     return 0, f"{passes} passé(s), {sautes} sauté(s)"
 
 
+#: Un test JOUÉ : passé, tombé, ou tombé comme prévu — pas sauté.
+JOUE = {"Passed", "Failed", "Expected Failure"}
+CIBLES = {"Unit test bundle", "UI test bundle"}
+
+
+def chemins_joues(arbre: dict) -> list[tuple[str, ...]]:
+    """Le chemin de chaque test joué, dans l'espace de noms des filtres : (cible, suite…, test).
+
+    L'arbre du xcresult range les tests comme `-only-testing:` les nomme : un test
+    XCTest ou d'une suite Swift Testing sous sa suite (« PiecesJointesUITests/testX() »),
+    un `@Test` libre directement sous sa cible (« lesDeuxMenusSontInscrits() »).
+    Lève KeyError, TypeError ou ValueError sur un arbre qui ne se lit pas.
+    """
+    chemins: list[tuple[str, ...]] = []
+
+    def parcourir(noeud: dict, cible: str | None) -> None:
+        if noeud["nodeType"] in CIBLES:
+            cible = noeud["name"]
+        if noeud["nodeType"] == "Test Case":
+            if cible is None:
+                raise ValueError(f"test hors de toute cible : {noeud.get('nodeIdentifier')!r}")
+            if noeud.get("result") in JOUE:
+                chemins.append((cible, *noeud["nodeIdentifier"].removesuffix("()").split("/")))
+            return
+        for enfant in noeud.get("children", []):
+            parcourir(enfant, cible)
+
+    for racine in arbre["testNodes"]:
+        parcourir(racine, None)
+    return chemins
+
+
+def filtres(arbre: dict, demandes: list[str]) -> tuple[int, str]:
+    """(sortie, ce qui se dit) : chaque filtre a-t-il joué au moins un test ? (#170)
+
+    Un filtre se compare au chemin de chaque test, composant par composant :
+    « Cible », « Cible/Classe », « Cible/Classe/methode » (parenthèses ou non).
+    """
+    try:
+        chemins = chemins_joues(arbre)
+    except (KeyError, TypeError, ValueError, AttributeError) as erreur:
+        return 2, f"INCONNU : arbre des tests de xcresult illisible ({erreur!r})"
+    if not demandes:
+        return 2, "INCONNU : aucun filtre à vérifier"
+    comptes = []
+    for demande in demandes:
+        parties = tuple(demande.removesuffix("()").split("/"))
+        comptes.append((demande, sum(1 for c in chemins if c[:len(parties)] == parties)))
+    vides = [d for d, n in comptes if n == 0]
+    if vides:
+        return 2, (f"INCONNU : {len(vides)} filtre(s) sur {len(demandes)} n'ont joué aucun test — "
+                   f"{', '.join(vides)}. Nom mal écrit, ou fichier absent du projet Xcode "
+                   "(bash scripts/generer-projet.sh) : les autres filtres ne disent rien de celui-ci.")
+    return 0, "chaque filtre a joué — " + ", ".join(f"{d} : {n}" for d, n in comptes)
+
+
 def lenteurs(journal: str) -> dict[str, int]:
     """Par test : le rang du dernier nouvel essai d'une requête (1 ou 2), s'il y en a eu."""
     courant, rangs = "?", {}
@@ -172,6 +233,67 @@ def _resume(*echecs: tuple[str, str, str], nombre: int | None = None) -> dict:
     }
 
 
+def _arbre(*tests: tuple[str, str, str]) -> dict:
+    """Un arbre de xcresult à la forme réelle (12/11/2026) : (cible, identifiant, résultat)."""
+    cibles: dict[str, dict] = {}
+    for cible, ident, resultat in tests:
+        noeud = cibles.setdefault(cible, {
+            "name": cible, "nodeType": "UI test bundle" if "UI" in cible else "Unit test bundle", "children": []})
+        cas = {"name": ident.rsplit("/", 1)[-1], "nodeIdentifier": ident, "nodeType": "Test Case",
+               "result": resultat, "children": [{"name": "1", "nodeType": "Arguments", "result": resultat}]}
+        if "/" in ident:
+            suite = ident.split("/")[0]
+            parent = next((s for s in noeud["children"] if s["name"] == suite), None)
+            if parent is None:
+                parent = {"name": suite, "nodeType": "Test Suite", "children": []}
+                noeud["children"].append(parent)
+            parent["children"].append(cas)
+        else:
+            noeud["children"].append(cas)
+    return {"testNodes": [{"name": "CoproFirst", "nodeType": "Test Plan", "children": list(cibles.values())}]}
+
+
+def _autotest_filtres() -> int:
+    arbre = _arbre(("CoproFirstTests", "lesDeuxMenusSontInscrits()", "Passed"),
+                   ("CoproFirstTests", "AProposTests/laMention()", "Passed"),
+                   ("CoproFirstTests", "AProposTests/unSaute()", "Skipped"),
+                   ("CoproFirstUITests", "AccesUITests/testSignaler()", "Passed"),
+                   ("CoproFirstUITests", "PiecesJointesUITests/testSaute()", "Skipped"))
+    cas = [
+        ("une cible", ["CoproFirstTests"], 0),
+        ("une cible et une classe d'interface jouée", ["CoproFirstTests", "CoproFirstUITests/AccesUITests"], 0),
+        ("un test par sa méthode, avec ou sans parenthèses",
+         ["CoproFirstUITests/AccesUITests/testSignaler", "CoproFirstTests/AProposTests/laMention()"], 0),
+        ("un @Test libre, sous sa cible", ["CoproFirstTests/lesDeuxMenusSontInscrits()"], 0),
+        ("un filtre sur deux reste vide (le passage du 11/11/2026) : INCONNU",
+         ["CoproFirstTests", "CoproFirstUITests/PiecesJointesUITestsAbsente"], 2),
+        ("une classe dont tous les tests sont sautés : INCONNU",
+         ["CoproFirstTests", "CoproFirstUITests/PiecesJointesUITests"], 2),
+        ("un nom tronqué ne vaut pas la classe : INCONNU", ["CoproFirstUITests/AccesUI"], 2),
+        ("la classe sous une autre cible : INCONNU", ["CoproFirstTests/AccesUITests"], 2),
+        ("une cible inconnue : INCONNU", ["CoproFirstTest"], 2),
+        ("aucun filtre : INCONNU", [], 2),
+    ]
+    rate = 0
+    for nom, demandes, sortie in cas:
+        obtenu, motif = filtres(arbre, demandes)
+        if obtenu != sortie:
+            print(f"❌ filtres, {nom} : sortie {obtenu} ({motif})")
+            rate += 1
+    _, motif = filtres(arbre, ["CoproFirstTests", "CoproFirstUITests/Absente"])
+    if "CoproFirstUITests/Absente" not in motif or "CoproFirstTests," in motif:
+        print(f"❌ filtres : le motif ne nomme pas le seul filtre vide ({motif})")
+        rate += 1
+    for nom, illisible in [("sans testNodes", {}), ("test hors cible",
+                           {"testNodes": [{"nodeType": "Test Case", "nodeIdentifier": "x()", "result": "Passed"}]}),
+                           ("pas un objet", [])]:
+        obtenu, motif = filtres(illisible, ["CoproFirstTests"])
+        if obtenu != 2:
+            print(f"❌ filtres, arbre {nom} : sortie {obtenu} ({motif})")
+            rate += 1
+    return rate
+
+
 def autotest() -> int:
     acces = (CIBLE_INTERFACE, "AccesUITests/testSignalerPerduPuisDeclarer()", PERTE)
     affaires = (CIBLE_INTERFACE, "AffairesUITests/testLeFiltreSuiviNeGardeQueSonEtat()", PERTE)
@@ -217,6 +339,7 @@ def autotest() -> int:
         if obtenu != sortie or not motif:
             print(f"❌ joues, {nom} : sortie {obtenu} ({motif})")
             rate += 1
+    rate += _autotest_filtres()
     rangs = lenteurs(JOURNAL)
     if rangs != {"AccesUITests/testSignalerPerduPuisDeclarer": 2, "AffairesUITests/testUneCarteOuvreSonDetail": 1}:
         print(f"❌ lenteurs : {rangs}")
@@ -251,6 +374,14 @@ def main(argv: list[str]) -> int:
             sortie, motif = 2, f"INCONNU : résumé de xcresult illisible ({erreur})"
         print(motif)
         return sortie
+    if len(argv) >= 3 and argv[1] == "filtres":
+        try:
+            with open(argv[2], encoding="utf-8") as f:
+                sortie, motif = filtres(json.load(f), argv[3:])
+        except (OSError, ValueError) as erreur:
+            sortie, motif = 2, f"INCONNU : arbre des tests de xcresult illisible ({erreur})"
+        print(motif)
+        return sortie
     if len(argv) == 4 and argv[1] == "relance-verte":
         try:
             with open(argv[2], encoding="utf-8") as f:
@@ -267,7 +398,7 @@ def main(argv: list[str]) -> int:
         print("\n".join(annotations))
         return 0
     print("usage : bilan_tests_ui.py --autotest | decider <résumé.json> | relance-verte <résumé.json> <n> "
-          "| joues <résumé.json> | lenteurs <journal> <résumé.md>",
+          "| joues <résumé.json> | filtres <arbre.json> <filtre>… | lenteurs <journal> <résumé.md>",
           file=sys.stderr)
     return 2
 

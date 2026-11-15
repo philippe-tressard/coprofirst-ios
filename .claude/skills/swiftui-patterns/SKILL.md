@@ -44,6 +44,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Mouvement | `.snappy` pour un état, `.smooth` pour un changement de palette, `accessibilityReduceMotion` lu ; retours haptiques sur résidence reconnue, connexion, Face ID, filtre | — |
 | Grandes tailles | `@ScaledMetric` ou `.dynamicTypeSize(...xxxLarge)` pour un pictogramme ; une rangée passe en colonne si `dynamicTypeSize.isAccessibilitySize` ; un écran fixe défile ; **le titre d'un écran de menu** : `.titreDeMenu()` après `.navigationTitle(…)` (grand titre, en ligne aux tailles d'accessibilité — #41), jamais un `navigationBarTitleDisplayMode` calculé dans l'écran | `CarteDuFil`, `AccueilView`, `Commun/Composants/TitreDeMenu.swift` |
 | Notifications push | `NotificationsPush` (`@Environment`) : autorisation demandée **après un geste** (`OffrePush`, dans la cloche), jamais au lancement ; POST /appareils à chaque ouverture d'une résidence, DELETE avant la déconnexion ; l'abonnement opaque (`AbonnementsPush`) est la seule clé lue dans une charge ; le jeton (`JetonAPNs`) a ses descriptions masquées et ne s'écrit nulle part. Sous `-api-simulee`, `CentreSimule` (`-push non-demandee|refusee`, `-push-touchee`) | `Fonctions/Notifications/Push/` |
+| Mesure d'audience (coprofirst#2726, #198) | un écran qui porte une page du site se note `.pageVue(chemin)` — le chemin **du site** (`CheminDuSite` : la route générée d'une page, `/tickets/<id>`, `<route>#<onglet>`) ; le registre des menus, `CadreAOnglets` et les détails d'affaire et de sondage le font déjà, un écran de menu n'a rien à ajouter. La file (`MesureAudience`, tenue par `Parcours`) part par lots à la borne GÉNÉRÉE (`LimitesAudience`), toutes les 30 s et au passage en arrière-plan, avec le canal ajouté au corps généré (`CorpsEnvoye`) ; rien si le compte refuse (`ProfilResidence.refusMesure`, inconnu = refus), sous le contrat 1.31.0, ou hors ligne. Un échec ne se dit pas | `Session/Audience/` (tests : `MesureAudienceTests`) |
 | Squelette | des identifiants propres (`0..<3`), jamais ceux des vrais éléments : SwiftUI réutiliserait les vues grisées | `FilView` |
 
 ## Arborescence (#10)
@@ -296,5 +297,10 @@ seule la CI le dit.
    worktrees, attend son tour et dit qui le tient (#108) — on le lance nu, sans lanceur.
    Un passage s'arrête par le pid de la fiche du verrou (l'en-tête du script donne la
    commande), jamais par son nom. Un passage filtré donne **un filtre par argument** :
-   s'il ne joue aucun test il sort INCONNU, pas vert (#96). Sans `DESTINATION`, le
+   s'il ne joue aucun test il sort INCONNU, pas vert (#96) — et **chaque** filtre doit
+   avoir joué au moins un test, compté dans l'arbre du xcresult : un filtre vide sort
+   INCONNU en se nommant, même si l'autre a joué ses 397 tests (#170). Un fichier de test
+   neuf n'est compilé qu'après `bash scripts/generer-projet.sh` : absent du projet
+   Xcode, il arrête le passage AVANT le build, INCONNU, avec cette commande (le script
+   ne régénère pas lui-même). Sans `DESTINATION`, le
    simulateur est choisi et nommé par `scripts/destination-simulateur.sh` (#112).
