@@ -68,6 +68,18 @@ jobs:
         # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
         # (skill publication-app-store). project.yml signe, le poste seul.
         run: bash scripts/tests-simulateur.sh -only-testing:CoproFirstTests
+      - name: Échantillon iPad (iPad Pro 13 pouces)
+        # L'app est universelle (#219) : un ÉCHANTILLON sur iPad, dans ce job, sans runner
+        # macOS de plus (#204) — la conformité du plist, l'entrée et la connexion. La suite
+        # complète sur iPad se joue au poste avant la fusion d'un lot iPad (#220).
+        env:
+          APPAREIL: ipad
+        run: >-
+          bash scripts/tests-simulateur.sh
+          -only-testing:CoproFirstTests/ConformiteAppStoreTests
+          -only-testing:CoproFirstUITests/ParcoursUITests
+          -only-testing:CoproFirstUITests/VitrineUITests
+          -only-testing:CoproFirstUITests/ConnexionUITests
 
   interface:
     name: Interface (${{ matrix.lot }}/2)

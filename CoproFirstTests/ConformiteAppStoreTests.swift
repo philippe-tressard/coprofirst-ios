@@ -13,12 +13,17 @@ import Testing
 struct ConformiteAppStoreTests {
     private var info: [String: Any] { Bundle.main.infoDictionary ?? [:] }
 
-    /// iPhone seul (CLAUDE.md) : une app iPad exige ses captures et le multitâche, donc
-    /// toutes les orientations — que cette app n'a pas.
-    @Test func lAppEstUneAppIPhone() {
-        #expect(info["UIDeviceFamily"] as? [Int] == [1])
+    /// iPhone et iPad (#219, depuis le 15/11/2026). L'iPhone reste en portrait ; l'iPad
+    /// prend les quatre orientations, sans quoi iPadOS ne lui ouvre pas le multitâche — et
+    /// rien ne réclame le plein écran, déprécié (#220).
+    @Test func lAppEstUneAppIPhoneEtIPad() {
+        #expect(info["UIDeviceFamily"] as? [Int] == [1, 2])
         #expect(info["UISupportedInterfaceOrientations"] as? [String] == ["UIInterfaceOrientationPortrait"])
-        #expect(info["UISupportedInterfaceOrientations~ipad"] == nil)
+        #expect(Set(info["UISupportedInterfaceOrientations~ipad"] as? [String] ?? []) == [
+            "UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown",
+            "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight",
+        ])
+        #expect(info["UIRequiresFullScreen"] == nil)
     }
 
     @Test func laVersionEstUneVersionPubliable() throws {

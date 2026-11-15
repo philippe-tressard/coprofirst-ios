@@ -15,7 +15,7 @@ settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_STRICT_CONCURRENCY: complete
-    TARGETED_DEVICE_FAMILY: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
     # Équipe Apple Developer (compte de particulier, ouvert le 01/11/2026) :
     # signature automatique. L'identifiant d'équipe n'est pas secret — il figure
     # dans chaque app signée. Les certificats et la connexion de Xcode au compte
@@ -66,7 +66,14 @@ targets:
         # Le jeton de session gardé au Trousseau ne se lit qu'après Face ID.
         NSFaceIDUsageDescription: "Face ID ouvre votre espace sans ressaisir votre mot de passe."
         UILaunchScreen: {}
+        # iPhone : portrait seul. iPad : les quatre orientations — la condition des fenêtres
+        # redimensionnables d'iPadOS (multitâche, Split View) ; pas de UIRequiresFullScreen (#220).
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
     # Droits de l'app, générés comme l'Info.plist (non versionnés). Capacités
     # enregistrées au compte Apple par la signature automatique, au poste (10/11/2026,
     # accord de Philippe) : Push (#17, relais coprofirst#2494) et liens universels (#18,
@@ -95,10 +102,9 @@ targets:
         # En changer après la création de l'app dans App Store Connect est impossible.
         PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app
         PRODUCT_NAME: CoproFirst
-        # iPhone seul (CLAUDE.md). Le réglage du projet ne suffit pas : XcodeGen pose « 1,2 » sur la
-        # cible, et l'archive devenait une app iPad — captures iPad et multitâche exigés par Apple
-        # pour une app qui n'a qu'une orientation.
-        TARGETED_DEVICE_FAMILY: "1"
+        # iPhone et iPad (#219, décision du 15/11/2026 : app iPad native). Écrit sur la cible aussi :
+        # XcodeGen y pose sa propre valeur, que le réglage du projet ne corrige pas.
+        TARGETED_DEVICE_FAMILY: "1,2"
         GENERATE_INFOPLIST_FILE: "NO"
   CoproFirstTests:
     type: bundle.unit-test
