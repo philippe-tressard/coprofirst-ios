@@ -58,7 +58,7 @@ enum FixturesPrestataires {
            "frequence_type": "mois", "frequence_valeur": 1, "frequence_libelle": "↺ Mensuel",
            "prochaine_visite": "2026-11-18", "actif": true,
            "notes": "<p>Visite mensuelle ; remplacement des câbles prévu en 2027.</p>",
-           "resilie_le": null, "remplace_par_id": null, "resilie": false, "remplace_par": null, "remplace": []},
+           "resilie_le": null, "remplace_par_id": null, "resilie": false, "remplace": []},
           {"id": 2, "copropriete_id": 1, "prestataire_id": 2, "type_equipement": "incendie",
            "libelle": "Vérification des extincteurs", "date_debut": "2023-06-01", "frequence_type": "fois_par_an",
            "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "prochaine_visite": "2026-09-30",
@@ -73,7 +73,7 @@ enum FixturesPrestataires {
           {"id": 4, "copropriete_id": 1, "prestataire_id": 5, "type_equipement": "incendie",
            "libelle": "Vérification des extincteurs", "date_debut": "2026-12-01", "frequence_type": "fois_par_an",
            "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "prochaine_visite": "2026-12-15",
-           "actif": true, "resilie_le": null, "remplace_par_id": null, "resilie": false, "remplace_par": null,
+           "actif": true, "resilie_le": null, "remplace_par_id": null, "resilie": false,
            "remplace": [{"id": 2, "libelle": "Vérification des extincteurs", "prestataire_id": 2,
                          "prestataire_nom": "Contrôles Sécurité Exemple", "date_debut": "2023-06-01",
                          "resilie_le": "2026-11-30"}]}
@@ -87,15 +87,9 @@ enum FixturesPrestataires {
         Reponse(nom: "contrats", schema: "ContratRead", json: contrats),
     ]
 
-    /// La résiliation et le remplacement, servis au-dessus du plancher (#185).
-    static let auDessus = AuDessusDuPlancher(
-        schema: "ContratRead", champs: ["resilie_le", "remplace_par_id", "resilie", "remplace_par", "remplace"],
-        contrat: "1.29.0")
-
     /// Les contrats, lus comme le client généré les lit, branchés comme le service réel.
     static func contratsLus() throws -> [Contrat] {
-        Contrat.lus(
-            try Relecture.generee([Components.Schemas.ContratRead].self, json: contrats), corps: Data(contrats.utf8))
+        Contrat.lus(try Relecture.generee([Components.Schemas.ContratRead].self, json: contrats))
     }
 
     static func lus(archives: Bool = false) throws -> [Prestataire] {

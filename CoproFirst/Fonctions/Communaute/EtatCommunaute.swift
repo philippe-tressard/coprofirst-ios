@@ -38,6 +38,8 @@ final class EtatCommunaute {
     var annonces = ListeChargee<Annonce>()
     var avis = ListeChargee<AvisResident>()
     private(set) var gestionnaireAvis = false
+    /// `peut_creer` servi (GET /sondages/gestes, #87) : illisible, il vaut « non ».
+    private(set) var peutCreerUnSondage = false
     private(set) var monAvisId: Int?
     /// La phrase d'un geste réussi ou manqué, montrée un instant en bas de l'écran.
     var bandeau: PhraseDuGeste?
@@ -70,7 +72,14 @@ final class EtatCommunaute {
 
     func charger(_ onglet: OngletCommunaute, _ installation: Installation, avec service: any ServiceCommunaute) async {
         switch onglet {
-        case .sondages: await remplir(\.sondages) { try await service.sondagesCommunaute(installation) }
+        case .sondages:
+            await remplir(\.sondages) {
+                async let sondages = service.sondagesCommunaute(installation)
+                async let creer = try? service.peutCreerUnSondage(installation)
+                let (lus, peutCreer) = (try await sondages, await creer ?? false)
+                await MainActor.run { self.peutCreerUnSondage = peutCreer }
+                return lus
+            }
         case .idees: await remplir(\.idees) { try await service.idees(installation) }
         case .annonces: await remplir(\.annonces) { try await service.annonces(installation) }
         case .avis: await chargerAvis(installation, avec: service)

@@ -14,23 +14,28 @@ fonctionnalités de l'application web, par étapes.
 
 Ce que l'app sait faire : « Écrans livrés » ci-dessous et
 [`Parite/PARITE.md`](Parite/PARITE.md) ; ce qui manque : les issues ouvertes.
-L'app n'est distribuée nulle part (« Sortir une version »).
+**L'app est publiée sur l'App Store** — iPhone, gratuite, version 1.0 en ligne depuis le
+14/11/2026 : <https://apps.apple.com/fr/app/coprofirst/id6834326392>. Les versions
+suivantes : « Sortir une version ».
 
 ## Sortir une version
 
-Aujourd'hui, une version ne sort que sur l'iPhone de Philippe :
+Une version sort sur l'App Store, et la soumission à la revue d'Apple reste un geste de
+Philippe :
 
-1. la version se lit dans `project.yml` (`MARKETING_VERSION`, `CURRENT_PROJECT_VERSION`) ;
-   l'app n'a ni étiquette ni release ;
+1. la version se lit dans `project.yml` (`MARKETING_VERSION`, et `CURRENT_PROJECT_VERSION`,
+   qui monte à chaque envoi) ; l'app n'a pas encore d'étiquette git — la 1.0 publiée
+   comprise —, une par version soumise est à poser (#205) ;
 2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; qui fusionne
    sur `main` se lit au champ `fusion` du registre (`CLAUDE.md`, « Dépôt ») ;
-3. au poste : `bash scripts/generer-projet.sh`, puis Xcode signe (signature automatique,
-   équipe `GUX8KASNTG`) et installe l'app sur l'iPhone branché.
+3. au poste : l'archive Release, signée automatiquement (équipe `GUX8KASNTG`) ; Philippe
+   l'envoie à App Store Connect, juge le rendu (simulateur, son iPhone, TestFlight
+   interne), puis la soumet — rien ne part en revue sans son « oui » écrit pour cette
+   version.
 
-Manquent pour TestFlight : l'app créée dans App Store Connect, un numéro de build qui
-monte à chaque envoi, une archive envoyée (au poste, ou par la CI avec une clé d'API
-rangée par Philippe), et un runner macOS épinglé plutôt que `macos-latest`. Ce qui
-est un geste de Philippe, et ce qui précède la première soumission : skill
+Le contrôle de cohérence qui précède chaque soumission, et l'étiquette qu'il pose :
+#205. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
+un geste de Philippe : skill
 [`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 
 ## Construire

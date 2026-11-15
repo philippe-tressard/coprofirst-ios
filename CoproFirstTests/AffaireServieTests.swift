@@ -75,6 +75,7 @@ struct AffaireServieTests {
         let entree = { (extra: String) in
             #"[{"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00", "#
                 + #""ancien_statut": "ouvert", "nouveau_statut": "en_cours", "perimetre_precise_libelle": "", "#
+                + #""etat_propose_libelle": "", "#
                 + #""nouveau_statut_libelle": \#(extra)}]"#
         }
         // L'ancien état, et le nouveau servi vide, se lisent dans les référentiels servis
@@ -91,11 +92,12 @@ struct AffaireServieTests {
     // MARK: - #125 : le rythme, servi — celui du contrat d'abord
 
     @Test func lIntervenantPorteLeRythmeDuContratDAbord() throws {
-        let prestataire = #", "prestataire_nom": "Ascenseurs (fictif)", "frequence_libelle": "↺ 1×/an""#
+        let seul = #", "prestataires": [{"id": 1, "nom": "Ascenseurs (fictif)"}]"#
+        let prestataire = seul + #", "frequence_libelle": "↺ 1×/an""#
         #expect(try affaire(prestataire).intervenant == "Ascenseurs (fictif) ·\u{00A0}↺ 1×/an")
         let sousContrat = try affaire(prestataire + #", "contrat": {"id": 1, "frequence_libelle": "↺ Mensuel"}"#)
         #expect(sousContrat.intervenant == "Ascenseurs (fictif) ·\u{00A0}↺ Mensuel")
-        #expect(try affaire(#", "prestataire_nom": "Ascenseurs (fictif)""#).intervenant == "Ascenseurs (fictif)")
+        #expect(try affaire(seul).intervenant == "Ascenseurs (fictif)")
         #expect(try affaire(#", "frequence_libelle": "↺ Mensuel""#).intervenant == nil, "sans prestataire : rien")
     }
 

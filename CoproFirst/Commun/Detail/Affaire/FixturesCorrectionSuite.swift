@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 #if DEBUG
@@ -30,14 +31,6 @@ enum FixturesCorrectionSuite {
         Reponse(nom: "correctionNonSuivie", schema: "TicketEvolutionRead", json: nonSuivie),
     ]
 
-    /// Ce que le serveur sert au-dessus du plancher (contrat 1.30.0, #187).
-    static let auDessus = [
-        AuDessusDuPlancher(
-            schema: "TicketEvolutionRead",
-            champs: ["affaire_suivie", "affaire_suivie_libelle", "etat_propose", "etat_propose_libelle"],
-            contrat: "1.30.0"),
-    ]
-
     /// La réponse servie pour CETTE correction : la phrase, l'état proposé et son libellé
     /// que le faux serveur a calculés, posés sur la forme de la fixture.
     static func servie(phrase: String, etatPropose: String?, libelle: String) throws -> Data {
@@ -48,6 +41,12 @@ enum FixturesCorrectionSuite {
         json["etat_propose"] = etatPropose ?? NSNull()
         json["etat_propose_libelle"] = etatPropose == nil ? "" : libelle
         return try JSONSerialization.data(withJSONObject: json)
+    }
+
+    /// La réponse servie, lue par le type généré comme le service réel la lit.
+    static func lue(_ servie: Data) throws -> Components.Schemas.TicketEvolutionRead {
+        guard let json = String(bytes: servie, encoding: .utf8) else { throw ErreurService.inattendue(500) }
+        return try Relecture.generee(Components.Schemas.TicketEvolutionRead.self, json: json)
     }
 }
 #endif

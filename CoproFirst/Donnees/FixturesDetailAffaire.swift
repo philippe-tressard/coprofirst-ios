@@ -68,7 +68,8 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "syndic", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-11T00:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["bat_b"], "perimetre_libelle": "Bâtiment B",
-           "prestataire_nom": "Ramonage Exemple (fictif)", "frequence_type": "fois_par_an",
+           "prestataire_id": 9, "prestataire_nom": "Ramonage Exemple (fictif)",
+           "prestataires": [{"id": 9, "nom": "Ramonage Exemple (fictif)"}], "frequence_type": "fois_par_an",
            "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": ""},
           {"id": 45, "numero": "A-0045", "titre": "Contrôle annuel de l'ascenseur",
            "description": "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
@@ -97,11 +98,13 @@ enum FixturesDetailAffaire {
           {"id": 1, "ticket_id": 41, "type": "etat", "cree_le": "2026-11-09T10:00:00",
            "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "en_cours",
            "nouveau_statut_libelle": "Chez le syndic", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "",
            "statut_avant": "ouvert", "peut_modifier": false, "peut_supprimer": false},
           {"id": 2, "ticket_id": 41, "type": "commentaire", "cree_le": "2026-11-09T11:00:00",
            "auteur_nom": "Le conseil syndical",
            "contenu": "<p>Le syndic est prévenu ; le plombier passe <strong>demain matin</strong>.</p>",
            "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "",
            "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false},
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
            "auteur_nom": "Le syndic",
@@ -109,14 +112,17 @@ enum FixturesDetailAffaire {
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],
            "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "",
            "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false},
           {"id": 4, "ticket_id": 31, "type": "etat", "cree_le": "2026-11-07T09:30:00",
            "auteur_nom": "Le conseil syndical", "ancien_statut": "ouvert", "nouveau_statut": "résolu",
            "nouveau_statut_libelle": "Résolu", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "",
            "contenu": "La carte électronique du portail a été remplacée.",
            "statut_avant": "ouvert", "peut_modifier": false, "peut_supprimer": false},
           {"id": 5, "ticket_id": 31, "type": "synthese", "cree_le": "2026-11-08T10:00:00",
            "auteur_nom": "Le conseil syndical", "nouveau_statut_libelle": "", "perimetre_precise_libelle": "",
+           "etat_propose_libelle": "",
            "statut_avant": "résolu", "peut_modifier": false, "peut_supprimer": false}
         ]
         """#
@@ -127,23 +133,12 @@ enum FixturesDetailAffaire {
         Reponse(nom: "evolutions", schema: "TicketEvolutionRead", json: evolutions),
     ]
 
-    /// Ce que le serveur sert au-dessus du plancher : les prestataires d'une affaire et le
-    /// droit d'en changer (contrat 1.28.0, #181). L'affaire 44 n'en sert pas : elle est
-    /// lue comme d'une installation antérieure, par `prestataire_nom`.
-    static let auDessus = [
-        AuDessusDuPlancher(
-            schema: "TicketRead", champs: ["prestataires", "peut_changer_prestataires"], contrat: "1.28.0"),
-    ]
-
     /// L'affaire `id` telle que le service réel la lirait, puis ses évolutions.
     static func lue(_ id: Int) throws -> DetailAffaire? {
         let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: affaires)
         guard let ticket = tickets.first(where: { $0.id == id }) else { return nil }
         let suites = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: evolutions)
-        // Le corps de CETTE affaire, tel que GET /tickets/{id} le servirait.
-        let corps = try JSONSerialization.jsonObject(with: Data(affaires.utf8)) as? [[String: Any]]
-        let servi = try corps?.first { $0["id"] as? Int == id }.map { try JSONSerialization.data(withJSONObject: $0) }
-        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id }, corps: servi)
+        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id })
     }
 }
 #endif
