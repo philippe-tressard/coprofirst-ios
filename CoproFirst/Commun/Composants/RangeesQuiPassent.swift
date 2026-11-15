@@ -14,43 +14,63 @@ struct FlowCapsules<Contenu: View>: View {
 }
 
 /// Une mise en page qui range ses éléments en lignes, et passe à la suivante au bord.
+///
+/// Un élément plus large que la rangée (une longue pastille, un grand texte) prend une
+/// ligne à lui, à la largeur de la rangée : il y passe à la ligne au lieu de déborder de
+/// sa carte (#191). La mesure et le placement lisent la même `miseEnPage`.
 struct RangeesQuiPassent: Layout {
     var espacement: CGFloat = 6
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let largeur = proposal.width ?? .infinity
+    struct MiseEnPage: Equatable {
+        var cadres: [CGRect]
+        var taille: CGSize
+    }
+
+    /// Les cadres des éléments, mesurés par `mesures` (une proposition → une taille), dans
+    /// une rangée de `largeur` (`nil` : sans limite).
+    static func miseEnPage(
+        _ mesures: [(ProposedViewSize) -> CGSize], largeur: CGFloat?, espacement: CGFloat
+    ) -> MiseEnPage {
+        let limite = largeur ?? .infinity
+        var cadres: [CGRect] = []
         var x: CGFloat = 0
         var y: CGFloat = 0
         var hauteurLigne: CGFloat = 0
         var plusLarge: CGFloat = 0
-        for vue in subviews {
-            let taille = vue.sizeThatFits(.unspecified)
-            if x > 0, x + taille.width > largeur {
+        for mesure in mesures {
+            var taille = mesure(.unspecified)
+            if taille.width > limite {
+                // Plus large que la rangée : sa largeur à elle, et la hauteur qu'il y prend.
+                taille = mesure(ProposedViewSize(width: limite, height: nil))
+                taille.width = min(taille.width, limite)
+            }
+            if x > 0, x + taille.width > limite {
                 y += hauteurLigne + espacement
                 x = 0
                 hauteurLigne = 0
             }
+            cadres.append(CGRect(origin: CGPoint(x: x, y: y), size: taille))
             x += taille.width + espacement
             hauteurLigne = max(hauteurLigne, taille.height)
             plusLarge = max(plusLarge, x - espacement)
         }
-        return CGSize(width: min(plusLarge, largeur), height: y + hauteurLigne)
+        return MiseEnPage(cadres: cadres, taille: CGSize(width: min(plusLarge, limite), height: y + hauteurLigne))
+    }
+
+    private func miseEnPage(_ subviews: Subviews, largeur: CGFloat?) -> MiseEnPage {
+        Self.miseEnPage(subviews.map { vue in { vue.sizeThatFits($0) } }, largeur: largeur, espacement: espacement)
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        miseEnPage(subviews, largeur: proposal.width).taille
     }
 
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var x = bounds.minX
-        var y = bounds.minY
-        var hauteurLigne: CGFloat = 0
-        for vue in subviews {
-            let taille = vue.sizeThatFits(.unspecified)
-            if x > bounds.minX, x + taille.width > bounds.maxX {
-                y += hauteurLigne + espacement
-                x = bounds.minX
-                hauteurLigne = 0
-            }
-            vue.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(taille))
-            x += taille.width + espacement
-            hauteurLigne = max(hauteurLigne, taille.height)
+        let mise = miseEnPage(subviews, largeur: bounds.width)
+        for (vue, cadre) in zip(subviews, mise.cadres) {
+            vue.place(
+                at: CGPoint(x: bounds.minX + cadre.minX, y: bounds.minY + cadre.minY),
+                proposal: ProposedViewSize(cadre.size))
         }
     }
 }
