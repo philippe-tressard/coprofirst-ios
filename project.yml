@@ -8,6 +8,8 @@ options:
   bundleIdPrefix: fr.coprofirst
   deploymentTarget:
     iOS: "17.0"
+    # L'écran de hall sur Apple TV (#218) : la même version minimale que l'iPhone.
+    tvOS: "17.0"
   developmentLanguage: fr
   createIntermediateGroups: true
   groupSortPosition: top
@@ -123,6 +125,64 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.uitests
         GENERATE_INFOPLIST_FILE: "YES"
         TEST_TARGET_NAME: CoproFirst
+  # L'écran de hall sur Apple TV (#218) : il fait défiler, en lecture seule, les affiches
+  # d'un périmètre — ce n'est pas l'app du résident. Il compile les MÊMES fichiers que
+  # l'iPhone pour la charte et les formats du site, nommément : un dossier de l'app n'y
+  # entre que s'il compile pour tvOS sans `#if os(…)`. Ce qui est propre à iOS s'isole dans
+  # son fichier et s'exclut ici, avec sa raison.
+  CoproFirstTV:
+    type: application
+    platform: tvOS
+    sources:
+      - path: CoproFirstTV
+      - path: CoproFirst/Charte
+        excludes:
+          # tvOS n'a pas de grands titres de barre.
+          - ApparenceNavigation.swift
+          # Les onglets des pages du site : la navigation de l'iPhone, rien à l'écran de hall.
+          - OngletsDuSite.swift
+      - path: CoproFirst/Commun/Texte
+    dependencies:
+      - package: ClientAPI
+    info:
+      path: CoproFirstTV/Info.plist
+      properties:
+        CFBundleDisplayName: CoproFirst
+        CFBundleDevelopmentRegion: fr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleLocalizations: [fr]
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen: {}
+    settings:
+      base:
+        # Le MÊME identifiant que l'iPhone (FIGÉ, voir CoproFirst) : une seule fiche App Store,
+        # un achat universel ; la plateforme tvOS s'y ajoute (geste de Philippe, lot 6).
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app
+        PRODUCT_NAME: CoproFirst
+        # Apple TV seule.
+        TARGETED_DEVICE_FAMILY: "3"
+        GENERATE_INFOPLIST_FILE: "NO"
+  # Les tests du code PARTAGÉ, rejoués sur tvOS : les mêmes fichiers que CoproFirstTests,
+  # nommément — jamais une copie (#218).
+  CoproFirstTVTests:
+    type: bundle.unit-test
+    platform: tvOS
+    sources:
+      # Ceux qui ne lisent que la charte et le texte du site. FormatsDuSiteTests et
+      # PictogrammesTests touchent aussi des composants et la navigation de l'iPhone.
+      - path: CoproFirstTests/TexteDuSiteTests.swift
+      - path: CoproFirstTests/MesuresTests.swift
+    dependencies:
+      - target: CoproFirstTV
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.tv.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        # L'app s'appelle CoproFirst.app, pas du nom de sa cible : XcodeGen déduirait
+        # « CoproFirstTV.app » et le test ne trouverait pas son hôte.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/CoproFirst.app/CoproFirst
+        BUNDLE_LOADER: $(TEST_HOST)
 schemes:
   CoproFirst:
     build:
@@ -137,3 +197,15 @@ schemes:
       targets:
         - CoproFirstTests
         - CoproFirstUITests
+  CoproFirstTV:
+    build:
+      targets:
+        CoproFirstTV: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      language: fr
+      region: FR
+      targets:
+        - CoproFirstTVTests

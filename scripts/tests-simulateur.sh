@@ -53,6 +53,9 @@ XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
 PROJET=${PROJET:-CoproFirst.xcodeproj}
+# L'écran de hall (#218) : SCHEMA=CoproFirstTV PLATEFORME=tvOS SOURCES_TESTS=CoproFirstTests.
+SCHEMA=${SCHEMA:-CoproFirst}
+PLATEFORME=${PLATEFORME:-iOS}
 SOURCES_TESTS=${SOURCES_TESTS:-CoproFirstTests CoproFirstUITests}
 A_ETEINDRE=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
@@ -188,7 +191,7 @@ passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
-    DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1
+    DESTINATION=$(bash scripts/destination-simulateur.sh "$PLATEFORME") || return 1
   fi
   if ! motif=$(hors_projet); then
     echo "❌ $motif" >&2
@@ -199,7 +202,7 @@ passer() {
   echo "Destination : $DESTINATION"
   demarrer_simulateur || return 1
   local communs=(
-    -project "$PROJET" -scheme CoproFirst -destination "$DESTINATION"
+    -project "$PROJET" -scheme "$SCHEMA" -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
     -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO
   )

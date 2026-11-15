@@ -8,9 +8,11 @@
 # passage à l'autre — et son autotest vivent dans scripts/destination_simulateur.py.
 # Un choix impossible, ou une liste qui ne se lit pas : INCONNU (sortie 2), jamais un
 # appareil au hasard — un test qui ne peut pas tourner n'est pas vert (#112).
+# `tvOS` en argument : une Apple TV, pour l'écran de hall (#218) ; iOS par défaut.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 LISTE=$(xcrun simctl list devices available -j) \
   || { echo "❓ INCONNU : simctl ne liste pas les simulateurs" >&2; exit 2; }
-UDID=$(python3 -I scripts/destination_simulateur.py <<< "$LISTE") || exit $?
-echo "platform=iOS Simulator,id=$UDID"
+PLATEFORME=${1:-iOS}
+UDID=$(python3 -I scripts/destination_simulateur.py --plateforme "$PLATEFORME" <<< "$LISTE") || exit $?
+echo "platform=$PLATEFORME Simulator,id=$UDID"
