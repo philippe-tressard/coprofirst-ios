@@ -22,7 +22,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         // La carte de l'Historique se lit d'un bloc (VoiceOver) : on cherche dans son libellé.
         let changement = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label CONTAINS %@", "Ouvert → Chez le syndic")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS %@", "Ouvert →\u{00A0}Chez le syndic")).firstMatch
         XCTAssertTrue(changement.exists)
 
         // Le bandeau d'un résident : le lien et la réponse, rien de ce que fait le conseil.
