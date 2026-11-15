@@ -108,7 +108,7 @@ private struct SquelettePrestataires: View {
                 Carte {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Un prestataire de la résidence").font(.headline)
-                        Text("Maintenance · Ascenseurs").font(.subheadline)
+                        Text("Maintenance\(Separateur.point)Ascenseurs").font(.subheadline)
                     }
                 }
             }

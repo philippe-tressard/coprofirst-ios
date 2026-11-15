@@ -56,7 +56,7 @@ struct OngletContrats: View {
         let sans = contrats.filter { $0.prochaineVisite == nil }.count
         var morceaux = [TextesPrestataires.contratsActifs(contrats.count)]
         if sans > 0 { morceaux.append(TextesPrestataires.sansEcheance(sans)) }
-        return morceaux.joined(separator: " · ")
+        return morceaux.joined(separator: Separateur.point)
     }
 
     /// `groupesParEquipement` : l'ordre des équipements servis, puis l'alphabet.

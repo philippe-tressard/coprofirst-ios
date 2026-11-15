@@ -20,8 +20,8 @@ struct PrestatairesAffaireTests {
     @Test func laFicheLitLaListeServieUneLigneParPrestataire() throws {
         let affaire = try #require(try FixturesDetailAffaire.lue(45))
         #expect(affaire.prestataires == [parc, controles])
-        #expect(affaire.intervenants == [parc.nom, "\(controles.nom) · ↺ Mensuel"], "le rythme après le dernier")
-        #expect(affaire.intervenant == "\(parc.nom), \(controles.nom) · ↺ Mensuel")
+        #expect(affaire.intervenants == [parc.nom, "\(controles.nom) ·\u{00A0}↺ Mensuel"], "le rythme après le dernier")
+        #expect(affaire.intervenant == "\(parc.nom), \(controles.nom) ·\u{00A0}↺ Mensuel")
         #expect(!affaire.droits.changerPrestataires, "servi à un résident : non")
     }
 
@@ -30,7 +30,7 @@ struct PrestatairesAffaireTests {
     @Test func sansListeServieLeSeulPrestataireCommeAvant() throws {
         let ancienne = try #require(try FixturesDetailAffaire.lue(44))
         #expect(ancienne.prestataires == [PrestataireAffaire(id: nil, nom: "Ramonage Exemple (fictif)")])
-        #expect(ancienne.intervenant == "Ramonage Exemple (fictif) · ↺ 1×/an")
+        #expect(ancienne.intervenant == "Ramonage Exemple (fictif) ·\u{00A0}↺ 1×/an")
         #expect(!ancienne.droits.changerPrestataires)
         let ticket = try Relecture.generee([Components.Schemas.TicketRead].self, json: FixturesDetailAffaire.affaires)
             .first { $0.id == 45 }

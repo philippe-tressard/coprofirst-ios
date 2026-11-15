@@ -20,14 +20,14 @@ struct FilAffaireTests {
         #expect(suite.meta == "3 suites", "le nombre d'entrées, jamais « n sur m » : on ne connaît pas la suite")
         #expect(suite.ouverteALaSuite, "le fil d'une affaire ouverte reste ouvert")
         #expect(suite.pliable && etapes[2].pliable)
-        #expect(suite.elements.first?.titre == "Ouvert → Chez le syndic")
+        #expect(suite.elements.first?.titre == "Ouvert →\u{00A0}Chez le syndic")
         #expect(etapes[3].meta == TextesFil.aVenir)
     }
 
     @Test func laSuitePlieeDitSaDerniereEntree() throws {
         let suite = EtapeFil.du(try service.detailSimule(41))[1]
         let resume = try #require(suite.resumePlie)
-        #expect(resume.hasPrefix("9 nov. 2026 — Intervention confirmée à 9 h."), "\(resume)")
+        #expect(resume.hasPrefix("9 nov. 2026 —\u{00A0}Intervention confirmée à 9 h."), "\(resume)")
     }
 
     @Test func lesComptesRendusVontDuPlusRecentAuPlusAncien() throws {

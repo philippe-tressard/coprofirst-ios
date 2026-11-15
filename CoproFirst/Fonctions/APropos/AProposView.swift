@@ -92,7 +92,7 @@ struct AProposView: View {
         if let version = info?["CFBundleShortVersionString"] as? String {
             morceaux.append("app \(version)")
         }
-        return morceaux.joined(separator: " · ")
+        return morceaux.joined(separator: Separateur.point)
     }
 
     @ViewBuilder

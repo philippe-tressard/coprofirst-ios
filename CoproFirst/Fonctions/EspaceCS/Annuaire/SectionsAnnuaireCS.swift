@@ -42,7 +42,8 @@ struct SectionConseilCS: View {
                     let logement = [membre.batimentNom?.nulSiVide.map(TextesAnnuaireCS.batiment), membre.etageLibelle]
                         .compactMap(\.self)
                     if !logement.isEmpty {
-                        Text(logement.joined(separator: " · ")).font(.subheadline).foregroundStyle(palette.textMuted)
+                        Text(logement.joined(separator: Separateur.point))
+                            .font(.subheadline).foregroundStyle(palette.textMuted)
                     }
                     if membre.userId != nil {
                         Label(TextesAnnuaireCS.inscritLie, systemImage: "link").font(.footnote)

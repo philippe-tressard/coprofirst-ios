@@ -43,7 +43,7 @@ extension DetailAffaire {
     static func intervenants(_ noms: [String], rythme: String?) -> [String] {
         var lignes = noms.compactMap(\.nulSiVide)
         guard let dernier = lignes.popLast() else { return [] }
-        return lignes + [[dernier, rythme?.nulSiVide].compactMap(\.self).joined(separator: " · ")]
+        return lignes + [[dernier, rythme?.nulSiVide].compactMap(\.self).joined(separator: Separateur.point)]
     }
 
     init(ticket: Components.Schemas.TicketRead, suites: [SuiteAffaire]) {

@@ -242,11 +242,11 @@ struct SuiteHistoriqueTests {
         let admin = service("administrateur")
         let avant = try admin.detailSimule(41)
         let transition = try #require(avant.suites.first)
-        #expect(transition.changementDEtat(avant.referentiels) == "Ouvert → Chez le syndic")
+        #expect(transition.changementDEtat(avant.referentiels) == "Ouvert →\u{00A0}Chez le syndic")
         try await admin.corrigerSuite(
             CorrectionSuite(suivi: .init(type: "etat", statut: "résolu")), transition.id, de: 41, dans: residence)
         var apres = try admin.detailSimule(41)
-        #expect(apres.suites.first?.changementDEtat(apres.referentiels) == "Ouvert → Résolu")
+        #expect(apres.suites.first?.changementDEtat(apres.referentiels) == "Ouvert →\u{00A0}Résolu")
         #expect(apres.statut == "résolu")
 
         try await admin.corrigerSuite(

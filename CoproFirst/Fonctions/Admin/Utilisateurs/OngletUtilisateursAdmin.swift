@@ -131,7 +131,7 @@ struct LigneUtilisateurAdmin: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Prénom Nom du compte").font(.headline)
             Text("adresse@exemple.fr").font(.subheadline)
-            Text("Copro. résident · Actif").font(.footnote)
+            Text("Copro. résident\(Separateur.point)Actif").font(.footnote)
         }
     }
 

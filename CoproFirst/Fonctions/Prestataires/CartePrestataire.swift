@@ -67,8 +67,9 @@ struct CartePrestataire: View {
                 ForEach(Array(prestataire.contacts.enumerated()), id: \.offset) { _, contact in
                     let nom = contact.nomAffiche ?? ""
                     let fonction = contact.fonction.map { " (\($0))" } ?? ""
+                    let qui = nom.isEmpty ? "" : "\(Separateur.tiret)\(nom)\(fonction)"
                     lien(
-                        "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(nom.isEmpty ? "" : " — \(nom)\(fonction)")",
+                        "📞 \(contact.telephone ?? FormatsDuSite.tiret)\(qui)",
                         tel: contact.telephone)
                 }
             } else {
