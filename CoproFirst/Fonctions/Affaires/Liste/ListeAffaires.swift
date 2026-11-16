@@ -31,6 +31,7 @@ struct ListeAffaires: View {
                             CarteAffaire(affaire: affaire, archive: affaire.archivee)
                         }
                         .buttonStyle(StyleCarte())
+                        .rangeeChoisie(AffaireAOuvrir(id: affaire.id))
                         .rangeeDAffaire()
                         .swipeActions(edge: .trailing) { actionArchiver(affaire) }
                         .contextMenu { menu(affaire) }

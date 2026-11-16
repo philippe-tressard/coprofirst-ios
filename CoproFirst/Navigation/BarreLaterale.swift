@@ -66,7 +66,8 @@ struct BarreLaterale: View {
             }
             .id(fixe.id)
         } else if let page = pages.first(where: { $0.id == parcours.onglet }) ?? pages.first {
-            EcranDePage(page: page, installation: installation)
+            // La page, et la colonne où ses listes ouvrent leurs fiches (`ListeEtFiche`, #222).
+            PageEtColonneDeFiche { EcranDePage(page: page, installation: installation) }
                 .id(page.id)
         }
     }

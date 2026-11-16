@@ -432,6 +432,16 @@ done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
 
+# La mise en page se décide sur la classe de taille, jamais sur l'appareil (#222) : un
+# iPhone pliable déplié est un iPhone en classe régulière (#119). Le dossier doit exister,
+# sinon le contrôle ne contrôle rien (standards/04).
+if [ -d CoproFirst/Commun/MiseEnPage ]; then
+  IDIOME=$(grep -rn 'userInterfaceIdiom' CoproFirst/Commun/MiseEnPage || true)
+  [ -z "$IDIOME" ] || { echo "$IDIOME"; echec "Commun/MiseEnPage lit l'appareil : horizontalSizeClass, jamais userInterfaceIdiom"; }
+else
+  echec "CoproFirst/Commun/MiseEnPage absent : le contrôle de l'idiome ne contrôle rien"
+fi
+
 # Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
 TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
 
@@ -479,4 +489,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, hôtes fictifs réservés, détection « documentation seule », ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

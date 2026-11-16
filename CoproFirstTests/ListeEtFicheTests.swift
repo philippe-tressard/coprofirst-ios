@@ -1,0 +1,59 @@
+// SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+// SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+import Foundation
+import SwiftUI
+import Testing
+
+@testable import CoproFirst
+
+/// La liste et la fiche côte à côte (#222) : la largeur de la liste, en classe régulière.
+struct ListeEtFicheTests {
+    @Test func uneColonneBorneeTientSaLargeurIdeale() {
+        let partage = Partage.parDefaut
+        #expect(partage.largeurDeLaListe(dans: 1376) == Mise.listeIdeale, "iPad 13 pouces en paysage")
+        #expect(partage.largeurDeLaListe(dans: 1032) == Mise.listeIdeale, "en portrait")
+    }
+
+    @Test func laListeNePrendJamaisPlusQueLaMoitie() {
+        let partage = Partage.liste(ideale: 400, min: 300, max: 440)
+        #expect(partage.largeurDeLaListe(dans: 694) == 347, "Split View aux deux tiers : la fiche reste la plus large")
+        #expect(partage.largeurDeLaListe(dans: 500) == 300, "jamais sous la borne basse")
+    }
+
+    @Test func leCarnetCoupeAuPli() {
+        #expect(Partage.proportion(0.5).largeurDeLaListe(dans: 900) == 450)
+        #expect(Partage.proportion(1.4).largeurDeLaListe(dans: 900) == 900, "une part bornée à 1")
+        #expect(Partage.proportion(-1).largeurDeLaListe(dans: 900) == 0)
+    }
+
+    @Test func laFicheVaOuLaClasseDeTailleLeDit() {
+        #expect(Disposition.pour(.compact, colonneFournie: true) == .pile, "iPhone, Split View étroit : la pile")
+        #expect(Disposition.pour(nil, colonneFournie: false) == .pile)
+        #expect(Disposition.pour(.regular, colonneFournie: true) == .colonne, "iPad : la colonne de la page")
+        #expect(Disposition.pour(.regular, colonneFournie: false) == .coteACote, "sans colonne : le repli")
+    }
+
+    /// Une liste qui disparaît après l'apparition de la suivante ne ferme pas la colonne
+    /// de celle-ci (Liste → Archives, un onglet qui change).
+    @MainActor @Test func uneSeuleListeOccupeLaColonne() {
+        let colonne = ColonneDeFiche()
+        let premiere = UUID()
+        let seconde = UUID()
+        colonne.ouvrir(par: premiere, partage: .parDefaut)
+        colonne.ouvrir(par: seconde, partage: .proportion(0.5))
+        colonne.fermer(par: premiere)
+        #expect(colonne.ouverte, "la seconde l'occupe toujours")
+        #expect(colonne.partage == .proportion(0.5))
+        colonne.montrer(.init(id: 1, vue: AnyView(EmptyView())), par: premiere)
+        #expect(colonne.contenu == nil, "l'ancienne n'y montre plus rien")
+        colonne.montrer(.init(id: 2, vue: AnyView(EmptyView())), par: seconde)
+        #expect(colonne.contenu?.id == AnyHashable(2))
+        colonne.fermer(par: seconde)
+        #expect(!colonne.ouverte && colonne.contenu == nil, "fermée : la page reprend la largeur")
+    }
+
+    @Test func laColonneParDefautResteDansSesBornes() {
+        #expect(Mise.listeMin <= Mise.listeIdeale && Mise.listeIdeale <= Mise.listeMax)
+    }
+}

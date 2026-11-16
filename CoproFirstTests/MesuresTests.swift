@@ -77,6 +77,26 @@ private let propresAIOS: [String: MesurePropre] = [
         valeur: Mise.filetRail, ecart: nil,
         raison: "le trait du rail : 2 px au site, écrit en dur (`RubriqueEtape.svelte`, `.etape::before`), sans jeton",
         depuis: "12/11/2026"),
+    "listeIdeale": MesurePropre(
+        valeur: Mise.listeIdeale, ecart: nil,
+        raison: "la colonne de liste à côté d'une fiche sur iPad (`ListeEtFiche`, #222), à l'échelle de "
+            + "celle des apps du système ; le site n'a pas de liste et fiche côte à côte",
+        depuis: "16/11/2026"),
+    "listeMin": MesurePropre(
+        valeur: Mise.listeMin, ecart: nil,
+        raison: "la colonne de liste à côté d'une fiche sur iPad (`ListeEtFiche`, #222), à l'échelle de "
+            + "celle des apps du système ; le site n'a pas de liste et fiche côte à côte",
+        depuis: "16/11/2026"),
+    "listeMax": MesurePropre(
+        valeur: Mise.listeMax, ecart: nil,
+        raison: "la colonne de liste à côté d'une fiche sur iPad (`ListeEtFiche`, #222), à l'échelle de "
+            + "celle des apps du système ; le site n'a pas de liste et fiche côte à côte",
+        depuis: "16/11/2026"),
+    "filetChoisi": MesurePropre(
+        valeur: Mise.filetChoisi, ecart: nil,
+        raison: "le trait qui souligne la carte dont la fiche est ouverte à côté (iPad, #222) ; "
+            + "le site n'a pas de liste et fiche côte à côte",
+        depuis: "16/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.
