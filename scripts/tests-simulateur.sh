@@ -39,6 +39,9 @@
 #     jamais par son nom : le script arrête alors ses descendants (xcodebuild ne lui
 #     survit pas), éteint le simulateur s'il l'a démarré, et rend le verrou.
 #
+# Appareil : un iPhone de série par défaut ; `APPAREIL=ipad` pour un iPad Pro 13 pouces
+# (#220) ; `DESTINATION` fixée l'emporte sur les deux.
+#
 # Arguments : passés au premier `xcodebuild test`, pour un passage partiel au poste
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
 # `--autotest` rejoue tout cela avec un faux xcodebuild
@@ -188,7 +191,12 @@ passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
-    DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1
+    # APPAREIL=ipad : le passage sur un iPad Pro 13 pouces de série (#220) ; l'iPhone sinon.
+    case "${APPAREIL:-iphone}" in
+      iphone) DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1 ;;
+      ipad) DESTINATION=$(bash scripts/destination-simulateur.sh --ipad) || return 1 ;;
+      *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone ou ipad)" >&2; return 2 ;;
+    esac
   fi
   if ! motif=$(hors_projet); then
     echo "❌ $motif" >&2
