@@ -208,7 +208,7 @@ autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofi
 # table absente, vide ou d'une autre forme arrête la génération, et qu'un module ne peut
 # plus déclarer une source du front que le site publie. Il découvre aussi chaque module.
 python3 -I scripts/concordance.py --autotest >/dev/null || echec "concordance.py : autotest en échec (comparaison, tables du site)"
-python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare une source du front que le site publie en table"
+python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare un fichier dont la release publie les constantes (#237), ou l'autotest du refus échoue"
 grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
 while IFS= read -r f; do
   [ -f "$f" ] || continue

@@ -25,11 +25,13 @@ AU-DESSUS, le ticket « a-monter » dit jusqu'où le plancher peut monter.
 # aucun, et n'en lit aucun (spec multi-coproprietes §4.1 bis de coprofirst).
 INSTALLATIONS = ("demo.coprofirst.fr", "5hostachy.fr")
 
-VERSION = "v3.101.0"
+VERSION = "v3.103.0"
 RAISON = (
-    "contrat 2.0.0 : la notation des prestataires (trois états, récapitulatif par exercice "
-    "et par intervention, modifier son avis — coprofirst#2728 à #2745, coprofirst-ios#207). "
-    "Montée décidée le 15/11/2026 par le coordinateur des sessions, sur délégation écrite de "
-    "Philippe (« demande au coordinateur ») ; fusionnée quand demo.coprofirst.fr et "
-    "5hostachy.fr servent le contrat 2.0.0"
+    "les constantes du serveur (longueur minimale d'un mot de passe, notes d'un avis, défauts des "
+    "préférences, schémas de lien) se lisent dans constantes-clients.json, joint à la release depuis "
+    "v3.102.0 — plus dans les sources, qui ne les portent plus par motif (#237, #227). v3.103.0 "
+    "plutôt que v3.102.0 : le MÊME plancher que l'app Android (coprofirst-android#141). Contrat "
+    "inchangé, 2.0.0 ; mesuré le 16/11/2026 : demo.coprofirst.fr sert 2.0.0, 5hostachy.fr 2.1.0, "
+    "aucune installation sous le plancher. Montée décidée par le coordinateur des sessions, sur "
+    "délégation écrite de Philippe"
 )

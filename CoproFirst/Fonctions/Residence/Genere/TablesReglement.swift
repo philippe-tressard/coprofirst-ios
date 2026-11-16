@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.101.0 (commit e6e8ecdbbd269ccb2b25081a0c12828176047a5c), front/src/lib/components/BadgeVerdict.svelte.
+// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/components/BadgeVerdict.svelte.
 
 /// Ce que le site écrit de l'avis sur le règlement et que le contrat ne sert pas.
 enum TablesReglement {

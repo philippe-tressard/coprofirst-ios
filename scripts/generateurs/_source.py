@@ -132,6 +132,10 @@ class Version:
             raise SourceIllisible(f"{self.etiquette} : absent du tag — {', '.join(sorted(voulus))}")
         return commit
 
+    def joint(self, nom: str) -> bool:
+        """La release joint-elle la pièce `nom` ?"""
+        return nom in self._pieces
+
     def piece_jointe(self, nom: str) -> bytes:
         if nom not in self._pieces:
             raise SourceIllisible(f"{self.etiquette} : la release ne joint pas {nom}")
