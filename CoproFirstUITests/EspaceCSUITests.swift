@@ -39,7 +39,7 @@ final class EspaceCSUITests: XCTestCase {
         // L'interrupteur, à droite de la ligne : toucher son libellé ne le bascule pas.
         nouvelArrivant.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
         LancementCaptures.capturer("cs-2-approuver-nouvel-arrivant")
-        app.elementAcces("cs.validation.enregistrer").tap()
+        app.toucher(app.elementAcces("cs.validation.enregistrer"))
         XCTAssertTrue(compte.disparait(), "le compte quitte la file")
         accepterUneCommande(app)
         chercherUnBadge(app)
@@ -86,7 +86,7 @@ final class EspaceCSUITests: XCTestCase {
         app.elementAcces("cs.annuaire.conseil.modifier").tap()
         XCTAssertTrue(app.elementAcces("cs.feuille.entete-conseil").apparait(), "l'en-tête")
         LancementCaptures.capturer("cs-5-annuaire-entete")
-        app.descendants(matching: .any)["Annuler"].firstMatch.tap()
+        app.toucher(app.descendants(matching: .any)["Annuler"].firstMatch)
         let syndic = app.elementAcces("cs.annuaire.syndic.0")
         XCTAssertTrue(syndic.apparait(), "le syndic")
         for _ in 0..<8 where !syndic.isHittable { app.swipeUp() }

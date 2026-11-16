@@ -48,7 +48,7 @@ final class ApercusSaisieUITests: XCTestCase {
         let ajouter = app.elementAcces("cs.annuaire.conseil.ajouter")
         XCTAssertTrue(ajouter.apparait(), "le conseil")
         for _ in 0..<8 where !ajouter.isHittable { app.swipeUp() }
-        ajouter.tap()
+        app.toucher(ajouter)
         let prenom = app.elementAcces("cs.feuille.prenom")
         XCTAssertTrue(prenom.apparait(), "la feuille d'une fiche neuve")
         prenom.tap()

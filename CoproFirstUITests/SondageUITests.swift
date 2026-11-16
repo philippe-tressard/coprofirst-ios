@@ -184,7 +184,7 @@ final class SondageUITests: XCTestCase {
         toucherApresBalayage(app.elementAcces("reponse.33.supprimer"))
         let confirmer = app.elementAcces("reponses.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "la suppression se confirme")
-        confirmer.tap()
+        app.toucher(confirmer)
         XCTAssertTrue(app.elementAcces("reponse.33").disparait())
 
         // Le commentaire d'un voisin : le signaler, motif obligatoire.
