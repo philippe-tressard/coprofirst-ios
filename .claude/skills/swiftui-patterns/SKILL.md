@@ -288,7 +288,8 @@ seule la CI le dit.
    défiler, un chemin facultatif, une absence à prouver une fois l'écran posé — se
    LIT par `element.sonde()` (`Attente.sonde`), et ne s'affirme pas par `XCTAssertTrue`.
    Un **toucher** passe par `app.toucher(élément)` : l'élément existe, sort de sous le
-   clavier, est amené à l'écran touchable, ne bouge plus, puis il est touché — et le test
+   clavier, est amené à l'écran (lu sur son cadre, jamais `isHittable`, qui fait échouer le
+   test sous iOS 26.5), ne bouge plus, puis il est touché — et le test
    vérifie l'EFFET. Un `tap()` direct partait sur une feuille qui montait encore et ne
    faisait rien, sans erreur (#217). Les `tap()` directs restants sont une dette au
    plafond décroissant (`scripts/verifier-touchers.sh`) : une classe touchée par un lot se
