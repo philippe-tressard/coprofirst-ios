@@ -89,7 +89,11 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
-    timeout-minutes: 45
+    # 41 min au plus lent sur 32 jobs des 15 et 16/11/2026 (échantillon iPad compris), plus
+    # le passage en très grand texte des parcours de la revue (#233 : SuppressionCompteUITests,
+    # jusqu'à 14 min en taille normale, ~1,4 fois en très grand texte) : ~61 min au pire. Le
+    # plafond des jobs d'interface : 70.
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
@@ -126,6 +130,28 @@ jobs:
           -only-testing:CoproFirstUITests/ConnexionUITests
           -only-testing:CoproFirstUITests/BarreLateraleUITests
           -only-testing:CoproFirstTests/PresentationNavigationTests
+      - name: Parcours de la revue d'Apple en très grand texte (AX5)
+        # Le reste de la CI joue la taille par défaut : SuppressionCompteUITests (règle
+        # 5.1.1 v) a cassé en très grand texte sans bruit après #196 (#232, #233). Un
+        # passage FILTRÉ, dans ce job — ni runner macOS de plus (#204), ni minute de plus
+        # aux lots d'interface (budget, #243). Une classe de la liste qui n'existe plus :
+        # INCONNU ; un filtre qui ne joue rien : INCONNU (tests-simulateur.sh, #96, #170).
+        # LancementCaptures.lancer() lit TEST_RUNNER_GRAND_TEXTE : une classe ajoutée ici
+        # doit lancer l'app par lui.
+        env:
+          TEST_RUNNER_GRAND_TEXTE: 1
+          REVUE_APPLE: SuppressionCompteUITests
+        run: |
+          filtres=()
+          for classe in $REVUE_APPLE; do
+            grep -qE "class $classe([^[:alnum:]_]|$)" CoproFirstUITests/*.swift \
+              || { echo "::error::REVUE_APPLE nomme $classe, absente de CoproFirstUITests"; exit 2; }
+            grep -q "LancementCaptures.lancer" "CoproFirstUITests/$classe.swift" \
+              || { echo "::error::$classe ne lance pas l'app par LancementCaptures.lancer() : le très grand texte n'y serait pas posé"; exit 2; }
+            filtres+=("-only-testing:CoproFirstUITests/$classe")
+          done
+          [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
+          bash scripts/tests-simulateur.sh "${filtres[@]}"
 
   interface:
     name: Interface (${{ matrix.lot }}/3)
