@@ -9,10 +9,10 @@ les règles du site (`front/src/lib/fichiers.ts` : `EXTENSIONS_IMAGE`, `PREFIXE_
 ni `.heif`, ni `.bmp`, ni `.tiff`) : une telle photo serait tombée parmi les documents.
 
 Depuis v3.105.0, le motif d'image et le préfixe se lisent dans `constantes-clients.json`
-(`motifImage`, `prefixeStockage`, #239). Les familles d'AFFICHAGE de `typeFichier`
-(JPEG → JPG, XLSX → EXCEL…) ne sont pas publiées — `famillesFichiers` est autre chose, les
-familles de téléversement : elles se lisent encore dans `fichiers.ts`, par l'exception
-datée de `generer.py`.
+(`motifImage`, `prefixeStockage`, #239) ; depuis v3.106.0, les familles d'AFFICHAGE de
+`typeFichier` (JPEG → JPG, XLSX → EXCEL…) dans `tables-clients.json`
+(`famillesAffichageFichiers`, coprofirst#2798) — à ne pas confondre avec `famillesFichiers`,
+les familles de téléversement. `fichiers.ts` ne se lit plus.
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ import re
 
 from generateurs._commun import CHARTE, chaine, ecrire_table
 
-SOURCES = ["front/src/lib/fichiers.ts"]
+SOURCES: list[str] = []
 
 
 def _alternatives(motif: str) -> list[str]:
@@ -47,13 +47,11 @@ def generer(ctx) -> str:
     p = re.fullmatch(r"\^\[0-9a-f\]\{(\d+)\}_", prefixe.get("motif", "")) if prefixe.get("ignorerCasse") else None
     if not p:
         raise SystemExit(f"❌ prefixeStockage : forme inattendue ({prefixe!r}) — l'app doit l'apprendre")
-    texte = ctx.lire(SOURCES[0])
-    f = re.search(r"const FAMILLES: Record<string, string> = \{([^}]*)\}", texte)
-    if not f:
-        raise SystemExit("❌ FAMILLES (typeFichier) introuvable dans fichiers.ts")
-    familles = re.findall(r"(\w+): '([^']+)'", f.group(1))
-    if not familles:
-        raise SystemExit("❌ FAMILLES (typeFichier) est vide")
+    publiees = ctx.table("famillesAffichageFichiers")
+    if not isinstance(publiees, dict) or not publiees or not all(
+            isinstance(c, str) and isinstance(v, str) for c, v in publiees.items()):
+        raise SystemExit(f"❌ famillesAffichageFichiers : forme inattendue ({publiees!r}) — l'app doit l'apprendre")
+    familles = list(publiees.items())
     liste = ", ".join(chaine(e) for e in images)
     table = "".join(f"        {chaine(cle)}: {chaine(valeur)},\n" for cle, valeur in familles)
     corps = (
@@ -67,7 +65,8 @@ def generer(ctx) -> str:
         + table
         + "    ]\n"
     )
-    source = f"{ctx.provenance_constantes('motifImage', 'prefixeStockage')}, front/src/lib/fichiers.ts (typeFichier)"
+    source = (f"{ctx.provenance_constantes('motifImage', 'prefixeStockage')}, "
+              f"{ctx.provenance_tables('famillesAffichageFichiers')}")
     ecrire_table(ctx, CHARTE / "FichiersDuSite.swift", source, "FichiersDuSite",
                  "Les pièces jointes comme le site les range et les nomme.", corps)
     return f"{len(images)} extensions d'image, {len(familles)} familles"
