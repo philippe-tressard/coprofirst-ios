@@ -21,8 +21,8 @@ Usage :
       plancher, lui, ne monte que par `_plancher.py`.
   python3 scripts/generer.py --sources
       Les fichiers de coprofirst lus, un par ligne ; échoue si un générateur déclare un
-      fichier dont les constantes sont PUBLIÉES à la release (#237) — et prouve d'abord,
-      sur un module fictif, qu'il refuse.
+      fichier de l'API ou une feuille de la charte hors des exceptions datées (#237), ou si
+      une exception ne sert plus — et prouve d'abord, sur des modules fictifs, qu'il refuse.
 """
 
 from __future__ import annotations
@@ -30,6 +30,7 @@ from __future__ import annotations
 import argparse
 import importlib
 import pathlib
+import re
 import sys
 import tempfile
 import types
@@ -59,26 +60,41 @@ def sources(modules: list) -> list[str]:
     return sorted({s for m in modules for s in m.SOURCES})
 
 
-#: Les fichiers du serveur dont coprofirst PUBLIE les constantes (`constantes-clients.json`,
-#: joint à chaque release depuis v3.102.0) : ils ne se lisent plus par motif — leur forme
-#: change sans prévenir, et la concordance devenait INCONNUE (#237). `ctx.constante`.
-#: À la lecture, `Contexte.lire` refuse aussi tout fichier source d'une constante publiée.
-PUBLIES = frozenset({
-    "api/app/utils/avis.py", "api/app/utils/html_sur.py",
-    "api/app/utils/mots_de_passe.py", "api/app/utils/preferences_mail.py",
-})
+#: Ce qu'aucun générateur ne lit dans les sources de coprofirst : l'API (`api/app/**`) et les
+#: feuilles de la charte (`socle.css`, `palette-sombre.css`). Leur forme change sans prévenir et
+#: la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
+#: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`) — `ctx.constante`,
+#: `ctx.table`. À la lecture, `Contexte.lire` refuse aussi la source d'une constante publiée.
+INTERDITS = re.compile(r"^(api/app/|front/src/styles/(socle|palette-sombre)\.css$)")
+#: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
+#: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
+EXCEPTIONS = {
+    "api/app/utils/saisie_affaire.py":
+        "16/11/2026 — MODES, SECTIONS_DE_BASE et SECTIONS_ESSENTIELLES_PAR_CATEGORIE ne sont pas "
+        "publiés : coprofirst#2686 (complété le 16/11/2026)",
+    "front/src/styles/socle.css":
+        "16/11/2026 — palettes.py, jusqu'à palettesResolues de tables-clients.json : coprofirst-ios#227",
+    "front/src/styles/palette-sombre.css":
+        "16/11/2026 — palettes.py, jusqu'à palettesResolues de tables-clients.json : coprofirst-ios#227",
+}
 
 
-def refus_sources(modules: list) -> list[str]:
-    return [f"❌ generateurs/{m.__name__.split('.')[-1]}.py déclare {s} : ses constantes sont publiées "
-            "(constantes-clients.json) — ctx.constante (#237)"
-            for m in modules for s in m.SOURCES if s in PUBLIES]
+def refus_sources(modules: list, exceptions: dict[str, str] = EXCEPTIONS) -> list[str]:
+    declarees = {s for m in modules for s in m.SOURCES}
+    fautes = [f"❌ generateurs/{m.__name__.split('.')[-1]}.py déclare {s} : la release publie de quoi "
+              "s'en passer — ctx.constante, ctx.table (#237), ou une exception datée"
+              for m in modules for s in m.SOURCES if INTERDITS.match(s) and s not in exceptions]
+    fautes += [f"❌ exception {s} : plus aucun générateur ne la lit — la retirer de generer.py"
+               for s in sorted(set(exceptions) - declarees)]
+    return fautes
 
 
 def controler_sources(modules: list) -> int:
     fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
-    if len(refus_sources([fictif])) != 1:
-        print("❌ autotest : un module qui déclare une source publiée doit être refusé")
+    toleree = types.SimpleNamespace(__name__="generateurs.toleree", SOURCES=["front/src/styles/socle.css"])
+    if (len(refus_sources([fictif], {})) != 1 or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
+            or len(refus_sources([fictif], {"front/src/styles/socle.css": "x"})) != 2):
+        print("❌ autotest : une source interdite, une exception qui ne sert plus doivent être refusées")
         return 1
     fautes = refus_sources(modules)
     print("\n".join(fautes or sources(modules)))
