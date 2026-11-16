@@ -8,9 +8,9 @@ import SwiftUI
 /// (`PagesOuvertes`, profil de GET /auth/me).
 ///
 /// LE point de choix de la présentation (#221) : la barre du bas en classe compacte, la
-/// barre latérale en classe régulière — `Parcours.presentation`, que `RacineView` tient de
-/// la classe de taille horizontale. Une présentation de plus (le carnet de l'iPhone
-/// pliable, #119) s'ajoute ICI, sur le même état.
+/// barre latérale en classe régulière, le carnet de l'iPhone pliable ouvert (#119) —
+/// `Parcours.presentation`, que `RacineView` tient de la classe de taille horizontale et
+/// de la posture. Une présentation de plus s'ajoute ICI, sur le même état.
 struct OngletsView: View {
     let installation: Installation
     @Environment(\.palette) private var palette
@@ -24,6 +24,7 @@ struct OngletsView: View {
             switch parcours.presentation {
             case .barreDuBas: BarreDuBas(pages: pages, installation: installation)
             case .barreLaterale: BarreLaterale(pages: pages, installation: installation)
+            case .carnet: Carnet(pages: pages, installation: installation)
             }
         }
         .tint(palette.primary)

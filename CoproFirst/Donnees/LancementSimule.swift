@@ -24,7 +24,8 @@ import Foundation
 /// `-saisie complete` sert la saisie Complète au compte (#69 ; défaut : Essentielle) ;
 /// `-hors-ligne gardee|perimee|sans-lecture` : l'appareil sans réseau au lancement (#101) —
 /// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
-/// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`).
+/// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`) ;
+/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -197,6 +198,19 @@ enum LancementSimule {
     /// état passager ne se prouve pas par un délai plus long : il se rend durable.
     static func avisDurable(_ arguments: [String]) -> Bool {
         arguments.contains("-api-simulee") && arguments.contains("-avis-durable")
+    }
+
+    /// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable, fixée (#119).
+    /// Le carnet se joue ainsi sur un simulateur en classe régulière (iPad), et en CI, qui
+    /// n'a ni iOS 27.1 ni l'iPhone Duo ; sur l'iPhone Duo, la charnière est lue telle quelle.
+    static func posture(_ arguments: [String]) -> Posture? {
+        guard arguments.contains("-api-simulee") else { return nil }
+        return switch argument("-posture", arguments) {
+        case "deplie": .deplie
+        case "entrouvert": .entrouvert
+        case "plie": .plie
+        default: nil
+        }
     }
 
     /// La valeur qui suit `nom` dans les arguments de lancement.

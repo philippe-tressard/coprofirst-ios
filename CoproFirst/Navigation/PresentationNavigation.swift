@@ -12,16 +12,23 @@ enum PresentationNavigation: Equatable, Sendable {
     case barreDuBas
     /// La barre latérale : toutes les pages, Profil et À propos (`BarreLaterale`).
     case barreLaterale
+    /// Le carnet de l'iPhone pliable ouvert (#119) : les mêmes entrées que la barre
+    /// latérale, en intercalaires sur la tranche droite (`Carnet`).
+    case carnet
 
-    static func pour(_ classe: UserInterfaceSizeClass?) -> Self {
-        classe == .regular ? .barreLaterale : .barreDuBas
+    /// La classe de taille d'abord : un iPhone pliable déplié en Split View étroit reste
+    /// compact. En classe régulière, la charnière ouverte (`Posture`) fait le carnet ; sans
+    /// charnière (iPad), la barre latérale.
+    static func pour(_ classe: UserInterfaceSizeClass?, posture: Posture = .sansPli) -> Self {
+        guard classe == .regular else { return .barreDuBas }
+        return posture.ouverte ? .carnet : .barreLaterale
     }
 
     /// Combien de pages se montrent avant « Plus » — où la porte d'un lien peut se poser.
     var visibles: Int {
         switch self {
         case .barreDuBas: 4
-        case .barreLaterale: .max
+        case .barreLaterale, .carnet: .max
         }
     }
 
@@ -33,11 +40,12 @@ enum PresentationNavigation: Equatable, Sendable {
 
     /// La même page, d'une présentation à l'autre (rotation, Split View, pliage) : la page
     /// ouverte reste ouverte. Dans « Plus », elle s'y rouvre ; « Plus » seul, sans page
-    /// ouverte, devient la première page qu'il portait — la barre latérale n'a pas de liste
-    /// « Plus ». Une page que la barre du bas n'a pas où poser (pas de « Plus ») : le fil.
+    /// ouverte, devient la première page qu'il portait — la barre latérale et le carnet
+    /// n'ont pas de liste « Plus ». Une page que la barre du bas n'a pas où poser (pas de
+    /// « Plus ») : le fil.
     static func traduire(_ place: Place, vers cible: Self, pages: [String]) -> Place {
         switch cible {
-        case .barreLaterale:
+        case .barreLaterale, .carnet:
             guard place.onglet == Aiguillage.idPlus else { return Place(onglet: place.onglet) }
             let premiere = pages.dropFirst(barreDuBas.visibles).first ?? EntreeFixe.profil.rawValue
             return Place(onglet: place.dansPlus ?? premiere)
