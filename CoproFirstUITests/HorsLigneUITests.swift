@@ -70,7 +70,7 @@ final class HorsLigneUITests: XCTestCase {
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
         let confirmer = element(app, "sortie.confirmer")
         XCTAssertTrue(confirmer.apparait())
-        confirmer.tap()
+        app.toucher(confirmer)
 
         XCTAssertTrue(element(app, "connexion.residence").apparait(), "retour à la connexion")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "plus rien de la résidence n'est affiché")

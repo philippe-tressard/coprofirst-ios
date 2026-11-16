@@ -211,7 +211,7 @@ autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofi
 # table absente, vide ou d'une autre forme arrête la génération, et qu'un module ne peut
 # plus déclarer une source du front que le site publie. Il découvre aussi chaque module.
 python3 -I scripts/concordance.py --autotest >/dev/null || echec "concordance.py : autotest en échec (comparaison, tables du site)"
-python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare une source du front que le site publie en table"
+python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare un fichier dont la release publie les constantes (#237), ou l'autotest du refus échoue"
 grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
 while IFS= read -r f; do
   [ -f "$f" ] || continue
@@ -435,9 +435,15 @@ done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
 
+# Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
+TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
+
 # Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
 python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
+# Une PR de documentation seule n'occupe pas les exécutants macOS (#204) : la détection
+# prouve qu'un fichier .swift relance bien le build et les tests.
+python3 -I scripts/ci_documentation_seule.py --autotest >/dev/null || echec "ci_documentation_seule.py : autotest en échec"
 
 # La simulation reste aux builds Debug (#84) : l'autotest prouve que le juge refuse
 # un symbole hors de `#if DEBUG`, puis le juge lit l'app. INCONNU (2) est un échec.
@@ -476,4 +482,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

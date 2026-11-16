@@ -63,16 +63,120 @@ extension XCUIApplication {
     /// son plafond de 70 min (15/11/2026).
     @discardableResult
     func amener(_ element: XCUIElement, essais: Int = 10, pourLire: Bool = false) -> Bool {
+        let fenetre = windows.firstMatch
+        return amener(element, essais: essais) {
+            pourLire ? element.frame.intersects(fenetre.frame) : element.isHittable
+        }
+    }
+
+    /// `amener`, arrivé quand `arrive` le dit (l'élément existe en plus).
+    @discardableResult
+    fileprivate func amener(_ element: XCUIElement, essais: Int, jusqua arrive: () -> Bool) -> Bool {
         _ = element.sonde()
         let fenetre = windows.firstMatch
-        let arrive = { element.exists && (pourLire ? element.frame.intersects(fenetre.frame) : element.isHittable) }
         for (depart, arrivee) in [(0.5, 0.25), (0.25, 0.5)] {
-            for _ in 0..<essais where !arrive() {
+            for _ in 0..<essais where !(element.exists && arrive()) {
                 let vers = fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: arrivee))
                 fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: depart))
                     .press(forDuration: 0.05, thenDragTo: vers)
             }
         }
         return element.exists
+    }
+}
+
+extension XCUIApplication {
+    /// Le SEUL toucher des tests (#217, comme `toucher()` de coprofirst-android#126) : un
+    /// `tap()` envoyé trop tôt part sur un élément pas encore touchable — une feuille qui
+    /// monte encore, un bouton sous le clavier, un onglet hors du cadre — et ne fait rien,
+    /// sans erreur : le test échouait plus loin, sur l'effet absent (4 occurrences en CI sous
+    /// iOS 26.5). Ici, dans l'ordre : l'élément existe ; s'il est sous le clavier, le clavier
+    /// se ferme ; il ne bouge plus ; il est À L'ÉCRAN de lui-même (`visible`, le temps d'une
+    /// sonde : une feuille qui finit de monter) ; sinon seulement, il y est amené par
+    /// défilement (borné en `essais`). Faire défiler d'emblée un bouton de barre de feuille
+    /// pas encore posé tirait la feuille vers le bas et la FERMAIT : le bouton disparaissait
+    /// (SuppressionCompteUITests, 350 s). Il ne bouge plus ; il est touché au centre de sa
+    /// partie visible. L'EFFET se vérifie ensuite par le test.
+    ///
+    /// Jamais `isHittable` ici : sous iOS 26.5, un bouton de la barre d'onglets ou d'un menu
+    /// n'a pas de point d'activation, et DEMANDER s'il est touchable fait échouer le test
+    /// (« Failed to determine hittability », #242 en CI). « À l'écran » se lit sur son cadre,
+    /// et le toucher part d'une coordonnée : rien ne demande le point d'activation.
+    ///
+    /// Une ligne qu'une liste ne CRÉE qu'au défilement (sous le pli, au très grand texte)
+    /// n'existe pas encore : l'appelant l'amène d'abord (`amener`), puis la touche. `toucher`
+    /// ne fait pas défiler pour attendre un élément qui tarde — ce défilement fermait les
+    /// feuilles. `scripts/verifier-touchers.sh` tient le plafond des `tap()` directs, qui ne
+    /// fait que baisser.
+    @MainActor
+    func toucher(_ element: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
+        let clavier = keyboards.firstMatch
+        if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
+           navigationBars.firstMatch.exists {
+            // Le titre de la barre de navigation : une zone neutre, hors du clavier, qui ne valide rien.
+            navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            _ = clavier.disparait()
+        }
+        immobile(element)
+        if visible(element, pendant: Attente.sonde) == nil {
+            amener(element, essais: essais) { visible(element) != nil }
+            immobile(element)
+        }
+        guard let point = visible(element) else {
+            XCTFail("à toucher : \(element) hors de l'écran (\(element.frame) dans \(frame))", file: file, line: line)
+            return
+        }
+        if point == CGVector(dx: 0.5, dy: 0.5) {
+            element.tap()
+        } else {
+            // Il dépasse de l'écran (un onglet d'une rangée qui défile) : sa partie visible.
+            element.coordinate(withNormalizedOffset: point).tap()
+        }
+    }
+
+    /// Le point à toucher, en coordonnées relatives à son cadre : son centre (0,5 ; 0,5) s'il
+    /// est dans la zone utile, sinon le centre de sa PARTIE VISIBLE ; `nil` s'il n'en montre
+    /// pas assez (22 pt de côté, ou tout l'élément s'il est plus petit), au plus tard après
+    /// `duree` secondes. La zone utile : l'écran de l'app, moins la barre d'onglets (sauf
+    /// pour ses propres boutons) — une ligne passée DERRIÈRE elle n'est pas à l'écran, le
+    /// toucher partait sur la barre (DelegationsCSUITests, très grand texte) —, et rien sous
+    /// le clavier. Lu sur les cadres seuls (voir `toucher`).
+    private func visible(_ element: XCUIElement, pendant duree: TimeInterval = 0) -> CGVector? {
+        let limite = Date().addingTimeInterval(duree)
+        while true {
+            if element.exists {
+                let cadre = element.frame
+                // Le cadre de l'APP, l'écran : `windows.firstMatch` peut être une autre fenêtre.
+                var zone = frame
+                let barre = tabBars.firstMatch
+                if barre.exists, !barre.frame.contains(cadre) {
+                    zone.size.height = max(0, min(zone.maxY, barre.frame.minY) - zone.minY)
+                }
+                let vu = cadre.intersection(zone)
+                let centre = zone.contains(CGPoint(x: cadre.midX, y: cadre.midY))
+                    ? CGPoint(x: cadre.midX, y: cadre.midY) : CGPoint(x: vu.midX, y: vu.midY)
+                let clavier = keyboards.firstMatch
+                if !cadre.isEmpty, !vu.isNull, vu.width >= min(22, cadre.width), vu.height >= min(22, cadre.height),
+                   !(clavier.exists && clavier.frame.contains(centre)) {
+                    return CGVector(
+                        dx: (centre.x - cadre.minX) / cadre.width, dy: (centre.y - cadre.minY) / cadre.height)
+                }
+            }
+            if Date() >= limite { return nil }
+            _ = XCTWaiter().wait(for: [XCTestExpectation(description: "visible")], timeout: 0.25)
+        }
+    }
+
+    /// Attend que l'élément ne bouge plus : deux cadres égaux à un quart de seconde d'écart
+    /// (la fin d'une animation de feuille ou d'un défilement), au plus `essais` fois.
+    private func immobile(_ element: XCUIElement, essais: Int = 8) {
+        var avant = element.frame
+        for _ in 0..<essais {
+            _ = XCTWaiter().wait(for: [XCTestExpectation(description: "immobile")], timeout: 0.25)
+            let apres = element.frame
+            if apres == avant { return }
+            avant = apres
+        }
     }
 }

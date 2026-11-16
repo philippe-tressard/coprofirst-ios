@@ -122,7 +122,7 @@ final class CommunauteUITests: XCTestCase {
         rubrique(app, "avis")
         XCTAssertTrue(app.descendants(matching: .any)["avis.4"].apparait())
         capture("6-communaute-avis")
-        el(app, "communaute.creer").tap()
+        app.toucher(el(app, "communaute.creer"))
         XCTAssertTrue(app.navigationBars["Donner mon avis"].apparait())
         XCTAssertTrue(inactif(app, "formulaire.enregistrer"), "rien n'est saisi : le bouton attend")
         capture("7-donner-mon-avis")
@@ -184,10 +184,10 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(supprimer.isHittable, "la suppression se voit, au bas de la liste")
         XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(3)"), "trois alertes choisies")
         capture("8b-notifications-modifier")
-        supprimer.tap()
+        app.toucher(supprimer)
         let confirmer = el(app, "notifications.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "la suppression se confirme : elle est définitive")
-        confirmer.tap()
+        app.toucher(confirmer)
         XCTAssertTrue(el(app, "notification.5").disparait(), "les trois alertes sont parties")
         XCTAssertFalse(el(app, "notification.4").exists)
         XCTAssertFalse(el(app, "notification.3").exists)
@@ -215,12 +215,12 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(lues.isHittable, "et se touche, sans passer par « Modifier »")
         XCTAssertGreaterThanOrEqual(lues.frame.height, 44, "une cible tactile entière")
         capture("8c-notifications-supprimer-les-lues")
-        lues.tap()
+        app.toucher(lues)
         let confirmer = el(app, "notifications.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "la suppression se confirme : elle est définitive")
         XCTAssertTrue(texte(app, "Les 138 notifications lues").exists, "la confirmation dit ce qui part")
         capture("8d-notifications-confirmer-les-lues")
-        confirmer.tap()
+        app.toucher(confirmer)
         // L'avis d'abord : il ne dure que 4 s. Cherché après la liste, il était déjà parti sur
         // un runner où une requête d'accessibilité prend plusieurs secondes (CI du 12/11/2026).
         XCTAssertTrue(texte(app, "Notifications lues supprimées").apparait(), "l'app le dit")
@@ -249,10 +249,10 @@ final class CommunauteUITests: XCTestCase {
             XCTAssertTrue(lu(app, "notifications.supprimerSelection", contient: "(\(nombre))"), "toutes sont choisies")
         }
         if let nom { capture(nom) }
-        supprimer.tap()
+        app.toucher(supprimer)
         let confirmer = el(app, "notifications.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "la suppression se confirme : elle est définitive")
-        confirmer.tap()
+        app.toucher(confirmer)
     }
 
     /// Plus de notifications choisies qu'une requête n'en accepte (#118) : tout part, sans

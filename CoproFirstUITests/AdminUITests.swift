@@ -53,7 +53,7 @@ final class AdminUITests: XCTestCase {
         ouvrirLaFiche("camille", 11, app)
         let retirerCS = app.elementAcces("admin.fiche.role.conseil_syndical")
         for _ in 0..<6 where !retirerCS.sonde() { app.swipeUp() }
-        retirerCS.tap()
+        app.toucher(retirerCS)
         XCTAssertTrue(
             app.libelleAcces("Retirer le rôle Conseil syndical de votre compte").apparait(),
             "la confirmation dit « votre compte »")
@@ -115,10 +115,10 @@ final class AdminUITests: XCTestCase {
         XCTAssertTrue(ajouterCS.exists, "« + CS », servi par le serveur")
         XCTAssertFalse(app.elementAcces("admin.fiche.role.operateur").exists, "aucun geste non servi")
         LancementCaptures.capturer("admin-3-fiche-roles")
-        ajouterCS.tap()
+        app.toucher(ajouterCS)
         let confirmer = app.buttons["Confirmer"].firstMatch
         XCTAssertTrue(confirmer.apparait(), "la confirmation du geste")
-        confirmer.tap()
+        app.toucher(confirmer)
         XCTAssertTrue(ajouterCS.disparait(), "le geste ferme la fiche")
     }
 

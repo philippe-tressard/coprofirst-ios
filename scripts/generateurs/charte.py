@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""La CHARTE de ce que l'app affiche, hors couleurs — lue dans `tables-clients.json` de
-la release (#128), sauf l'API Python, que le fichier ne publie pas :
+"""La CHARTE de ce que l'app affiche, hors couleurs — lue dans les pièces de la release :
+`tables-clients.json` (#128) et `constantes-clients.json` (#237), jamais dans les sources :
 
 - les NATURES du fil : libellé, teinte et pictogramme de chaque type d'élément
   (`naturesDuFil`) → `CoproFirst/Charte/NaturesDuFil.swift` ;
@@ -12,9 +12,8 @@ la release (#128), sauf l'API Python, que le fichier ne publie pas :
   `libellesHerites`) et les rôles que l'en-tête de l'accueil met en avant
   (`rolesMisEnAvant`) → `CoproFirst/Charte/RolesUtilisateur.swift` ;
 - la LISTE BLANCHE du texte riche : balises et attributs (`balisesAdmises`,
-  `attributsAdmis`), schémas de lien (`SCHEMAS_URL` de `api/app/utils/html_sur.py`, lu
-  par motif, dont `BALISES` doit égaler `balisesAdmises`)
-  → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
+  `attributsAdmis`), schémas de lien (`schemasDeLien`, constante du serveur publiée dans
+  `constantes-clients.json`, #237) → `CoproFirst/Charte/BalisesDuSite.swift` (#22) ;
 - les MESURES du site que `Mise` confronte aux siennes (`MESURES`, jetons de longueur de
   `jetonsCharte`) → `CoproFirst/Charte/MesuresDuSite.swift` (#85).
 """
@@ -25,8 +24,7 @@ import re
 
 from generateurs._commun import CHARTE, propriete
 
-# Seule l'API Python reste lue dans les sources : `tables-clients.json` ne publie que le front (#128).
-SOURCES = ["api/app/utils/html_sur.py"]
+SOURCES: list[str] = []  # tables et constantes publiées à la release (#128, #237)
 
 # Les jetons de longueur du site qu'une mesure de l'app (`Mise`) confronte : jeton → nom
 # Swift. Une mesure de `Mise` sans jeton ici est PROPRE À iOS, déclarée dans
@@ -117,21 +115,18 @@ def roles(ctx) -> int:
 
 def balises(ctx) -> int:
     tags, attrs = ctx.table("balisesAdmises"), ctx.table("attributsAdmis")
-    html_sur = ctx.lire(SOURCES[0])
-    m = re.search(r"^BALISES = frozenset\((.*?)^\)", html_sur, re.S | re.M)
-    s = re.search(r"^SCHEMAS_URL = frozenset\(\{(.*?)\}\)", html_sur, re.M)
-    if not m or not s:
-        raise SystemExit("❌ BALISES ou SCHEMAS_URL introuvable dans api/app/utils/html_sur.py")
-    if set(re.findall(r'"([a-z0-9]+)"', m.group(1))) != set(tags):
-        raise SystemExit("❌ html_sur.BALISES diverge de balisesAdmises (ALLOWED_TAGS) — à signaler à coprofirst")
-    schemas = sorted(re.findall(r'"([a-z]+)"', s.group(1)))
+    lus = ctx.constante("schemasDeLien")
+    if not isinstance(lus, list) or not all(isinstance(s, str) and s.isalpha() for s in lus):
+        raise SystemExit(f"❌ constantes-clients.json : schemasDeLien illisible ({lus!r})")
+    schemas = sorted(lus)
     if len(tags) < 10 or not schemas:
         raise SystemExit("❌ liste blanche du texte riche illisible")
 
     def ensemble(valeurs: list[str]) -> str:
         return "[" + ", ".join(f'"{v}"' for v in valeurs) + "]"
 
-    corps = ctx.entete(f"{_sources(ctx, 'balisesAdmises', 'attributsAdmis')} et {SOURCES[0]}")
+    corps = ctx.entete(f"{_sources(ctx, 'balisesAdmises', 'attributsAdmis')} et "
+                       f"{ctx.provenance_constantes('schemasDeLien')}")
     corps += "\n/// La liste blanche du texte riche du site : ce que l'app rend, et rien d'autre (#22).\n"
     corps += "enum BalisesDuSite {\n"
     corps += f"    static let balises: Set<String> = {ensemble(tags)}\n"

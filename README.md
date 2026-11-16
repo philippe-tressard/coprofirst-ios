@@ -26,8 +26,10 @@ Philippe :
 1. la version se lit dans `project.yml` (`MARKETING_VERSION`, et `CURRENT_PROJECT_VERSION`,
    qui monte à chaque envoi) ; l'app n'a pas encore d'étiquette git — la 1.0 publiée
    comprise —, une par version soumise est à poser (#205) ;
-2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** ; qui fusionne
-   sur `main` se lit au champ `fusion` du registre (`CLAUDE.md`, « Dépôt ») ;
+2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** — sauf une PR
+   de documentation seule, dont la CI saute le build et les tests macOS
+   (`scripts/ci_documentation_seule.py`, #204) ; qui fusionne sur `main` se lit au champ
+   `fusion` du registre (`CLAUDE.md`, « Dépôt ») ;
 3. au poste : l'archive Release, signée automatiquement (équipe `GUX8KASNTG`) ; Philippe
    l'envoie à App Store Connect, juge le rendu (simulateur, son iPhone, TestFlight
    interne), puis la soumet — rien ne part en revue sans son « oui » écrit pour cette

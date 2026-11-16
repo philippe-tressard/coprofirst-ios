@@ -25,8 +25,8 @@ import pathlib
 from generateurs._commun import ecrire_table
 
 SOURCES: list[str] = []
-COMMIT = "e5e18b3969035702dc0fdc0c3ade255d6095fc38"
-RAISON = "le contenu que coprofirst.fr sert le 08/11/2026, coprofirst-site#60"
+COMMIT = "62ebf39e891ff16b3aa54af38475e546e8cb2e90"
+RAISON = "le contenu que coprofirst.fr sert le 15/11/2026, hôtes d'exemple réservés (coprofirst-site#96)"
 CHEMIN = "site/contenu.json"
 # Le format que l'app sait lire (`ContenuDuSite.formatConnu`) : un autre est refusé ici.
 FORMAT_CONNU = 1

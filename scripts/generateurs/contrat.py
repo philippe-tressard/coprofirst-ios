@@ -7,10 +7,10 @@ et la version de ce contrat → `CoproFirst/Session/ContratDuPlancher.swift`
 (`VersionContrat.plancher`) : sous elle, la découverte dit que la résidence doit être
 mise à jour (#83).
 
-La version se lit là où le serveur la tient : `version` de
-`api/app/contrat/reference.json`, celle que chaque installation sert en
-`version_contrat` (GET /config). `info.version` d'`openapi.json` doit la redire ; un
-écart arrête la génération (#86 : la provenance citait un `API_VERSION` disparu).
+La version se lit dans ce que la release PUBLIE : `info.version` d'`openapi.json`, la
+version que chaque installation sert en `version_contrat` (GET /config) — jamais dans les
+sources de l'API (#237 ; `api/app/contrat/reference.json` la tenait, coprofirst la
+recopie dans le contrat publié). Hors de X.Y.Z, la génération s'arrête (#86).
 
 Le client se génère depuis ce fichier à chaque build ; aucune route ne s'écrit à la
 main. Seule la copie de l'app est normalisée, jamais le contrat publié.
@@ -22,8 +22,7 @@ import json
 import pathlib
 import re
 
-REFERENCE = "api/app/contrat/reference.json"
-SOURCES: list[str] = [REFERENCE]
+SOURCES: list[str] = []  # tout vient du contrat publié (#237)
 PIECES_JOINTES = ["openapi.json"]
 
 CLIENT = pathlib.Path("Paquets/ClientAPI")
@@ -94,7 +93,7 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 |---|---|
 | Source | {ctx.provenance}, pièce jointe `openapi.json` de la release |
 | Commit | `{ctx.commit}` (`{ctx.version.etiquette}`) |
-| Version du contrat | `{contrat}` (`version` de `{REFERENCE}`, servie par chaque installation en `version_contrat` de `GET /config`) |
+| Version du contrat | `{contrat}` (`info.version` du contrat publié, servie par chaque installation en `version_contrat` de `GET /config`) |
 | Préfixe servi | `/api` : les chemins du schéma s'entendent sous `https://<hôte>/api` |
 | Normalisation | `anyOf: [X, null]` réécrit en `type: [X, "null"]` (`$ref` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres `in: cookie` retirés — iOS envoie les cookies de session seul |
 """
@@ -103,7 +102,7 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 
 def plancher_swift(ctx, version: str) -> str:
     majeure, mineure, correctif = VERSION.match(version).groups()
-    corps = ctx.entete(f"{REFERENCE} (version)")
+    corps = ctx.entete("openapi.json de la release (info.version)")
     corps += "\n/// Le contrat du PLANCHER : celui sur lequel l'app se génère (`scripts/generateurs/_plancher.py`).\n"
     corps += "extension VersionContrat {\n"
     corps += "    /// Une installation qui sert un contrat plus ancien ne se décode plus : la découverte\n"
@@ -114,17 +113,14 @@ def plancher_swift(ctx, version: str) -> str:
 
 
 def version_du_contrat(ctx, schema: dict) -> str:
-    """`version` de `reference.json` — et `info.version` d'`openapi.json` qui la redit."""
+    """`info.version` du contrat publié : la version que les installations servent."""
     try:
-        reference = json.loads(ctx.lire(REFERENCE))["version"]
         publiee = schema["info"]["version"]
-    except (ValueError, KeyError, TypeError) as erreur:
+    except (KeyError, TypeError) as erreur:
         raise SystemExit(f"❌ version du contrat de {ctx.version.etiquette} illisible : {erreur}") from erreur
-    if not isinstance(reference, str) or not VERSION.match(reference):
-        raise SystemExit(f"❌ {REFERENCE} de {ctx.version.etiquette} : version « {reference} » hors de X.Y.Z")
-    if reference != publiee:
-        raise SystemExit(f"❌ {ctx.version.etiquette} : {REFERENCE} dit {reference}, openapi.json dit {publiee}")
-    return reference
+    if not isinstance(publiee, str) or not VERSION.match(publiee):
+        raise SystemExit(f"❌ openapi.json de {ctx.version.etiquette} : version « {publiee} » hors de X.Y.Z")
+    return publiee
 
 
 def generer(ctx) -> str:
