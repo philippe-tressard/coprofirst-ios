@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.101.0 (commit e6e8ecdbbd269ccb2b25081a0c12828176047a5c), front/src/lib/theme.ts#COOKIE_THEME, front/src/lib/theme.ts#THEME_PAR_DEFAUT, front/src/lib/theme.ts#OPTIONS_THEME, front/src/lib/preferences.ts#CANAUX_NOTIFS, front/src/lib/roles.ts#STATUTS_DEMANDABLES (tables-clients.json) ; api/app/utils/preferences_mail.py et mots_de_passe.py.
+// Source : philippe-tressard/coprofirst v3.102.0 (commit d3db6646db1053a82ad72fb0ce57f6d35216c77a), front/src/lib/theme.ts#COOKIE_THEME, front/src/lib/theme.ts#THEME_PAR_DEFAUT, front/src/lib/theme.ts#OPTIONS_THEME, front/src/lib/preferences.ts#CANAUX_NOTIFS, front/src/lib/roles.ts#STATUTS_DEMANDABLES (tables-clients.json) ; api/app/utils/preferences_mail.py#DEFAUTS, api/app/utils/mots_de_passe.py#LONGUEUR_MIN_MOT_DE_PASSE (constantes-clients.json).
 
 /// Ce que le site écrit du Profil et que le contrat ne sert pas.
 enum TablesProfil {
@@ -41,6 +41,6 @@ enum TablesProfil {
         "mandataire",
         "syndic",
     ]
-    /// La longueur minimale d'un nouveau mot de passe (`verifier_robustesse`, serveur).
+    /// La longueur minimale d'un nouveau mot de passe (`LONGUEUR_MIN_MOT_DE_PASSE`, serveur).
     static let longueurMinimaleMotDePasse = 8
 }

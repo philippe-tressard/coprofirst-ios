@@ -20,7 +20,9 @@ Usage :
       Depuis une autre version publiée — pour voir ce qu'une montée changerait ; le
       plancher, lui, ne monte que par `_plancher.py`.
   python3 scripts/generer.py --sources
-      Les fichiers de coprofirst lus, un par ligne.
+      Les fichiers de coprofirst lus, un par ligne ; échoue si un générateur déclare un
+      fichier dont les constantes sont PUBLIÉES à la release (#237) — et prouve d'abord,
+      sur un module fictif, qu'il refuse.
 """
 
 from __future__ import annotations
@@ -30,6 +32,7 @@ import importlib
 import pathlib
 import sys
 import tempfile
+import types
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "scripts"))
@@ -56,6 +59,32 @@ def sources(modules: list) -> list[str]:
     return sorted({s for m in modules for s in m.SOURCES})
 
 
+#: Les fichiers du serveur dont coprofirst PUBLIE les constantes (`constantes-clients.json`,
+#: joint à chaque release depuis v3.102.0) : ils ne se lisent plus par motif — leur forme
+#: change sans prévenir, et la concordance devenait INCONNUE (#237). `ctx.constante`.
+#: À la lecture, `Contexte.lire` refuse aussi tout fichier source d'une constante publiée.
+PUBLIES = frozenset({
+    "api/app/utils/avis.py", "api/app/utils/html_sur.py",
+    "api/app/utils/mots_de_passe.py", "api/app/utils/preferences_mail.py",
+})
+
+
+def refus_sources(modules: list) -> list[str]:
+    return [f"❌ generateurs/{m.__name__.split('.')[-1]}.py déclare {s} : ses constantes sont publiées "
+            "(constantes-clients.json) — ctx.constante (#237)"
+            for m in modules for s in m.SOURCES if s in PUBLIES]
+
+
+def controler_sources(modules: list) -> int:
+    fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
+    if len(refus_sources([fictif])) != 1:
+        print("❌ autotest : un module qui déclare une source publiée doit être refusé")
+        return 1
+    fautes = refus_sources(modules)
+    print("\n".join(fautes or sources(modules)))
+    return 1 if fautes else 0
+
+
 def executer(etiquette: str, sortie: pathlib.Path) -> tuple[Contexte, list[str]]:
     """Lance chaque générateur sur la version `etiquette`, en écrivant sous `sortie`.
 
@@ -80,8 +109,7 @@ def main() -> None:
     choix.add_argument("--sources", action="store_true", help="liste les fichiers de coprofirst lus")
     arguments = parser.parse_args()
     if arguments.sources:
-        print("\n".join(sources(generateurs())))
-        return
+        raise SystemExit(controler_sources(generateurs()))
     try:
         etiquette = derniere_version() if arguments.derniere else arguments.version
         ctx, bilans = executer(etiquette, RACINE)

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.101.0 (commit e6e8ecdbbd269ccb2b25081a0c12828176047a5c), front/src/lib/pages.ts#PAGES, front/src/lib/prestataires.ts#TYPES_PRESTATAIRE, front/src/lib/prestataires.ts#FILTRES_CONTRAT (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.102.0 (commit d3db6646db1053a82ad72fb0ce57f6d35216c77a), front/src/lib/pages.ts#PAGES, front/src/lib/prestataires.ts#TYPES_PRESTATAIRE, front/src/lib/prestataires.ts#FILTRES_CONTRAT (tables-clients.json).
 // swiftlint:disable line_length
 
 /// Ce que le site écrit de « Prestataires » et que le contrat ne sert pas.
