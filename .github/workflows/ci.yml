@@ -141,16 +141,18 @@ jobs:
         lot: [1, 2, 3]
     env:
       # Les lots 1 et 2, nommés classe par classe ; le lot 3 joue TOUT le reste — une classe
-      # neuve y tombe d'office, aucune n'est oubliée. Équilibrés sur les durées MESURÉES en CI
-      # (moyennes de trois runs, 16/11/2026, #243) : ~72 min de tests, des runners qui varient
-      # du simple à ~1,4 — à deux lots, un runner lent dépassait le budget (lot 1 : 68 min).
-      # ~1560 s, ~1425 s et ~1320 s de tests, ~40 min par job, ~50 sur un runner lent.
+      # neuve y tombe d'office, aucune n'est oubliée. Équilibrés sur les durées MESURÉES du
+      # runner le plus lent vu (main, run 43890088241, 16/11/2026 : lot 1 à 58 min pour
+      # 2279 s de tests, rouge au budget) : ~5570 s de tests et ~17 à 20 min de build par
+      # job. Lot 1 ~1750 s (~49 min d'étape, 6 de marge), lot 2 ~2060 s, lot 3 ~1900 s (~51 min) ;
+      # sur les runners des deux runs de #242, 1100 à 1760 s par lot. #243 avant.
       LOT_1: >-
-        SaisieAffaireUITests PrestatairesAffaireUITests CartesDuFilUITests
-        AffairesUITests HistoriqueUITests EcheanceUITests
+        SuppressionCompteUITests PrestatairesAffaireUITests SondageUITests ParcoursUITests
+        AvisReglementUITests PrestatairesUITests HorsLigneUITests GrandTexteUITests
+        LogoResidenceUITests PiecesJointesUITests LiensUITests ProtectionUITests
       LOT_2: >-
-        CommunauteUITests AdminUITests AccesUITests SondageUITests
-        ApercusSaisieUITests DelegationsCSUITests
+        CommunauteUITests HistoriqueUITests CartesDuFilUITests AdminUITests EcheanceUITests
+        EspaceCSUITests PushUITests RetourUITests ConnexionUITests VitrineUITests
       # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
       # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
       BUDGET_LOT: 55
