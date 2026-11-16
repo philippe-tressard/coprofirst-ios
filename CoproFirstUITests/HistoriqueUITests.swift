@@ -12,7 +12,7 @@ final class HistoriqueUITests: XCTestCase {
         let app = LancementCaptures.lancer(arguments: arguments)
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         return app
     }
@@ -29,7 +29,7 @@ final class HistoriqueUITests: XCTestCase {
         let gestes = app.elementAcces("historique.gestes.\(id)")
         for _ in 0..<6 where !(gestes.exists && gestes.isHittable) { app.swipeUp() }
         XCTAssertTrue(gestes.exists, "l'entrée \(id) offre ses gestes")
-        gestes.tap()
+        app.toucher(gestes)
     }
 
     /// « Enregistrer » est-il éteint ? L'identifiant peut être porté par un conteneur
@@ -50,12 +50,12 @@ final class HistoriqueUITests: XCTestCase {
         // La réponse appartient à son auteur : aucun geste sur elle.
         XCTAssertFalse(app.elementAcces("historique.gestes.3").exists)
 
-        app.elementAcces("affaire.suite").tap()
+        app.toucher(app.elementAcces("affaire.suite"))
         let texte = app.elementAcces("suite.texte")
         XCTAssertTrue(texte.apparait())
-        texte.tap()
+        app.toucher(texte)
         texte.typeText("Le plombier est passé.")
-        app.elementAcces("suite.enregistrer").tap()
+        app.toucher(app.elementAcces("suite.enregistrer"))
         XCTAssertTrue(entree("Le plombier est passé.", dans: app).apparait(), "la suite rejoint l'Historique")
 
         ouvrirLesGestes(4, dans: app)
@@ -63,7 +63,7 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(modifier.apparait(), "« Modifier la suite »")
         XCTAssertFalse(app.elementAcces("historique.geste.supprimer").exists, "effacer est à l'administrateur")
         LancementCaptures.capturer("historique-1-gestes-du-conseil")
-        modifier.tap()
+        app.toucher(modifier)
 
         // La feuille de la Suite, partie de l'entrée : son texte servi, et rien à enregistrer.
         let servi = app.descendants(matching: .any)
@@ -73,10 +73,10 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(servi.apparait(), "le texte servi")
         XCTAssertTrue(enregistrerEteint(app), "rien n'a changé : rien à enregistrer")
         let corrige = app.elementAcces("suite.texte")
-        corrige.tap()
+        app.toucher(corrige)
         corrige.typeText(" Jeudi")
         LancementCaptures.capturer("historique-2-modifier-la-suite")
-        app.elementAcces("suite.enregistrer").tap()
+        app.toucher(app.elementAcces("suite.enregistrer"))
 
         // Le toucher pose le curseur où il tombe : on cherche le mot, pas sa place.
         XCTAssertTrue(entree("Jeudi", dans: app).apparait(), "l'entrée corrigée, relue")
@@ -97,21 +97,21 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(modifier.apparait())
         XCTAssertTrue(app.elementAcces("historique.geste.supprimer").exists, "l'administrateur efface")
         LancementCaptures.capturer("historique-3-gestes-de-l-administrateur")
-        modifier.tap()
+        app.toucher(modifier)
         XCTAssertTrue(app.elementAcces("suite.texteFige").apparait(), "un texte mis en forme ne se réécrit pas")
         XCTAssertFalse(app.elementAcces("suite.texte").exists)
         XCTAssertTrue(enregistrerEteint(app))
-        app.descendants(matching: .any)["Annuler"].firstMatch.tap()
+        app.toucher(app.descendants(matching: .any)["Annuler"].firstMatch)
         XCTAssertTrue(app.elementAcces("suite.texteFige").disparait(), "la feuille se referme")
 
         ouvrirLesGestes(2, dans: app)
         let supprimer = app.elementAcces("historique.geste.supprimer")
         XCTAssertTrue(supprimer.apparait())
-        supprimer.tap()
+        app.toucher(supprimer)
         let confirmer = app.elementAcces("historique.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "effacer se confirme")
         LancementCaptures.capturer("historique-4-confirmer-la-suppression")
-        confirmer.tap()
+        app.toucher(confirmer)
 
         XCTAssertTrue(entree("Le syndic est prévenu", dans: app).disparait(), "l'entrée a quitté l'Historique")
         XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le syndic", dans: app).exists, "les autres entrées restent")
@@ -123,10 +123,10 @@ final class HistoriqueUITests: XCTestCase {
     private func choisirLEtat(_ etat: String, dans app: XCUIApplication) {
         let suivi = app.elementAcces("suite.etat")
         XCTAssertTrue(suivi.apparait(), "le Suivi de la feuille")
-        suivi.tap()
+        app.toucher(suivi)
         let choix = app.descendants(matching: .any)[etat].firstMatch
         XCTAssertTrue(choix.apparait(), "« \(etat) » parmi les états")
-        choix.tap()
+        app.toucher(choix)
     }
 
     /// Une Suite plus récente a changé l'état : corriger la première ne l'écrase pas (#187).
@@ -134,17 +134,17 @@ final class HistoriqueUITests: XCTestCase {
     @MainActor
     func testUneCorrectionQueLAffaireNAPasSuivieSeDitEtProposeLEtat() throws {
         let app = ouvrirLAffaire()
-        app.elementAcces("affaire.suite").tap()
+        app.toucher(app.elementAcces("affaire.suite"))
         choisirLEtat("Résolu", dans: app)
-        app.elementAcces("suite.enregistrer").tap()
+        app.toucher(app.elementAcces("suite.enregistrer"))
         XCTAssertTrue(entree("Chez le syndic →\u{00A0}Résolu", dans: app).apparait(), "la Suite plus récente")
 
         ouvrirLesGestes(1, dans: app)
         let modifier = app.elementAcces("historique.geste.modifier")
         XCTAssertTrue(modifier.apparait())
-        modifier.tap()
+        app.toucher(modifier)
         choisirLEtat("Chez le prestataire", dans: app)
-        app.elementAcces("suite.enregistrer").tap()
+        app.toucher(app.elementAcces("suite.enregistrer"))
 
         // La phrase du serveur, telle que servie, dans l'alerte « Entrée corrigée ».
         XCTAssertTrue(app.libelleAcces("L'affaire est restée « Résolu »").apparait(), "la phrase servie")
@@ -152,7 +152,7 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(appliquer.apparait(), "l'état proposé")
         XCTAssertTrue(app.descendants(matching: .any)["Laisser ainsi"].firstMatch.exists)
         LancementCaptures.capturer("historique-5-affaire-non-suivie")
-        appliquer.tap()
+        app.toucher(appliquer)
 
         XCTAssertTrue(
             entree("Résolu →\u{00A0}Chez le prestataire", dans: app).apparait(), "l'état appliqué par une Suite, relue")
