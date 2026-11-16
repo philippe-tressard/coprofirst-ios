@@ -9,7 +9,7 @@ import Foundation
 extension ServiceSimule: ServicePrestataires {
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire] {
         try await Task.sleep(for: .milliseconds(300))
-        return try FixturesPrestataires.lus(archives: archives)
+        return try avecMoyennesSimulees(FixturesPrestataires.lus(archives: archives))
     }
 
     func contrats(_ installation: Installation, archives: Bool) async throws -> [Contrat] {
@@ -19,7 +19,7 @@ extension ServiceSimule: ServicePrestataires {
 
     func interventions(de prestataire: Int, dans installation: Installation) async throws -> [ExerciceAvis] {
         try await Task.sleep(for: .milliseconds(200))
-        return try FixturesNotations.lus(prestataire)
+        return try recapitulatifSimule(prestataire)
     }
 
     func equipements(_ installation: Installation) async throws -> [Equipement] {
@@ -54,7 +54,7 @@ extension ServiceSimule: ServicePrestataires {
 }
 
 /// Les équipements simulés (les fiches et les contrats : `FixturesPrestataires` ; les avis :
-/// `FixturesNotations`).
+/// `FixturesNotations`, changés par leurs gestes dans `ServiceSimule+AvisPrestataire`).
 enum PrestatairesSimules {
     static let equipements: [Equipement] = [
         Equipement(code: "ascenseur", libelle: "Ascenseurs", ordre: 0),

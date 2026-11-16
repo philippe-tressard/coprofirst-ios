@@ -8,26 +8,75 @@ import SwiftUI
 /// (`GET /prestataires/{id}/interventions`). Un exercice par bloc, le plus récent ouvert ;
 /// dedans, une ligne par affaire et le badge de chaque avis, « non notée » sinon. Un badge
 /// porte un chevron (coprofirst#2745 : un avis replié se VOIT dépliable) et déplie, sous la
-/// ligne, l'auteur, la date et le commentaire.
+/// ligne, l'auteur, la date et le commentaire — puis ses gestes : « Modifier cet avis »
+/// selon `peut_modifier` (servi, l'auteur seul), « Retirer cet avis » pour le conseil
+/// syndical (`est_moderateur` servi), comme le serveur. En tête, « ⭐ Noter » (le conseil,
+/// sur une fiche non archivée). Après un geste, le récapitulatif ET la liste se relisent.
 struct RecapitulatifAvis: View {
     let prestataire: Prestataire
     let installation: Installation
     let service: any ServicePrestataires
+    let archive: Bool
+    let gestes: GestesAvis
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
     @State private var exercices: [ExerciceAvis] = []
     @State private var exerciceOuvert: Int?
     /// Un avis déplié à la fois, sinon la liste s'allonge.
     @State private var avisOuvert: Int?
+    @State private var corrige: AvisPrestataire?
+    @State private var aRetirer: AvisPrestataire?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
+            if gestes.conseil && !archive {
+                BoutonNoter(
+                    prestataire: prestataire, contrat: nil, installation: installation, service: service,
+                    gestes: gestes, relire: charger)
+            }
             if !exercices.isEmpty {
                 Text(TextesPrestataires.avisDuConseil(prestataire.nbNotations)).styleLibelle()
                 ForEach(exercices) { exercice in blocExercice(exercice) }
             }
         }
         .task(id: prestataire.id) { await charger() }
+        .sheet(item: $corrige, onDismiss: { gestes.avis.feuilleFermee() }, content: { avis in
+            FeuilleAvis(
+                mode: .corriger(avis), prestataire: prestataire, installation: installation, service: service,
+                envoye: { phrase in
+                    gestes.avis.direApresFermeture(phrase)
+                    corrige = nil
+                    apresGeste()
+                })
+        })
+        .confirmationDialog(
+            TextesSaisieAvis.retirer,
+            isPresented: Binding(get: { aRetirer != nil }, set: { if !$0 { aRetirer = nil } }),
+            titleVisibility: .visible, presenting: aRetirer
+        ) { avis in
+            Button(TextesSaisieAvis.confirmerRetrait, role: .destructive) { Task { await retirer(avis) } }
+                .accessibilityIdentifier("avis.confirmerRetrait")
+        } message: { avis in
+            Text(TextesSaisieAvis.retrait(avis))
+        }
+    }
+
+    /// La liste (moyenne servie) et le récapitulatif se relisent après un geste.
+    private func apresGeste() {
+        gestes.apres()
+        Task { await charger() }
+    }
+
+    /// Retirer un avis : définitif, et la moyenne du prestataire se recalcule au serveur.
+    private func retirer(_ avis: AvisPrestataire) async {
+        do {
+            try await service.retirer(avis.id, dans: installation)
+            gestes.avis.dire(TextesSaisieAvis.retire)
+            avisOuvert = nil
+            apresGeste()
+        } catch {
+            gestes.avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+        }
     }
 
     /// Illisible, le récapitulatif se tait : la fiche reste lisible sans lui.
@@ -128,20 +177,70 @@ struct RecapitulatifAvis: View {
     }
 
     private func detail(_ avis: AvisPrestataire) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text([avis.auteurNom ?? FormatsDuSite.tiret, FormatsDuSite.date(avis.creeLe)]
-                .joined(separator: Separateur.point))
-                .font(.caption).foregroundStyle(palette.textMuted)
-            if let commentaire = avis.commentaire {
-                Text(commentaire).font(.subheadline).foregroundStyle(palette.text)
-                    .fixedSize(horizontal: false, vertical: true)
+        VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text([avis.auteurNom ?? FormatsDuSite.tiret, FormatsDuSite.date(avis.creeLe)]
+                    .joined(separator: Separateur.point))
+                    .font(.caption).foregroundStyle(palette.textMuted)
+                if let commentaire = avis.commentaire {
+                    Text(commentaire).font(.subheadline).foregroundStyle(palette.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+            .accessibilityIdentifier("avis.\(avis.id).detail")
+            GestesDeLAvis(
+                avis: avis, retirable: gestes.conseil, modifier: { corrige = avis }, retirer: { aRetirer = avis })
         }
         .padding(10)
-        .frame(maxWidth: .infinity, alignment: .leading)
         .background(palette.neutreFond, in: .rect(cornerRadius: 10, style: .continuous))
-        .accessibilityElement(children: .combine)
-        .accessibilityIdentifier("avis.\(avis.id).detail")
         .transition(.opacity)
+    }
+}
+
+/// Les gestes d'un avis déplié, chacun selon son droit SERVI — absent, aucun bouton. Deux
+/// boutons nommés côte à côte, l'un sous l'autre quand le texte grandit ; le retrait,
+/// définitif, se confirme (`NotationsPrestataire.supprimer`).
+private struct GestesDeLAvis: View {
+    let avis: AvisPrestataire
+    let retirable: Bool
+    let modifier: () -> Void
+    let retirer: () -> Void
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        if avis.peutModifier || retirable {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) { boutons }
+                VStack(alignment: .leading, spacing: 8) { boutons }
+            }
+        }
+    }
+
+    @ViewBuilder private var boutons: some View {
+        if avis.peutModifier {
+            Button(action: modifier) {
+                Label(TextesSaisieAvis.modifier, systemImage: "pencil")
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.bordered)
+            .tint(palette.primary)
+            .frame(minHeight: Mise.cible)
+            .gesteEnLigne()
+            .accessibilityIdentifier("avis.\(avis.id).modifier")
+        }
+        if retirable {
+            Button(role: .destructive, action: retirer) {
+                Label(TextesSaisieAvis.retirer, systemImage: "trash")
+            }
+            .font(.subheadline.weight(.semibold))
+            .buttonStyle(.bordered)
+            .tint(palette.danger)
+            .frame(minHeight: Mise.cible)
+            .gesteEnLigne()
+            .accessibilityLabel(TextesSaisieAvis.retirerDe(avis))
+            .accessibilityIdentifier("avis.\(avis.id).retirer")
+        }
     }
 }

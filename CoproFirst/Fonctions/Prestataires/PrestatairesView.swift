@@ -3,13 +3,14 @@
 
 import SwiftUI
 
-/// « Prestataires » (page `prestataires` du site, #13) : trois onglets en lecture —
-/// Prestataires, Contrats, Consommations.
+/// « Prestataires » (page `prestataires` du site, #13) : trois onglets — Prestataires,
+/// Contrats, Consommations. Le conseil syndical y note, corrige et retire les avis (#207).
 struct PrestatairesView: View {
     let contexte: ContexteDeMenu
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var onglet = "prestataires"
+    @State private var avis = AvisDuGeste()
 
     init(contexte: ContexteDeMenu) { self.contexte = contexte }
 
@@ -39,15 +40,18 @@ struct PrestatairesView: View {
                 }
                 Chargement(
                     charger: { try await DonneesPrestataires.lire(installation, service: service) },
-                    contenu: { donnees, _ in
+                    contenu: { donnees, recharger in
+                        let gestes = GestesAvis(conseil: conseil, avis: avis, apres: recharger)
                         switch onglet {
                         case "contrats":
-                            OngletContrats(donnees: donnees, installation: installation, service: service)
+                            OngletContrats(
+                                donnees: donnees, installation: installation, service: service, gestes: gestes)
                         case "consommations":
                             OngletConsommations(
                                 donnees: donnees, installation: installation, service: service, conseil: conseil)
                         default:
-                            OngletPrestataires(donnees: donnees, installation: installation, service: service)
+                            OngletPrestataires(
+                                donnees: donnees, installation: installation, service: service, gestes: gestes)
                         }
                     },
                     squelette: { SquelettePrestataires() }
@@ -64,6 +68,7 @@ struct PrestatairesView: View {
             .frame(maxWidth: .infinity)
         }
         .background(palette.bg)
+        .avisEphemere(avis)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
     }
 }

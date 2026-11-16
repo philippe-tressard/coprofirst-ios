@@ -226,6 +226,9 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `postAvis` | `OtherUserContent` |
 | `patchAvisAvisId` | `OtherUserContent` |
 | `patchAvisAvisIdArchivage` | — |
+| `postPrestatairesNotations` | `OtherUserContent` |
+| `patchPrestatairesNotationsNId` | `OtherUserContent` |
+| `deletePrestatairesNotationsNId` | — |
 | `postAccesCommandes` | `OtherUserContent` |
 | `postAccesDeclarerBadge` | `OtherDataTypes` |
 | `patchAccesVigiksVigikIdPerdu` | `OtherUserContent` |

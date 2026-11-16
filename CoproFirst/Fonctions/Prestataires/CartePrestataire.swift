@@ -10,6 +10,9 @@ struct CartePrestataire: View {
     let donnees: DonneesPrestataires
     let installation: Installation
     let service: any ServicePrestataires
+    /// Une fiche des Archives : on n'y note plus (`!archive` du site).
+    let archive: Bool
+    let gestes: GestesAvis
     /// Au-delà de sept fiches, les contacts ne s'affichent que dépliés.
     let compact: Bool
     @Binding var deplie: Bool
@@ -43,7 +46,9 @@ struct CartePrestataire: View {
                 if !compact || deplie { apercuContacts }
                 if deplie {
                     detail(contrats: contrats)
-                    RecapitulatifAvis(prestataire: prestataire, installation: installation, service: service)
+                    RecapitulatifAvis(
+                        prestataire: prestataire, installation: installation, service: service, archive: archive,
+                        gestes: gestes)
                 }
             }
         }

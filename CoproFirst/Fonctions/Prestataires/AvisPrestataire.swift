@@ -14,13 +14,16 @@ struct AvisPrestataire: Hashable, Sendable, Identifiable {
     var auteurNom: String?
     var creeLe: Date
     var peutModifier = false
+    /// L'affaire jugée et le contrat de rattachement — `nil` hors affaire, hors contrat.
+    var ticketId: Int?
+    var contratId: Int?
 }
 
 extension AvisPrestataire {
     init(_ lu: Components.Schemas.NotationRead) {
         self.init(
             id: lu.id, etat: lu.etat ?? "", commentaire: lu.commentaire?.nulSiVide, auteurNom: lu.auteurNom,
-            creeLe: lu.creeLe, peutModifier: lu.peutModifier ?? false)
+            creeLe: lu.creeLe, peutModifier: lu.peutModifier ?? false, ticketId: lu.ticketId, contratId: lu.contratId)
     }
 }
 
