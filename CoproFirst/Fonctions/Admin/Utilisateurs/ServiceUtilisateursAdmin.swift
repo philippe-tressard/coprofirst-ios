@@ -49,9 +49,9 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
     /// Loti, TC, Vigik, Bail : `ok`, `manque` ou `sans_objet`, par le serveur.
     var etiquettes: [String: String]
     var ban: BanCommunaute
-    /// Les gestes de rôle servis (`gestes_roles`, contrat 1.18.0) ; `nil` seulement d'un
-    /// modèle construit hors du serveur.
-    var gestesRoles: [GesteDeRole]?
+    /// Les gestes de rôle servis (`gestes_roles`, contrat 1.18.0) ; aucun d'un modèle
+    /// construit hors du serveur.
+    var gestesRoles: [GesteDeRole] = []
     /// Averti de sa suppression pour inactivité ; s'efface à la reconnexion.
     var purgeAvertieLe: Date?
     var derniereConnexion: Date?
@@ -59,8 +59,8 @@ struct UtilisateurAdmin: Hashable, Sendable, Identifiable {
     /// `nom_affiche` servi (contrat 1.25.0, #135).
     var nomServi: String?
 
-    /// « Prénom NOM » servi ; à défaut, le repli de `FormatsDuSite.nom(affiche:…)`.
-    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
+    /// « Prénom NOM » servi.
+    var nomAffiche: String { FormatsDuSite.nom(servi: nomServi) }
 }
 
 /// Ce que le serveur dit de l'accès d'un compte à la communauté.
@@ -68,14 +68,8 @@ struct BanCommunaute: Hashable, Sendable {
     var interdit: Bool
     var jusquAu: Date?
     /// `communaute_banni` : exclu À CET INSTANT, jugé à l'heure du serveur (contrat
-    /// 1.18.0) ; `nil` d'une installation antérieure.
-    var banniServi: Bool?
-
-    /// Banni : ce que le serveur en dit ; à défaut (installation antérieure au contrat
-    /// 1.18.0), pour de bon ou jusqu'à une date encore à venir à l'heure du téléphone.
-    func banni(maintenant: Date = .now) -> Bool {
-        banniServi ?? (interdit || (jusquAu.map { $0 > maintenant } ?? false))
-    }
+    /// 1.18.0) — jamais à l'heure du téléphone (#87). Non servi : non.
+    var banni = false
 }
 
 /// Un geste de rôle, tel que le serveur le sert et que sa route le nomme.
@@ -120,7 +114,7 @@ extension UtilisateurAdmin {
             ],
             ban: BanCommunaute(
                 interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu,
-                banniServi: lu.communauteBanni),
+                banni: lu.communauteBanni ?? false),
             gestesRoles: GesteDeRole.servis(lu.gestesRoles), purgeAvertieLe: lu.purgeAvertieLe,
             derniereConnexion: lu.derniereConnexion, creeLe: lu.creeLe, nomServi: lu.nomAffiche)
     }
@@ -131,6 +125,6 @@ extension BanCommunaute {
     init(_ lu: Components.Schemas.UserRead) {
         self.init(
             interdit: lu.communauteInterdit ?? false, jusquAu: lu.communauteBanJusquAu,
-            banniServi: lu.communauteBanni)
+            banni: lu.communauteBanni ?? false)
     }
 }

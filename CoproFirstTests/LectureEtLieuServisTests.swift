@@ -103,16 +103,13 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
 // MARK: - #130 : le lieu
 
 @Suite struct LieuServiTests {
-    @Test func servi_ilFaitFoi_videIlSeTait_absentLeRepli() {
-        #expect(LieuServi.lieu("Bât. 2 › Toit", repli: "Bâtiment 2") == "Bât. 2 › Toit")
-        #expect(LieuServi.lieu("", repli: "Toute la copropriété") == nil, "le défaut se tait, comme le site")
-        #expect(LieuServi.lieu(nil, repli: "Toute la copropriété") == "Toute la copropriété")
+    @Test func servi_ilFaitFoi_videIlSeTait() {
+        #expect(LieuServi.lieu("Bât. 2 › Toit") == "Bât. 2 › Toit")
+        #expect(LieuServi.lieu("") == nil, "le défaut se tait, comme le site")
         #expect(LieuServi.lieu(nil) == nil)
-        #expect(LieuServi.lieu(nil, repli: "") == nil)
     }
 
     @Test func unAccesDuParcLitSonLieuServi() async throws {
-        let arbre = try FixturesPerimetres.lus()
         // Un vigik d'`AccesAdminOut`, avec `servi` ajouté tel quel au JSON.
         func parc(_ servi: String) async throws -> AccesDuParc? {
             let acces = #"""
@@ -123,8 +120,8 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
             return try await service(["/acces/admin/vigiks": acces, "/acces/admin/telecommandes": "[]"])
                 .parc(residence).first
         }
-        #expect(try await parc(#", "perimetre_libelle": "Bât. A › Hall""#)?.lieu(arbre: arbre) == "Bât. A › Hall")
-        #expect(try await parc(", \"perimetre_libelle\": \"\"")?.lieu(arbre: arbre) == nil, "servi vide : le défaut")
+        #expect(try await parc(#", "perimetre_libelle": "Bât. A › Hall""#)?.lieu == "Bât. A › Hall")
+        #expect(try await parc(", \"perimetre_libelle\": \"\"")?.lieu == nil, "servi vide : le défaut")
     }
 
     @Test func lesIdeesEtLesAnnoncesLisentQuiEtOu() throws {
@@ -139,13 +136,10 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
         #expect(annonces.first { $0.id == 23 }?.lecture?.cle == "coproprietaires")
     }
 
-    @Test func uneAfficheDuHallTaitLeDefautServiEtGardeSonLibelleSinon() throws {
+    @Test func uneAfficheDuHallTaitLeDefautServi() throws {
         let affiches = try FixturesAnnoncesHall.affichesLues()
         #expect(affiches.first { $0.id == 6 }?.lieu == nil, "servi vide : plus « Toute la copropriété »")
         #expect(affiches.first { $0.id == 7 }?.lieu == "Bât. A")
-        var ancienne = try #require(affiches.first { $0.id == 6 })
-        ancienne.perimetreLibelle = nil
-        #expect(ancienne.lieu == "Toute la copropriété", "installation antérieure : `perimetre_label`, comme avant")
     }
 
     @Test func leFilLitQuiEtOuDansMetaAffaire() throws {

@@ -36,9 +36,9 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
 
 @Test func lesGestesDeRoleServisSontOffertsDansLOrdreDuSite() throws {
     let alex = try lu(#", "gestes_roles": {"operateur": "ajouter", "admin": "retirer", "conseil_syndical": "ajouter"}"#)
-    #expect(alex.gestesRoles?.map(\.role) == ["conseil_syndical", "admin", "operateur"])
-    #expect(alex.gestesRoles?.map(\.geste) == [.ajouter, .retirer, .ajouter])
-    #expect(alex.gestesRoles.map { $0.map(TextesUtilisateursAdmin.bouton) } == ["+ CS", "– Admin", "+ Opérateur"])
+    #expect(alex.gestesRoles.map(\.role) == ["conseil_syndical", "admin", "operateur"])
+    #expect(alex.gestesRoles.map(\.geste) == [.ajouter, .retirer, .ajouter])
+    #expect(alex.gestesRoles.map(TextesUtilisateursAdmin.bouton) == ["+ CS", "– Admin", "+ Opérateur"])
 }
 
 @Test func unGesteNulNEstPasOffert() throws {
@@ -46,12 +46,12 @@ private func lu(_ extra: String) throws -> UtilisateurAdmin {
     #expect(alex.gestesRoles == [], "servis, mais aucun : rien à offrir (défaut fermé)")
 }
 
-/// `communaute_banni` prime sur l'heure du téléphone : le ban court jusqu'en 2099, mais
-/// le serveur dit qu'il ne vaut plus.
+/// `communaute_banni` seul fait foi, jamais l'heure du téléphone : le ban court jusqu'en
+/// 2099, mais le serveur dit qu'il ne vaut plus ; non servi, non (#87).
 @Test func leBannissementSeLitTelQueServi() throws {
-    #expect(try lu(#", "communaute_banni": false"#).ban.banni() == false)
-    #expect(try lu(#", "communaute_banni": true"#).ban.banni() == true)
-    #expect(try lu("").ban.banni() == true, "non servi (facultatif) : la date, à l'heure du téléphone")
+    #expect(try lu(#", "communaute_banni": false"#).ban.banni == false)
+    #expect(try lu(#", "communaute_banni": true"#).ban.banni == true)
+    #expect(try lu("").ban.banni == false, "non servi : non, même si la date court encore")
 }
 
 /// Un champ servi au-dessus du plancher, relu par le mécanisme qui reste pour le suivant.
@@ -73,12 +73,12 @@ private struct Temoin: Decodable, Equatable {
     let etat = EtatUtilisateursAdmin()
     await etat.charger(service, ServiceSimule.residence)
     let alix = try #require(etat.compte(13))
-    let ajouterCS = try #require(alix.gestesRoles?.first { $0.role == "conseil_syndical" })
+    let ajouterCS = try #require(alix.gestesRoles.first { $0.role == "conseil_syndical" })
     #expect(ajouterCS.geste == .ajouter)
     let annonce = try await etat.changerRole(alix, ajouterCS, service, ServiceSimule.residence)
     #expect(annonce == "Rôle Conseil syndical ajouté à Alix MODÈLE.")
     #expect(etat.compte(13)?.roles.contains("conseil_syndical") == true)
-    #expect(etat.compte(13)?.gestesRoles?.first?.geste == .retirer)
+    #expect(etat.compte(13)?.gestesRoles.first?.geste == .retirer)
     #expect(etat.membresDuConseil == 2)
 }
 
@@ -86,7 +86,7 @@ private struct Temoin: Decodable, Equatable {
 @Test func lesGestesSimulesSontCeuxDuServeur() throws {
     let comptes = try FixturesUtilisateursAdmin.lus()
     #expect(comptes.first { $0.id == 14 }?.gestesRoles == [])
-    #expect(comptes.first { $0.id == 11 }?.gestesRoles?.contains { $0.role == "admin" } == false)
+    #expect(comptes.first { $0.id == 11 }?.gestesRoles.contains { $0.role == "admin" } == false)
 }
 
 // MARK: - #87 : l'annonce d'une demande traitée
@@ -97,16 +97,8 @@ private struct Temoin: Decodable, Equatable {
     #expect(PhraseAvis(servie.annonce) == PhraseAvis(texte: "Phrase du serveur.", ton: .warning))
 }
 
-/// Un serveur antérieur au contrat 1.16.0 ne sert pas d'annonce : la phrase d'avant.
-private struct DemandesSansAnnonce: ServiceDemandesProfil {
-    func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil] { [] }
-    func traiterDemandeProfil(
-        _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis? { nil }
-}
-
 @MainActor
-@Test func leTraitementDitLAnnonceServieSinonLaPhraseDAvant() async throws {
+@Test func leTraitementDitLAnnonceServie() async throws {
     let etat = EtatDemandesProfil()
     let service = ServiceSimule()
     await etat.charger(service, ServiceSimule.residence)
@@ -114,9 +106,6 @@ private struct DemandesSansAnnonce: ServiceDemandesProfil {
     let servie = try await etat.traiter(demande, approuver: false, motif: nil, service, ServiceSimule.residence)
     #expect(servie == PhraseAvis(texte: "Demande rejetée.", ton: .success))
     #expect(!etat.demandes.contains { $0.id == demande.id })
-    let ancienne = try await etat.traiter(
-        demande, approuver: true, motif: nil, DemandesSansAnnonce(), ServiceSimule.residence)
-    #expect(ancienne == PhraseAvis(texte: TextesATraiter.approuvee))
 }
 
 // MARK: - #88 : le sélecteur de périmètre descend jusqu'au niveau 3

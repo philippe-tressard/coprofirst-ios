@@ -19,8 +19,8 @@ extension DetailAffaire {
             return suite
         }
         var detail = DetailAffaire(ticket: ticket, suites: suites.sorted { $0.date < $1.date })
-        // Le crayon SERVI (`peut_corriger`, contrat 1.21.0, #127) ; non servi, le droit sur le contenu.
-        detail.droits.corriger = ticket.peutCorriger ?? detail.droits.modifier
+        // Le crayon SERVI (`peut_corriger`, contrat 1.21.0, #127) ; non servi, non (#87).
+        detail.droits.corriger = ticket.peutCorriger ?? false
         // Le suivi d'une actualité en clair (1.21.0) ; le rythme qui fait foi : celui du contrat
         // sous contrat, celui de l'affaire sinon (`intervenantAffiche` du site, 1.20.0, #125).
         detail.suiviActualiteLibelle = ticket.suiviActualiteLibelle
