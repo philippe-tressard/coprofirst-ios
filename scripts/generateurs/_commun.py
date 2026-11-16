@@ -103,6 +103,8 @@ class Contexte:
         """Le fichier du site dont la table est tirée (`front/src/lib/bail.ts#ETATS_BAIL`)."""
         self.table(nom)
         source = _tables_clients(self.version)[nom].get("source")
+        if isinstance(source, dict) and source and all(isinstance(v, str) for v in source.values()):
+            return ", ".join(source.values())  # une table à plusieurs colonnes (`notations`)
         return source if isinstance(source, str) else "tables-clients.json"
 
     def provenance_tables(self, *noms: str) -> str:

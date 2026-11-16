@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.105.0 (commit 74da8ebb2f9a71a5a62b3584b358e96d9f8b8efd), front/src/lib/saisie-affaire.ts (OPTIONS_SAISIE, LIBELLE_MODE) et entites/ticket.ts (TICKET) ; api/app/utils/saisie_affaire.py (MODES).
+// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/saisie-affaire.ts (OPTIONS_SAISIE, LIBELLE_MODE) et entites/ticket.ts (TICKET) ; api/app/utils/saisie_affaire.py (MODES).
 
 /// La saisie d'une affaire, Essentielle ou Complète : ce que le contrat ne sert pas.
 enum TablesSaisie {
