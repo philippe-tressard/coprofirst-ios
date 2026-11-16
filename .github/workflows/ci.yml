@@ -20,7 +20,8 @@ permissions:
 # si sa CI aboutit : le 15/11/2026, 6 exécutions de main sur 8 avaient été annulées par
 # la fusion suivante, aucune fusion n'était validée. Sur main, un groupe PAR COMMIT : GitHub
 # ne garde qu'une exécution en attente par groupe, et deux fusions rapprochées évinçaient
-# encore la précédente, sans annulation demandée (coprofirst-android#62).
+# encore la précédente, sans annulation demandée (coprofirst-android#62). Les jobs
+# d'interface ont, sur main, leur propre file (voir `interface`, #235).
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -130,6 +131,17 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, une file PAR LOT et par branche, plus par commit (#235, standards/09 §8 bis) :
+    # quatre fusions rapprochées faisaient 8 jobs d'environ 60 min pour 3 exécutants macOS.
+    # L'exécution en cours va au bout (jamais annulée) ; GitHub ne garde que la DERNIÈRE en
+    # attente, qui juge toute la plage. Un rouge désigne les commits depuis le dernier vert ;
+    # un commit dont l'interface a été remplacée reste annulé (gris), jamais vert.
+    # Sur une PR, rien de plus que le groupe du workflow.
+    concurrency:
+      group: >-
+        ${{ github.event_name == 'push' && format('ci-interface-main-{0}', matrix.lot)
+        || format('ci-interface-{0}-{1}', github.run_id, matrix.lot) }}
+      cancel-in-progress: false
     # Les tests d'interface seuls approchaient déjà 70 min : deux lots, chacun sous 70.
     timeout-minutes: 70
     strategy:
@@ -173,10 +185,12 @@ jobs:
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
     # unitaires ET les deux lots d'interface le sont, ou si la détection a LU une PR de
-    # documentation seule — jamais par défaut : une détection en échec rend rouge.
+    # documentation seule — jamais par défaut : une détection en échec rend rouge. Sur les
+    # PR seulement : sur main, une interface remplacée dans sa file (#235) le rendrait vert
+    # sans avoir joué, ou rouge sans faute — chaque job y parle pour lui-même.
     name: Build, tests, SwiftLint
     needs: [detection, unitaires, interface]
-    if: always()
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
