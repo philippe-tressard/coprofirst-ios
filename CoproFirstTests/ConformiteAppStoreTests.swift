@@ -16,14 +16,21 @@ struct ConformiteAppStoreTests {
     /// iPhone et iPad (#219, depuis le 15/11/2026). L'iPhone reste en portrait ; l'iPad
     /// prend les quatre orientations, sans quoi iPadOS ne lui ouvre pas le multitâche — et
     /// rien ne réclame le plein écran, déprécié (#220).
-    @Test func lAppEstUneAppIPhoneEtIPad() {
-        #expect(info["UIDeviceFamily"] as? [Int] == [1, 2])
-        #expect(info["UISupportedInterfaceOrientations"] as? [String] == ["UIInterfaceOrientationPortrait"])
-        #expect(Set(info["UISupportedInterfaceOrientations~ipad"] as? [String] ?? []) == [
+    ///
+    /// Lu dans le fichier `Info.plist` BRUT de l'app : `infoDictionary` résout les clés
+    /// `~ipad` selon l'appareil (retirées sur iPhone, substituées à la clé de base sur iPad),
+    /// et le même test ne dirait pas la même chose sur les deux simulateurs.
+    @Test func lAppEstUneAppIPhoneEtIPad() throws {
+        let url = try #require(Bundle.main.url(forResource: "Info", withExtension: "plist"))
+        let brut = try #require(
+            try PropertyListSerialization.propertyList(from: Data(contentsOf: url), format: nil) as? [String: Any])
+        #expect(brut["UIDeviceFamily"] as? [Int] == [1, 2])
+        #expect(brut["UISupportedInterfaceOrientations"] as? [String] == ["UIInterfaceOrientationPortrait"])
+        #expect(Set(brut["UISupportedInterfaceOrientations~ipad"] as? [String] ?? []) == [
             "UIInterfaceOrientationPortrait", "UIInterfaceOrientationPortraitUpsideDown",
             "UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight",
         ])
-        #expect(info["UIRequiresFullScreen"] == nil)
+        #expect(brut["UIRequiresFullScreen"] == nil)
     }
 
     @Test func laVersionEstUneVersionPubliable() throws {

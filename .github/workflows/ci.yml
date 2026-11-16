@@ -72,12 +72,18 @@ jobs:
         # L'app est universelle (#219) : un ÉCHANTILLON sur iPad, dans ce job, sans runner
         # macOS de plus (#204) — la conformité du plist, l'entrée et la connexion. La suite
         # complète sur iPad se joue au poste avant la fusion d'un lot iPad (#220).
+        # ParcoursUITests test par test : ses trois tests de la barre du bas n'ont pas cours
+        # sur iPad (la TabView d'iPadOS n'y est pas une TabBar) ; la barre latérale (#221)
+        # apporte leurs pendants iPad.
         env:
           APPAREIL: ipad
         run: >-
           bash scripts/tests-simulateur.sh
           -only-testing:CoproFirstTests/ConformiteAppStoreTests
-          -only-testing:CoproFirstUITests/ParcoursUITests
+          -only-testing:CoproFirstUITests/ParcoursUITests/testDeLAccueilAuFilParLaConnexion
+          -only-testing:CoproFirstUITests/ParcoursUITests/testEnTresGrandTexteLeLogementPasseSousLeTitre
+          -only-testing:CoproFirstUITests/ParcoursUITests/testLaDemoSOuvreDUnToucher
+          -only-testing:CoproFirstUITests/ParcoursUITests/testLaPastilleMontreLesRolesEtSeDeconnecte
           -only-testing:CoproFirstUITests/VitrineUITests
           -only-testing:CoproFirstUITests/ConnexionUITests
 
