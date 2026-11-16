@@ -284,7 +284,7 @@ import Testing
     let connues = InstallationsConnues(reglages: reglages, coffre: coffre)
     let residence = ServiceSimule.residence
     connues.retenir(residence)
-    connues.retenir(Installation(adresse: URL(string: "https://autre.exemple.fr")!, nom: "Autre", aUnLogo: false))
+    connues.retenir(Installation(adresse: URL(string: "https://autre.example.com")!, nom: "Autre", aUnLogo: false))
     connues.retenir(residence)
     #expect(connues.liste.map(\.nom) == [residence.nom, "Autre"])
     #expect(InstallationsConnues(reglages: reglages, coffre: coffre).liste.count == 2, "relue au lancement suivant")

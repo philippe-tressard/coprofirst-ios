@@ -4,7 +4,7 @@
 import XCTest
 
 /// La confirmation d'un hôte jamais vu, avant le premier mot de passe (#82), contre
-/// l'API simulée : `tilleuls.exemple.fr` sert la preuve, `imitation.exemple.fr` non.
+/// l'API simulée : `tilleuls.example.com` sert la preuve, `imitation.example.com` non.
 final class ConfirmationHoteUITests: XCTestCase {
     @MainActor
     func testUnHoteJamaisVuSeConfirmeAvantLeMotDePasse() throws {
@@ -13,7 +13,7 @@ final class ConfirmationHoteUITests: XCTestCase {
 
         let hote = app.elementAcces("confirmationHote.hote")
         XCTAssertTrue(hote.apparait(), "l'écran de confirmation s'ouvre")
-        XCTAssertEqual(hote.label, "tilleuls.exemple.fr", "l'hôte en entier")
+        XCTAssertEqual(hote.label, "tilleuls.example.com", "l'hôte en entier")
         XCTAssertFalse(app.buttons["faceid.plusTard"].exists, "rien ne s'est ouvert : le mot de passe attend")
         XCTAssertTrue(app.elementAcces("confirmationHote.reconnue").apparait(), "la preuve lue")
         LancementCaptures.capturer("confirmation-hote-1-reconnue")
@@ -30,13 +30,13 @@ final class ConfirmationHoteUITests: XCTestCase {
         let residence = app.elementAcces("connexion.residence")
         XCTAssertTrue(residence.apparait())
         residence.tap()
-        residence.typeText("imitation.exemple.fr")
+        residence.typeText("imitation.example.com")
         XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].apparait(), "l'imitation répond")
         Self.saisirIdentifiants(app)
 
         XCTAssertTrue(
             app.elementAcces("confirmationHote.avertissement").apparait(), "l'avertissement en clair")
-        XCTAssertEqual(app.elementAcces("confirmationHote.hote").label, "imitation.exemple.fr")
+        XCTAssertEqual(app.elementAcces("confirmationHote.hote").label, "imitation.example.com")
         XCTAssertTrue(Self.etat(app, "confirmationHote.confirmer", actif: false), "un seul accord ne suffit pas")
         LancementCaptures.capturer("confirmation-hote-2-avertissement")
 
@@ -84,7 +84,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         let email = app.elementAcces("connexion.email")
         XCTAssertTrue(email.apparait())
         email.tap()
-        email.typeText("resident@exemple.fr\n")
+        email.typeText("resident@example.com\n")
         app.elementAcces("connexion.motDePasse").typeText("secret\n")
     }
 }

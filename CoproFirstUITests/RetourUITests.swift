@@ -31,8 +31,8 @@ final class RetourUITests: XCTestCase {
         element(app, "retour.motDePasse").tap()
         let email = element(app, "connexion.email")
         XCTAssertTrue(email.apparait())
-        XCTAssertEqual(email.value as? String, "resident@exemple.fr", "le courriel retenu")
-        XCTAssertEqual(element(app, "connexion.residence").value as? String, "tilleuls.exemple.fr")
+        XCTAssertEqual(email.value as? String, "resident@example.com", "le courriel retenu")
+        XCTAssertEqual(element(app, "connexion.residence").value as? String, "tilleuls.example.com")
         XCTAssertFalse(app.tabBars.firstMatch.exists, "rien ne s'est ouvert par Face ID")
     }
 
@@ -43,7 +43,7 @@ final class RetourUITests: XCTestCase {
         app.launch()
         let email = element(app, "connexion.email")
         XCTAssertTrue(email.apparait(), "la connexion d'emblée")
-        XCTAssertEqual(email.value as? String, "resident@exemple.fr", "le courriel retenu")
+        XCTAssertEqual(email.value as? String, "resident@example.com", "le courriel retenu")
         XCTAssertFalse(element(app, "accueil.demo").exists, "ni l'accueil ni la démo")
 
         let motDePasse = element(app, "connexion.motDePasse")

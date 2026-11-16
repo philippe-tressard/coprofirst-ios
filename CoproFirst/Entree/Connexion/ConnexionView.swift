@@ -64,7 +64,7 @@ struct ConnexionView: View {
                 ChampSaisie(
                     libelle: "Adresse électronique",
                     champ: {
-                        TextField("vous@exemple.fr", text: $email)
+                        TextField("vous@example.com", text: $email)
                             .keyboardType(.emailAddress)
                             .textContentType(.username)
                             .textInputAutocapitalization(.never)

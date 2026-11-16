@@ -16,7 +16,7 @@ final class ConnexionUITests: XCTestCase {
         let email = app.textFields["connexion.email"]
         XCTAssertTrue(email.apparait())
         email.tap()
-        email.typeText("resident@exemple.fr")
+        email.typeText("resident@example.com")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
         motDePasse.tap()
         motDePasse.typeText("secret")

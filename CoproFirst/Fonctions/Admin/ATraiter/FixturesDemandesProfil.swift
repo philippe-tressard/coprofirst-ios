@@ -18,12 +18,12 @@ enum FixturesDemandesProfil {
           {"id": 41, "utilisateur_id": 31, "statut_demande": "en_attente", "statut_souhaite": "copropriétaire_bailleur",
            "batiment_id_souhaite": null, "batiment_nom_souhaite": null, "motif": "Je mets mon appartement en location.",
            "motif_refus": null, "traite_le": null, "traite_par_id": null, "cree_le": "2026-11-05T09:30:00",
-           "utilisateur_nom": "Sacha Exemple", "utilisateur_email": "sacha@exemple.fr",
+           "utilisateur_nom": "Sacha Exemple", "utilisateur_email": "sacha@example.com",
            "statut_actuel": "copropriétaire_résident", "batiment_actuel": "Bâtiment A"},
           {"id": 42, "utilisateur_id": 32, "statut_demande": "en_attente", "statut_souhaite": null,
            "batiment_id_souhaite": 2, "batiment_nom_souhaite": "Bâtiment B", "motif": null,
            "motif_refus": null, "traite_le": null, "traite_par_id": null, "cree_le": "2026-11-08T17:10:00",
-           "utilisateur_nom": "Morgan Fictif", "utilisateur_email": "morgan@exemple.fr",
+           "utilisateur_nom": "Morgan Fictif", "utilisateur_email": "morgan@example.com",
            "statut_actuel": "locataire", "batiment_actuel": "Bâtiment A"}
         ]
         """#

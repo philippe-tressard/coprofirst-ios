@@ -58,10 +58,10 @@ import Testing
 
 @Test func unLienWebOuCourrielEstTouchable() {
     let riche = TexteDuSite.riche(
-        "<p>Voir <a href=\"https://exemple.fr/a?b=1&amp;c=2\">ici</a> ou "
-            + "<a href=\"mailto:cs@exemple.fr\">écrire</a></p>")
+        "<p>Voir <a href=\"https://example.com/a?b=1&amp;c=2\">ici</a> ou "
+            + "<a href=\"mailto:cs@example.com\">écrire</a></p>")
     let liens = riche.runs.compactMap(\.link)
-    #expect(liens.map(\.absoluteString) == ["https://exemple.fr/a?b=1&c=2", "mailto:cs@exemple.fr"])
+    #expect(liens.map(\.absoluteString) == ["https://example.com/a?b=1&c=2", "mailto:cs@example.com"])
 }
 
 @Test func leDetailGardeGrasItaliqueListesEtTitres() {
@@ -103,10 +103,10 @@ import Testing
 /// Le rendu en très grand texte : le texte riche suit Dynamic Type, sans rien perdre.
 @MainActor
 @Test func leDetailSeRendEnTresGrandTexte() throws {
-    let texte = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://exemple.fr\">voir</a>.</p>"))
+    let texte = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://example.com\">voir</a>.</p>"))
         .frame(width: 320)
         .environment(\.dynamicTypeSize, .accessibility5)
-    let normal = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://exemple.fr\">voir</a>.</p>"))
+    let normal = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://example.com\">voir</a>.</p>"))
         .frame(width: 320)
     let grand = try #require(ImageRenderer(content: texte).uiImage)
     let petit = try #require(ImageRenderer(content: normal).uiImage)

@@ -20,23 +20,23 @@ private func lien(_ texte: String) throws -> Destination {
 // MARK: - Les chemins de l'AASA servi par les installations (coprofirst#2459)
 
 @Test func chaqueCheminDeLAASAMeneASonEcran() throws {
-    #expect(try lien("https://tilleuls.exemple.fr/").ecran == .accueil)
-    #expect(try lien("https://tilleuls.exemple.fr").ecran == .accueil, "le QR de la fiche d'arrivée")
-    #expect(try lien("https://tilleuls.exemple.fr/tickets").ecran == .page(affaires))
-    #expect(try lien("https://tilleuls.exemple.fr/tickets/23").ecran == .affaire(id: 23, message: nil))
-    #expect(try lien("https://tilleuls.exemple.fr/tickets/23#msg-45").ecran == .affaire(id: 23, message: 45))
-    #expect(try lien("https://tilleuls.exemple.fr/auth/connexion").ecran == .connexion)
+    #expect(try lien("https://tilleuls.example.com/").ecran == .accueil)
+    #expect(try lien("https://tilleuls.example.com").ecran == .accueil, "le QR de la fiche d'arrivée")
+    #expect(try lien("https://tilleuls.example.com/tickets").ecran == .page(affaires))
+    #expect(try lien("https://tilleuls.example.com/tickets/23").ecran == .affaire(id: 23, message: nil))
+    #expect(try lien("https://tilleuls.example.com/tickets/23#msg-45").ecran == .affaire(id: 23, message: 45))
+    #expect(try lien("https://tilleuls.example.com/auth/connexion").ecran == .connexion)
 }
 
 @Test func lesActualitesSontLaVueAffaires() throws {
-    #expect(try lien("https://tilleuls.exemple.fr/actualites").ecran == .page(affaires))
-    #expect(try lien("https://tilleuls.exemple.fr/actualites#pub-7").ecran == .page(affaires))
+    #expect(try lien("https://tilleuls.example.com/actualites").ecran == .page(affaires))
+    #expect(try lien("https://tilleuls.example.com/actualites#pub-7").ecran == .page(affaires))
 }
 
 @Test func unLienAJetonSOuvreDansSafariIntegreAvecSonJeton() throws {
     for texte in [
-        "https://tilleuls.exemple.fr/auth/verifier-email?token=abc",
-        "https://tilleuls.exemple.fr/auth/reinitialisation-mdp?token=abc",
+        "https://tilleuls.example.com/auth/verifier-email?token=abc",
+        "https://tilleuls.example.com/auth/reinitialisation-mdp?token=abc",
     ] {
         let url = try #require(URL(string: texte))
         #expect(try lien(texte).ecran == .navigateur(url), "le jeton n'est pas perdu")
@@ -44,25 +44,25 @@ private func lien(_ texte: String) throws -> Destination {
 }
 
 @Test func unCheminInconnuOuMalFormeResteAuSite() throws {
-    let inconnu = try #require(URL(string: "https://tilleuls.exemple.fr/mentions-legales"))
+    let inconnu = try #require(URL(string: "https://tilleuls.example.com/mentions-legales"))
     #expect(try lien(inconnu.absoluteString).ecran == .navigateur(inconnu))
-    let illisible = try #require(URL(string: "https://tilleuls.exemple.fr/tickets/abc"))
+    let illisible = try #require(URL(string: "https://tilleuls.example.com/tickets/abc"))
     #expect(try lien(illisible.absoluteString).ecran == .navigateur(illisible))
 }
 
 @Test func uneRouteDuMenuOuvreSaPage() throws {
-    #expect(try lien("https://tilleuls.exemple.fr/annuaire").ecran == .page("annuaire"))
+    #expect(try lien("https://tilleuls.example.com/annuaire").ecran == .page("annuaire"))
 }
 
 @Test func lAdresseEstCelleDUneInstallation() throws {
-    #expect(try lien("https://TILLEULS.exemple.fr/tickets/1").adresse == tilleuls.adresse, "hôte normalisé")
-    let avecPort = try lien("https://essai.exemple.fr:8443/")
-    #expect(avecPort.adresse.absoluteString == "https://essai.exemple.fr:8443")
-    #expect(AdresseInstallation.enSaisie(avecPort.adresse) == "essai.exemple.fr:8443")
+    #expect(try lien("https://TILLEULS.example.com/tickets/1").adresse == tilleuls.adresse, "hôte normalisé")
+    let avecPort = try lien("https://essai.example.com:8443/")
+    #expect(avecPort.adresse.absoluteString == "https://essai.example.com:8443")
+    #expect(AdresseInstallation.enSaisie(avecPort.adresse) == "essai.example.com:8443")
 }
 
 @Test func seulHTTPSPasse() throws {
-    for texte in ["http://tilleuls.exemple.fr/tickets/1", "coprofirst://tilleuls.exemple.fr/", "https:///tickets/1"] {
+    for texte in ["http://tilleuls.example.com/tickets/1", "coprofirst://tilleuls.example.com/", "https:///tickets/1"] {
         let url = try #require(URL(string: texte))
         #expect(LienUniversel.destination(url) == nil, "\(texte)")
     }
@@ -105,7 +105,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 
 @MainActor @Test func dansLaResidenceOuverteLEcranSOuvreAussitot() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    parcours.suivre(try lien("https://tilleuls.example.com/tickets/41"))
     #expect(parcours.ouverte == tilleuls)
     #expect(parcours.onglet == affaires)
     #expect(parcours.porte.affaireDansLOnglet == 41)
@@ -116,7 +116,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
     var residence = tilleuls
     residence.ordrePages = ["tableau-de-bord", "residence", "mon-lot", "annuaire", affaires]
     let parcours = try parcoursDeTest(ouverte: residence)
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    parcours.suivre(try lien("https://tilleuls.example.com/tickets/41"))
     #expect(parcours.porte.affaireEnFeuille?.id == 41)
     #expect(parcours.onglet == OrdrePages.idFil, "l'onglet ne change pas sous la feuille")
 }
@@ -124,7 +124,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 @MainActor @Test func uneResidenceConnueSeRouvreParSaConnexionPuisMontreLEcran() throws {
     let autre = ServiceSimule.demo
     let parcours = try parcoursDeTest(ouverte: autre, connues: [tilleuls])
-    let destination = try lien("https://tilleuls.exemple.fr/tickets/41")
+    let destination = try lien("https://tilleuls.example.com/tickets/41")
     parcours.suivre(destination)
     #expect(parcours.ouverte == nil, "le lien vise une autre résidence")
     #expect(parcours.reconnue == tilleuls)
@@ -138,7 +138,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 
 @MainActor @Test func sansDecouverteUnHoteJamaisVuNOuvreRien() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
-    let ailleurs = try lien("https://inconnue.exemple.org/")
+    let ailleurs = try lien("https://inconnue.example.org/")
     #expect(parcours.suivre(ailleurs, decouvrir: false) == false, "une notification ne découvre pas (#17)")
     #expect(parcours.ouverte == tilleuls)
     #expect(parcours.chemin.isEmpty && parcours.porte.enAttente == nil)
@@ -147,7 +147,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 @MainActor @Test func laDerniereResidenceGardeSonEcranDEntree() throws {
     let parcours = try parcoursDeTest(connues: [tilleuls])
     #expect(parcours.connues.derniere == tilleuls)
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    parcours.suivre(try lien("https://tilleuls.example.com/tickets/41"))
     #expect(parcours.chemin.isEmpty, "le retour par Face ID de l'entrée reste à l'écran")
     #expect(parcours.ouvertureLibre(tilleuls))
     parcours.ouvrir(tilleuls)
@@ -156,7 +156,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 
 @MainActor @Test func unHoteJamaisVuPasseParLaConnexionPreRemplieVenueDUnLien() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
-    let destination = try lien("https://inconnue.exemple.org/tickets/3")
+    let destination = try lien("https://inconnue.example.org/tickets/3")
     parcours.suivre(destination)
     #expect(parcours.ouverte == nil)
     #expect(parcours.reconnue == nil, "aucune palette ni nom avant la découverte")
@@ -168,7 +168,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 
 @MainActor @Test func unLienEnAttenteNeSuitPasUneAutreResidence() throws {
     let parcours = try parcoursDeTest(connues: [tilleuls])
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    parcours.suivre(try lien("https://tilleuls.example.com/tickets/41"))
     parcours.ouvrir(ServiceSimule.demo)
     #expect(parcours.onglet == OrdrePages.idFil)
     #expect(parcours.porte.affaireDansLOnglet == nil)
@@ -177,7 +177,7 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 
 @MainActor @Test func auLancementLeRetourNOuvrePasUneAutreResidenceQueCelleDuLien() throws {
     let parcours = try parcoursDeTest(connues: [tilleuls, ServiceSimule.demo])  // la dernière : la démo
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/tickets/41"))
+    parcours.suivre(try lien("https://tilleuls.example.com/tickets/41"))
     #expect(parcours.ouvertureLibre(ServiceSimule.demo) == false, "le Face ID d'office de la dernière résidence attend")
     #expect(parcours.ouvertureLibre(tilleuls))
     parcours.chemin = []  // l'utilisateur revient de la connexion du lien
@@ -198,14 +198,14 @@ private func parcoursDeTest(ouverte: Installation? = nil, connues: [Installation
 @MainActor @Test func unLienDeConnexionVersLaResidenceOuverteMeneAuFil() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
     parcours.onglet = affaires
-    parcours.suivre(try lien("https://tilleuls.exemple.fr/auth/connexion"))
+    parcours.suivre(try lien("https://tilleuls.example.com/auth/connexion"))
     #expect(parcours.ouverte == tilleuls)
     #expect(parcours.onglet == OrdrePages.idFil)
 }
 
 @MainActor @Test func unLienAJetonNeQuittePasLaResidence() throws {
     let parcours = try parcoursDeTest(ouverte: tilleuls)
-    let url = try #require(URL(string: "https://inconnue.exemple.org/auth/verifier-email?token=abc"))
+    let url = try #require(URL(string: "https://inconnue.example.org/auth/verifier-email?token=abc"))
     parcours.suivre(try #require(LienUniversel.destination(url)))
     #expect(parcours.porte.pageWeb?.url == url)
     #expect(parcours.ouverte == tilleuls)

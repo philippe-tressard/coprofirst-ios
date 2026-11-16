@@ -11,7 +11,7 @@ import Testing
     ("  Demo.CoproFirst.fr  ", "https://demo.coprofirst.fr"),
     ("https://demo.coprofirst.fr/auth/connexion?x=1", "https://demo.coprofirst.fr"),
     ("http://demo.coprofirst.fr", "https://demo.coprofirst.fr"),
-    ("residence.exemple.fr:8443", "https://residence.exemple.fr:8443"),
+    ("residence.example.com:8443", "https://residence.example.com:8443"),
 ])
 func uneAdresseSeRameneAuSite(saisie: String, attendu: String) {
     #expect(AdresseInstallation.normaliser(saisie)?.absoluteString == attendu)

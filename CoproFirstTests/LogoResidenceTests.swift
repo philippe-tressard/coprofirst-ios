@@ -40,12 +40,12 @@ func uneVersionIllisibleNeSeDevinePas(_ texte: String?) {
 
 private func installation(logo: Bool = true, sombre: Bool? = true, contrat: String?) -> Installation {
     Installation(
-        adresse: URL(string: "https://residence.exemple.fr")!, nom: "Résidence", aUnLogo: logo,
+        adresse: URL(string: "https://residence.example.com")!, nom: "Résidence", aUnLogo: logo,
         versionContrat: contrat, aUnLogoSombre: sombre)
 }
 
-private let logoClair = "https://residence.exemple.fr/api/config/logo.png"
-private let logoSombre = "https://residence.exemple.fr/api/config/logo.png?variante=sombre"
+private let logoClair = "https://residence.example.com/api/config/logo.png"
+private let logoSombre = "https://residence.example.com/api/config/logo.png?variante=sombre"
 
 @Test func auSombreLaVarianteSeDemandeAPartirDu1_15_0() {
     #expect(installation(contrat: "1.15.0").adresseLogo(sombre: true)?.absoluteString == logoSombre)
@@ -75,7 +75,7 @@ func avantLe1_15_0LeLogoResteCeluiDuClair(_ contrat: String?) {
 // MARK: - Ce que sert GET /config
 
 @Test func laConfigurationDitLeContratEtLaVarianteSombre() throws {
-    let adresse = URL(string: "https://residence.exemple.fr")!
+    let adresse = URL(string: "https://residence.example.com")!
     let recente = try #require(
         Installation(
             adresse: adresse,
@@ -93,7 +93,7 @@ func avantLe1_15_0LeLogoResteCeluiDuClair(_ contrat: String?) {
 
 @Test func uneResidenceRetenueAvantLaVarianteSeRelitEncore() throws {
     // Une installation gardée par une version de l'app d'avant #70 n'a ni l'un ni l'autre.
-    let json = #"{"adresse":"https://residence.exemple.fr","nom":"Résidence","aUnLogo":true}"#
+    let json = #"{"adresse":"https://residence.example.com","nom":"Résidence","aUnLogo":true}"#
     let relue = try JSONDecoder().decode(Installation.self, from: Data(json.utf8))
     #expect(relue.versionContrat == nil && relue.aUnLogoSombre == nil)
     #expect(relue.adresseLogo(sombre: true)?.absoluteString == logoClair)

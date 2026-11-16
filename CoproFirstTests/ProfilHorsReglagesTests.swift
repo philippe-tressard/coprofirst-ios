@@ -32,13 +32,13 @@ private func contenu(_ suite: String) -> String {
     // (#82), puis le mot de passe part par la garde ; enfin la relecture du profil.
     let garde = parcours.garde
     func seConnecter() async throws -> Bool {
-        try await garde.connecter(residence, origine: .saisie, email: "resident@exemple.fr", motDePasse: "secret")
+        try await garde.connecter(residence, origine: .saisie, email: "resident@example.com", motDePasse: "secret")
     }
     #expect(try await seConnecter() == false, "la confirmation de l'hôte d'abord")
     await garde.verifier()
     #expect(garde.confirmer())
     #expect(try await seConnecter())
-    parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: residence)
+    parcours.connues.retenirIdentifiant("resident@example.com", pour: residence)
     parcours.ouvrir(residence, premiereConnexion: true)
     await parcours.rafraichirProfil()
     let profil = try #require(parcours.ouverteAJour?.profil, "le profil est bien connu de l'app")
@@ -47,7 +47,7 @@ private func contenu(_ suite: String) -> String {
 
     let ecrit = contenu(suite)
     #expect(ecrit.contains(residence.nom), "la résidence, elle, est retenue")
-    for trace in profil.roles + [profil.statut, profil.libelleLogement, "resident@exemple.fr"].compactMap({ $0 }) {
+    for trace in profil.roles + [profil.statut, profil.libelleLogement, "resident@example.com"].compactMap({ $0 }) {
         #expect(!ecrit.contains(trace), "« \(trace) » ne doit pas être dans les réglages")
     }
     #expect(!ecrit.contains("profil"), "aucun profil sérialisé")
@@ -55,7 +55,7 @@ private func contenu(_ suite: String) -> String {
     // Relu au lancement suivant, depuis le coffre.
     let relance = InstallationsConnues(reglages: reglages, coffre: coffre)
     #expect(relance.liste.first?.profil == profil)
-    #expect(relance.identifiant(residence) == "resident@exemple.fr")
+    #expect(relance.identifiant(residence) == "resident@example.com")
 }
 
 /// Ce qu'une version antérieure a écrit en clair passe au coffre, puis s'efface.
@@ -68,16 +68,16 @@ private func contenu(_ suite: String) -> String {
     let profil = ProfilResidence(statut: "locataire", roles: ["résident"], libelleLogement: "Bât. B, T2")
     ancienne.profil = profil
     reglages.set(try JSONEncoder().encode([ancienne]), forKey: "installations-connues")
-    reglages.set("ancien@exemple.fr", forKey: "identifiant." + ancienne.hote)
+    reglages.set("ancien@example.com", forKey: "identifiant." + ancienne.hote)
 
     let coffre = CoffreEnMemoire()
     let connues = InstallationsConnues(reglages: reglages, coffre: coffre)
 
     #expect(connues.liste.first?.profil == profil, "le profil reste connu")
-    #expect(connues.identifiant(ancienne) == "ancien@exemple.fr", "le courriel reste pré-rempli")
+    #expect(connues.identifiant(ancienne) == "ancien@example.com", "le courriel reste pré-rempli")
     let ecrit = contenu(suite)
     #expect(!ecrit.contains("locataire") && !ecrit.contains("Bât. B"), "le profil a quitté les réglages")
-    #expect(!ecrit.contains("ancien@exemple.fr"), "le courriel a quitté les réglages")
+    #expect(!ecrit.contains("ancien@example.com"), "le courriel a quitté les réglages")
     #expect(ecrit.contains(ancienne.nom), "la résidence reste")
 }
 
@@ -96,11 +96,11 @@ private struct CoffreQuiRefuse: CoffreDuCompte {
     var ancienne = ServiceSimule.residence
     ancienne.profil = ProfilResidence(statut: "locataire", roles: ["résident"], libelleLogement: nil)
     reglages.set(try JSONEncoder().encode([ancienne]), forKey: "installations-connues")
-    reglages.set("ancien@exemple.fr", forKey: "identifiant." + ancienne.hote)
+    reglages.set("ancien@example.com", forKey: "identifiant." + ancienne.hote)
 
     _ = InstallationsConnues(reglages: reglages, coffre: CoffreQuiRefuse())
 
-    #expect(reglages.string(forKey: "identifiant." + ancienne.hote) == "ancien@exemple.fr", "le courriel reste")
+    #expect(reglages.string(forKey: "identifiant." + ancienne.hote) == "ancien@example.com", "le courriel reste")
     #expect(contenu(suite).contains("locataire"), "le profil reste, jusqu'à ce que le coffre l'accepte")
 }
 

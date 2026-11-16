@@ -61,7 +61,7 @@ private func parcoursOuvert() throws -> Ouvert {
     let ouvert = try parcoursOuvert()
     let (parcours, service) = (ouvert.parcours, ouvert.service)
     parcours.connues.retenir(ServiceSimule.demo)
-    parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: ServiceSimule.residence)
+    parcours.connues.retenirIdentifiant("resident@example.com", pour: ServiceSimule.residence)
     await parcours.oublierTout()
     #expect(parcours.connues.liste.isEmpty)
     #expect(parcours.connues.identifiant(ServiceSimule.residence) == nil, "le courriel retenu est effacé")
@@ -90,13 +90,13 @@ private func parcoursOuvert() throws -> Ouvert {
         connues: InstallationsConnues(reglages: reglages, coffre: coffre))
     #expect(neuf.connues.derniere == nil && neuf.reconnue == nil, "appareil neuf : l'accueil")
 
-    neuf.connues.retenirIdentifiant("resident@exemple.fr", pour: ServiceSimule.residence)
+    neuf.connues.retenirIdentifiant("resident@example.com", pour: ServiceSimule.residence)
     neuf.ouvrir(ServiceSimule.residence)
 
     let relance = Parcours(
         service: ServiceSimule(delai: .milliseconds(1)),
         connues: InstallationsConnues(reglages: reglages, coffre: coffre))
     #expect(relance.reconnue == ServiceSimule.residence, "la palette de la résidence dès le 1er écran")
-    #expect(relance.connues.identifiant(ServiceSimule.residence) == "resident@exemple.fr")
+    #expect(relance.connues.identifiant(ServiceSimule.residence) == "resident@example.com")
     #expect(relance.connues.identifiant(ServiceSimule.demo) == nil, "un courriel par résidence")
 }

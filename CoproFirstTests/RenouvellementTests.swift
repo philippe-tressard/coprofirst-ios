@@ -119,7 +119,7 @@ private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
         let serveur = ServeurAJetonCourt()
         let garde = GardeHote(service: service(serveur), connues: { [residence] })
         await #expect(throws: ErreurService.identifiantsRefuses) {
-            try await garde.connecter(residence, origine: .saisie, email: "a@exemple.fr", motDePasse: "x")
+            try await garde.connecter(residence, origine: .saisie, email: "a@example.com", motDePasse: "x")
         }
         #expect(await serveur.renouvellements == 0)
     }

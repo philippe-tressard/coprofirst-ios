@@ -15,9 +15,15 @@ on:
 permissions:
   contents: read
 
+# Une PR : sa nouvelle tête annule l'exécution périmée. `main` : jamais — chaque fusion se
+# valide jusqu'au bout. Le filet de `main` après fusion (standards/09 §8 bis) n'existe que
+# si sa CI aboutit : le 15/11/2026, 6 exécutions de main sur 8 avaient été annulées par
+# la fusion suivante, aucune fusion n'était validée. Sur main, un groupe PAR COMMIT : GitHub
+# ne garde qu'une exécution en attente par groupe, et deux fusions rapprochées évinçaient
+# encore la précédente, sans annulation demandée (coprofirst-android#62).
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   depot:

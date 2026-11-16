@@ -82,7 +82,7 @@ def autotest() -> bool:
         "#if DEBUG\nlet s = ServiceSimule()\n#endif\n": 0,
         "#if DEBUG\n#if os(iOS)\nlet f = FixturesAcces.lus()\n#endif\n#endif\n": 0,
         "/// Réalisé par `ServiceSimule`.\nlet a = 1 // ServiceSimule\n": 0,
-        'let u = URL(string: "https://exemple.fr")!\n': 0,
+        'let u = URL(string: "https://example.com")!\n': 0,
     }
     for texte, attendu in cas.items():
         if len(fautes(texte)) != attendu:
