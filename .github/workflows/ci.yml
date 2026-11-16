@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
 # CI : garde-fous du dépôt et REUSE (Linux) ; build, SwiftLint et tests unitaires ; tests
-# d'interface en deux lots — en parallèle sur macOS, réunis sous le check requis. Une PR
+# d'interface en trois lots — en parallèle sur macOS, réunis sous le check requis. Une PR
 # qui ne touche que la documentation n'occupe aucun exécutant macOS (#204).
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
 name: CI
@@ -127,7 +127,7 @@ jobs:
           -only-testing:CoproFirstUITests/ConnexionUITests
 
   interface:
-    name: Interface (${{ matrix.lot }}/2)
+    name: Interface (${{ matrix.lot }}/3)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
@@ -142,22 +142,24 @@ jobs:
         ${{ github.event_name == 'push' && format('ci-interface-main-{0}', matrix.lot)
         || format('ci-interface-{0}-{1}', github.run_id, matrix.lot) }}
       cancel-in-progress: false
-    # Les tests d'interface seuls approchaient déjà 70 min : deux lots, chacun sous 70.
+    # Les tests d'interface seuls font ~72 min (16/11/2026) : trois lots, chacun sous BUDGET_LOT.
     timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
-        lot: [1, 2]
+        lot: [1, 2, 3]
     env:
-      # Le lot 1, nommé classe par classe ; le lot 2 joue TOUT le reste — une classe neuve y
-      # tombe d'office, aucune n'est oubliée. Rééquilibré sur les durées MESURÉES en CI le
-      # 16/11/2026 (#243) : le lot 2 était coupé à 70 min (main 17c0911), le lot 1 tenait en
-      # 25 ; SaisieAffaire (~10-14 min) et PrestatairesAffaire (~4 min) passent au lot 1.
-      # Chaque lot vise ~45 min ; au-delà de BUDGET_LOT, l'étape échoue en le disant.
+      # Les lots 1 et 2, nommés classe par classe ; le lot 3 joue TOUT le reste — une classe
+      # neuve y tombe d'office, aucune n'est oubliée. Équilibrés sur les durées MESURÉES en CI
+      # (moyennes de trois runs, 16/11/2026, #243) : ~72 min de tests, des runners qui varient
+      # du simple à ~1,4 — à deux lots, un runner lent dépassait le budget (lot 1 : 68 min).
+      # ~1560 s, ~1425 s et ~1320 s de tests, ~40 min par job, ~50 sur un runner lent.
       LOT_1: >-
-        CommunauteUITests AdminUITests CartesDuFilUITests AffairesUITests
-        AccesUITests HistoriqueUITests EcheanceUITests SaisieAffaireUITests
-        PrestatairesAffaireUITests
+        SaisieAffaireUITests PrestatairesAffaireUITests CartesDuFilUITests
+        AffairesUITests HistoriqueUITests EcheanceUITests
+      LOT_2: >-
+        CommunauteUITests AdminUITests AccesUITests SondageUITests
+        ApercusSaisieUITests DelegationsCSUITests
       # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
       # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
       BUDGET_LOT: 55
@@ -176,16 +178,22 @@ jobs:
           LOT: ${{ matrix.lot }}
         run: |
           filtres=()
-          [ "$LOT" = 2 ] && filtres+=(-only-testing:CoproFirstUITests)
-          for classe in $LOT_1; do
-            # Une classe renommée ne se jouerait plus nulle part, sans bruit : INCONNU.
-            grep -qE "class $classe([^[:alnum:]_]|$)" CoproFirstUITests/*.swift \
-              || { echo "::error::LOT_1 nomme $classe, absente de CoproFirstUITests"; exit 2; }
-            if [ "$LOT" = 1 ]; then
-              filtres+=("-only-testing:CoproFirstUITests/$classe")
-            else
-              filtres+=("-skip-testing:CoproFirstUITests/$classe")
-            fi
+          [ "$LOT" = 3 ] && filtres+=(-only-testing:CoproFirstUITests)
+          for nomme in 1 2; do
+            liste=LOT_$nomme
+            for classe in ${!liste}; do
+              # Une classe renommée ne se jouerait plus nulle part, sans bruit : INCONNU.
+              grep -qE "class $classe([^[:alnum:]_]|$)" CoproFirstUITests/*.swift \
+                || { echo "::error::$liste nomme $classe, absente de CoproFirstUITests"; exit 2; }
+              # Nommée deux fois, elle jouerait deux fois et fausserait l'équilibre.
+              [ "$nomme" = 2 ] && grep -qw "$classe" <<< "$LOT_1" \
+                && { echo "::error::$classe est dans LOT_1 et LOT_2"; exit 2; }
+              if [ "$LOT" = "$nomme" ]; then
+                filtres+=("-only-testing:CoproFirstUITests/$classe")
+              elif [ "$LOT" = 3 ]; then
+                filtres+=("-skip-testing:CoproFirstUITests/$classe")
+              fi
+            done
           done
           debut=$SECONDS
           # `bash -e` : le statut se garde pour que la durée s'écrive aussi sur un échec.
@@ -195,13 +203,13 @@ jobs:
           echo "Lot $LOT : $minutes min de build et de tests (budget $BUDGET_LOT)" >> "$GITHUB_STEP_SUMMARY"
           [ "$statut" = 0 ] || exit "$statut"
           if [ "$minutes" -gt "$BUDGET_LOT" ]; then
-            echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer LOT_1 sur les durées mesurées (#243)"
+            echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer LOT_1 et LOT_2 sur les durées mesurées (#243)"
             exit 1
           fi
 
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
-    # unitaires ET les deux lots d'interface le sont, ou si la détection a LU une PR de
+    # unitaires ET les trois lots d'interface le sont, ou si la détection a LU une PR de
     # documentation seule — jamais par défaut : une détection en échec rend rouge. Sur les
     # PR seulement : sur main, une interface remplacée dans sa file (#235) le rendrait vert
     # sans avoir joué, ou rouge sans faute — chaque job y parle pour lui-même.
