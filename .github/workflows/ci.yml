@@ -35,21 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Garde-fous du dépôt
-        run: bash scripts/verifier-depot.sh
-      - name: Écart au plancher (rien de généré n'est retouché à la main)
-        # Régénère tout depuis le plancher de coprofirst (scripts/generateurs/_plancher.py)
-        # et compare à l'octet, API simulée comprise ; une version publiée au-dessus,
-        # c'est le workflow quotidien « Concordance avec CoproFirst » (#20).
+        # UNE étape, la même qu'au poste et au hook (#241) : écart au plancher, logo et
+        # REUSE sont joués par ce script (scripts/controles-distants.sh). Un contrôle de
+        # plus s'y ajoute, jamais ici — scripts/verifier-ci.py refuse une 2e étape.
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python3 -I scripts/concordance.py --plancher
-      - name: Logo et sa licence identiques à coprofirst
-        run: bash scripts/verifier-logo.sh
-      - name: REUSE
-        run: |
-          python3 -m venv "$RUNNER_TEMP/reuse"
-          "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check "reuse[charset-normalizer]==6.2.0"
-          "$RUNNER_TEMP/reuse/bin/reuse" lint
+        run: bash scripts/verifier-depot.sh
 
   # Documentation seule ? Lue sur la liste des fichiers de la PR ; un push sur main, une
   # liste vide ou illisible lancent tout (défaut fermé, scripts/ci_documentation_seule.py).

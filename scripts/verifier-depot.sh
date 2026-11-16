@@ -56,7 +56,10 @@
 #      la fiche y est listé embarqué, et chaque version écrite est l'épinglée
 #      (scripts/verifier-dependances.py, #143) ;
 #  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
-#      #135) : ni ses trois routes, ni son service, ni son délai ailleurs.
+#      #135) : ni ses trois routes, ni son service, ni son délai ailleurs ;
+#  21. ce que lit coprofirst ou demande reuse : écart au plancher, logo, REUSE
+#      (scripts/controles-distants.sh) — et ce script est la seule étape du job
+#      « Dépôt » de la CI (scripts/verifier-ci.py, #241). INCONNU (sortie 2) ≠ vert.
 #
 # Il juge les fichiers que git connaît (index compris) : un fichier ignoré n'est
 # pas livré, il n'a pas à passer.
@@ -471,6 +474,15 @@ grep '^❓' <<< "$CONFIDENTIALITE" || true
 python3 -I scripts/verifier-dependances.py --autotest >/dev/null || echec "verifier-dependances.py : autotest en échec"
 DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCES"; echec "DEPENDANCES.md ≠ Package.resolved, ou un composant tiers sans ses textes"; }
 
+# Le job « Dépôt » de la CI n'a qu'une étape, ce script (#241) : poste, hook et CI jouent
+# la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
+python3 -I scripts/verifier-ci.py --autotest >/dev/null || echec "verifier-ci.py : autotest en échec"
+JOB_DEPOT=$(python3 -I scripts/verifier-ci.py) || { echo "$JOB_DEPOT"; echec "job « Dépôt » de la CI à plus d'une étape"; }
+DISTANTS=$(bash scripts/controles-distants.sh)
+DISTANTS_CODE=$?
+[ "$DISTANTS_CODE" -eq 0 ] || echo "$DISTANTS"
+[ "$DISTANTS_CODE" -eq 2 ] || [ "$DISTANTS_CODE" -eq 0 ] || echec "contrôles distants (plancher, logo, REUSE)"
+
 if ! cmp -s LICENSE <(assembler_licence); then
   echec "LICENSE diverge de LICENSES/ — bash scripts/verifier-depot.sh --ecrire-licence"
 fi
@@ -479,4 +491,5 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+[ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
