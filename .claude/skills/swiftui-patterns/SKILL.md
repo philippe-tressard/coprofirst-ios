@@ -287,6 +287,12 @@ seule la CI le dit.
    contrôle le refuse (#147). Ce qui peut légitimement manquer — une boucle qui fait
    défiler, un chemin facultatif, une absence à prouver une fois l'écran posé — se
    LIT par `element.sonde()` (`Attente.sonde`), et ne s'affirme pas par `XCTAssertTrue`.
+   Un **toucher** passe par `app.toucher(élément)` : l'élément existe, sort de sous le
+   clavier, est amené à l'écran touchable, ne bouge plus, puis il est touché — et le test
+   vérifie l'EFFET. Un `tap()` direct partait sur une feuille qui montait encore et ne
+   faisait rien, sans erreur (#217). Les `tap()` directs restants sont une dette au
+   plafond décroissant (`scripts/verifier-touchers.sh`) : une classe touchée par un lot se
+   convertit entière et s'ajoute à `CLASSES_TOUCHER`, et le plafond baisse d'autant.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test

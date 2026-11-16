@@ -76,3 +76,42 @@ extension XCUIApplication {
         return element.exists
     }
 }
+
+extension XCUIApplication {
+    /// Le SEUL toucher des tests (#217, comme `toucher()` de coprofirst-android#126) : un
+    /// `tap()` envoyé trop tôt part sur un élément pas encore touchable — une feuille qui
+    /// monte encore, un bouton sous le clavier, un onglet hors du cadre — et ne fait rien,
+    /// sans erreur : le test échouait plus loin, sur l'effet absent (4 occurrences en CI sous
+    /// iOS 26.5). Ici, dans l'ordre : l'élément existe ; s'il est sous le clavier, le clavier
+    /// se ferme ; il est amené à l'écran, TOUCHABLE (`isHittable`, borné en `essais` : on le
+    /// touche, on ne le lit pas — #231) ; il ne bouge plus ; il est touché. L'EFFET se vérifie
+    /// ensuite par le test. `scripts/verifier-depot.sh` tient le plafond des `tap()` directs,
+    /// qui ne fait que baisser.
+    @MainActor
+    func toucher(_ element: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
+        let clavier = keyboards.firstMatch
+        if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
+           navigationBars.firstMatch.exists {
+            // Le titre de la barre de navigation : une zone neutre, hors du clavier, qui ne valide rien.
+            navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            _ = clavier.disparait()
+        }
+        amener(element, essais: essais)
+        immobile(element)
+        XCTAssertTrue(element.isHittable, "à toucher : \(element) pas touchable", file: file, line: line)
+        element.tap()
+    }
+
+    /// Attend que l'élément ne bouge plus : deux cadres égaux à un quart de seconde d'écart
+    /// (la fin d'une animation de feuille ou d'un défilement), au plus `essais` fois.
+    private func immobile(_ element: XCUIElement, essais: Int = 8) {
+        var avant = element.frame
+        for _ in 0..<essais {
+            _ = XCTWaiter().wait(for: [XCTestExpectation(description: "immobile")], timeout: 0.25)
+            let apres = element.frame
+            if apres == avant { return }
+            avant = apres
+        }
+    }
+}

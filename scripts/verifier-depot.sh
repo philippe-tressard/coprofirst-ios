@@ -432,6 +432,9 @@ done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
 
+# Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
+TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
+
 # Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
 # ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
 python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
@@ -476,4 +479,4 @@ if [ "$ECHECS" -gt 0 ]; then
   echo "── $ECHECS échec(s)"
   exit 1
 fi
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule » ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

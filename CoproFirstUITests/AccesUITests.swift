@@ -30,7 +30,7 @@ final class AccesUITests: XCTestCase {
         app.launch()
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.apparait())
-        barre.buttons["Accès"].tap()
+        app.toucher(barre.buttons["Accès"])
         XCTAssertTrue(app.navigationBars["Mes lots & accès"].apparait())
         return app
     }
@@ -41,64 +41,64 @@ final class AccesUITests: XCTestCase {
         XCTAssertTrue(app.libelleAcces("Caractéristiques").apparait(), "la carte du lot")
         app.capturerAcces("acces-1-mes-lots", dans: self)
 
-        app.elementAcces("acces.lot.417").tap()
+        app.toucher(app.elementAcces("acces.lot.417"))
         XCTAssertTrue(app.libelleAcces("Sous-sol A").apparait(), "le lot choisi s'affiche")
 
-        app.elementAcces("onglet.badges").tap()
+        app.toucher(app.elementAcces("onglet.badges"))
         XCTAssertTrue(app.libelleAcces("A4F21C07").apparait(), "les badges détenus")
         app.capturerAcces("acces-2-badges", dans: self)
 
-        app.elementAcces("onglet.telecommandes").tap()
+        app.toucher(app.elementAcces("onglet.telecommandes"))
         XCTAssertTrue(app.libelleAcces("TC-2048").apparait(), "les télécommandes détenues")
         app.capturerAcces("acces-3-telecommandes", dans: self)
 
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
         app.elementAcces("onglet.telecommandes").swipeLeft()
-        app.elementAcces("onglet.location").tap()
+        app.toucher(app.elementAcces("onglet.location"))
         XCTAssertTrue(app.libelleAcces("Locataire DU LOT 31").apparait(), "un bail actif")
         app.capturerAcces("acces-4-gestion-locative", dans: self)
-        app.libelleAcces("📁 Archives").tap()
+        app.toucher(app.libelleAcces("📁 Archives"))
         XCTAssertTrue(app.libelleAcces("Ancien locataire DU LOT 31").apparait(), "les archives")
     }
 
     @MainActor
     func testSignalerPerduPuisDeclarer() throws {
         let app = ouvrirAcces()
-        app.elementAcces("onglet.badges").tap()
+        app.toucher(app.elementAcces("onglet.badges"))
         let perdu = app.elementAcces("acces.perdu.12")
         XCTAssertTrue(perdu.apparait())
-        perdu.tap()
-        app.elementAcces("acces.perdu.confirmer").tap()
+        app.toucher(perdu)
+        app.toucher(app.elementAcces("acces.perdu.confirmer"))
         XCTAssertTrue(app.libelleAcces("Signalement enregistré").apparait())
         XCTAssertFalse(app.elementAcces("acces.perdu.12").exists, "un accès perdu ne se signale plus")
 
-        app.elementAcces("acces.gestes").tap()
-        app.elementAcces("acces.geste.declarer").tap()
+        app.toucher(app.elementAcces("acces.gestes"))
+        app.toucher(app.elementAcces("acces.geste.declarer"))
         let code = app.elementAcces("acces.declarer.code")
         XCTAssertTrue(code.apparait())
         code.typeText("TC-7777")
         app.capturerAcces("acces-5-declarer", dans: self)
-        app.elementAcces("acces.feuille.enregistrer").tap()
+        app.toucher(app.elementAcces("acces.feuille.enregistrer"))
         XCTAssertTrue(app.libelleAcces("Accès enregistré").apparait())
-        app.elementAcces("onglet.telecommandes").tap()
+        app.toucher(app.elementAcces("onglet.telecommandes"))
         XCTAssertTrue(app.libelleAcces("TC-7777").apparait(), "la liste est relue")
     }
 
     @MainActor
     func testNouvelAccesNeProposeQueSesLots() throws {
         let app = ouvrirAcces()
-        app.elementAcces("onglet.badges").tap()
-        app.elementAcces("acces.gestes").tap()
-        app.elementAcces("acces.geste.demander").tap()
+        app.toucher(app.elementAcces("onglet.badges"))
+        app.toucher(app.elementAcces("acces.gestes"))
+        app.toucher(app.elementAcces("acces.geste.demander"))
         XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].apparait())
-        app.elementAcces("acces.feuille.enregistrer").tap()
+        app.toucher(app.elementAcces("acces.feuille.enregistrer"))
         XCTAssertTrue(app.libelleAcces("Sélectionnez un lot").apparait(), "un lot est exigé")
-        app.elementAcces("acces.demande.lot").tap()
+        app.toucher(app.elementAcces("acces.demande.lot"))
         XCTAssertTrue(app.libelleAcces("Lot 15").apparait())
         XCTAssertTrue(app.libelleAcces("Lot 450").exists)
-        app.libelleAcces("Lot 15").tap()
+        app.toucher(app.libelleAcces("Lot 15"))
         app.capturerAcces("acces-6-nouvel-acces", dans: self)
-        app.elementAcces("acces.feuille.enregistrer").tap()
+        app.toucher(app.elementAcces("acces.feuille.enregistrer"))
         let avis = app.libelleAcces("Demande envoyée au conseil syndical")
         XCTAssertTrue(avis.apparait())
         // Le garde-fou de `-avis-durable` : passé les 4 s de l'app, l'avis est toujours là.
@@ -135,12 +135,9 @@ extension XCUIApplication {
     func ouvrirDansPlus(_ libelle: String) {
         let plus = descendants(matching: .any)["Plus"].firstMatch
         XCTAssertTrue(plus.apparait())
-        plus.tap()
-        let entree = libelleAcces(libelle)
-        _ = entree.sonde()
-        for _ in 0..<6 where !(entree.exists && entree.isHittable) { swipeUp() }
-        XCTAssertTrue(entree.exists, "« \(libelle) » dans Plus")
-        entree.tap()
+        toucher(plus)
+        // Aux grandes tailles, `toucher` fait défiler jusqu'à la ligne.
+        toucher(libelleAcces(libelle))
     }
 
     @MainActor
