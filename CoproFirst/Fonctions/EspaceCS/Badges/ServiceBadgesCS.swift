@@ -29,19 +29,13 @@ struct AccesDuParc: Hashable, Sendable, Identifiable {
     var porteurRang: Int
     var porteurId: Int?
     var lotLibelle: String?
-    /// Ce que l'accès ouvre : des CODES de périmètre — nommés par l'arbre au seul repli
-    /// d'une installation antérieure au contrat 1.24.0 (`lieu(arbre:)`).
-    var perimetreCible: [String]
     var statut: String
     var chezLocataire: Bool
     /// Ce qu'il ouvre, nommé par le serveur (`perimetre_libelle`, contrat 1.24.0, #130).
     var perimetreLibelle: String?
 
-    /// Ce que l'accès ouvre, à montrer : le lieu servi (`""` → rien), sinon le repli au
-    /// plancher (`LieuServi`, le seul).
-    func lieu(arbre: [Perimetre]) -> String? {
-        LieuServi.lieu(perimetreLibelle, codes: perimetreCible, arbre: arbre)
-    }
+    /// Ce que l'accès ouvre, à montrer : le lieu servi (`""` → rien).
+    var lieu: String? { LieuServi.lieu(perimetreLibelle) }
 
     var id: String { "\(type.rawValue)-\(numero)" }
 
@@ -85,7 +79,7 @@ extension AccesDuParc {
         self.init(
             type: type, numero: acces.id, code: acces.code, porteurNom: acces.porteurNom,
             porteurRang: acces.porteurRang, porteurId: acces.porteurId, lotLibelle: acces.lotLibelle,
-            perimetreCible: acces.perimetreCible ?? [], statut: acces.statut.rawValue,
+            statut: acces.statut.rawValue,
             chezLocataire: acces.chezLocataire, perimetreLibelle: acces.perimetreLibelle)
     }
 }

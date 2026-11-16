@@ -118,7 +118,7 @@ struct Bail: Hashable, Sendable, Identifiable {
     var enCours: Bool { statut == "actif" || statut == "en_cours_sortie" }
     var termine: Bool { statut == "termine" }
     var nomLocataire: String {
-        FormatsDuSite.nom(affiche: locataireNomServi, prenom: locatairePrenom, nom: locataireNom)
+        FormatsDuSite.nom(servi: locataireNomServi)
     }
     /// Le regroupement du site : un même locataire, ou ce bail seul (`ext_<id>`).
     var cleLocataire: String { locataireId.map { "\($0)" } ?? "ext_\(id)" }
@@ -153,12 +153,12 @@ struct BailDuLocataire: Hashable, Sendable {
     var bailleurEmail: String?
     var bailleurTelephone: String?
     /// L'étage du lot en clair (« 2ème »), tel que le serveur le sert (`lot_etage_libelle`,
-    /// contrat 1.21.0, #127) ; `nil` d'une installation antérieure : le nombre, comme avant.
+    /// contrat 1.21.0, #127) ; facultatif au contrat : non servi, le nombre.
     var lotEtageLibelle: String?
     /// `bailleur_nom_affiche` servi (contrat 1.25.0, #135).
     var bailleurNomServi: String?
 
-    var nomBailleur: String { FormatsDuSite.nom(affiche: bailleurNomServi, prenom: bailleurPrenom, nom: bailleurNom) }
+    var nomBailleur: String { FormatsDuSite.nom(servi: bailleurNomServi) }
 }
 
 /// Une demande d'accès (`CommandeAccesCreate`).

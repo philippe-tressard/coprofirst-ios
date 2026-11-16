@@ -34,8 +34,6 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
     var assisteIa: Bool?
     /// Le texte simple, composé par le serveur pour une carte.
     var apercu: String
-    /// Le lieu d'avant #130 (« Toute la copropriété » pour le défaut) : le seul repli.
-    var perimetreLabel: String
     var formatLabel: String
     var images: [String]
     var destinataires: [String]
@@ -55,15 +53,15 @@ struct AnnonceHall: Hashable, Sendable, Identifiable {
     var perimetreLibelle: String?
 
     /// Le lieu à montrer : servi, il fait foi (le défaut se tait, comme `BadgePerimetre`
-    /// du site) ; sinon `perimetre_label`, comme avant.
-    var lieu: String? { LieuServi.lieu(perimetreLibelle, repli: perimetreLabel) }
+    /// du site).
+    var lieu: String? { LieuServi.lieu(perimetreLibelle) }
 }
 
 extension AnnonceHall {
     init(_ lue: Components.Schemas.AnnonceHallRead) {
         self.init(
             id: lue.id, titre: lue.titre, message: lue.message, assisteIa: lue.assisteIa, apercu: lue.apercu,
-            perimetreLabel: lue.perimetreLabel, formatLabel: lue.formatLabel, images: lue.images,
+            formatLabel: lue.formatLabel, images: lue.images,
             destinataires: lue.destinataires, envoyeLe: lue.envoyeLe, archivee: lue.archivee, ticketId: lue.ticketId,
             creeLe: lue.creeLe, auteurNom: lue.auteurNom, peutArchiver: lue.peutArchiver,
             peutRestaurer: lue.peutRestaurer, peutSupprimer: lue.peutSupprimer, perimetreLibelle: lue.perimetreLibelle)
