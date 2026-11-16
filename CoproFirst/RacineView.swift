@@ -8,6 +8,8 @@ import SwiftUI
 /// Elle pose la palette en vigueur pour tout l'écran.
 struct RacineView: View {
     @Environment(Parcours.self) private var parcours
+    /// La classe de taille horizontale décide de la navigation (`PresentationNavigation`).
+    @Environment(\.horizontalSizeClass) private var classe
 
     var body: some View {
         @Bindable var parcours = parcours
@@ -56,5 +58,6 @@ struct RacineView: View {
         .animation(.smooth(duration: 0.35), value: parcours.ouverte)
         .animation(.smooth(duration: 0.4), value: palette.code)
         .onChange(of: palette.code, initial: true) { ApparenceNavigation.appliquer(palette) }
+        .onChange(of: classe, initial: true) { _, classe in parcours.presenter(.pour(classe)) }
     }
 }
