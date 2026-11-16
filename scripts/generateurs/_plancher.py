@@ -25,11 +25,13 @@ AU-DESSUS, le ticket « a-monter » dit jusqu'où le plancher peut monter.
 # aucun, et n'en lit aucun (spec multi-coproprietes §4.1 bis de coprofirst).
 INSTALLATIONS = ("demo.coprofirst.fr", "5hostachy.fr")
 
-VERSION = "v3.105.0"
+VERSION = "v3.106.0"
 RAISON = (
-    "la release publie les badges du verdict et les séparateurs (tables-clients.json 1.3.0) et les "
-    "règles de fichiers (constantes-clients.json 1.1.0) : ils se lisent là, plus par motif dans le "
-    "front (#239). Contrat 2.0.0 → 2.1.0 ; mesuré le 16/11/2026 : demo.coprofirst.fr et "
-    "5hostachy.fr servent 2.1.0, aucune installation sous le plancher. Le même plancher que l'app "
-    "Android. Montée décidée par le coordinateur des sessions, sur délégation écrite de Philippe"
+    "la release publie les familles d'affichage des fichiers (tables-clients.json 1.4.0, "
+    "famillesAffichageFichiers, coprofirst#2798) : fichiers.ts ne se lit plus. Depuis v3.105.0 : "
+    "badges du verdict, séparateurs (tables-clients.json 1.3.0) et règles de fichiers "
+    "(constantes-clients.json 1.1.0, #239). Contrat 2.1.0, inchangé ; mesuré le 16/11/2026 au soir : "
+    "demo.coprofirst.fr sert 2.1.0, 5hostachy.fr 2.2.0 : aucune installation sous le plancher. Le même "
+    "plancher que l'app Android. Montée décidée par le coordinateur des sessions, sur délégation "
+    "écrite de Philippe"
 )
