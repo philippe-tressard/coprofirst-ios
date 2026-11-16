@@ -73,7 +73,13 @@ class Contexte:
         return fichier_du_site(commit, chemin)
 
     def lire(self, relatif: str) -> str:
-        """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`)."""
+        """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`) — jamais
+        un fichier dont la release publie les constantes : `ctx.constante` (#237)."""
+        if self.version.joint("constantes-clients.json"):
+            publiees = [n for n, c in _constantes_clients(self.version).items()
+                        if str(c.get("source", "")).split("#")[0] == relatif]
+            if publiees:
+                raise SystemExit(f"❌ {relatif} : ses constantes sont publiées ({', '.join(publiees)}) — ctx.constante")
         return (self.racine / relatif).read_text(encoding="utf-8")
 
     def table(self, nom: str):
@@ -99,29 +105,58 @@ class Contexte:
         publiée lue, puis « (tables-clients.json) »."""
         return ", ".join(self.source_table(n) for n in noms) + " (tables-clients.json)"
 
+    def constante(self, nom: str):
+        """Une constante du SERVEUR que coprofirst publie (`constantes-clients.json`, jointe à
+        chaque release depuis v3.102.0, coprofirst#2755) : sa `valeur`. Les sources de l'API ne
+        se lisent plus (#237) — une constante absente arrête la génération."""
+        constantes = _constantes_clients(self.version)
+        if nom not in constantes:
+            raise SystemExit(f"❌ constantes-clients.json de {self.version.etiquette} : constante « {nom} » absente")
+        return constantes[nom]["valeur"]
 
-_TABLES: dict[str, dict] = {}
-#: La version MAJEURE de `tables-clients.json` que ces générateurs savent lire : une
-#: majeure de plus annonce une table retirée ou une forme qui recule (`RETRAITS` côté serveur).
+    def provenance_constantes(self, *noms: str) -> str:
+        """L'en-tête « Source : » de constantes lues : le fichier du serveur de chacune
+        (`api/app/utils/avis.py#NOTE_MIN`), puis « (constantes-clients.json) »."""
+        sources = []
+        for nom in noms:
+            self.constante(nom)
+            source = _constantes_clients(self.version)[nom].get("source")
+            sources.append(source if isinstance(source, str) else nom)
+        return ", ".join(sources) + " (constantes-clients.json)"
+
+
+#: La version MAJEURE des pièces publiées que ces générateurs savent lire : une majeure de
+#: plus annonce une entrée retirée ou une forme qui recule (`RETRAITS` côté serveur).
 FORMAT_TABLES = 1
+_PIECES: dict[tuple[str, str], dict] = {}
 
 
-def _tables_clients(version: Version) -> dict:
-    if version.etiquette not in _TABLES:
+def _piece_publiee(version: Version, piece: str, cle: str) -> dict:
+    """Le dictionnaire `cle` d'une pièce JSON de la release (`tables-clients.json`,
+    `constantes-clients.json`) — même enveloppe pour les deux : `format`, `version`, `cle`."""
+    if (version.etiquette, piece) not in _PIECES:
         import json
 
         try:
-            lu = json.loads(version.piece_jointe("tables-clients.json"))
+            lu = json.loads(version.piece_jointe(piece))
             majeure = int(str(lu["version"]).split(".")[0])
-            tables = lu["tables"]
+            contenu = lu[cle]
         except (ValueError, KeyError, TypeError) as erreur:
-            raise SystemExit(f"❌ tables-clients.json de {version.etiquette} illisible ({erreur})") from erreur
-        if lu.get("format") != FORMAT_TABLES or majeure != FORMAT_TABLES:
+            raise SystemExit(f"❌ {piece} de {version.etiquette} illisible ({erreur})") from erreur
+        if lu.get("format") != FORMAT_TABLES or majeure != FORMAT_TABLES or not isinstance(contenu, dict):
             raise SystemExit(
-                f"❌ tables-clients.json de {version.etiquette} : format {lu.get('format')}, version {lu['version']} "
+                f"❌ {piece} de {version.etiquette} : format {lu.get('format')}, version {lu['version']} "
                 f"— ces générateurs lisent le format {FORMAT_TABLES}, version {FORMAT_TABLES}.x")
-        _TABLES[version.etiquette] = tables
-    return _TABLES[version.etiquette]
+        _PIECES[(version.etiquette, piece)] = contenu
+    return _PIECES[(version.etiquette, piece)]
+
+
+def _tables_clients(version: Version) -> dict:
+    return _piece_publiee(version, "tables-clients.json", "tables")
+
+
+def _constantes_clients(version: Version) -> dict:
+    return _piece_publiee(version, "constantes-clients.json", "constantes")
 
 
 def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, doc: str, corps: str,

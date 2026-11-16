@@ -4,19 +4,20 @@
 
 Le contrat d'API ne sert que des CODES : libellés, teintes et seuils vivent dans le
 code de coprofirst. Quand une règle vit des deux côtés, la source est le SERVEUR —
-c'est lui qui juge. Ce que le front publie se lit dans `tables-clients.json` de la
-release (#128) ; ce que seul le serveur porte se lit encore par motif dans ses sources :
+c'est lui qui juge. Tout se lit dans les pièces de la release : ce que le front publie
+dans `tables-clients.json` (#128), les constantes du serveur dans `constantes-clients.json`
+(depuis v3.102.0, #237) — jamais dans les sources :
 
 - idées : `statutsIdee` (`STATUTS_IDEE`, publiée) ;
 - annonces : `typesAnnonce`, `categoriesAnnonce`, `trisAnnonce`, `statutsAnnonce` et la
   teinte de chaque statut (`teinteStatutAnnonce`), publiées ;
-- avis : les bornes et les seuils de la note (`api/app/utils/avis.py`, serveur, par motif) ;
+- avis : les bornes et les seuils de la note (`noteMin`, `noteMax`, `noteRemarque`,
+  `notePubliable`, constantes du serveur) ;
 - thème : `optionsTheme`, `cookieTheme`, `themeParDefaut`, publiées ;
-- préférences de notification : les défauts (`DEFAUTS`, `api/app/utils/preferences_mail.py`,
-  serveur, par motif) et les deux canaux (`canauxNotifications`, publiée) ;
+- préférences de notification : les défauts (`defautsPreferences`, constante du serveur) et
+  les deux canaux (`canauxNotifications`, publiée) ;
 - profils demandables (`statutsDemandables`, publiée) ;
-- longueur minimale d'un mot de passe (`verifier_robustesse`, `api/app/utils/mots_de_passe.py`,
-  serveur, par motif).
+- longueur minimale d'un mot de passe (`longueurMinMotDePasse`, constante du serveur).
 
 → `CoproFirst/Fonctions/Communaute/Genere/TablesCommunaute.swift` et
 `CoproFirst/Fonctions/Profil/Genere/TablesProfil.swift`.
@@ -24,32 +25,26 @@ release (#128) ; ce que seul le serveur porte se lit encore par motif dans ses s
 
 from __future__ import annotations
 
-import re
-
 from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-API = "api/app/utils/"
-#: Ce que tables-clients.json ne publie pas : les règles du SERVEUR, lues par motif (#128).
-SOURCES = [API + "avis.py", API + "preferences_mail.py", API + "mots_de_passe.py"]
+#: Rien ne se lit dans les sources : tables et constantes viennent de la release (#237).
+SOURCES: list[str] = []
+NOTES = ("noteMin", "noteMax", "noteRemarque", "notePubliable")
 
 
-def entier(texte: str, motif: str, source: str) -> int:
-    m = re.search(motif, texte)
-    if not m:
-        raise SystemExit(f"❌ {source} : « {motif} » introuvable — la source a changé")
-    return int(m.group(1))
+def entier(ctx, nom: str) -> int:
+    valeur = ctx.constante(nom)
+    if not isinstance(valeur, int) or isinstance(valeur, bool):
+        raise SystemExit(f"❌ constantes-clients.json : {nom} n'est pas un entier ({valeur!r})")
+    return valeur
 
 
-def defauts_preferences(texte: str) -> dict[str, bool]:
-    """`DEFAUTS` du serveur, ses clés résolues par les constantes du module."""
-    constantes = dict(re.findall(r'^([A-Z_]+)\s*=\s*"([a-z_]+)"', texte, re.M))
-    corps = re.search(r"^DEFAUTS[^=]*=\s*\{(.*?)\}", texte, re.S | re.M)
-    if not corps:
-        raise SystemExit("❌ DEFAUTS introuvable dans preferences_mail.py")
-    paires = re.findall(r"([A-Z_]+):\s*(True|False)", corps.group(1))
-    if not paires:
-        raise SystemExit("❌ DEFAUTS vide ou illisible")
-    return {constantes[nom]: valeur == "True" for nom, valeur in paires}
+def defauts_preferences(ctx) -> dict[str, bool]:
+    """`DEFAUTS` du serveur, clé par clé, tel que publié."""
+    defauts = ctx.constante("defautsPreferences")
+    if not isinstance(defauts, dict) or not defauts or not all(isinstance(v, bool) for v in defauts.values()):
+        raise SystemExit(f"❌ constantes-clients.json : defautsPreferences illisible ({defauts!r})")
+    return defauts
 
 
 def element(type_: str, **champs) -> str:
@@ -71,7 +66,6 @@ def libelles(table: list, cle: str = "val") -> str:
 
 
 def communaute(ctx) -> str:
-    avis = ctx.lire(API + "avis.py")
     teintes = ctx.table("teinteStatutAnnonce")
     statuts_annonce = ctx.table("statutsAnnonce")
     manquantes = [s["val"] for s in statuts_annonce if s["val"] not in teintes]
@@ -100,21 +94,18 @@ def communaute(ctx) -> str:
         + "    ]\n"
         "    /// La note d'un avis et ses seuils — la règle du SERVEUR (`utils/avis.py`) :\n"
         "    /// sous `noteRemarque`, ce qui a manqué ; à partir de `notePubliable`, l'accord de diffusion.\n"
-        f"    static let noteMin = {entier(avis, r'(?m)^NOTE_MIN\s*=\s*(\d+)', 'avis.py')}\n"
-        f"    static let noteMax = {entier(avis, r'(?m)^NOTE_MAX\s*=\s*(\d+)', 'avis.py')}\n"
-        f"    static let noteRemarque = {entier(avis, r'(?m)^NOTE_REMARQUE\s*=\s*(\d+)', 'avis.py')}\n"
-        f"    static let notePubliable = {entier(avis, r'(?m)^NOTE_PUBLIABLE\s*=\s*(\d+)', 'avis.py')}\n"
+        + "".join(f"    static let {nom} = {entier(ctx, nom)}\n" for nom in NOTES)
     )
 
 
 def profil(ctx) -> str:
-    defauts = defauts_preferences(ctx.lire(API + "preferences_mail.py"))
+    defauts = defauts_preferences(ctx)
     canaux = ctx.table("canauxNotifications")  # clés déjà résolues par le site
     for canal in canaux:
         for cle in ("mon", "autres"):
             if canal[cle] not in defauts:
                 raise SystemExit(f"❌ CANAUX_NOTIFS : {canal[cle]} n'a pas de défaut côté serveur")
-    longueur = entier(ctx.lire(API + "mots_de_passe.py"), r"len\(password\)\s*<\s*(\d+)", "mots_de_passe.py")
+    longueur = entier(ctx, "longueurMinMotDePasse")
     return (
         "    /// Le thème : une préférence de l'APPAREIL (le cookie du site), ses choix (`OPTIONS_THEME`).\n"
         f"    static let cleTheme = {chaine(ctx.table('cookieTheme'))}\n"
@@ -136,7 +127,7 @@ def profil(ctx) -> str:
         "    static let statutsDemandables: [String] = [\n"
         + "".join(f"        {chaine(s)},\n" for s in ctx.table("statutsDemandables"))
         + "    ]\n"
-        "    /// La longueur minimale d'un nouveau mot de passe (`verifier_robustesse`, serveur).\n"
+        "    /// La longueur minimale d'un nouveau mot de passe (`LONGUEUR_MIN_MOT_DE_PASSE`, serveur).\n"
         f"    static let longueurMinimaleMotDePasse = {longueur}\n"
     )
 
@@ -144,11 +135,11 @@ def profil(ctx) -> str:
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Communaute" / "Genere" / "TablesCommunaute.swift",
                  ctx.provenance_tables("statutsIdee", "typesAnnonce", "categoriesAnnonce", "trisAnnonce", "statutsAnnonce",
-                        "teinteStatutAnnonce") + " ; api/app/utils/avis.py", "TablesCommunaute",
+                        "teinteStatutAnnonce") + " ; " + ctx.provenance_constantes(*NOTES), "TablesCommunaute",
                  "Ce que le site écrit de la Communauté et que le contrat ne sert pas.", communaute(ctx))
     ecrire_table(ctx, FONCTIONS / "Profil" / "Genere" / "TablesProfil.swift",
                  ctx.provenance_tables("cookieTheme", "themeParDefaut", "optionsTheme", "canauxNotifications", "statutsDemandables")
-                 + " ; api/app/utils/preferences_mail.py et mots_de_passe.py",
+                 + " ; " + ctx.provenance_constantes("defautsPreferences", "longueurMinMotDePasse"),
                  "TablesProfil",
                  "Ce que le site écrit du Profil et que le contrat ne sert pas.", profil(ctx))
     return "idées, annonces, avis, thème, préférences et profils"
