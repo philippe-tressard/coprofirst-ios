@@ -18,6 +18,8 @@ déclaration sans objet se retire, standards/05 §9 bis) :
     le classe dans un type de donnée du manifeste ; chaque type du manifeste ⇄ la
     table « donnees », et il est porté par un envoi au moins ;
   - chaque preuve de la fiche (`fichier` › `extrait`) se retrouve dans le fichier ;
+  - la description du magasin, versionnée dans la fiche, ne nie aucun type que le
+    manifeste déclare (« aucune mesure d'audience » face à `ProductInteraction`, #238) ;
   - chaque paquet de `Package.resolved` ⇄ la table « paquets », à la RÉVISION examinée ;
     ses sources, quand elles sont là, sont relues.
 
@@ -53,6 +55,15 @@ NON_MESURE = (
     "ce que chaque installation garde et journalise ; ce que la page de confidentialité du "
     "site affiche ; ce qui est saisi dans App Store Connect ; un champ neuf dans un envoi "
     "déjà classé ; ce que les cadres d'Apple transmettent")
+
+#: La description du magasin, versionnée dans la fiche (#238), et ce qui NIERAIT un type
+#: déclaré : la 1.0 disait « aucune mesure d'audience », faux dès les écrans vus (#199).
+DESCRIPTION = re.compile(r"<!-- description -->(.*?)<!-- /description -->", re.S)
+NEGATIONS = {
+    "ProductInteraction": re.compile(
+        r"\b(aucune?|sans|pas de|ni)\s+(mesure d'audience|statistiques?|analyse d'usage|suivi de l'usage)"
+        r"|\bno (analytics|usage data)", re.I),
+}
 
 # Les API « à raison requise » et les raisons admises, relues le 11/11/2026 dans la
 # documentation d'Apple (NSPrivacyAccessedAPIType) — à relire avant chaque soumission.
@@ -264,6 +275,12 @@ def juger(etat: Etat) -> list[str]:
     premiers = {n: {(jetons(l[0]) or [l[0]])[0] for l in lues[n]} for n in TABLES}
     types = {d.get(TYPE, "?").removeprefix(TYPE) for d in etat.manifeste.get("NSPrivacyCollectedDataTypes", [])}
     fautes = juger_manifeste(etat.manifeste) + juger_api(etat.manifeste, etat.code, sans_objet=True)
+    bloc = DESCRIPTION.search(etat.fiche)
+    if bloc is None:
+        fautes.append("fiche : aucun bloc <!-- description --> — la description du magasin n'est pas versionnée (#238)")
+    else:
+        fautes += [f"description : « {m.group(0)} » nie {TYPE}{t}, que le manifeste déclare (#238)"
+                   for t, motif in NEGATIONS.items() if t in types and (m := motif.search(bloc.group(1)))]
     if etat.genere is not None:
         fautes += juger_api(etat.manifeste, etat.genere, "le client généré")
     if not re.search(r"^\s*- path: CoproFirst\s*$", etat.projet, re.M) or etat.lire(MANIFESTE) is None:
@@ -317,7 +334,8 @@ def _jeu() -> Etat:
         "", "<!-- table:autorisations -->", "| Clé |", "|---|", "| `NSCameraUsageDescription` |",
         "", "<!-- table:modules -->", "| Module |", "|---|", "| `Foundation` |",
         "", "<!-- table:paquets -->", "| Paquet | Révision | Rôle | Sources |", "|---|---|---|---|",
-        "| `p-runtime` | `abc123` | embarqué | `Sources/R` |", "| `p-outil` | `def456` | outil | — |", ""])
+        "| `p-runtime` | `abc123` | embarqué | `Sources/R` |", "| `p-outil` | `def456` | outil | — |", "",
+        "<!-- description -->", "Aucune publicité, aucune mesure d'audience.", "<!-- /description -->", ""])
     projet = "\n".join([
         "targets:", "  CoproFirst:", "    sources:", "      - path: CoproFirst", "    info:",
         "      properties:", "        CFBundleDisplayName: X", "        NSCameraUsageDescription: \"La caméra\"",
@@ -382,6 +400,10 @@ def autotest() -> bool:
         ("par le client généré", lambda e: setattr(e, "genere", {"Client.swift": "let t = mach_absolute_time()\n"})),
         ("n'est plus embarqué", lambda e: setattr(e, "projet", e.projet.replace("- path: CoproFirst", "- path: Sources"))),
         ("table(s) absente(s)", lambda e: fiche(e, "<!-- table:envois -->", "")),
+        # La 1.0 puis #199 : vraie sans le type, la même phrase est refusée dès qu'il est déclaré.
+        ("« aucune mesure d'audience » nie NSPrivacyCollectedDataTypeProductInteraction", lambda e: e.manifeste[
+            "NSPrivacyCollectedDataTypes"].append({**e.manifeste["NSPrivacyCollectedDataTypes"][0], TYPE: TYPE + "ProductInteraction"})),
+        ("aucun bloc <!-- description -->", lambda e: fiche(e, "<!-- description -->", "")),
     ]
     conforme = juger(_jeu())
     if conforme:

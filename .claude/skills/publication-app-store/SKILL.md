@@ -55,8 +55,10 @@ fait après le « oui ».
   la revue — après son « oui » écrit pour cette version. L'app et les contrats d'Apple
   existent depuis la 1.0.
 - Tenir à jour, à chaque version, la politique de confidentialité, les étiquettes
-  « App Privacy » et la note de revue : le pas à pas (Où / Quoi) et les réponses exactes sont dans
-  [`confidentialite.md`](confidentialite.md) §9 et §5.
+  « App Privacy », la **description** et la note de revue : le pas à pas (Où / Quoi) et
+  les textes exacts sont dans [`confidentialite.md`](confidentialite.md) §9 et §5. La
+  description se change là d'abord : `scripts/verifier-confidentialite.py` refuse
+  qu'elle nie une donnée du manifeste (#238).
 - Le jour où la CI devra signer ou envoyer sur TestFlight : une clé d'API App
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
   la CI la lit, personne ne la voit passer.
