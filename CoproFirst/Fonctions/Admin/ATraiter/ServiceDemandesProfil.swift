@@ -13,11 +13,10 @@ protocol ServiceDemandesProfil: Sendable {
     /// 1.16.0, coprofirst#2618).
     func demandesProfil(_ installation: Installation) async throws -> [DemandeProfil]
     /// POST /admin/demandes-profil/{id}/traiter — `approuver`, ou `rejeter` avec un motif.
-    /// Rend l'annonce SERVIE (`annonce`, contrat 1.16.0, #87) ; `nil` d'une installation
-    /// antérieure, qui ne la sert pas.
+    /// Rend l'annonce SERVIE (`annonce`, contrat 1.16.0, #87).
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis?
+    ) async throws -> PhraseAvis
 }
 
 extension ContexteOnglet {

@@ -18,7 +18,7 @@ extension ServiceAPI: ServiceDemandesProfil {
 
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis? {
+    ) async throws -> PhraseAvis {
         let corps = Components.Schemas.DemandeProfilAction(
             action: approuver ? "approuver" : "rejeter", motifRefus: approuver ? nil : motif?.nulSiVide)
         let sortie = try await appeler {
