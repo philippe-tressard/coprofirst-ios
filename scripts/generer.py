@@ -65,13 +65,19 @@ def sources(modules: list) -> list[str]:
 #: la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
 #: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`) — `ctx.constante`,
 #: `ctx.table`. À la lecture, `Contexte.lire` refuse aussi la source d'une constante publiée.
-INTERDITS = re.compile(r"^(api/app/|front/src/styles/(socle|palette-sombre)\.css$)")
+INTERDITS = re.compile(
+    r"^(api/app/|front/src/styles/(socle|palette-sombre)\.css$"
+    # #239 : publiés par tables-clients.json 1.3.0 et constantes-clients.json 1.1.0 (v3.105.0).
+    r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts)$)")
 #: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
 #: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
 EXCEPTIONS = {
     "api/app/utils/saisie_affaire.py":
         "16/11/2026 — MODES, SECTIONS_DE_BASE et SECTIONS_ESSENTIELLES_PAR_CATEGORIE ne sont pas "
         "publiés : coprofirst#2686 (complété le 16/11/2026)",
+    "front/src/lib/fichiers.ts":
+        "16/11/2026 — fichiers.py : les familles d'AFFICHAGE de typeFichier (JPEG → JPG, XLSX → EXCEL) "
+        "ne sont pas publiées ; le motif d'image et le préfixe, si (#239). Ticket côté serveur : coprofirst#2798",
     "front/src/styles/socle.css":
         "16/11/2026 — palettes.py, jusqu'à palettesResolues de tables-clients.json : coprofirst-ios#227",
     "front/src/styles/palette-sombre.css":

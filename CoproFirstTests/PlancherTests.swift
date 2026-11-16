@@ -22,9 +22,11 @@ private func installation(contrat: String?) -> Installation {
 }
 
 @Test func auPlancherOuAuDessusLaResidenceSOuvre() throws {
+    // Relatif au plancher : une montée ne le fait pas mentir (« 2.0.1 » écrit en dur, #239).
+    let plancher = VersionContrat.plancher.nombres
     try installation(contrat: VersionContrat.plancher.description).exigerLePlancher()
-    try installation(contrat: "2.0.1").exigerLePlancher()
-    try installation(contrat: "3.0.0").exigerLePlancher()
+    try installation(contrat: "\(plancher[0]).\(plancher[1]).\(plancher[2] + 1)").exigerLePlancher()
+    try installation(contrat: "\(plancher[0] + 1).0.0").exigerLePlancher()
 }
 
 @Test func uneVersionAbsenteOuIllisibleNeBloquePas() throws {
