@@ -26,6 +26,8 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     var delaiDetail: Duration = .milliseconds(500)
     /// Les hôtes dont on s'est déconnecté : leur fil n'est plus lisible.
     private var deconnectes: Set<String> = []
+    /// Le signal d'une session refusée ; les tests le donnent eux-mêmes.
+    let sessionsRefusees = SessionsRefusees()
     private let verrou = NSLock()
     /// Le profil servi par la résidence inventée (un compte du conseil syndical). Sa saisie
     /// d'une affaire est le défaut du serveur sans choix — Essentielle pour tous (#2615).
