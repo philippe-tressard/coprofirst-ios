@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/separateurs.ts.
+// Source : philippe-tressard/coprofirst v3.105.0 (commit 74da8ebb2f9a71a5a62b3584b358e96d9f8b8efd), front/src/lib/separateurs.ts#SEPARATEUR (tables-clients.json).
 
 /// Les séparateurs du site : une espace sécable avant, insécable après — la ligne se coupe devant eux, jamais après.
 enum Separateur {
-    /// sépare deux éléments d'une même ligne : « 3/5 · PDF »
+    /// `SEPARATEUR.point`
     static let point = " ·\u{00A0}"
-    /// introduit un complément : « 📞 01 02 — la gérante »
+    /// `SEPARATEUR.tiret`
     static let tiret = " —\u{00A0}"
-    /// borne un intervalle : « 18:00 → 20:00 »
+    /// `SEPARATEUR.fleche`
     static let fleche = " →\u{00A0}"
 }
