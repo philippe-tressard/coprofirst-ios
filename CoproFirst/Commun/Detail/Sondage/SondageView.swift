@@ -6,7 +6,8 @@ import SwiftUI
 /// La fiche d'un sondage, comme celle du site (`sondages/[id]/+page.svelte`, #38) :
 /// l'en-tête, puis le vote s'il est ouvert (réponse, précision, commentaire, charte) ou
 /// les résultats quand le serveur les rend visibles (`resultats_visibles`, sa décision),
-/// puis le fil des commentaires.
+/// puis le fil des commentaires. Visibles et le vote encore à faire, les résultats
+/// (provisoires) passent au-dessus du formulaire.
 struct SondageView: View {
     let id: Int
     let installation: Installation
@@ -53,6 +54,9 @@ private struct ContenuSondage: View {
         List {
             Section { EnteteSondage(sondage: sondage) }
                 .listRowBackground(palette.surface)
+            if sondage.resultatsAvantVote {
+                ResultatsSondage(sondage: sondage)
+            }
             if sondage.peutVoter {
                 FormulaireVote(sondage: sondage, vote: $vote, envoi: envoi) { Task { await voter() } }
             } else {
