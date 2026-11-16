@@ -331,23 +331,40 @@ changé.
 | l'écran des types de données | cocher les neuf cases de la colonne « Case d'App Store Connect » du §5, aucune autre |
 | chaque type, l'un après l'autre | usage : **App Functionality** seule — **Analytics** seule pour *Product Interaction* ; *linked to the user's identity* : **Yes** ; *used for tracking* : **No** |
 | même page › *Publish* | publier les réponses ; relire l'étiquette affichée : « Data Linked to You », aucune ligne « Data Used to Track You » |
-| la version › *App Information* / fiche › *Description* | ajouter le paragraphe « Confidentialité » ci-dessous |
+| la version › *App Information* / fiche › *Description* | remplacer la description entière par le bloc « Description » ci-dessous |
 | la version › *App Review Information* › *Notes* | coller la note ci-dessous |
 
 L'adresse de la politique est celle que l'app affiche déjà :
 `CoproFirst/Entree/Contenu/Genere/ContenuEmbarque.swift` › `https://coprofirst.fr/confidentialite.html`.
 
-**Paragraphe pour la description :**
+**Description (*App Information* › *Description*), texte entier à coller :**
 
-> Confidentialité. CoproFirst se connecte au site de votre résidence, dont vous saisissez
-> l'adresse ou scannez le QR code. Ce que vous y lisez et y écrivez est gardé par votre
-> résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur. Comme
-> sur son site, votre résidence compte les pages consultées pour ses statistiques de
-> fréquentation ; vous pouvez le refuser dans votre profil. Les notifications ne contiennent aucune information personnelle : le
-> message est toujours « Vous avez une nouvelle notification. », et le détail se lit dans
-> l'application. Un avis urgent (une fuite, un ascenseur bloqué) est signalé comme urgent
-> à iOS pour traverser le mode Concentration : Apple apprend qu'il est urgent, pas ce
-> qu'il dit.
+La description publiée ne vit pas dans App Store Connect seul : elle est versionnée ici, et
+`scripts/verifier-confidentialite.py` refuse qu'elle nie un type de donnée du manifeste
+(#238 — la 1.0 disait « aucune mesure d'audience », faux dès l'envoi des écrans vus,
+#199). Une phrase changée dans App Store Connect se change d'abord ici. Celle de la 1.0
+(relue le 16/11/2026) est dans l'historique de ce fichier ; le texte ci-dessous est celui
+de la version suivante, à coller à sa soumission (#205), pas avant.
+
+<!-- description -->
+```text
+CoproFirst est l'application de votre résidence. Elle se connecte au site de votre copropriété, installé par elle ou hébergé pour elle, et montre à chacun ce qui le concerne, et rien de plus.
+
+• Fil d'activité : ce qui se passe dans votre résidence, en un coup d'œil.
+• Affaires : signalez une panne, suivez-la jusqu'à sa résolution, avec photos et documents.
+• Résidence : le carnet d'entretien, le règlement, les informations utiles.
+• Accès : vos lots, badges et télécommandes.
+• Communauté : annonces entre voisins, idées, sondages.
+• Annuaire, prestataires, FAQ et notifications, si votre résidence les active.
+• Conseil syndical : les outils de suivi et de validation réservés à ses membres.
+
+Pour entrer : saisissez l'adresse de votre résidence, scannez le QR code de votre fiche d'arrivée, ou essayez la démonstration. Face ID peut protéger votre session.
+
+CoproFirst est un logiciel libre (AGPL-3.0), sans compte chez l'éditeur : vos données restent chez votre résidence.
+
+Confidentialité. CoproFirst se connecte au site de votre résidence, dont vous saisissez l'adresse ou scannez le QR code. Ce que vous y lisez et y écrivez est gardé par votre résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur. Comme sur son site, votre résidence compte les pages consultées pour ses statistiques de fréquentation ; vous pouvez le refuser dans votre profil. Les notifications ne contiennent aucune information personnelle : le message est toujours « Vous avez une nouvelle notification. », et le détail se lit dans l'application. Un avis urgent (une fuite, un ascenseur bloqué) est signalé comme urgent à iOS pour traverser le mode Concentration : Apple apprend qu'il est urgent, pas ce qu'il dit.
+```
+<!-- /description -->
 
 **Note pour la revue (*App Review Information*) :**
 
