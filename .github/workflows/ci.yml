@@ -149,11 +149,18 @@ jobs:
       matrix:
         lot: [1, 2]
     env:
-      # Le lot 1, nommé classe par classe (~30 min en CI le 12/11/2026) ; le lot 2 joue
-      # TOUT le reste — une classe neuve y tombe d'office, aucune n'est oubliée.
+      # Le lot 1, nommé classe par classe ; le lot 2 joue TOUT le reste — une classe neuve y
+      # tombe d'office, aucune n'est oubliée. Rééquilibré sur les durées MESURÉES en CI le
+      # 16/11/2026 (#243) : le lot 2 était coupé à 70 min (main 17c0911), le lot 1 tenait en
+      # 25 ; SaisieAffaire (~10-14 min) et PrestatairesAffaire (~4 min) passent au lot 1.
+      # Chaque lot vise ~45 min ; au-delà de BUDGET_LOT, l'étape échoue en le disant.
       LOT_1: >-
         CommunauteUITests AdminUITests CartesDuFilUITests AffairesUITests
-        AccesUITests HistoriqueUITests EcheanceUITests
+        AccesUITests HistoriqueUITests EcheanceUITests SaisieAffaireUITests
+        PrestatairesAffaireUITests
+      # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
+      # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
+      BUDGET_LOT: 55
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
@@ -180,7 +187,17 @@ jobs:
               filtres+=("-skip-testing:CoproFirstUITests/$classe")
             fi
           done
-          bash scripts/tests-simulateur.sh "${filtres[@]}"
+          debut=$SECONDS
+          # `bash -e` : le statut se garde pour que la durée s'écrive aussi sur un échec.
+          statut=0
+          bash scripts/tests-simulateur.sh "${filtres[@]}" || statut=$?
+          minutes=$(( (SECONDS - debut + 59) / 60 ))
+          echo "Lot $LOT : $minutes min de build et de tests (budget $BUDGET_LOT)" >> "$GITHUB_STEP_SUMMARY"
+          [ "$statut" = 0 ] || exit "$statut"
+          if [ "$minutes" -gt "$BUDGET_LOT" ]; then
+            echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer LOT_1 sur les durées mesurées (#243)"
+            exit 1
+          fi
 
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
