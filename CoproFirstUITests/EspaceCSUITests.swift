@@ -52,14 +52,19 @@ final class EspaceCSUITests: XCTestCase {
         // Une commande : acceptée avec le code du badge remis.
         let commande = app.elementAcces("cs.commande.71")
         let accepter = app.elementAcces("cs.commande.71.approuver")
-        for _ in 0..<8 where !accepter.isHittable { app.swipeUp() }
-        accepter.tap()
+        // La ligne n'est créée qu'au défilement : amenée, puis touchée (#264).
+        app.amener(accepter)
+        app.toucher(accepter)
         // Le champ d'une alerte ne garde pas son identifiant : il se trouve par son indication.
         let codes = app.descendants(matching: .any)
             .matching(NSPredicate(format: "placeholderValue == %@", "4521, 417D5927")).firstMatch
         XCTAssertTrue(codes.apparait(), "les codes remis")
+        // L'alerte monte encore : saisir avant que le champ ait le focus échouait en CI
+        // (« Neither element nor any descendant has keyboard focus », #264).
+        app.toucher(codes)
+        XCTAssertTrue(codes.attendre("hasKeyboardFocus == true"), "le curseur attend dans les codes")
         codes.typeText("4521")
-        app.descendants(matching: .any)["Accepter"].firstMatch.tap()
+        app.toucher(app.descendants(matching: .any)["Accepter"].firstMatch)
         XCTAssertTrue(commande.disparait(), "la commande quitte la file")
     }
 
