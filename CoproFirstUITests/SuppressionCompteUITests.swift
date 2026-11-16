@@ -36,7 +36,9 @@ final class SuppressionCompteUITests: XCTestCase {
         // Aux grandes tailles, la feuille défile : les phrases d'abord, le champ plus bas.
         let perte = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "Ancien résident"))
             .firstMatch
-        XCTAssertTrue(app.amener(perte, essais: 40), "ce que la personne perd et ce qui reste, dit avant de confirmer")
+        XCTAssertTrue(
+            app.amener(perte, essais: 40, pourLire: true),
+            "ce que la personne perd et ce qui reste, dit avant de confirmer")
         LancementCaptures.capturer("suppression-2a-ce-qui-reste")
         XCTAssertTrue(app.amener(motDePasse, essais: 40), "la confirmation demande le mot de passe")
         let confirmer = app.elementAcces("suppression.confirmer")
@@ -51,9 +53,12 @@ final class SuppressionCompteUITests: XCTestCase {
         XCTAssertTrue(app.amener(motDePasse, essais: 40))
         motDePasse.tap()
         motDePasse.typeText("refuse")
+        // « Confirmer » amené à l'écran avant le toucher : sur l'iPhone de la CI comme au très
+        // grand texte, il était sous le pli, et le toucher n'aboutissait pas (#232).
+        XCTAssertTrue(app.amener(confirmer), "« Confirmer » à l'écran")
         confirmer.tap()
-        XCTAssertTrue(
-            app.staticTexts["Mot de passe incorrect."].apparait(), "le refus du serveur, en toutes lettres")
+        let refus = app.staticTexts["Mot de passe incorrect."].firstMatch
+        XCTAssertTrue(app.amener(refus, essais: 20, pourLire: true), "le refus du serveur, en toutes lettres")
         LancementCaptures.capturer("suppression-3-refus")
 
         // Le bon mot de passe : la demande part, la feuille se ferme.
@@ -62,6 +67,7 @@ final class SuppressionCompteUITests: XCTestCase {
         // Efface « refuse » touche par touche : le menu « Tout sélectionner » dépend de la langue.
         motDePasse.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "refuse".count))
         motDePasse.typeText("secret")
+        XCTAssertTrue(app.amener(confirmer), "« Confirmer » à l'écran")
         confirmer.tap()
         let retirer = app.elementAcces("profil.suppression.retirer")
         XCTAssertTrue(retirer.apparait(), "la demande est envoyée : on peut la retirer")
