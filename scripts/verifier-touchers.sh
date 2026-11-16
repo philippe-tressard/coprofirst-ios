@@ -11,10 +11,11 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-PLAFOND_TAP=207
+PLAFOND_TAP=197
 POINT_ATTENTE=CoproFirstUITests/Attente.swift
 CLASSES_TOUCHER="CoproFirstUITests/AccesUITests.swift CoproFirstUITests/SuppressionCompteUITests.swift
-CoproFirstUITests/HistoriqueUITests.swift"
+CoproFirstUITests/HistoriqueUITests.swift
+CoproFirstUITests/PrestatairesAffaireUITests.swift"
 
 # $@ : les fichiers à lire. Rend le nombre de `tap()` directs hors commentaires.
 compter_tap() { cat "$@" /dev/null | grep -E '\.tap\(\)' | grep -vcE '^[[:space:]]*///?' ; }

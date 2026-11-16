@@ -22,32 +22,32 @@ final class PrestatairesAffaireUITests: XCTestCase {
         let carte = app.elementAcces("fil.ticket_mis_a_jour:45")
         XCTAssertTrue(carte.apparait())
         app.amener(carte)
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0045"))
         XCTAssertTrue(
             app.elementDisant(
                 "affaire.intervenant", "Intervenants : Ascenseurs du Parc (fictif), Contrôles Sécurité Exemple"
             ).exists, "une ligne par prestataire, lue d'un bloc")
 
-        app.elementAcces("affaire.modifier").tap()
+        app.toucher(app.elementAcces("affaire.modifier"))
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertTrue(enregistrer.apparait())
         let retirer = app.elementAcces("modifier.prestataire.2.retirer")
         XCTAssertTrue(app.amener(retirer), "chaque prestataire a son ×")
-        retirer.tap()
+        app.toucher(retirer)
         XCTAssertTrue(app.elementAcces("modifier.prestataire.2").disparait())
         XCTAssertTrue(enregistrer.isEnabled, "la liste a changé : elle part")
 
         let ajouter = app.elementAcces("modifier.prestataires.ajouter")
         XCTAssertTrue(app.amener(ajouter))
-        ajouter.tap()
+        app.toucher(ajouter)
         // Le menu du système ne fait pas toujours descendre les identifiants : son libellé.
         let choix = app.descendants(matching: .any)["Eaux de la Ville (fictif)"].firstMatch
         XCTAssertTrue(choix.apparait(), "« Ajouter » propose ceux qui n'y sont pas")
-        choix.tap()
+        app.toucher(choix)
         XCTAssertTrue(app.elementAcces("modifier.prestataire.3").apparait())
         app.capturerAcces("prestataires-modifier", dans: self)
-        enregistrer.tap()
+        app.toucher(enregistrer)
 
         XCTAssertTrue(
             app.elementDisant(
@@ -63,9 +63,9 @@ final class PrestatairesAffaireUITests: XCTestCase {
         let app = lancer(["-ecran", "fil", "-compte", "resident"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-        app.elementAcces("affaire.modifier").tap()
+        app.toucher(app.elementAcces("affaire.modifier"))
         XCTAssertTrue(app.buttons["modifier.enregistrer"].apparait())
         XCTAssertFalse(app.amener(app.elementAcces("modifier.prestataires.ajouter"), essais: 4))
     }
@@ -77,10 +77,10 @@ final class PrestatairesAffaireUITests: XCTestCase {
         // L'écran s'ouvre sur la barre : le menu Affaires d'abord, comme AffairesUITests.
         let menu = app.descendants(matching: .any)["Affaires"].firstMatch
         XCTAssertTrue(menu.apparait())
-        menu.tap()
+        app.toucher(menu)
         let onglet = app.descendants(matching: .any)["Kanban"].firstMatch
         XCTAssertTrue(onglet.apparait(), "l'onglet, une fois la liste chargée")
-        onglet.tap()
+        app.toucher(onglet)
         XCTAssertTrue(app.elementAcces("kanban.colonne.cs").apparait())
         // « Chez le prestataire » est une colonne à droite : on y va.
         let carte = app.elementAcces("kanban.carte.A-0040")
