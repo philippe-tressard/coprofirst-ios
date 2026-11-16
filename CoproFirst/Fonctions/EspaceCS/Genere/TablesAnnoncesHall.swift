@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/annonces-hall.ts#AH_FORMATS (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.105.0 (commit 74da8ebb2f9a71a5a62b3584b358e96d9f8b8efd), front/src/lib/annonces-hall.ts#AH_FORMATS (tables-clients.json).
 
 /// Ce que le site écrit des Annonces Hall de l'Espace CS et que le contrat ne sert pas.
 enum TablesAnnoncesHall {
