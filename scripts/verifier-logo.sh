@@ -36,16 +36,27 @@ comparer() { # chemin-local chemin-coprofirst
 comparer LICENSES/LicenseRef-CoproFirst-Logo.txt LICENSES/LicenseRef-CoproFirst-Logo.txt
 comparer CoproFirst/Ressources/Assets.xcassets/Logo.imageset/logo.svg front/static/favicon.svg
 
-if command -v sips >/dev/null; then
-  dims=$(sips -g pixelWidth -g pixelHeight -g hasAlpha "$ICONE" | awk '/pixel|hasAlpha/ {print $2}' | tr '\n' ' ')
-  if [ "$dims" = "1024 1024 no " ]; then
-    echo "✅ $ICONE : 1024×1024, opaque"
-  else
-    echo "❌ $ICONE : $dims (attendu 1024 1024, sans alpha)"
-    ECHECS=$((ECHECS + 1))
-  fi
+# L'en-tête PNG lu en Python, et non par `sips` (macOS seul) : le job « Dépôt » tourne sur
+# Linux (#204). Largeur, hauteur, puis « sans alpha » : un type de couleur sans canal alpha
+# (ni 4 ni 6) et aucun bloc tRNS. Un fichier qui n'est pas un PNG lisible : INCONNU.
+dims=$(python3 -I - "$ICONE" <<'PY'
+import struct, sys
+d = open(sys.argv[1], "rb").read()
+if d[:8] != b"\x89PNG\r\n\x1a\n" or d[12:16] != b"IHDR":
+    sys.exit(2)
+largeur, hauteur = struct.unpack(">II", d[16:24])
+alpha, i = d[25] in (4, 6), 8
+while i + 8 <= len(d):
+    taille, nom = struct.unpack(">I4s", d[i:i + 8])
+    alpha = alpha or nom == b"tRNS"
+    i += 12 + taille
+print(largeur, hauteur, "yes" if alpha else "no", end=" ")
+PY
+) || { echo "❓ INCONNU : $ICONE n'est pas un PNG lisible, icône non vérifiée"; exit 2; }
+if [ "$dims" = "1024 1024 no " ]; then
+  echo "✅ $ICONE : 1024×1024, opaque"
 else
-  echo "❓ INCONNU : sips absent, icône non vérifiée"
-  exit 2
+  echo "❌ $ICONE : $dims (attendu 1024 1024, sans alpha)"
+  ECHECS=$((ECHECS + 1))
 fi
 [ "$ECHECS" -eq 0 ]

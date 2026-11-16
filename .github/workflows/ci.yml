@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# CI : garde-fous du dépôt et REUSE ; build, SwiftLint et tests unitaires ; tests
-# d'interface en deux lots — en parallèle sur macOS, réunis sous le check requis.
+# CI : garde-fous du dépôt et REUSE (Linux) ; build, SwiftLint et tests unitaires ; tests
+# d'interface en deux lots — en parallèle sur macOS, réunis sous le check requis. Une PR
+# qui ne touche que la documentation n'occupe aucun exécutant macOS (#204).
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
 name: CI
 
@@ -28,7 +29,8 @@ concurrency:
 jobs:
   depot:
     name: Dépôt (500 lignes, encodage, modes, LICENSE, REUSE)
-    runs-on: macos-latest
+    # Rien n'y construit : Linux, pour laisser les exécutants macOS au build (#204).
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,6 +51,34 @@ jobs:
           "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check "reuse[charset-normalizer]==6.2.0"
           "$RUNNER_TEMP/reuse/bin/reuse" lint
 
+  # Documentation seule ? Lue sur la liste des fichiers de la PR ; un push sur main, une
+  # liste vide ou illisible lancent tout (défaut fermé, scripts/ci_documentation_seule.py).
+  detection:
+    name: Documentation seule ?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      macos: ${{ steps.lue.outputs.macos }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Fichiers changés
+        id: lue
+        env:
+          EVENEMENT: ${{ github.event_name }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          TETE: ${{ github.event.pull_request.head.sha }}
+        run: |
+          python3 -I scripts/ci_documentation_seule.py --autotest
+          if [ "$EVENEMENT" = pull_request ]; then
+            git diff --name-only "$BASE...$TETE" > "$RUNNER_TEMP/changes.txt"
+          else
+            : > "$RUNNER_TEMP/changes.txt"
+          fi
+          cat "$RUNNER_TEMP/changes.txt"
+          python3 -I scripts/ci_documentation_seule.py < "$RUNNER_TEMP/changes.txt" | tee -a "$GITHUB_OUTPUT"
+
   # Les tests au simulateur en jobs parallèles, chacun sous son plafond (décision du
   # 12/11/2026, #139) : un job unique dépassait 85 min — 14 de build, plus de 70 de tests
   # d'interface sur un runner deux fois plus lent que le poste. On scinde, on ne relève
@@ -56,6 +86,8 @@ jobs:
   # limite quand la suite grossit.
   unitaires:
     name: Unitaires (build, SwiftLint, client d'API)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
     timeout-minutes: 45
     steps:
@@ -96,6 +128,8 @@ jobs:
 
   interface:
     name: Interface (${{ matrix.lot }}/2)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
     # Sur main, une file PAR LOT et par branche, plus par commit (#235, standards/09 §8 bis) :
     # quatre fusions rapprochées faisaient 8 jobs d'environ 60 min pour 3 exécutants macOS.
@@ -150,19 +184,26 @@ jobs:
 
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
-    # unitaires ET les deux lots d'interface le sont — jamais par défaut. Sur les PR
-    # seulement : sur main, une interface remplacée dans sa file (#235) le rendrait vert
+    # unitaires ET les deux lots d'interface le sont, ou si la détection a LU une PR de
+    # documentation seule — jamais par défaut : une détection en échec rend rouge. Sur les
+    # PR seulement : sur main, une interface remplacée dans sa file (#235) le rendrait vert
     # sans avoir joué, ou rouge sans faute — chaque job y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [unitaires, interface]
+    needs: [detection, unitaires, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Unitaires et interface verts
+      - name: Unitaires et interface verts, ou documentation seule
         env:
+          DETECTION: ${{ needs.detection.result }}
+          MACOS: ${{ needs.detection.outputs.macos }}
           UNITAIRES: ${{ needs.unitaires.result }}
           INTERFACE: ${{ needs.interface.result }}
         run: |
-          echo "unitaires : $UNITAIRES ; interface : $INTERFACE"
+          echo "détection : $DETECTION (macos=$MACOS) ; unitaires : $UNITAIRES ; interface : $INTERFACE"
+          if [ "$DETECTION" = success ] && [ "$MACOS" = false ]; then
+            echo "Documentation seule : build et tests sautés, saut justifié par la liste lue."
+            exit 0
+          fi
           [ "$UNITAIRES" = success ] && [ "$INTERFACE" = success ]
