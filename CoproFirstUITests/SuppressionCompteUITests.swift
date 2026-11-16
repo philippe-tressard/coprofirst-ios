@@ -16,10 +16,10 @@ final class SuppressionCompteUITests: XCTestCase {
         let app = LancementCaptures.lancer()
         let plus = app.descendants(matching: .any)["Plus"].firstMatch
         XCTAssertTrue(plus.apparait())
-        plus.tap()
+        app.toucher(plus)
         let profil = app.elementAcces("plus.profil")
         XCTAssertTrue(app.amener(profil), "« Profil » dans la liste « Plus »")
-        profil.tap()
+        app.toucher(profil)
         return app
     }
 
@@ -29,7 +29,7 @@ final class SuppressionCompteUITests: XCTestCase {
         let demander = app.elementAcces("profil.suppression.demander")
         XCTAssertTrue(app.amener(demander, essais: 40), "le geste, sous « Vos droits »")
         LancementCaptures.capturer("suppression-1-invitation")
-        demander.tap()
+        app.toucher(demander, essais: 40)
 
         // La feuille dit ce qui sera effacé (phrases servies) avant de demander quoi que ce soit.
         let motDePasse = app.elementAcces("suppression.motDePasse")
@@ -50,32 +50,28 @@ final class SuppressionCompteUITests: XCTestCase {
         LancementCaptures.capturer("suppression-2-confirmation")
 
         // Un mot de passe refusé par le serveur : la phrase du serveur, la feuille reste.
-        XCTAssertTrue(app.amener(motDePasse, essais: 40))
-        motDePasse.tap()
+        app.toucher(motDePasse, essais: 40)
         motDePasse.typeText("refuse")
-        // « Confirmer » amené à l'écran avant le toucher : sur l'iPhone de la CI comme au très
-        // grand texte, il était sous le pli, et le toucher n'aboutissait pas (#232).
-        XCTAssertTrue(app.amener(confirmer), "« Confirmer » à l'écran")
-        confirmer.tap()
+        // « Confirmer », bouton de la barre de la feuille : `toucher` attend qu'il soit
+        // touchable avant tout défilement — en faire défiler la feuille la fermait (#232, #217).
+        app.toucher(confirmer)
         let refus = app.staticTexts["Mot de passe incorrect."].firstMatch
         XCTAssertTrue(app.amener(refus, essais: 20, pourLire: true), "le refus du serveur, en toutes lettres")
         LancementCaptures.capturer("suppression-3-refus")
 
         // Le bon mot de passe : la demande part, la feuille se ferme.
-        XCTAssertTrue(app.amener(motDePasse, essais: 40))
-        motDePasse.tap()
+        app.toucher(motDePasse, essais: 40)
         // Efface « refuse » touche par touche : le menu « Tout sélectionner » dépend de la langue.
         motDePasse.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: "refuse".count))
         motDePasse.typeText("secret")
-        XCTAssertTrue(app.amener(confirmer), "« Confirmer » à l'écran")
-        confirmer.tap()
+        app.toucher(confirmer)
         let retirer = app.elementAcces("profil.suppression.retirer")
         XCTAssertTrue(retirer.apparait(), "la demande est envoyée : on peut la retirer")
         XCTAssertFalse(app.elementAcces("profil.suppression.demander").exists)
         LancementCaptures.capturer("suppression-4-demande-envoyee")
 
         // Retirée : le compte est conservé, le geste revient.
-        retirer.tap()
+        app.toucher(retirer)
         XCTAssertTrue(app.elementAcces("profil.suppression.demander").apparait(), "demande retirée")
     }
 }

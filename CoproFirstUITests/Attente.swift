@@ -43,9 +43,9 @@ extension XCUIElement {
     /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont
     /// chacune portait son propre délai.
     @MainActor
-    func attendre(_ condition: String) -> Bool {
+    func attendre(_ condition: String, pendant duree: TimeInterval = Attente.plafond) -> Bool {
         let etat = XCTNSPredicateExpectation(predicate: NSPredicate(format: condition), object: self)
-        return XCTWaiter().wait(for: [etat], timeout: Attente.plafond) == .completed
+        return XCTWaiter().wait(for: [etat], timeout: duree) == .completed
     }
 }
 
@@ -83,9 +83,16 @@ extension XCUIApplication {
     /// monte encore, un bouton sous le clavier, un onglet hors du cadre — et ne fait rien,
     /// sans erreur : le test échouait plus loin, sur l'effet absent (4 occurrences en CI sous
     /// iOS 26.5). Ici, dans l'ordre : l'élément existe ; s'il est sous le clavier, le clavier
-    /// se ferme ; il est amené à l'écran, TOUCHABLE (`isHittable`, borné en `essais` : on le
-    /// touche, on ne le lit pas — #231) ; il ne bouge plus ; il est touché. L'EFFET se vérifie
-    /// ensuite par le test. `scripts/verifier-depot.sh` tient le plafond des `tap()` directs,
+    /// se ferme ; il ne bouge plus ; il devient TOUCHABLE de lui-même (`hittable`, le temps
+    /// d'une sonde : une feuille qui finit de monter) ; sinon seulement, il est amené à
+    /// l'écran par défilement (borné en `essais` : on le touche, on ne le lit pas — #231). Faire
+    /// défiler d'emblée un bouton de barre de feuille pas encore touchable tirait la feuille
+    /// vers le bas et la FERMAIT : le bouton disparaissait (SuppressionCompteUITests, 350 s).
+    /// Il ne bouge plus ; il est touché. L'EFFET se vérifie ensuite par le test.
+    ///
+    /// Une ligne qu'une liste ne CRÉE qu'au défilement (sous le pli, au très grand texte)
+    /// n'existe pas encore : l'appelant l'amène d'abord (`amener`), puis la touche. `toucher`
+    /// ne fait pas défiler pour attendre un élément qui tarde — ce défilement fermait les feuilles. `scripts/verifier-depot.sh` tient le plafond des `tap()` directs,
     /// qui ne fait que baisser.
     @MainActor
     func toucher(_ element: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
@@ -97,8 +104,11 @@ extension XCUIApplication {
             navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             _ = clavier.disparait()
         }
-        amener(element, essais: essais)
         immobile(element)
+        if !element.attendre("hittable == true", pendant: Attente.sonde) {
+            amener(element, essais: essais)
+            immobile(element)
+        }
         XCTAssertTrue(element.isHittable, "à toucher : \(element) pas touchable", file: file, line: line)
         element.tap()
     }

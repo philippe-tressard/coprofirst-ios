@@ -136,8 +136,9 @@ extension XCUIApplication {
         let plus = descendants(matching: .any)["Plus"].firstMatch
         XCTAssertTrue(plus.apparait())
         toucher(plus)
-        // Aux grandes tailles, `toucher` fait défiler jusqu'à la ligne.
-        toucher(libelleAcces(libelle))
+        let entree = libelleAcces(libelle)
+        XCTAssertTrue(amener(entree), "« \(libelle) » dans Plus")
+        toucher(entree)
     }
 
     @MainActor
