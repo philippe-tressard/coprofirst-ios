@@ -10,6 +10,9 @@ publie dans `tables-clients.json` de chaque release (#128) :
   eux-mêmes sont dans `Charte/OngletsDuSite.swift` (#30) ;
 - `statutsAcces` et `typesAcces` (`types-acces.ts`) ;
 - l'état d'un bail (`etatsBail`, `ETATS_BAIL` de `bail.ts`) ;
+- l'inventaire d'un bail (`typesObjetBail`, `statutsObjetBail` de `bail.ts`) et la
+  gravité d'un constat sur un lot (`gravitesConstat` de `constats.ts`), recopiés à la main
+  jusqu'à leur publication (#13, #227) ;
 - `typesPrestataire` et `filtresContrat` (`prestataires.ts`).
 
 → `CoproFirst/Fonctions/Acces/Genere/TablesAcces.swift` et
@@ -48,6 +51,10 @@ def acces(ctx) -> str:
     statuts = [(s["val"], s["label"], s["badge"]) for s in ctx.table("statutsAcces")]
     types = "".join(f"        ({chaine(t['val'])}, {chaine(t['label'])}),\n" for t in ctx.table("typesAcces"))
     bail = ctx.table("etatsBail")
+    objets = "".join(f"        {chaine(o['val'])}: {chaine(o['label'])},\n" for o in ctx.table("typesObjetBail"))
+    gravites = "".join(
+        f"        ({chaine(c)}, LibelleTeinte({chaine(v['libelle'])}, {chaine(v['badge'])})),\n"
+        for c, v in ctx.table("gravitesConstat").items())
     return (
         descriptifs(ctx, "mon-lot")
         + teintes("statutsAcces", statuts, "L'état d'un badge ou d'une télécommande (`STATUTS_ACCES`).")
@@ -55,6 +62,12 @@ def acces(ctx) -> str:
         "    static let typesAcces: [(code: String, libelle: String)] = [\n" + types + "    ]\n"
         + teintes("statutsBail", [(c, v["libelle"], v["badge"]) for c, v in bail.items()],
                   "L'état d'un bail (`ETATS_BAIL`).")
+        + "    /// Le type d'un objet remis au locataire (`TYPES_OBJET_BAIL`).\n"
+        "    static let typesObjet: [String: String] = [\n" + objets + "    ]\n"
+        + teintes("statutsObjet", [(c, v["libelle"], v["badge"]) for c, v in ctx.table("statutsObjetBail").items()],
+                  "Le statut d'un objet remis (`STATUTS_OBJET_BAIL`).")
+        + "    /// La gravité d'un constat sur un lot, du plus grave au moins grave (`GRAVITES_CONSTAT`).\n"
+        "    static let gravites: [(code: String, teinte: LibelleTeinte)] = [\n" + gravites + "    ]\n"
     )
 
 
@@ -75,7 +88,9 @@ def prestataires(ctx) -> str:
 
 def generer(ctx) -> str:
     ecrire_table(ctx, FONCTIONS / "Acces" / "Genere" / "TablesAcces.swift",
-                 ctx.provenance_tables("pages", "statutsAcces", "typesAcces", "etatsBail"), "TablesAcces",
+                 ctx.provenance_tables(
+                     "pages", "statutsAcces", "typesAcces", "etatsBail", "typesObjetBail", "statutsObjetBail",
+                     "gravitesConstat"), "TablesAcces",
                  "Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.", acces(ctx))
     ecrire_table(ctx, FONCTIONS / "Prestataires" / "Genere" / "TablesPrestataires.swift",
                  ctx.provenance_tables("pages", "typesPrestataire", "filtresContrat"), "TablesPrestataires",
