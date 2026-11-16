@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.101.0 (commit e6e8ecdbbd269ccb2b25081a0c12828176047a5c), front/src/lib/idees.ts#STATUTS_IDEE, front/src/lib/annonces.ts#TYPES_ANNONCE, front/src/lib/annonces.ts#CATEGORIES_ANNONCE, front/src/lib/annonces.ts#TRIS_ANNONCE, front/src/lib/annonces.ts#STATUTS_ANNONCE, front/src/lib/annonces.ts#TEINTE_STATUT_ANNONCE (tables-clients.json) ; api/app/utils/avis.py.
+// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/idees.ts#STATUTS_IDEE, front/src/lib/annonces.ts#TYPES_ANNONCE, front/src/lib/annonces.ts#CATEGORIES_ANNONCE, front/src/lib/annonces.ts#TRIS_ANNONCE, front/src/lib/annonces.ts#STATUTS_ANNONCE, front/src/lib/annonces.ts#TEINTE_STATUT_ANNONCE (tables-clients.json) ; api/app/utils/avis.py#NOTE_MIN, api/app/utils/avis.py#NOTE_MAX, api/app/utils/avis.py#NOTE_REMARQUE, api/app/utils/avis.py#NOTE_PUBLIABLE (constantes-clients.json).
 
 /// Ce que le site écrit de la Communauté et que le contrat ne sert pas.
 enum TablesCommunaute {

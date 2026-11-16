@@ -20,7 +20,9 @@ Usage :
       Depuis une autre version publiée — pour voir ce qu'une montée changerait ; le
       plancher, lui, ne monte que par `_plancher.py`.
   python3 scripts/generer.py --sources
-      Les fichiers de coprofirst lus, un par ligne.
+      Les fichiers de coprofirst lus, un par ligne ; échoue si un générateur déclare un
+      fichier de l'API ou une feuille de la charte hors des exceptions datées (#237), ou si
+      une exception ne sert plus — et prouve d'abord, sur des modules fictifs, qu'il refuse.
 """
 
 from __future__ import annotations
@@ -28,8 +30,10 @@ from __future__ import annotations
 import argparse
 import importlib
 import pathlib
+import re
 import sys
 import tempfile
+import types
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "scripts"))
@@ -56,6 +60,47 @@ def sources(modules: list) -> list[str]:
     return sorted({s for m in modules for s in m.SOURCES})
 
 
+#: Ce qu'aucun générateur ne lit dans les sources de coprofirst : l'API (`api/app/**`) et les
+#: feuilles de la charte (`socle.css`, `palette-sombre.css`). Leur forme change sans prévenir et
+#: la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
+#: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`) — `ctx.constante`,
+#: `ctx.table`. À la lecture, `Contexte.lire` refuse aussi la source d'une constante publiée.
+INTERDITS = re.compile(r"^(api/app/|front/src/styles/(socle|palette-sombre)\.css$)")
+#: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
+#: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
+EXCEPTIONS = {
+    "api/app/utils/saisie_affaire.py":
+        "16/11/2026 — MODES, SECTIONS_DE_BASE et SECTIONS_ESSENTIELLES_PAR_CATEGORIE ne sont pas "
+        "publiés : coprofirst#2686 (complété le 16/11/2026)",
+    "front/src/styles/socle.css":
+        "16/11/2026 — palettes.py, jusqu'à palettesResolues de tables-clients.json : coprofirst-ios#227",
+    "front/src/styles/palette-sombre.css":
+        "16/11/2026 — palettes.py, jusqu'à palettesResolues de tables-clients.json : coprofirst-ios#227",
+}
+
+
+def refus_sources(modules: list, exceptions: dict[str, str] = EXCEPTIONS) -> list[str]:
+    declarees = {s for m in modules for s in m.SOURCES}
+    fautes = [f"❌ generateurs/{m.__name__.split('.')[-1]}.py déclare {s} : la release publie de quoi "
+              "s'en passer — ctx.constante, ctx.table (#237), ou une exception datée"
+              for m in modules for s in m.SOURCES if INTERDITS.match(s) and s not in exceptions]
+    fautes += [f"❌ exception {s} : plus aucun générateur ne la lit — la retirer de generer.py"
+               for s in sorted(set(exceptions) - declarees)]
+    return fautes
+
+
+def controler_sources(modules: list) -> int:
+    fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
+    toleree = types.SimpleNamespace(__name__="generateurs.toleree", SOURCES=["front/src/styles/socle.css"])
+    if (len(refus_sources([fictif], {})) != 1 or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
+            or len(refus_sources([fictif], {"front/src/styles/socle.css": "x"})) != 2):
+        print("❌ autotest : une source interdite, une exception qui ne sert plus doivent être refusées")
+        return 1
+    fautes = refus_sources(modules)
+    print("\n".join(fautes or sources(modules)))
+    return 1 if fautes else 0
+
+
 def executer(etiquette: str, sortie: pathlib.Path) -> tuple[Contexte, list[str]]:
     """Lance chaque générateur sur la version `etiquette`, en écrivant sous `sortie`.
 
@@ -80,8 +125,7 @@ def main() -> None:
     choix.add_argument("--sources", action="store_true", help="liste les fichiers de coprofirst lus")
     arguments = parser.parse_args()
     if arguments.sources:
-        print("\n".join(sources(generateurs())))
-        return
+        raise SystemExit(controler_sources(generateurs()))
     try:
         etiquette = derniere_version() if arguments.derniere else arguments.version
         ctx, bilans = executer(etiquette, RACINE)
