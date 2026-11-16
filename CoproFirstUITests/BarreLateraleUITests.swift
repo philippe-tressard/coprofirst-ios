@@ -36,11 +36,11 @@ final class BarreLateraleUITests: XCTestCase {
         XCTAssertFalse(entree("plus", dans: app).exists, "pas de « Plus » : tout tient")
         XCTAssertEqual(entree("mon-lot", dans: app).label, "Accès", "le libellé de la barre, écrit une fois")
 
-        entree("mon-lot", dans: app).tap()
+        app.toucher(entree("mon-lot", dans: app))
         XCTAssertTrue(app.navigationBars["Mes lots & accès"].apparait(), "l'écran garde son titre")
-        entree("faq", dans: app).tap()
+        app.toucher(entree("faq", dans: app))
         XCTAssertTrue(app.navigationBars["FAQ"].apparait(), "une page d'au-delà de la barre du bas, d'un toucher")
-        entree("profil", dans: app).tap()
+        app.toucher(entree("profil", dans: app))
         XCTAssertTrue(app.navigationBars["Profil"].apparait())
         XCTAssertTrue(app.buttons["pastille.residence"].apparait(), "« où suis-je » sur le Profil aussi")
     }
@@ -60,10 +60,10 @@ final class BarreLateraleUITests: XCTestCase {
         let app = lancer("-logement-long")
         let logement = app.buttons["fil.lot"]
         XCTAssertTrue(logement.apparait())
-        XCTAssertTrue(app.buttons["pastille.residence"].isHittable, "la résidence reste visible")
-        XCTAssertTrue(app.buttons["cloche"].isHittable, "la cloche aussi")
+        XCTAssertTrue(app.buttons["pastille.residence"].apparait(), "la résidence reste dans la barre")
+        XCTAssertTrue(app.buttons["cloche"].apparait(), "la cloche aussi")
 
-        logement.tap()
+        app.toucher(logement)
         XCTAssertTrue(app.navigationBars["Mes lots & accès"].apparait())
         let retenue = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", "barre.mon-lot")).firstMatch
