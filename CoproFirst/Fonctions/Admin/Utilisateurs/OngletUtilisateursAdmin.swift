@@ -130,7 +130,7 @@ struct LigneUtilisateurAdmin: View {
     static let squelette = Carte {
         VStack(alignment: .leading, spacing: 6) {
             Text("Prénom Nom du compte").font(.headline)
-            Text("adresse@exemple.fr").font(.subheadline)
+            Text("adresse@example.com").font(.subheadline)
             Text("Copro. résident\(Separateur.point)Actif").font(.footnote)
         }
     }

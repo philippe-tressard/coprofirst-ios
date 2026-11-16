@@ -48,7 +48,7 @@ private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
 @Test(arguments: [
     ("https://demo.coprofirst.fr", "https://demo.coprofirst.fr/admin?onglet=imports"),
     ("https://demo.coprofirst.fr/", "https://demo.coprofirst.fr/admin?onglet=imports"),
-    ("https://exemple.fr/copro", "https://exemple.fr/copro/admin?onglet=imports"),
+    ("https://example.com/copro", "https://example.com/copro/admin?onglet=imports"),
 ])
 func unOngletDuSiteSOuvreSousLAdresseDeLaResidence(adresse: String, attendu: String) throws {
     let base = try #require(URL(string: adresse))

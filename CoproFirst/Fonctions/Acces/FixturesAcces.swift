@@ -16,7 +16,7 @@ import Foundation
 /// aucun champ que le serveur ne sert, aucun champ requis qui manque (#20).
 ///
 /// Tout est inventé : aucun nom de personne, des numéros de la plage réservée à la
-/// fiction (01 99 00 …), des adresses `exemple.fr`.
+/// fiction (01 99 00 …), des adresses `example.com`.
 enum FixturesAcces {
     /// GET /lots/mes-lots → `[LotRead]`.
     static let mesLots = #"""
@@ -74,7 +74,7 @@ enum FixturesAcces {
     static let baux = #"""
         [
           {"id": 3, "lot_id": 31, "bailleur_id": 70, "locataire_id": 81, "locataire_nom": "du lot 31",
-           "locataire_prenom": "Locataire", "locataire_email": "locataire.31@exemple.fr",
+           "locataire_prenom": "Locataire", "locataire_email": "locataire.31@example.com",
            "locataire_nom_affiche": "Locataire DU LOT 31",
            "locataire_telephone": "01 99 00 00 31", "date_entree": "2025-09-01", "date_sortie_prevue": null,
            "date_sortie_reelle": null, "statut": "actif",
@@ -115,7 +115,7 @@ enum FixturesAcces {
          "lot_type": "appartement", "lot_type_appartement": "T3", "lot_etage": 2, "lot_etage_libelle": "2ème",
          "lot_superficie": 64.5, "date_entree": "2025-09-01", "date_sortie_prevue": null,
          "bailleur_prenom": "Sacha", "bailleur_nom": "Exemple", "bailleur_nom_affiche": "Sacha EXEMPLE",
-         "bailleur_email": "bailleur@exemple.fr",
+         "bailleur_email": "bailleur@example.com",
          "bailleur_telephone": "01 99 00 00 70", "acces": []}
         """#
 

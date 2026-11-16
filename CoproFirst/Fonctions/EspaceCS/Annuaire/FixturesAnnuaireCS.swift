@@ -11,7 +11,7 @@ import Foundation
 /// `scripts/verifier-fixtures.py`.
 ///
 /// Tout est inventé : des noms qui n'appartiennent à personne, des numéros de la plage
-/// réservée à la fiction (01 99 00 …), des adresses `exemple.fr`.
+/// réservée à la fiction (01 99 00 …), des adresses `example.com`.
 enum FixturesAnnuaireCS {
     typealias Reponse = FixturesAcces.Reponse
 
@@ -35,14 +35,14 @@ enum FixturesAnnuaireCS {
     /// GET /admin/annuaire/syndic → `InfoSyndicAdmin`.
     static let syndic = #"""
         {"nom_syndic": "Cabinet Exemple Gestion", "nom_syndic_source": "contrat",
-         "adresse": "1 rue de l'Exemple, 75000 Paris", "site_web": "https://syndic.exemple.fr",
+         "adresse": "1 rue de l'Exemple, 75000 Paris", "site_web": "https://syndic.example.com",
          "membres": [
            {"id": 35, "ordre": 0, "genre": "Mme", "prenom": "Désirée", "nom": "Modèle", "nom_affiche": "Désirée Modèle",
-            "fonction": "Gestionnaire de copropriété", "email": "gestion@exemple.fr",
+            "fonction": "Gestionnaire de copropriété", "email": "gestion@example.com",
             "telephone": "01 99 00 12 34,06 99 00 12 34", "telephones": ["01 99 00 12 34", "06 99 00 12 34"],
             "est_principal": true, "photo_url": null, "user_id": null},
            {"id": 36, "ordre": 1, "genre": "Mr", "prenom": "Eudes", "nom": "Fictif", "nom_affiche": "Eudes Fictif",
-            "fonction": "Comptable", "email": "compta@exemple.fr", "telephone": "01 99 00 56 78",
+            "fonction": "Comptable", "email": "compta@example.com", "telephone": "01 99 00 56 78",
             "telephones": ["01 99 00 56 78"], "est_principal": false, "photo_url": null, "user_id": null}
          ]}
         """#

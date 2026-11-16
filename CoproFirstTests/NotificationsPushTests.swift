@@ -103,7 +103,7 @@ private func reglagesNeufs() -> UserDefaults {
 @MainActor
 private func autreResidence(_ parcours: Parcours) -> Installation {
     var autre = ServiceSimule.residence
-    autre.adresse = URL(string: "https://glycines.exemple.fr") ?? autre.adresse
+    autre.adresse = URL(string: "https://glycines.example.com") ?? autre.adresse
     parcours.connues.retenir(autre)
     return autre
 }
@@ -232,7 +232,7 @@ private func jusqua(_ condition: () -> Bool) async {
     let app = await AppOuverte(.accordee)
     let parcours = app.parcours
     let ouverte = parcours.ouverte
-    let ailleurs = URL(string: "https://ailleurs.exemple.fr") ?? ServiceSimule.residence.adresse
+    let ailleurs = URL(string: "https://ailleurs.example.com") ?? ServiceSimule.residence.adresse
     #expect(!parcours.suivre(Destination(adresse: ailleurs, ecran: .notifications), decouvrir: false))
     #expect(parcours.ouverte == ouverte)
     #expect(parcours.porte.enAttente == nil)

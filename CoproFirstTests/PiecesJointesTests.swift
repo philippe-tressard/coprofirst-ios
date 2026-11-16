@@ -79,7 +79,7 @@ func leTypeMontreSuitLesFamillesDuSite(chemin: String, type: String) {
 
 @Test func unePieceOuverteSEcritSousSonNomLisible() async throws {
     let installation = Installation(
-        adresse: try #require(URL(string: "https://pieces.exemple.fr")), nom: "Pièces", aUnLogo: false)
+        adresse: try #require(URL(string: "https://pieces.example.com")), nom: "Pièces", aUnLogo: false)
     let chemins = [ServiceSimule.devisSimule, "/uploads/tickets/41-1.jpg"]
     let lus = try await PiecesLocales.partagees.fichiers(chemins, dans: installation, service: ServiceSimule())
     #expect(lus.map(\.lastPathComponent) == ["Devis plombier.pdf", "41-1.jpg"], "dans l'ordre demandé")

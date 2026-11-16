@@ -103,7 +103,7 @@ enum LancementSimule {
     ) {
         parcours.connues.retenir(residence)
         parcours.connues.noterFaceIDProposee(residence)
-        parcours.connues.retenirIdentifiant("resident@exemple.fr", pour: residence)
+        parcours.connues.retenirIdentifiant("resident@example.com", pour: residence)
         parcours.reconnue = residence
         if faceID { simule.garder(residence) }
     }

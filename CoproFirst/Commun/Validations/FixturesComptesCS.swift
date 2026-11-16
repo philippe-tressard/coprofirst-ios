@@ -17,17 +17,17 @@ enum FixturesComptesCS {
     /// GET /admin/comptes-en-attente → `[UserRead]`.
     static let comptes = #"""
         [
-          {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@exemple.fr", "actif": false,
+          {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@example.com", "actif": false,
            "nom_affiche": "Camille EXEMPLE", "nom_aide_affiche": "", "est_moderateur": false,
            "role": "propriétaire", "statut": "copropriétaire_résident", "batiment_nom": "Bâtiment A",
            "cree_le": "2026-11-06T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
            "preferences_notifications": "{}"},
-          {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@exemple.fr", "actif": false,
+          {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@example.com", "actif": false,
            "nom_affiche": "Dominique FICTIF", "nom_aide_affiche": "", "est_moderateur": false,
            "role": "résident", "statut": "locataire", "batiment_nom": "Bâtiment B",
            "cree_le": "2026-11-07T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
            "preferences_notifications": "{}"},
-          {"id": 503, "prenom": "Alix", "nom": "Modèle", "email": "alix@exemple.fr", "actif": false,
+          {"id": 503, "prenom": "Alix", "nom": "Modèle", "email": "alix@example.com", "actif": false,
            "nom_affiche": "Alix MODÈLE", "nom_aide_affiche": "Claude FICTIF", "est_moderateur": false,
            "role": "externe", "statut": "aidant", "prenom_aide": "Claude", "nom_aide": "Fictif",
            "cree_le": "2026-11-08T07:00:00", "onboarding_complete": false, "onboarding_etape": 1,
@@ -49,7 +49,7 @@ enum FixturesComptesCS {
 
     /// POST /admin/comptes/{id}/traiter → `CompteTraiteResult` : un compte apparié.
     static let validation = #"""
-        {"user": {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@exemple.fr",
+        {"user": {"id": 501, "prenom": "Camille", "nom": "Exemple", "email": "camille.exemple@example.com",
                   "nom_affiche": "Camille EXEMPLE", "nom_aide_affiche": "", "est_moderateur": false,
                   "actif": true, "role": "propriétaire", "statut": "copropriétaire_résident",
                   "cree_le": "2026-11-06T08:00:00", "onboarding_complete": false, "onboarding_etape": 1,
@@ -59,7 +59,7 @@ enum FixturesComptesCS {
 
     /// …et un compte que l'import ne connaît pas : l'avertissement du serveur.
     static let validationSansLot = #"""
-        {"user": {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@exemple.fr",
+        {"user": {"id": 502, "prenom": "Dominique", "nom": "Fictif", "email": "dominique@example.com",
                   "nom_affiche": "Dominique FICTIF", "nom_aide_affiche": "", "est_moderateur": false,
                   "actif": true, "role": "résident", "statut": "locataire", "cree_le": "2026-11-07T08:00:00",
                   "onboarding_complete": false, "onboarding_etape": 1, "preferences_notifications": "{}"},

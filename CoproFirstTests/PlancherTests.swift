@@ -12,7 +12,7 @@ import Testing
 
 private func installation(contrat: String?) -> Installation {
     Installation(
-        adresse: URL(string: "https://residence.exemple.fr")!, nom: "Résidence", aUnLogo: false,
+        adresse: URL(string: "https://residence.example.com")!, nom: "Résidence", aUnLogo: false,
         versionContrat: contrat)
 }
 
@@ -43,10 +43,10 @@ private func installation(contrat: String?) -> Installation {
 @Test func laDecouverteDUneResidenceSousLePlancherLeDit() async {
     let decouverte = EtatDecouverte()
     let service = ServiceSimule(delai: .zero)
-    let ancienne = await decouverte.decouvrir(URL(string: "https://ancienne.exemple.fr")!, avec: service)
+    let ancienne = await decouverte.decouvrir(URL(string: "https://ancienne.example.com")!, avec: service)
     #expect(ancienne == nil)
     #expect(decouverte.erreur == .residenceAMettreAJour)
-    let recente = await decouverte.decouvrir(URL(string: "https://tilleuls.exemple.fr")!, avec: service)
+    let recente = await decouverte.decouvrir(URL(string: "https://tilleuls.example.com")!, avec: service)
     #expect(recente != nil && decouverte.erreur == nil)
 }
 

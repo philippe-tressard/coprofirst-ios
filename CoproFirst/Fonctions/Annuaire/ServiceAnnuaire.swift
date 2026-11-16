@@ -126,15 +126,15 @@ extension Apercu {
             ]),
         syndic: .init(
             nomSyndic: "Cabinet Exemple Gestion", adresse: "1 place de l'Exemple, 00000 Ville-Exemple",
-            siteWeb: "https://syndic.exemple.fr",
+            siteWeb: "https://syndic.example.com",
             membres: [
                 .init(
                     id: 10, genre: "Mme", prenom: "Elsa", nom: "Gestion", fonction: "Gestionnaire de copropriété",
-                    email: "gestion@syndic.exemple.fr", telephone: "01 00 00 00 01, 06 00 00 00 02",
+                    email: "gestion@syndic.example.com", telephone: "01 00 00 00 01, 06 00 00 00 02",
                     estPrincipal: true),
                 .init(
                     id: 11, genre: "M.", prenom: "Firmin", nom: "Compta", fonction: "Comptabilité",
-                    email: "compta@syndic.exemple.fr", telephone: "01 00 00 00 03"),
+                    email: "compta@syndic.example.com", telephone: "01 00 00 00 03"),
             ]),
         whatsappUrl: "https://chat.whatsapp.com/exemple")
 }

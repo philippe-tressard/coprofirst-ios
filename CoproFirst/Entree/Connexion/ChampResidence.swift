@@ -19,7 +19,7 @@ struct ChampResidence: View {
                 libelle: "Votre résidence",
                 champ: {
                     HStack(spacing: 10) {
-                        TextField("residence.exemple.fr", text: $saisie)
+                        TextField("residence.example.com", text: $saisie)
                             .keyboardType(.URL)
                             .textContentType(.URL)
                             .textInputAutocapitalization(.never)

@@ -11,7 +11,7 @@ extension ServiceSimule: ServiceProfil {
     func compte(_ installation: Installation) async throws -> Compte {
         try await Task.sleep(for: .milliseconds(350))
         return Compte(
-            prenom: "Résident", nom: "Exemple", email: "resident@exemple.fr", telephone: nil, societe: nil,
+            prenom: "Résident", nom: "Exemple", email: "resident@example.com", telephone: nil, societe: nil,
             fonction: nil, photo: nil, statut: profilSimule.statut ?? "", roles: profilSimule.roles, batimentNom: "A",
             actif: true, creeLe: Date.now.addingTimeInterval(-86_400 * 420),
             derniereConnexion: Date.now.addingTimeInterval(-3_600), preferences: #"{"mon_batiment_mail": true}"#,

@@ -69,7 +69,7 @@ enum FixturesCommunaute {
            "description": "<p>Huit kilos, deux ans, factures à l'appui.</p>",
            "type_annonce": "vente", "categorie": "electromenager", "prix": 180, "negotiable": true, "photos": [],
            "statut": "en_cours", "auteur_id": 12, "auteur_prenom": "Voisine du 2ᵉ",
-           "auteur_email": "voisine@exemple.fr", "est_auteur": false, "peut_modifier": false,
+           "auteur_email": "voisine@example.com", "est_auteur": false, "peut_modifier": false,
            "peut_supprimer": true, "archivee": false,
            "cree_le": "2026-11-04T10:00:00", "nb_reponses": 1,
            "lecture": {"cle": "tous", "icones": ["users-round"], "court": "Tous", "long": "Tous", "titre": "Tous",
