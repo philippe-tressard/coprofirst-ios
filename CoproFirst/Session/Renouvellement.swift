@@ -15,6 +15,12 @@ actor Renouvellement {
     /// Les renouvellements réussis, par hôte.
     private var reussis: [String: Int] = [:]
     private var enCours: [String: Task<Bool, any Error>] = [:]
+    /// Un 401 qui tient après le renouvellement se signale ici (`SessionsRefusees`).
+    let refusees: SessionsRefusees
+
+    init(refusees: SessionsRefusees = SessionsRefusees()) {
+        self.refusees = refusees
+    }
 
     /// Relevé AVANT d'envoyer une requête : revenue refusée alors qu'un renouvellement a
     /// réussi depuis, elle partait avec l'ancien jeton — elle se rejoue sans renouveler.
@@ -39,17 +45,18 @@ actor Renouvellement {
 
     /// Envoie ; sur un 401, renouvelle puis renvoie UNE fois. Un renouvellement refusé
     /// rend la première réponse, un second 401 la seconde : l'appelant y lit la session
-    /// expirée, comme avant.
+    /// expirée, et le parcours en est averti (`SessionsRefusees`) — il ramène à la
+    /// connexion. Une erreur de réseau pendant le renouvellement remonte sans signal.
     nonisolated func rejouer<Reponse>(
         _ hote: String, par rafraichir: @escaping @Sendable () async throws -> Bool,
         statut: (Reponse) -> Int, envoyer: () async throws -> Reponse
     ) async throws -> Reponse {
         let avant = await releve(hote)
         let reponse = try await envoyer()
-        guard statut(reponse) == 401, try await renouveler(hote, depuis: avant, par: rafraichir) else {
-            return reponse
-        }
-        return try await envoyer()
+        guard statut(reponse) == 401 else { return reponse }
+        let finale = try await renouveler(hote, depuis: avant, par: rafraichir) ? try await envoyer() : reponse
+        if statut(finale) == 401 { refusees.signaler(hote) }
+        return finale
     }
 }
 
