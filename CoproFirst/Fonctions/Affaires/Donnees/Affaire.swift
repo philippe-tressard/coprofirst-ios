@@ -34,8 +34,7 @@ struct Affaire: Identifiable, Hashable, Sendable {
     let suiviKanban: Bool
     /// Les natures que le serveur pose : actualité, calendrier, activité.
     let natures: [String]
-    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181) ; d'une
-    /// installation antérieure, le seul qu'elle sert (`prestataire_nom`).
+    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181).
     var prestataires: [String]
     /// Les codes de périmètre visés (`perimetre_cible`).
     let perimetres: [String]
@@ -51,8 +50,7 @@ struct Affaire: Identifiable, Hashable, Sendable {
     var peutDeplacer: Bool
     /// 📦 Archiver (`peut_archiver`, le conseil ou l'administration) — servi lui aussi.
     var peutArchiver: Bool
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
-    /// antérieure : aucune pastille.
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` non servie : aucune pastille.
     var lecture: Lecture?
 
     var estActualite: Bool { categorie == TablesAffaires.categorieActualite }

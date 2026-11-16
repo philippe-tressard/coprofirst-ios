@@ -47,7 +47,7 @@ private func compteDuProfil(_ json: String) throws -> Compte {
     let servi = try compteDuProfil(compte(5, roles: "[]"))
     #expect(servi.nomAffiche == "Jean-Baptiste FORT")
     let vide = try compteDuProfil(compte(5, roles: "[]", nomAffiche: ""))
-    #expect(vide.nomAffiche == "Jean-Baptiste Fort", "servi vide : le repli")
+    #expect(vide.nomAffiche == "—", "servi vide : « — », plus de repli prénom-nom hors de l'annuaire (#87)")
 }
 
 @Test func laFileDesComptesNommeLeCompteEtLaPersonneAidee() throws {
@@ -147,23 +147,22 @@ private func messages(_ extra: String) -> String {
     """# + extra + "}]"
 }
 
-private func message(_ extra: String, moi: Int?) throws -> MessageAffaire {
+private func message(_ extra: String) throws -> MessageAffaire {
     let generes = try Relecture.generee([MessageAffaire.Servi].self, json: messages(extra))
-    return try #require(MessageAffaire.lus(generes, moi: moi).first)
+    return try #require(MessageAffaire.lus(generes).first)
 }
 
 @Test func estAuteurServiRangeLaBulleSansComparerLesIdentifiants() throws {
-    let mien = try message(#", "auteur_nom": "Jean-Baptiste FORT", "est_auteur": true"#, moi: 99)
-    #expect(mien.deMoi && mien.auteur == "Vous", "le serveur dit « le vôtre » : auteur_id n'y change rien")
-    let autre = try message(#", "auteur_nom": "Jean-Baptiste FORT", "est_auteur": false"#, moi: 7)
-    #expect(!autre.deMoi, "même identifiant, mais le serveur dit non")
+    let mien = try message(#", "auteur_nom": "Jean-Baptiste FORT", "est_auteur": true"#)
+    #expect(mien.deMoi && mien.auteur == "Vous", "le serveur dit « le vôtre »")
+    let autre = try message(#", "auteur_nom": "Jean-Baptiste FORT", "est_auteur": false"#)
+    #expect(!autre.deMoi, "le serveur dit non")
     #expect(autre.auteur == "Jean-Baptiste FORT")
 }
 
-@Test func sansChampsServisLaBulleGardeSonRepli() throws {
-    let avant = try message("", moi: 7)
-    #expect(avant.deMoi, "`est_auteur` non servi (facultatif) : l'identifiant du compte")
-    let autre = try message("", moi: 3)
-    #expect(!autre.deMoi && autre.auteur == "Un résident", "la qualité servie, à défaut du nom")
-    #expect(try message(#", "auteur_nom": """#, moi: 3).auteur == "Un résident")
+@Test func sansChampsServisLaBulleNEstPasLaMienneEtDitLaQualite() throws {
+    let anonyme = try message("")
+    #expect(!anonyme.deMoi, "`est_auteur` non servi : non (défaut fermé, #87), auteur_id n'y est pour rien")
+    #expect(anonyme.auteur == "Un résident", "la qualité servie, à défaut du nom")
+    #expect(try message(#", "auteur_nom": """#).auteur == "Un résident")
 }

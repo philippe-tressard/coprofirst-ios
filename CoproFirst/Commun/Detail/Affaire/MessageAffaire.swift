@@ -39,16 +39,13 @@ extension MessageAffaire {
     typealias Servi = Components.Schemas.AppRoutersTicketsMessagesSchemasMessageRead
 
     /// Le fil servi, `auteur_nom` et `est_auteur` compris (contrat 1.26.0, #138) — le MÊME
-    /// branchement pour le service réel et l'API simulée.
-    ///
-    /// `moi` (l'identifiant du compte, `GET /auth/me`) ne sert qu'au REPLI d'un message
-    /// servi sans `est_auteur` (le champ est facultatif au contrat) : la comparaison à
-    /// `auteur_id` d'avant, écrite ici seulement. Compte illisible : aucun message « à moi ».
-    static func lus(_ servis: [Servi], moi: Int?) -> [MessageAffaire] {
+    /// branchement pour le service réel et l'API simulée. « À moi » se lit dans `est_auteur`
+    /// seul, jamais en comparant `auteur_id` au compte (#87) : non servi, non.
+    static func lus(_ servis: [Servi]) -> [MessageAffaire] {
         servis.map { message in
             MessageAffaire(
                 id: message.id, contenu: message.contenu, date: message.creeLe,
-                deMoi: message.estAuteur ?? (moi != nil && message.auteurId == moi), nom: message.auteurNom,
+                deMoi: message.estAuteur ?? false, nom: message.auteurNom,
                 qualite: message.auteurQualite, interne: message.interne,
                 pieces: PiecesJointes(urls: message.fichiersUrls ?? []))
         }

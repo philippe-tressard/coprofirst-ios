@@ -27,9 +27,6 @@ struct MessagesAffaireTests {
         let lus = try FixturesMessagesAffaire.lus(pour: 41, conseil: false)
         #expect(lus.first?.deMoi == true && lus.first?.auteur == "Vous")
         #expect(lus.last?.deMoi == false && lus.last?.auteur == "Le conseil syndical")
-        let servi = try Relecture.generee([MessageAffaire.Servi].self, json: FixturesMessagesAffaire.messages)
-        let sansCompte = MessageAffaire.lus(servi, moi: nil)
-        #expect(sansCompte.first?.deMoi == true, "`est_auteur` servi fait foi, compte lisible ou non")
     }
 
     @Test func uneActualiteNaPasDeFilDeMessages() throws {
@@ -54,8 +51,7 @@ struct MessagesAffaireTests {
     /// Le client généré lit le fil tel que le serveur le sert, puis le branchement du service.
     @Test func leFilServiSeLitParLeClientGenere() async throws {
         let sortie = try await filServi(FixturesMessagesAffaire.messages)
-        // `moi` n'y est pour rien : `est_auteur` est servi, il fait foi.
-        let lus = MessageAffaire.lus(try sortie.ok.body.json, moi: nil)
+        let lus = MessageAffaire.lus(try sortie.ok.body.json)
         #expect(lus.map(\.id) == [501, 502, 503] && lus[0].deMoi && lus[2].interne)
         #expect(lus.map(\.nom) == ["Camille ESSAI", "Le conseil syndical", "Le conseil syndical"])
     }

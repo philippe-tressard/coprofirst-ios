@@ -69,7 +69,7 @@ struct ResidentDelegable: Hashable, Sendable, Identifiable {
     /// `nom_affiche` servi (contrat 1.25.0, #135).
     var nomServi: String?
 
-    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }
+    var nomAffiche: String { FormatsDuSite.nom(servi: nomServi) }
 }
 
 /// La saisie de « Nouvelle délégation » (`DelegationCreate`).

@@ -19,11 +19,11 @@ extension ServiceSimule: ServiceAnnoncesHallCS {
         let format = TablesAnnoncesHall.formats.first { $0.code == saisie.format }?.libelle ?? "A5"
         let creee = AnnonceHall(
             id: 100 + Int.random(in: 0..<900), titre: saisie.titre, message: HTMLDeSaisie.depuis(saisie.message),
-            assisteIa: false, apercu: saisie.message, perimetreLabel: "Toute la copropriété",
-            formatLabel: format == "Auto" ? "A5" : format, images: [],
+            assisteIa: false, apercu: saisie.message, formatLabel: format == "Auto" ? "A5" : format, images: [],
             destinataires: saisie.envoyerCS ? ["Lucie Exemple", "Marc Démo"] : [],
             envoyeLe: saisie.envoyerCS ? .now : nil, archivee: false, ticketId: nil, creeLe: .now,
-            auteurNom: "Camille Essai", peutArchiver: true, peutRestaurer: false, peutSupprimer: true)
+            auteurNom: "Camille Essai", peutArchiver: true, peutRestaurer: false, peutSupprimer: true,
+            perimetreLibelle: "")
         try modifierSimule(depuis: FixturesAnnoncesHall.affichesLues) { $0.insert(creee, at: 0) }
         return creee
     }

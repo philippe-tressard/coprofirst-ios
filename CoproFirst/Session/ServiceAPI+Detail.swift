@@ -11,7 +11,6 @@ extension ServiceAPI {
         async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
         async let evolutions = appeler { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
-        async let compte = appeler { try await client.getAuthMe() }
         async let servis = referentiels(installation)
         async let comptesRendus = comptesRendus(id, client: client)
 
@@ -33,12 +32,8 @@ extension ServiceAPI {
         if detail.close { detail.synthese = await synthese(id, client: client) }
         // Pas de messages sur une actualité : elle informe, on n'y répond pas (`+page.svelte`).
         guard !detail.estActualite else { return detail }
-        // `moi` ne sert qu'au repli d'une installation qui ne sert pas `est_auteur`. Le compte
-        // illisible n'empêche pas de lire le fil : aucune bulle n'est alors « à moi ».
-        var moi: Int?
-        if case .ok(let ok)? = try? await compte { moi = try? ok.body.json.id }
         switch try await messages {
-        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json, moi: moi)
+        case .ok(let ok): detail.messages = MessageAffaire.lus(try ok.body.json)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }

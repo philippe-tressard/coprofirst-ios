@@ -155,11 +155,17 @@ enum FormatsDuSite {
     /// `locataire_nom_affiche`, `bailleur_nom_affiche`, `nom_aide_affiche` — contrat 1.25.0,
     /// coprofirst#2633 lot 4, #135), jamais composé dans un écran.
     ///
-    /// Non servi ou vide — une installation antérieure, une fiche de l'annuaire renommée
-    /// que la relecture ne retrouve pas (la feuille, elle, montre le nom que le serveur rend
-    /// de la saisie, `NomDeLaSaisie`, `POST /noms/affiche`, #135) — : le repli d'avant,
-    /// prénom puis nom tels que servis, « — » sans l'un ni l'autre. Ce repli vit ICI
-    /// seulement : `scripts/verifier-regles-servies.py` refuse toute autre composition.
+    /// Le nom servi seul : le plancher le sert partout (#87) ; vide, « — ». Aucun repli.
+    static func nom(servi: String?) -> String {
+        servi?.trimmingCharacters(in: .whitespaces).nulSiVide ?? tiret
+    }
+
+    /// Le nom d'une fiche d'ANNUAIRE, qui peut manquer de nom servi : un annuaire gardé avant
+    /// #135, une fiche renommée que la relecture ne retrouve pas, une fiche du conseil pas
+    /// encore enregistrée (la feuille, elle, montre le nom que le serveur rend de la saisie,
+    /// `NomDeLaSaisie`, `POST /noms/affiche`, #135). Non servi ou vide : prénom puis nom tels
+    /// que servis ou saisis, « — » sans l'un ni l'autre. Ce repli vit ICI seulement :
+    /// `scripts/verifier-regles-servies.py` refuse toute autre composition.
     static func nom(affiche: String?, prenom: String?, nom: String?) -> String {
         if let servi = affiche?.trimmingCharacters(in: .whitespaces), !servi.isEmpty { return servi }
         let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
