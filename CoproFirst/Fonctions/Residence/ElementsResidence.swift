@@ -53,7 +53,7 @@ struct Gouttiere: View {
             Label {
                 Text(
                     [date.map(FormatsDuSite.date), nature.abrege]
-                        .compactMap { $0 }.joined(separator: " · "))
+                        .compactMap { $0 }.joined(separator: Separateur.point))
             } icon: {
                 Image(systemName: nature.symbole)
             }

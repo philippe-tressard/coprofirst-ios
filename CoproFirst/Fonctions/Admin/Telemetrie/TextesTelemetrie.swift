@@ -35,7 +35,7 @@ enum TextesTelemetrie {
 
     /// « 37 vues · 25 % » : la part servie, jamais recalculée.
     static func vuesEtPart(_ canal: PartCanal) -> String {
-        "\(FormatsDuSite.nombre(canal.vues)) vues · \(FormatsDuSite.nombre(canal.part)) %"
+        "\(FormatsDuSite.nombre(canal.vues)) vues\(Separateur.point)\(FormatsDuSite.nombre(canal.part)) %"
     }
 
     /// Les comptes venus par ce canal ; « — » quand le serveur ne les connaît pas.
@@ -53,7 +53,7 @@ enum TextesTelemetrie {
 
     /// L'accès d'une page du palmarès : « Site web 12 · App iPhone 3 ».
     static func accesDe(_ page: TableauTelemetrie.PageVue) -> String {
-        page.canaux.map { "\($0.libelle)\u{00A0}\(FormatsDuSite.nombre($0.vues))" }.joined(separator: " · ")
+        page.canaux.map { "\($0.libelle)\u{00A0}\(FormatsDuSite.nombre($0.vues))" }.joined(separator: Separateur.point)
     }
     static let utilisateursActifs = "Utilisateurs actifs"
     static let periode = "Période"
@@ -72,11 +72,11 @@ enum TextesTelemetrie {
     }
 
     static func vuesEtUniques(_ total: Int, _ uniques: Int) -> String {
-        "\(FormatsDuSite.nombre(total)) vues · \(FormatsDuSite.nombre(uniques)) uniques"
+        "\(FormatsDuSite.nombre(total)) vues\(Separateur.point)\(FormatsDuSite.nombre(uniques)) uniques"
     }
 
     static func vuesEtPages(_ total: Int, _ pages: Int) -> String {
-        "\(FormatsDuSite.nombre(total)) vues · \(FormatsDuSite.nombre(pages)) pages"
+        "\(FormatsDuSite.nombre(total)) vues\(Separateur.point)\(FormatsDuSite.nombre(pages)) pages"
     }
 
     static func derniereConnexion(_ date: String) -> String { "Dernière connexion : \(date)" }
@@ -129,10 +129,12 @@ enum TextesTelemetrie {
         ]
         liste += moyennes.compactMap { valeur, libelle in valeur.map { (FormatsDuSite.nombre($0), libelle) } }
         if let record = kpi.recordJour {
-            liste.append((utilisateurs(record.uniques), "Record jour — \(FormatsDuSite.date(record.jour))"))
+            let jour = FormatsDuSite.date(record.jour)
+            liste.append((utilisateurs(record.uniques), "Record jour\(Separateur.tiret)\(jour)"))
         }
         if let record = kpi.recordMois {
-            liste.append((utilisateurs(record.uniques), "Record mois — \(FormatsDuSite.moisAnnee(record.mois))"))
+            let mois = FormatsDuSite.moisAnnee(record.mois)
+            liste.append((utilisateurs(record.uniques), "Record mois\(Separateur.tiret)\(mois)"))
         }
         return liste.map { (valeur: $0.0, libelle: $0.1) }
     }

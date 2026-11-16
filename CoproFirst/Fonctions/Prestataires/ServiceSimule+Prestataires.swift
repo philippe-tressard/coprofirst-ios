@@ -17,9 +17,9 @@ extension ServiceSimule: ServicePrestataires {
         return archives ? [] : try FixturesPrestataires.contratsLus()
     }
 
-    func avis(_ installation: Installation) async throws -> [AvisPrestataire] {
+    func interventions(de prestataire: Int, dans installation: Installation) async throws -> [ExerciceAvis] {
         try await Task.sleep(for: .milliseconds(200))
-        return PrestatairesSimules.avis
+        return try FixturesNotations.lus(prestataire)
     }
 
     func equipements(_ installation: Installation) async throws -> [Equipement] {
@@ -53,17 +53,9 @@ extension ServiceSimule: ServicePrestataires {
     }
 }
 
-/// Les avis et équipements simulés (les fiches et les contrats : `FixturesPrestataires`).
+/// Les équipements simulés (les fiches et les contrats : `FixturesPrestataires` ; les avis :
+/// `FixturesNotations`).
 enum PrestatairesSimules {
-    static let avis: [AvisPrestataire] = [
-        AvisPrestataire(
-            id: 1, prestataireId: 1, note: 4, commentaire: "Intervention rapide lors de la dernière panne.",
-            auteurNom: "Conseil syndical", creeLe: Date(timeIntervalSince1970: 1_790_000_000)),
-        AvisPrestataire(
-            id: 2, prestataireId: 1, note: 5, commentaire: nil, auteurNom: "Conseil syndical",
-            creeLe: Date(timeIntervalSince1970: 1_780_000_000)),
-    ]
-
     static let equipements: [Equipement] = [
         Equipement(code: "ascenseur", libelle: "Ascenseurs", ordre: 0),
         Equipement(code: "incendie", libelle: "Sécurité incendie", ordre: 1),

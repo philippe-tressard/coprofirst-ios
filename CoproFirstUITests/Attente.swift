@@ -55,12 +55,19 @@ extension XCUIApplication {
     /// sautait une ligne d'un `Form`, qui ne crée pas ses lignes hors de l'écran — surtout
     /// clavier ouvert (AffairesUITests rouge en CI le 12/11/2026). Les gestes se font dans
     /// le haut de l'écran, au-dessus d'un clavier. `false` s'il n'existe pas à l'issue.
+    ///
+    /// `pourLire` : un élément qu'on LIT (un texte) s'arrête dès qu'il existe à l'écran. Sous
+    /// iOS 26.5, un texte statique d'une feuille n'est jamais `isHittable` : exiger qu'il le
+    /// soit faisait faire à la boucle ses 2 × `essais` défilements avant de rendre `true` —
+    /// 750 s au lieu de 78 pour `SuppressionCompteUITests`, et le lot 2 de la CI au-delà de
+    /// son plafond de 70 min (15/11/2026).
     @discardableResult
-    func amener(_ element: XCUIElement, essais: Int = 10) -> Bool {
+    func amener(_ element: XCUIElement, essais: Int = 10, pourLire: Bool = false) -> Bool {
         _ = element.sonde()
         let fenetre = windows.firstMatch
+        let arrive = { element.exists && (pourLire ? element.frame.intersects(fenetre.frame) : element.isHittable) }
         for (depart, arrivee) in [(0.5, 0.25), (0.25, 0.5)] {
-            for _ in 0..<essais where !(element.exists && element.isHittable) {
+            for _ in 0..<essais where !arrive() {
                 let vers = fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: arrivee))
                 fenetre.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: depart))
                     .press(forDuration: 0.05, thenDragTo: vers)

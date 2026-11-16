@@ -40,7 +40,8 @@ struct ChoixPerimetres: View {
             }
             if let ouverte, let tete = arbre.noeud(ouverte) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Préciser dans \(tete.libelle)\(Text(" — facultatif").foregroundStyle(palette.textMuted))")
+                    let facultatif = Text("\(Separateur.tiret)facultatif").foregroundStyle(palette.textMuted)
+                    Text("Préciser dans \(tete.libelle)\(facultatif)")
                         .font(.footnote.weight(.medium))
                         .foregroundStyle(palette.text)
                     FlowEtiquettes {
@@ -76,7 +77,7 @@ struct ChoixPerimetres: View {
     /// ou non — l'accusé de réception du toucher (site, 18/08/2026).
     private func libelle(_ tete: Perimetre, retenus: [Perimetre]) -> String {
         guard !retenus.isEmpty else { return tete.libelle }
-        return "\(tete.libelle) › " + retenus.map { $0.libelleCourt ?? $0.libelle }.joined(separator: " · ")
+        return "\(tete.libelle) › " + retenus.map { $0.libelleCourt ?? $0.libelle }.joined(separator: Separateur.point)
     }
 
     private func changer(_ geste: (inout ChoixDePerimetres) -> Void) {

@@ -85,6 +85,9 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     # règle du site (`$isCS`) lue par `DroitsOnglet`.
     (re.compile(r"\bvar estConseil: Bool \{ DroitsOnglet\b|\betat\.moi\?\.droits\.cs\b"),
      "`peut_rediger` et `peut_creer` servis (GET /faq/gestes, GET /sondages/gestes)"),
+    # #207 : l'état d'une moyenne se lit par les seuils GÉNÉRÉS du site (`etatDeMoyenne`).
+    (re.compile(r"\bmoyenne\s*[<>]=?\s*\d"),
+     "`EtatAvis.deMoyenne`, sur les seuils générés (`TablesNotations.seuilsDeMoyenne`)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -151,6 +154,7 @@ def autotest() -> int:
         "        let ouvre = Perimetre.libelles(acces.perimetreCible, parmi: perimetres)",
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
         "                    if etat.moi?.droits.cs == true {",
+        "        if moyenne < 2.5 { return \"mauvais\" }",
     ]
     sains = [
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
@@ -158,6 +162,7 @@ def autotest() -> int:
         "            if lue.peutRediger {",
         "                    if etat.peutCreerUnSondage {",
         "        let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs",
+        "        TablesNotations.seuilsDeMoyenne.first { moyenne < $0.borne }?.etat ?? TablesNotations.etatAuDela",
         '        PastilleTeinte(libelle: libelle, badge: StatutsAffaire.pastilles[statut] ?? "badge-gray")',
         '            "carnet": bool(c.get("carnet")), "reservee": bool(c.get("reserveCS")),',
         "        affaire.estActualite ? [] : affaire.referentiels.proposables",
