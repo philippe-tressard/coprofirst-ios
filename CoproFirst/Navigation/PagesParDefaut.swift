@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/pages.ts#PAGES et front/src/lib/flux.ts#TITRE_FIL (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.105.0 (commit 74da8ebb2f9a71a5a62b3584b358e96d9f8b8efd), front/src/lib/pages.ts#PAGES et front/src/lib/flux.ts#TITRE_FIL (tables-clients.json).
 
 /// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.
 enum PagesParDefaut {
