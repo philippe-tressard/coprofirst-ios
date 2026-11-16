@@ -34,11 +34,7 @@ VRAIS = (
     "chat.whatsapp.com",                        # le lien d'un groupe, reconnu tel que servi
 )
 #: chemin → raison. Une dispense qui ne couvre plus rien échoue.
-DISPENSES = {
-    "CoproFirst/Entree/Contenu/Genere/ContenuEmbarque.swift":
-        "copie GÉNÉRÉE du contenu de la vitrine (coprofirst-site) : ses exemples d'adresse se "
-        "corrigent à la source, coprofirst-site#96 (#214)",
-}
+DISPENSES: dict[str, str] = {}
 
 
 def autorise(domaine: str) -> bool:
