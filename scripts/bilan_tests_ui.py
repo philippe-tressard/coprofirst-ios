@@ -29,7 +29,7 @@ Appelé par `scripts/tests-simulateur.sh` (#50). Deux lectures :
   rend INCONNU (sortie 2) en nommant le filtre.
 
 `--autotest` rejoue ces lectures sur des extraits de journaux réels (runs
-42066224812 et 41940166154) : un contrôle qui ne refuse rien ne prouve rien.
+42066224812, 41940166154 et 43858383798) : un contrôle qui ne refuse rien ne prouve rien.
 """
 
 from __future__ import annotations
@@ -43,6 +43,8 @@ import sys
 #: connexion après trois requêtes d'accessibilité expirées, l'app vivante.
 CAUSES_RELANCE = {
     "Lost connection to the application": "perte de connexion à l'app (trois requêtes d'accessibilité expirées)",
+    # #246, run 43858383798 : le simulateur du runner n'a pas pu lancer l'app (app.launch()).
+    "Failed to get background assertion for target app": "lancement de l'app refusé par le simulateur (background assertion)",
 }
 #: Au-delà, ce n'est plus un accroc du runner : le run reste rouge.
 PLAFOND_TESTS = 2
@@ -212,6 +214,8 @@ def rendre_lenteurs(rangs: dict[str, int]) -> tuple[list[str], list[str]]:
 # ── Autotest ────────────────────────────────────────────────────────────────────
 PERTE = ("Failed to get matching snapshots: Lost connection to the application (pid 22209). "
          "(Underlying Error: Impossible de communiquer avec une application d’aide.)")
+LANCEMENT = ("Failed to get background assertion for target app with pid 58391: "
+             "Timed out while acquiring background assertion.")
 JOURNAL = """\
 Test Case '-[CoproFirstUITests.AccesUITests testLesQuatreOngletsSOuvrent]' started.
     t =    10.20s     Checking existence of `"onglet.badges" Any`
@@ -301,6 +305,11 @@ def autotest() -> int:
         ("une perte de connexion : relance", _resume(acces), 0,
          ["-only-testing:CoproFirstUITests/AccesUITests/testSignalerPerduPuisDeclarer"]),
         ("deux, au plafond : relance", _resume(acces, affaires), 0, None),
+        ("un lancement refusé par le simulateur (#246) : relance",
+         _resume((CIBLE_INTERFACE, "ConnexionUITests/testUnSeulToucherSurSeConnecterOuvreLaResidence()", LANCEMENT)),
+         0, ["-only-testing:CoproFirstUITests/ConnexionUITests/testUnSeulToucherSurSeConnecterOuvreLaResidence"]),
+        ("une perte et un lancement refusé, au plafond : relance",
+         _resume(acces, (CIBLE_INTERFACE, "ConnexionUITests/testX()", LANCEMENT)), 0, None),
         ("trois : refus", _resume(acces, affaires, (CIBLE_INTERFACE, "ResidenceUITests/testX()", PERTE)), 1, []),
         ("une assertion à côté : refus",
          _resume(acces, (CIBLE_INTERFACE, "AccesUITests/testSignalerPerduPuisDeclarer()", "XCTAssertTrue failed")),
