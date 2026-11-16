@@ -110,7 +110,7 @@ final class ParcoursUITests: XCTestCase {
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
         let confirmer = app.buttons["sortie.confirmer"].firstMatch
         XCTAssertTrue(confirmer.apparait(), "le geste se confirme")
-        confirmer.tap()
+        app.toucher(confirmer)
 
         let adresse = app.textFields["connexion.residence"]
         XCTAssertTrue(adresse.apparait(), "retour à la connexion")

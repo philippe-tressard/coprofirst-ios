@@ -40,11 +40,11 @@ final class CartesDuFilUITests: XCTestCase {
         }
         XCTAssertTrue(bulle(501, "Vous"), "est_auteur servi : la bulle du compte")
         XCTAssertTrue(bulle(502, "Le conseil syndical"), "auteur_nom servi")
-        app.elementAcces("affaire.repondre").tap()
+        app.toucher(app.elementAcces("affaire.repondre"))
         let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.apparait())
         texte.typeText("Merci, je contourne la zone.")
-        app.elementAcces("repondre.envoyer").tap()
+        app.toucher(app.elementAcces("repondre.envoyer"))
         XCTAssertTrue(app.elementAcces("affaire.repondre").apparait(), "la feuille se referme")
         // La réponse est un MESSAGE (comme sur le site), pas une suite de l'Historique.
         let message = app.descendants(matching: .any)
@@ -92,7 +92,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(texte.apparait())
         texte.tap()
         texte.typeText("Le plombier est passé.")
-        app.elementAcces("suite.enregistrer").tap()
+        app.toucher(app.elementAcces("suite.enregistrer"))
         let ajoutee = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Le plombier est passé.")).firstMatch
         XCTAssertTrue(ajoutee.apparait(), "la suite rejoint l'Historique")
@@ -124,7 +124,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
         titre.tap()
         titre.typeText(" nord")
-        enregistrer.tap()
+        app.toucher(enregistrer)
 
         let modifiee = app.descendants(matching: .any)
             // Le toucher pose le curseur où il tombe : on cherche le mot, pas sa place.

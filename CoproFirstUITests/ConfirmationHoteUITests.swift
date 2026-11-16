@@ -44,7 +44,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         app.elementAcces("confirmationHote.secondAccord").tap()
         XCTAssertTrue(Self.etat(app, "confirmationHote.confirmer", actif: true), "le second accord ouvre la connexion")
         LancementCaptures.capturer("confirmation-hote-3-second-accord")
-        app.elementAcces("confirmationHote.confirmer").tap()
+        app.toucher(app.elementAcces("confirmationHote.confirmer"))
         XCTAssertTrue(app.buttons["faceid.plusTard"].apparait())
     }
 
@@ -64,7 +64,7 @@ final class ConfirmationHoteUITests: XCTestCase {
     @MainActor
     static func confirmer(_ app: XCUIApplication) {
         XCTAssertTrue(etat(app, "confirmationHote.confirmer", actif: true), "la preuve est lue")
-        app.elementAcces("confirmationHote.confirmer").tap()
+        app.toucher(app.elementAcces("confirmationHote.confirmer"))
     }
 
     /// L'état d'un bouton. Un conteneur qui porte l'identifiant est toujours actif : seul

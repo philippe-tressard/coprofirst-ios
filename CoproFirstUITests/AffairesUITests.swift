@@ -75,7 +75,7 @@ final class AffairesUITests: XCTestCase {
         description.typeText("La serrure ne tourne plus depuis ce matin.")
         capturer("5-saisie")
         XCTAssertFalse(desactive("nouvelle.envoyer", dans: app), "titre et description saisis : Envoyer s'active")
-        element("nouvelle.envoyer", dans: app).tap()
+        app.toucher(element("nouvelle.envoyer", dans: app))
         XCTAssertTrue(
             element("affaires.carte.A-0042", dans: app).apparait(),
             "l'affaire créée paraît en tête de la Liste")

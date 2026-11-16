@@ -27,7 +27,7 @@ final class DelegationsCSUITests: XCTestCase {
         app.elementAcces("delegation.8.revoquer").tap()
         let confirmer = app.elementAcces("delegations.revoquer.confirmer")
         XCTAssertTrue(confirmer.apparait(), "la confirmation")
-        confirmer.tap()
+        app.toucher(confirmer)
         XCTAssertTrue(app.elementAcces("delegation.8.revoquer").disparait(), "révoquée")
 
         // Nouvelle délégation (conseil) : « Enregistrer » attend deux personnes.
@@ -89,7 +89,7 @@ final class DelegationsCSUITests: XCTestCase {
         LancementCaptures.capturer("cs-annonces-hall-1-nouvelle")
         let creer = app.elementAcces("nouvelle-annonce-hall.creer")
         for _ in 0..<6 where !creer.isHittable { app.swipeUp() }
-        creer.tap()
+        app.toucher(creer)
         XCTAssertTrue(app.elementAcces("annonce-hall.7").apparait(), "les archives s'ouvrent")
         LancementCaptures.capturer("cs-annonces-hall-2-archives")
 
