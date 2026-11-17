@@ -157,7 +157,8 @@ enum FormatsDuSite {
     ///
     /// Le nom servi seul : le plancher le sert partout (#87) ; vide, « — ». Aucun repli.
     static func nom(servi: String?) -> String {
-        servi?.trimmingCharacters(in: .whitespaces).nulSiVide ?? tiret
+        guard let nom = servi?.trimmingCharacters(in: .whitespaces), !nom.isEmpty else { return tiret }
+        return nom
     }
 
     /// Le nom d'une fiche d'ANNUAIRE, qui peut manquer de nom servi : un annuaire gardé avant
