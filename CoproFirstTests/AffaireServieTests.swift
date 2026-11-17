@@ -48,11 +48,12 @@ struct AffaireServieTests {
         #expect(!GesteAffaire.offerts(pour: lecteur, conseil: false).contains(.modifier))
     }
 
-    @Test func sansPeutCorrigerLeCrayonSuitPeutModifierCommeAvant() throws {
+    /// Le plancher sert `peut_corriger` : non servi, pas de crayon, même avec `peut_modifier`
+    /// — plus de repli sur le droit au contenu (#87, défaut fermé).
+    @Test func sansPeutCorrigerPasDeCrayon() throws {
         let ouverte = try affaire(#", "peut_modifier": true"#)
-        #expect(ouverte.droits.corriger && !ouverte.contenuFige, "`peut_corriger` non servi (facultatif)")
-        let fermee = try affaire("")
-        #expect(!fermee.droits.corriger, "ni l'un ni l'autre servi : pas de crayon")
+        #expect(!ouverte.droits.corriger, "`peut_corriger` non servi : non")
+        #expect(!GesteAffaire.offerts(pour: ouverte, conseil: false).contains(.modifier))
     }
 
     // MARK: - #127 : l'état en clair, servi

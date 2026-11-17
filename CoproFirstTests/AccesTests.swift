@@ -107,7 +107,7 @@ import Testing
     sansLibelle.etageLibelle = ""
     #expect(sansLibelle.typeLu == "cave")
     #expect(sansLibelle.etageLu == "-1")
-    // Le repli d'une installation qui ne sert pas encore le nom affiché (#135).
+    // Le repli de l'annuaire, seul à le garder (#135, #87) : une fiche sans nom servi.
     #expect(FormatsDuSite.nom(affiche: nil, prenom: " Marie ", nom: "Durand") == "Marie Durand")
     #expect(FormatsDuSite.nom(affiche: nil, prenom: nil, nom: "  ") == "—")
 }

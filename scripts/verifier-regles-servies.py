@@ -64,10 +64,13 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     # seule la teinte se génère (`StatutsAffaire.pastilles`).
     (re.compile(r"\bStatutsAffaire\.parCode\b|\(libelle: String, pastille: String\)"),
      "l'état en clair servi (`StatutsAffaire.libelle(_:servi:dans:)`) ; la teinte : `StatutsAffaire.pastilles`"),
-    # #135 : « Prénom NOM » est SERVI (`nom_affiche`…, contrat 1.25.0) ; le repli d'une
-    # installation antérieure vit dans `FormatsDuSite.nom(affiche:prenom:nom:)`, seul.
-    (re.compile(r"\bFormatsDuSite\.nom\((?!affiche:)"),
-     "le nom servi (`nom_affiche`, `locataire_nom_affiche`…) par `FormatsDuSite.nom(affiche:prenom:nom:)`"),
+    # #135 : « Prénom NOM » est SERVI (`nom_affiche`…, contrat 1.25.0) : `FormatsDuSite.nom(servi:)`.
+    # Le repli prénom-nom ne vit que dans `FormatsDuSite.nom(affiche:prenom:nom:)`, pour
+    # l'ANNUAIRE seul (#87) : ailleurs, le plancher sert le nom.
+    (re.compile(r"\bFormatsDuSite\.nom\((?!affiche:|servi:)"),
+     "le nom servi (`nom_affiche`, `locataire_nom_affiche`…) par `FormatsDuSite.nom(servi:)`"),
+    (re.compile(r"\bFormatsDuSite\.nom\(affiche:"),
+     "`FormatsDuSite.nom(servi:)` : le repli prénom-nom est réservé à l'annuaire (dispensé)"),
     (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
      "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
     # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0) ; `rolesCS` n'est
@@ -98,11 +101,10 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
 DISPENSES: dict[str, str] = {
     "CoproFirst/Fonctions/Admin/Utilisateurs/EtatUtilisateursAdmin.swift":
         "compte les membres du conseil parmi les comptes listés — une donnée affichée, pas un droit du lecteur",
-    "CoproFirst/Commun/Detail/Affaire/MessageAffaire.swift":
-        "repli de `MessageAffaire.lus` quand l'installation ne sert pas `est_auteur` (contrat < 1.26.0, #138)",
-    "CoproFirst/Donnees/LieuServi.swift":
-        "le SEUL repli au plancher (#130) : une installation antérieure au contrat 1.24.0 ne sert pas le lieu "
-        "d'un accès ; il se retire quand le plancher atteint 1.24.0",
+    "CoproFirst/Fonctions/Annuaire/ServiceAnnuaire.swift":
+        "un annuaire gardé avant #135 se relit sans `nom_affiche` : le repli prénom-nom (#87)",
+    "CoproFirst/Fonctions/EspaceCS/Annuaire/ServiceAnnuaireCS.swift":
+        "une fiche du conseil pas encore enregistrée n'a pas de nom servi : le nom saisi (#87)",
 }
 
 
@@ -160,6 +162,8 @@ def autotest() -> int:
         "                    if etat.moi?.droits.cs == true {",
         "        if moyenne < 2.5 { return \"mauvais\" }",
         "        ProvisoireAcces.gravites.first { $0.code == constat.gravite }?.teinte",
+        "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
+        "            deMoi: message.estAuteur ?? (moi != nil && message.auteurId == moi), nom: message.auteurNom,",
     ]
     sains = [
         "        TablesAcces.gravites.first { $0.code == constat.gravite }?.teinte",
@@ -179,7 +183,7 @@ def autotest() -> int:
         "            case .modifier, .options: affaire.droits.corriger",
         "        let nouveau = StatutsAffaire.libelle(nouveauStatut, servi: nouveauStatutLibelle, dans: servis)",
         "        servi?.nulSiVide ?? referentiels.statuts.first { $0.code == code }?.libelle ?? code",
-        "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
+        "    var nomAffiche: String { FormatsDuSite.nom(servi: nomServi) }",
         '            let cle = email.isEmpty ? "\\(bail.locatairePrenom ?? "")|\\(bail.locataireNom ?? "")" : email',
         "                deMoi: servi?.estAuteur ?? false, nom: servi?.auteurNom,",
         "        let ouvre = acces.lieu(arbre: perimetres)",

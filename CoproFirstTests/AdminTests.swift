@@ -132,12 +132,13 @@ func chaqueVueDeLaTelemetrieSeLit(portee: PorteeTelemetrie) throws {
     #expect(etat.membresDuConseil == 1)
 }
 
-@Test func unBannissementProbatoireExpire() {
-    let maintenant = Date(timeIntervalSince1970: 1_800_000_000)
-    #expect(BanCommunaute(interdit: true, jusquAu: nil).banni(maintenant: maintenant))
-    #expect(BanCommunaute(interdit: false, jusquAu: maintenant.addingTimeInterval(60)).banni(maintenant: maintenant))
-    #expect(!BanCommunaute(interdit: false, jusquAu: maintenant.addingTimeInterval(-60)).banni(maintenant: maintenant))
-    #expect(!BanCommunaute(interdit: false, jusquAu: nil).banni(maintenant: maintenant))
+/// Banni se lit tel que servi (`communaute_banni`), jamais en comparant la fin du
+/// bannissement à l'heure du téléphone (#87).
+@Test func unBannissementSeLitTelQueServi() {
+    let fin = Date.now.addingTimeInterval(86_400)
+    #expect(!BanCommunaute(interdit: true, jusquAu: nil).banni, "non servi : non")
+    #expect(!BanCommunaute(interdit: false, jusquAu: fin).banni, "une fin à venir ne vaut pas « banni »")
+    #expect(BanCommunaute(interdit: false, jusquAu: fin, banni: true).banni)
 }
 
 /// Le premier bannissement simulé est probatoire, le suivant définitif — comme le serveur.
@@ -148,8 +149,8 @@ func chaqueVueDeLaTelemetrieSeLit(portee: PorteeTelemetrie) throws {
     await etat.charger(service, ServiceSimule.residence)
     let alix = try #require(etat.compte(13))
     #expect(try await etat.basculerCommunaute(alix, service, ServiceSimule.residence).contains("1 mois"))
-    #expect(etat.compte(13)?.ban.banni() == true)
+    #expect(etat.compte(13)?.ban.banni == true)
     let banni = try #require(etat.compte(13))
     #expect(try await etat.basculerCommunaute(banni, service, ServiceSimule.residence).contains("réautorisé"))
-    #expect(etat.compte(13)?.ban.banni() == false)
+    #expect(etat.compte(13)?.ban.banni == false)
 }

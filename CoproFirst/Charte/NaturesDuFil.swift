@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/lib/flux.ts#NATURES_DU_FIL (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/flux.ts#NATURES_DU_FIL (tables-clients.json).
 
 /// Ce que le fil montre de chaque type d'élément : libellé, teinte, pictogramme (Lucide).
 enum NaturesDuFil {
