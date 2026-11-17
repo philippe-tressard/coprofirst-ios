@@ -61,22 +61,22 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
 
     @ViewBuilder
     private var disposee: some View {
-        switch Disposition.pour(classe, colonneFournie: colonne != nil) {
+        switch disposition {
         case .pile:
-            liste.navigationDestination(item: $selection, destination: fiche)
+            listeQuiChoisit.navigationDestination(item: $selection) { ficheSeule($0) }
                 .onAppear { _ = reprendre() }
         case .colonne:
             dansLaColonne
         case .coteACote:
             GeometryReader { cadre in
                 HStack(spacing: 0) {
-                    liste
+                    listeQuiChoisit
                         .environment(\.ficheOuverte, selection.map(AnyHashable.init))
                         .frame(width: partage.largeurDeLaListe(dans: cadre.size.width))
                     Divider().ignoresSafeArea(edges: .bottom)
                     NavigationStack {
                         if let selection {
-                            fiche(selection).id(selection)
+                            ficheSeule(selection).id(selection)
                         } else {
                             vide.frame(maxWidth: .infinity, maxHeight: .infinity).background(palette.bg)
                         }
@@ -103,9 +103,29 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
         selections.memoire.noter(choisi, sous: selections.cle(memoire))
     }
 
+    private var disposition: Disposition { .pour(classe, colonneFournie: colonne != nil) }
+
+    /// La liste, et ce que ses `LienDeFiche` choisissent : un autre type que `Element`
+    /// est une erreur d'écriture, pas un choix.
+    private var listeQuiChoisit: some View {
+        liste.environment(
+            \.choixDeFiche,
+            ChoixDeFiche(enPile: disposition == .pile) { valeur in
+                guard let element = valeur.base as? Element else {
+                    return assertionFailure("LienDeFiche de \(type(of: valeur.base)) dans une liste de \(Element.self)")
+                }
+                selection = element
+            })
+    }
+
+    /// La fiche, sans le choix de la liste : ses propres liens ne choisissent pas pour elle.
+    private func ficheSeule(_ element: Element) -> some View {
+        fiche(element).environment(\.choixDeFiche, nil)
+    }
+
     /// La liste seule ici ; sa fiche part dans la colonne de la page.
     private var dansLaColonne: some View {
-        liste
+        listeQuiChoisit
             .environment(\.ficheOuverte, selection.map(AnyHashable.init))
             .onAppear {
                 // La reprise AVANT d'ouvrir la colonne : sinon « Aucune sélection », puis la fiche.
@@ -121,7 +141,7 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
         // Le fond de la page sous « Aucune sélection » : sans lui, la colonne gardait celui du
         // système (blanc, noir au sombre) à côté d'une page teintée par la palette.
         let vue =
-            choisi.map { AnyView(fiche($0)) }
+            choisi.map { AnyView(ficheSeule($0)) }
             ?? AnyView(vide.frame(maxWidth: .infinity, maxHeight: .infinity).background(palette.bg))
         colonne?.montrer(.init(id: choisi.map(AnyHashable.init), vue: vue), par: jeton)
     }

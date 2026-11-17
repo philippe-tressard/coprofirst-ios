@@ -171,12 +171,13 @@ private struct CarteEntree: View {
             }
             lien
         }
+        .rangeeChoisie(affaire.map(DestinationResidence.affaire))
     }
 
     @ViewBuilder
     private var lien: some View {
         if let affaire {
-            NavigationLink(value: DestinationResidence.affaire(affaire)) {
+            LienDeFiche(valeur: DestinationResidence.affaire(affaire)) {
                 Label("Voir l'affaire", systemImage: "arrow.right").labelStyle(.titleAndIcon)
             }
             .font(.subheadline.weight(.semibold))

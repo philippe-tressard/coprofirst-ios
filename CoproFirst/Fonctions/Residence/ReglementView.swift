@@ -100,10 +100,11 @@ struct ReglementView: View {
                     }
                 }
                 ForEach(questions) { question in
-                    NavigationLink(value: DestinationResidence.question(question)) {
+                    LienDeFiche(valeur: DestinationResidence.question(question)) {
                         CarteQuestion(question: question)
                     }
                     .buttonStyle(.plain)
+                    .rangeeChoisie(DestinationResidence.question(question))
                 }
             }
         }

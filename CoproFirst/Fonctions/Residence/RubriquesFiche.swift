@@ -73,7 +73,7 @@ struct RubriqueDocuments: View {
                 // La date montrée est celle de l'acte, jamais celle du dépôt ; un plan n'en a pas.
                 let date = gouttiere == .plan ? nil : document.date
                 CarteAGouttiere(gouttiere: Gouttiere(nature: gouttiere, date: date)) {
-                    NavigationLink(value: DestinationResidence.document(document)) {
+                    LienDeFiche(valeur: DestinationResidence.document(document)) {
                         VStack(alignment: .leading, spacing: 6) {
                             HStack(alignment: .firstTextBaseline) {
                                 Text(document.titre).font(.headline).foregroundStyle(palette.text)
@@ -94,6 +94,7 @@ struct RubriqueDocuments: View {
                     .accessibilityHint("Ouvre le document")
                     ListeAnnexes(annexes: contenu.annexes(deDocument: document.id))
                 }
+                .rangeeChoisie(DestinationResidence.document(document))
             }
         }
     }

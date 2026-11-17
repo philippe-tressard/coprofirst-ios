@@ -103,6 +103,11 @@ private let propresAIOS: [String: MesurePropre] = [
             + "carnet ; le plus long mot des libellés par défaut (« Prestataires », « Communauté ») en "
             + "`caption2` y tient entier à la taille par défaut (CarnetTests)",
         depuis: "17/11/2026"),
+    "debordChoisi": MesurePropre(
+        valeur: Mise.debordChoisi, ecart: nil,
+        raison: "l'écart de ce trait autour d'un lien dans le texte (le syndic, une annexe), pour qu'il "
+            + "ne touche pas ses lettres ; le site n'a pas de liste et fiche côte à côte",
+        depuis: "17/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.

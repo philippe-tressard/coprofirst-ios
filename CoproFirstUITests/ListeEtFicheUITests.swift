@@ -97,4 +97,42 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("sondage.question").apparait(), "le sondage remplace l'affaire")
         XCTAssertTrue(affaire.exists)
     }
+
+    /// La Résidence : le syndic de la Fiche ouvre l'annuaire à côté, la Fiche reste.
+    @MainActor
+    func testLeSyndicSOuvreACoteDeLaFicheDeLaResidence() throws {
+        let app = lancer("fil")
+        app.toucher(app.elementAcces("barre.residence"))
+        let syndic = app.elementAcces("residence.syndic")
+        app.toucher(syndic)
+        let appeler = app.elementAcces("annuaire.appeler")
+        XCTAssertTrue(appeler.apparait(), "l'annuaire du syndic dans la colonne")
+        XCTAssertTrue(app.staticTexts["AA0-000-000"].exists, "la Fiche reste à côté")
+        XCTAssertGreaterThan(appeler.frame.minX, syndic.frame.maxX, "à droite de la Fiche")
+        XCTAssertTrue(choisie("residence.syndic", dans: app).apparait(), "le syndic est souligné")
+        XCTAssertEqual(
+            app.buttons.matching(identifier: "pastille.residence").count, 1,
+            "la pastille de la page, pas une seconde pour la fiche")
+        capture("residence-liste-et-fiche", app)
+
+        // Un autre onglet : la fiche d'à côté n'est plus la sienne.
+        app.toucher(app.buttons["Carnet d’entretien"])
+        XCTAssertTrue(app.staticTexts["Aucune sélection"].apparait(), "l'onglet change, la fiche se vide")
+    }
+
+    /// Une rangée de `List` (les annonces) : l'annonce à côté, la liste gardée.
+    @MainActor
+    func testUneAnnonceSOuvreACoteDeSaListe() throws {
+        let app = lancer("fil")
+        app.toucher(app.elementAcces("barre.communaute"))
+        app.toucher(app.elementAcces("communaute.onglet.annonces"))
+        let annonce = app.elementAcces("annonce.21")
+        app.toucher(annonce)
+        let contact = app.elementAcces("annonce.contact")
+        XCTAssertTrue(contact.apparait(), "l'annonce dans la colonne")
+        XCTAssertTrue(annonce.exists, "la liste reste à côté")
+        XCTAssertGreaterThan(contact.frame.minX, annonce.frame.maxX, "à droite de la liste")
+        XCTAssertTrue(choisie("annonce.21", dans: app).apparait(), "sa rangée est soulignée")
+        capture("annonces-liste-et-fiche", app)
+    }
 }
