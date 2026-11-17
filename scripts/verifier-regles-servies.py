@@ -88,6 +88,10 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     # #207 : l'état d'une moyenne se lit par les seuils GÉNÉRÉS du site (`etatDeMoyenne`).
     (re.compile(r"\bmoyenne\s*[<>]=?\s*\d"),
      "`EtatAvis.deMoyenne`, sur les seuils générés (`TablesNotations.seuilsDeMoyenne`)"),
+    # #227 : l'inventaire d'un bail et la gravité d'un constat, recopiés à la main depuis
+    # v3.61.0 (#13), sont publiés dans tables-clients.json depuis v3.102.0.
+    (re.compile(r"\bProvisoire[A-Z]\w*"),
+     "les tables générées `TablesAcces.typesObjet`, `.statutsObjet`, `.gravites` (tables-clients.json)"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -155,8 +159,10 @@ def autotest() -> int:
         "    private var estConseil: Bool { DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs }",
         "                    if etat.moi?.droits.cs == true {",
         "        if moyenne < 2.5 { return \"mauvais\" }",
+        "        ProvisoireAcces.gravites.first { $0.code == constat.gravite }?.teinte",
     ]
     sains = [
+        "        TablesAcces.gravites.first { $0.code == constat.gravite }?.teinte",
         "            colonnes: lu.colonnesKanban.map { ColonneKanban(id: $0.code) },",
         "            colonne: ticket.colonneKanban, peutDeplacer: ticket.peutDeplacerAuKanban ?? false,",
         "            if lue.peutRediger {",

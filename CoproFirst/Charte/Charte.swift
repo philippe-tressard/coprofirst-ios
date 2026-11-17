@@ -62,6 +62,13 @@ enum Mise {
     static let jalonSecondaire: CGFloat = 10
     /// Le trait du rail qui relie les pastilles.
     static let filetRail: CGFloat = 2
+    /// La colonne de liste à côté d'une fiche, en classe régulière (`ListeEtFiche`, #222) :
+    /// sa largeur idéale, puis ses bornes.
+    static let listeIdeale: CGFloat = 360
+    static let listeMin: CGFloat = 300
+    static let listeMax: CGFloat = 440
+    /// Le trait qui souligne la rangée dont la fiche est ouverte à côté (`rangeeChoisie`).
+    static let filetChoisi: CGFloat = 2
 }
 
 extension Font {

@@ -31,7 +31,7 @@
 #      dans la pièce jointe tables-clients.json, par son nom et à la forme attendue,
 #      jamais par motif dans une source du front — autotest de scripts/concordance.py
 #      (#128) ; le logo, lui, se compare et se recopie à l'étiquette du plancher
-#      (scripts/plancher.sh, #133) ;
+#      (scripts/plancher.sh, #133 ; jugé par scripts/controles-distants.sh) ;
 #  12. chaque réponse de l'API simulée a la forme du schéma du serveur
 #      (scripts/verifier-fixtures.py, bogue des badges du 05/11/2026) ;
 #  13. les tests au simulateur : relance bornée et déclarée (#50), un passage qui ne
@@ -57,7 +57,8 @@
 #      (scripts/verifier-dependances.py, #143) ;
 #  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
 #      #135) : ni ses trois routes, ni son service, ni son délai ailleurs ;
-#  21. ce que lit coprofirst ou demande reuse : écart au plancher, logo, REUSE
+#  21. ce que lit coprofirst ou demande reuse : écart au plancher, logo (et sa
+#      référence, le plancher), REUSE
 #      (scripts/controles-distants.sh) — et ce script est la seule étape du job
 #      « Dépôt » de la CI (scripts/verifier-ci.py, #241). INCONNU (sortie 2) ≠ vert.
 #
@@ -219,27 +220,6 @@ while IFS= read -r f; do
   [ -z "$motif" ] || echec "$f : $motif"
 done < <(grep -E "$GENERATION" <<< "$FICHIERS")
 
-# Le logo se compare et se recopie à l'étiquette du plancher (scripts/plancher.sh),
-# jamais à une branche : `dev` de coprofirst disparaît à chaque mise en production,
-# et le job « Dépôt » rougissait au hasard (#133).
-REF_LOGO='REF=${1:-$(bash scripts/plancher.sh)}'
-# $1 : le fichier à lire. Rend le motif du refus, ou rien.
-refus_ref_logo() { grep -qF "$REF_LOGO" "$1" || echo "la référence par défaut n'est pas le plancher (scripts/plancher.sh)"; }
-autotest_ref_logo() {
-  local d ok=0
-  d=$(mktemp -d) || return 1
-  printf 'REF=${1:-dev}\n' > "$d/branche"
-  printf '%s || exit 2\n' "$REF_LOGO" > "$d/plancher"
-  [ -n "$(refus_ref_logo "$d/branche")" ] || ok=1
-  [ -z "$(refus_ref_logo "$d/plancher")" ] || ok=1
-  rm -rf "${d:?}"
-  return $ok
-}
-autotest_ref_logo || echec "verifier-depot.sh : autotest de la référence du logo en échec"
-for f in scripts/verifier-logo.sh scripts/importer-logo.sh; do
-  motif=$(refus_ref_logo "$f")
-  [ -z "$motif" ] || echec "$f : $motif"
-done
 bash scripts/plancher.sh > /dev/null || echec "scripts/plancher.sh : plancher illisible (INCONNU)"
 
 # Les réponses de l'API simulée contre le schéma du serveur : l'autotest d'abord, puis
@@ -435,6 +415,16 @@ done < <(grep -E '^CoproFirstUITests/.*\.swift$' <<< "$FICHIERS")
 # Un point commun que personne n'emploie ne remplace rien.
 [ "$ATTENTES" -gt 0 ] || echec "aucun test n'attend par $POINT_ATTENTE : le point commun n'est pas employé"
 
+# La mise en page se décide sur la classe de taille, jamais sur l'appareil (#222) : un
+# iPhone pliable déplié est un iPhone en classe régulière (#119). Le dossier doit exister,
+# sinon le contrôle ne contrôle rien (standards/04).
+if [ -d CoproFirst/Commun/MiseEnPage ]; then
+  IDIOME=$(grep -rn 'userInterfaceIdiom' CoproFirst/Commun/MiseEnPage || true)
+  [ -z "$IDIOME" ] || { echo "$IDIOME"; echec "Commun/MiseEnPage lit l'appareil : horizontalSizeClass, jamais userInterfaceIdiom"; }
+else
+  echec "CoproFirst/Commun/MiseEnPage absent : le contrôle de l'idiome ne contrôle rien"
+fi
+
 # Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
 TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
 
@@ -492,4 +482,4 @@ if [ "$ECHECS" -gt 0 ]; then
   exit 1
 fi
 [ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

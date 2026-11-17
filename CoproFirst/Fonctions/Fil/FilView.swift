@@ -6,12 +6,13 @@ import SwiftUI
 /// Écran 6 — le fil de la résidence, jour par jour : le premier écran après la connexion.
 struct FilView: View {
     let installation: Installation
-    @Binding var chemin: NavigationPath
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var jours: [JourDuFil] = []
     @State private var phase = Phase.chargement
     @State private var resume: ElementDuFil?
+    /// L'élément ouvert : poussé sur iPhone, à côté du fil sur iPad (`ListeEtFiche`, #222).
+    @State private var choisi: ElementDuFil?
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var taille
 
@@ -25,40 +26,14 @@ struct FilView: View {
     }
 
     var body: some View {
-        ScrollView {
-            LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
-                if !logementDansLaBarre {
-                    PastilleLogement.Ligne(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
-                }
-                if phase == .chargement {
-                    Section {
-                        squelette
-                    } header: {
-                        EnTeteJour(texte: Chronologie.espacer("Aujourd'hui".uppercased()))
-                    }
-                }
-                ForEach(jours) { jour in
-                    Section {
-                        ForEach(jour.elements) { element in
-                            CarteOuvrable(element: element, installation: installation, zoom: zoom) { resume = element }
-                                .padding(.horizontal, Mise.marge)
-                        }
-                    } header: {
-                        EnTeteJour(texte: Chronologie.enteteAffiche(jour.jour))
-                    }
-                }
-            }
-            .padding(.bottom, 16)
-        }
-        .background(palette.bg)
-        .overlay { etatVide }
-        .refreshable { await charger() }
-        .navigationTitle(OrdrePages.libelleFil)
-        .titreDeMenu()
-        .navigationDestination(for: ElementDuFil.self) { element in
+        ListeEtFiche(selection: $choisi) {
+            fil
+        } fiche: { element in
             DestinationDuFil(element: element, installation: installation)
                 .destinationZoom(id: element.id, dans: zoom)
         }
+        .navigationTitle(OrdrePages.libelleFil)
+        .titreDeMenu()
         .sheet(item: $resume) { element in
             ResumeFeuille(element: element, installation: installation)
                 .presentationDetents([.medium, .large])
@@ -84,6 +59,43 @@ struct FilView: View {
             ouvrirDemande()
             await parcours.rafraichirProfil()
         }
+    }
+
+    /// Le fil, jour par jour : la liste de `ListeEtFiche`.
+    private var fil: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
+                if !logementDansLaBarre {
+                    PastilleLogement.Ligne(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
+                }
+                if phase == .chargement {
+                    Section {
+                        squelette
+                    } header: {
+                        EnTeteJour(texte: Chronologie.espacer("Aujourd'hui".uppercased()))
+                    }
+                }
+                ForEach(jours) { jour in
+                    Section {
+                        ForEach(jour.elements) { element in
+                            CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
+                                .padding(.horizontal, Mise.marge)
+                        }
+                    } header: {
+                        EnTeteJour(texte: Chronologie.enteteAffiche(jour.jour))
+                    }
+                }
+            }
+            .padding(.bottom, 16)
+        }
+        .background(palette.bg)
+        .overlay { etatVide }
+        .refreshable { await charger() }
+    }
+
+    /// Un résumé s'ouvre en feuille ; le reste, en fiche.
+    private func ouvrir(_ element: ElementDuFil) {
+        if case .resume = element.cible { resume = element } else { choisi = element }
     }
 
     private var squelette: some View {
@@ -113,7 +125,7 @@ struct FilView: View {
         guard let id = parcours.aOuvrir else { return }
         parcours.aOuvrir = nil
         guard let element = jours.flatMap(\.elements).first(where: { $0.id == id }) else { return }
-        if case .resume = element.cible { resume = element } else { chemin.append(element) }
+        ouvrir(element)
     }
 
     private func charger() async {
@@ -150,6 +162,6 @@ struct EnTeteJour: View {
 
 extension FilView: EcranDeMenu {
     init(contexte: ContexteDeMenu) {
-        self.init(installation: contexte.installation, chemin: contexte.chemin)
+        self.init(installation: contexte.installation)
     }
 }

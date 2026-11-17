@@ -14,12 +14,13 @@ enum Aiguillage: Equatable {
     /// La feuille des notifications, par-dessus l'onglet en cours (#17).
     case cloche
 
-    /// L'identifiant de l'onglet « Plus » de `OngletsView`.
+    /// L'identifiant de l'onglet « Plus » de la barre du bas (`BarreDuBas`).
     static let idPlus = "plus"
 
     /// - Parameters:
     ///   - pages: les pages de la barre, dans leur ordre (`Parcours.pagesDeLaBarre`).
-    ///   - visibles: combien en tiennent avant « Plus » (`OngletsView.visibles`).
+    ///   - visibles: combien en tiennent avant « Plus » (`PresentationNavigation.visibles` :
+    ///     toutes dans la barre latérale).
     static func aiguiller(_ ecran: Destination.Ecran, pages: [String], visibles: Int) -> Aiguillage {
         func place(_ id: String) -> String? {
             guard let rang = pages.firstIndex(of: id) else { return nil }

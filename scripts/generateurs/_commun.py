@@ -94,6 +94,11 @@ class Contexte:
             raise SystemExit(f"❌ tables-clients.json de {self.version.etiquette} : table « {nom} » absente")
         return tables[nom]["valeur"]
 
+    def publie(self, nom: str) -> bool:
+        """La version lue publie-t-elle la table `nom` ? Pour un générateur qui lit une table
+        publiée récemment et garde, le temps que le plancher la rejoigne, un repli DATÉ."""
+        return nom in _tables_clients(self.version)
+
     def source_table(self, nom: str) -> str:
         """Le fichier du site dont la table est tirée (`front/src/lib/bail.ts#ETATS_BAIL`)."""
         self.table(nom)
@@ -175,36 +180,6 @@ def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, do
     if lignes_longues:
         texte += "// swiftlint:enable line_length\n"
     ctx.ecrire(relatif, texte)
-
-
-# Une déclaration CSS `--nom: valeur;` (les jetons de la charte).
-JETON_CSS = re.compile(r"--([a-z][a-z0-9-]*)\s*:\s*([^;]+);")
-
-
-def bloc_css(texte: str, selecteur: str) -> str:
-    """Le corps du premier bloc dont l'en-tête contient `selecteur`, accolades équilibrées."""
-    debut = texte.index(selecteur)
-    ouverture = texte.index("{", debut)
-    profondeur = 0
-    for i in range(ouverture, len(texte)):
-        if texte[i] == "{":
-            profondeur += 1
-        elif texte[i] == "}":
-            profondeur -= 1
-            if profondeur == 0:
-                return texte[ouverture + 1 : i]
-    raise ValueError(f"bloc non fermé : {selecteur}")
-
-
-def jetons_css(corps: str) -> dict[str, str]:
-    """Les jetons `--nom: valeur` d'un bloc CSS, commentaires retirés."""
-    sans = re.sub(r"/\*.*?\*/", "", corps, flags=re.S)
-    return {nom: valeur.strip() for nom, valeur in JETON_CSS.findall(sans)}
-
-
-def jetons_du_socle(ctx: Contexte) -> dict[str, str]:
-    """Les jetons de la charte (`:root` de `front/src/styles/socle.css`)."""
-    return jetons_css(bloc_css(ctx.lire("front/src/styles/socle.css"), ":root,"))
 
 
 def chaine(valeur) -> str:

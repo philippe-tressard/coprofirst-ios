@@ -3,10 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/styles/socle.css.
-// Jetons non portés (color-mix, valeur non littérale) :
-//   --color-fond-logo: transparent
-//   --color-success-plein-survol: color-mix(in srgb, var(--color-success-plein) 85%, black)
+// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
 
 import SwiftUI
 
@@ -33,6 +30,8 @@ struct Palette: Sendable {
     let dangerFond: Color
     /// `--color-danger-plein`
     let dangerPlein: Color
+    /// `--color-fond-logo`
+    let fondLogo: Color
     /// `--color-import-lie`
     let importLie: Color
     /// `--color-info`
@@ -87,6 +86,8 @@ struct Palette: Sendable {
     let successFond: Color
     /// `--color-success-plein`
     let successPlein: Color
+    /// `--color-success-plein-survol`
+    let successPleinSurvol: Color
     /// `--color-success-texte`
     let successTexte: Color
     /// `--color-sur-accent`

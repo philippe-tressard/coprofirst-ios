@@ -103,8 +103,7 @@ jobs:
         # macOS de plus (#204) — la conformité du plist, l'entrée et la connexion. La suite
         # complète sur iPad se joue au poste avant la fusion d'un lot iPad (#220).
         # ParcoursUITests test par test : ses trois tests de la barre du bas n'ont pas cours
-        # sur iPad (la TabView d'iPadOS n'y est pas une TabBar) ; la barre latérale (#221)
-        # apporte leurs pendants iPad.
+        # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
         env:
           APPAREIL: ipad
         run: >-
@@ -116,6 +115,10 @@ jobs:
           -only-testing:CoproFirstUITests/ParcoursUITests/testLaPastilleMontreLesRolesEtSeDeconnecte
           -only-testing:CoproFirstUITests/VitrineUITests
           -only-testing:CoproFirstUITests/ConnexionUITests
+          -only-testing:CoproFirstUITests/BarreLateraleUITests
+          -only-testing:CoproFirstTests/PresentationNavigationTests
+          -only-testing:CoproFirstUITests/ListeEtFicheUITests
+          -only-testing:CoproFirstTests/ListeEtFicheTests
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
