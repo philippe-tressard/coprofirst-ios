@@ -31,8 +31,13 @@ enum TablesNotations {
     /// Les motifs à cocher, par nature (`POINTS_FORTS`, `POINTS_FAIBLES`).
     static let pointsForts = ["délai respecté", "travail soigné", "pièces fournies", "interlocuteur réactif"]
     static let pointsFaibles = ["retard", "travail à refaire", "facture contestée", "intervenant injoignable"]
-    /// Le début de chaque morceau de la phrase générée (`phraseGeneree`) : les motifs
-    /// suivent, joints par « , », puis un point ; les deux morceaux, par une espace.
+    /// La forme de la phrase générée et du commentaire (`FORME_COMMENTAIRE`) : le début
+    /// de chaque groupe, puis ses motifs joints par `entreMotifs`, puis `finDeGroupe` ;
+    /// les groupes, joints par `entreGroupes` ; le texte libre suit après `avantLibre`.
     static let phraseForts = "Points forts : "
     static let phraseFaibles = "Points faibles : "
+    static let entreMotifs = ", "
+    static let finDeGroupe = "."
+    static let entreGroupes = " "
+    static let avantLibre = "\n"
 }
