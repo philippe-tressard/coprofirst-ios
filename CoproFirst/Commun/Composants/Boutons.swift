@@ -13,7 +13,6 @@ struct StyleBouton: ButtonStyle {
     @Environment(\.palette) private var palette
     let genre: GenreBouton
     @Environment(\.isEnabled) private var actif
-    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -29,9 +28,7 @@ struct StyleBouton: ButtonStyle {
                 }
             }
             .opacity(actif ? 1 : 0.45)
-            // Le retour au toucher : un appui se voit à l'instant, et se défait aussitôt.
-            .scaleEffect(configuration.isPressed && !mouvementReduit ? 0.97 : 1)
-            .animation(.snappy(duration: 0.18), value: configuration.isPressed)
+            .appuiCharte(configuration.isPressed)
             .contentShape(.rect(cornerRadius: Mise.rayon))
     }
 
@@ -48,6 +45,30 @@ struct StyleBouton: ButtonStyle {
         case .contour: .clear
         case .clair: palette.primaryLight
         }
+    }
+}
+
+/// Le retour au toucher de la charte : un appui se voit à l'instant (97 %), et se défait
+/// aussitôt — rien quand le mouvement est réduit.
+private struct AppuiCharte: ViewModifier {
+    let presse: Bool
+    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(presse && !mouvementReduit ? 0.97 : 1)
+            .animation(.snappy(duration: 0.18), value: presse)
+    }
+}
+
+extension View {
+    func appuiCharte(_ presse: Bool) -> some View { modifier(AppuiCharte(presse: presse)) }
+}
+
+/// Un bouton dont le libellé porte déjà sa forme : seul l'appui de la charte s'y ajoute.
+struct StyleAppui: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.appuiCharte(configuration.isPressed)
     }
 }
 

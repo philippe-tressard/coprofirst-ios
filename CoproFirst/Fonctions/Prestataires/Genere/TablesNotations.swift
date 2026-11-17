@@ -28,4 +28,11 @@ enum TablesNotations {
     ]
     /// Au-delà de la dernière borne.
     static let etatAuDela = "excellent"
+    /// Les motifs à cocher, par nature (`POINTS_FORTS`, `POINTS_FAIBLES`).
+    static let pointsForts = ["délai respecté", "travail soigné", "pièces fournies", "interlocuteur réactif"]
+    static let pointsFaibles = ["retard", "travail à refaire", "facture contestée", "intervenant injoignable"]
+    /// Le début de chaque morceau de la phrase générée (`phraseGeneree`) : les motifs
+    /// suivent, joints par « , », puis un point ; les deux morceaux, par une espace.
+    static let phraseForts = "Points forts : "
+    static let phraseFaibles = "Points faibles : "
 }

@@ -102,6 +102,14 @@ quatre secondes, un double toucher ou un appui long la garde ouverte (#178).
 Un contrat résilié dit, sur sa carte, par qui il est remplacé et dès quand ; celui qui
 prend la suite dit qui il remplace (coprofirst v3.91.0, contrat 1.29.0, #185) — rien de
 plus d'une installation antérieure. La saisie d'un contrat reste au site.
+Les **avis du conseil syndical sur un prestataire** se lisent par exercice et par
+intervention, tels que la résidence les regroupe (#207). Le conseil y note un prestataire
+— « ⭐ Noter », sur sa fiche ou sur la carte d'un contrat : l'affaire jugée (les siennes
+d'abord, avec la recherche de la page Affaires ; une affaire où il n'intervient pas
+l'y ajoute, après confirmation), l'état (Mauvais, Neutre, Excellent), les points forts
+et faibles qui composent le commentaire, un texte libre — et retire un avis, après
+confirmation. L'auteur corrige le sien : ses cases se recochent. Chaque geste suit le
+droit que la résidence sert (`est_moderateur`, `peut_modifier`).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
