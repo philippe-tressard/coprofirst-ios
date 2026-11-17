@@ -193,7 +193,9 @@ final class CartesDuFilUITests: XCTestCase {
         let sondage = app.buttons["fil.sondage_ouvert:3"]
         XCTAssertTrue(sondage.apparait())
         sondage.tap()
-        XCTAssertTrue(app.elementAcces("sondage.option.1").apparait())
+        // La question, en tête de fiche : les choix du vote peuvent être sous l'écran, les
+        // résultats provisoires au-dessus d'eux (#257), et une liste ne garde que ses rangées visibles.
+        XCTAssertTrue(app.elementAcces("sondage.question").apparait())
         app.navigationBars.buttons.firstMatch.tap()
 
         let document = app.buttons["fil.document:7"]

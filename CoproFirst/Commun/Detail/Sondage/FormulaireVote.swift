@@ -20,9 +20,7 @@ struct FormulaireVote: View {
     var body: some View {
         Section {
             ForEach(sondage.options) { option in
-                LigneChoix(
-                    option: option, choisie: vote.option == option.id, resultats: sondage.resultatsVisibles
-                ) {
+                LigneChoix(option: option, choisie: vote.option == option.id) {
                     withAnimation(.snappy) {
                         // Changer de réponse vide la précision : elle valait pour l'autre (le site).
                         if vote.option != option.id { vote.reponseLibre = "" }
@@ -91,11 +89,10 @@ struct FormulaireVote: View {
 }
 
 /// Une réponse possible : le rond qui se coche, le libellé, ✏️ si elle demande une
-/// précision, et ses votes quand le serveur les montre.
+/// précision. Ses votes ne se disent pas ici : visibles, les barres sont au-dessus.
 private struct LigneChoix: View {
     let option: OptionSondage
     let choisie: Bool
-    let resultats: Bool
     let choisir: () -> Void
     @Environment(\.palette) private var palette
 
@@ -112,12 +109,6 @@ private struct LigneChoix: View {
                     Text("✏️").accessibilityLabel("Cette réponse inclut un champ de précision")
                 }
                 Spacer(minLength: 8)
-                if resultats, let votes = option.nbVotes {
-                    Text(TextesSondage.votes(votes))
-                        .monospacedDigit()
-                        .font(.subheadline)
-                        .foregroundStyle(palette.textMuted)
-                }
             }
             .frame(minHeight: Mise.cible)
             .contentShape(.rect)
