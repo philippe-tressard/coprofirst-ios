@@ -6,9 +6,7 @@ import Foundation
 /// Ce que les écrans demandent à une installation. Deux réalisations : le client
 /// généré (`ServiceAPI`) et une API simulée pour les aperçus et les tests
 /// (`ServiceSimule`) — aucun écran n'appelle le réseau lui-même.
-protocol ServiceCoproFirst: Sendable {
-    /// GET /config : l'adresse mène-t-elle à une résidence ? Son nom, son logo.
-    func decouvrir(_ adresse: URL) async throws -> Installation
+protocol ServiceCoproFirst: DecouvreInstallation {
     /// GET /config/logo.png : les octets du logo à cette adresse
     /// (`Installation.adresseLogo(sombre:)`) — une route publique.
     func logo(_ adresse: URL) async throws -> Data

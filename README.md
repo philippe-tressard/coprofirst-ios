@@ -66,8 +66,11 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 
 La cible `CoproFirstTV` (tvOS 17, #218) fait d'une Apple TV l'écran de hall d'une
 résidence : elle fera défiler les affiches d'un périmètre, en lecture seule, une fois
-l'écran appairé (serveur : coprofirst#2770). Elle compile les fichiers de l'app que
-`project.yml` nomme — la charte, le texte du site — et rejoue leurs tests sur tvOS :
+l'écran appairé (serveur : coprofirst#2770). On y entre dans la résidence par son
+adresse, ou par la démo (lot 2) — ni QR, ni lien universel, ni Face ID, que tvOS n'a pas —,
+puis l'écran attend son appairage (lot 3). Elle compile les fichiers de l'app que
+`project.yml` nomme — la charte, le texte du site, l'entrée (adresse, GET /config,
+plancher) — et rejoue leurs tests sur tvOS, avec les siens (`CoproFirstTVTests/`) :
 
 ```bash
 APPAREIL=tv bash scripts/tests-simulateur.sh
