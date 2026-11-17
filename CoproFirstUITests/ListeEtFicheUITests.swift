@@ -65,6 +65,22 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(choisie("affaires.carte.A-0038", dans: app).apparait())
     }
 
+    /// La page se reconstruit quand on la quitte (barre latérale), comme au pli d'un iPhone
+    /// pliable : l'affaire ouverte se retrouve au retour (`MemoireDesSelections`, #119).
+    @MainActor
+    func testLAffaireOuverteSeRetrouveEnRevenantALaPage() throws {
+        let app = lancer("affaires")
+        app.toucher(app.elementAcces("barre.mes-demandes"))
+        app.toucher(app.elementAcces("affaires.carte.A-0041"))
+        XCTAssertTrue(ficheAffaire("A-0041", dans: app))
+
+        app.toucher(app.elementAcces("barre.faq"))
+        XCTAssertTrue(app.navigationBars["FAQ"].apparait())
+        app.toucher(app.elementAcces("barre.mes-demandes"))
+        XCTAssertTrue(ficheAffaire("A-0041", dans: app), "la fiche ouverte au départ, sans clignement vide")
+        XCTAssertTrue(choisie("affaires.carte.A-0041", dans: app).apparait(), "sa carte toujours soulignée")
+    }
+
     @MainActor
     func testLeFilGardeSaListeAuToucherDUneCarte() throws {
         let app = lancer("fil")

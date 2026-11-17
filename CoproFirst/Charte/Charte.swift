@@ -69,6 +69,9 @@ enum Mise {
     static let listeMax: CGFloat = 440
     /// Le trait qui souligne la rangée dont la fiche est ouverte à côté (`rangeeChoisie`).
     static let filetChoisi: CGFloat = 2
+    /// La largeur de la tranche du carnet, où se rangent les intercalaires (#119), au
+    /// texte par défaut : elle suit Dynamic Type.
+    static let tranche: CGFloat = 84
 }
 
 extension Font {

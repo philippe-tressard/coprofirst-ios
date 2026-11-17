@@ -40,7 +40,7 @@ struct AffairesView: View {
             if onglet == "kanban" {
                 contenu(service).frame(maxHeight: .infinity)
             } else {
-                ListeEtFiche(selection: $choisie) {
+                ListeEtFiche(selection: $choisie, memoire: "affaires") {
                     contenu(service).frame(maxHeight: .infinity)
                 } fiche: { cible in
                     DetailAffaireView(id: cible.id, installation: installation)
@@ -149,6 +149,16 @@ struct AffairesView: View {
 /// Une affaire à ouvrir : son détail (`DetailAffaireView`), poussé ou à côté de la liste.
 struct AffaireAOuvrir: Hashable {
     let id: Int
+}
+
+/// Le marque-page du pliable garde l'affaire ouverte par son numéro seul (#119).
+extension AffaireAOuvrir: SelectionGardable {
+    var cleGardee: String { String(id) }
+
+    init?(cleGardee: String) {
+        guard let id = Int(cleGardee) else { return nil }
+        self.init(id: id)
+    }
 }
 
 extension AffairesView: EcranDeMenu {

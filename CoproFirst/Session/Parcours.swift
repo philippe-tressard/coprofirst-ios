@@ -52,12 +52,19 @@ final class Parcours {
     /// porte d'une notification, `Destination.Ecran.element`).
     var aOuvrir: String?
     /// L'onglet affiché dans l'espace de la résidence (identifiant de page).
-    var onglet = OrdrePages.idFil
+    var onglet = OrdrePages.idFil {
+        didSet { noterLeMarquePage() }
+    }
+    /// La charnière de l'appareil, tenue par `RacineView` (#119) : elle fait le carnet, et
+    /// seule elle autorise le marque-page sur disque (`MarquePage.swift`).
+    var posture = Posture.sansPli
     /// La présentation de la navigation, tenue de la classe de taille par `RacineView` :
     /// la porte d'un lien s'y règle avant même que l'espace de la résidence s'affiche (#221).
     private(set) var presentation = PresentationNavigation.barreDuBas
     /// La page ouverte dans « Plus » (barre du bas) — celle que la barre latérale reprend.
-    var ouverteDansPlus: String?
+    var ouverteDansPlus: String? {
+        didSet { noterLeMarquePage() }
+    }
     /// Ce que la porte d'un lien ou d'une notification retient (`Parcours+Porte`).
     var porte = EtatPorte()
     /// Ce que l'écran de connexion doit dire en arrivant (déconnexion hors ligne…).
@@ -74,10 +81,15 @@ final class Parcours {
     let connues: InstallationsConnues
     /// Le seul chemin du mot de passe : la confirmation d'un hôte jamais vu (#82).
     let garde: GardeHote
+    /// Le marque-page du pliable, par résidence (#119).
+    @ObservationIgnored let marques: MarquesPages
+    /// L'élément ouvert de chaque liste nommée de la résidence ouverte (`ListeEtFiche`).
+    @ObservationIgnored let selections = MemoireDesSelections()
 
-    init(service: any ServiceCoproFirst, connues: InstallationsConnues) {
+    init(service: any ServiceCoproFirst, connues: InstallationsConnues, marques: MarquesPages = .standard) {
         self.service = service
         self.connues = connues
+        self.marques = marques
         garde = GardeHote(service: service, connues: { connues.liste })
         audience = MesureAudience(service: service.serviceAudience)
         // Au retour, la palette de la dernière résidence s'applique dès le 1er écran.
@@ -85,6 +97,7 @@ final class Parcours {
         // En consultation hors ligne, rien ne se note : rien ne partirait.
         audience.courante = { [weak self] in self?.consultation == nil ? self?.ouverteAJour : nil }
         ecouterLesSessionsRefusees()
+        selections.disque = disqueDesSelections
     }
 
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.
@@ -97,8 +110,12 @@ final class Parcours {
         reconnue = installation
         ouverte = installation
         self.consultation = consultation
-        onglet = OrdrePages.idFil
-        ouverteDansPlus = nil
+        // Rien des listes d'une autre résidence ; le Fil, sauf sur un pliable qui garde un
+        // marque-page de celle-ci (#119).
+        selections.oublier()
+        let place = pageARouvrir(installation)
+        onglet = place.onglet
+        ouverteDansPlus = place.dansPlus
         avis = nil
         chemin = []
         clocheOuverte = false

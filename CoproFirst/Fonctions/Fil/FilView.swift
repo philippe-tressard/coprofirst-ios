@@ -13,6 +13,9 @@ struct FilView: View {
     @State private var resume: ElementDuFil?
     /// L'élément ouvert : poussé sur iPhone, à côté du fil sur iPad (`ListeEtFiche`, #222).
     @State private var choisi: ElementDuFil?
+    /// Dans le carnet du pliable (#119), le jour ouvert : son rang, du plus récent (0).
+    @State private var rangDuJour = 0
+    @Environment(\.selectionsDeLaPage) private var selections
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var taille
 
@@ -25,9 +28,24 @@ struct FilView: View {
         case erreur(ErreurService)
     }
 
+    /// Le carnet ouvert, le fil chargé : une journée par double page (`PageDuJour`).
+    private var enDoublePage: Bool {
+        parcours.presentation == .carnet && phase == .pret && !jours.isEmpty
+    }
+
     var body: some View {
-        ListeEtFiche(selection: $choisi) {
-            fil
+        // En mémoire seulement : un élément du fil ne se réécrit pas depuis son identifiant.
+        ListeEtFiche(
+            selection: $choisi, partage: parcours.presentation == .carnet ? .proportion(0.5) : .parDefaut,
+            memoire: "fil"
+        ) {
+            if enDoublePage {
+                PageDuJour(jours: jours, rang: $rangDuJour) { element in
+                    CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
+                }
+            } else {
+                fil
+            }
         } fiche: { element in
             DestinationDuFil(element: element, installation: installation)
                 .destinationZoom(id: element.id, dans: zoom)
@@ -54,6 +72,11 @@ struct FilView: View {
         }
         // Demandé fil déjà chargé : une notification touchée, l'app ouverte (#17).
         .onChange(of: parcours.aOuvrir) { if phase == .pret { ouvrirDemande() } }
+        // Le jour ouvert du carnet se retrouve au pli comme au retour à la page (#119).
+        .onChange(of: rangDuJour) { _, rang in
+            guard let selections else { return }
+            selections.memoire.noter(jours[safe: rang]?.jour, sous: selections.cle("jour"))
+        }
         .task {
             await charger()
             ouvrirDemande()
@@ -93,9 +116,17 @@ struct FilView: View {
         .refreshable { await charger() }
     }
 
-    /// Un résumé s'ouvre en feuille ; le reste, en fiche.
+    /// Un résumé s'ouvre en feuille ; le reste, en fiche — et, dans le carnet, sur la page
+    /// de son jour.
     private func ouvrir(_ element: ElementDuFil) {
+        if let rang = jours.firstIndex(where: { $0.elements.contains(element) }) { rangDuJour = rang }
         if case .resume = element.cible { resume = element } else { choisi = element }
+    }
+
+    /// Le jour que le carnet avait ouvert, s'il est encore au fil ; sinon le plus récent.
+    private func reprendreLeJour() {
+        let repris = selections.flatMap { $0.memoire.reprendre(Date.self, sous: $0.cle("jour")) }
+        rangDuJour = repris.flatMap { jour in jours.firstIndex { $0.jour == jour } } ?? 0
     }
 
     private var squelette: some View {
@@ -120,9 +151,12 @@ struct FilView: View {
         }
     }
 
-    /// L'élément demandé au lancement (`-ouvrir`), une fois le fil chargé.
+    /// L'élément demandé au lancement (`-ouvrir`, une notification), une fois le fil chargé.
+    /// Pas avant : un fil quitté en plein chargement (au lancement d'un pliable déplié, la
+    /// charnière arrive après le premier écran et le carnet reconstruit le Fil, #119)
+    /// consommait la demande sans rien trouver — et la notification n'ouvrait rien.
     private func ouvrirDemande() {
-        guard let id = parcours.aOuvrir else { return }
+        guard phase == .pret, let id = parcours.aOuvrir else { return }
         parcours.aOuvrir = nil
         guard let element = jours.flatMap(\.elements).first(where: { $0.id == id }) else { return }
         ouvrir(element)
@@ -135,6 +169,7 @@ struct FilView: View {
                 jours = Chronologie.parJour(elements)
                 phase = .pret
             }
+            reprendreLeJour()
         } catch {
             withAnimation(.snappy) { phase = .erreur(ErreurService.depuis(error)) }
         }
