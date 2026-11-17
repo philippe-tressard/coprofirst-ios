@@ -73,6 +73,21 @@ l'écran appairé (serveur : coprofirst#2770). Elle compile les fichiers de l'ap
 APPAREIL=tv bash scripts/tests-simulateur.sh
 ```
 
+### L'Apple Watch
+
+La cible `CoproFirstWatch` (watchOS 10, #226) montre au poignet la cloche de la dernière
+résidence ouverte sur l'iPhone : les non lues d'abord, les urgentes devant, puis « Déjà
+lues », repliée ; un toucher ouvre l'alerte entière. Elle ne fait que lire — rien ne s'y
+marque comme lu. Elle se reliera à l'iPhone par un jeton de montre (coprofirst#2771) ;
+d'ici là, elle dit de l'ouvrir par l'iPhone. Elle compile les fichiers de l'app que
+`project.yml` nomme — la charte, le texte du site, l'alerte servie — et joue ses tests et
+ceux du code partagé sur watchOS (`-api-simulee` : une résidence inventée,
+`-cloche vide|injoignable|<nombre>`) :
+
+```bash
+APPAREIL=montre bash scripts/tests-simulateur.sh
+```
+
 ## Écrans livrés
 
 Accueil, En savoir plus, connexion en un écran (résidence reconnue par son

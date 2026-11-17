@@ -1,9 +1,10 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
-# CI : garde-fous du dépôt et REUSE (Linux) ; build, SwiftLint et tests unitaires ; tests
-# d'interface en cinq lots — en parallèle sur macOS, réunis sous le check requis. Une PR
-# qui ne touche que la documentation n'occupe aucun exécutant macOS (#204).
+# CI : garde-fous du dépôt et REUSE (Linux) ; build, SwiftLint et tests unitaires ; l'Apple
+# Watch ; échantillons ; tests d'interface en cinq lots — en parallèle sur macOS, réunis sous
+# le check requis. Une PR qui ne touche que la documentation n'occupe aucun exécutant macOS
+# (#204).
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
 name: CI
 
@@ -124,6 +125,40 @@ jobs:
           done
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
+
+  montre:
+    # Un job à part, en parallèle des autres (#226) : la montre a son propre build, comme les
+    # échantillons ; ajoutée à Unitaires (l'iPhone et le très grand texte, ~43 min attendues),
+    # elle l'aurait rapproché du plafond. Plafond estimé, à mesurer aux premiers passages : au
+    # poste, ~5 à 7 min de build et de tests et ~8 de build Release, soit ~25 min sur un runner
+    # 1,5 fois plus lent, plus l'outillage — 45 laisse la marge d'un runner lent.
+    name: Apple Watch (build, tests, app livrée dépendante)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: Projet Xcode (XcodeGen)
+        run: bash scripts/generer-projet.sh
+      - name: Apple Watch — build et tests de la montre et du code partagé
+        # La cible watchOS (#226) compile les mêmes fichiers que l'iPhone pour la charte, les
+        # formats et l'alerte servie ; ses tests et ceux du code partagé y sont joués. Même
+        # script, même verdict : INCONNU si aucune Apple Watch Series n'est disponible.
+        env:
+          APPAREIL: montre
+          RESULTATS: .build/ResultatsMontre
+        run: bash scripts/tests-simulateur.sh
+
+      - name: Apple Watch — l'app livrée reste dépendante de l'iPhone
+        # Construite en Release, l'app montre doit porter WKRunsIndependentlyOfCompanionApp à
+        # false : l'étape qui la déclare indépendante ne vaut que pour le Debug du simulateur
+        # (#226). Absente, true ou illisible : rouge, ou INCONNU si la construction échoue.
+        run: bash scripts/verifier-montre-dependante.sh
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
@@ -285,7 +320,7 @@ jobs:
     # dans sa file (#235) le rendrait vert sans avoir joué, ou rouge sans faute — chaque job
     # y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [detection, unitaires, echantillons, interface]
+    needs: [detection, unitaires, montre, echantillons, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5

@@ -4,18 +4,6 @@
 import ClientAPI
 import Foundation
 
-/// Une alerte reçue, telle que GET /notifications la sert (`NotificationRead`).
-struct NotificationRecue: Hashable, Sendable, Identifiable {
-    let id: Int
-    let type: String
-    let titre: String
-    /// Du HTML de l'éditeur : il passe par `TexteDuSite`.
-    let corps: String
-    var lue: Bool
-    let urgente: Bool
-    let creeLe: Date
-}
-
 /// Ce que l'écran des notifications demande à une installation (#14).
 protocol ServiceNotifications: Sendable {
     /// GET /notifications : toutes, les plus récentes d'abord (le serveur trie).
@@ -109,13 +97,5 @@ extension ServiceAPI: ServiceNotifications {
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
-    }
-}
-
-extension NotificationRecue {
-    init(lue notification: Components.Schemas.NotificationRead) {
-        self.init(
-            id: notification.id, type: notification._type, titre: notification.titre, corps: notification.corps,
-            lue: notification.lue, urgente: notification.urgente, creeLe: notification.creeLe)
     }
 }

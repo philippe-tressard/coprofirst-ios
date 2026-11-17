@@ -31,6 +31,9 @@
 !/CoproFirstTests/
 !/CoproFirstUITests/
 !/CoproFirstTV/
+!/CoproFirstWatch/
+!/CoproFirstWatchTests/
+!/CoproFirstWatchUITests/
 
 # 3. Exclus PARTOUT, même dans un dossier ré-inclus
 # Produits de build et réglages personnels d'Xcode
@@ -45,6 +48,7 @@ xcuserdata/
 /CoproFirst/Info.plist
 /CoproFirst/CoproFirst.entitlements
 /CoproFirstTV/Info.plist
+/CoproFirstWatch/Info.plist
 # Signature et secrets : clés d'API App Store Connect et APNs, certificats, profils
 *.p8
 *.p12
