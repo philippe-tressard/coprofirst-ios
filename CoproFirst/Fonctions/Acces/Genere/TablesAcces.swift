@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/pages.ts#PAGES, front/src/lib/types-acces.ts#STATUTS_ACCES, front/src/lib/types-acces.ts#TYPES_ACCES, front/src/lib/bail.ts#ETATS_BAIL, front/src/lib/bail.ts#TYPES_OBJET_BAIL, front/src/lib/bail.ts#STATUTS_OBJET_BAIL, front/src/lib/constats.ts#GRAVITES_CONSTAT (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), front/src/lib/pages.ts#PAGES, front/src/lib/types-acces.ts#STATUTS_ACCES, front/src/lib/types-acces.ts#TYPES_ACCES, front/src/lib/bail.ts#ETATS_BAIL, front/src/lib/bail.ts#TYPES_OBJET_BAIL, front/src/lib/bail.ts#STATUTS_OBJET_BAIL, front/src/lib/constats.ts#GRAVITES_CONSTAT (tables-clients.json).
 // swiftlint:disable line_length
 
 /// Ce que le site écrit de « Mes lots & accès » et que le contrat ne sert pas.

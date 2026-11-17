@@ -19,23 +19,27 @@ import Testing
 
 // MARK: - Ce qui part chez l'installation
 
-/// Le motif d'un champ de `AppareilEnregistre`, lu dans le contrat embarqué — jamais recopié.
-private func motifDuContrat(_ champ: String) throws -> Regex<AnyRegexOutput> {
+/// Un champ de `AppareilEnregistre`, lu dans le contrat embarqué — jamais recopié.
+private func champDuContrat(_ champ: String) throws -> [String: Any] {
     let contrat = URL(filePath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
         .appending(path: "Paquets/ClientAPI/Sources/ClientAPI/openapi.json")
     let json = try #require(try JSONSerialization.jsonObject(with: Data(contentsOf: contrat)) as? [String: Any])
     let schemas = (json["components"] as? [String: Any])?["schemas"] as? [String: Any]
     let proprietes = (schemas?["AppareilEnregistre"] as? [String: Any])?["properties"] as? [String: Any]
-    let motif = try #require((proprietes?[champ] as? [String: Any])?["pattern"] as? String)
-    return try Regex(motif)
+    return try #require(proprietes?[champ] as? [String: Any])
 }
 
-@Test func lAbonnementEtLeJetonSuiventLesMotifsDuContrat() throws {
-    let abonnement = try motifDuContrat("abonnement")
+/// Depuis le contrat 2.4.0 (coprofirst#2789), le jeton n'a plus de motif au contrat : le
+/// serveur le juge avec sa `plateforme` (`apns` par défaut). Le contrat n'en dit plus que la
+/// longueur maximale — c'est elle qui se vérifie ici, avec le motif de l'abonnement.
+@Test func lAbonnementEtLeJetonSuiventLeContrat() throws {
+    let abonnement = try Regex(try #require(try champDuContrat("abonnement")["pattern"] as? String))
     let tires = (0..<50).map { _ in AbonnementsPush.tirer() }
     for tire in tires { #expect(tire.wholeMatch(of: abonnement) != nil, "abonnement hors du motif") }
     #expect(Set(tires).count == tires.count, "un tirage aléatoire, jamais deux fois le même")
-    #expect(JetonAPNs(CentreSimule.jeton).hexadecimal.wholeMatch(of: try motifDuContrat("jeton")) != nil)
+    let longueur = try #require(try champDuContrat("jeton")["maxLength"] as? Int)
+    let jeton = JetonAPNs(CentreSimule.jeton).hexadecimal
+    #expect(!jeton.isEmpty && jeton.count <= longueur)
 }
 
 /// Un transport qui garde le corps envoyé, et répond 204.

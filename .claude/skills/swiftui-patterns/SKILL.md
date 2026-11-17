@@ -296,6 +296,11 @@ seule la CI le dit.
    faisait rien, sans erreur (#217). Les `tap()` directs restants sont une dette au
    plafond décroissant (`scripts/verifier-touchers.sh`) : une classe touchée par un lot se
    convertit entière et s'ajoute à `CLASSES_TOUCHER`, et le plafond baisse d'autant.
+   Un toucher qui OUVRE une page (idempotent) et peut se perdre sous charge passe par
+   `app.toucher(élément, jusqua: effet)` : rejoué au plus `Attente.reprises` fois, chaque
+   reprise déclarée au résumé du run (`bilan_tests_ui.py`, #282) — jamais pour un
+   interrupteur ni un envoi. Un toucher voulu aux COORDONNÉES (sans le défilement
+   d'XCUITest, #47) : `app.toucherAuDessin(élément)`, une fois son cadre immobile.
 5. **Une suite lente ou rouge seulement en tête de passage** : le simulateur sortait à
    peine de son démarrage. `scripts/tests-simulateur.sh` le démarre AVANT le build et
    attend la fin de son démarrage (`simctl bootstatus -b`) ; l'autotest refuse un test

@@ -12,6 +12,9 @@ Appelé par `scripts/tests-simulateur.sh` (#50). Deux lectures :
   deux d'affilée, rarement — sauf sur une branche qui alourdit l'app. Les deux
   d'affilée se signalent donc, même sur un run vert : c'est la marche d'avant
   l'échec.
+  Le même journal dit aussi les REPRISES du toucher « jusqu'à l'effet »
+  (`app.toucher(_:jusqua:)`, #282) : un toucher qui n'a rien fait est rejoué, au plus
+  deux fois, et chaque reprise se déclare au résumé et en annotation — jamais muette.
 - `decider <résumé.json>` — le résumé de `xcresulttool get test-results summary`.
   Une relance n'est permise que si CHAQUE échec est un test d'interface tombé sur
   une cause déclarée dans `CAUSES_RELANCE`, et pas plus de `PLAFOND_TESTS` tests.
@@ -45,6 +48,11 @@ CAUSES_RELANCE = {
     "Lost connection to the application": "perte de connexion à l'app (trois requêtes d'accessibilité expirées)",
     # #246, run 43858383798 : le simulateur du runner n'a pas pu lancer l'app (app.launch()).
     "Failed to get background assertion for target app": "lancement de l'app refusé par le simulateur (background assertion)",
+    # #282, run 44135010683 (essai 1, échantillon iPad) : la photographie de l'arbre
+    # d'accessibilité n'aboutit pas, l'app vivante — la marche d'avant « Lost connection »
+    # (#50). « main thread busy » n'y est PAS : c'est le fil de l'APP qui ne répond plus,
+    # un gel possible de l'app, que rien ne doit relancer en silence.
+    "Timed out while evaluating UI query": "photographie de l'arbre d'accessibilité expirée (runner saturé)",
 }
 #: Au-delà, ce n'est plus un accroc du runner : le run reste rouge.
 PLAFOND_TESTS = 2
@@ -52,6 +60,8 @@ CIBLE_INTERFACE = "CoproFirstUITests"
 
 DEBUT_TEST = re.compile(r"Test Case '-\[(?P<cible>\w+)\.(?P<classe>\w+) (?P<methode>\w+)\]' started")
 NOUVEL_ESSAI = re.compile(r"\(retry (?P<rang>\d+)\)\s*$")
+#: La ligne que `app.toucher(_:jusqua:)` écrit à chaque reprise (CoproFirstUITests/Attente.swift).
+REPRISE = re.compile(r"↻ reprise du toucher (?P<rang>\d+)/(?P<plafond>\d+) : (?P<quoi>.*)$")
 #: « AccesUITests/testSignalerPerduPuisDeclarer() » : un autre format ne se relance pas,
 #: le `-only-testing:` qui en sortirait pourrait ne viser aucun test.
 IDENTIFIANT = re.compile(r"^\w+/\w+\(\)$")
@@ -195,6 +205,32 @@ def lenteurs(journal: str) -> dict[str, int]:
     return rangs
 
 
+def reprises(journal: str) -> dict[str, list[str]]:
+    """Par test : chaque reprise du toucher « jusqu'à l'effet », telle que le test l'a écrite."""
+    courant, lues = "?", {}
+    for ligne in journal.splitlines():
+        if m := DEBUT_TEST.search(ligne):
+            courant = f"{m['classe']}/{m['methode']}"
+        elif m := REPRISE.search(ligne):
+            lues.setdefault(courant, []).append(f"{m['rang']}/{m['plafond']} : {m['quoi'].strip()}")
+    return lues
+
+
+def rendre_reprises(lues: dict[str, list[str]]) -> tuple[list[str], list[str]]:
+    """(lignes du résumé en Markdown, annotations GitHub) — chaque reprise se déclare."""
+    if not lues:
+        return ["Touchers repris : aucun."], []
+    resume = ["| Test | Toucher repris (rang/plafond : élément sans effet) |", "|---|---|"]
+    annotations = []
+    for test, liste in sorted(lues.items()):
+        for reprise in liste:
+            resume.append(f"| `{test}` | {reprise} |")
+            annotations.append(
+                f"::warning title=Toucher repris ({test})::{reprise} — un toucher perdu sous charge, "
+                "rejoué (#282). Une reprise qui revient sur le même écran est un défaut à chercher.")
+    return resume, annotations
+
+
 def rendre_lenteurs(rangs: dict[str, int]) -> tuple[list[str], list[str]]:
     """(lignes du résumé en Markdown, annotations GitHub)."""
     if not rangs:
@@ -225,6 +261,8 @@ Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' star
     t =   132.22s     Checking existence of `"acces.declarer.code" Any` (retry 2)
 Test Case '-[CoproFirstUITests.AffairesUITests testUneCarteOuvreSonDetail]' started.
     t =    46.83s     Find the "FAQ" Any (retry 1)
+Test Case '-[CoproFirstUITests.BarreLateraleUITests testLaBarreLateraleListeToutesLesPages]' started.
+↻ reprise du toucher 1/2 : "barre.mon-lot" Button sans effet ("Mes lots & accès" NavigationBar) en 10 s (#282)
 """
 
 
@@ -357,6 +395,22 @@ def autotest() -> int:
     if len(annotations) != 1 or "testSignalerPerduPuisDeclarer" not in annotations[0]:
         print(f"❌ une seule annotation attendue, pour deux expirations d'affilée : {annotations}")
         rate += 1
+    lues = reprises(JOURNAL)
+    if list(lues) != ["BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"] or len(lues[
+            "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"]) != 1:
+        print(f"❌ reprises : {lues}")
+        rate += 1
+    if len(rendre_reprises(lues)[1]) != 1 or rendre_reprises({})[1]:
+        print("❌ une annotation par reprise, aucune sans reprise")
+        rate += 1
+    saturee = _resume(("CoproFirstUITests", "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages()",
+                       "Failed to get matching snapshots: Timed out while evaluating UI query."))
+    gel = _resume(("CoproFirstUITests", "ConnexionUITests/testUnSeulToucherSurSeConnecterOuvreLaResidence()",
+                   "Failed to get matching snapshots: Unable to perform work on main run loop, "
+                   "process main thread busy for 30.0s"))
+    if decider(saturee)[0] != 0 or decider(gel)[0] != 1:
+        print("❌ requête expirée : une relance ; fil de l'app occupé : aucune")
+        rate += 1
     print("✅ bilan_tests_ui : autotest" if rate == 0 else f"── {rate} cas en échec")
     return 0 if rate == 0 else 1
 
@@ -401,7 +455,10 @@ def main(argv: list[str]) -> int:
         return 0 if verte else 1
     if len(argv) == 4 and argv[1] == "lenteurs":
         with open(argv[2], encoding="utf-8", errors="replace") as f:
-            lignes, annotations = rendre_lenteurs(lenteurs(f.read()))
+            journal = f.read()
+        lignes, annotations = rendre_lenteurs(lenteurs(journal))
+        lignes_r, annotations_r = rendre_reprises(reprises(journal))
+        lignes, annotations = lignes + [""] + lignes_r, annotations + annotations_r
         with open(argv[3], "a", encoding="utf-8") as f:
             f.write("\n".join(lignes) + "\n\n")
         print("\n".join(annotations))
