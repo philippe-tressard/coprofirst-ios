@@ -62,8 +62,10 @@ struct Perimetre: Identifiable, Hashable, Sendable {
     /// Les lieux qu'un sélecteur propose (#88) : les nœuds sélectionnables, jusqu'au
     /// niveau 3 et jamais plus bas — un nœud écrit avant la règle sous un parent qui ne
     /// peut plus rien porter (`niveaux_libres` servi à 0) ne se propose pas. Le plafond
-    /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Une installation
-    /// antérieure au contrat 1.17.0 ne le sert pas : tout nœud sélectionnable, comme avant.
+    /// n'est pas recopié ici : il se lit sur ce que le serveur sert. Le plancher le sert
+    /// (contrat 1.17.0), mais `niveaux_libres` reste FACULTATIF au contrat : absent, le
+    /// parent ne ferme rien — tout nœud sélectionnable se propose. Un repli gardé exprès
+    /// (#254) : lire l'absence comme le défaut du schéma (0) viderait le sélecteur.
     ///
     /// `garder` : le lieu déjà enregistré d'un contenu qu'on modifie — proposé même trop
     /// profond, pour que le modifier ne le perde pas en silence.
