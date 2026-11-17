@@ -103,6 +103,9 @@ struct AvisEphemere: ViewModifier {
                         .padding(.bottom, 12)
                         .padding(.horizontal, Mise.marge)
                         .transition(mouvementReduit ? .opacity : .move(edge: .bottom).combined(with: .opacity))
+                        // Il passe sur l'écran sans rien retenir : un toucher posé dessous va
+                        // au bouton qu'il couvre (au très grand texte, il en couvre plusieurs).
+                        .allowsHitTesting(false)
                         .accessibilityAddTraits(.updatesFrequently)
                         .task(id: texte) {
                             AccessibilityNotification.Announcement(texte).post()

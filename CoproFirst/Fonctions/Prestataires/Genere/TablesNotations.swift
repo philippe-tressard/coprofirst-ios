@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/notations.ts#ETATS, front/src/lib/notations.ts#PAR_ETAT, front/src/lib/notations.ts#SEUILS_DE_MOYENNE, front/src/lib/notations.ts#ETAT_AU_DELA (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/notations.ts#ETATS, front/src/lib/notations.ts#PAR_ETAT, front/src/lib/notations.ts#SEUILS_DE_MOYENNE, front/src/lib/notations.ts#ETAT_AU_DELA (tables-clients.json), front/src/lib/notations.ts.
 
 /// La notation d'un prestataire, telle que le site l'écrit.
 enum TablesNotations {
@@ -28,4 +28,11 @@ enum TablesNotations {
     ]
     /// Au-delà de la dernière borne.
     static let etatAuDela = "excellent"
+    /// Les motifs à cocher, par nature (`POINTS_FORTS`, `POINTS_FAIBLES`).
+    static let pointsForts = ["délai respecté", "travail soigné", "pièces fournies", "interlocuteur réactif"]
+    static let pointsFaibles = ["retard", "travail à refaire", "facture contestée", "intervenant injoignable"]
+    /// Le début de chaque morceau de la phrase générée (`phraseGeneree`) : les motifs
+    /// suivent, joints par « , », puis un point ; les deux morceaux, par une espace.
+    static let phraseForts = "Points forts : "
+    static let phraseFaibles = "Points faibles : "
 }

@@ -14,6 +14,10 @@ import OpenAPIRuntime
 ///
 /// Un champ que le corps généré porte déjà n'est jamais remplacé : `Collision` — le jour
 /// où le plancher le déclare, il s'écrit par le type généré et l'ajout se retire.
+///
+/// Second usage : un `null` EXPLICITE (`[String: Int?]` à valeurs `nil`). Le type généré
+/// tait un champ `nil` ; un PATCH que le serveur lit champ par champ (`model_fields_set`)
+/// ne l'efface donc jamais — ramener un avis « sans affaire » l'exige (#207).
 public enum CorpsEnvoye {
     /// L'objet JSON à ajouter, porté par la tâche : par le seul appel qui l'a demandé.
     @TaskLocal static var ajouts: Data?

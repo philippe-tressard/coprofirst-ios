@@ -67,8 +67,9 @@ enum TextesPrestataires {
     static let photoDuReleve = "Relevé de compteur"
     static let aucunFournisseur = "Aucun fournisseur"
 
-    /// Les gestes du conseil syndical, que l'app ne porte pas encore (coprofirst#2507).
+    /// Les gestes du conseil syndical, que l'app ne porte pas encore (coprofirst#2507) ;
+    /// noter, corriger et retirer un avis, si (#207).
     static let gestesSurLeSite =
-        "Ajouter ou corriger une fiche, un contrat ou un relevé, noter un prestataire, archiver : "
+        "Ajouter ou corriger une fiche, un contrat ou un relevé, archiver : "
         + "ces gestes du conseil syndical se font sur le site de la résidence."
 }

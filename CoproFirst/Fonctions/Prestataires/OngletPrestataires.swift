@@ -10,6 +10,7 @@ struct OngletPrestataires: View {
     let donnees: DonneesPrestataires
     let installation: Installation
     let service: any ServicePrestataires
+    let gestes: GestesAvis
     @State private var recherche = ""
     @State private var categorie: String?
     @State private var contrat: String?
@@ -46,7 +47,8 @@ struct OngletPrestataires: View {
                 ForEach(sansType) { carte($0, compact: courants.count > 7) }
                 if !archivees.isEmpty {
                     DisclosureGroup {
-                        VStack(spacing: 10) { ForEach(archivees) { carte($0, compact: true) } }.padding(.top, 8)
+                        VStack(spacing: 10) { ForEach(archivees) { carte($0, compact: true, archive: true) } }
+                            .padding(.top, 8)
                     } label: {
                         Text("\(TextesPrestataires.archives) (\(archivees.count))").font(.headline)
                     }
@@ -72,9 +74,10 @@ struct OngletPrestataires: View {
         ForEach(groupe) { carte($0, compact: compact) }
     }
 
-    private func carte(_ prestataire: Prestataire, compact: Bool) -> some View {
+    private func carte(_ prestataire: Prestataire, compact: Bool, archive: Bool = false) -> some View {
         CartePrestataire(
-            prestataire: prestataire, donnees: donnees, installation: installation, service: service, compact: compact,
+            prestataire: prestataire, donnees: donnees, installation: installation, service: service,
+            archive: archive, gestes: gestes, compact: compact,
             deplie: Binding(
                 get: { deplie == prestataire.id }, set: { deplie = $0 ? prestataire.id : nil }))
     }
