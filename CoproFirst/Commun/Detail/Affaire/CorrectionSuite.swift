@@ -5,7 +5,7 @@ import Foundation
 
 /// Un geste sur UNE entrée de l'Historique (#91, #93). L'ORDRE est celui du site
 /// (`RubriqueHistorique.svelte`) : ✏️ puis 🗑️, l'irréversible en dernier.
-enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
+enum GesteSuite: String, CaseIterable, Identifiable, Sendable, GesteDeMenu {
     case modifier, supprimer
 
     var id: String { rawValue }
@@ -24,6 +24,8 @@ enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
         case .supprimer: "trash"
         }
     }
+
+    var destructif: Bool { self == .supprimer }
 
     /// Les gestes offerts sur cette entrée : ceux que le serveur a servis AVEC elle
     /// (`DroitsServisSuite`), et aucun autre — sans droit servi, l'Historique se lit sans

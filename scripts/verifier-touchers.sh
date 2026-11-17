@@ -19,7 +19,8 @@ CoproFirstUITests/PrestatairesAffaireUITests.swift
 CoproFirstUITests/PrestatairesUITests.swift
 CoproFirstUITests/HorsLigneUITests.swift CoproFirstUITests/ConnexionUITests.swift
 CoproFirstUITests/BarreLateraleUITests.swift
-CoproFirstUITests/CartesDuFilUITests.swift CoproFirstUITests/SaisieAffaireUITests.swift"
+CoproFirstUITests/CartesDuFilUITests.swift CoproFirstUITests/SaisieAffaireUITests.swift
+CoproFirstUITests/MessagesAffaireUITests.swift"
 
 # $@ : les fichiers à lire. Rend le nombre de `tap()` directs hors commentaires.
 compter_tap() { cat "$@" /dev/null | grep -E '\.tap\(\)' | grep -vcE '^[[:space:]]*///?' ; }

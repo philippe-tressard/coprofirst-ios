@@ -204,6 +204,8 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `patchTicketsTicketIdEvolutionsEvolId` | `OtherUserContent` |
 | `deleteTicketsTicketIdEvolutionsEvolId` | — |
 | `postTicketsTicketIdMessages` | `EmailsOrTextMessages` |
+| `patchTicketsTicketIdMessagesMsgId` | `EmailsOrTextMessages` |
+| `deleteTicketsTicketIdMessagesMsgId` | — |
 | `postSignalements` | `OtherUserContent` |
 | `postLecturesApercu` | `OtherUserContent` |
 | `postPerimetresLibelle` | `OtherUserContent` |
