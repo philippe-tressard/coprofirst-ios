@@ -42,7 +42,8 @@
 #     survit pas), éteint le simulateur s'il l'a démarré, et rend le verrou.
 #
 # Appareil : un iPhone de série par défaut ; `APPAREIL=ipad` pour un iPad Pro 13 pouces
-# (#220) ; `DESTINATION` fixée l'emporte sur les deux.
+# (#220) ; `APPAREIL=tv` pour une Apple TV 4K et le schéma CoproFirstTV (#218) ;
+# `DESTINATION` fixée l'emporte sur l'appareil.
 #
 # Arguments : passés au premier `xcodebuild test`, pour un passage partiel au poste
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
@@ -58,6 +59,8 @@ XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
 PROJET=${PROJET:-CoproFirst.xcodeproj}
+# Le schéma : celui de l'app ; avec APPAREIL=tv, celui de l'écran de hall (#218).
+if [ "${APPAREIL:-iphone}" = tv ]; then SCHEMA=${SCHEMA:-CoproFirstTV}; else SCHEMA=${SCHEMA:-CoproFirst}; fi
 SOURCES_TESTS=${SOURCES_TESTS:-CoproFirstTests CoproFirstUITests}
 A_ETEINDRE=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
@@ -193,11 +196,12 @@ passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
-    # APPAREIL=ipad : le passage sur un iPad Pro 13 pouces de série (#220) ; l'iPhone sinon.
+    # APPAREIL=ipad : un iPad Pro 13 pouces de série (#220) ; tv : une Apple TV (#218).
     case "${APPAREIL:-iphone}" in
       iphone) DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1 ;;
       ipad) DESTINATION=$(bash scripts/destination-simulateur.sh --ipad) || return 1 ;;
-      *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone ou ipad)" >&2; return 2 ;;
+      tv) DESTINATION=$(bash scripts/destination-simulateur.sh --tv) || return 1 ;;
+      *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone, ipad ou tv)" >&2; return 2 ;;
     esac
   fi
   if ! motif=$(hors_projet); then
@@ -209,7 +213,7 @@ passer() {
   echo "Destination : $DESTINATION"
   demarrer_simulateur || return 1
   local communs=(
-    -project "$PROJET" -scheme CoproFirst -destination "$DESTINATION"
+    -project "$PROJET" -scheme "$SCHEMA" -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
     -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO
   )

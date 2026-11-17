@@ -87,6 +87,9 @@ echec() { echo "❌ $*"; ECHECS=$((ECHECS + 1)); }
 
 FICHIERS=$(git ls-files --cached)
 [ -n "$FICHIERS" ] || { echo "❓ INCONNU : git ne connaît aucun fichier (rien d'indexé ?)"; exit 2; }
+# Le code Swift de l'app : l'iPhone et l'écran de hall sur Apple TV (#218). Les règles
+# du code s'appliquent aux deux — une cible neuve n'y échappe pas par son dossier.
+CODE_APP='^CoproFirst(TV)?/.*\.swift$'
 
 # Les seuls fichiers dispensés de la limite de longueur — produits par un outil,
 # jamais écrits à la main. Toute autre exception se discute, elle ne s'ajoute pas.
@@ -170,7 +173,7 @@ while IFS= read -r f; do
   [ -f "$f" ] || continue
   motif=$(refus_couleur "$f" "$f")
   [ -z "$motif" ] || echec "$f : $motif"
-done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+done < <(grep -E "$CODE_APP" <<< "$FICHIERS")
 
 # Une génération lit coprofirst à une version PUBLIÉE, et par `_source.py` seul (#34) :
 # aucun autre script de génération n'ouvre un clone, une branche ou l'arbre de travail.
@@ -241,7 +244,7 @@ while IFS= read -r f; do
   # Le code seul : un commentaire qui explique l'interdit a le droit de le nommer.
   trouve=$(grep -nE "$MOTEUR_WEB" "$f" | grep -vE '^[0-9]+:[[:space:]]*///?' | head -1)
   [ -z "$trouve" ] || echec "$f : moteur web pour du HTML (${trouve%%:*}) — passer par TexteDuSite"
-done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+done < <(grep -E "$CODE_APP" <<< "$FICHIERS")
 
 # La consultation hors ligne (#101) : ce qu'une session laisse sur l'appareil (jeton,
 # lecture gardée, copies ouvertes) s'efface à UNE porte, `oublierCeQuiEstGarde` — un
@@ -324,7 +327,7 @@ while IFS= read -r f; do
   [ -z "$motif" ] || echec "$f : $motif"
   motif=$(refus_porte_apercu "$f" "$f")
   [ -z "$motif" ] || echec "$f : $motif"
-done < <(grep -E '^CoproFirst/.*\.swift$' <<< "$FICHIERS")
+done < <(grep -E "$CODE_APP" <<< "$FICHIERS")
 
 # Les gestes qui envoient une version en revue chez Apple : soumission à l'App
 # Store, distribution aux testeurs externes de TestFlight. Ils n'ont pas de place

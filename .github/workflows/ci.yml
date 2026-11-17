@@ -82,8 +82,8 @@ jobs:
     runs-on: macos-latest
     # 41 min au plus lent sur 32 jobs des 15 et 16/11/2026 (échantillon iPad compris), plus
     # le passage en très grand texte des parcours de la revue (#233 : SuppressionCompteUITests,
-    # jusqu'à 14 min en taille normale, ~1,4 fois en très grand texte) : ~61 min au pire. Le
-    # plafond des jobs d'interface : 70.
+    # jusqu'à 14 min en taille normale, ~1,4 fois en très grand texte) : ~61 min au pire, plus
+    # l'écran de hall (Apple TV, #218 : 2 à 4 min) : ~67. Le plafond des jobs d'interface : 70.
     timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -145,6 +145,14 @@ jobs:
           done
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
+      - name: Écran de hall (Apple TV) — build et tests du code partagé
+        # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
+        # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
+        # si aucune Apple TV de série n'est disponible sur le runner.
+        env:
+          APPAREIL: tv
+          RESULTATS: .build/ResultatsTV
+        run: bash scripts/tests-simulateur.sh
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
