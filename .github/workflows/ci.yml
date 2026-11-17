@@ -126,6 +126,8 @@ jobs:
           -only-testing:CoproFirstUITests/ConnexionUITests
           -only-testing:CoproFirstUITests/BarreLateraleUITests
           -only-testing:CoproFirstTests/PresentationNavigationTests
+          -only-testing:CoproFirstUITests/ListeEtFicheUITests
+          -only-testing:CoproFirstTests/ListeEtFicheTests
 
   interface:
     name: Interface (${{ matrix.lot }}/3)

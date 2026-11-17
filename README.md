@@ -98,6 +98,8 @@ barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ». **Sur iPad** en plein
 écran (#221), une barre latérale liste toutes les pages, puis Profil et À propos ; en
 Split View étroit, la barre du bas revient — la page ouverte reste ouverte au passage.
+Une liste et la fiche qu'elle ouvre (Mes affaires, le fil) s'y tiennent côte à côte,
+chacune avec sa barre (#222).
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
