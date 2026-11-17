@@ -16,7 +16,7 @@ extension ServiceSimule: ServiceDemandesProfil {
 
     func traiterDemandeProfil(
         _ id: Int, approuver: Bool, motif: String?, dans installation: Installation
-    ) async throws -> PhraseAvis? {
+    ) async throws -> PhraseAvis {
         try await Task.sleep(for: .milliseconds(350))
         try modifierSimule(depuis: FixturesDemandesProfil.lues) { demandes in
             guard demandes.contains(where: { $0.id == id }) else {

@@ -28,8 +28,7 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     /// Les natures de l'affaire que porte la carte (`meta.affaire.natures`, dérivées par
     /// le serveur) ; vide pour une rubrique qui n'en a pas — `NatureDeLaCarte` (#78).
     var natures: [String] = []
-    /// « Qui la lit » (`meta.affaire.lecture`, #129) ; `nil` hors affaire, ou d'une
-    /// installation antérieure.
+    /// « Qui la lit » (`meta.affaire.lecture`, #129) ; `nil` hors affaire, ou non servie.
     var lecture: Lecture?
     /// Le lieu de l'affaire (`meta.affaire.perimetre_libelle`, #130) ; `nil` pour le défaut.
     var lieu: String?

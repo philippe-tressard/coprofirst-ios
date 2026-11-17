@@ -7,6 +7,12 @@ les règles du site (`front/src/lib/fichiers.ts` : `EXTENSIONS_IMAGE`, `PREFIXE_
 
 Écrite à la main, la liste des extensions d'image avait divergé du site (ni `.avif`,
 ni `.heif`, ni `.bmp`, ni `.tiff`) : une telle photo serait tombée parmi les documents.
+
+Depuis v3.105.0, le motif d'image et le préfixe se lisent dans `constantes-clients.json`
+(`motifImage`, `prefixeStockage`, #239) ; depuis v3.106.0, les familles d'AFFICHAGE de
+`typeFichier` (JPEG → JPG, XLSX → EXCEL…) dans `tables-clients.json`
+(`famillesAffichageFichiers`, coprofirst#2798) — à ne pas confondre avec `famillesFichiers`,
+les familles de téléversement. `fichiers.ts` ne se lit plus.
 """
 
 from __future__ import annotations
@@ -15,7 +21,7 @@ import re
 
 from generateurs._commun import CHARTE, chaine, ecrire_table
 
-SOURCES = ["front/src/lib/fichiers.ts"]
+SOURCES: list[str] = []
 
 
 def _alternatives(motif: str) -> list[str]:
@@ -33,34 +39,34 @@ def _alternatives(motif: str) -> list[str]:
 
 
 def generer(ctx) -> str:
-    texte = ctx.lire(SOURCES[0])
-    m = re.search(r"const EXTENSIONS_IMAGE = /\\\.\(([^)]*)\)\$/i;", texte)
+    image, prefixe = ctx.constante("motifImage"), ctx.constante("prefixeStockage")
+    m = re.fullmatch(r"\\\.\(([^)]*)\)\$", image.get("motif", "")) if image.get("ignorerCasse") else None
     if not m:
-        raise SystemExit("❌ EXTENSIONS_IMAGE introuvable dans fichiers.ts")
+        raise SystemExit(f"❌ motifImage : forme inattendue ({image!r}) — l'app doit l'apprendre")
     images = _alternatives(m.group(1))
-    p = re.search(r"const PREFIXE_UUID = /\^\[0-9a-f\]\{(\d+)\}_/i;", texte)
+    p = re.fullmatch(r"\^\[0-9a-f\]\{(\d+)\}_", prefixe.get("motif", "")) if prefixe.get("ignorerCasse") else None
     if not p:
-        raise SystemExit("❌ PREFIXE_UUID introuvable dans fichiers.ts")
-    f = re.search(r"const FAMILLES: Record<string, string> = \{([^}]*)\}", texte)
-    if not f:
-        raise SystemExit("❌ FAMILLES (typeFichier) introuvable dans fichiers.ts")
-    familles = re.findall(r"(\w+): '([^']+)'", f.group(1))
-    if not familles:
-        raise SystemExit("❌ FAMILLES (typeFichier) est vide")
+        raise SystemExit(f"❌ prefixeStockage : forme inattendue ({prefixe!r}) — l'app doit l'apprendre")
+    publiees = ctx.table("famillesAffichageFichiers")
+    if not isinstance(publiees, dict) or not publiees or not all(
+            isinstance(c, str) and isinstance(v, str) for c, v in publiees.items()):
+        raise SystemExit(f"❌ famillesAffichageFichiers : forme inattendue ({publiees!r}) — l'app doit l'apprendre")
+    familles = list(publiees.items())
     liste = ", ".join(chaine(e) for e in images)
     table = "".join(f"        {chaine(cle)}: {chaine(valeur)},\n" for cle, valeur in familles)
     corps = (
-        "    /// Les extensions d'une image affichable en vignette (`EXTENSIONS_IMAGE`).\n"
+        "    /// Les extensions d'une image affichable en vignette (`motifImage`).\n"
         f"    static let extensionsImage: Set<String> = [{liste}]\n\n"
         "    /// Le préfixe que le serveur ajoute au nom téléversé : tant de chiffres\n"
-        "    /// hexadécimaux, puis « _ » (`PREFIXE_UUID`) — retiré du nom montré.\n"
+        "    /// hexadécimaux, puis « _ » (`prefixeStockage`) — retiré du nom montré.\n"
         f"    static let longueurPrefixe = {int(p.group(1))}\n\n"
         "    /// L'extension en capitales, ramenée à sa famille (`typeFichier`).\n"
         "    static let familles: [String: String] = [\n"
         + table
         + "    ]\n"
     )
-    ecrire_table(ctx, CHARTE / "FichiersDuSite.swift", "front/src/lib/fichiers.ts (EXTENSIONS_IMAGE, "
-                 "PREFIXE_UUID, typeFichier)", "FichiersDuSite",
+    source = (f"{ctx.provenance_constantes('motifImage', 'prefixeStockage')}, "
+              f"{ctx.provenance_tables('famillesAffichageFichiers')}")
+    ecrire_table(ctx, CHARTE / "FichiersDuSite.swift", source, "FichiersDuSite",
                  "Les pièces jointes comme le site les range et les nomme.", corps)
     return f"{len(images)} extensions d'image, {len(familles)} familles"

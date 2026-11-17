@@ -25,8 +25,6 @@ enum TextesATraiter {
     static let titre = "Demandes de profil"
     static let aucune = "Aucune demande en attente."
     static let erreur = "Impossible d’afficher les demandes de profil"
-    static let approuvee = "Demande approuvée."
-    static let rejetee = "Demande rejetée."
     static let statutSouhaite = "Type"
     static let batimentSouhaite = "Bât."
     static func rejeter(_ nom: String) -> String { "Rejeter la demande de \(nom) ?" }
@@ -60,9 +58,8 @@ final class EtatDemandesProfil {
         let servie = try await service.traiterDemandeProfil(
             demande.id, approuver: approuver, motif: motif, dans: installation)
         demandes.removeAll { $0.id == demande.id }
-        // L'annonce du serveur (contrat ≥ 1.16.0) ; d'une installation antérieure, la
-        // phrase d'avant.
-        return servie ?? PhraseAvis(texte: approuver ? TextesATraiter.approuvee : TextesATraiter.rejetee)
+        // L'annonce du serveur, telle que servie (contrat 1.16.0, #87).
+        return servie
     }
 }
 

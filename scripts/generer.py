@@ -66,7 +66,11 @@ def sources(modules: list) -> list[str]:
 #: la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
 #: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`) — `ctx.constante`,
 #: `ctx.table`. À la lecture, `Contexte.lire` refuse aussi la source d'une constante publiée.
-INTERDITS = re.compile(r"^(api/app/|front/src/styles/(socle|palette-sombre|palettes)\.css$)")
+INTERDITS = re.compile(
+    r"^(api/app/|front/src/styles/(socle|palette-sombre|palettes)\.css$"
+    # #239 : publiés par tables-clients.json 1.3.0 et constantes-clients.json 1.1.0 (v3.105.0) ;
+    # fichiers.ts en entier par tables-clients.json 1.4.0 (famillesAffichageFichiers, v3.106.0).
+    r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts)$)")
 #: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
 #: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
 EXCEPTIONS = {

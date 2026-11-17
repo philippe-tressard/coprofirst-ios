@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 # Les onglets du site
 
 GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
-Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), `front/src/lib/pages.ts#PAGES` (tables-clients.json).
+Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), `front/src/lib/pages.ts#PAGES` (tables-clients.json).
 
 Chaque ligne doit être classée dans [PARITE.md](PARITE.md) — `scripts/verifier-parite.py` refuse sinon. « — » : une page sans onglets.
 
