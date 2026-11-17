@@ -120,7 +120,9 @@ Split View étroit, la barre du bas revient — la page ouverte reste ouverte au
 Une liste et la fiche qu'elle ouvre (Mes affaires, le fil) s'y tiennent côte à côte,
 chacune avec sa barre (#222).
 **Sur l'iPhone pliable** ouvert (#119, en cours), l'app se lit comme un carnet : les
-pages en intercalaires sur la tranche droite ; plié, la barre du bas.
+pages en intercalaires sur la tranche droite, le fil une journée par double page (la
+fiche ouverte en face) ; la page et la fiche ouvertes s'y retrouvent après un arrêt par
+iOS ; plié, la barre du bas.
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran

@@ -35,6 +35,9 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
     @Environment(\.palette) private var palette
     /// Qui occupe la colonne de fiche : cette liste, tant qu'elle est à l'écran.
     @State private var jeton = UUID()
+    /// La mémoire ne se relit qu'à la CONSTRUCTION de la liste : en pile, revenir d'une fiche
+    /// fait réapparaître la liste avant que le `nil` du retour soit noté — la fiche se rouvrait.
+    @State private var repriseFaite = false
 
     init(
         selection: Binding<Element?>,
@@ -87,6 +90,8 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
 
     /// L'élément que la liste avait ouvert, si elle n'en a pas : rendu à l'appelant.
     private func reprendre() -> Element? {
+        guard !repriseFaite else { return selection }
+        repriseFaite = true
         guard selection == nil, let memoire, let selections else { return selection }
         let repris = selections.memoire.reprendre(Element.self, sous: selections.cle(memoire))
         if let repris { selection = repris }
@@ -113,7 +118,11 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
     }
 
     private func publier(_ choisi: Element?) {
-        let vue = choisi.map { AnyView(fiche($0)) } ?? AnyView(vide.frame(maxWidth: .infinity, maxHeight: .infinity))
+        // Le fond de la page sous « Aucune sélection » : sans lui, la colonne gardait celui du
+        // système (blanc, noir au sombre) à côté d'une page teintée par la palette.
+        let vue =
+            choisi.map { AnyView(fiche($0)) }
+            ?? AnyView(vide.frame(maxWidth: .infinity, maxHeight: .infinity).background(palette.bg))
         colonne?.montrer(.init(id: choisi.map(AnyHashable.init), vue: vue), par: jeton)
     }
 }
