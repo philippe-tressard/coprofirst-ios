@@ -14,22 +14,18 @@ final class ConnexionUITests: XCTestCase {
         app.launch()
 
         let email = app.textFields["connexion.email"]
-        XCTAssertTrue(email.apparait())
-        email.tap()
+        app.toucher(email)
         email.typeText("resident@example.com")
         let motDePasse = app.secureTextFields["connexion.motDePasse"]
-        motDePasse.tap()
+        app.toucher(motDePasse)
         motDePasse.typeText("secret")
 
         // Le champ mot de passe a le focus : le bouton doit se voir au-dessus du clavier.
         let valider = app.buttons["connexion.valider"]
         XCTAssertTrue(valider.attendre("isHittable == true"), "le bouton se voit au-dessus du clavier")
 
-        // Un toucher là où le bouton est dessiné, comme un doigt : sans le défilement
-        // qu'XCUITest ajoute de lui-même avant `tap()` sur un élément caché.
-        app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: valider.frame.midX, dy: valider.frame.midY))
-            .tap()
+        // Un toucher là où le bouton est dessiné, comme un doigt, une fois le clavier posé.
+        app.toucherAuDessin(valider)
         // Un hôte jamais vu sur cet appareil : l'adresse se confirme d'abord (#82).
         ConfirmationHoteUITests.confirmer(app)
 
