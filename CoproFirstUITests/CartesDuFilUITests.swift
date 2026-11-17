@@ -68,8 +68,11 @@ final class CartesDuFilUITests: XCTestCase {
         app.elementAcces("affaire.modifier").tap()
         XCTAssertTrue(app.elementAcces("modifier.contenuFige").apparait())
         let titreFige = NSPredicate(format: "identifier == %@ AND isEnabled == false", "modifier.titre")
+        // Un `Form` ne crée pas ses lignes hors de l'écran : sur iPad, la feuille de formulaire
+        // range le titre sous les catégories — il s'amène avant de se lire.
         XCTAssertTrue(
-            app.descendants(matching: .any).matching(titreFige).firstMatch.exists, "le titre ne se modifie plus")
+            app.amener(app.descendants(matching: .any).matching(titreFige).firstMatch, pourLire: true),
+            "le titre ne se modifie plus")
     }
 
     /// Le conseil syndical : 🔗 · 🔄 · options · 📦, sans « Répondre » ; une Suite qui
@@ -187,6 +190,22 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("affaire.message.503").exists)
     }
 
+    /// La fiche s'ouvre-t-elle à côté du fil ? La classe de taille de la fenêtre, comme
+    /// l'app la lit (`ListeEtFiche`) — jamais l'appareil.
+    @MainActor
+    private func aCote(_ app: XCUIApplication) -> Bool {
+        app.windows.firstMatch.horizontalSizeClass == .regular
+    }
+
+    /// Retour au fil après une fiche : seulement si elle a été POUSSÉE par-dessus (iPhone) ;
+    /// à côté du fil (iPad, #222), le fil reste à portée — le premier bouton de la barre y
+    /// serait celui de la barre latérale.
+    @MainActor
+    private func revenirAuFil(_ app: XCUIApplication) {
+        guard !aCote(app) else { return }
+        app.toucher(app.navigationBars.buttons.firstMatch)
+    }
+
     @MainActor
     func testUnSondageUnDocumentEtUnResumeSOuvrent() throws {
         let app = lancer()
@@ -194,13 +213,19 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(sondage.apparait())
         sondage.tap()
         XCTAssertTrue(app.elementAcces("sondage.option.1").apparait())
-        app.navigationBars.buttons.firstMatch.tap()
+        revenirAuFil(app)
 
         let document = app.buttons["fil.document:7"]
         XCTAssertTrue(document.apparait())
         document.tap()
-        XCTAssertTrue(app.navigationBars["Procès-verbal de l'assemblée générale"].apparait())
-        app.navigationBars.buttons.firstMatch.tap()
+        // Poussé (iPhone) : son titre à la barre ; à côté du fil (iPad, #222) : sa carte choisie.
+        let ouvert =
+            aCote(app)
+            ? app.buttons.matching(NSPredicate(format: "identifier == %@ AND isSelected == true", "fil.document:7"))
+                .firstMatch
+            : app.navigationBars["Procès-verbal de l'assemblée générale"]
+        XCTAssertTrue(ouvert.apparait())
+        revenirAuFil(app)
 
         let point = app.buttons["fil.point_conseil:2"]
         if !point.isHittable { app.swipeUp() }
