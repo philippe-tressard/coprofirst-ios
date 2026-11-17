@@ -100,11 +100,14 @@ enum EntreeFixe: String, CaseIterable, Identifiable, Sendable {
 struct EcranDePage: View {
     let page: PageDeNavigation
     let installation: Installation
+    @Environment(Parcours.self) private var parcours
     @State private var chemin = NavigationPath()
 
     var body: some View {
         NavigationStack(path: $chemin) {
             RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
         }
+        // L'élément ouvert de ses listes survit au changement de présentation (#119).
+        .environment(\.selectionsDeLaPage, SelectionsDeLaPage(memoire: parcours.selections, page: page.id))
     }
 }

@@ -26,7 +26,8 @@ struct FilView: View {
     }
 
     var body: some View {
-        ListeEtFiche(selection: $choisi) {
+        // En mémoire seulement : un élément du fil ne se réécrit pas depuis son identifiant.
+        ListeEtFiche(selection: $choisi, memoire: "fil") {
             fil
         } fiche: { element in
             DestinationDuFil(element: element, installation: installation)

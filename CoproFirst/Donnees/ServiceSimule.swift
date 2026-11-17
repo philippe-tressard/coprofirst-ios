@@ -19,6 +19,8 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// La résidence que sert la découverte (GET /config simulé) : `residence`, ou celle
     /// qu'un argument de lancement a changée (`-logo-residence`, #70).
     var residenceServie = ServiceSimule.residence
+    /// Le marque-page du parcours simulé, effacé à la déconnexion comme par la vraie porte.
+    var marques: MarquesPages?
     /// Le délai d'une réponse : assez pour voir le squelette, pas pour attendre.
     private let delai: Duration
     /// Le délai du détail d'une affaire ; `-delai-detail <ms>` l'allonge, pour jouer le
@@ -128,9 +130,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         verrou.withLock {
             deconnectes.insert(installation.hote)
             gardees.remove(installation.hote)
-            // Comme `oublierCeQuiEstGarde` : le jeton et la lecture gardée partent ensemble.
+            // Comme `oublierCeQuiEstGarde` : le jeton, la lecture gardée et le marque-page
+            // partent ensemble.
             lectureSimulee = .aucune
         }
+        marques?.effacer(installation.hote)
         return !horsLigneSimule
     }
 

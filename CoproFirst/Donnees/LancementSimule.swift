@@ -49,8 +49,13 @@ enum LancementSimule {
         reglages.removePersistentDomain(forName: suite)
         let simule = ServiceSimule()
         compteSimule(arguments, simule)
+        // Le marque-page aussi dans ces réglages, vidés à chaque lancement : un test ne rouvre
+        // pas sur la page où le précédent s'est arrêté (#119).
+        let marques = MarquesPages(reglages: reglages)
+        simule.marques = marques
         let parcours = Parcours(
-            service: simule, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
+            service: simule, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()),
+            marques: marques)
         simule.residenceServie = residenceSimulee(arguments)
         let residence = simule.residenceServie
         let ecran = argument("-ecran", arguments)
