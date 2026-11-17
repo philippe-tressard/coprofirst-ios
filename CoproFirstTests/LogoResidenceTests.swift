@@ -130,11 +130,13 @@ private actor Lectures {
 }
 
 @MainActor
-@Test func uneInstallationAncienneNeLitQuUnLogo() async throws {
+@Test func sansVarianteTeleverseeUnSeulLogoSeLit() async throws {
+    // La porte de version retirée (#254), c'est la variante TÉLÉVERSÉE qui décide : sans
+    // elle, clair et sombre partagent une adresse, donc une lecture.
     let logos = LogosEnMemoire()
     let lectures = Lectures()
     let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
-    let ancienne = installation(contrat: "1.14.0")
+    let ancienne = installation(sombre: false, contrat: VersionContrat.plancher.description)
     for sombre in [false, true, false, true] {
         await logos.charger(try #require(ancienne.adresseLogo(sombre: sombre)), lire: lire)
     }
