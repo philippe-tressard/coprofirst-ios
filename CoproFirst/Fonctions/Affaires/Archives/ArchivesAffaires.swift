@@ -29,6 +29,7 @@ struct ArchivesAffaires: View {
                                 CarteAffaire(affaire: affaire, archive: true)
                             }
                             .buttonStyle(StyleCarte())
+                            .rangeeChoisie(AffaireAOuvrir(id: affaire.id))
                             .rangeeDAffaire()
                             .accessibilityIdentifier("archives.carte.\(affaire.numero)")
                         }

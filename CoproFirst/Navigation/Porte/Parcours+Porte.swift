@@ -64,12 +64,15 @@ extension Parcours {
 
     private func montrer(_ ecran: Destination.Ecran, dans installation: Installation) {
         let pages = pagesDeLaBarre(installation).map(\.id)
-        let aiguillage = Aiguillage.aiguiller(ecran, pages: pages, visibles: OngletsView.visibles)
+        let aiguillage = Aiguillage.aiguiller(ecran, pages: pages, visibles: presentation.visibles)
         // La cloche est une feuille : tout autre écran demandé la referme d'abord.
         clocheOuverte = aiguillage == .cloche
         switch aiguillage {
         case .onglet(let id):
             onglet = id
+            // Une page au-delà de la barre du bas s'ouvre DANS « Plus » ; retenue, elle se
+            // retrouve aussi si la barre latérale prend la place (lien reçu au lancement).
+            if id == Aiguillage.idPlus, case .page(let page) = ecran { ouverteDansPlus = page }
         case .affaireDansLOnglet(let id, let affaire):
             porte.affaireDansLOnglet = affaire
             onglet = id

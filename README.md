@@ -103,7 +103,11 @@ L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucun
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
 barre du bas suit l'ordre réglé par l'administration de la résidence
-(`pages_order`) ; les entrées non livrées annoncent « Bientôt ».
+(`pages_order`) ; les entrées non livrées annoncent « Bientôt ». **Sur iPad** en plein
+écran (#221), une barre latérale liste toutes les pages, puis Profil et À propos ; en
+Split View étroit, la barre du bas revient — la page ouverte reste ouverte au passage.
+Une liste et la fiche qu'elle ouvre (Mes affaires, le fil) s'y tiennent côte à côte,
+chacune avec sa barre (#222).
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
