@@ -119,6 +119,14 @@ jobs:
           -only-testing:CoproFirstTests/PresentationNavigationTests
           -only-testing:CoproFirstUITests/ListeEtFicheUITests
           -only-testing:CoproFirstTests/ListeEtFicheTests
+      - name: Écran de hall (Apple TV) — build et tests du code partagé
+        # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
+        # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
+        # si aucune Apple TV de série n'est disponible sur le runner.
+        env:
+          APPAREIL: tv
+          RESULTATS: .build/ResultatsTV
+        run: bash scripts/tests-simulateur.sh
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})

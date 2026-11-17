@@ -100,9 +100,23 @@ import Testing
     #expect(apercu.components(separatedBy: "riche").count == 2_001)
 }
 
+/// Le système applique-t-il Dynamic Type à un texte ORDINAIRE ? iOS et tvOS 27 oui ; tvOS 26
+/// non (CI du 16/11/2026, #218 : 35 pt dans les deux tailles). Sans lui, le test suivant ne
+/// prouve rien : il se déclare désactivé — INCONNU, jamais vert. La sonde n'emprunte pas le
+/// texte riche : c'est lui que le test juge, et une régression de sa part reste rouge.
+@MainActor
+func dynamicTypeServi() -> Bool {
+    func hauteur(_ taille: DynamicTypeSize) -> CGFloat {
+        let texte = Text("Le lundi, voir.").frame(width: 320).environment(\.dynamicTypeSize, taille)
+        return ImageRenderer(content: texte).uiImage?.size.height ?? 0
+    }
+    return hauteur(.accessibility5) > hauteur(.large) * 1.5
+}
+
 /// Le rendu en très grand texte : le texte riche suit Dynamic Type, sans rien perdre.
 @MainActor
-@Test func leDetailSeRendEnTresGrandTexte() throws {
+@Test(.enabled("Dynamic Type non appliqué par ce système (tvOS 26) — INCONNU") { await dynamicTypeServi() })
+func leDetailSeRendEnTresGrandTexte() throws {
     let texte = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://example.com\">voir</a>.</p>"))
         .frame(width: 320)
         .environment(\.dynamicTypeSize, .accessibility5)

@@ -16,6 +16,10 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
 
 - **Application iOS native en SwiftUI**, iOS 17 minimum, iPhone, **français seul**.
   Décision du 01/11/2026 (coprofirst#2460) : native, pas une WebView ; iOS seul.
+  **Élargie le 15/11/2026 (#218)** : une cible **Apple TV** (`CoproFirstTV`, tvOS 17),
+  pour le seul **écran de hall** — lecture seule des affiches d'un périmètre, appairage
+  par code (serveur : coprofirst#2770). Elle compile les fichiers de l'app nommément
+  dans `project.yml` ; ce qui est propre à iOS s'isole dans son fichier et s'exclut.
 - **Projet Xcode généré** par XcodeGen depuis `project.yml` — `CoproFirst.xcodeproj`
   n'est pas versionné : `bash scripts/generer-projet.sh` (qui fige aussi les
   versions des paquets).
