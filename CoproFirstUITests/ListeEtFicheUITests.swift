@@ -77,7 +77,8 @@ final class ListeEtFicheUITests: XCTestCase {
         capture("fil-liste-et-fiche", app)
 
         app.toucher(app.buttons["fil.sondage_ouvert:3"])
-        XCTAssertTrue(app.elementAcces("sondage.option.1").apparait(), "le sondage remplace l'affaire")
+        // La question, en tête de fiche : les résultats provisoires passent au-dessus du vote (#257).
+        XCTAssertTrue(app.elementAcces("sondage.question").apparait(), "le sondage remplace l'affaire")
         XCTAssertTrue(affaire.exists)
     }
 }
