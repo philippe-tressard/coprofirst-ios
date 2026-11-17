@@ -26,6 +26,8 @@ recopie dans les champs « Sign-In Information » d'App Store Connect, pas ici.
 | Contenu d'utilisateurs : signalement au conseil syndical | `Commun/Composants/SignalementAuConseil.swift` ; arbitrage du 12/11/2026 (#167) : pas de blocage d'un auteur |
 | Suppression du compte : une demande lancée depuis le Profil, traitée par l'administration de la résidence | `Fonctions/Profil/SuppressionCompte/` (#166) ; route `/auth/demande-suppression` du contrat 1.27.0 ; la démo accepte la demande sans jamais effacer son compte — **lu dans le code serveur v3.89.0, pas rejoué sur la démo : à jouer avant de soumettre** |
 | Ni suivi, ni publicité, ni achat intégré | `PrivacyInfo.xcprivacy` (`NSPrivacyTracking` faux), `scripts/verifier-confidentialite.py` |
+| Les écrans vus, comptés par la résidence, refusables au Profil (depuis la 1.1) | #199 ; `ProfilView.swift` (« Refuser la collecte de statistiques de navigation ») ; `ProductInteraction` du manifeste |
+| Sur iPad, Profil et À propos sont dans la barre latérale, pas sous « Plus » | `BarreLateraleUITests` (#221) |
 | Code source ouvert, lien dans l'app | Plus › À propos › « Code source de l'app » (AGPL §13) |
 
 ## Texte à coller
@@ -47,7 +49,7 @@ HOW TO REVIEW
 ACCOUNTS
 Accounts are opened by each residence's administrators, who check that the person
 lives there; the app itself only links to the residence's web sign-up form.
-Account deletion: in the app, More > Profile > "Supprimer mon compte" (below "Vos droits
+Account deletion: in the app, More > Profile (on iPad: Profile in the sidebar) > "Supprimer mon compte" (below "Vos droits
 (RGPD)"). The user reads what will be erased, confirms with their password and may give
 a reason; the request is sent to the residence's administrators, who process it within
 the delay shown on screen (30 days at most). The user can withdraw the request until it is
@@ -71,9 +73,12 @@ PERMISSIONS
 
 PRIVACY
 No tracking, no advertising, no third-party analytics, no in-app purchase. Data is
-sent only to the residence the user chose, never to the developer.
+sent only to the residence the user chose, never to the developer. Like its website,
+the residence counts the screens viewed for its own visit statistics (declared as
+Usage Data > Product Interaction, Analytics); the user can opt out in Profile >
+"Vos droits (RGPD)" > "Refuser la collecte de statistiques de navigation".
 
 SOURCE CODE
 The app is free software (AGPL-3.0 with an additional permission for App Store
-distribution). Its source is linked from More > About.
+distribution). Its source is linked from More > About (on iPad: About in the sidebar).
 ```

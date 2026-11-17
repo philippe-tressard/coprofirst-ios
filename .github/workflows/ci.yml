@@ -80,7 +80,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
-    timeout-minutes: 45
+    # Mesuré le 17/11/2026 : 36 à 39 min (build et tests, échantillon iPad, écran de hall), et
+    # coupé à 45 pendant l'étape Apple TV sur un runner lent (c3d25e2 : 17 + 17 + 6 min d'étapes
+    # avant la coupe). Le plafond des jobs d'interface : 70.
+    timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
@@ -152,23 +155,26 @@ jobs:
         lot: [1, 2, 3, 4, 5]
     env:
       # Les lots 1 à 4, nommés classe par classe ; le DERNIER lot joue TOUT le reste — une
-      # classe neuve y tombe d'office, aucune n'est oubliée. Équilibrés sur les durées MESURÉES
-      # de 88 jobs d'interface des 15 et 16/11/2026 (médiane par classe ; 77 min de tests en
-      # tout) : ~15 min de tests par lot en médiane, ~14 min de build (18 au plus lent). Le
-      # runner le plus lent vu joue les tests 1,49 fois la médiane (#247, lot 2 : 56 min, rouge
-      # au budget) : ~42 min d'étape, 13 de marge. À trois lots il en fallait 56, à quatre 47.
+      # classe neuve y tombe d'office, aucune n'est oubliée. Rééquilibrés le 17/11/2026 sur les
+      # durées MESURÉES de 34 jobs d'interface depuis #260 (b57cd45), répartis sur le PIRE temps
+      # de chaque classe : PrestatairesUITests y est passé de 11 à 14 min en médiane, 22 au plus
+      # lent, et le lot 4 a dépassé le budget (63 min sur c3d25e2). 98 min de tests en médiane,
+      # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
+      # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
+      # ListeEtFiche) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
-        SaisieAffaireUITests NatureUITests HorsLigneUITests LogoResidenceUITests VitrineUITests
+        CommunauteUITests PrestatairesAffaireUITests ConfirmationHoteUITests NatureUITests
+        ResidenceUITests RetourUITests
       LOT_2: >-
-        CommunauteUITests DelegationsCSUITests ParcoursUITests EcheanceUITests LiensUITests
-        ConnexionUITests
+        SaisieAffaireUITests CartesDuFilUITests SondageUITests ParcoursUITests
+        ApercusSaisieUITests LiensUITests
       LOT_3: >-
-        SuppressionCompteUITests SondageUITests ConfirmationHoteUITests PushUITests RetourUITests
-        GrandTexteUITests
+        SuppressionCompteUITests AccesUITests AffairesUITests GrandTexteUITests EspaceCSUITests
+        LogoResidenceUITests
       LOT_4: >-
-        AdminUITests AffairesUITests HistoriqueUITests PrestatairesUITests EspaceCSUITests
-        ResidenceUITests
+        AdminUITests HistoriqueUITests DelegationsCSUITests HorsLigneUITests
+        AvisReglementUITests ConnexionUITests VitrineUITests
       # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
       # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
       BUDGET_LOT: 55
