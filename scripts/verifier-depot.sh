@@ -362,6 +362,8 @@ python3 -I scripts/destination_simulateur.py --autotest >/dev/null || echec "des
 # L'app montre livrée reste dépendante de l'iPhone (#226) : le contrôle lui-même, sur des
 # Info.plist faits pour (la construction Release se juge en CI, étape « Apple Watch »).
 bash scripts/verifier-montre-dependante.sh --autotest >/dev/null || echec "verifier-montre-dependante.sh : autotest en échec"
+# Le contrôle avant soumission (#205) refuse sur un rouge comme sur un INCONNU : son autotest.
+python3 -I scripts/avant_soumission.py --autotest >/dev/null || echec "avant_soumission.py : autotest en échec"
 
 # Une attente par prédicat (le focus du clavier, un onglet retenu) passe par le point
 # d'attente commun et son plafond (#123) : écrite sur place, chacune portait son délai,
