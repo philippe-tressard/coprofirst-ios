@@ -35,12 +35,10 @@ struct DetailAffaire: Hashable, Sendable {
     /// ne le tient pas du serveur (un geste simulé) : ses référentiels le disent alors.
     var statutLibelle: String?
     /// Le suivi d'une actualité (`suivi_actualite`, un code) et son libellé servi
-    /// (`suivi_actualite_libelle`, contrat 1.21.0, #127) — vide sans suivi ; `nil` d'une
-    /// installation antérieure, qui ne le sert pas.
+    /// (`suivi_actualite_libelle`, contrat 1.21.0, #127) — vide sans suivi.
     var suiviActualite: String?
-    var suiviActualiteLibelle: String?
-    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181) ;
-    /// d'une installation antérieure, le seul qu'elle sert (`prestataire_nom`).
+    var suiviActualiteLibelle = ""
+    /// Ses prestataires, dans l'ordre servi (`prestataires`, contrat 1.28.0, #181).
     var prestataires: [PrestataireAffaire] = []
     /// Le rythme SERVI (`frequence_libelle`, contrat 1.20.0, #125) : celui du contrat sous
     /// contrat, celui de l'affaire sinon.
@@ -50,8 +48,7 @@ struct DetailAffaire: Hashable, Sendable {
     var intervenants: [String] { Self.intervenants(prestataires.map(\.nom), rythme: rythme) }
     /// « A, B · ↺ Mensuel » : l'intervenant en une phrase, celle que VoiceOver lit.
     var intervenant: String? { intervenants.isEmpty ? nil : intervenants.joined(separator: ", ") }
-    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` d'une installation
-    /// antérieure.
+    /// « Qui la lit », servie (`lecture`, contrat 1.22.0, #129) ; `nil` non servie.
     var lecture: Lecture?
     /// Les référentiels lus avec elle (`GET /tickets/referentiels`, #105) : les libellés des
     /// états de son Historique, les états qu'une Suite propose, les catégories que
@@ -68,15 +65,14 @@ struct DetailAffaire: Hashable, Sendable {
     var estActualite: Bool { categorie == "actualite" }
 
     /// L'état que la fiche montre (`etatAffiche` du site) : le statut d'une affaire, le
-    /// suivi d'une actualité — aucun pour une actualité sans suivi. D'une installation
-    /// antérieure au contrat 1.21.0 (pas de `suivi_actualite_libelle`), le statut, comme avant.
+    /// suivi d'une actualité — aucun pour une actualité sans suivi.
     var etat: EtatServi? {
-        guard estActualite, let libelle = suiviActualiteLibelle else {
+        guard estActualite else {
             return EtatServi(
                 code: statut, libelle: StatutsAffaire.libelle(statut, servi: statutLibelle, dans: referentiels))
         }
-        guard let suivi = suiviActualite, !libelle.isEmpty else { return nil }
-        return EtatServi(code: suivi, libelle: libelle)
+        guard let suivi = suiviActualite, !suiviActualiteLibelle.isEmpty else { return nil }
+        return EtatServi(code: suivi, libelle: suiviActualiteLibelle)
     }
 }
 
@@ -102,11 +98,11 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     /// Ce qu'elle joint (`fichiers_urls`) : photos et documents.
     var pieces: PiecesJointes = .aucune
     /// L'état que l'entrée donne, en clair, tel que le serveur le sert
-    /// (`nouveau_statut_libelle`, contrat 1.21.0, #127) ; `nil` d'une installation antérieure.
+    /// (`nouveau_statut_libelle`, contrat 1.21.0, #127) ; vide sans changement d'état.
     var nouveauStatutLibelle: String?
     /// « Périmètre précisé : 🔹 Bât. 2 » — le lieu que la Suite déclare, tel que servi
     /// (`perimetre_precise_libelle`, contrat 1.24.0, #130), même par défaut ; `nil` quand
-    /// elle n'en déclare pas, ou d'une installation antérieure.
+    /// elle n'en déclare pas.
     var perimetrePrecise: String?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
@@ -132,7 +128,7 @@ struct DroitsServisAffaire: Hashable, Sendable {
     var archiver = false
     /// ✏️ Le crayon : ouvrir la correction (`peut_corriger`, contrat 1.21.0, #127), plus
     /// large que `modifier` — l'auteur d'une affaire engagée le garde (l'urgence, les
-    /// options passent encore). D'une installation antérieure : `modifier`, comme avant.
+    /// options passent encore). Non servi : non.
     var corriger = false
     /// Ajouter, retirer un prestataire (`peut_changer_prestataires`, contrat 1.28.0, #181) :
     /// le conseil, sur une affaire du bâti encore ouverte. Non servi : non.

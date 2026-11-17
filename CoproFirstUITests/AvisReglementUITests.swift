@@ -46,19 +46,24 @@ final class AvisReglementUITests: XCTestCase {
     private func ouvrirLAvis(_ app: XCUIApplication, question: String) {
         let barre = app.tabBars.firstMatch
         XCTAssertTrue(barre.apparait())
-        barre.descendants(matching: .any)["Résidence"].firstMatch.tap()
+        app.toucher(barre.descendants(matching: .any)["Résidence"].firstMatch)
+        // Les onglets d'abord, au plafond commun : sur un runner lent, l'écran n'était pas
+        // encore là quand la sonde cherchait « Règlement », et le test prenait la voie des
+        // grandes tailles (CI de #251, 16/11/2026, #258).
+        let onglets = element(app, "residence.onglets")
+        XCTAssertTrue(onglets.apparait(), "les onglets de la Résidence")
         let onglet = app.descendants(matching: .any)["Règlement"].firstMatch
         if !onglet.sonde() {
             // Aux tailles d'accessibilité, les onglets sont un menu (`ResidenceView.choixOnglet`).
-            element(app, "residence.onglets").tap()
+            app.toucher(onglets)
         }
         XCTAssertTrue(onglet.apparait())
-        onglet.tap()
+        app.toucher(onglet)
         let carte = app.descendants(matching: .any)[question].firstMatch
         for _ in 0..<4 where !(carte.sonde() && carte.isHittable) {
             app.swipeUp()
         }
-        carte.tap()
+        app.toucher(carte)
     }
 
     private func element(_ app: XCUIApplication, _ identifiant: String) -> XCUIElement {

@@ -51,15 +51,11 @@ struct ContactPrestataire: Hashable, Sendable {
     var fonction: String?
     var telephone: String?
     var email: String?
-    /// `nom_affiche` servi (`PrestataireContactLu`, contrat 1.25.0, #135) ; `nil` d'une
-    /// installation antérieure.
+    /// `nom_affiche` servi (`PrestataireContactLu`, contrat 1.25.0, #135).
     var nomServi: String?
 
-    /// « Prénom NOM » servi ; à défaut, le repli. `nil` pour un contact sans nom.
-    var nomAffiche: String? {
-        let lu = FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom)
-        return lu == FormatsDuSite.tiret ? nil : lu
-    }
+    /// « Prénom NOM » servi. `nil` pour un contact sans nom.
+    var nomAffiche: String? { nomServi?.trimmingCharacters(in: .whitespaces).nulSiVide }
 }
 
 struct Prestataire: Hashable, Sendable, Identifiable {
@@ -97,8 +93,7 @@ struct Contrat: Hashable, Sendable, Identifiable {
     var frequenceLibelle: String?
     var prochaineVisite: String?
     var notes: String?
-    /// La résiliation et le remplacement servis (contrat 1.29.0, #185) — vides d'une
-    /// installation antérieure.
+    /// La résiliation et le remplacement servis (contrat 1.29.0, #185).
     var remplacement = RemplacementContrat()
 }
 

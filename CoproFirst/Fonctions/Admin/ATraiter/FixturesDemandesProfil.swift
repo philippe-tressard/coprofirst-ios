@@ -44,7 +44,7 @@ enum FixturesDemandesProfil {
         Reponse(nom: "rejetee", schema: "DemandeProfilTraitee", json: rejetee),
     ]
 
-    static func annonce(approuver: Bool) throws -> PhraseAvis? {
+    static func annonce(approuver: Bool) throws -> PhraseAvis {
         let json = approuver ? approuvee : rejetee
         return PhraseAvis(try Relecture.generee(Components.Schemas.DemandeProfilTraitee.self, json: json).annonce)
     }

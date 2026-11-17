@@ -16,9 +16,6 @@ import Foundation
 enum FixturesMessagesAffaire {
     typealias Reponse = FixturesAcces.Reponse
 
-    /// L'identifiant du compte simulé (celui de `moiCommunaute`).
-    static let moi = FixturesSondage.moi
-
     /// GET /tickets/41/messages → `[MessageRead]`, dans l'ordre de `cree_le`.
     static let messages = #"""
         [
@@ -47,7 +44,7 @@ enum FixturesMessagesAffaire {
     static func lus(pour affaire: Int, conseil: Bool) throws -> [MessageAffaire] {
         let servis = try Relecture.generee([MessageAffaire.Servi].self, json: messages)
             .filter { $0.ticketId == affaire && (conseil || !$0.interne) }
-        return MessageAffaire.lus(servis, moi: moi)
+        return MessageAffaire.lus(servis)
     }
 }
 #endif

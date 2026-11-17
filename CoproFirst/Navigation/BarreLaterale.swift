@@ -35,7 +35,7 @@ struct BarreLaterale: View {
             .navigationTitle(installation.nom)
             .navigationBarTitleDisplayMode(.inline)
         } detail: {
-            detail
+            PageRetenue(pages: pages, installation: installation)
         }
         .navigationSplitViewStyle(.balanced)
     }
@@ -52,23 +52,5 @@ struct BarreLaterale: View {
         Label(libelle, systemImage: symbole)
             .elementIdentifie("barre.\(id)", lu: libelle)
             .tag(id)
-    }
-
-    /// La page retenue, chacune avec SA pile : changer de page repart de son écran. Un
-    /// onglet qui n'est plus offert (un rôle retiré, « Plus » d'avant une rotation) : la
-    /// première page, le fil.
-    @ViewBuilder
-    private var detail: some View {
-        if let fixe = EntreeFixe(rawValue: parcours.onglet) {
-            NavigationStack {
-                fixe.ecran(installation)
-                    .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
-            }
-            .id(fixe.id)
-        } else if let page = pages.first(where: { $0.id == parcours.onglet }) ?? pages.first {
-            // La page, et la colonne où ses listes ouvrent leurs fiches (`ListeEtFiche`, #222).
-            PageEtColonneDeFiche { EcranDePage(page: page, installation: installation) }
-                .id(page.id)
-        }
     }
 }

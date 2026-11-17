@@ -1869,7 +1869,7 @@
       },
       "AppareilEnregistre": {
         "additionalProperties": false,
-        "description": "Ce que l'application envoie — rien d'autre n'est admis.",
+        "description": "Ce que l'application envoie — rien d'autre n'est admis. La plateforme et le jeton\nse jugent ensemble (`JetonDePlateforme`, #2789).",
         "properties": {
           "abonnement": {
             "pattern": "^[A-Za-z0-9_-]{16,64}$",
@@ -1877,6 +1877,7 @@
             "type": "string"
           },
           "environnement": {
+            "default": "production",
             "enum": [
               "production",
               "developpement"
@@ -1885,14 +1886,22 @@
             "type": "string"
           },
           "jeton": {
-            "pattern": "^[0-9a-fA-F]{64,200}$",
+            "maxLength": 1024,
             "title": "Jeton",
+            "type": "string"
+          },
+          "plateforme": {
+            "default": "apns",
+            "enum": [
+              "apns",
+              "fcm"
+            ],
+            "title": "Plateforme",
             "type": "string"
           }
         },
         "required": [
           "jeton",
-          "environnement",
           "abonnement"
         ],
         "title": "AppareilEnregistre",
@@ -7793,6 +7802,11 @@
       "EntreeCarnetLue": {
         "description": "Un fait daté du carnet — `utils/carnet_entretien.EntreeCarnet.en_dict`.",
         "properties": {
+          "a_venir": {
+            "default": false,
+            "title": "A Venir",
+            "type": "boolean"
+          },
           "alerte": {
             "title": "Alerte",
             "type": [
@@ -11510,6 +11524,110 @@
         "title": "MetriquesPrestataire",
         "type": "object"
       },
+      "MontreDemandee": {
+        "additionalProperties": false,
+        "description": "Ce que le téléphone envoie — rien d'autre n'est admis.",
+        "properties": {
+          "plateforme": {
+            "enum": [
+              "watchos",
+              "wearos"
+            ],
+            "title": "Plateforme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plateforme"
+        ],
+        "title": "MontreDemandee",
+        "type": "object"
+      },
+      "MontreEmise": {
+        "description": "Une montre et son jeton brut — rendu UNE fois, à transmettre à la montre.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "expire_le": {
+            "format": "date-time",
+            "title": "Expire Le",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "jeton": {
+            "title": "Jeton",
+            "type": "string"
+          },
+          "plateforme": {
+            "title": "Plateforme",
+            "type": "string"
+          },
+          "vu_le": {
+            "format": "date-time",
+            "title": "Vu Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "plateforme",
+          "cree_le",
+          "expire_le",
+          "vu_le",
+          "jeton"
+        ],
+        "title": "MontreEmise",
+        "type": "object"
+      },
+      "MontreLue": {
+        "description": "Une montre de la personne, sans son jeton.",
+        "properties": {
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          },
+          "expire_le": {
+            "format": "date-time",
+            "title": "Expire Le",
+            "type": "string"
+          },
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "plateforme": {
+            "title": "Plateforme",
+            "type": "string"
+          },
+          "vu_le": {
+            "format": "date-time",
+            "title": "Vu Le",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "plateforme",
+          "cree_le",
+          "expire_le",
+          "vu_le"
+        ],
+        "title": "MontreLue",
+        "type": "object"
+      },
       "MoyenRead": {
         "properties": {
           "avec_lieu": {
@@ -12696,6 +12814,13 @@
             "title": "Batiment Id",
             "type": [
               "integer",
+              "null"
+            ]
+          },
+          "batiment_libelle": {
+            "title": "Batiment Libelle",
+            "type": [
+              "string",
               "null"
             ]
           },
@@ -20332,7 +20457,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "2.0.0"
+    "version": "2.4.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -32091,6 +32216,161 @@
         ]
       }
     },
+    "/montres": {
+      "get": {
+        "description": "Les montres reliées au compte, pour les voir et les retirer — jamais leur jeton.",
+        "operationId": "get_montres",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MontreLue"
+                  },
+                  "title": "Response Get Montres",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lister Montres",
+        "tags": [
+          "montres"
+        ]
+      },
+      "post": {
+        "description": "Émet le jeton d'une montre de la personne connectée : lecture de la cloche seule.",
+        "operationId": "post_montres",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MontreDemandee"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontreEmise"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Emettre Montre",
+        "tags": [
+          "montres"
+        ]
+      }
+    },
+    "/montres/{montre_id}": {
+      "delete": {
+        "description": "Retire une montre de la personne : son jeton cesse aussitôt de servir.",
+        "operationId": "delete_montres_montre_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "montre_id",
+            "required": true,
+            "schema": {
+              "title": "Montre Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Retirer Montre",
+        "tags": [
+          "montres"
+        ]
+      }
+    },
+    "/montres/{montre_id}/renouveler": {
+      "post": {
+        "description": "Remplace le jeton d'une montre de la personne et repousse son échéance.",
+        "operationId": "post_montres_montre_id_renouveler",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "montre_id",
+            "required": true,
+            "schema": {
+              "title": "Montre Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MontreEmise"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Renouveler Montre",
+        "tags": [
+          "montres"
+        ]
+      }
+    },
     "/noms/affiche": {
       "post": {
         "description": "« Jean-Baptiste », « ForT » → « Jean-Baptiste FORT » — l'aperçu d'une saisie.",
@@ -32136,6 +32416,20 @@
     "/notifications": {
       "get": {
         "operationId": "get_notifications",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "title": "Authorization",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {

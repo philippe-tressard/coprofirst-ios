@@ -180,7 +180,7 @@ struct RubriqueDiagnostics: View {
                     synthese = ouverte ? nil : rapport.id
                 } label: {
                     Label(TextesResidence.synthese, systemImage: ouverte ? "chevron.up" : "chevron.down")
-                        .labelStyle(TitreAvantIcone())
+                        .labelStyle(TitreAvantIcone(policeIcone: .caption.weight(.bold)))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(palette.primary)
                         .frame(minHeight: Mise.cible)
@@ -206,16 +206,6 @@ struct RubriqueDiagnostics: View {
             apercu = try await service.rapport(rapport.id, nom: rapport.fichier, dans: installation)
         } catch {
             erreur = ErreurService.depuis(error)
-        }
-    }
-}
-
-/// « 💡 Synthèse ⌄ » : le libellé, puis le chevron — comme le bouton du site.
-private struct TitreAvantIcone: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 6) {
-            configuration.title
-            configuration.icon.font(.caption.weight(.bold))
         }
     }
 }

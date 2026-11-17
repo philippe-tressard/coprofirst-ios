@@ -17,38 +17,54 @@ import SwiftUI
 ///
 /// La décision se prend sur la classe de taille HORIZONTALE, jamais sur l'appareil :
 /// `verifier-depot.sh` refuse toute lecture de l'idiome dans ce dossier. La sélection
-/// appartient à l'appelant : un changement de classe de taille ne la perd pas (le
-/// marque-page du carnet la garde au repli).
+/// appartient à l'appelant, dans un `@State` de son écran — que le changement de
+/// présentation (pli, Split View) reconstruit : une liste qui se nomme (`memoire:`) la
+/// retrouve dans la `MemoireDesSelections` de la résidence, et le marque-page du pliable
+/// la garde sur disque (#119). Sans nom, la fiche se referme au changement.
 struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: View {
     @Binding var selection: Element?
     let partage: Partage
+    /// Le nom de la liste dans sa page, pour retrouver l'élément ouvert (`MemoireDesSelections`).
+    let memoire: String?
     let liste: Liste
     let fiche: (Element) -> Fiche
     let vide: Vide
     @Environment(\.horizontalSizeClass) private var classe
     @Environment(\.colonneDeFiche) private var colonne
+    @Environment(\.selectionsDeLaPage) private var selections
     @Environment(\.palette) private var palette
     /// Qui occupe la colonne de fiche : cette liste, tant qu'elle est à l'écran.
     @State private var jeton = UUID()
+    /// La mémoire ne se relit qu'à la CONSTRUCTION de la liste : en pile, revenir d'une fiche
+    /// fait réapparaître la liste avant que le `nil` du retour soit noté — la fiche se rouvrait.
+    @State private var repriseFaite = false
 
     init(
         selection: Binding<Element?>,
         partage: Partage = .parDefaut,
+        memoire: String? = nil,
         @ViewBuilder liste: () -> Liste,
         @ViewBuilder fiche: @escaping (Element) -> Fiche,
         @ViewBuilder vide: () -> Vide
     ) {
         _selection = selection
         self.partage = partage
+        self.memoire = memoire
         self.liste = liste()
         self.fiche = fiche
         self.vide = vide()
     }
 
     var body: some View {
+        disposee.onChange(of: selection) { _, choisi in noter(choisi) }
+    }
+
+    @ViewBuilder
+    private var disposee: some View {
         switch Disposition.pour(classe, colonneFournie: colonne != nil) {
         case .pile:
             liste.navigationDestination(item: $selection, destination: fiche)
+                .onAppear { _ = reprendre() }
         case .colonne:
             dansLaColonne
         case .coteACote:
@@ -68,7 +84,23 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
                     .frame(maxWidth: .infinity)
                 }
             }
+            .onAppear { _ = reprendre() }
         }
+    }
+
+    /// L'élément que la liste avait ouvert, si elle n'en a pas : rendu à l'appelant.
+    private func reprendre() -> Element? {
+        guard !repriseFaite else { return selection }
+        repriseFaite = true
+        guard selection == nil, let memoire, let selections else { return selection }
+        let repris = selections.memoire.reprendre(Element.self, sous: selections.cle(memoire))
+        if let repris { selection = repris }
+        return repris
+    }
+
+    private func noter(_ choisi: Element?) {
+        guard let memoire, let selections else { return }
+        selections.memoire.noter(choisi, sous: selections.cle(memoire))
     }
 
     /// La liste seule ici ; sa fiche part dans la colonne de la page.
@@ -76,16 +108,22 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
         liste
             .environment(\.ficheOuverte, selection.map(AnyHashable.init))
             .onAppear {
+                // La reprise AVANT d'ouvrir la colonne : sinon « Aucune sélection », puis la fiche.
+                let choisi = reprendre()
                 colonne?.ouvrir(par: jeton, partage: partage)
-                publier()
+                publier(choisi)
             }
             .onDisappear { colonne?.fermer(par: jeton) }
-            .onChange(of: selection) { publier() }
+            .onChange(of: selection) { _, choisi in publier(choisi) }
     }
 
-    private func publier() {
-        let vue = selection.map { AnyView(fiche($0)) } ?? AnyView(vide.frame(maxWidth: .infinity, maxHeight: .infinity))
-        colonne?.montrer(.init(id: selection.map(AnyHashable.init), vue: vue), par: jeton)
+    private func publier(_ choisi: Element?) {
+        // Le fond de la page sous « Aucune sélection » : sans lui, la colonne gardait celui du
+        // système (blanc, noir au sombre) à côté d'une page teintée par la palette.
+        let vue =
+            choisi.map { AnyView(fiche($0)) }
+            ?? AnyView(vide.frame(maxWidth: .infinity, maxHeight: .infinity).background(palette.bg))
+        colonne?.montrer(.init(id: choisi.map(AnyHashable.init), vue: vue), par: jeton)
     }
 }
 
@@ -109,10 +147,13 @@ extension ListeEtFiche where Vide == FicheVide {
     init(
         selection: Binding<Element?>,
         partage: Partage = .parDefaut,
+        memoire: String? = nil,
         @ViewBuilder liste: () -> Liste,
         @ViewBuilder fiche: @escaping (Element) -> Fiche
     ) {
-        self.init(selection: selection, partage: partage, liste: liste, fiche: fiche) { FicheVide() }
+        self.init(selection: selection, partage: partage, memoire: memoire, liste: liste, fiche: fiche) {
+            FicheVide()
+        }
     }
 }
 

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), LICENSES/ISC.txt et MIT.txt.
+// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), LICENSES/ISC.txt et MIT.txt.
 
 /// Les licences des pictogrammes Lucide de l'app (`Pictogrammes.xcassets`), avec
 /// leurs titulaires : l'avis doit accompagner chaque copie (ISC, MIT).

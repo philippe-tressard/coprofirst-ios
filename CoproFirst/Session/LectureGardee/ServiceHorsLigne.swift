@@ -39,8 +39,8 @@ extension ServiceCoproFirst {
 
 extension ServiceAPI: ServiceHorsLigne {
     /// LA porte de l'effacement de ce qu'une session laisse sur l'appareil : le jeton du
-    /// Trousseau, la lecture gardée et les copies des fichiers ouverts, jamais l'un sans
-    /// l'autre — la déconnexion, une session que le serveur refuse. `scripts/verifier-depot.sh`
+    /// Trousseau, la lecture gardée, les copies des fichiers ouverts et le marque-page du
+    /// pliable (#119), jamais l'un sans l'autre — la déconnexion, une session que le serveur refuse. `scripts/verifier-depot.sh`
     /// refuse tout autre appel à `Trousseau.supprimer(pour:)` hors du Trousseau.
     func oublierCeQuiEstGarde(_ installation: Installation) {
         Self.oublierCeQuiEstGarde(installation.hote, lectures)
@@ -51,6 +51,8 @@ extension ServiceAPI: ServiceHorsLigne {
         Trousseau.supprimer(pour: hote)
         lectures.effacer(hote)
         Fichiers.effacerLesCopies()
+        // Le marque-page du pliable : la page où rouvrir cette résidence (#119).
+        MarquesPages.standard.effacer(hote)
     }
 
     /// La porte des lectures gardées de l'installation à cette adresse, pour son client.

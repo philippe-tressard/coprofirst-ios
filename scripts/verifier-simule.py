@@ -24,8 +24,9 @@ from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
 # `simul` couvre ServiceSimule, MagasinSimuleCS, AccesSimules, profilSimule,
-# -api-simulee… ; `Fixtures` les jeux de données servis par la simulation.
-SYMBOLE = re.compile(r"(?i:simul)|\bFixtures[A-Z]")
+# -api-simulee… ; `Fixtures` les jeux de données servis par la simulation. Le
+# `simultaneousGesture` de SwiftUI n'est pas la simulation (#119).
+SYMBOLE = re.compile(r"(?i:simul(?!taneous))|\bFixtures[A-Z]")
 
 
 class NonRefermé(Exception):
@@ -78,11 +79,13 @@ def autotest() -> bool:
         "#if DEBUG\nlet a = 1\n#else\nlet s = ServiceSimule()\n#endif\n": 1,
         "#if os(iOS)\nlet f = FixturesAcces.lus()\n#endif\n": 1,
         "#if DEBUG\n#endif\nextension ServiceSimule: X {}\n": 1,
+        "let simultane = MagasinSimule()\n": 1,
         # Conformes.
         "#if DEBUG\nlet s = ServiceSimule()\n#endif\n": 0,
         "#if DEBUG\n#if os(iOS)\nlet f = FixturesAcces.lus()\n#endif\n#endif\n": 0,
         "/// Réalisé par `ServiceSimule`.\nlet a = 1 // ServiceSimule\n": 0,
         'let u = URL(string: "https://example.com")!\n': 0,
+        ".simultaneousGesture(glissement)\n": 0,
     }
     for texte, attendu in cas.items():
         if len(fautes(texte)) != attendu:

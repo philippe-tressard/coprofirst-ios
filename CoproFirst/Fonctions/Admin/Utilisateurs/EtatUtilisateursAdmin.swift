@@ -66,7 +66,7 @@ final class EtatUtilisateursAdmin {
     ) async throws -> String {
         enCours = utilisateur.id
         defer { enCours = nil }
-        let interdire = !utilisateur.ban.banni()
+        let interdire = !utilisateur.ban.banni
         let ban = try await service.bannirCommunaute(utilisateur.id, interdit: interdire, dans: installation)
         if let rang = comptes.firstIndex(where: { $0.id == utilisateur.id }) { comptes[rang].ban = ban }
         let nom = utilisateur.nomAffiche

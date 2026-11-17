@@ -97,6 +97,12 @@ private let propresAIOS: [String: MesurePropre] = [
         raison: "le trait qui souligne la carte dont la fiche est ouverte à côté (iPad, #222) ; "
             + "le site n'a pas de liste et fiche côte à côte",
         depuis: "16/11/2026"),
+    "tranche": MesurePropre(
+        valeur: Mise.tranche, ecart: nil,
+        raison: "la tranche des intercalaires du carnet de l'iPhone pliable (#119) : le site n'a pas de "
+            + "carnet ; le plus long mot des libellés par défaut (« Prestataires », « Communauté ») en "
+            + "`caption2` y tient entier à la taille par défaut (CarnetTests)",
+        depuis: "17/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.

@@ -8,7 +8,8 @@ import SwiftUI
 /// Elle pose la palette en vigueur pour tout l'écran.
 struct RacineView: View {
     @Environment(Parcours.self) private var parcours
-    /// La classe de taille horizontale décide de la navigation (`PresentationNavigation`).
+    /// La classe de taille horizontale décide de la navigation (`PresentationNavigation`),
+    /// et la charnière d'un iPhone pliable en fait un carnet (#119).
     @Environment(\.horizontalSizeClass) private var classe
 
     var body: some View {
@@ -58,6 +59,9 @@ struct RacineView: View {
         .animation(.smooth(duration: 0.35), value: parcours.ouverte)
         .animation(.smooth(duration: 0.4), value: palette.code)
         .onChange(of: palette.code, initial: true) { ApparenceNavigation.appliquer(palette) }
-        .onChange(of: classe, initial: true) { _, classe in parcours.presenter(.pour(classe)) }
+        .lecturePosture($parcours.posture)
+        .onChange(of: PresentationNavigation.pour(classe, posture: parcours.posture), initial: true) { _, cible in
+            parcours.presenter(cible)
+        }
     }
 }
