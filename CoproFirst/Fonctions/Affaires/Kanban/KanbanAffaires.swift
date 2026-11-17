@@ -157,7 +157,7 @@ struct KanbanAffaires: View {
         .scrollPosition(id: $visible)
         .contentMargins(.horizontal, Mise.marge, for: .scrollContent)
         .scrollIndicators(.hidden)
-        .refreshable { await etat.charger(installation, avec: service) }
+        .actualisable { await etat.charger(installation, avec: service) }
     }
 
     /// Les colonnes où la carte peut aller : celles où un état servi mène, sauf la sienne.

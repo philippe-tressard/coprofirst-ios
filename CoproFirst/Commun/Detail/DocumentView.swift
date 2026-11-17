@@ -13,11 +13,34 @@ struct DocumentView: View {
     let installation: Installation
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
+    /// À côté d'une liste, la fiche n'a pas de barre à elle : le titre passe en tête du
+    /// contenu, comme le numéro d'une affaire (#223) — sur iPhone, il reste en barre seule.
+    @Environment(\.dansLaColonneDeFiche) private var dansLaColonne
 
     var body: some View {
+        VStack(spacing: 0) {
+            if dansLaColonne {
+                Text(titre)
+                    .font(.headline)
+                    .foregroundStyle(palette.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                    .padding(.vertical, 12)
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityIdentifier("document.titre")
+                Divider()
+            }
+            apercu
+        }
+        .background(palette.bg)
+        .navigationTitle(titre)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var apercu: some View {
         let service = parcours.service
         let installation = installation
-        Chargement(
+        return Chargement(
             charger: { [id, nom] in try await service.document(id, nom: nom, dans: installation) },
             contenu: { fichier, _ in
                 ApercuQuickLook(fichier: fichier).ignoresSafeArea(edges: .bottom)
@@ -32,9 +55,6 @@ struct DocumentView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         )
-        .background(palette.bg)
-        .navigationTitle(titre)
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 

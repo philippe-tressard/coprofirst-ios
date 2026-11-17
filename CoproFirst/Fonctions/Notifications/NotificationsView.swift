@@ -58,7 +58,7 @@ struct NotificationsView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { if enEdition { barreDeSuppression } }
         .animation(.snappy, value: enEdition)
         .animation(.snappy, value: push.offreDue)
-        .refreshable { await etat.charger(installation, avec: parcours.serviceNotifications) }
+        .actualisable { await etat.charger(installation, avec: parcours.serviceNotifications) }
         .task { await etat.charger(installation, avec: parcours.serviceNotifications) }
         .onChange(of: etat.liste.isEmpty) { _, vide in if vide { modeEdition = .inactive } }
         .sensoryFeedback(.success, trigger: etat.nonLues == 0 && etat.phase == .pret)

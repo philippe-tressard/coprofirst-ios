@@ -56,7 +56,7 @@ struct OngletAnnonces: View {
                 toutArchive: enCours.isEmpty && !retenues.isEmpty, textes: Self.textes
             ) { Task { await etat.charger(.annonces, installation, avec: parcours.serviceCommunaute) } }
         }
-        .refreshable { await etat.charger(.annonces, installation, avec: parcours.serviceCommunaute) }
+        .actualisable { await etat.charger(.annonces, installation, avec: parcours.serviceCommunaute) }
         .task { await etat.charger(.annonces, installation, avec: parcours.serviceCommunaute) }
     }
 

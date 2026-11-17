@@ -130,4 +130,16 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(app.elementRetenu("annonce.21").apparait(), "sa rangée est soulignée")
         capture("annonces-liste-et-fiche", app)
     }
+
+    /// Un document à côté du fil porte son titre en tête : la colonne de fiche n'a pas de
+    /// barre à elle, et l'aperçu du système n'en montre aucun (#223).
+    @MainActor
+    func testUnDocumentACoteDuFilPorteSonTitre() throws {
+        let app = lancer("fil")
+        let document = app.buttons["fil.document:7"]
+        app.toucher(document)
+        XCTAssertTrue(app.elementAcces("document.titre").apparait(), "le titre en tête de la colonne")
+        XCTAssertTrue(document.exists, "le fil reste à côté")
+        capture("fil-document-a-cote", app)
+    }
 }

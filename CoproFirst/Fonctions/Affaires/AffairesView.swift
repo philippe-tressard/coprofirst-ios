@@ -134,13 +134,15 @@ struct AffairesView: View {
         Button {
             nouvelle = true
         } label: {
-            Image(systemName: "plus")
+            // Le libellé nomme aussi le raccourci dans le panneau de ⌘ tenu (#223).
+            Label(TextesClavier.nouvelleAffaire, systemImage: "plus")
+                .labelStyle(.iconOnly)
                 .font(.body.weight(.semibold))
         }
         .buttonStyle(.borderedProminent)
         .buttonBorderShape(.circle)
         .tint(palette.primaryPlein)
-        .accessibilityLabel("Nouvelle affaire")
+        .keyboardShortcut("n")
         .gesteEnLigne()
         .accessibilityIdentifier("affaires.nouvelle")
     }

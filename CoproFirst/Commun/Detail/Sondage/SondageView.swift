@@ -67,6 +67,7 @@ private struct ContenuSondage: View {
                 invite: TextesSondage.commentaireInviteFil, entete: TextesSondage.commentaires)
         }
         .scrollContentBackground(.hidden)
+        .largeurDeLecture()
         // Le clavier cacherait « Voter », au bas du formulaire : défiler le ferme, « OK » aussi.
         // Les champs sont multilignes, « Retour » y va à la ligne.
         .scrollDismissesKeyboard(.immediately)
