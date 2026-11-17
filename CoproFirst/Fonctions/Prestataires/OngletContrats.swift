@@ -9,6 +9,7 @@ struct OngletContrats: View {
     let donnees: DonneesPrestataires
     let installation: Installation
     let service: any ServicePrestataires
+    let gestes: GestesAvis
     @State private var archives: [Contrat]?
     @State private var deplie: Int?
     @Environment(\.palette) private var palette
@@ -45,7 +46,7 @@ struct OngletContrats: View {
     private func carte(_ contrat: Contrat, archive: Bool = false) -> some View {
         CarteContrat(
             contrat: contrat, prestataire: donnees.prestataires.first { $0.id == contrat.prestataireId },
-            archive: archive, installation: installation, service: service,
+            archive: archive, installation: installation, service: service, gestes: gestes,
             deplie: Binding(get: { deplie == contrat.id }, set: { deplie = $0 ? contrat.id : nil }))
     }
 
@@ -81,6 +82,7 @@ private struct CarteContrat: View {
     let archive: Bool
     let installation: Installation
     let service: any ServicePrestataires
+    let gestes: GestesAvis
     @Binding var deplie: Bool
     @State private var documents: [DocumentContrat]?
     @Environment(\.palette) private var palette
@@ -189,6 +191,13 @@ private struct CarteContrat: View {
                 }
             } else {
                 Text(TextesPrestataires.aucunDocument).font(.subheadline).foregroundStyle(palette.textMuted)
+            }
+            // Noter le prestataire depuis son contrat (`CarteContrat.svelte`) : le conseil
+            // syndical, et seulement s'il y a un intervenant à noter.
+            if gestes.conseil, let prestataire {
+                BoutonNoter(
+                    prestataire: prestataire, contrat: contrat.id, installation: installation, service: service,
+                    gestes: gestes)
             }
         }
     }

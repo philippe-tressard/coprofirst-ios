@@ -4,11 +4,12 @@
 import ClientAPI
 import Foundation
 
-/// Ce que « Prestataires » demande à une installation (#13), en LECTURE. Réalisé par
-/// `ServiceAPI` (client généré) et `ServiceSimule`, dans ce dossier.
+/// Ce que « Prestataires » demande à une installation (#13). Réalisé par `ServiceAPI`
+/// (client généré) et `ServiceSimule`, dans ce dossier.
 ///
-/// Les gestes (créer, corriger, archiver, noter, relever un compteur) sont réservés
-/// au conseil syndical et restent sur le site pour l'instant : l'écran le dit.
+/// Des gestes du conseil syndical, l'app porte les AVIS (#207) : noter, corriger son avis,
+/// le retirer. Créer, corriger, archiver une fiche ou un contrat, relever un compteur
+/// restent sur le site pour l'instant : l'écran le dit.
 protocol ServicePrestataires: Sendable {
     /// GET /prestataires, ou /prestataires/archives.
     func prestataires(_ installation: Installation, archives: Bool) async throws -> [Prestataire]
@@ -17,6 +18,17 @@ protocol ServicePrestataires: Sendable {
     /// GET /prestataires/{id}/interventions : le récapitulatif de ses avis, par exercice et
     /// par intervention (#207) — regroupé et compté par l'API.
     func interventions(de prestataire: Int, dans installation: Installation) async throws -> [ExerciceAvis]
+    /// GET /prestataires/affaires-a-noter : les affaires qu'un avis peut juger, servies
+    /// triées — celles où le prestataire intervient, puis les autres.
+    func affairesANoter(de prestataire: Int, dans installation: Installation) async throws -> [AffaireANoter]
+    /// POST /prestataires/notations : noter (le conseil syndical, `est_moderateur`).
+    func noter(_ envoi: EnvoiAvis, dans installation: Installation) async throws
+    /// PATCH /prestataires/notations/{id} : l'auteur corrige son avis (`peut_modifier`).
+    /// L'état, le commentaire et l'affaire partent toujours, `null` compris : un avis
+    /// ramené « sans affaire » le dit au serveur (il ne lit que les champs envoyés).
+    func corriger(_ avis: Int, _ envoi: EnvoiAvis, dans installation: Installation) async throws
+    /// DELETE /prestataires/notations/{id} : retirer un avis (le conseil syndical).
+    func retirer(_ avis: Int, dans installation: Installation) async throws
     /// GET /equipements : les équipements (libellés et ordre) — des données, pas une table.
     func equipements(_ installation: Installation) async throws -> [Equipement]
     /// GET /documents?contrat_id= : les documents d'un contrat.
