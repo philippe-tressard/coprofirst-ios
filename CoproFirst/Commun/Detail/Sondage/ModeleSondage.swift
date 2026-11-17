@@ -23,6 +23,11 @@ struct DetailSondage: Hashable, Sendable {
     var totalVotes: Int { options.reduce(0) { $0 + ($1.nbVotes ?? 0) } }
     /// Ouvert et pas encore voté : la règle de la fiche du site, sur les champs servis.
     var peutVoter: Bool { !cloture && monVote == nil }
+    /// Les barres se montrent AVANT le vote, au-dessus du formulaire, quand le serveur
+    /// les rend visibles (le site, 16/11/2026) — elles remplacent le décompte par choix.
+    var resultatsAvantVote: Bool { peutVoter && resultatsVisibles }
+    /// Visibles et le sondage encore ouvert : le décompte peut bouger, les barres le disent.
+    var resultatsProvisoires: Bool { resultatsVisibles && !cloture }
 }
 
 struct OptionSondage: Hashable, Sendable, Identifiable {
@@ -77,6 +82,7 @@ enum TextesSondage {
     static let voteEnregistre = "Vote enregistré"
     static let monVote = "Mon vote ✓"
     static let resultatsMasques = "Les résultats de ce sondage ne seront visibles qu'après sa clôture."
+    static let resultatsProvisoires = "Résultats provisoires : le sondage est encore ouvert."
     static let commentaireInviteFil = "Votre commentaire sur ce sondage…"
     static let commentairePublie = "Commentaire publié"
     static let commentaireSupprime = "Commentaire supprimé"

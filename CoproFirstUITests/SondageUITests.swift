@@ -142,6 +142,10 @@ final class SondageUITests: XCTestCase {
     func testUnVoteAPreciserCommenteSousLaCharte() throws {
         let app = ouvrirLeSondage()
         XCTAssertTrue(dit(app, "sondage.total", "29 votes"))
+        XCTAssertTrue(
+            vu(app, "sondage.resultatsProvisoires", "Résultats provisoires"),
+            "visibles avant la clôture, les barres passent au-dessus du vote")
+        XCTAssertTrue(dit(app, "sondage.resultat.1", "14"), "le décompte se lit sur la barre")
         LancementCaptures.capturer("1-sondage-vote")
         XCTAssertTrue(vu(app, "sondage.manque", "Sélectionnez une option"))
 
@@ -161,6 +165,8 @@ final class SondageUITests: XCTestCase {
         XCTAssertTrue(vu(app, "sondage.resultat.4", "Mon vote ✓"), "les résultats remplacent le vote")
         XCTAssertTrue(dit(app, "sondage.resultat.4", "Le 20 juin"), "ma précision rejoint les réponses libres")
         XCTAssertTrue(vu(app, "sondage.total", "30 votes"), "le vote est compté")
+        XCTAssertTrue(
+            vu(app, "sondage.resultatsProvisoires", "Résultats provisoires"), "encore ouvert : toujours provisoires")
         LancementCaptures.capturer("3-sondage-resultats")
         XCTAssertTrue(vu(app, "reponses.entete", "Commentaires (4)"), "le commentaire du vote rejoint le fil")
     }

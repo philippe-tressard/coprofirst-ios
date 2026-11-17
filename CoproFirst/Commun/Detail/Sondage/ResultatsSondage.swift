@@ -5,7 +5,8 @@ import SwiftUI
 
 /// Les résultats d'un sondage (`ResultatsSondage.svelte`) : une barre par réponse, son
 /// pourcentage et ses votes, « Mon vote ✓ », et sous chaque option à préciser les
-/// réponses libres des votants. Masqués, ils ne sont pas des barres vides : le serveur
+/// réponses libres des votants ; le sondage encore ouvert, « Résultats provisoires »
+/// en tête (`provisoires` du site). Masqués, ils ne sont pas des barres vides : le serveur
 /// n'envoie pas les décomptes, et « 0 vote » se lirait « personne n'a voté ».
 struct ResultatsSondage: View {
     let sondage: DetailSondage
@@ -14,6 +15,12 @@ struct ResultatsSondage: View {
     var body: some View {
         Section {
             if sondage.resultatsVisibles {
+                if sondage.resultatsProvisoires {
+                    Text(TextesSondage.resultatsProvisoires)
+                        .font(.footnote.italic())
+                        .foregroundStyle(palette.textMuted)
+                        .accessibilityIdentifier("sondage.resultatsProvisoires")
+                }
                 ForEach(sondage.options) { option in
                     LigneResultat(option: option, total: sondage.totalVotes, mienne: option.id == sondage.monVote)
                 }
