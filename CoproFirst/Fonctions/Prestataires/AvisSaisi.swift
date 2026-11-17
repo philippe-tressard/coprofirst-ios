@@ -40,7 +40,7 @@ struct AvisSaisi: Hashable, Sendable {
     /// Le commentaire enregistré : la phrase générée, puis le texte libre.
     var commentaire: String {
         [genere, libre.trimmingCharacters(in: .whitespacesAndNewlines)].filter { !$0.isEmpty }
-            .joined(separator: "\n")
+            .joined(separator: TablesNotations.avantLibre)
     }
 
     /// Ce qui retient l'avis, avec les mots du site — `nil` quand il peut partir.
@@ -67,8 +67,8 @@ extension AvisSaisi {
     static func phrase(forts: [String], faibles: [String]) -> String {
         [(TablesNotations.phraseForts, forts), (TablesNotations.phraseFaibles, faibles)]
             .filter { !$0.1.isEmpty }
-            .map { "\($0.0)\($0.1.joined(separator: ", "))." }
-            .joined(separator: " ")
+            .map { $0.0 + $0.1.joined(separator: TablesNotations.entreMotifs) + TablesNotations.finDeGroupe }
+            .joined(separator: TablesNotations.entreGroupes)
     }
 
     /// `decomposerCommentaire` : la première ligne n'est reprise comme phrase générée que
@@ -76,24 +76,28 @@ extension AvisSaisi {
     /// ressemble, et il reste libre.
     static func decomposer(_ commentaire: String?) -> CommentaireDecompose {
         let texte = commentaire ?? ""
-        let lignes = texte.components(separatedBy: "\n")
+        let lignes = texte.components(separatedBy: TablesNotations.avantLibre)
         let premiere = lignes[0].trimmingCharacters(in: .whitespaces)
+        let fin = NSRegularExpression.escapedPattern(for: TablesNotations.finDeGroupe)
         let motif =
-            "^(?:\(NSRegularExpression.escapedPattern(for: TablesNotations.phraseForts))(.+?)\\.)?\\s*"
-            + "(?:\(NSRegularExpression.escapedPattern(for: TablesNotations.phraseFaibles))(.+?)\\.)?$"
+            "^(?:\(NSRegularExpression.escapedPattern(for: TablesNotations.phraseForts))(.+?)\(fin))?\\s*"
+            + "(?:\(NSRegularExpression.escapedPattern(for: TablesNotations.phraseFaibles))(.+?)\(fin))?$"
         guard let expression = try? NSRegularExpression(pattern: motif),
             let trouve = expression.firstMatch(
                 in: premiere, range: NSRange(premiere.startIndex..., in: premiere))
         else { return CommentaireDecompose(libre: texte) }
         func motifs(_ groupe: Int) -> [String] {
-            Range(trouve.range(at: groupe), in: premiere).map { premiere[$0].components(separatedBy: ", ") } ?? []
+            Range(trouve.range(at: groupe), in: premiere).map {
+                premiere[$0].components(separatedBy: TablesNotations.entreMotifs)
+            } ?? []
         }
         let (forts, faibles) = (motifs(1), motifs(2))
         let reconnus =
             forts.count + faibles.count > 0 && forts.allSatisfy(TablesNotations.pointsForts.contains)
             && faibles.allSatisfy(TablesNotations.pointsFaibles.contains)
         guard reconnus else { return CommentaireDecompose(libre: texte) }
-        return CommentaireDecompose(forts: forts, faibles: faibles, libre: lignes.dropFirst().joined(separator: "\n"))
+        return CommentaireDecompose(
+            forts: forts, faibles: faibles, libre: lignes.dropFirst().joined(separator: TablesNotations.avantLibre))
     }
 }
 
