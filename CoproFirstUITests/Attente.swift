@@ -18,6 +18,14 @@ enum Attente {
     /// absence à prouver une fois l'écran posé. Jamais pour affirmer une présence :
     /// une sonde qui échoue n'est pas un défaut de l'app (#147).
     static let sonde: TimeInterval = 2
+
+    /// Le délai d'un EFFET, avant de reprendre un toucher qui n'a rien fait (`toucher(_:jusqua:)`,
+    /// #282) : un écran poussé arrive en 1 à 3 s au poste, jusqu'à 12 s sur un runner chargé
+    /// (#98) — une reprise sur un effet seulement lent est sans dommage pour un toucher qui
+    /// ouvre une page (le second ne change rien), et la dernière attente est le plafond.
+    static let effet: TimeInterval = 10
+    /// Au plus deux reprises : au-delà, ce n'est plus un toucher perdu, c'est un défaut.
+    static let reprises = 2
 }
 
 extension XCUIElement {
@@ -133,6 +141,42 @@ extension XCUIApplication {
             // Il dépasse de l'écran (un onglet d'une rangée qui défile) : sa partie visible.
             element.coordinate(withNormalizedOffset: point).tap()
         }
+    }
+
+    /// Le toucher JUSQU'À L'EFFET (#282, #183) : `toucher`, puis l'attente de `effet` (un
+    /// élément qui doit apparaître). Sous charge, un toucher synthétisé peut se perdre : il
+    /// est rejoué, au plus `Attente.reprises` fois, et CHAQUE reprise s'écrit au journal
+    /// (« ↻ reprise du toucher n/N : … »), que `scripts/bilan_tests_ui.py` déclare au résumé
+    /// et en annotation — une reprise muette masquerait un vrai toucher sans réponse.
+    ///
+    /// Pour un toucher IDEMPOTENT seulement (ouvrir une page, un onglet) : le rejouer sur un
+    /// effet simplement lent ne change rien. Jamais pour un interrupteur ni un envoi.
+    @MainActor
+    func toucher(
+        _ element: XCUIElement, jusqua effet: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        toucher(element, file: file, line: line)
+        for reprise in 1...Attente.reprises {
+            if effet.waitForExistence(timeout: Attente.effet) { return }
+            let trace = "↻ reprise du toucher \(reprise)/\(Attente.reprises) : \(element) sans effet "
+                + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
+            print(trace)
+            XCTContext.runActivity(named: trace) { _ in }
+            toucher(element, file: file, line: line)
+        }
+        XCTAssertTrue(
+            effet.apparait(), "\(element) touché \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+    }
+
+    /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
+    /// qu'XCUITest ajoute avant `tap()` sur un élément caché (#47) : une fois son cadre
+    /// immobile (le clavier et la mise en page bougeaient encore, #183, ex-#270).
+    @MainActor
+    func toucherAuDessin(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
+        immobile(element)
+        let cadre = element.frame
+        coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: cadre.midX, dy: cadre.midY)).tap()
     }
 
     /// Le point à toucher, en coordonnées relatives à son cadre : son centre (0,5 ; 0,5) s'il

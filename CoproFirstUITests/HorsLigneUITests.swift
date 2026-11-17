@@ -42,15 +42,12 @@ final class HorsLigneUITests: XCTestCase {
     func testLesGestesGardentLeurPlaceGrisesEtLaLectureResteOuverte() throws {
         let app = lancer("gardee")
         let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
-        XCTAssertTrue(onglet.apparait())
-        onglet.tap()
-
         let carte = element(app, "affaires.carte.A-0041")
-        XCTAssertTrue(carte.apparait(), "la liste gardée")
+        app.toucher(onglet, jusqua: carte)
         XCTAssertTrue(element(app, "horsligne.bandeau").exists, "le bandeau suit d'écran en écran")
         XCTAssertTrue(controle(app, "affaires.nouvelle", actif: false).exists, "« Nouvelle affaire » en place, grisée")
 
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"), "le détail gardé s'ouvre")
         XCTAssertTrue(element(app, "horsligne.bandeau").exists)
         XCTAssertTrue(controle(app, "affaire.suite", actif: false).exists, "« Ajouter une suite » en place, grisée")
@@ -62,11 +59,10 @@ final class HorsLigneUITests: XCTestCase {
     func testSeDeconnecterHorsLigneNeLaissePlusRienALire() throws {
         let app = lancer("gardee")
         let pastille = element(app, "pastille.residence")
-        XCTAssertTrue(pastille.apparait())
-        pastille.tap()
+        app.toucher(pastille)
         let sortir = element(app, "residence.deconnecter")
         XCTAssertTrue(sortir.apparait(), "se déconnecter reste possible sans réseau")
-        sortir.tap()
+        app.toucher(sortir)
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
         let confirmer = element(app, "sortie.confirmer")
         XCTAssertTrue(confirmer.apparait())
