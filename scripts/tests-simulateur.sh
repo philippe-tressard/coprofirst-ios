@@ -29,6 +29,8 @@
 #     `generer-projet.sh`) arrête tout AVANT le build : INCONNU, avec la commande à
 #     lancer. Le script ne régénère pas le projet lui-même : XcodeGen réécrit un projet
 #     qu'Xcode peut tenir ouvert, et en CI la génération est une étape à part (#170) ;
+#   - le verrou COMMUN du poste d'abord (`verrou_poste.py`, #255), qui exclut aussi
+#     Gradle et le rejeu de la CI des autres projets ; puis
 #   - UN SEUL passage à la fois sur le poste (#108) : le script prend le verrou
 #     `simulateur.verrou` du répertoire git commun — celui que partagent tous les
 #     worktrees —, attend son tour en disant qui le tient et depuis quand, et le rend
@@ -270,6 +272,23 @@ if [ "${1:-}" = "--autotest" ]; then
   source scripts/autotest-tests-simulateur.sh
   autotest
   exit $?
+fi
+# Le verrou COMMUN du poste d'abord (`~/.claude/bin/verrou_poste.py`, claude-config#552,
+# #255) : xcodebuild, Gradle et l'émulateur d'Android, le rejeu de la CI de 5Hostachy
+# s'excluent tous. Le 16/11/2026, un xcodebuild iPad et Gradle tournaient ensemble (charge
+# à 39 sur 12 cœurs, 4,2 Go de swap) : le verrou du simulateur, plus bas, n'exclut que
+# les passages iOS entre eux. Le script se relance sous le verrou commun, qui DEVIENT ce
+# passage (même pid : la fiche du verrou iOS et l'arrêt par le pid restent justes). Déjà
+# tenu (`VERROU_POSTE_TENU`), en CI ou sans le verrou commun : il continue, et l'absence
+# se dit. `VERROU_POSTE` remplace son chemin (l'autotest).
+VERROU_COMMUN=${VERROU_POSTE:-$HOME/.claude/bin/verrou_poste.py}
+if [ -z "${VERROU_POSTE_TENU:-}" ] && [ "${GITHUB_ACTIONS:-}" != true ]; then
+  if [ -f "$VERROU_COMMUN" ]; then
+    export VERROU_POSTE_TENU=1
+    exec python3 "$VERROU_COMMUN" prendre --libelle "xcodebuild test (CoproFirst-iOS)" --depot "$PWD" \
+      -- "$BASH" "$PWD/scripts/tests-simulateur.sh" "$@"
+  fi
+  echo "ℹ️  sans verrou commun du poste ($VERROU_COMMUN absent) : ce passage n'exclut que les passages iOS" >&2
 fi
 trap sortir EXIT
 trap 'exit 143' TERM

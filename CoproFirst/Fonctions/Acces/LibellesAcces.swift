@@ -3,8 +3,8 @@
 
 import Foundation
 
-/// Les libellés de « Mes lots & accès » : ceux des tables GÉNÉRÉES (`Genere/`), et
-/// ceux que le site écrit dans un composant (`Provisoire/`).
+/// Les libellés de « Mes lots & accès » : ceux des tables GÉNÉRÉES (`Genere/`), toutes
+/// lues dans `tables-clients.json` de la release (#227).
 ///
 /// ⚠️ Aucune RÈGLE du site n'est recopiée ici (`lotTypeLabel`, `etageLabel`,
 /// `nomAffiche`…, `standards/09` §8) : l'écran montre la donnée brute, lisible, et
@@ -12,9 +12,7 @@ import Foundation
 enum LibellesAcces {
     static func statutAcces(_ code: String) -> LibelleTeinte { TablesAcces.statutsAcces[code] ?? .brut(code) }
     static func statutBail(_ code: String) -> LibelleTeinte { TablesAcces.statutsBail[code] ?? .brut(code) }
-    static func statutObjet(_ code: String) -> LibelleTeinte {
-        ProvisoireAcces.statutsObjet[code] ?? .brut(code)
-    }
+    static func statutObjet(_ code: String) -> LibelleTeinte { TablesAcces.statutsObjet[code] ?? .brut(code) }
 
     static func typeAcces(_ code: String) -> String {
         TablesAcces.typesAcces.first { $0.code == code }?.libelle ?? code

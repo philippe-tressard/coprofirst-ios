@@ -53,6 +53,11 @@ final class Parcours {
     var aOuvrir: String?
     /// L'onglet affiché dans l'espace de la résidence (identifiant de page).
     var onglet = OrdrePages.idFil
+    /// La présentation de la navigation, tenue de la classe de taille par `RacineView` :
+    /// la porte d'un lien s'y règle avant même que l'espace de la résidence s'affiche (#221).
+    private(set) var presentation = PresentationNavigation.barreDuBas
+    /// La page ouverte dans « Plus » (barre du bas) — celle que la barre latérale reprend.
+    var ouverteDansPlus: String?
     /// Ce que la porte d'un lien ou d'une notification retient (`Parcours+Porte`).
     var porte = EtatPorte()
     /// Ce que l'écran de connexion doit dire en arrivant (déconnexion hors ligne…).
@@ -79,6 +84,7 @@ final class Parcours {
         reconnue = connues.derniere
         // En consultation hors ligne, rien ne se note : rien ne partirait.
         audience.courante = { [weak self] in self?.consultation == nil ? self?.ouverteAJour : nil }
+        ecouterLesSessionsRefusees()
     }
 
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.
@@ -92,6 +98,7 @@ final class Parcours {
         ouverte = installation
         self.consultation = consultation
         onglet = OrdrePages.idFil
+        ouverteDansPlus = nil
         avis = nil
         chemin = []
         clocheOuverte = false
@@ -102,6 +109,20 @@ final class Parcours {
             proposerFaceID = true
         }
         suivreLeLienEnAttente(installation)
+    }
+
+    /// Change de présentation (rotation, Split View, pliage) en gardant la page ouverte
+    /// (`PresentationNavigation.traduire`).
+    func presenter(_ nouvelle: PresentationNavigation) {
+        guard nouvelle != presentation else { return }
+        if let ouverte {
+            let pages = pagesDeLaBarre(ouverte).map(\.id)
+            let place = PresentationNavigation.traduire(
+                .init(onglet: onglet, dansPlus: ouverteDansPlus), vers: nouvelle, pages: pages)
+            onglet = place.onglet
+            ouverteDansPlus = place.dansPlus
+        }
+        presentation = nouvelle
     }
 
     /// Changer de résidence : retour à la connexion, adresse pré-remplie ou vide.

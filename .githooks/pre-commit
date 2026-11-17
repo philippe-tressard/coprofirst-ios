@@ -4,7 +4,8 @@
 #
 # pre-commit — armé une fois par clone : git config core.hooksPath .githooks
 # Refuse un commit sur une branche en retard sur origin (standards/08 §2), puis
-# rejoue les garde-fous du dépôt et REUSE.
+# rejoue les garde-fous du dépôt — exactement le job « Dépôt » de la CI, plancher, logo
+# et REUSE compris (#241). Sans réseau ni reuse : INCONNU, le commit est refusé.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
@@ -18,9 +19,3 @@ if git rev-parse --verify -q "origin/$BRANCHE" >/dev/null; then
 fi
 
 bash scripts/verifier-depot.sh
-if command -v reuse >/dev/null; then
-  reuse lint --quiet || { echo "❌ reuse lint" >&2; exit 1; }
-else
-  echo "❓ reuse absent : conformité REUSE INCONNUE (pipx install reuse)" >&2
-  exit 1
-fi

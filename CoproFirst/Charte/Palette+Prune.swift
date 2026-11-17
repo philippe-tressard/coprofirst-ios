@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), front/src/styles/socle.css, palette-sombre.css, palettes.css.
+// Source : philippe-tressard/coprofirst v3.103.0 (commit 1d1ed30cb3fa2128692ce2be0fe34ded87d72c69), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
 
 import SwiftUI
 
@@ -19,6 +19,7 @@ extension Palette {
         dangerBordure: Color(clair: RVBA(0xE6, 0xB0, 0xAA, 1), sombre: RVBA(0x6E, 0x4C, 0x54, 1)),
         dangerFond: Color(clair: RVBA(0xFD, 0xED, 0xEC, 1), sombre: RVBA(0x3B, 0x34, 0x43, 1)),
         dangerPlein: Color(clair: RVBA(0xC0, 0x39, 0x2B, 1), sombre: RVBA(0xC0, 0x39, 0x2B, 1)),
+        fondLogo: Color(clair: RVBA(0x00, 0x00, 0x00, 0), sombre: RVBA(0xFF, 0xFF, 0xFF, 1)),
         importLie: Color(clair: RVBA(0x25, 0x63, 0xEB, 1), sombre: RVBA(0x65, 0x91, 0xF1, 1)),
         info: Color(clair: RVBA(0x25, 0x63, 0xA6, 1), sombre: RVBA(0x6F, 0xAE, 0xEE, 1)),
         infoBordure: Color(clair: RVBA(0xA8, 0xC1, 0xDB, 1), sombre: RVBA(0x3A, 0x5A, 0x80, 1)),
@@ -46,6 +47,7 @@ extension Palette {
         successBordure: Color(clair: RVBA(0xAB, 0xCB, 0xBA, 1), sombre: RVBA(0x32, 0x61, 0x5A, 1)),
         successFond: Color(clair: RVBA(0xE6, 0xF4, 0xEE, 1), sombre: RVBA(0x22, 0x3D, 0x45, 1)),
         successPlein: Color(clair: RVBA(0x2E, 0x7D, 0x52, 1), sombre: RVBA(0x2E, 0x7D, 0x52, 1)),
+        successPleinSurvol: Color(clair: RVBA(0x27, 0x6A, 0x46, 1), sombre: RVBA(0x27, 0x6A, 0x46, 1)),
         successTexte: Color(clair: RVBA(0x27, 0x6A, 0x46, 1), sombre: RVBA(0x7F, 0xD6, 0xA6, 1)),
         surAccent: Color(clair: RVBA(0x1A, 0x1A, 0x2E, 1), sombre: RVBA(0x1A, 0x1A, 0x2E, 1)),
         surPlein: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 1), sombre: RVBA(0xFF, 0xFF, 0xFF, 1)),

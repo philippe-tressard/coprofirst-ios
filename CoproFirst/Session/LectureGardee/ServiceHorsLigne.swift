@@ -43,8 +43,13 @@ extension ServiceAPI: ServiceHorsLigne {
     /// l'autre — la déconnexion, une session que le serveur refuse. `scripts/verifier-depot.sh`
     /// refuse tout autre appel à `Trousseau.supprimer(pour:)` hors du Trousseau.
     func oublierCeQuiEstGarde(_ installation: Installation) {
-        Trousseau.supprimer(pour: installation.hote)
-        lectures.effacer(installation.hote)
+        Self.oublierCeQuiEstGarde(installation.hote, lectures)
+    }
+
+    /// La même porte, par l'hôte : une session refusée en cours d'usage (`SessionsRefusees`).
+    static func oublierCeQuiEstGarde(_ hote: String, _ lectures: LecturesGardees) {
+        Trousseau.supprimer(pour: hote)
+        lectures.effacer(hote)
         Fichiers.effacerLesCopies()
     }
 

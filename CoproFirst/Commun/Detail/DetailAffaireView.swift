@@ -72,6 +72,8 @@ private struct ContenuAffaire: View {
 private struct EnTeteAffaire: View {
     let affaire: DetailAffaire
     @Environment(\.palette) private var palette
+    /// À côté d'une liste, la fiche n'a pas de barre : son numéro passe dans l'en-tête.
+    @Environment(\.dansLaColonneDeFiche) private var dansLaColonne
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -94,6 +96,12 @@ private struct EnTeteAffaire: View {
                     Label("Archivée", systemImage: "archivebox")
                         .font(.caption.weight(.bold))
                         .foregroundStyle(palette.textMuted)
+                }
+                if dansLaColonne {
+                    Text(affaire.numero)
+                        .font(.caption.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(palette.textMuted)
+                        .accessibilityIdentifier("affaire.numero")
                 }
                 Spacer(minLength: 0)
                 if let etat = affaire.etat { PastilleStatut(etat) }

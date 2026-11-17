@@ -1,14 +1,15 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Les PALETTES : la charte (`socle.css`, `palette-sombre.css`, palette `seine`) et
-chaque palette de `palettes.css`, au clair et au sombre, selon la cascade du site — un
-jeton que la palette ne redéfinit pas garde celui de la charte
+"""Les PALETTES : la charte (palette `seine`) et chaque palette du site, au clair et au
+sombre, telles que le site les RÉSOUT — `palettesResolues` de `tables-clients.json`
+(coprofirst#2754, depuis v3.102.0 ; comparées au rendu du site, 0 écart)
 → `CoproFirst/Charte/Palette.swift` et `Palette+<code>.swift`.
 
 Une propriété par jeton `--color-*`, `--fil-*`, `--kanban-*` (les teintes des
 colonnes du Kanban, #34), `--serie-*` et `--palier-*` (les tranches des répartitions du
-Reporting, #15) ; les autres jetons (`--teinte-*`…) ne servent qu'à résoudre
-un `var(--…)`.
+Reporting, #15), chacun déjà en `#rrggbb` ou `rgba(…)`. Les feuilles de la charte
+(`socle.css`, `palette-sombre.css`, `palettes.css`) ne se lisent plus, ni leur cascade ne
+se refait ici (#227) : `generer.py` refuse leur retour.
 
 `GET /config/palettes` sert les mêmes couleurs, mais à l'administrateur seul : l'app,
 qui colore l'écran de connexion, ne peut pas le lire (coprofirst#2460).
@@ -18,34 +19,22 @@ from __future__ import annotations
 
 import re
 
-from generateurs._commun import CHARTE, bloc_css, jetons_css, jetons_du_socle, propriete
+from generateurs._commun import CHARTE, propriete
 
-SOURCES = [
-    "front/src/styles/socle.css",
-    "front/src/styles/palette-sombre.css",
-    "front/src/styles/palettes.css",
-]
+SOURCES: list[str] = []  # palettesResolues de tables-clients.json (#227), pas les feuilles du site
 
-# Tout jeton se lit (un `var(--teinte-6)` doit se résoudre) ; seuls ces préfixes deviennent
-# des propriétés de `Palette`.
 EXPOSES = ("color-", "fil-", "kanban-", "serie-", "palier-")
 HEX = re.compile(r"^#([0-9a-fA-F]{6})$")
 RGBA = re.compile(r"^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([0-9.]+)\s*\)$")
-VAR = re.compile(r"^var\(--([a-z][a-z0-9-]*)\)$")
 
 
-def resoudre(nom: str, table: dict[str, str], vus=()) -> tuple | None:
-    """(rouge, vert, bleu, alpha) du jeton dans `table`, ou None s'il n'est pas portable."""
-    valeur = table.get(nom)
-    if valeur is None or nom in vus:
-        return None
+def couleur(valeur: str) -> tuple | None:
+    """(rouge, vert, bleu, alpha) d'une valeur résolue, ou None si elle n'est pas littérale."""
     if m := HEX.match(valeur):
         h = int(m.group(1), 16)
         return (h >> 16 & 0xFF, h >> 8 & 0xFF, h & 0xFF, 1.0)
     if m := RGBA.match(valeur):
         return (int(m.group(1)), int(m.group(2)), int(m.group(3)), float(m.group(4)))
-    if m := VAR.match(valeur):
-        return resoudre(m.group(1), table, (*vus, nom))
     return None
 
 
@@ -55,31 +44,29 @@ def litteral(c: tuple) -> str:
 
 
 def generer(ctx) -> str:
-    socle = jetons_du_socle(ctx)
-    sombre = jetons_css(bloc_css((ctx.front / "src" / "styles" / "palette-sombre.css").read_text(encoding="utf-8"), ":root[data-theme='dark']"))
-    texte = (ctx.front / "src" / "styles" / "palettes.css").read_text(encoding="utf-8")
-    codes = ["seine"] + sorted(set(re.findall(r":root\[data-palette='([a-z]+)'\]", texte)))
-
-    # La cascade du site : au clair, la palette sur la charte ; au sombre, la charte
-    # sombre par-dessus la palette claire, puis la palette sombre par-dessus tout.
+    resolues = ctx.table("palettesResolues")
+    if not isinstance(resolues, dict) or "seine" not in resolues:
+        raise SystemExit("❌ palettesResolues : pas de palette « seine »")
+    codes = ["seine"] + sorted(c for c in resolues if c != "seine")
+    # Même structure pour toutes : chaque palette porte, au clair et au sombre, les jetons de
+    # la charte, chacun littéral. Sinon la table a changé de forme : on s'arrête.
+    jetons = sorted(j.removeprefix("--") for j in resolues["seine"].get("clair", {}))
+    portables = [j for j in jetons if j.startswith(EXPOSES)]
     tables = {}
     for code in codes:
-        clair_p = sombre_p = {}
-        if code != "seine":
-            clair_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'],"))
-            sombre_p = jetons_css(bloc_css(texte, f":root[data-palette='{code}'][data-theme='dark']"))
-        tables[code] = ({**socle, **clair_p}, {**socle, **clair_p, **sombre, **sombre_p})
+        paire = tuple(resolues[code].get(mode, {}) for mode in ("clair", "sombre"))
+        for mode, table in zip(("clair", "sombre"), paire):
+            lus = sorted(j.removeprefix("--") for j in table)
+            illisibles = [j for j in portables if couleur(table.get(f"--{j}", "")) is None]
+            if lus != jetons or illisibles:
+                raise SystemExit(f"❌ palettesResolues : {code}/{mode} n'a pas les jetons de seine, "
+                                 f"ou des valeurs non littérales ({', '.join(illisibles[:3])})")
+        tables[code] = paire
+    if not portables:
+        raise SystemExit("❌ palettesResolues : aucun jeton exposé")
+    source = ctx.provenance_tables("palettesResolues")
 
-    # Un jeton n'entre que s'il se résout partout : la structure est la même pour toutes.
-    portables = [
-        j for j in sorted(socle) if j.startswith(EXPOSES)
-        and all(resoudre(j, t) is not None for paire in tables.values() for t in paire)
-    ]
-    ecartes = sorted(j for j in set(socle) - set(portables) if j.startswith(EXPOSES))
-
-    struct = ctx.entete("front/src/styles/socle.css")
-    struct += "// Jetons non portés (color-mix, valeur non littérale) :\n"
-    struct += "".join(f"//   --{e}: {socle[e]}\n" for e in ecartes)
+    struct = ctx.entete(source)
     struct += "\nimport SwiftUI\n\n"
     struct += "/// Les couleurs d'une palette de CoproFirst : un jeton `--color-*`, `--fil-*`, `--kanban-*`,\n"
     struct += "/// `--serie-*` ou `--palier-*` chacune, claire et sombre. La charte est `seine` ; une\n"
@@ -94,11 +81,12 @@ def generer(ctx) -> str:
 
     for code in codes:
         clair, fonce = tables[code]
-        corps = ctx.entete("front/src/styles/socle.css, palette-sombre.css, palettes.css")
+        corps = ctx.entete(source)
         corps += f"\nimport SwiftUI\n\nextension Palette {{\n    static let {code} = Palette(\n"
         corps += f'        code: "{code}",\n'
         corps += ",\n".join(
-            f"        {propriete(j)}: Color(clair: {litteral(resoudre(j, clair))}, sombre: {litteral(resoudre(j, fonce))})"
+            f"        {propriete(j)}: Color(clair: {litteral(couleur(clair['--' + j]))}, "
+            f"sombre: {litteral(couleur(fonce['--' + j]))})"
             for j in portables
         )
         corps += "\n    )\n}\n"

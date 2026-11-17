@@ -3,31 +3,27 @@
 
 import SwiftUI
 
-/// L'espace de la résidence ouverte : la barre du bas suit l'ORDRE RÉGLÉ PAR
-/// L'ADMINISTRATION (`pages_order`) ; au-delà de quatre entrées, « Plus ». Une page
-/// réservée à un rôle n'y paraît qu'à qui l'a (`PagesOuvertes`, profil de GET /auth/me).
+/// L'espace de la résidence ouverte. Ses pages suivent l'ORDRE RÉGLÉ PAR
+/// L'ADMINISTRATION (`pages_order`) ; une page réservée à un rôle n'y paraît qu'à qui l'a
+/// (`PagesOuvertes`, profil de GET /auth/me).
+///
+/// LE point de choix de la présentation (#221) : la barre du bas en classe compacte, la
+/// barre latérale en classe régulière — `Parcours.presentation`, que `RacineView` tient de
+/// la classe de taille horizontale. Une présentation de plus (le carnet de l'iPhone
+/// pliable, #119) s'ajoute ICI, sur le même état.
 struct OngletsView: View {
     let installation: Installation
     @Environment(\.palette) private var palette
     @Environment(Parcours.self) private var parcours
     @Environment(\.scenePhase) private var phase
 
-    /// Les onglets qui tiennent dans la barre ; au-delà, « Plus » (`Aiguillage.idPlus`).
-    static let visibles = 4
-
     var body: some View {
         let pages = parcours.pagesDeLaBarre(installation)
         @Bindable var parcours = parcours
-        TabView(selection: $parcours.onglet) {
-            ForEach(pages.prefix(Self.visibles)) { page in
-                EcranDePage(page: page, installation: installation)
-                    .tabItem { Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone)) }
-                    .tag(page.id)
-            }
-            if pages.count > Self.visibles {
-                PlusView(pages: Array(pages.dropFirst(Self.visibles)), installation: installation)
-                    .tabItem { Label("Plus", systemImage: "ellipsis.circle") }
-                    .tag(Aiguillage.idPlus)
+        Group {
+            switch parcours.presentation {
+            case .barreDuBas: BarreDuBas(pages: pages, installation: installation)
+            case .barreLaterale: BarreLaterale(pages: pages, installation: installation)
             }
         }
         .tint(palette.primary)
@@ -51,90 +47,5 @@ struct OngletsView: View {
         .onChange(of: phase) { _, phase in
             if phase == .background { parcours.audience.viderEnArrierePlan() }
         }
-    }
-}
-
-/// Un onglet de la barre : sa pile de navigation, et l'écran que le registre des
-/// menus inscrit pour sa page (`RegistreDesMenus`) — « Bientôt » sinon.
-private struct EcranDePage: View {
-    let page: PageDeNavigation
-    let installation: Installation
-    @State private var chemin = NavigationPath()
-
-    var body: some View {
-        NavigationStack(path: $chemin) {
-            RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
-        }
-    }
-}
-
-/// Les pages au-delà des quatre premières : leur écran s'ouvre dans la pile de « Plus ».
-private struct PlusView: View {
-    let pages: [PageDeNavigation]
-    let installation: Installation
-    @Environment(\.palette) private var palette
-    @State private var chemin = NavigationPath()
-
-    var body: some View {
-        NavigationStack(path: $chemin) {
-            List {
-                ForEach(pages) { page in
-                    NavigationLink {
-                        RegistreDesMenus.ecran(ContexteDeMenu(page: page, installation: installation, chemin: $chemin))
-                    } label: {
-                        EntreeDePlus(libelle: page.libelle, symbole: Pictogrammes.symbole(page.icone))
-                    }
-                    .accessibilityIdentifier("plus.\(page.id)")
-                    .listRowBackground(palette.surface)
-                }
-                // Le profil n'a pas d'entrée de menu sur le site (pages.ts : href null) :
-                // il vit ici, avec la déconnexion.
-                NavigationLink {
-                    ProfilView().pageVue(CheminDuSite.profil)
-                } label: {
-                    EntreeDePlus(libelle: "Profil", symbole: "person.crop.circle")
-                }
-                .accessibilityIdentifier("plus.profil")
-                .listRowBackground(palette.surface)
-                // Le pied de page du site : ©, mentions légales, confidentialité, logiciel libre.
-                NavigationLink {
-                    AProposView(installation: installation)
-                } label: {
-                    EntreeDePlus(libelle: "À propos", symbole: "info.circle")
-                }
-                .accessibilityIdentifier("plus.a-propos")
-                .listRowBackground(palette.surface)
-            }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle("Plus")
-            .titreDeMenu()
-            .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
-        }
-    }
-}
-
-/// Une entrée de « Plus » : pictogramme et libellé côte à côte. Aux tailles
-/// d'accessibilité, le pictogramme passe au-dessus et laisse toute la largeur au
-/// libellé, qui la prend sans couper un mot (`TexteSansCoupure`, #33).
-private struct EntreeDePlus: View {
-    let libelle: String
-    let symbole: String
-    @Environment(\.dynamicTypeSize) private var taille
-    @Environment(\.palette) private var palette
-
-    var body: some View {
-        Group {
-            if taille.isAccessibilitySize {
-                VStack(alignment: .leading, spacing: 4) {
-                    Image(systemName: symbole).accessibilityHidden(true)
-                    TexteSansCoupure(texte: libelle)
-                }
-                .accessibilityElement(children: .combine)
-            } else {
-                Label(libelle, systemImage: symbole)
-            }
-        }
-        .foregroundStyle(palette.text)
     }
 }

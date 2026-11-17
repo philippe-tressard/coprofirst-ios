@@ -55,8 +55,10 @@ fait après le « oui ».
   la revue — après son « oui » écrit pour cette version. L'app et les contrats d'Apple
   existent depuis la 1.0.
 - Tenir à jour, à chaque version, la politique de confidentialité, les étiquettes
-  « App Privacy » et la note de revue : le pas à pas (Où / Quoi) et les réponses exactes sont dans
-  [`confidentialite.md`](confidentialite.md) §9 et §5.
+  « App Privacy », la **description** et la note de revue : le pas à pas (Où / Quoi) et
+  les textes exacts sont dans [`confidentialite.md`](confidentialite.md) §9 et §5. La
+  description se change là d'abord : `scripts/verifier-confidentialite.py` refuse
+  qu'elle nie une donnée du manifeste (#238).
 - Le jour où la CI devra signer ou envoyer sur TestFlight : une clé d'API App
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
   la CI la lit, personne ne la voit passer.
@@ -72,7 +74,7 @@ Fait pour cette première version, à ne pas refaire — et à reprendre pour la
 
 | Sujet | Ce qui a été fait, et ce qu'il faut savoir |
 |---|---|
-| **Archive** | `bash scripts/generer-projet.sh`, puis `xcodebuild archive -configuration Release -destination 'generic/platform=iOS' -archivePath "~/Library/Developer/Xcode/Archives/<date>/CoproFirst <jj-mm-aa hh.mm>.xcarchive"` depuis un **worktree épinglé sur le commit voulu** : Xcode › Window › Organizer la voit. La signature est automatique ; Philippe clique « Distribute App › App Store Connect › Distribute » (c'est lui qui crée le certificat de distribution). **Le numéro de build doit monter à chaque envoi** (`CURRENT_PROJECT_VERSION`). |
+| **Archive** | `bash scripts/generer-projet.sh`, puis, sous le verrou commun du poste (#255), `python3 ~/.claude/bin/verrou_poste.py prendre --libelle "xcodebuild archive (CoproFirst-iOS)" -- xcodebuild archive -configuration Release -destination 'generic/platform=iOS' -archivePath "~/Library/Developer/Xcode/Archives/<date>/CoproFirst <jj-mm-aa hh.mm>.xcarchive"` depuis un **worktree épinglé sur le commit voulu** : Xcode › Window › Organizer la voit. La signature est automatique ; Philippe clique « Distribute App › App Store Connect › Distribute » (c'est lui qui crée le certificat de distribution). **Le numéro de build doit monter à chaque envoi** (`CURRENT_PROJECT_VERSION`). |
 | **Contrôler l'app construite, pas `project.yml`** | Le 12/11/2026, l'archive Release sortait **iPhone et iPad** (XcodeGen posait `1,2` sur la cible) et une version écrite en dur. `ConformiteAppStoreTests` lit le plist de l'app construite ; relire aussi `codesign -d --entitlements` et la présence des symboles de simulation (aucun). |
 | **Jouer le geste exigé par la revue** | La feuille « Supprimer mon compte » **ne s'ouvrait pas** (attachée à la `Section` d'une `List`) et aucun test ne le voyait. `SuppressionCompteUITests` joue le parcours. Toute règle d'Apple qui demande un geste dans l'app se joue **à l'écran** avant l'envoi. |
 | **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). Pas d'iPhone Duo (#119). |
