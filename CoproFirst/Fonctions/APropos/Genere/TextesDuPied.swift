@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), front/src/lib/plateforme.ts, piedDePage.ts.
+// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), front/src/lib/plateforme.ts, piedDePage.ts.
 // swiftlint:disable line_length
 
 /// Ce que le pied de page du site dit sur chaque page : le logiciel, sa licence, ses liens.

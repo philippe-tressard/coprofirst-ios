@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.106.0 (commit adf93b1264dfbe9382049e853cc4f58f5a29e8dd), api/app/utils/fichiers.py#_EXTENSIONS_IMAGE, api/app/utils/fichiers.py#_PREFIXE_UUID (constantes-clients.json), front/src/lib/fichiers.ts#FAMILLES_AFFICHAGE (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), api/app/utils/fichiers.py#_EXTENSIONS_IMAGE, api/app/utils/fichiers.py#_PREFIXE_UUID (constantes-clients.json), front/src/lib/fichiers.ts#FAMILLES_AFFICHAGE (tables-clients.json).
 // swiftlint:disable line_length
 
 /// Les pièces jointes comme le site les range et les nomme.
