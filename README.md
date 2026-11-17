@@ -145,9 +145,10 @@ pages en intercalaires sur la tranche droite, le fil une journée par double pag
 fiche ouverte en face) ; la page et la fiche ouvertes s'y retrouvent après un arrêt par
 iOS ; plié, la barre du bas. Restent la semaine, ouverte d'un pincement (#277, qui attend
 que le plancher serve la période), et les documents en double page (#278).
-**Notifications** : la cloche de chaque écran. Le push est abandonné (17/11/2026,
-coprofirst#2494) : l'offre « Être averti sur ce téléphone », livrée par #17, ne délivrera
-rien — elle se retire de l'app, et l'appareil cesse de s'enregistrer (#283).
+**Notifications** : la cloche de chaque écran. Le push est une fonction à venir, pour les
+alertes sonores qu'émet le syndic (#283) : l'offre « Être averti sur ce téléphone »
+(#17) existe, mais ne délivre rien tant que le relais de la plateforme n'est pas branché
+(clé `.p8` du compte Apple, coprofirst#2494).
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
