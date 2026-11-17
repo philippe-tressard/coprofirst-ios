@@ -12,7 +12,10 @@ import OpenAPIRuntime
 final class ServiceAPI: ServiceCoproFirst {
     let sessions = SessionsParHote()
     /// LA porte du renouvellement de session, partagée par toutes les requêtes (#81).
-    let renouvellement = Renouvellement()
+    let renouvellement: Renouvellement
+    /// Une session refusée en cours d'usage (#248) : ce qu'elle gardait s'efface, le parcours
+    /// ramène à la connexion.
+    var sessionsRefusees: SessionsRefusees { renouvellement.refusees }
     /// Les lectures gardées pour la consultation hors ligne (#101) — `Session/LectureGardee/`.
     let lectures: LecturesGardees
     /// Le transport d'un test (un serveur simulé) ; `nil` : la session HTTP de chaque hôte.
@@ -21,6 +24,10 @@ final class ServiceAPI: ServiceCoproFirst {
     init(transport: (@Sendable (URL) -> any ClientTransport)? = nil, lectures: LecturesGardees = .appareil) {
         self.transport = transport
         self.lectures = lectures
+        renouvellement = Renouvellement()
+        // Inscrit le premier : le jeton mort et la lecture gardée partent avant le retour à
+        // la connexion, qui proposerait sinon Face ID pour une session déjà refusée.
+        renouvellement.refusees.ecouter { [lectures] hote in Self.oublierCeQuiEstGarde(hote, lectures) }
     }
 
     func decouvrir(_ adresse: URL) async throws -> Installation {

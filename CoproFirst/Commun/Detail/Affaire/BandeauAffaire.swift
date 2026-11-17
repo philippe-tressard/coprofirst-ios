@@ -13,6 +13,10 @@ struct BandeauAffaire: ViewModifier {
     let installation: Installation
     let recharger: () -> Void
     @Environment(Parcours.self) private var parcours
+    /// À côté d'une liste (iPad), la barre du bas est celle de toute la colonne de la page :
+    /// le bandeau se pose au bas de SA colonne (`ColonneDeFiche`).
+    @Environment(\.dansLaColonneDeFiche) private var dansLaColonne
+    @Environment(\.palette) private var palette
     @State private var feuille: GesteAffaire?
     @State private var avis = AvisDuGeste()
     @State private var enCours = false
@@ -20,23 +24,37 @@ struct BandeauAffaire: ViewModifier {
     func body(content: Content) -> some View {
         let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs
         let gestes = GesteAffaire.offerts(pour: affaire, conseil: conseil)
-        content
-            .toolbar {
-                // Réparties sur la largeur, sous le pouce — la même mise en page sur tous les
-                // iPhone, l'iPhone Duo déplié compris : seule la taille de l'écran change.
-                ToolbarItemGroup(placement: .bottomBar) {
-                    ForEach(gestes) { geste in
-                        if geste != gestes.first { Spacer() }
-                        bouton(geste)
-                            .accessibilityIdentifier("affaire.\(geste.rawValue)")
-                    }
+        Group {
+            if dansLaColonne {
+                content.safeAreaInset(edge: .bottom, spacing: 0) {
+                    HStack { boutons(gestes) }
+                        .padding(.horizontal, Mise.marge)
+                        .frame(minHeight: Mise.cible)
+                        .background(.bar)
+                        .overlay(alignment: .top) { Divider() }
+                }
+            } else {
+                content.toolbar {
+                    // Réparties sur la largeur, sous le pouce — la même mise en page sur tous
+                    // les iPhone, l'iPhone Duo déplié compris : seule la taille change.
+                    ToolbarItemGroup(placement: .bottomBar) { boutons(gestes) }
                 }
             }
+        }
             .sheet(item: $feuille, onDismiss: avis.feuilleFermee) { geste in
                 feuille(geste)
                     .presentationDragIndicator(.visible)
             }
             .avisEphemere(avis)
+    }
+
+    @ViewBuilder
+    private func boutons(_ gestes: [GesteAffaire]) -> some View {
+        ForEach(gestes) { geste in
+            if geste != gestes.first { Spacer() }
+            bouton(geste)
+                .accessibilityIdentifier("affaire.\(geste.rawValue)")
+        }
     }
 
     @ViewBuilder
@@ -56,7 +74,12 @@ struct BandeauAffaire: ViewModifier {
 
     @ViewBuilder
     private func bouton(_ geste: GesteAffaire) -> some View {
+        // Dans la colonne de fiche, hors d'une barre du système : l'icône seule (le libellé
+        // reste à VoiceOver et à l'appui long) et une cible de 44 pt, comme en barre.
         let icone = Label(geste.libelle, systemImage: geste.symbole)
+            .labelStyle(.iconOnly)
+            .frame(minWidth: dansLaColonne ? Mise.cible : nil, minHeight: dansLaColonne ? Mise.cible : nil)
+            .contentShape(.rect)
         switch geste {
         case .lien:
             // Un toucher COPIE, comme le site (`BoutonLien`) ; l'appui long offre le partage.

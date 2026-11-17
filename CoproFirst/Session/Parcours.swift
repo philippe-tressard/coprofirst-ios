@@ -84,6 +84,7 @@ final class Parcours {
         reconnue = connues.derniere
         // En consultation hors ligne, rien ne se note : rien ne partirait.
         audience.courante = { [weak self] in self?.consultation == nil ? self?.ouverteAJour : nil }
+        ecouterLesSessionsRefusees()
     }
 
     /// La palette en vigueur : celle de la résidence ouverte ou reconnue, sinon la charte.

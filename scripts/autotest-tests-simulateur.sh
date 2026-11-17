@@ -12,7 +12,8 @@
 #     joue, fichier de test absent du projet Xcode (#170) ;
 #   - de vrais passages, chacun dans son processus (`passage`) : deux en même temps,
 #     verrou orphelin ou sans fiche, arrêt par le pid, CI, lanceur, extinction du
-#     simulateur (#108).
+#     simulateur (#108) ; le verrou commun du poste pris d'abord, ni repris s'il est
+#     tenu, ni en CI, et son absence dite (#255).
 #
 # Un contrôle qui ne refuse rien ne prouve rien : chaque cas a été vu rouge en
 # retirant la ligne qu'il éprouve.
@@ -151,7 +152,8 @@ FAUX
     shift
     exec env FAUX_DOSSIER="$d" XCODEBUILD="$d/faux" XCRUN="$d/faux" MESURER=0 \
       DESTINATION='platform=iOS Simulator,id=X' RESULTATS="$d/r-$nom" GITHUB_STEP_SUMMARY="$d/resume-$nom.md" \
-      PROJET="$d/projet" SOURCES_TESTS="$d/sources" GITHUB_ACTIONS= VERROU="$d/verrou" VERROU_PAS=0.1 VERROU_QUI="$nom" "$@" \
+      PROJET="$d/projet" SOURCES_TESTS="$d/sources" GITHUB_ACTIONS= VERROU="$d/verrou" VERROU_PAS=0.1 VERROU_QUI="$nom" \
+      VERROU_POSTE="$d/faux-verrou-poste.py" VERROU_POSTE_TENU=1 "$@" \
       "$BASH" scripts/tests-simulateur.sh > "$d/$nom.txt" 2>&1
   }
   # Attendre qu'une commande réussisse, 10 s au plus.
@@ -249,6 +251,39 @@ FAUX
   attendu "sortie sous le verrou d'un ancêtre" "$?" 0
   attendu "fiche du verrou d'un ancêtre après le passage" "$(cat "$d/verrou/pid" 2>/dev/null)" "$$"
   attendu "extinctions d'un simulateur déjà démarré" "$(grep -c '^simctl shutdown' "$d/appels")" 0
+
+  # Le verrou COMMUN du poste (#255) : pris d'abord, avec un libellé, et il DEVIENT le
+  # passage ; déjà tenu, il ne se reprend pas ; en CI, pas de verrou ; absent, le passage
+  # joue et le dit. Le faux verrou s'inscrit aux appels, puis devient la commande.
+  cat > "$d/faux-verrou-poste.py" <<'FAUX'
+import os, sys
+with open(os.path.join(os.environ["FAUX_DOSSIER"], "appels"), "a", encoding="utf-8") as f:
+    f.write("verrou-poste " + " ".join(sys.argv[1:sys.argv.index("--")]) + "\n")
+commande = sys.argv[sys.argv.index("--") + 1:]
+os.execvp(commande[0], commande)
+FAUX
+  rm -f "$d/appels"
+  passage I VERROU_POSTE_TENU= & a=$!
+  fin "$a"
+  attendu "sortie sous le verrou commun" "$?" 0
+  attendu "verrou commun pris" "$(grep -c '^verrou-poste prendre --libelle xcodebuild test (CoproFirst-iOS)' "$d/appels")" 1
+  attendu "le verrou commun avant le passage" "$(head -1 "$d/appels" | cut -d' ' -f1)" "verrou-poste"
+  attendu "passage joué sous le verrou commun" "$(joues)" 1
+  rm -f "$d/appels"
+  passage J & a=$!
+  fin "$a"
+  attendu "verrou commun repris alors qu'il est tenu" "$(grep -c '^verrou-poste' "$d/appels")" 0
+  rm -f "$d/appels"
+  passage K VERROU_POSTE_TENU= GITHUB_ACTIONS=true & a=$!
+  fin "$a"
+  attendu "verrou commun pris en CI" "$(grep -c '^verrou-poste' "$d/appels")" 0
+  rm -f "$d/appels"
+  passage L VERROU_POSTE_TENU= VERROU_POSTE="$d/absent.py" & a=$!
+  fin "$a"
+  attendu "sortie sans verrou commun" "$?" 0
+  attendu "passage joué sans verrou commun" "$(joues)" 1
+  grep -q 'sans verrou commun du poste' "$d/L.txt" \
+    || { echo "❌ l'absence du verrou commun ne se dit pas"; rate=$((rate + 1)); }
 
   # Un verrou qui ne peut pas se poser (son répertoire n'existe pas) : INCONNU, sans attendre.
   rm -rf "$d/verrou" "$d/appels"

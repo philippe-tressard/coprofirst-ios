@@ -87,10 +87,10 @@ relais de l'éditeur, puis par Apple (§4).
 | la dernière lecture de la résidence, **si** Face ID est activé (#101) : fil, affaires (liste et détail, messages, Historique), profil, annuaire, documents et photos déjà ouverts — rien de l'administration ni de l'Espace CS, aucun jeton ni cookie | `Application Support`, un dossier par résidence, chiffré (`.complete`), **exclu des sauvegardes** iCloud et Finder ; effacée au-delà de 7 jours sans lecture fraîche | `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `exclue.isExcludedFromBackup = true` ; `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `static let joursMax = 7` ; `CoproFirst/Session/LectureGardee/GarderLesLectures.swift` › `static let operations: Set<String> = [` |
 
 La déconnexion efface la session — le jeton, la dernière lecture gardée et les copies des
-fichiers ouverts, à une seule porte : `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Trousseau.supprimer(pour: installation.hote)` ;
-`CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `lectures.effacer(installation.hote)` ;
+fichiers ouverts, à une seule porte : `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Trousseau.supprimer(pour: hote)` ;
+`CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `lectures.effacer(hote)` ;
 `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Fichiers.effacerLesCopies()`.
-Une session que le serveur refuse efface de même ; l'une et l'autre retirent aussi du profil
+Une session que le serveur refuse — à la reprise comme en cours d'usage (#248) — efface de même ; l'une et l'autre retirent aussi du profil
 gardé l'identifiant du compte (`CoproFirst/Session/InstallationsConnues.swift` › `profil.idCompte = nil`),
 que le prochain `GET /auth/me` redit — il ne quitte pas l'appareil. La lecture gardée ne quitte jamais
 l'appareil : elle ne change donc rien au §5 (rien de plus n'est « collecté »), mais elle se

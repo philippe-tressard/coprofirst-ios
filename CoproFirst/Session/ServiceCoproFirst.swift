@@ -43,4 +43,7 @@ protocol ServiceCoproFirst: Sendable {
     /// jeton), puis TOUJOURS l'effacement local — jeton du Trousseau, cookies, session
     /// HTTP de cet hôte. Rend `false` si le serveur n'a pas pu être joint.
     func deconnecter(_ installation: Installation) async -> Bool
+    /// Le signal d'une session que le serveur refuse en cours d'usage : le parcours
+    /// l'écoute et ramène à la connexion.
+    var sessionsRefusees: SessionsRefusees { get }
 }

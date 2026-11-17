@@ -16,6 +16,9 @@ struct AffairesView: View {
     @State private var etat = EtatAffaires()
     @State private var onglet = "liste"
     @State private var nouvelle = false
+    /// L'affaire ouverte depuis la liste ou les archives : poussée sur iPhone, à côté de la
+    /// liste sur iPad (`ListeEtFiche`, #222). Le Kanban, qui veut toute la largeur, pousse.
+    @State private var choisie: AffaireAOuvrir?
 
     private var droits: DroitsAffaires { DroitsAffaires(profil: parcours.ouverteAJour?.profil) }
     /// Les onglets que la réserve de chacun ouvre à ce compte (`ongletsOuverts` du site).
@@ -34,7 +37,15 @@ struct AffairesView: View {
         // couvrait le grand titre des onglets qui défilent (Liste, Archives).
         VStack(spacing: 0) {
             enTete
-            contenu(service).frame(maxHeight: .infinity)
+            if onglet == "kanban" {
+                contenu(service).frame(maxHeight: .infinity)
+            } else {
+                ListeEtFiche(selection: $choisie) {
+                    contenu(service).frame(maxHeight: .infinity)
+                } fiche: { cible in
+                    DetailAffaireView(id: cible.id, installation: installation)
+                }
+            }
         }
         .background(palette.bg)
         .navigationTitle(titre)
@@ -88,12 +99,16 @@ struct AffairesView: View {
         }
     }
 
-    private func ouvrir(_ affaire: Affaire) { chemin.append(AffaireAOuvrir(id: affaire.id)) }
+    private func ouvrir(_ affaire: Affaire) { ouvrir(AffaireAOuvrir(id: affaire.id)) }
+
+    private func ouvrir(_ cible: AffaireAOuvrir) {
+        if onglet == "kanban" { chemin.append(cible) } else { choisie = cible }
+    }
 
     private func ouvrirDemandee() {
         guard let id = parcours.porte.affaireDansLOnglet else { return }
         parcours.porte.affaireDansLOnglet = nil
-        chemin.append(AffaireAOuvrir(id: id))
+        ouvrir(AffaireAOuvrir(id: id))
     }
 
     /// Le choix de l'onglet, sur la matière de la barre : le contenu défile dessous.
@@ -131,7 +146,7 @@ struct AffairesView: View {
     }
 }
 
-/// Une affaire à ouvrir dans la pile de l'onglet : son détail (`DetailAffaireView`).
+/// Une affaire à ouvrir : son détail (`DetailAffaireView`), poussé ou à côté de la liste.
 struct AffaireAOuvrir: Hashable {
     let id: Int
 }

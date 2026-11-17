@@ -3,23 +3,19 @@
 
 import SwiftUI
 
-/// Une carte du fil qui s'ouvre : poussée (affaire, actualité, sondage, document)
-/// ou en feuille (résumé). Le toucher se voit à l'instant.
+/// Une carte du fil qui s'ouvre : son écran (affaire, actualité, sondage, document),
+/// poussé ou à côté du fil (`ListeEtFiche`, #222), ou sa feuille (résumé) — c'est
+/// l'écran du fil qui en décide (`ouvrir`). Le toucher se voit à l'instant.
 struct CarteOuvrable: View {
     let element: ElementDuFil
     let installation: Installation
     let zoom: Namespace.ID
-    let ouvrirResume: () -> Void
+    let ouvrir: () -> Void
 
     var body: some View {
-        Group {
-            if case .resume = element.cible {
-                Button(action: ouvrirResume) { CarteDuFil(element: element, installation: installation) }
-            } else {
-                NavigationLink(value: element) { CarteDuFil(element: element, installation: installation) }
-            }
-        }
+        Button(action: ouvrir) { CarteDuFil(element: element, installation: installation) }
         .buttonStyle(StyleCarte())
+        .rangeeChoisie(element)
         .sourceZoom(id: element.id, dans: zoom)
         .accessibilityHint(element.cible.libelle)
         .accessibilityIdentifier("fil.\(element.id)")
