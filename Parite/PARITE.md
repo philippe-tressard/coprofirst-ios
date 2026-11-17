@@ -93,7 +93,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `communaute` | `sondages` | fait | #14, #38 | Liste ; fiche comme celle du site (`SondageView`) : réponse à préciser, commentaire, charte, résultats et réponses libres, fil des commentaires (commenter, retirer, signaler) ; créer, modifier, stopper : site (conseil syndical) |
+| `communaute` | `sondages` | fait | #14, #38 | Liste ; fiche comme celle du site (`SondageView`) : réponse à préciser, commentaire, charte, résultats et réponses libres (visibles avant la clôture : provisoires, au-dessus du vote), fil des commentaires (commenter, retirer, signaler) ; créer, modifier, stopper : site (conseil syndical) |
 | `communaute` | `idees` | fait | #14 | Liste, filtre, vote, réponses, signalement, proposer ; corriger, statut, supprimer : site |
 | `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |

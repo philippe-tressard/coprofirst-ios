@@ -48,6 +48,28 @@ import Testing
     #expect(fiches.first { $0.id == 9 }?.peutVoter == false)
 }
 
+/// Les résultats avant le vote (le site, 16/11/2026) : visibles avant la clôture, ils
+/// passent au-dessus du formulaire et se disent provisoires ; masqués, rien ne paraît ;
+/// clos, les barres sans la mention.
+@Test func lesResultatsVisiblesPassentAvantLeVoteEtSeDisentProvisoires() throws {
+    let fiches = try FixturesSondage.lues()
+    let ouverte = try #require(fiches.first { $0.id == 12 })
+    #expect(ouverte.peutVoter && ouverte.resultatsAvantVote && ouverte.resultatsProvisoires)
+    #expect(TextesSondage.resultatsProvisoires == "Résultats provisoires : le sondage est encore ouvert.")
+
+    let masquee = try #require(fiches.first { $0.id == 11 })
+    #expect(masquee.peutVoter && !masquee.resultatsAvantVote, "masqués : aucun décompte avant la clôture")
+    #expect(!masquee.resultatsProvisoires)
+
+    let close = try #require(fiches.first { $0.id == 9 })
+    #expect(!close.resultatsAvantVote && close.resultatsVisibles)
+    #expect(!close.resultatsProvisoires, "clos : les barres, sans la mention")
+
+    var votee = ouverte
+    votee.monVote = 1
+    #expect(!votee.resultatsAvantVote && votee.resultatsProvisoires, "voté, encore ouvert : provisoires")
+}
+
 @Test func voterCommenterEtRetirerChangentLaFicheSimulee() async throws {
     let service = ServiceSimule(delai: .zero)
     let residence = ServiceSimule.residence
