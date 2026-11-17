@@ -41,9 +41,7 @@ final class CarnetUITests: XCTestCase {
 
         app.toucher(intercalaire("faq", dans: app))
         XCTAssertTrue(app.navigationBars["FAQ"].apparait(), "une page d'au-delà de la barre du bas, d'un toucher")
-        let retenu = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", "carnet.faq")).firstMatch
-        XCTAssertTrue(retenu.apparait(), "l'intercalaire ouvert est retenu")
+        XCTAssertTrue(app.elementRetenu("carnet.faq").apparait(), "l'intercalaire ouvert est retenu")
 
         app.toucher(intercalaire("profil", dans: app))
         XCTAssertTrue(app.navigationBars["Profil"].apparait())

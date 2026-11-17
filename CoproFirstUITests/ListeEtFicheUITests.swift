@@ -36,11 +36,6 @@ final class ListeEtFicheUITests: XCTestCase {
         return numero.apparait() && app.elementAcces("affaire.lien").apparait()
     }
 
-    private func choisie(_ identifiant: String, dans app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", identifiant)).firstMatch
-    }
-
     @MainActor
     func testUneAffaireSOuvreACoteDeLaListe() throws {
         let app = lancer("affaires")
@@ -56,13 +51,13 @@ final class ListeEtFicheUITests: XCTestCase {
         let liste = app.elementAcces("affaires.carte.A-0040").frame
         XCTAssertGreaterThan(lien.minX, liste.maxX, "le bandeau sous la fiche, à droite de la liste")
         XCTAssertGreaterThan(lien.minY, liste.minY, "au bas de la colonne")
-        XCTAssertTrue(choisie("affaires.carte.A-0041", dans: app).apparait(), "sa carte est soulignée")
+        XCTAssertTrue(app.elementRetenu("affaires.carte.A-0041").apparait(), "sa carte est soulignée")
         capture("affaires-liste-et-fiche", app)
 
         // Une autre affaire dont l'API simulée sert le détail (FixturesDetailAffaire).
         app.toucher(app.elementAcces("affaires.carte.A-0038"))
         XCTAssertTrue(ficheAffaire("A-0038", dans: app), "une autre carte remplace la fiche")
-        XCTAssertTrue(choisie("affaires.carte.A-0038", dans: app).apparait())
+        XCTAssertTrue(app.elementRetenu("affaires.carte.A-0038").apparait())
     }
 
     /// La page se reconstruit quand on la quitte (barre latérale), comme au pli d'un iPhone
@@ -78,7 +73,7 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(app.navigationBars["FAQ"].apparait())
         app.toucher(app.elementAcces("barre.mes-demandes"))
         XCTAssertTrue(ficheAffaire("A-0041", dans: app), "la fiche ouverte au départ, sans clignement vide")
-        XCTAssertTrue(choisie("affaires.carte.A-0041", dans: app).apparait(), "sa carte toujours soulignée")
+        XCTAssertTrue(app.elementRetenu("affaires.carte.A-0041").apparait(), "sa carte toujours soulignée")
     }
 
     @MainActor
@@ -89,7 +84,7 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(ficheAffaire("A-0041", dans: app))
         XCTAssertTrue(affaire.exists, "le fil reste à côté")
         XCTAssertTrue(app.navigationBars["Fil d'activité"].exists, "le fil garde son titre")
-        XCTAssertTrue(choisie("fil.ticket_ouvert:41", dans: app).apparait())
+        XCTAssertTrue(app.elementRetenu("fil.ticket_ouvert:41").apparait())
         capture("fil-liste-et-fiche", app)
 
         app.toucher(app.buttons["fil.sondage_ouvert:3"])
@@ -109,7 +104,7 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(appeler.apparait(), "l'annuaire du syndic dans la colonne")
         XCTAssertTrue(app.staticTexts["AA0-000-000"].exists, "la Fiche reste à côté")
         XCTAssertGreaterThan(appeler.frame.minX, syndic.frame.maxX, "à droite de la Fiche")
-        XCTAssertTrue(choisie("residence.syndic", dans: app).apparait(), "le syndic est souligné")
+        XCTAssertTrue(app.elementRetenu("residence.syndic").apparait(), "le syndic est souligné")
         XCTAssertEqual(
             app.buttons.matching(identifier: "pastille.residence").count, 1,
             "la pastille de la page, pas une seconde pour la fiche")
@@ -132,7 +127,7 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(contact.apparait(), "l'annonce dans la colonne")
         XCTAssertTrue(annonce.exists, "la liste reste à côté")
         XCTAssertGreaterThan(contact.frame.minX, annonce.frame.maxX, "à droite de la liste")
-        XCTAssertTrue(choisie("annonce.21", dans: app).apparait(), "sa rangée est soulignée")
+        XCTAssertTrue(app.elementRetenu("annonce.21").apparait(), "sa rangée est soulignée")
         capture("annonces-liste-et-fiche", app)
     }
 }

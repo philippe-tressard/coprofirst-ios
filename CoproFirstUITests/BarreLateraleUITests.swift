@@ -63,8 +63,6 @@ final class BarreLateraleUITests: XCTestCase {
         XCTAssertTrue(app.buttons["cloche"].apparait(), "la cloche aussi")
 
         app.toucher(logement, jusqua: app.navigationBars["Mes lots & accès"])
-        let retenue = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", "barre.mon-lot")).firstMatch
-        XCTAssertTrue(retenue.apparait(), "l'entrée Accès est retenue")
+        XCTAssertTrue(app.elementRetenu("barre.mon-lot").apparait(), "l'entrée Accès est retenue")
     }
 }
