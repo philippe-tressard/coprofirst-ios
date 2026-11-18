@@ -149,6 +149,7 @@ private struct CarteEcran: View {
                     .accessibilityIdentifier("ecran.\(ecran.id).retirer")
             }
         }
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("ecran.\(ecran.id)")
     }
 }
