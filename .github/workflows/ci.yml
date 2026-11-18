@@ -156,13 +156,16 @@ jobs:
       # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
       # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
       # ListeEtFiche) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
+      # Le 18/11/2026 (#288), le lot 2 restait le plus lourd : 32 à 36,5 min de tests sur trois
+      # runs (e7875db, 148dbac, #289), contre 26 au plus pour les autres, et 57 min d'étape sur
+      # #289. CartesDuFilUITests (5,6 à 8,4 min) est passé au lot 1, SondageUITests (5,1 à
+      # 8,1) au dernier : ~24 min au pire pour le lot 2, ~31 pour le lot 1, ~32 pour le 5.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
-        CommunauteUITests PrestatairesAffaireUITests ConfirmationHoteUITests NatureUITests
-        ResidenceUITests RetourUITests
+        CommunauteUITests PrestatairesAffaireUITests CartesDuFilUITests ConfirmationHoteUITests
+        NatureUITests ResidenceUITests RetourUITests
       LOT_2: >-
-        SaisieAffaireUITests CartesDuFilUITests SondageUITests ParcoursUITests
-        ApercusSaisieUITests LiensUITests
+        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests LiensUITests
       LOT_3: >-
         SuppressionCompteUITests AccesUITests AffairesUITests GrandTexteUITests EspaceCSUITests
         LogoResidenceUITests
