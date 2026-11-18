@@ -24,7 +24,8 @@ final class InstallationSuspendueUITests: XCTestCase {
         let app = lancer("-ecran", "fil", "-installation-suspendue")
         let bandeau = app.elementAcces(Self.bandeau)
         XCTAssertTrue(bandeau.apparait(), "le bandeau en tête du Fil")
-        XCTAssertTrue(bandeau.label.hasPrefix("Installation suspendue — lecture seule."), bandeau.label)
+        // Le tiret du site : une espace sécable avant, INSÉCABLE après (`Separateur.tiret`).
+        XCTAssertTrue(bandeau.label.hasPrefix("Installation suspendue —\u{00A0}lecture seule."), bandeau.label)
         XCTAssertTrue(bandeau.label.contains("Tout reste consultable"), "le texte publié, entier")
         LancementCaptures.capturer("installation-suspendue-fil")
 
