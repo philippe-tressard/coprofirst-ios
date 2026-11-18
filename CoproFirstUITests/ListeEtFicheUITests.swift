@@ -174,6 +174,16 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaires.carte.A-0040").exists, "la liste est sous la fiche")
         capture("affaires-portrait-fiche", app)
 
+        // Le clavier d'une feuille ne fait pas passer le portrait pour un paysage : la fiche
+        // poussée reste sous la saisie, et après.
+        app.toucher(app.elementAcces("affaire.repondre"))
+        let texte = app.elementAcces("repondre.texte")
+        XCTAssertTrue(texte.apparait())
+        texte.typeText("Merci.")
+        app.toucher(app.elementAcces("repondre.envoyer"))
+        XCTAssertTrue(app.elementAcces("affaire.repondre").apparait(), "la feuille se referme sur la fiche")
+        XCTAssertTrue(app.navigationBars["A-0041"].exists, "la fiche est restée poussée")
+
         app.toucher(app.navigationBars["A-0041"].buttons.firstMatch)
         XCTAssertTrue(app.elementAcces("affaires.carte.A-0040").apparait(), "le retour rend la liste")
     }

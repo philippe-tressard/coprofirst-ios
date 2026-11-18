@@ -44,6 +44,16 @@ struct ListeEtFicheTests {
         #expect(Disposition.pour(ClasseDeLaPage.pour(CGSize(width: 820, height: 1180)), colonneFournie: true) == .pile)
     }
 
+    /// Le clavier d'une feuille retranche sa hauteur des marges sûres : la fenêtre se mesure
+    /// marges rendues, sinon l'iPad en portrait passait pour un paysage et la fiche poussée
+    /// disparaissait à la saisie.
+    @Test func leClavierNeFaitPasBasculerLaPage() {
+        let avecClavier = ClasseDeLaPage.fenetre(
+            CGSize(width: 1032, height: 900), marges: EdgeInsets(top: 24, leading: 0, bottom: 452, trailing: 0))
+        #expect(avecClavier == CGSize(width: 1032, height: 1376))
+        #expect(ClasseDeLaPage.pour(avecClavier) == .compact, "toujours le portrait")
+    }
+
     /// Le titre d'un menu se règle par UN modificateur, la colonne ouverte ou non (#279) :
     /// un `if` donnait deux identités à la page, qui bouclait en s'ouvrant.
     @MainActor @Test func leTitreDeMenuSuitLaColonneEtLaTaille() {

@@ -46,7 +46,7 @@ struct BarreLaterale: View {
                 .environment(\.horizontalSizeClass, ClasseDeLaPage.pour(fenetre))
         }
         .navigationSplitViewStyle(.balanced)
-        .onGeometryChange(for: CGSize.self, of: \.size) { fenetre = $0 }
+        .onGeometryChange(for: CGSize.self, of: ClasseDeLaPage.fenetre) { fenetre = $0 }
     }
 
     /// La sélection de la liste, c'est l'onglet du parcours : la porte d'un lien et le
@@ -70,5 +70,18 @@ struct BarreLaterale: View {
 enum ClasseDeLaPage {
     static func pour(_ fenetre: CGSize) -> UserInterfaceSizeClass {
         fenetre.height > fenetre.width ? .compact : .regular
+    }
+
+    /// La fenêtre ENTIÈRE, marges sûres rendues : le clavier d'une feuille en est une, et
+    /// sa hauteur retranchée faisait passer un iPad en portrait pour un paysage — la page
+    /// repassait côte à côte, la fiche poussée disparaissait sous la saisie.
+    static func fenetre(_ cadre: GeometryProxy) -> CGSize {
+        fenetre(cadre.size, marges: cadre.safeAreaInsets)
+    }
+
+    static func fenetre(_ taille: CGSize, marges: EdgeInsets) -> CGSize {
+        CGSize(
+            width: taille.width + marges.leading + marges.trailing,
+            height: taille.height + marges.top + marges.bottom)
     }
 }
