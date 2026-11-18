@@ -60,6 +60,8 @@ struct PersonnesMasqueesView: View {
         }
         .padding(.vertical, 4)
         .listRowBackground(palette.surface)
+        // Un conteneur : l'identifiant de la rangée ne recouvre pas celui de son bouton.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("masque.\(masque.auteurId)")
     }
 

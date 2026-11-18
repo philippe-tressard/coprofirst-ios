@@ -12,7 +12,7 @@ extension AvisDuGeste {
     /// disponible » ; sinon l'envoi, la phrase de réussite, puis `apres` (relire ce qui
     /// change) ; un échec dit la phrase du serveur.
     @discardableResult
-    func agir<Service>(
+    func agir<Service: Sendable>(
         avec service: Service?, reussite: String, apres: () -> Void = {},
         _ envoi: (Service) async throws -> Void
     ) async -> Bool {

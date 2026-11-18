@@ -46,8 +46,12 @@ final class ModerationUITests: XCTestCase {
         XCTAssertTrue(plus.apparait())
         app.toucher(plus)
         app.toucher(app.elementAcces("plus.profil"))
+        // Sous « Ce que j'affiche », plus bas que l'écran : une liste ne crée ses rangées
+        // qu'en approchant, on la fait défiler jusqu'à elle.
+        XCTAssertTrue(app.navigationBars["Profil"].apparait())
         let entree = app.elementAcces("profil.masquees")
-        XCTAssertTrue(entree.apparait(), "l'entrée, le compte lu")
+        for _ in 0..<8 where entree.sonde() == false { app.swipeUp() }
+        XCTAssertTrue(entree.exists, "l'entrée, le compte lu")
         app.toucher(entree)
 
         let ligne = app.elementAcces("masque.31")
