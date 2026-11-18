@@ -11,8 +11,10 @@ struct JetonRefuse: Error {}
 
 /// La cloche lue par la montre : `GET /notifications`, par le client GÉNÉRÉ, avec le jeton de
 /// montre en porteur — la seule route que ce jeton ouvre (coprofirst#2771 : `lecteur_de_la_cloche`
-/// lit `Authorization: Bearer`). Une session éphémère, sans cookie : un cookie présent
-/// l'emporterait côté serveur. Le jeton ne part que vers l'adresse de la liaison.
+/// lit `Authorization: Bearer` ; le contrat 2.6.0 et suivants la protègent par le schéma
+/// `JetonAppareil`, que le client généré ne pose pas lui-même). Une session éphémère, sans
+/// cookie : un cookie présent l'emporterait côté serveur. Le jeton ne part que vers l'adresse
+/// de la liaison.
 enum ClocheParJeton {
     static func alertes(_ liaison: LiaisonGardee, transport: (any ClientTransport)? = nil) async throws
         -> [NotificationRecue]
