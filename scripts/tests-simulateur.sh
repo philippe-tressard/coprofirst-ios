@@ -43,6 +43,7 @@
 #
 # Appareil : un iPhone de série par défaut ; `APPAREIL=ipad` pour un iPad Pro 13 pouces
 # (#220) ; `APPAREIL=tv` pour une Apple TV 4K et le schéma CoproFirstTV (#218) ;
+# `APPAREIL=montre` pour une Apple Watch Series et le schéma CoproFirstWatch (#226) ;
 # `DESTINATION` fixée l'emporte sur l'appareil.
 #
 # Arguments : passés au premier `xcodebuild test`, pour un passage partiel au poste
@@ -59,8 +60,13 @@ XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
 PROJET=${PROJET:-CoproFirst.xcodeproj}
-# Le schéma : celui de l'app ; avec APPAREIL=tv, celui de l'écran de hall (#218).
-if [ "${APPAREIL:-iphone}" = tv ]; then SCHEMA=${SCHEMA:-CoproFirstTV}; else SCHEMA=${SCHEMA:-CoproFirst}; fi
+# Le schéma : celui de l'app ; avec APPAREIL=tv, celui de l'écran de hall (#218) ; avec
+# APPAREIL=montre, celui de l'Apple Watch (#226).
+case "${APPAREIL:-iphone}" in
+  tv) SCHEMA=${SCHEMA:-CoproFirstTV} ;;
+  montre) SCHEMA=${SCHEMA:-CoproFirstWatch} ;;
+  *) SCHEMA=${SCHEMA:-CoproFirst} ;;
+esac
 SOURCES_TESTS=${SOURCES_TESTS:-CoproFirstTests CoproFirstUITests}
 A_ETEINDRE=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
@@ -196,12 +202,14 @@ passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
-    # APPAREIL=ipad : un iPad Pro 13 pouces de série (#220) ; tv : une Apple TV (#218).
+    # APPAREIL=ipad : un iPad Pro 13 pouces de série (#220) ; tv : une Apple TV (#218) ;
+    # montre : une Apple Watch Series (#226).
     case "${APPAREIL:-iphone}" in
       iphone) DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1 ;;
       ipad) DESTINATION=$(bash scripts/destination-simulateur.sh --ipad) || return 1 ;;
       tv) DESTINATION=$(bash scripts/destination-simulateur.sh --tv) || return 1 ;;
-      *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone, ipad ou tv)" >&2; return 2 ;;
+      montre) DESTINATION=$(bash scripts/destination-simulateur.sh --montre) || return 1 ;;
+      *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone, ipad, tv ou montre)" >&2; return 2 ;;
     esac
   fi
   if ! motif=$(hors_projet); then

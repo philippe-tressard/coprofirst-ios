@@ -24,18 +24,6 @@ struct RVBA: Sendable {
     }
 }
 
-extension Color {
-    /// Une couleur qui suit le thème du système : la valeur claire de `socle.css`,
-    /// la sombre de `palette-sombre.css` (Palette+*.swift, générés).
-    init(clair: RVBA, sombre: RVBA) {
-        self.init(
-            uiColor: UIColor { traits in
-                traits.userInterfaceStyle == .dark ? sombre.uiColor : clair.uiColor
-            }
-        )
-    }
-}
-
 /// Typographie et mesures de l'app — écrites une fois.
 ///
 /// Chacune est PROPRE À iOS, déclarée avec sa raison et sa date dans

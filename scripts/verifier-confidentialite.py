@@ -49,7 +49,8 @@ RESOLU = "Paquets/ClientAPI/Package.resolved"
 CONSTRUIT = "Paquets/ClientAPI/.build"
 # L'écran de hall (CoproFirstTV/, #218) est jugé avec l'app : il partage son identifiant
 # et sa fiche. Son propre manifeste viendra avec son premier envoi (lot 5 de #218).
-CODE = ("CoproFirst/", "CoproFirstTV/", "Paquets/ClientAPI/Sources/")
+# L'Apple Watch (CoproFirstWatch/, #226) aussi : même fiche ; son manifeste, avec la liaison.
+CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
 TABLES = ("donnees", "envois", "portes", "droits", "autorisations", "modules", "paquets")

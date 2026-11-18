@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Choisir le simulateur des tests : un iPhone ordinaire du runtime iOS standard le plus récent
-— ou un iPad (`--ipad`), ou une Apple TV pour l'écran de hall (`--tv`, #218).
+— ou un iPad (`--ipad`), une Apple TV pour l'écran de hall (`--tv`, #218), ou une Apple Watch
+(`--montre`, #226).
 
 Appelé par `scripts/destination-simulateur.sh`, qui lui passe sur l'entrée standard
 la sortie de `xcrun simctl list devices available -j`. Imprime l'udid retenu (sortie
@@ -29,6 +30,9 @@ Avec `--tv` (#218), la même règle sur tvOS : un runtime tvOS standard, une « 
 4K (Nᵉ generation) » à son nom d'usine, en 4K — pas sa variante « (at 1080p) » —, la
 génération la plus récente.
 
+Avec `--montre` (#226), la même règle sur watchOS : une « Apple Watch Series N (Mmm) » à son
+nom d'usine — ni SE, ni Ultra —, la génération la plus récente, le plus grand boîtier d'abord.
+
 Les noms ne s'écrivent pas en dur : ils changent d'une image de runner à l'autre.
 `--autotest` rejoue la règle sur la liste du poste du 11/11/2026 (deux runtimes
 27.2, dont celui du seul iPhone Duo) : un contrôle qui ne refuse rien ne prouve rien.
@@ -43,11 +47,13 @@ import sys
 IPHONE_DE_SERIE = re.compile(r"^iPhone (?P<generation>\d+)(?P<pro> Pro)?$")
 IPAD_DE_SERIE = re.compile(r"^iPad Pro 13-inch \(M(?P<generation>\d+)\)$")
 APPLE_TV_DE_SERIE = re.compile(r"^Apple TV 4K \((?P<generation>\d+)(?P<suffixe>st|nd|rd|th) generation\)$")
+APPLE_WATCH_DE_SERIE = re.compile(r"^Apple Watch Series (?P<generation>\d+) \((?P<boitier>\d+)mm\)$")
 TYPE = "com.apple.CoreSimulator.SimDeviceType."
 #: Par famille : sa plateforme, et ce que le message d'INCONNU dit chercher.
 FAMILLES = {"iphone": ("iOS", "iPhone de série (« iPhone N » ou « iPhone N Pro »)"),
             "ipad": ("iOS", "iPad Pro 13 pouces de série (« iPad Pro 13-inch (MN) »)"),
-            "tv": ("tvOS", "Apple TV 4K de série (« Apple TV 4K (Nᵉ generation) »)")}
+            "tv": ("tvOS", "Apple TV 4K de série (« Apple TV 4K (Nᵉ generation) »)"),
+            "montre": ("watchOS", "Apple Watch de série (« Apple Watch Series N (Mmm) »)")}
 
 
 def runtime_standard(plateforme: str) -> re.Pattern[str]:
@@ -74,6 +80,11 @@ def de_serie(appareil: dict, famille: str = "iphone") -> tuple[int, int] | None:
         if not trouve or type_ != TYPE + attendu:
             return None
         return int(trouve["generation"]), 0
+    if famille == "montre":
+        trouve = APPLE_WATCH_DE_SERIE.match(nom)
+        if not trouve or type_ != TYPE + f"Apple-Watch-Series-{trouve['generation']}-{trouve['boitier']}mm":
+            return None
+        return int(trouve["generation"]), int(trouve["boitier"])
     trouve = IPHONE_DE_SERIE.match(nom)
     if not trouve or type_ != TYPE + nom.replace(" ", "-"):
         return None
@@ -117,6 +128,15 @@ def _appareil(nom: str, udid: str, type_: str | None = None, disponible: bool = 
 
 _IOS = "com.apple.CoreSimulator.SimRuntime.iOS-"
 _TVOS = "com.apple.CoreSimulator.SimRuntime.tvOS-"
+_WATCHOS = "com.apple.CoreSimulator.SimRuntime.watchOS-"
+#: Le poste, le 17/11/2026 (#226) : les cinq montres du runtime watchOS 27.2.
+MONTRES_POSTE = {"devices": {_WATCHOS + "27-2": [
+    _appareil("Apple Watch Series 12 (46mm)", "FEBA1967", "Apple-Watch-Series-12-46mm"),
+    _appareil("Apple Watch Series 12 (42mm)", "323AB555", "Apple-Watch-Series-12-42mm"),
+    _appareil("Apple Watch Ultra 4 (49mm)", "6411EF64", "Apple-Watch-Ultra-4-49mm"),
+    _appareil("Apple Watch SE 3 (44mm)", "25E7FDF4", "Apple-Watch-SE-3-44mm"),
+    _appareil("Apple Watch SE 3 (40mm)", "BB8C13A7", "Apple-Watch-SE-3-40mm"),
+]}}
 #: Le poste, le 11/11/2026 : l'ordre et les noms de `simctl list devices available -j`.
 POSTE = {"devices": {
     _IOS + "27-2": [
@@ -198,6 +218,18 @@ def autotest() -> int:
          "tv"),
     ]
     rate = 0
+    montres = MONTRES_POSTE["devices"][_WATCHOS + "27-2"]
+    cas += [
+        # --montre (#226) : la liste du poste du 17/11/2026, ses cinq montres.
+        ("montre : la Series la plus récente, le grand boîtier", MONTRES_POSTE, 0, "FEBA1967", "montre"),
+        ("montre : ni SE ni Ultra : INCONNU", {"devices": {_WATCHOS + "27-2": montres[2:]}}, 2, "", "montre"),
+        ("montre : le poste du 11/11 n'a qu'une SE : INCONNU", POSTE, 2, "", "montre"),
+        ("montre : un clone renommé n'est pas une Series",
+         {"devices": {_WATCHOS + "27-2": [_appareil("Apple Watch Series 12 (46mm)", "A", "Apple-Watch-SE-3-44mm")]}},
+         2, "", "montre"),
+        ("montre : aucun runtime watchOS : INCONNU", {"devices": {_IOS + "27-2": POSTE["devices"][_IOS + "27-2"]}}, 2,
+         "", "montre"),
+    ]
     for nom, liste, sortie, udid, *famille in cas:
         obtenu, retenu, dit = choisir(liste, *famille)
         if (obtenu, retenu) != (sortie, udid) or not dit:
@@ -210,10 +242,10 @@ def autotest() -> int:
 def main(argv: list[str]) -> int:
     if argv[1:] == ["--autotest"]:
         return autotest()
-    familles = {(): "iphone", ("--ipad",): "ipad", ("--tv",): "tv"}
+    familles = {(): "iphone", ("--ipad",): "ipad", ("--tv",): "tv", ("--montre",): "montre"}
     famille = familles.get(tuple(argv[1:]))
     if famille is None:
-        print("usage : xcrun simctl list devices available -j | destination_simulateur.py [--ipad|--tv]"
+        print("usage : xcrun simctl list devices available -j | destination_simulateur.py [--ipad|--tv|--montre]"
               " | --autotest", file=sys.stderr)
         return 2
     try:
