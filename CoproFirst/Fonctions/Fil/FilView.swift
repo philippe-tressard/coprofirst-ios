@@ -62,8 +62,7 @@ struct FilView: View {
         .titreDeMenu()
         .sheet(item: $resume) { element in
             ResumeFeuille(element: element, installation: installation)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .feuilleACrans()
         }
         .toolbar {
             // Le logement à gauche, en face de la résidence : une ligne de gagnée sous le titre.
@@ -124,7 +123,7 @@ struct FilView: View {
         }
         .background(palette.bg)
         .overlay { etatVide }
-        .refreshable { await charger() }
+        .actualisable { await charger() }
     }
 
     /// Un résumé s'ouvre en feuille ; le reste, en fiche — et, dans le carnet, sur la page

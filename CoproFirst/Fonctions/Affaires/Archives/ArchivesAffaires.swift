@@ -42,7 +42,7 @@ struct ArchivesAffaires: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .overlay { etatVide(vide: annees.isEmpty) }
-        .refreshable { await etat.charger(installation, avec: service) }
+        .actualisable { await etat.charger(installation, avec: service) }
         .onChange(of: annees.map(\.annee), initial: true) { _, liste in
             // Une année qui apparaît se replie, sauf la plus récente : la règle se
             // calcule, elle ne s'écrit pas année par année.

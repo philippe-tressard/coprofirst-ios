@@ -22,7 +22,7 @@ struct FicheView: View {
                         .padding(.horizontal, Mise.marge)
                         .padding(.vertical, 16)
                 }
-                .refreshable { recharger() }
+                .actualisable { recharger() }
             },
             squelette: {
                 ScrollView {

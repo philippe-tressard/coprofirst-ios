@@ -58,6 +58,7 @@ struct AProposView: View {
             .listRowBackground(palette.surface)
         }
         .scrollContentBackground(.hidden)
+        .largeurDeLecture()
         .background(palette.bg)
         .navigationTitle("À propos")
         .navigationBarTitleDisplayMode(.inline)

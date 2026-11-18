@@ -55,7 +55,7 @@ struct OngletAvis: View {
                 toutArchive: enCours.isEmpty && !retenus.isEmpty, textes: Self.textes
             ) { Task { await etat.charger(.avis, installation, avec: parcours.serviceCommunaute) } }
         }
-        .refreshable { await etat.charger(.avis, installation, avec: parcours.serviceCommunaute) }
+        .actualisable { await etat.charger(.avis, installation, avec: parcours.serviceCommunaute) }
         .task { await etat.charger(.avis, installation, avec: parcours.serviceCommunaute) }
     }
 

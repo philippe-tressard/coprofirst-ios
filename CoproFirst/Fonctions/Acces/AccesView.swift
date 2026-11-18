@@ -44,11 +44,10 @@ struct AccesView: View {
             }
             .padding(.horizontal, Mise.marge)
             .padding(.bottom, 32)
-            .frame(maxWidth: 720)
-            .frame(maxWidth: .infinity)
+            .largeurDeLecture()
         }
         .background(palette.bg)
-        .refreshable { await charger(service) }
+        .actualisable { await charger(service) }
         .toolbar {
             PastilleOuSuisJe(installation: contexte.installation, cloche: true)
             if onglet == "badges" || onglet == "telecommandes" {
@@ -57,8 +56,7 @@ struct AccesView: View {
         }
         .sheet(item: $feuille, onDismiss: { etat.avis.feuilleFermee() }, content: { quoi in
             feuilleDe(quoi, service: service)
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .feuilleACrans()
         })
         .avisEphemere(etat.avis)
         .task { await charger(service) }
