@@ -107,7 +107,7 @@ enum FixturesDetailAffaire {
            "etat_propose_libelle": "",
            "statut_avant": "en_cours", "peut_modifier": false, "peut_supprimer": false},
           {"id": 3, "ticket_id": 41, "type": "reponse", "cree_le": "2026-11-09T13:00:00",
-           "auteur_nom": "Le syndic",
+           "auteur_id": 21, "auteur_nom": "Le syndic",
            "contenu": "Intervention confirmée à 9 h. La vanne d'arrêt sera fermée une heure.",
            "fichiers_urls": ["/uploads/tickets/41-vanne.jpg",
                              "/uploads/tickets/0123456789abcdef0123456789abcdef_Devis%20plombier.pdf"],

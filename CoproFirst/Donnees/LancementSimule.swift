@@ -25,7 +25,9 @@ import Foundation
 /// `-hors-ligne gardee|perimee|sans-lecture` : l'appareil sans réseau au lancement (#101) —
 /// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
 /// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`) ;
-/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119).
+/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ;
+/// `-contrat <version>` : le contrat que sert la résidence — `2.9.0` ouvre la porte
+/// `.moderation` (signaler, masquer, #286).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -116,10 +118,12 @@ enum LancementSimule {
 
     /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
     /// variante sombre, servis à ce contrat (#70) ; avec `-instance-commune`, l'opérateur
-    /// désigné par l'exploitant (`operateur_par_exploitant`, #94).
+    /// désigné par l'exploitant (`operateur_par_exploitant`, #94) ; avec `-contrat <version>`,
+    /// ce contrat servi — une porte au-dessus du plancher ouverte (`.moderation`, #286).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
         if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
+        if let contrat = argument("-contrat", arguments) { residence.versionContrat = contrat }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true

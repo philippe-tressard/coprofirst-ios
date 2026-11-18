@@ -7,10 +7,16 @@ import SwiftUI
 /// mention, puis l'avis. Un avis à renvois se lit en synthèse, fondements et sections
 /// pliées (`AvisARenvois`) ; un avis d'avant, section après section — d'après le
 /// règlement, ses extraits, d'après les AG, leurs extraits, la synthèse et les réserves.
+///
+/// 🚩 « Signaler la réponse de l'assistant » (#286, coprofirst#2861 « 2a ») : les magasins
+/// exigent qu'une réponse de l'IA se signale sans quitter l'app — si l'installation le sert.
 struct QuestionReglementView: View {
     let question: QuestionReglement
     let installation: Installation
+    @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
+    @State private var aSignaler: QuestionReglement?
+    @State private var avis = AvisDuGeste()
 
     var body: some View {
         ScrollViewReader { defilement in
@@ -19,6 +25,7 @@ struct QuestionReglementView: View {
                     Text(question.question).font(.titre(.title2)).foregroundStyle(palette.text)
                     PiedQuestion(question: question)
                     Text(mention).font(.footnote).italic().foregroundStyle(palette.textMuted)
+                    if installation.sert(.moderation) { signaler }
                     if question.avecRenvois {
                         AvisARenvois(question: question, defilement: defilement)
                     } else {
@@ -34,6 +41,27 @@ struct QuestionReglementView: View {
         .navigationTitle("Avis sur le règlement")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
+        .signalementAuConseil($aSignaler) { question, motif in
+            Task {
+                await avis.agir(avec: parcours.service.signalements, reussite: TextesSignalement.transmis) {
+                    try await $0.signalerAuConseil(.questionReglement(question.id), motif: motif, dans: installation)
+                }
+            }
+        }
+        .avisEphemere(avis)
+    }
+
+    /// Sous la mention de l'IA, là où l'on doute de l'avis — et non en barre : la pastille
+    /// « où suis-je » s'y replierait.
+    private var signaler: some View {
+        Button { aSignaler = question } label: {
+            Label("Signaler la réponse de l'assistant", systemImage: "flag").font(.footnote)
+        }
+        .buttonStyle(.borderless)
+        .tint(palette.primary)
+        .frame(minHeight: Mise.cible)
+        .gesteEnLigne()
+        .accessibilityIdentifier("reglement.signaler")
     }
 
     /// « Posée le … Avis indicatif… Rédigé par …, d'après …. » (`CarteQuestionReglement`).
