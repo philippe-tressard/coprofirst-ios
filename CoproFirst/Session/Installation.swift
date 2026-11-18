@@ -58,6 +58,10 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// Le contrat servi, lu par ses nombres — `nil` s'il est absent ou illisible.
     var contrat: VersionContrat? { VersionContrat(versionContrat) }
 
+    /// Sert-elle ce qu'ouvre la PORTE `porte` (`.logoSombre`, `.moderation`…) ? Un contrat
+    /// absent ou illisible n'ouvre aucune porte : l'app garde les gestes du plancher.
+    func sert(_ porte: VersionContrat) -> Bool { contrat.map { $0 >= porte } ?? false }
+
     /// À la découverte : une installation qui SERT un contrat plus ancien que le plancher
     /// ne s'ouvre pas — ses réponses ne se décoderaient pas, et l'utilisateur lirait
     /// « La résidence n'a pas pu répondre » à chaque écran (#83). Une version absente ou
@@ -81,7 +85,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     func adresseLogo(sombre: Bool) -> URL? {
         guard aUnLogo else { return nil }
         let adresse = adresse.appending(path: "api/config/logo.png")
-        guard sombre, aUnLogoSombre == true, let contrat, contrat >= .logoSombre else { return adresse }
+        guard sombre, aUnLogoSombre == true, sert(.logoSombre) else { return adresse }
         return adresse.appending(queryItems: [URLQueryItem(name: "variante", value: "sombre")])
     }
 }
