@@ -23,7 +23,11 @@ private actor DecouverteSimulee: DecouvreInstallation {
     }
 }
 
-private func residence(_ hote: String, contrat: String? = "2.6.0", palette: String? = "prune") -> Installation {
+/// Une résidence au plancher : le contrat se lit sur `VersionContrat.plancher` (généré), jamais
+/// en dur — une valeur écrite ici tombait sous le plancher à sa montée (2.6.0 sous 2.8.0, #294).
+private func residence(
+    _ hote: String, contrat: String? = VersionContrat.plancher.description, palette: String? = "prune"
+) -> Installation {
     Installation(
         adresse: URL(string: "https://\(hote)")!, nom: "Les Tilleuls", aUnLogo: false,
         codePalette: palette, versionContrat: contrat)
