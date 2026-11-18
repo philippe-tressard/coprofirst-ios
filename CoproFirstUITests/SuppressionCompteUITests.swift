@@ -29,7 +29,9 @@ final class SuppressionCompteUITests: XCTestCase {
         let demander = app.elementAcces("profil.suppression.demander")
         XCTAssertTrue(app.amener(demander, essais: 40), "le geste, sous « Vos droits »")
         LancementCaptures.capturer("suppression-1-invitation")
-        app.toucher(demander, essais: 40)
+        // La feuille s'ouvre JUSQU'À son titre : sous charge, le toucher se perdait et la
+        // feuille ne montait pas (main b247512, lot 3, #282).
+        app.toucher(demander, jusqua: app.navigationBars["Supprimer mon compte"], essais: 40)
 
         // La feuille dit ce qui sera effacé (phrases servies) avant de demander quoi que ce soit.
         let motDePasse = app.elementAcces("suppression.motDePasse")

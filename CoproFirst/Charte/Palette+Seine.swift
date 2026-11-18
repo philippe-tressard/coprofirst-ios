@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.117.0 (commit d25fa8df3721cf67b5522648fd22d000b61ca237), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
 
 import SwiftUI
 

@@ -149,20 +149,22 @@ extension XCUIApplication {
     /// (« ↻ reprise du toucher n/N : … »), que `scripts/bilan_tests_ui.py` déclare au résumé
     /// et en annotation — une reprise muette masquerait un vrai toucher sans réponse.
     ///
-    /// Pour un toucher IDEMPOTENT seulement (ouvrir une page, un onglet) : le rejouer sur un
-    /// effet simplement lent ne change rien. Jamais pour un interrupteur ni un envoi.
+    /// Pour un toucher IDEMPOTENT seulement (ouvrir une page, un onglet, une feuille) : le
+    /// rejouer sur un effet simplement lent ne change rien. Jamais pour un interrupteur, un
+    /// dépliage ni un envoi.
     @MainActor
     func toucher(
-        _ element: XCUIElement, jusqua effet: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+        _ element: XCUIElement, jusqua effet: XCUIElement, essais: Int = 10, file: StaticString = #filePath,
+        line: UInt = #line
     ) {
-        toucher(element, file: file, line: line)
+        toucher(element, essais: essais, file: file, line: line)
         for reprise in 1...Attente.reprises {
             if effet.waitForExistence(timeout: Attente.effet) { return }
             let trace = "↻ reprise du toucher \(reprise)/\(Attente.reprises) : \(element) sans effet "
                 + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
             print(trace)
             XCTContext.runActivity(named: trace) { _ in }
-            toucher(element, file: file, line: line)
+            toucher(element, essais: essais, file: file, line: line)
         }
         XCTAssertTrue(
             effet.apparait(), "\(element) touché \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
