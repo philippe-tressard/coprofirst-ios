@@ -10,6 +10,21 @@ struct GestesReponses {
     let publier: @MainActor (String) async -> Bool
     let retirer: @MainActor (ReponseCommunaute) async -> Void
     let signaler: @MainActor (ReponseCommunaute) -> Void
+    /// « Masquer ce que publie… » l'auteur d'une réponse (#286) : `nil` quand l'installation
+    /// ne le sert pas (`installation.sert(.moderation)`) — le geste ne s'offre pas.
+    var masquer: (@MainActor (AuteurAMasquer) -> Void)?
+}
+
+extension GestesReponses {
+    /// Offre « Masquer ce que publie… » (#286) si l'installation le sert — la porte, écrite
+    /// une fois pour les trois écrans qui portent un fil (idée, annonce, sondage).
+    func masquage(
+        _ installation: Installation, _ masquer: @escaping @MainActor (AuteurAMasquer) -> Void
+    ) -> GestesReponses {
+        var gestes = self
+        gestes.masquer = installation.sert(.moderation) ? masquer : nil
+        return gestes
+    }
 }
 
 /// La réponse dont on demande le retrait. La confirmation se pose sur la LISTE qui porte le
@@ -43,7 +58,9 @@ extension View {
 /// pour répondre. Texte brut : une réponse n'est jamais du HTML.
 ///
 /// Les droits sont SERVIS : « Supprimer » suit `peut_supprimer` ; « Signaler » s'offre
-/// sur les réponses des autres (`rep.auteur_id !== currentUserId`, la règle du site).
+/// sur les réponses des autres (`rep.auteur_id !== currentUserId`, la règle du site) ;
+/// « Masquer ce que publie… », sur celles d'un autre résident nommé, hors du conseil
+/// syndical (`!rep.est_cs`, #286) — le serveur refuserait de toute façon.
 struct FilReponses: View {
     let reponses: [ReponseCommunaute]
     /// L'identifiant du compte (GET /auth/me) : on ne signale pas sa propre réponse.
@@ -87,11 +104,23 @@ struct FilReponses: View {
                                 .tint(palette.orange)
                                 .accessibilityIdentifier("reponse.\(reponse.id).signaler")
                         }
+                        if let masquer = gestes.masquer, let auteur = aMasquer(reponse) {
+                            Button { masquer(auteur) } label: {
+                                Label(TextesMasquage.confirmer, systemImage: TextesMasquage.symbole)
+                            }
+                            .tint(palette.textMuted)
+                            .accessibilityIdentifier("reponse.\(reponse.id).masquer")
+                        }
                     }
                     .contextMenu {
                         if peutSignaler(reponse) {
                             Button { gestes.signaler(reponse) } label: {
                                 Label("Signaler cette réponse", systemImage: "flag")
+                            }
+                        }
+                        if let masquer = gestes.masquer, let auteur = aMasquer(reponse) {
+                            Button { masquer(auteur) } label: {
+                                Label(TextesMasquage.geste(auteur.nom), systemImage: TextesMasquage.symbole)
                             }
                         }
                         if reponse.peutSupprimer {
@@ -131,6 +160,10 @@ struct FilReponses: View {
     }
 
     private func peutSignaler(_ reponse: ReponseCommunaute) -> Bool { reponse.auteurId != moi }
+
+    private func aMasquer(_ reponse: ReponseCommunaute) -> AuteurAMasquer? {
+        reponse.estCs == true ? nil : AuteurAMasquer(id: reponse.auteurId, nom: reponse.auteurNom, moi: moi)
+    }
 
     private func envoyer() async {
         let contenu = texte.trimmingCharacters(in: .whitespacesAndNewlines)

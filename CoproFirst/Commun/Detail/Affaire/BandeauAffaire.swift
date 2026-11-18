@@ -18,12 +18,14 @@ struct BandeauAffaire: ViewModifier {
     @Environment(\.dansLaColonneDeFiche) private var dansLaColonne
     @Environment(\.palette) private var palette
     @State private var feuille: GesteAffaire?
+    @State private var aSignaler: DetailAffaire?
     @State private var avis = AvisDuGeste()
     @State private var enCours = false
 
     func body(content: Content) -> some View {
         let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs
-        let gestes = GesteAffaire.offerts(pour: affaire, conseil: conseil)
+        let gestes = GesteAffaire.offerts(
+            pour: affaire, conseil: conseil, moderation: installation.sert(.moderation))
         Group {
             if dansLaColonne {
                 content.safeAreaInset(edge: .bottom, spacing: 0) {
@@ -45,6 +47,7 @@ struct BandeauAffaire: ViewModifier {
                 feuille(geste)
                     .presentationDragIndicator(.visible)
             }
+            .signalementAuConseil($aSignaler) { affaire, motif in Task { await signaler(affaire, motif) } }
             .avisEphemere(avis)
     }
 
@@ -105,6 +108,9 @@ struct BandeauAffaire: ViewModifier {
             Button { Task { await archiver() } } label: { icone }
                 .disabled(enCours)
                 .gesteEnLigne()
+        case .signaler:
+            Button { aSignaler = affaire } label: { icone }
+                .gesteEnLigne()
         case .repondre, .suite, .modifier:
             Button { feuille = geste } label: { icone }
                 .gesteEnLigne()
@@ -138,21 +144,18 @@ struct BandeauAffaire: ViewModifier {
         }
     }
 
+    /// 🚩 : rien ne change à l'affaire, l'avis le confirme (#286).
+    private func signaler(_ affaire: DetailAffaire, _ motif: String) async {
+        await avis.agir(avec: parcours.service.signalements, reussite: TextesSignalement.transmis) {
+            try await $0.signalerAuConseil(.affaire(affaire.id), motif: motif, dans: installation)
+        }
+    }
+
     /// Un geste sans feuille : envoyé, annoncé, puis l'affaire relue.
     private func geste(_ phrase: String, _ envoi: (any ServiceGestesAffaire) async throws -> Void) async {
-        guard let service = parcours.service.gestesAffaire else {
-            avis.dire("Ce geste n'est pas disponible ici.", ton: .error)
-            return
-        }
         enCours = true
         defer { enCours = false }
-        do {
-            try await envoi(service)
-            avis.dire(phrase)
-            recharger()
-        } catch {
-            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
-        }
+        await avis.agir(avec: parcours.service.gestesAffaire, reussite: phrase, apres: recharger, envoi)
     }
 }
 

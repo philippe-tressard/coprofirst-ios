@@ -3,9 +3,17 @@
 
 import SwiftUI
 
+/// Les mots du signalement, écrits une fois (`lib/signalements.ts` du site).
+enum TextesSignalement {
+    static let titre = "Signaler au conseil syndical"
+    /// L'avis qui suit l'envoi : rien ne change à l'écran.
+    static let transmis = "Signalement transmis au conseil syndical"
+}
+
 /// « Signaler au conseil syndical » : un motif obligatoire, puis l'envoi — les mots de
-/// `signaler()` du site (`lib/signalements.ts`). Deux lecteurs : la Communauté et la
-/// fiche d'un sondage (#38). La cible est celle de l'écran (une idée, un commentaire…).
+/// `signaler()` du site (`lib/signalements.ts`). Lecteurs : la Communauté, la fiche d'un
+/// sondage (#38), une affaire et ses suites, la réponse de l'assistant (#286). La cible
+/// est celle de l'écran (une idée, un commentaire…).
 struct SignalementAuConseil<Cible>: ViewModifier {
     @Binding var cible: Cible?
     let envoyer: (Cible, String) -> Void
@@ -13,7 +21,7 @@ struct SignalementAuConseil<Cible>: ViewModifier {
 
     func body(content: Content) -> some View {
         content.alert(
-            "Signaler au conseil syndical", isPresented: Binding(get: { cible != nil }, set: { if !$0 { cible = nil } })
+            TextesSignalement.titre, isPresented: Binding(get: { cible != nil }, set: { if !$0 { cible = nil } })
         ) {
             TextField("Pourquoi signalez-vous ce contenu ?", text: $motif, axis: .vertical)
             Button("Annuler", role: .cancel) { motif = "" }

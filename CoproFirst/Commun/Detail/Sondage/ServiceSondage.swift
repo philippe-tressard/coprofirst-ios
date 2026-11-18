@@ -6,7 +6,7 @@ import Foundation
 /// Ce que la fiche d'un sondage demande à une installation (#38). Le fil et la
 /// Communauté l'ouvrent : un composant commun, son service avec lui. Signaler un
 /// commentaire : la lecture commune (`ServiceSignalements`).
-protocol ServiceSondage: ServiceSignalements {
+protocol ServiceSondage: ServiceSignalements, ServiceMasquages {
     /// GET /sondages/{id}, et GET /auth/me pour l'identifiant du compte.
     func sondage(_ id: Int, dans installation: Installation) async throws -> DetailSondage
     /// POST /sondages/{id}/voter (`VoteBody`) : l'option, la précision, le commentaire.

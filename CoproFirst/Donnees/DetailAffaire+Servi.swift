@@ -71,6 +71,6 @@ extension SuiteAffaire {
                 modifier: evolution.peutModifier ?? false, supprimer: evolution.peutSupprimer ?? false),
             contenu: evolution.contenu, ancienStatut: evolution.ancienStatut ?? evolution.statutAvant,
             nouveauStatut: evolution.nouveauStatut,
-            pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []))
+            pieces: PiecesJointes(urls: evolution.fichiersUrls ?? []), auteurId: evolution.auteurId)
     }
 }

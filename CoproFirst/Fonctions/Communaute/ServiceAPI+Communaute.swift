@@ -320,6 +320,6 @@ extension Annonce {
             auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, peutSupprimer: lue.peutSupprimer ?? false,
             archivee: lue.archivee, creeLe: lue.creeLe,
             reponses: lue.reponses?.map(ReponseCommunaute.init))
-        (lecture, lieu) = (lue.lecture.map(Lecture.init), LieuServi.lieu(lue.perimetreLibelle))
+        (lecture, lieu, auteurId) = (lue.lecture.map(Lecture.init), LieuServi.lieu(lue.perimetreLibelle), lue.auteurId)
     }
 }

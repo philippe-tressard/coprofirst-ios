@@ -117,7 +117,7 @@ struct SuiteFeuille: View {
 
     private func envoyer() async {
         guard let service = parcours.service.gestesAffaire else {
-            erreur = TextesSuite.indisponible
+            erreur = AvisDuGeste.indisponible
             return
         }
         envoi = true

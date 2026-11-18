@@ -149,14 +149,17 @@ struct DetailIdee: View {
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
     @State private var signalee: CibleCommunaute?
+    @State private var aMasquer: AuteurAMasquer?
     @State private var retrait = RetraitDeReponse()
 
     var body: some View {
         let service = parcours.serviceCommunaute
         if let idee = etat.idees.elements.first(where: { $0.id == id }) {
+            // L'idée ne dit pas son auteur : elle ne se masque pas ; ses réponses, si (#286).
             let gestes = etat.gestesReponses(.idee(idee.id), onglet: .idees, installation, avec: service) {
                 signalee = .reponse($0.id)
             }
+            .masquage(installation) { aMasquer = $0 }
             List {
                 Section {
                     HStack(alignment: .top, spacing: 14) {
@@ -201,6 +204,9 @@ struct DetailIdee: View {
             .confirmationDeRetrait(retrait, gestes: gestes)
             .signalementAuConseil($signalee) { cible, motif in
                 Task { await etat.signaler(cible, motif: motif, installation, avec: service) }
+            }
+            .confirmationMasquage($aMasquer) { auteur in
+                Task { await etat.masquer(auteur, recharger: .idees, installation, avec: service) }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 @Bindable var etat = etat

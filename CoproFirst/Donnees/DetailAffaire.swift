@@ -104,6 +104,9 @@ struct SuiteAffaire: Identifiable, Hashable, Sendable {
     /// (`perimetre_precise_libelle`, contrat 1.24.0, #130), même par défaut ; `nil` quand
     /// elle n'en déclare pas.
     var perimetrePrecise: String?
+    /// Son auteur (`auteur_id`) : on ne signale pas ce qu'on a écrit, et « Masquer ce que
+    /// publie… » le vise (#286).
+    var auteurId: Int?
 
     /// « Ouvert → Chez le syndic », pour une entrée qui change l'état. Le nouvel état se
     /// lit tel que servi avec elle ; l'ancien, que le serveur n'y met pas en clair, dans
