@@ -110,8 +110,9 @@ private struct CoffreQuiRefuse: CoffreDuCompte {
 /// par `ConsultationHorsLigneTests` (#101).
 let trousseauAccessible: Bool = {
     let sonde = "tests.sonde.\(UUID().uuidString)"
-    defer { Trousseau.effacerCompte(sonde) }
-    return Trousseau.rangerCompte(Data([1]), sonde)
+    let coffre = CoffreTrousseau()
+    defer { coffre.effacer(sonde) }
+    return coffre.ranger(Data([1]), sonde)
 }()
 
 /// Le coffre de l'app est le Trousseau : une valeur rangée se relit, puis s'efface.

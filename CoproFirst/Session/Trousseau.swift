@@ -28,7 +28,7 @@ enum Trousseau {
     @discardableResult
     static func enregistrer(_ jeton: String, pour hote: String) -> ProtectionSession? {
         supprimer(pour: hote)
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         requete[kSecValueData as String] = Data(jeton.utf8)
         var erreur: Unmanaged<CFError>?
         if let nom = Biometrie.actuelle.nom,
@@ -51,7 +51,7 @@ enum Trousseau {
     static func lire(pour hote: String, raison: String) -> String? {
         let contexte = LAContext()
         contexte.localizedReason = raison
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         requete[kSecReturnData as String] = true
         requete[kSecMatchLimit as String] = kSecMatchLimitOne
         requete[kSecUseAuthenticationContext as String] = contexte
@@ -64,7 +64,7 @@ enum Trousseau {
 
     /// Présent, sans le lire (aucune invite Face ID).
     static func contient(pour hote: String) -> Bool {
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         let contexte = LAContext()
         contexte.interactionNotAllowed = true
         requete[kSecUseAuthenticationContext as String] = contexte
@@ -73,43 +73,6 @@ enum Trousseau {
     }
 
     static func supprimer(pour hote: String) {
-        SecItemDelete(base(hote) as CFDictionary)
-    }
-
-    // MARK: - Le compte, sans biométrie (#84)
-
-    /// Ce que l'app retient d'un compte (profil, courriel) : lisible après le premier
-    /// déverrouillage, sans invite — l'arrivée en a besoin avant toute requête.
-    private static let serviceCompte = "fr.coprofirst.app.compte"
-
-    static func lireCompte(_ cle: String) -> Data? {
-        var requete = base(cle, domaine: serviceCompte)
-        requete[kSecReturnData as String] = true
-        requete[kSecMatchLimit as String] = kSecMatchLimitOne
-        var resultat: CFTypeRef?
-        guard SecItemCopyMatching(requete as CFDictionary, &resultat) == errSecSuccess else { return nil }
-        return resultat as? Data
-    }
-
-    /// Range la valeur ; `false` si le Trousseau l'a refusée.
-    @discardableResult
-    static func rangerCompte(_ donnees: Data, _ cle: String) -> Bool {
-        effacerCompte(cle)
-        var requete = base(cle, domaine: serviceCompte)
-        requete[kSecValueData as String] = donnees
-        requete[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        return SecItemAdd(requete as CFDictionary, nil) == errSecSuccess
-    }
-
-    static func effacerCompte(_ cle: String) {
-        SecItemDelete(base(cle, domaine: serviceCompte) as CFDictionary)
-    }
-
-    private static func base(_ cle: String, domaine: String = service) -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: domaine,
-            kSecAttrAccount as String: cle,
-        ]
+        SecItemDelete(CoffreTrousseau.requete(hote, service: service) as CFDictionary)
     }
 }
