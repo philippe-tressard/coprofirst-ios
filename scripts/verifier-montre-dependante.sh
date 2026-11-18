@@ -93,10 +93,18 @@ esac
 
 # Construire l'app montre en Release, au simulateur (aucune signature) : sous le verrou commun
 # du poste quand il existe, comme tout xcodebuild lancé à la main ; en CI, directement.
+# Ce qui se juge est l'Info.plist de la configuration Release : son traitement et l'étape
+# Debug de project.yml ne dépendent que de $CONFIGURATION, pas de l'optimisation du code. Le
+# build se fait donc sans optimisation et pour arm64 seul : en -O et pour deux architectures
+# (arm64 et x86_64, « generic »), il a passé 27 min sur le runner sans finir, coupé au
+# plafond du job (#292, 18/11/2026). L'optimisation globale (wholemodule) reste : en
+# compilation incrémentale, le même build à froid lançait 833 compilations (les paquets
+# OpenAPI et leur générateur) et durait 29 min au poste.
 DERIVEES=.build/DerivedMontreRelease
 COMMANDE=(xcodebuild build -project CoproFirst.xcodeproj -scheme CoproFirstWatch -configuration Release
   -destination 'generic/platform=watchOS Simulator' -derivedDataPath "$DERIVEES"
-  -skipPackagePluginValidation -skipMacroValidation CODE_SIGNING_ALLOWED=NO)
+  -skipPackagePluginValidation -skipMacroValidation CODE_SIGNING_ALLOWED=NO
+  ARCHS=arm64 SWIFT_OPTIMIZATION_LEVEL=-Onone SWIFT_COMPILATION_MODE=wholemodule)
 VERROU=~/.claude/bin/verrou_poste.py
 mkdir -p .build
 if [ -z "${CI:-}" ] && [ -f "$VERROU" ]; then

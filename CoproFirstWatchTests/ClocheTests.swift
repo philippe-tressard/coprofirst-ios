@@ -58,6 +58,12 @@ struct ClocheTests {
         #expect(lecteur.lecture == .injoignable)
     }
 
+    @MainActor @Test func sansLiaisonLaLectureSeDitInjoignable() async {
+        let lecteur = LecteurCloche(source: .aucune)
+        await lecteur.lire()
+        #expect(lecteur.lecture == .injoignable)
+    }
+
     @MainActor @Test func laClocheLueGardeLesAlertesDeLaBoiteSimulee() async {
         let lecteur = LecteurCloche(source: .simulee(.boite(nombre: 10)))
         await lecteur.lire()

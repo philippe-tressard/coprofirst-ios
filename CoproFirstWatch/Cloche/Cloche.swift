@@ -38,6 +38,11 @@ enum LectureCloche: Equatable, Sendable {
 
 /// D'où la montre lit les alertes.
 enum SourceDeLaCloche: Equatable, Sendable {
+    /// Liaison éteinte (#226, lot 1) : aucune résidence à lire — la lecture échoue, et la
+    /// montre dirait « injoignable ». Le cas existe pour que le type ne soit pas VIDE en
+    /// Release, où `simulee` n'existe pas : un type sans valeur ne se compile pas hors
+    /// optimisation globale (#292). La résidence reliée le remplace au lot de la liaison.
+    case aucune
     #if DEBUG
     /// Une résidence inventée (`-api-simulee`) : la boîte de l'iPhone simulé.
     case simulee(ClocheSimulee.Reglage)
@@ -45,9 +50,13 @@ enum SourceDeLaCloche: Equatable, Sendable {
 
     func alertes() async throws -> [NotificationRecue] {
         switch self {
+        case .aucune: throw LiaisonEteinte()
         #if DEBUG
         case .simulee(let reglage): try await ClocheSimulee.alertes(reglage)
         #endif
         }
     }
 }
+
+/// La lecture d'une montre que rien ne relie (`SourceDeLaCloche.aucune`).
+struct LiaisonEteinte: Error {}

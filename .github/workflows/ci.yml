@@ -129,14 +129,17 @@ jobs:
   montre:
     # Un job à part, en parallèle des autres (#226) : la montre a son propre build, comme les
     # échantillons ; ajoutée à Unitaires (l'iPhone et le très grand texte, ~43 min attendues),
-    # elle l'aurait rapproché du plafond. Plafond estimé, à mesurer aux premiers passages : au
-    # poste, ~5 à 7 min de build et de tests et ~8 de build Release, soit ~25 min sur un runner
-    # 1,5 fois plus lent, plus l'outillage — 45 laisse la marge d'un runner lent.
+    # elle l'aurait rapproché du plafond.
+    # Mesuré sur #292 le 18/11/2026 (run 44308489685) : build et tests de la montre 18 min ;
+    # build Release en -O pour deux architectures coupé au plafond de 45, après 27 min sans
+    # finir. Le Release se construit désormais en arm64 seul et sans optimisation
+    # (verifier-montre-dependante.sh) : ~20 min attendues au pire, soit ~40 min de job ;
+    # 1,5 fois : 60. À reprendre sur la durée mesurée des premiers passages.
     name: Apple Watch (build, tests, app livrée dépendante)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
-    timeout-minutes: 45
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
