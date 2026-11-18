@@ -20,10 +20,26 @@ cd "$(dirname "$0")/.."
 
 CLE=WKRunsIndependentlyOfCompanionApp
 
+# La clé, lue par plistlib et non par PlistBuddy : l'autotest tourne aussi dans le job « Dépôt »,
+# sous Linux, où PlistBuddy n'existe pas (#226). Imprime true, false, une autre valeur, ou rien
+# si la clé manque ; sort en 1 si le fichier n'est pas une liste de propriétés lisible.
+lire_cle() {
+  python3 -I -c '
+import plistlib, sys
+try:
+    with open(sys.argv[1], "rb") as f:
+        valeur = plistlib.load(f).get(sys.argv[2])
+except Exception:
+    sys.exit(1)
+if valeur is not None:
+    print(str(valeur).lower() if isinstance(valeur, bool) else valeur)
+' "$1" "$CLE"
+}
+
 juger() {
   local plist=$1 valeur
   [ -f "$plist" ] || { echo "❓ INCONNU : aucun Info.plist construit ($plist)" >&2; return 2; }
-  if ! valeur=$(/usr/libexec/PlistBuddy -c "Print :$CLE" "$plist" 2>/dev/null); then
+  if ! valeur=$(lire_cle "$plist") || [ -z "$valeur" ]; then
     echo "❌ $CLE absente de l'Info.plist construit : l'app montre doit s'y dire dépendante ($plist)" >&2
     return 1
   fi
@@ -34,17 +50,29 @@ juger() {
   echo "✅ app montre Release dépendante de l'iPhone ($CLE = false)"
 }
 
+# Un Info.plist d'essai : la clé à la valeur donnée (un booléen), ou absente.
+ecrire_plist() {
+  python3 -I -c '
+import plistlib, sys
+contenu = {"CFBundleIdentifier": "fr.coprofirst.app.watchkitapp"}
+if sys.argv[2] != "absente":
+    contenu[sys.argv[3]] = sys.argv[2] == "true"
+with open(sys.argv[1], "wb") as f:
+    plistlib.dump(contenu, f)
+' "$1" "$2" "$CLE"
+}
+
 autotest() {
   local dossier rate=0 sortie
   dossier=$(mktemp -d)
   trap 'rm -rf "$dossier"' RETURN
-  for cas in "false:0" "true:1" "absente:1" "illisible:2"; do
+  for cas in "false:0" "true:1" "absente:1" "corrompue:1" "illisible:2"; do
     local valeur=${cas%%:*} attendu=${cas##*:}
     local plist="$dossier/Info-$valeur.plist"
     case "$valeur" in
-      absente) /usr/libexec/PlistBuddy -c "Add :CFBundleIdentifier string fr.coprofirst.app.watchkitapp" "$plist" >/dev/null ;;
       illisible) plist="$dossier/inexistant.plist" ;;
-      *) /usr/libexec/PlistBuddy -c "Add :$CLE bool $valeur" "$plist" >/dev/null ;;
+      corrompue) printf 'pas une liste de propriétés' > "$plist" ;;
+      *) ecrire_plist "$plist" "$valeur" ;;
     esac
     juger "$plist" >/dev/null 2>&1
     sortie=$?
