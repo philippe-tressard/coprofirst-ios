@@ -9,7 +9,7 @@ import SwiftUI
 /// ⚠️ UNE LIGNE PAR ONGLET, séparée des autres par une ligne vide : deux sessions y
 /// ajoutent chacune la leur sans conflit. L'ORDRE et l'ouverture ne se décident pas ici
 /// (`OngletsDuSite.ouverts(page: "espace-cs", …)`, généré) ; un onglet absent de la
-/// table paraît dans « Sur le site », qui y renvoie par son adresse (les écrans du hall).
+/// table s'affiche « Bientôt ».
 ///
 /// Ajouter un onglet : son dossier, sa vue conforme à `OngletDePage`, une ligne ici.
 @MainActor

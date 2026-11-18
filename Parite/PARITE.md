@@ -113,7 +113,7 @@ Après les écrans des résidents. Dossiers : `Fonctions/EspaceCS`, `Fonctions/D
 | `espace-cs` | `annonces-hall` | fait | #15 | Créer (titre, message, périmètre, format, Diffusion CS / syndic / copie), archives : renvoyer, archiver, restaurer, supprimer — les gestes que le serveur ouvre (#56) ; photos, assistant, aperçu, reprise du fil, WhatsApp et PDF restent au site |
 | `espace-cs` | `annuaire` | fait | #15 | Conseil (AG, WhatsApp, président) et syndic (cabinet, interlocuteur principal, ordre), fiches à ajouter, corriger, retirer ; le rapprochement par le nom, servi à la frappe (#55) ; les consignes de la fiche arrivant restent au site |
 | `espace-cs` | `courriels` | fait | #15 | Le journal de la relève : verdict, motif, affaire rejointe |
-| `espace-cs` | `ecrans` | site seulement | #218 | Les écrans du hall (contrat 2.6.0) : le code qu'affiche l'Apple TV se saisit sur le site, où son QR mène (#218, lot 3) ; l'app renvoie au site |
+| `espace-cs` | `ecrans` | prévu | #295 | Les écrans du hall (contrat 2.6.0) : liste, appairage par le code qu'affiche l'écran, retrait — dans l'app (décision de Philippe du 18/11/2026) ; « Bientôt » d'ici là |
 | `delegations` | — | fait | #15 | Liste, Accepter (l'aidant), Révoquer, Nouvelle délégation (conseil) ; lecture seule (coprofirst#1534) ; gestes servis (`peut_accepter`, `peut_revoquer`) et réponses typées (#56) |
 
 ### #16 — Administration, en partie

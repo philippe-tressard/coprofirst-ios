@@ -20,19 +20,6 @@ struct PageAOnglets {
     /// Le titre de l'écran : le libellé du menu par défaut — un grand titre ne passe pas
     /// à la ligne, « Espace Conseil Syndical (CS) » se tronquerait.
     var titre: KeyPath<PageDeNavigation, String> = \.libelle
-
-    /// Parmi les onglets ouverts, ceux que l'app ne porte pas, sur une page qui renvoie au site.
-    func ailleurs(_ ouverts: [OngletDuSite]) -> [OngletDuSite] {
-        routes == nil ? [] : ouverts.filter { ecrans[$0.id] == nil }
-    }
-
-    /// La barre : les onglets ouverts ; sur une page qui renvoie au site, les inscrits
-    /// puis « Sur le site », s'il reste un onglet que l'app ne porte pas.
-    func barre(_ ouverts: [OngletDuSite]) -> [OngletDuSite] {
-        guard routes != nil else { return ouverts }
-        let portes = ouverts.filter { ecrans[$0.id] != nil }
-        return ailleurs(ouverts).isEmpty ? portes : portes + [.surLeSite]
-    }
 }
 
 /// Le CADRE d'une page à onglets (#15, #16) — titre, barre d'onglets dans l'ordre du
@@ -58,9 +45,16 @@ struct CadreAOnglets: View {
     /// Les onglets que ce compte ouvre, dans l'ordre du site (`OngletsDuSite.ouverts`).
     private var ouverts: [OngletDuSite] { OngletsDuSite.ouverts(page: page.id, droits: droits) }
 
-    private var ailleurs: [OngletDuSite] { page.ailleurs(ouverts) }
+    /// Ceux que l'app ne porte pas, sur une page qui renvoie au site.
+    private var ailleurs: [OngletDuSite] {
+        page.routes == nil ? [] : ouverts.filter { page.ecrans[$0.id] == nil }
+    }
 
-    private var barre: [OngletDuSite] { page.barre(ouverts) }
+    private var barre: [OngletDuSite] {
+        guard page.routes != nil else { return ouverts }
+        let portes = ouverts.filter { page.ecrans[$0.id] != nil }
+        return ailleurs.isEmpty ? portes : portes + [.surLeSite]
+    }
 
     var body: some View {
         Group {
