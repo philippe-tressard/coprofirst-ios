@@ -20,6 +20,9 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   pour le seul **écran de hall** — lecture seule des affiches d'un périmètre, appairage
   par code (serveur : coprofirst#2770). Elle compile les fichiers de l'app nommément
   dans `project.yml` ; ce qui est propre à iOS s'isole dans son fichier et s'exclut.
+  **Et le 16/11/2026 (#226)** : une cible **Apple Watch** (`CoproFirstWatch`, watchOS
+  10), la cloche de la dernière résidence ouverte en **lecture seule** (jeton de montre,
+  coprofirst#2771), qui sort avec l'app Wear OS équivalente ; même règle de partage.
 - **Projet Xcode généré** par XcodeGen depuis `project.yml` — `CoproFirst.xcodeproj`
   n'est pas versionné : `bash scripts/generer-projet.sh` (qui fige aussi les
   versions des paquets).

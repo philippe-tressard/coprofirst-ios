@@ -20,7 +20,7 @@ struct CarteAffaire: View {
                 ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2))
                 : AnyLayout(HStackLayout(spacing: 8))
             enTete {
-                Text(affaire.creeLe, format: .relative(presentation: .named))
+                Text(FormatsDuSite.relatif(affaire.creeLe))
                     .font(.footnote)
                     .foregroundStyle(palette.textMuted)
                 if affaire.urgente {
@@ -88,7 +88,7 @@ struct CarteAffaire: View {
         morceaux.append(affaire.titre)
         morceaux.append(affaire.statutLibelle)
         if archive { morceaux.append("archivée") }
-        morceaux.append(affaire.creeLe.formatted(.relative(presentation: .named)))
+        morceaux.append(FormatsDuSite.relatif(affaire.creeLe))
         if let lieu = affaire.lieu { morceaux.append(lieu) }
         if let lecture = Lecture.aMontrer(affaire.lecture) { morceaux.append(lecture.enClair()) }
         if let messages = affaire.messages { morceaux.append("\(messages) messages") }

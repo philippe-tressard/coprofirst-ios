@@ -101,7 +101,8 @@ import Testing
 }
 
 /// Le système applique-t-il Dynamic Type à un texte ORDINAIRE ? iOS et tvOS 27 oui ; tvOS 26
-/// non (CI du 16/11/2026, #218 : 35 pt dans les deux tailles). Sans lui, le test suivant ne
+/// non (CI du 16/11/2026, #218 : 35 pt dans les deux tailles), ni watchOS 27 au simulateur
+/// (poste, 17/11/2026, #226). Sans lui, le test suivant ne
 /// prouve rien : il se déclare désactivé — INCONNU, jamais vert. La sonde n'emprunte pas le
 /// texte riche : c'est lui que le test juge, et une régression de sa part reste rouge.
 @MainActor
@@ -115,7 +116,7 @@ func dynamicTypeServi() -> Bool {
 
 /// Le rendu en très grand texte : le texte riche suit Dynamic Type, sans rien perdre.
 @MainActor
-@Test(.enabled("Dynamic Type non appliqué par ce système (tvOS 26) — INCONNU") { await dynamicTypeServi() })
+@Test(.enabled("Dynamic Type non appliqué par ce système (tvOS 26, watchOS) — INCONNU") { await dynamicTypeServi() })
 func leDetailSeRendEnTresGrandTexte() throws {
     let texte = Text(TexteDuSite.riche("<p>Le <strong>lundi</strong>, <a href=\"https://example.com\">voir</a>.</p>"))
         .frame(width: 320)

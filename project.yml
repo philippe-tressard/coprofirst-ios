@@ -10,6 +10,9 @@ options:
     iOS: "17.0"
     # L'écran de hall sur Apple TV (#218) : la même version minimale que l'iPhone.
     tvOS: "17.0"
+    # L'Apple Watch (#226) : watchOS 10, le premier à poser la pile de widgets et
+    # NavigationStack au poignet.
+    watchOS: "10.0"
   developmentLanguage: fr
   createIntermediateGroups: true
   groupSortPosition: top
@@ -206,6 +209,101 @@ targets:
         # « CoproFirstTV.app » et le test ne trouverait pas son hôte.
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/CoproFirst.app/CoproFirst
         BUNDLE_LOADER: $(TEST_HOST)
+  # L'Apple Watch (#226) : la cloche de la dernière résidence ouverte, en LECTURE seule
+  # (jeton de montre, coprofirst#2771). Comme l'écran de hall, elle compile les MÊMES
+  # fichiers que l'iPhone, nommément ; ce qui est propre à iOS s'isole et s'exclut ici.
+  CoproFirstWatch:
+    type: application
+    platform: watchOS
+    sources:
+      - path: CoproFirstWatch
+      - path: CoproFirst/Charte
+        excludes:
+          # Pas de barre de navigation à grands titres au poignet.
+          - ApparenceNavigation.swift
+          # Les onglets des pages du site : la navigation de l'iPhone.
+          - OngletsDuSite.swift
+          # La couleur qui suit le thème : la montre est toujours en sombre (CouleurMontre.swift).
+          - CouleurDuTheme.swift
+      - path: CoproFirst/Commun/Texte
+      # L'alerte servie et ses libellés : ceux de la cloche de l'iPhone.
+      - path: CoproFirst/Fonctions/Notifications/NotificationRecue.swift
+      - path: CoproFirst/Fonctions/Notifications/TextesNotifications.swift
+      - path: CoproFirst/Fonctions/Notifications/BoiteSimulee.swift
+    dependencies:
+      - package: ClientAPI
+    info:
+      path: CoproFirstWatch/Info.plist
+      properties:
+        CFBundleDisplayName: CoproFirst
+        CFBundleDevelopmentRegion: fr
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleLocalizations: [fr]
+        ITSAppUsesNonExemptEncryption: false
+        # Une app montre autonome dans son paquet, compagne de l'app iPhone.
+        WKApplication: true
+        WKCompanionAppBundleIdentifier: fr.coprofirst.app
+        # Livrée DÉPENDANTE de l'iPhone, comme la montre Wear OS (`standalone=false`) : elle ne
+        # sert à rien sans l'app iPhone qui la relie. En Debug seulement, l'étape ci-dessous la
+        # déclare indépendante.
+        WKRunsIndependentlyOfCompanionApp: false
+    # Au simulateur Apple Watch, aucun iPhone jumelé : watchOS oubliait l'app montre
+    # « dépendante » d'un compagnon absent — un lancement sur cinq ou six échouait, « Application
+    # info provider returned nil » (poste, 17/11/2026, #226). En Debug seulement (simulateur,
+    # tests), l'app se déclare indépendante ; une archive Release reste dépendante.
+    postBuildScripts:
+      - name: Montre indépendante en Debug (simulateur sans iPhone)
+        basedOnDependencyAnalysis: false
+        # L'Info.plist CONSTRUIT en entrée : l'étape passe après son traitement, qui l'écrasait.
+        inputFiles:
+          - $(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)
+        script: |
+          if [ "$CONFIGURATION" = Debug ]; then
+            /usr/libexec/PlistBuddy -c "Set :WKRunsIndependentlyOfCompanionApp true" \
+              "$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          fi
+    settings:
+      base:
+        # L'identifiant d'une app montre se dérive de celui de l'iPhone (FIGÉ).
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.watchkitapp
+        # Le module s'appelle CoproFirst, comme sur l'iPhone et l'Apple TV : les tests du code
+        # partagé (`@testable import CoproFirst`) se rejouent ici sans un mot de changé.
+        PRODUCT_NAME: CoproFirst
+        TARGETED_DEVICE_FAMILY: "4"
+        GENERATE_INFOPLIST_FILE: "NO"
+  # Les tests de la montre, et ceux du code PARTAGÉ rejoués sur watchOS — nommément.
+  CoproFirstWatchTests:
+    type: bundle.unit-test
+    platform: watchOS
+    sources:
+      - path: CoproFirstWatchTests
+      - path: CoproFirstTests/TexteDuSiteTests.swift
+      - path: CoproFirstTests/MesuresTests.swift
+      - path: CoproFirstTests/FormatsRelatifTests.swift
+    dependencies:
+      - target: CoproFirstWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.watchkitapp.tests
+        GENERATE_INFOPLIST_FILE: "YES"
+        # L'app s'appelle CoproFirst.app (voir CoproFirstWatch), pas du nom de sa cible.
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/CoproFirst.app/CoproFirst
+        BUNDLE_LOADER: $(TEST_HOST)
+  # L'interface de la montre (#226), sur ses aides d'attente communes avec l'iPhone.
+  CoproFirstWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources:
+      - path: CoproFirstWatchUITests
+      - path: CoproFirstUITests/Attente.swift
+    dependencies:
+      - target: CoproFirstWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.watchkitapp.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: CoproFirstWatch
 schemes:
   CoproFirst:
     build:
@@ -232,3 +330,16 @@ schemes:
       region: FR
       targets:
         - CoproFirstTVTests
+  CoproFirstWatch:
+    build:
+      targets:
+        CoproFirstWatch: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      language: fr
+      region: FR
+      targets:
+        - CoproFirstWatchTests
+        - CoproFirstWatchUITests

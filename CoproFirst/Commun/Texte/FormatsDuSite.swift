@@ -13,6 +13,7 @@ import Foundation
 /// | `dateHeure(_:)` | `fmtDatetime`, idem | « 2 avr. 2026, 16:30 » |
 /// | `dateHeureCourte(_:)` | `fmtDatetimeShort`, idem | « 02/04/2026 16:30 » |
 /// | `heure(_:)` | `fmtTime`, idem | « 16:30 » |
+/// | `relatif(_:)` | — (propre aux apps, #226) | « il y a 2 heures », « hier » |
 /// | `jourCourt(_:semaine:)` | `fmtJourCourt`, idem (v3.79.0) | « mar. 17 nov. », « 19 nov. » |
 /// | `jourISO(_:)` | `jourIso`, idem | « 2026-04-02 » (envoyé) |
 /// | `moisAnnee(_:)` | `fmtMonthYear`, idem | « novembre 2026 » |
@@ -68,6 +69,23 @@ enum FormatsDuSite {
     static func heure(_ valeur: Date?) -> String {
         guard let valeur else { return tiret }
         return valeur.formatted(style.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits))
+    }
+
+    /// L'âge d'un élément, au formateur relatif d'iOS (style « nommé ») : « il y a 2 heures »,
+    /// « hier », « la semaine dernière ». Le site n'en a pas ; l'app le dit sur la carte d'une
+    /// affaire et sur une alerte de la montre (#226) — et l'Android, à la même règle
+    /// (`FormatsDuSite.relatif` de coprofirst-android). En français, à Paris, quelle que soit
+    /// la langue de l'appareil.
+    static func relatif(_ valeur: Date?, maintenant: Date = .now) -> String {
+        guard let valeur else { return tiret }
+        let formateur = RelativeDateTimeFormatter()
+        formateur.locale = locale
+        formateur.dateTimeStyle = .named
+        var calendrier = Calendar(identifier: .gregorian)
+        calendrier.locale = locale
+        calendrier.timeZone = paris
+        formateur.calendar = calendrier
+        return formateur.localizedString(for: valeur, relativeTo: maintenant)
     }
 
     /// Une date telle que l'API la sert (chaîne ISO), lue comme `new Date()` la lit.
