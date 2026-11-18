@@ -80,11 +80,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
-    # Mesuré le 17/11/2026 : 36 à 39 min (build et tests, échantillon iPad, écran de hall), et
-    # coupé à 45 pendant l'étape Apple TV sur un runner lent (c3d25e2 : 17 + 17 + 6 min d'étapes
-    # avant la coupe). Plus le passage en très grand texte des parcours de la revue (#233 :
-    # SuppressionCompteUITests, jusqu'à 14 min en taille normale, ~1,4 fois en très grand
-    # texte) : ~59 min au pire. Le plafond des jobs d'interface : 70.
+    # Mesuré sur main le 18/11/2026 (#288) : 58 à 67 min avec l'échantillon iPad et l'Apple
+    # TV, si près du plafond qu'une PR un peu lente le coupait sans défaut. Ces deux-là ont
+    # leur propre build : ils sont passés au job « Échantillons ». Reste ici le très grand
+    # texte, qui réutilise le build iPhone (4 min, contre ~17 ailleurs) : ~43 min attendues.
     timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -103,27 +102,6 @@ jobs:
         # La CI ne signe pas : aucun certificat ni secret Apple dans GitHub
         # (skill publication-app-store). project.yml signe, le poste seul.
         run: bash scripts/tests-simulateur.sh -only-testing:CoproFirstTests
-      - name: Échantillon iPad (iPad Pro 13 pouces)
-        # L'app est universelle (#219) : un ÉCHANTILLON sur iPad, dans ce job, sans runner
-        # macOS de plus (#204) — la conformité du plist, l'entrée et la connexion. La suite
-        # complète sur iPad se joue au poste avant la fusion d'un lot iPad (#220).
-        # ParcoursUITests test par test : ses trois tests de la barre du bas n'ont pas cours
-        # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
-        env:
-          APPAREIL: ipad
-        run: >-
-          bash scripts/tests-simulateur.sh
-          -only-testing:CoproFirstTests/ConformiteAppStoreTests
-          -only-testing:CoproFirstUITests/ParcoursUITests/testDeLAccueilAuFilParLaConnexion
-          -only-testing:CoproFirstUITests/ParcoursUITests/testEnTresGrandTexteLeLogementPasseSousLeTitre
-          -only-testing:CoproFirstUITests/ParcoursUITests/testLaDemoSOuvreDUnToucher
-          -only-testing:CoproFirstUITests/ParcoursUITests/testLaPastilleMontreLesRolesEtSeDeconnecte
-          -only-testing:CoproFirstUITests/VitrineUITests
-          -only-testing:CoproFirstUITests/ConnexionUITests
-          -only-testing:CoproFirstUITests/BarreLateraleUITests
-          -only-testing:CoproFirstTests/PresentationNavigationTests
-          -only-testing:CoproFirstUITests/ListeEtFicheUITests
-          -only-testing:CoproFirstTests/ListeEtFicheTests
       - name: Parcours de la revue d'Apple en très grand texte (AX5)
         # Le reste de la CI joue la taille par défaut : SuppressionCompteUITests (règle
         # 5.1.1 v) a cassé en très grand texte sans bruit après #196 (#232, #233). Un
@@ -146,14 +124,6 @@ jobs:
           done
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
-      - name: Écran de hall (Apple TV) — build et tests du code partagé
-        # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
-        # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
-        # si aucune Apple TV de série n'est disponible sur le runner.
-        env:
-          APPAREIL: tv
-          RESULTATS: .build/ResultatsTV
-        run: bash scripts/tests-simulateur.sh
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
@@ -186,13 +156,16 @@ jobs:
       # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
       # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
       # ListeEtFiche) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
+      # Le 18/11/2026 (#288), le lot 2 restait le plus lourd : 32 à 36,5 min de tests sur trois
+      # runs (e7875db, 148dbac, #289), contre 26 au plus pour les autres, et 57 min d'étape sur
+      # #289. CartesDuFilUITests (5,6 à 8,4 min) est passé au lot 1, SondageUITests (5,1 à
+      # 8,1) au dernier : ~24 min au pire pour le lot 2, ~31 pour le lot 1, ~32 pour le 5.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
-        CommunauteUITests PrestatairesAffaireUITests ConfirmationHoteUITests NatureUITests
-        ResidenceUITests RetourUITests
+        CommunauteUITests PrestatairesAffaireUITests CartesDuFilUITests ConfirmationHoteUITests
+        NatureUITests ResidenceUITests RetourUITests
       LOT_2: >-
-        SaisieAffaireUITests CartesDuFilUITests SondageUITests ParcoursUITests
-        ApercusSaisieUITests LiensUITests
+        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests LiensUITests
       LOT_3: >-
         SuppressionCompteUITests AccesUITests AffairesUITests GrandTexteUITests EspaceCSUITests
         LogoResidenceUITests
@@ -252,28 +225,84 @@ jobs:
             exit 1
           fi
 
+  echantillons:
+    # Hors du job Unitaires depuis #288 : l'iPad et l'Apple TV construisent chacun pour leur
+    # destination, sans rien réutiliser du build iPhone — les y laisser poussait Unitaires à
+    # 67 min sur 70. Un exécutant macOS de plus par run (#204), décidé le 18/11/2026 : un
+    # dépassement coûte une relance de 70 min. Seul, sans build iPhone à réutiliser : 27 min
+    # sur #289 (iPad 22,6 + Apple TV 4,1), puis coupé à 40 sur un runner ~1,35 fois plus lent
+    # (iPad 32,2 min, dont 13,8 de tests ; Apple TV encore au build à 7,7). Au pire mesuré,
+    # ~42 min ; plafond à 1,5 fois : 65.
+    name: Échantillons (iPad, Apple TV)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: Projet Xcode (XcodeGen)
+        run: bash scripts/generer-projet.sh
+      - name: Échantillon iPad (iPad Pro 13 pouces)
+        # L'app est universelle (#219) : un ÉCHANTILLON sur iPad — la conformité du plist,
+        # l'entrée et la connexion. La suite complète sur iPad se joue au poste avant la
+        # fusion d'un lot iPad (#220).
+        # ParcoursUITests test par test : ses trois tests de la barre du bas n'ont pas cours
+        # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
+        env:
+          APPAREIL: ipad
+        run: >-
+          bash scripts/tests-simulateur.sh
+          -only-testing:CoproFirstTests/ConformiteAppStoreTests
+          -only-testing:CoproFirstUITests/ParcoursUITests/testDeLAccueilAuFilParLaConnexion
+          -only-testing:CoproFirstUITests/ParcoursUITests/testEnTresGrandTexteLeLogementPasseSousLeTitre
+          -only-testing:CoproFirstUITests/ParcoursUITests/testLaDemoSOuvreDUnToucher
+          -only-testing:CoproFirstUITests/ParcoursUITests/testLaPastilleMontreLesRolesEtSeDeconnecte
+          -only-testing:CoproFirstUITests/VitrineUITests
+          -only-testing:CoproFirstUITests/ConnexionUITests
+          -only-testing:CoproFirstUITests/BarreLateraleUITests
+          -only-testing:CoproFirstTests/PresentationNavigationTests
+          -only-testing:CoproFirstUITests/ListeEtFicheUITests
+          -only-testing:CoproFirstTests/ListeEtFicheTests
+      - name: Écran de hall (Apple TV) — build et tests du code partagé
+        # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
+        # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
+        # si aucune Apple TV de série n'est disponible sur le runner.
+        env:
+          APPAREIL: tv
+          RESULTATS: .build/ResultatsTV
+        run: bash scripts/tests-simulateur.sh
+
   ios:
-    # Le nom que la protection de main exige : il ne change pas. Vert seulement si les
-    # unitaires ET tous les lots d'interface le sont, ou si la détection a LU une PR de
-    # documentation seule — jamais par défaut : une détection en échec rend rouge. Sur les
-    # PR seulement : sur main, une interface remplacée dans sa file (#235) le rendrait vert
-    # sans avoir joué, ou rouge sans faute — chaque job y parle pour lui-même.
+    # Le nom que la protection de main exige : il ne change pas. Vert seulement si CHAQUE job
+    # de `needs` hors la détection l'est, ou si la détection a LU une PR de documentation
+    # seule — jamais par défaut : une détection en échec rend rouge. Un job ajouté à `needs`
+    # est exigé d'office, sans ligne de plus ici (#288) ; scripts/verifier-ci.py refuse un
+    # job macOS absent de `needs`. Sur les PR seulement : sur main, une interface remplacée
+    # dans sa file (#235) le rendrait vert sans avoir joué, ou rouge sans faute — chaque job
+    # y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [detection, unitaires, interface]
+    needs: [detection, unitaires, echantillons, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Unitaires et interface verts, ou documentation seule
+      - name: Chaque job macOS vert, ou documentation seule
         env:
           DETECTION: ${{ needs.detection.result }}
           MACOS: ${{ needs.detection.outputs.macos }}
-          UNITAIRES: ${{ needs.unitaires.result }}
-          INTERFACE: ${{ needs.interface.result }}
+          BESOINS: ${{ toJSON(needs) }}
         run: |
-          echo "détection : $DETECTION (macos=$MACOS) ; unitaires : $UNITAIRES ; interface : $INTERFACE"
+          jq -r 'to_entries[] | "\(.key) : \(.value.result)"' <<<"$BESOINS"
           if [ "$DETECTION" = success ] && [ "$MACOS" = false ]; then
             echo "Documentation seule : build et tests sautés, saut justifié par la liste lue."
             exit 0
           fi
-          [ "$UNITAIRES" = success ] && [ "$INTERFACE" = success ]
+          # Illisible ou sans autre job que la détection : rouge, jamais vert par défaut.
+          [ "$(jq 'del(.detection) | length' <<<"$BESOINS")" -ge 1 ] \
+            || { echo "::error::aucun job à juger dans needs"; exit 1; }
+          rouges=$(jq -r 'del(.detection) | to_entries[] | select(.value.result != "success") | .key' <<<"$BESOINS")
+          [ -z "$rouges" ] || { echo "::error::pas verts : $(echo $rouges)"; exit 1; }
