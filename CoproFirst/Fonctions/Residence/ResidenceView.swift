@@ -13,11 +13,44 @@ struct ResidenceView: View {
     @Environment(\.dynamicTypeSize) private var taille
     @State private var onglet = OngletResidence.fiche.rawValue
     @State private var accesReglement: Bool?
+    /// La fiche ouverte (document, affaire, question, syndic) : poussée sur iPhone, à côté
+    /// de l'onglet sur iPad (`ListeEtFiche`, #222).
+    @State private var choisie: DestinationResidence?
 
     private var droits: DroitsOnglet { DroitsOnglet(profil: parcours.ouverteAJour?.profil) }
     private var ouverts: [OngletDuSite] { OngletsResidence.ouverts(droits, accesReglement: accesReglement) }
 
     var body: some View {
+        ListeEtFiche(selection: $choisie) {
+            onglets
+        } fiche: { destination in
+            destination.ecran(installation)
+        }
+        .navigationTitle(titre)
+        .titreDeMenu()
+        .barreDuHaut {
+            VStack(spacing: 0) {
+                BandeauHorsLigne()
+                if ouverts.count > 1 { choixOnglet }
+            }
+        }
+        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
+        // Un autre onglet : la fiche d'à côté n'est plus la sienne.
+        .onChange(of: onglet) { choisie = nil }
+        .onChange(of: ouverts) { _, ouverts in
+            // Un onglet qui se ferme (rôle, accès retiré) ramène sur la Fiche — `BarreOnglets`.
+            if !ouverts.contains(where: { $0.id == onglet }) { onglet = OngletResidence.fiche.rawValue }
+        }
+        .task {
+            await parcours.rafraichirProfil()
+            guard droits.proprioOuCS, let service = parcours.service.residence else { return }
+            // Une réponse en échec ne masque rien : l'onglet ouvert dira l'erreur.
+            accesReglement = (try? await service.accesReglement(installation)) ?? true
+        }
+    }
+
+    /// L'onglet ouvert : la liste de `ListeEtFiche`.
+    private var onglets: some View {
         Group {
             if let service = parcours.service.residence {
                 switch OngletResidence(rawValue: onglet) ?? .fiche {
@@ -32,28 +65,6 @@ struct ResidenceView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.bg)
-        .navigationTitle(titre)
-        .titreDeMenu()
-        .barreDuHaut {
-            VStack(spacing: 0) {
-                BandeauHorsLigne()
-                if ouverts.count > 1 { choixOnglet }
-            }
-        }
-        .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
-        .navigationDestination(for: DestinationResidence.self) { destination in
-            destination.ecran(installation)
-        }
-        .onChange(of: ouverts) { _, ouverts in
-            // Un onglet qui se ferme (rôle, accès retiré) ramène sur la Fiche — `BarreOnglets`.
-            if !ouverts.contains(where: { $0.id == onglet }) { onglet = OngletResidence.fiche.rawValue }
-        }
-        .task {
-            await parcours.rafraichirProfil()
-            guard droits.proprioOuCS, let service = parcours.service.residence else { return }
-            // Une réponse en échec ne masque rien : l'onglet ouvert dira l'erreur.
-            accesReglement = (try? await service.accesReglement(installation)) ?? true
-        }
     }
 
     /// Les onglets : un segment, qui devient un menu aux très grandes tailles de texte
@@ -91,9 +102,9 @@ private extension View {
     }
 }
 
-/// Ce qu'un écran de la résidence pousse dans la pile de son onglet.
+/// Ce qu'un écran de la résidence ouvre — sa fiche, par `LienDeFiche`.
 enum DestinationResidence: Hashable {
-    case document(id: Int, nom: String, titre: String)
+    case document(DocumentAOuvrir)
     case affaire(Int)
     case question(QuestionReglement)
     /// L'annuaire, ouvert sur la section du syndic (« Syndic » de la Fiche → ici).
@@ -101,14 +112,14 @@ enum DestinationResidence: Hashable {
 
     /// Un document de la résidence, ouvert dans l'aperçu du système.
     static func document(_ document: DocumentResidence) -> Self {
-        .document(id: document.id, nom: document.fichier, titre: document.titre)
+        .document(DocumentAOuvrir(id: document.id, nom: document.fichier, titre: document.titre))
     }
 
     @MainActor @ViewBuilder
     func ecran(_ installation: Installation) -> some View {
         switch self {
-        case .document(let id, let nom, let titre):
-            DocumentView(id: id, nom: nom, titre: titre, installation: installation)
+        case .document(let document):
+            DocumentView(document, installation: installation)
         case .affaire(let id):
             DetailAffaireView(id: id, installation: installation)
         case .question(let question):

@@ -135,13 +135,14 @@ struct ListeAnnexes: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(TextesResidence.annexes).styleLibelle()
                 ForEach(annexes) { annexe in
-                    NavigationLink(value: DestinationResidence.document(annexe)) {
+                    LienDeFiche(valeur: DestinationResidence.document(annexe)) {
                         Label(annexe.titre, systemImage: "paperclip")
                             .font(.subheadline)
                             .foregroundStyle(palette.primary)
                             .frame(minHeight: Mise.cible, alignment: .leading)
                     }
                     .buttonStyle(.plain)
+                    .rangeeChoisie(DestinationResidence.document(annexe), debord: Mise.debordChoisi)
                 }
             }
         }

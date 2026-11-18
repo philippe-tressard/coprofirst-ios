@@ -41,8 +41,18 @@ private struct JournalView: View {
     let installation: Installation
     let recharger: () -> Void
     @Environment(\.palette) private var palette
+    /// L'affaire rejointe ouverte : poussée sur iPhone, à côté du journal sur iPad (#222).
+    @State private var affaire: AffaireAOuvrir?
 
     var body: some View {
+        ListeEtFiche(selection: $affaire) {
+            messages
+        } fiche: { affaire in
+            DetailAffaireView(id: affaire.id, installation: installation)
+        }
+    }
+
+    private var messages: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 Text(TextesCourriels.aide(journal.limite))
@@ -140,14 +150,13 @@ private struct LigneCourriel: View {
                 Text(message.motif).font(.subheadline).foregroundStyle(palette.text)
             }
             if let ticket = message.ticketId {
-                NavigationLink {
-                    DetailAffaireView(id: ticket, installation: installation)
-                } label: {
+                LienDeFiche(valeur: AffaireAOuvrir(id: ticket)) {
                     Label(TextesCourriels.affaire(message.affaire), systemImage: "arrow.up.right.square")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(palette.primary)
                 }
                 .frame(minHeight: Mise.cible)
+                .rangeeChoisie(AffaireAOuvrir(id: ticket), debord: Mise.debordChoisi)
                 .accessibilityIdentifier("courriel.\(message.id).affaire")
             }
         }

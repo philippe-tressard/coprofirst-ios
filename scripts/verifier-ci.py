@@ -1,12 +1,19 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Le job « Dépôt » de la CI n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241).
+"""Deux règles de la CI, lues dans `.github/workflows/ci.yml`.
+
+1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241).
 
 Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : le
 16/11/2026, #240 est passée au poste puis a rougi en CI sur `verifier-logo.sh`, une
 étape que seul le job jouait. Un contrôle de plus s'ajoute DANS `verifier-depot.sh`
 (ou `scripts/controles-distants.sh`), jamais en étape du job.
+
+2. Chaque job macOS a son `timeout-minutes` et figure dans les `needs` de l'agrégat
+   (`ios`, le check que la protection de `main` exige), qui juge `toJSON(needs)` en
+   entier (#288). Sinon un job neuf — les échantillons, la montre — peut rougir sans
+   rendre la PR rouge.
 
 Lecture au texte, sans PyYAML (absent de `python3 -I` sur le runner Linux) : le bloc
 du job va de `  depot:` à la clé de job suivante, au même retrait.
@@ -24,6 +31,7 @@ from pathlib import Path
 WORKFLOW = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "ci.yml"
 JOB = "depot"
 ATTENDU = "bash scripts/verifier-depot.sh"
+AGREGAT = "ios"
 
 
 def bloc_du_job(texte: str, job: str) -> list[str] | None:
@@ -41,8 +49,8 @@ def bloc_du_job(texte: str, job: str) -> list[str] | None:
     return bloc
 
 
-def refus(texte: str) -> tuple[int, list[str]]:
-    """(code, messages) : 0 conforme, 1 refus, 2 INCONNU."""
+def refus_depot(texte: str) -> tuple[int, list[str]]:
+    """Règle 1 — (code, messages) : 0 conforme, 1 refus, 2 INCONNU."""
     bloc = bloc_du_job(texte, JOB)
     if bloc is None:
         return 2, [f"❓ INCONNU : job « {JOB} » introuvable dans {WORKFLOW.name}"]
@@ -55,11 +63,60 @@ def refus(texte: str) -> tuple[int, list[str]]:
     ]
 
 
+def jobs(texte: str) -> list[str]:
+    """Les clés de job, dans l'ordre : retrait de deux espaces, sous `jobs:`."""
+    lignes = texte.splitlines()
+    if "jobs:" not in lignes:
+        return []
+    noms = []
+    for ligne in lignes[lignes.index("jobs:") + 1:]:
+        if re.match(r"^\S", ligne):
+            break
+        m = re.match(r"^  ([A-Za-z0-9_-]+):\s*$", ligne)
+        if m:
+            noms.append(m.group(1))
+    return noms
+
+
+def refus_agregat(texte: str) -> tuple[int, list[str]]:
+    """Règle 2 — chaque job macOS : un plafond, et exigé par l'agrégat qui juge tous ses needs."""
+    agregat = bloc_du_job(texte, AGREGAT)
+    if agregat is None:
+        return 2, [f"❓ INCONNU : agrégat « {AGREGAT} » introuvable"]
+    besoins = next((l.split("needs:", 1)[1].strip() for l in agregat if re.match(r"^    needs:", l)), "")
+    exiges = set(re.findall(r"[A-Za-z0-9_-]+", besoins)) if besoins.startswith("[") else {besoins}
+    macos = [j for j in jobs(texte) if any("runs-on: macos" in l for l in bloc_du_job(texte, j) or [])]
+    if not macos:
+        return 2, ["❓ INCONNU : aucun job macOS lu dans le workflow"]
+    messages = []
+    for job in macos:
+        if job not in exiges:
+            messages.append(f"❌ job macOS « {job} » absent des needs de « {AGREGAT} » : il rougirait sans rougir la PR")
+        if not any(re.match(r"^    timeout-minutes: \d+", l) for l in bloc_du_job(texte, job) or []):
+            messages.append(f"❌ job macOS « {job} » sans timeout-minutes : il tiendrait 6 h un exécutant rare")
+    if not any("toJSON(needs)" in l for l in agregat):
+        messages.append(f"❌ « {AGREGAT} » ne juge pas toJSON(needs) : un job de needs pourrait n'être lu par personne")
+    if messages:
+        return 1, messages
+    return 0, [f"✅ {len(macos)} job(s) macOS ({', '.join(macos)}) : plafonnés et exigés par « {AGREGAT} »"]
+
+
+def refus(texte: str) -> tuple[int, list[str]]:
+    """Les deux règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
+    codes, messages = zip(*(r(texte) for r in (refus_depot, refus_agregat)))
+    code = 1 if 1 in codes else max(codes)
+    return code, [m for ms in messages for m in ms]
+
+
 def autotest() -> int:
     conforme = (
         "jobs:\n  depot:\n    runs-on: ubuntu-latest\n    steps:\n"
         "      - uses: actions/checkout@x\n      - name: Dépôt\n"
         f"        run: {ATTENDU}\n  detection:\n    steps:\n      - run: autre\n"
+        "  unitaires:\n    runs-on: macos-latest\n    timeout-minutes: 70\n    steps:\n      - run: x\n"
+        "  echantillons:\n    runs-on: macos-latest\n    timeout-minutes: 40\n    steps:\n      - run: x\n"
+        f"  {AGREGAT}:\n    needs: [detection, unitaires, echantillons]\n    runs-on: ubuntu-latest\n"
+        "    steps:\n      - env:\n          BESOINS: ${{ toJSON(needs) }}\n        run: juger\n"
     )
     deux = conforme.replace("  detection:", "      - run: bash scripts/verifier-logo.sh\n  detection:")
     autre = conforme.replace(f"run: {ATTENDU}", "run: bash scripts/autre.sh")
@@ -70,6 +127,11 @@ def autotest() -> int:
         (autre, 1, "une étape qui n'est pas verifier-depot.sh"),
         (bloc, 1, "un bloc run: | qui pourrait enchaîner d'autres commandes"),
         (conforme.replace("  depot:", "  dépôt:"), 2, "un job introuvable"),
+        (conforme.replace("unitaires, echantillons]", "unitaires]"), 1, "un job macOS hors des needs"),
+        (conforme.replace("    timeout-minutes: 40\n", ""), 1, "un job macOS sans plafond"),
+        (conforme.replace("${{ toJSON(needs) }}", "${{ needs.unitaires.result }}"), 1, "un agrégat qui ne juge pas tout"),
+        (conforme.replace(f"  {AGREGAT}:", "  agregat:"), 2, "un agrégat introuvable"),
+        (conforme.replace("macos-latest", "ubuntu-latest"), 2, "aucun job macOS"),
     ]
     ko = [nom for texte, code, nom in cas if refus(texte)[0] != code]
     for nom in ko:

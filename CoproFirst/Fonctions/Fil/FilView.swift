@@ -18,10 +18,15 @@ struct FilView: View {
     @Environment(\.selectionsDeLaPage) private var selections
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var taille
+    @Environment(\.colonneDeFiche) private var colonne
 
-    /// Le logement va dans la barre, sauf aux tailles d'accessibilité : iOS y coincerait
-    /// le titre entre les deux côtés (`PastilleLogement`).
-    private var logementDansLaBarre: Bool { !taille.isAccessibilitySize }
+    /// Le logement va dans la barre sous un grand titre seulement : un titre en ligne (tailles
+    /// d'accessibilité) ou en tête (fiche ouverte à côté, la page à la largeur de sa liste)
+    /// partage la rangée de la barre — iOS y coinçait le titre, et iOS 26 y retirait le
+    /// logement (`PastilleLogement`, #279). Il passe alors sous le titre.
+    private var logementDansLaBarre: Bool {
+        TitreDeMenu.mode(colonneOuverte: colonne?.ouverte == true, taille: taille) == .grand
+    }
 
     private enum Phase: Equatable {
         case chargement, pret
@@ -40,8 +45,11 @@ struct FilView: View {
             memoire: "fil"
         ) {
             if enDoublePage {
-                PageDuJour(jours: jours, rang: $rangDuJour) { element in
-                    CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
+                VStack(spacing: 0) {
+                    if !logementDansLaBarre { logementSousLeTitre }
+                    PageDuJour(jours: jours, rang: $rangDuJour) { element in
+                        CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
+                    }
                 }
             } else {
                 fil
@@ -84,13 +92,16 @@ struct FilView: View {
         }
     }
 
+    /// Le logement quand la barre n'a pas de place pour lui (`logementDansLaBarre`).
+    private var logementSousLeTitre: some View {
+        PastilleLogement.Ligne(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
+    }
+
     /// Le fil, jour par jour : la liste de `ListeEtFiche`.
     private var fil: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 10, pinnedViews: [.sectionHeaders]) {
-                if !logementDansLaBarre {
-                    PastilleLogement.Ligne(profil: parcours.ouverteAJour?.profil) { parcours.onglet = "mon-lot" }
-                }
+                if !logementDansLaBarre { logementSousLeTitre }
                 if phase == .chargement {
                     Section {
                         squelette

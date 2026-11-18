@@ -18,7 +18,7 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer(["-compte", "resident"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         // La carte de l'Historique se lit d'un bloc (VoiceOver) : on cherche dans son libellé.
         let changement = app.descendants(matching: .any)
@@ -63,9 +63,9 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer(["-compte", "resident"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-        app.elementAcces("affaire.modifier").tap()
+        app.toucher(app.elementAcces("affaire.modifier"))
         XCTAssertTrue(app.elementAcces("modifier.contenuFige").apparait())
         let titreFige = NSPredicate(format: "identifier == %@ AND isEnabled == false", "modifier.titre")
         // Un `Form` ne crée pas ses lignes hors de l'écran : sur iPad, la feuille de formulaire
@@ -82,7 +82,7 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer()
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let suite = app.elementAcces("affaire.suite")
         XCTAssertTrue(suite.exists)
@@ -90,17 +90,17 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaire.repondre").exists, "le conseil ne répond pas, il suit")
         XCTAssertTrue(app.elementAcces("affaire.message.503").exists, "la note interne, au conseil")
 
-        suite.tap()
+        app.toucher(suite)
         let texte = app.elementAcces("suite.texte")
         XCTAssertTrue(texte.apparait())
-        texte.tap()
+        app.toucher(texte)
         texte.typeText("Le plombier est passé.")
         app.toucher(app.elementAcces("suite.enregistrer"))
         let ajoutee = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Le plombier est passé.")).firstMatch
         XCTAssertTrue(ajoutee.apparait(), "la suite rejoint l'Historique")
 
-        app.elementAcces("affaire.archiver").tap()
+        app.toucher(app.elementAcces("affaire.archiver"))
         let archivee = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Affaire archivée")).firstMatch
         XCTAssertTrue(archivee.apparait())
@@ -114,18 +114,18 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer()
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         let modifier = app.elementAcces("affaire.modifier")
         XCTAssertTrue(modifier.exists)
-        modifier.tap()
+        app.toucher(modifier)
 
         let titre = app.textFields["modifier.titre"]
         XCTAssertTrue(titre.apparait())
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
-        titre.tap()
+        app.toucher(titre)
         titre.typeText(" nord")
         app.toucher(enregistrer)
 
@@ -146,9 +146,9 @@ final class CartesDuFilUITests: XCTestCase {
             let app = lancer(arguments)
             let carte = app.buttons["fil.ticket_ouvert:41"]
             XCTAssertTrue(carte.apparait())
-            carte.tap()
+            app.toucher(carte)
             XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-            app.elementAcces("affaire.modifier").tap()
+            app.toucher(app.elementAcces("affaire.modifier"))
 
             let mode = app.elementAcces("modifier.modeSaisie")
             XCTAssertTrue(mode.apparait(), "la phrase dit la saisie")
@@ -159,7 +159,8 @@ final class CartesDuFilUITests: XCTestCase {
             XCTAssertTrue(question.apparait())
             // Les vignettes en grille : « Question » peut être sous le pli.
             for _ in 0..<6 where !question.isHittable { app.swipeUp() }
-            question.tap()
+            // Sous charge, un toucher se perd : la catégorie restait « sinistre », sans groupe (#282).
+            app.toucher(question, jusqua: app.elementRetenu("nouvelle.categorie.question"))
             let groupe = app.elementAcces("modifier.plusDeDetails")
             if essentielle {
                 // Un `Form` ne crée pas ses lignes hors de l'écran : sur un petit écran (celui de
@@ -184,7 +185,7 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer(["-delai-detail", "8000"])
         let carte = app.buttons["fil.ticket_ouvert:41"]
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         XCTAssertTrue(app.elementAcces("affaire.suite").exists)
         XCTAssertTrue(app.elementAcces("affaire.message.503").exists)
@@ -211,7 +212,7 @@ final class CartesDuFilUITests: XCTestCase {
         let app = lancer()
         let sondage = app.buttons["fil.sondage_ouvert:3"]
         XCTAssertTrue(sondage.apparait())
-        sondage.tap()
+        app.toucher(sondage)
         // La question, en tête de fiche : les choix du vote peuvent être sous l'écran, les
         // résultats provisoires au-dessus d'eux (#257), et une liste ne garde que ses rangées visibles.
         XCTAssertTrue(app.elementAcces("sondage.question").apparait())
@@ -219,12 +220,11 @@ final class CartesDuFilUITests: XCTestCase {
 
         let document = app.buttons["fil.document:7"]
         XCTAssertTrue(document.apparait())
-        document.tap()
+        app.toucher(document)
         // Poussé (iPhone) : son titre à la barre ; à côté du fil (iPad, #222) : sa carte choisie.
         let ouvert =
             aCote(app)
-            ? app.buttons.matching(NSPredicate(format: "identifier == %@ AND isSelected == true", "fil.document:7"))
-                .firstMatch
+            ? app.elementRetenu("fil.document:7")
             : app.navigationBars["Procès-verbal de l'assemblée générale"]
         XCTAssertTrue(ouvert.apparait())
         revenirAuFil(app)
@@ -232,7 +232,7 @@ final class CartesDuFilUITests: XCTestCase {
         let point = app.buttons["fil.point_conseil:2"]
         if !point.isHittable { app.swipeUp() }
         XCTAssertTrue(point.apparait())
-        point.tap()
+        app.toucher(point)
         XCTAssertTrue(
             app.staticTexts["Ordre du jour : ascenseur, ravalement, contrat d'entretien."].apparait())
     }
