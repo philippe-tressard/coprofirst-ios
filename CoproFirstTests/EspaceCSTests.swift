@@ -91,7 +91,23 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func lesOngletsSuiventLOrdreDuSite() {
     let ids = OngletsDuSite.ouverts(page: "espace-cs", droits: droits(["conseil_syndical"])).map(\.id)
-    #expect(ids == ["validations", "badges", "reporting", "annonces-hall", "annuaire", "courriels"])
+    #expect(ids == ["validations", "badges", "reporting", "annonces-hall", "ecrans", "annuaire", "courriels"])
+}
+
+/// Les écrans du hall restent au site (PARITE.md) : la barre de l'app ne les offre pas,
+/// « Sur le site » y renvoie par leur adresse — jamais « Bientôt ».
+@MainActor
+@Test func lesEcransDuHallPassentParSurLeSite() {
+    let page = PageAOnglets(
+        id: "espace-cs", ecrans: OngletsEspaceCS.ecrans, descriptifs: TablesEspaceCS.descriptifs,
+        reserve: TextesEspaceCS.reserve, routes: TablesEspaceCS.routes)
+    let ouverts = OngletsDuSite.ouverts(page: "espace-cs", droits: droits(["conseil_syndical"]))
+    #expect(page.barre(ouverts).map(\.id)
+        == ["validations", "badges", "reporting", "annonces-hall", "annuaire", "courriels", OngletDuSite.surLeSite.id])
+    #expect(page.ailleurs(ouverts).map(\.id) == ["ecrans"])
+    for onglet in OngletsDuSite.parPage["espace-cs"] ?? [] {
+        #expect(TablesEspaceCS.routes[onglet.id] != nil, "« \(onglet.id) » sans adresse")
+    }
 }
 
 @Test func chaqueOngletADesDescriptifsDuSite() {

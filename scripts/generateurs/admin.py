@@ -17,7 +17,7 @@
 
 from __future__ import annotations
 
-from generateurs._commun import FONCTIONS, chaine, ecrire_table
+from generateurs._commun import FONCTIONS, chaine, dictionnaire, ecrire_table, page_a_onglets
 
 SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas dans les sources
 
@@ -25,22 +25,8 @@ SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas
 TABLES = ("pages", "libellesTache", "statutsTache", "attributsRole", "attributsStatut")
 
 
-def _dictionnaire(nom: str, valeurs: list[tuple[str, str]], doc: str) -> str:
-    return (
-        f"    /// {doc}\n"
-        f"    static let {nom}: [String: String] = [\n"
-        + "".join(f"        {chaine(c)}: {chaine(v)},\n" for c, v in valeurs)
-        + "    ]\n"
-    )
-
-
 def generer(ctx) -> str:
-    page = next((p for p in ctx.table("pages") if p.get("id") == "admin"), None)
-    if page is None:
-        raise SystemExit("❌ la page admin a disparu de la table pages")
-    onglets = page.get("onglets") or []
-    if any(not o.get("route") for o in onglets):
-        raise SystemExit("❌ un onglet de la page admin n'a plus d'adresse (`route`) — l'app doit l'apprendre")
+    onglets, onglets_lus = page_a_onglets(ctx, "admin")
     libelles = ctx.table("libellesTache")
     if not isinstance(libelles, dict) or not all(isinstance(v, str) for v in libelles.values()):
         raise SystemExit("❌ la table libellesTache change de forme")
@@ -54,24 +40,21 @@ def generer(ctx) -> str:
             or not all(isinstance(s.get("abrege"), str) for s in statuts_compte.values()):
         raise SystemExit("❌ la table attributsRole ou attributsStatut change de forme")
     corps = (
-        _dictionnaire("descriptifs", [(o["id"], o["descriptif"]) for o in onglets if o.get("descriptif")],
-                      "Le descriptif de chaque onglet de la page `admin` (texte du site).")
-        + _dictionnaire("routes", [(o["id"], o["route"]) for o in onglets],
-                        "L'adresse de chaque onglet sur le site, sous celle de la résidence.")
-        + _dictionnaire("libellesTache", list(libelles.items()),
-                        "Le nom de chaque tâche planifiée (`LIBELLE_TACHE`), par son code servi.")
-        + _dictionnaire("libellesStatut", [(c, s["libelle"]) for c, s in statuts.items()],
-                        "Le libellé de chaque statut de santé d'une tâche.")
-        + _dictionnaire("aidesStatut", [(c, s["aide"]) for c, s in statuts.items()],
-                        "Ce que chaque statut veut dire, en une phrase du site.")
-        + _dictionnaire("teintesStatut", [(c, s["classe"]) for c, s in statuts.items()],
-                        "La teinte de chaque statut : la classe `badge-*` du site (`PastilleTeinte`).")
-        + _dictionnaire("teintesRole", [(c, r["badge"]) for c, r in roles.items()],
-                        "La teinte d'un rôle (`BADGE_ROLE`) ; gris pour une clé inconnue.")
-        + _dictionnaire("teintesStatutCompte", [(c, r["badge"]) for c, r in statuts_compte.items()],
-                        "La teinte d'un statut de compte (`BADGE_STATUT`) ; gris pour une clé inconnue.")
-        + _dictionnaire("abregesStatutCompte", [(c, r["abrege"]) for c, r in statuts_compte.items()],
-                        "Un statut de compte abrégé, pour une liste dense (`LIBELLES_STATUT_ABREGE`).")
+        onglets_lus
+        + dictionnaire("libellesTache", list(libelles.items()),
+                       "Le nom de chaque tâche planifiée (`LIBELLE_TACHE`), par son code servi.")
+        + dictionnaire("libellesStatut", [(c, s["libelle"]) for c, s in statuts.items()],
+                       "Le libellé de chaque statut de santé d'une tâche.")
+        + dictionnaire("aidesStatut", [(c, s["aide"]) for c, s in statuts.items()],
+                       "Ce que chaque statut veut dire, en une phrase du site.")
+        + dictionnaire("teintesStatut", [(c, s["classe"]) for c, s in statuts.items()],
+                       "La teinte de chaque statut : la classe `badge-*` du site (`PastilleTeinte`).")
+        + dictionnaire("teintesRole", [(c, r["badge"]) for c, r in roles.items()],
+                       "La teinte d'un rôle (`BADGE_ROLE`) ; gris pour une clé inconnue.")
+        + dictionnaire("teintesStatutCompte", [(c, r["badge"]) for c, r in statuts_compte.items()],
+                       "La teinte d'un statut de compte (`BADGE_STATUT`) ; gris pour une clé inconnue.")
+        + dictionnaire("abregesStatutCompte", [(c, r["abrege"]) for c, r in statuts_compte.items()],
+                       "Un statut de compte abrégé, pour une liste dense (`LIBELLES_STATUT_ABREGE`).")
         + "    /// Les statuts de compte dans l'ordre du site : le filtre « Type » des utilisateurs.\n"
         + f"    static let ordreStatutsCompte: [String] = [{', '.join(chaine(c) for c in statuts_compte)}]\n"
     )

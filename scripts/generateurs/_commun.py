@@ -179,6 +179,36 @@ def ecrire_table(ctx: Contexte, relatif: pathlib.Path, source: str, nom: str, do
     ctx.ecrire(relatif, texte)
 
 
+def dictionnaire(nom: str, valeurs: list[tuple[str, str]], doc: str) -> str:
+    """Un `static let nom: [String: String]` généré, sa doc au-dessus."""
+    return (
+        f"    /// {doc}\n"
+        f"    static let {nom}: [String: String] = [\n"
+        + "".join(f"        {chaine(c)}: {chaine(v)},\n" for c, v in valeurs)
+        + "    ]\n"
+    )
+
+
+def page_a_onglets(ctx: Contexte, page_id: str) -> tuple[list[dict], str]:
+    """Les onglets d'une page du site (table `pages`), et le descriptif et l'adresse de
+    chacun, générés (`descriptifs`, `routes`) : « Sur le site » renvoie par l'adresse à
+    ceux que l'app ne porte pas (`PageAOnglets.routes`). Un onglet sans adresse arrête
+    la génération."""
+    page = next((p for p in ctx.table("pages") if p.get("id") == page_id), None)
+    if page is None:
+        raise SystemExit(f"❌ la page {page_id} a disparu de la table pages")
+    onglets = page.get("onglets") or []
+    if any(not o.get("route") for o in onglets):
+        raise SystemExit(f"❌ un onglet de la page {page_id} n'a plus d'adresse (`route`) — l'app doit l'apprendre")
+    corps = (
+        dictionnaire("descriptifs", [(o["id"], o["descriptif"]) for o in onglets if o.get("descriptif")],
+                     f"Le descriptif de chaque onglet de la page `{page_id}` (texte du site).")
+        + dictionnaire("routes", [(o["id"], o["route"]) for o in onglets],
+                       "L'adresse de chaque onglet sur le site, sous celle de la résidence.")
+    )
+    return onglets, corps
+
+
 def chaine(valeur) -> str:
     """Un littéral de chaîne Swift."""
     texte = str(valeur).replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n")

@@ -18,6 +18,16 @@ enum TablesEspaceCS {
         "annuaire": "Coordonnées des membres du CS et du syndic.",
         "courriels": "Ce que le site a fait de chaque message reçu à l'adresse des affaires — réponses du syndic, fils transférés par le conseil : ajouté à une affaire, refusé ou ignoré, et pourquoi. Un message refusé se corrige puis se transfère de nouveau.",
     ]
+    /// L'adresse de chaque onglet sur le site, sous celle de la résidence.
+    static let routes: [String: String] = [
+        "validations": "/espace-cs",
+        "badges": "/espace-cs/badges",
+        "reporting": "/espace-cs/reporting",
+        "annonces-hall": "/espace-cs/annonces-hall",
+        "ecrans": "/espace-cs/ecrans",
+        "annuaire": "/espace-cs/annuaire",
+        "courriels": "/espace-cs/courriels",
+    ]
     /// Les civilités d'une fiche de l'annuaire, dans l'ordre du site (`CIVILITES`).
     static let civilites: [String] = ["Mme", "Mlle", "Mr"]
 }

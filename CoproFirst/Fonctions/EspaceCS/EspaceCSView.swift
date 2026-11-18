@@ -22,7 +22,7 @@ struct EspaceCSView: View {
             contexte: contexte,
             page: PageAOnglets(
                 id: "espace-cs", ecrans: OngletsEspaceCS.ecrans, descriptifs: TablesEspaceCS.descriptifs,
-                reserve: TextesEspaceCS.reserve))
+                reserve: TextesEspaceCS.reserve, routes: TablesEspaceCS.routes))
     }
 }
 
