@@ -12,15 +12,34 @@ extension View {
     func titreDeMenu() -> some View { modifier(TitreDeMenu()) }
 }
 
-private struct TitreDeMenu: ViewModifier {
+struct TitreDeMenu: ViewModifier {
     @Environment(\.dynamicTypeSize) private var tailleTexte
     @Environment(\.colonneDeFiche) private var colonne
 
+    /// UN modificateur, jamais un `if` sur la colonne : deux branches donnent à la page deux
+    /// identités — la colonne qui s'ouvre la recréait, sa liste refermait la colonne en
+    /// disparaissant, et l'ordre apparition/disparition décidait d'une boucle sans fin (fil
+    /// principal occupé, échantillon iPad de la CI, #279).
     func body(content: Content) -> some View {
-        if colonne?.ouverte == true {
-            content.toolbarTitleDisplayMode(.inlineLarge)
-        } else {
-            content.navigationBarTitleDisplayMode(tailleTexte.isAccessibilitySize ? .inline : .large)
+        let mode = TitreDeMenu.mode(colonneOuverte: colonne?.ouverte == true, taille: tailleTexte)
+        content.toolbarTitleDisplayMode(mode.barre)
+    }
+
+    /// `ToolbarTitleDisplayMode` ne se compare pas : le choix se dit ici, et se teste.
+    enum Mode: Equatable {
+        case grand, enLigne, enTete
+
+        var barre: ToolbarTitleDisplayMode {
+            switch self {
+            case .grand: .large
+            case .enLigne: .inline
+            case .enTete: .inlineLarge
+            }
         }
+    }
+
+    static func mode(colonneOuverte: Bool, taille: DynamicTypeSize) -> Mode {
+        if colonneOuverte { return .enTete }
+        return taille.isAccessibilitySize ? .enLigne : .grand
     }
 }

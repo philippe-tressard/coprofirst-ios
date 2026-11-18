@@ -34,6 +34,15 @@ struct ListeEtFicheTests {
         #expect(Disposition.pour(.regular, colonneFournie: false) == .coteACote, "sans colonne : le repli")
     }
 
+    /// Le titre d'un menu se règle par UN modificateur, la colonne ouverte ou non (#279) :
+    /// un `if` donnait deux identités à la page, qui bouclait en s'ouvrant.
+    @MainActor @Test func leTitreDeMenuSuitLaColonneEtLaTaille() {
+        #expect(TitreDeMenu.mode(colonneOuverte: true, taille: .large) == .enTete, "une fiche à côté")
+        #expect(TitreDeMenu.mode(colonneOuverte: true, taille: .accessibility3) == .enTete)
+        #expect(TitreDeMenu.mode(colonneOuverte: false, taille: .large) == .grand)
+        #expect(TitreDeMenu.mode(colonneOuverte: false, taille: .accessibility3) == .enLigne, "le très grand texte")
+    }
+
     /// Une liste qui disparaît après l'apparition de la suivante ne ferme pas la colonne
     /// de celle-ci (Liste → Archives, un onglet qui change).
     @MainActor @Test func uneSeuleListeOccupeLaColonne() {

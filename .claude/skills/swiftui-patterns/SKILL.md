@@ -319,3 +319,13 @@ seule la CI le dit.
    Xcode, il arrête le passage AVANT le build, INCONNU, avec cette commande (le script
    ne régénère pas lui-même). Sans `DESTINATION`, le
    simulateur est choisi et nommé par `scripts/destination-simulateur.sh` (#112).
+7. **Un rouge ne se range dans « runner saturé » qu'après comparaison avec `main`,
+   sur le même test** : signature et durées, journal contre journal. Si « App event loop
+   idle notification not received » ou « main thread busy » frappe tous les tests d'un
+   même écran, alors que `main` les passe sans ce signal, c'est l'app qui tourne en boucle
+   (#279). Le poste, sous une autre version d'iOS, peut rester vert (#287) : la boucle se
+   prouve par une trace (`print` temporaire, `simctl launch --console-pty`). La cause
+   type : un `if` sur un état dans un `ViewModifier` qui enveloppe une page. Chaque
+   branche donne à la page une autre identité ; quand l'état change, la page se recrée,
+   avec ses `@State`, ses `onAppear` et ses `onDisappear`. Un seul modificateur, avec une
+   valeur calculée (`TitreDeMenu.mode`).
