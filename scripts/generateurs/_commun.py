@@ -73,7 +73,7 @@ class Contexte:
         return fichier_du_site(commit, chemin)
 
     def lire(self, relatif: str) -> str:
-        """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/pages.ts`) — jamais
+        """Un fichier de coprofirst, relatif à sa racine (`front/src/lib/tickets.ts`) — jamais
         un fichier dont la release publie les constantes : `ctx.constante` (#237)."""
         if self.version.joint("constantes-clients.json"):
             publiees = [n for n, c in _constantes_clients(self.version).items()
