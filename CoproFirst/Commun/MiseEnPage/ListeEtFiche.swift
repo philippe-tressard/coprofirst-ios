@@ -6,9 +6,9 @@ import SwiftUI
 /// Une liste et la fiche de l'élément choisi (#222), écrit UNE fois pour tous les écrans
 /// liste → fiche — et pour le carnet de l'iPhone pliable (#119), qui le reprend.
 ///
-/// - **Classe compacte** (iPhone, iPad en Split View étroit) : la pile d'aujourd'hui, la
-///   fiche poussée par-dessus la liste (`navigationDestination(item:)`).
-/// - **Classe régulière** (iPad, pliable déplié) : la liste à gauche, la fiche à droite,
+/// - **Classe compacte** (iPhone, iPad en Split View étroit ou en portrait — `ClasseDeLaPage`) :
+///   la pile d'aujourd'hui, la fiche poussée par-dessus la liste (`navigationDestination(item:)`).
+/// - **Classe régulière** (iPad en paysage, pliable déplié) : la liste à gauche, la fiche à droite,
 ///   dans la COLONNE DE FICHE que fournit la page (`ColonneDeFiche`) — une pile sœur de
 ///   la sienne : son titre, sa barre d'outils et ce qu'elle pousse restent dans sa
 ///   colonne, la liste ne se perd pas, sa rangée soulignée (`rangeeChoisie`). Rien de

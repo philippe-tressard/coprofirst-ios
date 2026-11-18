@@ -135,9 +135,11 @@ barre du bas suit l'ordre réglé par l'administration de la résidence
 (`pages_order`) ; les entrées non livrées annoncent « Bientôt ». **Sur iPad** en plein
 écran (#221), une barre latérale liste toutes les pages, puis Profil et À propos ; en
 Split View étroit, la barre du bas revient — la page ouverte reste ouverte au passage.
-Une liste et la fiche qu'elle ouvre s'y tiennent côte à côte (#222) : Mes affaires,
-le fil, Ma résidence (documents, carnet, règlement, syndic), les annonces, les
-documents des contrats, les courriels et le reporting de l'Espace CS.
+En paysage, une liste et la fiche qu'elle ouvre s'y tiennent côte à côte (#222) : Mes
+affaires, le fil, Ma résidence (documents, carnet, règlement, syndic), les annonces, les
+documents des contrats, les courriels et le reporting de l'Espace CS ; en portrait, deux
+colonnes seulement, la barre et la page, dont la liste ouvre sa fiche par-dessus elle,
+comme sur l'iPhone.
 **Sur l'iPhone pliable** ouvert (#119, en cours), l'app se lit comme un carnet : les
 pages en intercalaires sur la tranche droite, le fil une journée par double page (la
 fiche ouverte en face) ; la page et la fiche ouvertes s'y retrouvent après un arrêt par

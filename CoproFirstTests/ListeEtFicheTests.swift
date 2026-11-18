@@ -34,6 +34,16 @@ struct ListeEtFicheTests {
         #expect(Disposition.pour(.regular, colonneFournie: false) == .coteACote, "sans colonne : le repli")
     }
 
+    /// L'iPad en portrait : deux colonnes, la page en classe compacte ; en paysage, liste et
+    /// fiche côte à côte. Liste, fiche et barre en portrait étaient illisibles.
+    @Test func laPageDeLaBarreEstCompacteEnPortrait() {
+        #expect(ClasseDeLaPage.pour(CGSize(width: 820, height: 1180)) == .compact, "iPad 11 pouces en portrait")
+        #expect(ClasseDeLaPage.pour(CGSize(width: 1032, height: 1376)) == .compact, "iPad 13 pouces en portrait")
+        #expect(ClasseDeLaPage.pour(CGSize(width: 1180, height: 820)) == .regular, "en paysage : rien ne change")
+        #expect(ClasseDeLaPage.pour(.zero) == .regular, "pas encore mesurée : la classe de la barre")
+        #expect(Disposition.pour(ClasseDeLaPage.pour(CGSize(width: 820, height: 1180)), colonneFournie: true) == .pile)
+    }
+
     /// Le titre d'un menu se règle par UN modificateur, la colonne ouverte ou non (#279) :
     /// un `if` donnait deux identités à la page, qui bouclait en s'ouvrant.
     @MainActor @Test func leTitreDeMenuSuitLaColonneEtLaTaille() {
