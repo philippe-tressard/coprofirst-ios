@@ -143,8 +143,8 @@ documents des contrats, les courriels et le reporting de l'Espace CS.
 **Sur l'iPhone pliable** ouvert (#119, livré par #275), l'app se lit comme un carnet : les
 pages en intercalaires sur la tranche droite, le fil une journée par double page (la
 fiche ouverte en face) ; la page et la fiche ouvertes s'y retrouvent après un arrêt par
-iOS ; plié, la barre du bas. Restent la semaine, ouverte d'un pincement (#277, qui attend
-que le plancher serve la période), et les documents en double page (#278).
+iOS ; plié, la barre du bas. Restent la semaine, ouverte d'un pincement (#277 ; le
+plancher sert la période depuis v3.117.0), et les documents en double page (#278).
 **Notifications** : la cloche de chaque écran. Le push est une fonction à venir, pour les
 alertes sonores qu'émet le syndic (#283) : l'offre « Être averti sur ce téléphone »
 (#17) existe, mais ne délivre rien tant que le relais de la plateforme n'est pas branché
