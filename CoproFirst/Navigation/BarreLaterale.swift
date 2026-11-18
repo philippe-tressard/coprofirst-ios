@@ -12,9 +12,8 @@ import SwiftUI
 /// visibles en portrait (`.all`, `.balanced`) : aucune page n'est derrière un geste ; le
 /// bouton du système replie la barre pour qui veut toute la largeur.
 ///
-/// En PORTRAIT, deux colonnes et pas trois : la barre et la page, la page en classe
-/// compacte (`ClasseDeLaPage`) — sa liste ouvre sa fiche par-dessus elle, comme sur
-/// l'iPhone. Liste et fiche côte à côte n'y laissaient à chacune qu'un tiers d'écran,
+/// En PORTRAIT, deux colonnes et pas trois : la barre et la page, dont la liste ouvre sa
+/// fiche par-dessus elle, comme sur l'iPhone (`FicheParDessus`). Liste et fiche côte à côte n'y laissaient à chacune qu'un tiers d'écran,
 /// illisible. En paysage, rien ne change : liste et fiche côte à côte (#222).
 struct BarreLaterale: View {
     let pages: [PageDeNavigation]
@@ -43,10 +42,10 @@ struct BarreLaterale: View {
             .navigationBarTitleDisplayMode(.inline)
         } detail: {
             PageRetenue(pages: pages, installation: installation)
-                .environment(\.horizontalSizeClass, ClasseDeLaPage.pour(fenetre))
+                .environment(\.ficheParDessus, FicheParDessus.enPortrait(fenetre))
         }
         .navigationSplitViewStyle(.balanced)
-        .onGeometryChange(for: CGSize.self, of: ClasseDeLaPage.fenetre) { fenetre = $0 }
+        .onGeometryChange(for: CGSize.self, of: FicheParDessus.fenetre) { fenetre = $0 }
     }
 
     /// La sélection de la liste, c'est l'onglet du parcours : la porte d'un lien et le
@@ -64,24 +63,3 @@ struct BarreLaterale: View {
     }
 }
 
-/// La classe de taille que la barre latérale donne à sa page : régulière en paysage (liste
-/// et fiche côte à côte), compacte en portrait (la fiche par-dessus la liste). Une fenêtre
-/// pas encore mesurée garde la classe régulière : celle de la barre elle-même.
-enum ClasseDeLaPage {
-    static func pour(_ fenetre: CGSize) -> UserInterfaceSizeClass {
-        fenetre.height > fenetre.width ? .compact : .regular
-    }
-
-    /// La fenêtre ENTIÈRE, marges sûres rendues : le clavier d'une feuille en est une, et
-    /// sa hauteur retranchée faisait passer un iPad en portrait pour un paysage — la page
-    /// repassait côte à côte, la fiche poussée disparaissait sous la saisie.
-    static func fenetre(_ cadre: GeometryProxy) -> CGSize {
-        fenetre(cadre.size, marges: cadre.safeAreaInsets)
-    }
-
-    static func fenetre(_ taille: CGSize, marges: EdgeInsets) -> CGSize {
-        CGSize(
-            width: taille.width + marges.leading + marges.trailing,
-            height: taille.height + marges.top + marges.bottom)
-    }
-}

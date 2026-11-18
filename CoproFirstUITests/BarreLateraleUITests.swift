@@ -56,7 +56,7 @@ final class BarreLateraleUITests: XCTestCase {
     /// pastille de la résidence et la cloche restent dans la barre du fil. La fiche ouverte à
     /// côté, le titre se pose dans la barre : le logement passe dessous (iOS 26 l'y retirait, #279).
     /// En paysage : en portrait, la fiche est poussée, le titre est grand, le logement dans la
-    /// barre comme sur l'iPhone (`ClasseDeLaPage`).
+    /// barre comme sur l'iPhone (`FicheParDessus`).
     @MainActor
     func testLeLogementOuvreSaPageDansLaBarreLaterale() throws {
         XCUIDevice.shared.orientation = .landscapeLeft

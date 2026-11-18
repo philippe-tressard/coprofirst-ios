@@ -6,7 +6,7 @@ import XCTest
 /// La liste et la fiche côte à côte, sur iPad en plein écran et EN PAYSAGE — classe de
 /// taille régulière (#222) : la fiche s'ouvre à droite, la liste reste, sa carte soulignée.
 /// En portrait, deux colonnes seulement : la barre et la page, la fiche poussée par-dessus
-/// la liste comme sur l'iPhone (`ClasseDeLaPage`) — `testEnPortrait…`.
+/// la liste comme sur l'iPhone (`FicheParDessus`) — `testEnPortrait…`.
 ///
 /// Sautés sur iPhone : le test choisit son appareil, l'app ne lit que la classe de taille
 /// et la forme de la fenêtre. Sur iPhone, les tests d'Affaires et du Fil prouvent la pile.
@@ -22,9 +22,9 @@ final class ListeEtFicheUITests: XCTestCase {
         super.tearDown()
     }
 
-    private func lancer(_ ecran: String) -> XCUIApplication {
+    private func lancer(_ ecran: String, compte: String? = nil) -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-api-simulee", "-ecran", ecran]
+        app.launchArguments = ["-api-simulee", "-ecran", ecran] + (compte.map { ["-compte", $0] } ?? [])
         app.launch()
         return app
     }
@@ -174,8 +174,23 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("affaires.carte.A-0040").exists, "la liste est sous la fiche")
         capture("affaires-portrait-fiche", app)
 
-        // Le clavier d'une feuille ne fait pas passer le portrait pour un paysage : la fiche
-        // poussée reste sous la saisie, et après.
+        app.toucher(app.navigationBars["A-0041"].buttons.firstMatch)
+        XCTAssertTrue(app.elementAcces("affaires.carte.A-0040").apparait(), "le retour rend la liste")
+    }
+
+    /// Le fil en portrait : la carte touchée ouvre sa fiche par-dessus le fil, et le clavier
+    /// d'une feuille ne fait pas passer le portrait pour un paysage — la fiche reste poussée.
+    @MainActor
+    func testEnPortraitLeFilPousseSaFiche() throws {
+        XCUIDevice.shared.orientation = .portrait
+        let app = lancer("fil", compte: "resident")
+        let affaire = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(affaire.apparait())
+        capture("fil-portrait", app)
+        app.toucher(affaire)
+        XCTAssertTrue(app.navigationBars["A-0041"].apparait(), "la fiche poussée par-dessus le fil")
+        XCTAssertFalse(affaire.exists, "le fil est sous la fiche")
+
         app.toucher(app.elementAcces("affaire.repondre"))
         let texte = app.elementAcces("repondre.texte")
         XCTAssertTrue(texte.apparait())
@@ -183,21 +198,5 @@ final class ListeEtFicheUITests: XCTestCase {
         app.toucher(app.elementAcces("repondre.envoyer"))
         XCTAssertTrue(app.elementAcces("affaire.repondre").apparait(), "la feuille se referme sur la fiche")
         XCTAssertTrue(app.navigationBars["A-0041"].exists, "la fiche est restée poussée")
-
-        app.toucher(app.navigationBars["A-0041"].buttons.firstMatch)
-        XCTAssertTrue(app.elementAcces("affaires.carte.A-0040").apparait(), "le retour rend la liste")
-    }
-
-    /// Le fil en portrait : la carte touchée ouvre sa fiche par-dessus le fil.
-    @MainActor
-    func testEnPortraitLeFilPousseSaFiche() throws {
-        XCUIDevice.shared.orientation = .portrait
-        let app = lancer("fil")
-        let affaire = app.buttons["fil.ticket_ouvert:41"]
-        XCTAssertTrue(affaire.apparait())
-        capture("fil-portrait", app)
-        app.toucher(affaire)
-        XCTAssertTrue(app.navigationBars["A-0041"].apparait(), "la fiche poussée par-dessus le fil")
-        XCTAssertFalse(affaire.exists, "le fil est sous la fiche")
     }
 }

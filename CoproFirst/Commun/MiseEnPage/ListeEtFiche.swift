@@ -6,8 +6,9 @@ import SwiftUI
 /// Une liste et la fiche de l'élément choisi (#222), écrit UNE fois pour tous les écrans
 /// liste → fiche — et pour le carnet de l'iPhone pliable (#119), qui le reprend.
 ///
-/// - **Classe compacte** (iPhone, iPad en Split View étroit ou en portrait — `ClasseDeLaPage`) :
-///   la pile d'aujourd'hui, la fiche poussée par-dessus la liste (`navigationDestination(item:)`).
+/// - **Classe compacte** (iPhone, iPad en Split View étroit), **et l'iPad en portrait**
+///   (`FicheParDessus`) : la pile, la fiche poussée par-dessus la liste
+///   (`navigationDestination(item:)`).
 /// - **Classe régulière** (iPad en paysage, pliable déplié) : la liste à gauche, la fiche à droite,
 ///   dans la COLONNE DE FICHE que fournit la page (`ColonneDeFiche`) — une pile sœur de
 ///   la sienne : son titre, sa barre d'outils et ce qu'elle pousse restent dans sa
@@ -31,6 +32,7 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
     let vide: Vide
     @Environment(\.horizontalSizeClass) private var classe
     @Environment(\.colonneDeFiche) private var colonne
+    @Environment(\.ficheParDessus) private var parDessus
     @Environment(\.selectionsDeLaPage) private var selections
     @Environment(\.palette) private var palette
     /// Qui occupe la colonne de fiche : cette liste, tant qu'elle est à l'écran.
@@ -103,7 +105,7 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
         selections.memoire.noter(choisi, sous: selections.cle(memoire))
     }
 
-    private var disposition: Disposition { .pour(classe, colonneFournie: colonne != nil) }
+    private var disposition: Disposition { .pour(classe, colonneFournie: colonne != nil, parDessus: parDessus) }
 
     /// La liste, et ce que ses `LienDeFiche` choisissent : un autre type que `Element`
     /// est une erreur d'écriture, pas un choix.
@@ -149,15 +151,15 @@ struct ListeEtFiche<Element: Hashable, Liste: View, Fiche: View, Vide: View>: Vi
 
 /// Où va la fiche d'une `ListeEtFiche` — décidé sur la classe de taille seule.
 enum Disposition: Equatable {
-    /// Poussée par-dessus la liste (classe compacte : iPhone, Split View étroit).
+    /// Poussée par-dessus la liste (classe compacte : iPhone, Split View étroit ; iPad en portrait).
     case pile
     /// Dans la colonne de fiche de la page, pile sœur à droite de la liste.
     case colonne
     /// À côté de la liste, dans la pile de la page : le repli sans colonne fournie.
     case coteACote
 
-    static func pour(_ classe: UserInterfaceSizeClass?, colonneFournie: Bool) -> Self {
-        guard classe == .regular else { return .pile }
+    static func pour(_ classe: UserInterfaceSizeClass?, colonneFournie: Bool, parDessus: Bool = false) -> Self {
+        guard classe == .regular, !parDessus else { return .pile }
         return colonneFournie ? .colonne : .coteACote
     }
 }

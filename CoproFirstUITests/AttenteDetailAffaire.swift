@@ -29,7 +29,7 @@ extension XCUIApplication {
 
 extension XCUIApplication {
     /// Une fiche s'ouvre-t-elle à côté de sa liste ? Comme l'app le décide : la fenêtre en
-    /// classe régulière ET plus large que haute (`ClasseDeLaPage`) — en portrait, l'iPad
+    /// classe régulière ET plus large que haute (`FicheParDessus`) — en portrait, l'iPad
     /// pousse la fiche par-dessus la liste, comme l'iPhone. Jamais l'appareil.
     @MainActor
     var ficheACote: Bool {
