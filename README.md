@@ -149,13 +149,19 @@ l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écr
 gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la session
 reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
 la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
+**Installation suspendue** par la référence (Registre R6, #262, contrat 2.5.0) : en lecture
+seule, le bandeau du site le dit sous la barre de chaque page, à la connexion et au
+retour ; un geste
+refusé (403, ou 409 au sixième compte du mode limité) dit la phrase du serveur, mot pour
+mot. Le **carnet d'entretien** marque « À venir » un contrat qui n'a pas commencé (#259).
 
 **Mesure d'audience** (coprofirst#2726, #198, contrat 1.31.0) : chaque écran vu part à la
 résidence sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`)
 et le canal « App iPhone », par lots de 20 au plus, toutes les 30 s et au passage en
 arrière-plan — comme le site, que le tableau de bord mêle alors à l'app. Rien ne part si le
 compte l'a refusée au Profil, ni vers une résidence antérieure au contrat 1.31.0 (elle
-compterait l'app comme le site), ni hors ligne ; aucun identifiant d'appareil. L'onglet
+compterait l'app comme le site), ni hors ligne ; aucun identifiant d'appareil, seulement sa classe — iPhone, iPad, Mac,
+Vision Pro (coprofirst#2774, #229). L'onglet
 Télémétrie montre la répartition servie : « Accès : site ou application », et l'accès de
 chaque page quand la période en a plusieurs.
 
