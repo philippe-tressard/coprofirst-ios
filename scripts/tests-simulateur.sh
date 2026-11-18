@@ -46,6 +46,11 @@
 # `APPAREIL=montre` pour une Apple Watch Series et le schéma CoproFirstWatch (#226) ;
 # `DESTINATION` fixée l'emporte sur l'appareil.
 #
+# Système (#287) : au poste, le plus récent installé ; `OS_SIMULATEUR=ci` joue celui de la
+# CI (`OS_SIMULATEUR_CI` d'outillage.env), `OS_SIMULATEUR=26.5` une version nommée. La CI
+# joue toujours le sien. Le résumé nomme le système joué et celui de la CI : le 17/11/2026,
+# #279 était vert sous 27.2 au poste et rouge sous 26.5 en CI.
+#
 # Arguments : passés au premier `xcodebuild test`, pour un passage partiel au poste
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
 # `--autotest` rejoue tout cela avec un faux xcodebuild
@@ -68,6 +73,9 @@ case "${APPAREIL:-iphone}" in
   *) SCHEMA=${SCHEMA:-CoproFirst} ;;
 esac
 SOURCES_TESTS=${SOURCES_TESTS:-CoproFirstTests CoproFirstUITests}
+OS_CI=$(sed -n 's/^OS_SIMULATEUR_CI=//p' outillage.env 2>/dev/null)
+# En CI, le système déclaré, jamais celui que l'image du runner met en tête (#287).
+[ "${GITHUB_ACTIONS:-}" != true ] || OS_SIMULATEUR=${OS_SIMULATEUR:-ci}
 A_ETEINDRE=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
 source scripts/verrou-simulateur.sh
@@ -162,6 +170,12 @@ verifier_filtres() {
   return "$sortie"
 }
 
+# La ligne « Système » du résumé : le système de l'appareil joué, et celui de la CI (#287).
+systeme_joue() {
+  "$XCRUN" simctl list devices -j 2>/dev/null \
+    | python3 -I scripts/destination_simulateur.py --systeme "${DESTINATION##*id=}" "$OS_CI"
+}
+
 mesurer() {
   [ "$MESURER" = 1 ] || { echo "Mesure du runner : sautée (MESURER=0)."; return; }
   local fin
@@ -203,18 +217,27 @@ passer() {
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then
     # APPAREIL=ipad : un iPad Pro 13 pouces de série (#220) ; tv : une Apple TV (#218) ;
-    # montre : une Apple Watch Series (#226).
+    # montre : une Apple Watch Series (#226). OS_SIMULATEUR : le système (#287).
+    local choix=() systeme=${OS_SIMULATEUR:-}
     case "${APPAREIL:-iphone}" in
-      iphone) DESTINATION=$(bash scripts/destination-simulateur.sh) || return 1 ;;
-      ipad) DESTINATION=$(bash scripts/destination-simulateur.sh --ipad) || return 1 ;;
-      tv) DESTINATION=$(bash scripts/destination-simulateur.sh --tv) || return 1 ;;
-      montre) DESTINATION=$(bash scripts/destination-simulateur.sh --montre) || return 1 ;;
+      iphone) ;;
+      ipad | tv | montre) choix=("--$APPAREIL") ;;
       *) echo "❓ INCONNU : APPAREIL=$APPAREIL (iphone, ipad, tv ou montre)" >&2; return 2 ;;
     esac
+    [ "$systeme" != ci ] || systeme=$OS_CI
+    if [ "${OS_SIMULATEUR:-}" = ci ] && [ -z "$systeme" ]; then
+      echo "❓ INCONNU : OS_SIMULATEUR=ci, et outillage.env ne déclare pas OS_SIMULATEUR_CI" >&2
+      return 2
+    fi
+    [ -z "$systeme" ] || choix+=(--os "$systeme")
+    DESTINATION=$(bash scripts/destination-simulateur.sh ${choix[@]+"${choix[@]}"}) || return 1
   fi
+  echo "## Tests au simulateur" >> "$RESUME"
+  motif=$(systeme_joue)
+  echo "$motif"
+  echo "$motif" >> "$RESUME"
   if ! motif=$(hors_projet); then
     echo "❌ $motif" >&2
-    echo "## Tests au simulateur" >> "$RESUME"
     echo "Projet : $motif" >> "$RESUME"
     return 2
   fi
@@ -228,7 +251,6 @@ passer() {
   local debut=$SECONDS code seuls decision
   lancer "$RESULTATS/tests.log" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
   code=$?
-  echo "## Tests au simulateur" >> "$RESUME"
   python3 -I scripts/bilan_tests_ui.py lenteurs "$RESULTATS/tests.log" "$RESUME"
   if [ "$code" -eq 0 ]; then
     # Sortie 0 ne suffit pas : un filtre qui ne vise rien sort en 0 sans rien jouer (#96).

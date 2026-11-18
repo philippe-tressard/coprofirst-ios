@@ -92,7 +92,8 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   au plus, déclarée, sur les seules causes de `scripts/bilan_tests_ui.py` (#50) ;
   un seul passage à la fois sur le poste : le verrou commun du poste d'abord
   (`verrou_poste.py`, qui exclut aussi Gradle, #255), puis celui du script (#108) ;
-  un passage filtré n'est vert que si CHAQUE filtre a joué (#96, #170).
+  un passage filtré n'est vert que si CHAQUE filtre a joué (#96, #170) ; le résumé
+  nomme le système joué et celui de la CI, que `OS_SIMULATEUR=ci` joue au poste (#287).
 - **Confidentialité** : le manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`), la
   fiche à saisir dans App Store Connect (skill `publication-app-store`,
   `confidentialite.md`) et le code disent la même chose — un envoi, un module, un droit

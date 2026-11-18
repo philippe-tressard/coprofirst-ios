@@ -62,6 +62,16 @@ Le greffon `swift-openapi-generator` demande, à la première ouverture, d'être
 autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 `-skipPackagePluginValidation`.
 
+Les tests au simulateur jouent, au poste, le système le plus récent installé ; la CI joue
+le sien, `OS_SIMULATEUR_CI` d'[`outillage.env`](outillage.env). Le résumé du passage
+nomme les deux (ligne « Système »). Pour jouer au poste ce que la CI jugera — son runtime
+installé (`xcodebuild -downloadPlatform iOS -buildVersion 26.5`) et un « iPhone 17 Pro »
+à son nom d'usine sous ce runtime :
+
+```bash
+OS_SIMULATEUR=ci bash scripts/tests-simulateur.sh
+```
+
 ### L'écran de hall (Apple TV)
 
 La cible `CoproFirstTV` (tvOS 17, #218) fait d'une Apple TV l'écran de hall d'une
