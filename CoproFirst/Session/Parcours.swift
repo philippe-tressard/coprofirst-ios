@@ -121,6 +121,7 @@ final class Parcours {
         clocheOuverte = false
         // Sans réseau, l'appareil s'enregistrera à la reprise de la session.
         if let push, consultation == nil { Task { await push.residenceOuverte(installation) } }
+        if consultation == nil { Task { await relireLaSuspension(installation) } }
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
             proposerFaceID = true
@@ -155,6 +156,16 @@ final class Parcours {
     var ouverteAJour: Installation? {
         guard let ouverte else { return nil }
         return connues.liste.first { $0.adresse == ouverte.adresse } ?? ouverte
+    }
+
+    /// GET /config relu à chaque ouverture : une résidence rouverte par Face ID ne repasse
+    /// pas par la découverte, et sa suspension (R6, #262) a pu changer depuis — le bandeau
+    /// dit l'état servi. Un échec garde ce qui est connu ; les refus disent le reste.
+    func relireLaSuspension(_ installation: Installation) async {
+        guard let servie = try? await service.decouvrir(installation.adresse),
+            ouverte?.adresse == installation.adresse
+        else { return }
+        connues.noterSuspension(servie.suspendue, pour: installation)
     }
 
     /// Relit le profil de l'utilisateur dans la résidence ouverte (GET /auth/me).

@@ -31,11 +31,16 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// la fiche d'un compte opérateur le dit à la place du geste (#94). Absent d'une
     /// résidence retenue avant #94, ou d'une installation qui ne le sert pas : rien n'est dit.
     var operateurParExploitant: Bool?
+    /// Suspendue par la référence CoproFirst : en lecture seule, toute écriture est refusée
+    /// (`installation_suspendue` = `1`, clé CALCULÉE par le serveur, Registre R6 #262). Absent
+    /// d'une installation qui ne le sert pas, ou d'une résidence retenue avant : non suspendue.
+    var suspendue: Bool?
 
     init(
         adresse: URL, nom: String, aUnLogo: Bool, codePalette: String? = nil,
         ordrePages: [String]? = nil, surchargesPages: [String: SurchargePage]? = nil,
-        versionContrat: String? = nil, aUnLogoSombre: Bool? = nil, operateurParExploitant: Bool? = nil
+        versionContrat: String? = nil, aUnLogoSombre: Bool? = nil, operateurParExploitant: Bool? = nil,
+        suspendue: Bool? = nil
     ) {
         self.adresse = adresse
         self.nom = nom
@@ -46,6 +51,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
         self.versionContrat = versionContrat
         self.aUnLogoSombre = aUnLogoSombre
         self.operateurParExploitant = operateurParExploitant
+        self.suspendue = suspendue
     }
 
     var id: URL { adresse }
@@ -100,7 +106,8 @@ extension Installation {
             codePalette: cles["site_palette"], ordrePages: OrdrePages.lire(cles["pages_order"]),
             surchargesPages: surcharges, versionContrat: cles["version_contrat"],
             aUnLogoSombre: !(cles["site_logo_sombre"] ?? "").isEmpty,
-            operateurParExploitant: cles["operateur_par_exploitant"] == "1")
+            operateurParExploitant: cles["operateur_par_exploitant"] == "1",
+            suspendue: cles["installation_suspendue"]?.trimmingCharacters(in: .whitespaces) == "1")
     }
 }
 

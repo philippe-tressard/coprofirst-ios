@@ -52,6 +52,8 @@ struct ConnexionView: View {
                 ChampResidence(
                     saisie: $saisieResidence, reconnue: parcours.reconnue, enCours: decouverte.enCours,
                     erreur: decouverte.erreur, scanner: { scanner = true })
+                // En lecture seule, on se connecte encore pour lire (R6, #262) : on le sait avant.
+                BandeauInstallation(encartPour: parcours.reconnue)
                 if let aide = preremplissage.aide { AideDemo(texte: aide) }
                 if let avis = parcours.avis {
                     Label(avis, systemImage: "info.circle.fill")
