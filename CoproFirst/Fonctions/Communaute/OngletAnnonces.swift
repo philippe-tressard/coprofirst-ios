@@ -14,6 +14,8 @@ struct OngletAnnonces: View {
     @State private var categorie: String?
     /// Un code de `TRIS_ANNONCE` : le premier est celui par défaut.
     @State private var tri = RegleCommunaute.trisAnnonce.first?.code ?? "recent"
+    /// L'annonce ouverte : poussée sur iPhone, à côté de la liste sur iPad (#222).
+    @State private var choisie: Int?
 
     static let textes = TextesListe(
         vide: "Aucune annonce", videDetail: "Déposez la première annonce en touchant « + ».",
@@ -27,7 +29,16 @@ struct OngletAnnonces: View {
                 (type == nil || $0.typeAnnonce == type) && (categorie == nil || $0.categorie == categorie)
             })
         let enCours = retenues.filter { $0.archivee != true }
-        List {
+        ListeEtFiche(selection: $choisie) {
+            annonces(retenues: retenues, enCours: enCours)
+        } fiche: { id in
+            DetailAnnonce(etat: etat, id: id, installation: installation)
+        }
+    }
+
+    private func annonces(retenues: [Annonce], enCours: [Annonce]) -> some View {
+        let liste = etat.annonces
+        return List {
             if liste.phase == .pret {
                 Section {
                     ForEach(enCours) { ligne($0) }
@@ -50,12 +61,10 @@ struct OngletAnnonces: View {
     }
 
     private func ligne(_ annonce: Annonce) -> some View {
-        NavigationLink {
-            DetailAnnonce(etat: etat, id: annonce.id, installation: installation)
-        } label: {
+        LienDeFiche(valeur: annonce.id, ligneDeListe: true) {
             LigneAnnonce(annonce: annonce)
         }
-        .listRowBackground(palette.surface)
+        .rangeeDeListeChoisie(annonce.id, fond: palette.surface)
         .accessibilityIdentifier("annonce.\(annonce.id)")
     }
 

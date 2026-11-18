@@ -72,6 +72,8 @@ enum Mise {
     /// La largeur de la tranche du carnet, où se rangent les intercalaires (#119), au
     /// texte par défaut : elle suit Dynamic Type.
     static let tranche: CGFloat = 84
+    /// L'écart de ce trait autour d'un lien dans le texte (le syndic, une annexe).
+    static let debordChoisi: CGFloat = 6
 }
 
 extension Font {

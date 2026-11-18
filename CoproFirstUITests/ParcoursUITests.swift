@@ -98,7 +98,7 @@ final class ParcoursUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
         let logement = app.buttons["fil.lot"]
-        XCTAssertTrue(logement.apparait(), "le logement en haut à gauche, dans la barre")
+        XCTAssertTrue(logement.apparait(), "le logement en haut à gauche")
         XCTAssertLessThan(logement.frame.maxX, app.buttons["pastille.residence"].frame.minX, "à gauche de la résidence")
 
         app.buttons["pastille.residence"].tap()

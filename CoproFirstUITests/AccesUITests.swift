@@ -114,6 +114,13 @@ extension XCUIApplication {
         descendants(matching: .any).matching(identifier: identifiant).firstMatch
     }
 
+    /// L'élément de cet identifiant, RETENU (`isSelected`) : une carte ouverte à côté, une
+    /// entrée de la barre latérale, une catégorie choisie — l'effet d'un toucher qui choisit.
+    func elementRetenu(_ identifiant: String) -> XCUIElement {
+        descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", identifiant)).firstMatch
+    }
+
     /// Le premier élément dont le libellé COMMENCE par ce texte (une carte réunit
     /// souvent plusieurs textes en un seul libellé).
     func libelleAcces(_ debut: String) -> XCUIElement {

@@ -92,8 +92,18 @@ private struct SuiviView: View {
     let entretien: Bool
     let installation: Installation
     @Environment(\.palette) private var palette
+    /// L'affaire ouverte : poussée sur iPhone, à côté du relevé sur iPad (#222).
+    @State private var affaire: AffaireAOuvrir?
 
     var body: some View {
+        ListeEtFiche(selection: $affaire) {
+            releve
+        } fiche: { affaire in
+            DetailAffaireView(id: affaire.id, installation: installation)
+        }
+    }
+
+    private var releve: some View {
         VStack(alignment: .leading, spacing: 12) {
             chiffres
             if !suivi.parCategorie.isEmpty {
@@ -109,12 +119,11 @@ private struct SuiviView: View {
                 .accessibilityIdentifier("reporting.vide")
             }
             ForEach(suivi.affaires) { affaire in
-                NavigationLink {
-                    DetailAffaireView(id: affaire.id, installation: installation)
-                } label: {
+                LienDeFiche(valeur: AffaireAOuvrir(id: affaire.id)) {
                     LigneAffaireSuivie(affaire: affaire, entretien: entretien)
                 }
                 .buttonStyle(.plain)
+                .rangeeChoisie(AffaireAOuvrir(id: affaire.id))
             }
         }
     }

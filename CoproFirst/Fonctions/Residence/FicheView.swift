@@ -146,7 +146,7 @@ private struct CarteFiche: View {
         if let syndic = fiche.syndic {
             // Le lien mène à l'annuaire, qui porte les PERSONNES : la fiche ne les recopie pas.
             Champ(libelle: TextesResidence.syndic) {
-                NavigationLink(value: DestinationResidence.syndic) {
+                LienDeFiche(valeur: DestinationResidence.syndic) {
                     let cabinet = Text(syndic).foregroundStyle(palette.primary).underline()
                     let mandat = Text(TextesResidence.mandat(fiche.syndicEcheance, echu: fiche.syndicEchu))
                         .foregroundStyle(fiche.syndicEchu ? palette.danger : palette.text)
@@ -155,6 +155,7 @@ private struct CarteFiche: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityHint("Ouvre l'annuaire du syndic")
+                .rangeeChoisie(DestinationResidence.syndic, debord: Mise.debordChoisi)
                 .accessibilityIdentifier("residence.syndic")
             }
         }

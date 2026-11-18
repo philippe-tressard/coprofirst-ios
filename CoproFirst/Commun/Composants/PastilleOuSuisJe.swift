@@ -16,12 +16,17 @@ struct PastilleOuSuisJe: ToolbarContent {
     var largeurNom: CGFloat = 150
     /// Lue ici, côté écran : dans la barre, UIKit plafonne la taille de texte.
     @Environment(\.dynamicTypeSize) private var taille
+    /// Une fiche ouverte à côté d'une liste partage la barre de la page (#222) : la page
+    /// y porte déjà la pastille et la cloche, la fiche ne les double pas.
+    @Environment(\.dansLaColonneDeFiche) private var dansLaColonne
 
     var body: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Pastille(installation: installation, largeurNom: largeurNom, logoSeul: taille.isAccessibilitySize)
+        if !dansLaColonne {
+            ToolbarItem(placement: .topBarTrailing) {
+                Pastille(installation: installation, largeurNom: largeurNom, logoSeul: taille.isAccessibilitySize)
+            }
+            if cloche, let installation { ClocheNotifications(installation: installation) }
         }
-        if cloche, let installation { ClocheNotifications(installation: installation) }
     }
 
     private struct Pastille: View {

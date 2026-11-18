@@ -65,3 +65,16 @@ private struct ApercuQuickLook: UIViewControllerRepresentable {
         }
     }
 }
+
+/// Un document à ouvrir : la fiche d'une liste (`LienDeFiche`), poussée ou à côté (#222).
+struct DocumentAOuvrir: Hashable {
+    let id: Int
+    let nom: String?
+    let titre: String
+}
+
+extension DocumentView {
+    init(_ document: DocumentAOuvrir, installation: Installation) {
+        self.init(id: document.id, nom: document.nom, titre: document.titre, installation: installation)
+    }
+}

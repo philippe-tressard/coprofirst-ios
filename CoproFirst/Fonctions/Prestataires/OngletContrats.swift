@@ -12,11 +12,21 @@ struct OngletContrats: View {
     let gestes: GestesAvis
     @State private var archives: [Contrat]?
     @State private var deplie: Int?
+    /// Le document ouvert : poussé sur iPhone, à côté des contrats sur iPad (#222).
+    @State private var document: DocumentAOuvrir?
     @Environment(\.palette) private var palette
 
     var body: some View {
+        ListeEtFiche(selection: $document) {
+            contrats
+        } fiche: { document in
+            DocumentView(document, installation: installation)
+        }
+    }
+
+    private var contrats: some View {
         let courants = donnees.contrats
-        VStack(alignment: .leading, spacing: 14) {
+        return VStack(alignment: .leading, spacing: 14) {
             if courants.isEmpty && (archives ?? []).isEmpty {
                 NoteAcces(titre: TextesPrestataires.aucunContrat, texte: "", pictogramme: "doc.text")
             } else {
@@ -179,15 +189,13 @@ private struct CarteContrat: View {
             Text(TextesPrestataires.documents(documents?.count ?? 0)).styleLibelle().padding(.top, 4)
             if let documents, !documents.isEmpty {
                 ForEach(documents) { document in
-                    NavigationLink {
-                        DocumentView(
-                            id: document.id, nom: document.fichierNom, titre: document.titre,
-                            installation: installation)
-                    } label: {
+                    let aOuvrir = DocumentAOuvrir(id: document.id, nom: document.fichierNom, titre: document.titre)
+                    LienDeFiche(valeur: aOuvrir) {
                         Label(document.titre, systemImage: "doc.text").font(.subheadline)
                             .frame(minHeight: Mise.cible, alignment: .leading)
                     }
                     .tint(palette.primary)
+                    .rangeeChoisie(aOuvrir, debord: Mise.debordChoisi)
                 }
             } else {
                 Text(TextesPrestataires.aucunDocument).font(.subheadline).foregroundStyle(palette.textMuted)

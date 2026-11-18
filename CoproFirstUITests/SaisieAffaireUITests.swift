@@ -20,7 +20,7 @@ final class SaisieAffaireUITests: XCTestCase {
     private func ouvrirAffaires(_ app: XCUIApplication) {
         let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
         XCTAssertTrue(onglet.apparait())
-        onglet.tap()
+        app.toucher(onglet)
     }
 
     private func el(_ app: XCUIApplication, _ identifiant: String) -> XCUIElement {
@@ -33,10 +33,11 @@ final class SaisieAffaireUITests: XCTestCase {
     }
 
     private func nouvelle(_ app: XCUIApplication, categorie: String) {
-        el(app, "affaires.nouvelle").tap()
+        app.toucher(el(app, "affaires.nouvelle"))
         let vignette = el(app, "nouvelle.categorie.\(categorie)")
         XCTAssertTrue(vignette.apparait())
-        vignette.tap()
+        // Choisir est idempotent : repris jusqu'à la vignette retenue (#282).
+        app.toucher(vignette, jusqua: app.elementRetenu("nouvelle.categorie.\(categorie)"))
     }
 
     func testEnEssentielleLUrgenceDUneQuestionSeRange() throws {
@@ -46,14 +47,16 @@ final class SaisieAffaireUITests: XCTestCase {
         XCTAssertTrue(app.amener(el(app, "nouvelle.plusDeDetails")), "l'urgence d'une question est rangée")
         XCTAssertFalse(el(app, "nouvelle.urgente").exists, "plié, le groupe ne montre pas l'urgence")
         LancementCaptures.capturer("saisie-1-essentielle-question")
-        el(app, "nouvelle.plusDeDetails").tap()
+        // Déplier n'est PAS idempotent : une reprise replierait le groupe — un toucher, au
+        // point commun (élément immobile), puis l'attente de l'effet (#282).
+        app.toucher(el(app, "nouvelle.plusDeDetails"))
         XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "déplié, l'urgence se règle")
         LancementCaptures.capturer("saisie-2-plus-de-details")
 
         app.swipeDown()
         let panne = el(app, "nouvelle.categorie.panne")
         XCTAssertTrue(panne.apparait())
-        panne.tap()
+        app.toucher(panne)
         XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
         // Le groupe se retire après le toucher : son absence s'attend, elle ne se lit pas
         // par `.exists` dans la foulée (vu rouge au poste chargé, 11/11/2026).
@@ -76,7 +79,7 @@ final class SaisieAffaireUITests: XCTestCase {
     func testLaGrilleEtLaPhraseSuiventCeQueLeServeurPermet() throws {
         for (arguments, duConseil) in [(["-compte", "resident"], false), ([String](), true)] {
             let app = lancer(arguments)
-            el(app, "affaires.nouvelle").tap()
+            app.toucher(el(app, "affaires.nouvelle"))
             XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait(), "la grille est servie")
             // La grille est posée : « Actualité », sa première vignette, y est ou n'y est pas.
             XCTAssertEqual(el(app, "nouvelle.categorie.actualite").exists, duConseil, "réservée au conseil")
@@ -92,13 +95,13 @@ final class SaisieAffaireUITests: XCTestCase {
     /// la saisie ; le lieu posé par défaut se dit en clair, nommé par le serveur.
     func testQuiLaLiraEtLeLieuSontServis() throws {
         let app = lancer()
-        el(app, "affaires.nouvelle").tap()
+        app.toucher(el(app, "affaires.nouvelle"))
         XCTAssertTrue(el(app, "nouvelle.categorie.panne").apparait())
         XCTAssertTrue(app.amener(el(app, "nouvelle.quiLaLira")))
         XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "catégorie choisie"), "rien à demander sans catégorie")
         let panne = el(app, "nouvelle.categorie.panne")
         for _ in 0..<6 where !(panne.exists && panne.isHittable) { app.swipeDown() }
-        panne.tap()
+        app.toucher(panne)
         XCTAssertTrue(app.amener(el(app, "nouvelle.lieuServi")))
         XCTAssertTrue(lu(app, "nouvelle.lieuServi", contient: "Toute la copropriété"), "le défaut, en clair")
         XCTAssertTrue(app.amener(el(app, "nouvelle.quiLaLira")))
@@ -110,15 +113,15 @@ final class SaisieAffaireUITests: XCTestCase {
         let app = lancer()
         let plus = app.tabBars.buttons["Plus"]
         XCTAssertTrue(plus.apparait())
-        plus.tap()
+        app.toucher(plus)
         let profil = el(app, "plus.profil")
         XCTAssertTrue(app.amener(profil))
-        profil.tap()
+        app.toucher(profil)
         let complete = el(app, "profil.saisie").buttons["Complète"]
         XCTAssertTrue(app.amener(complete), "le réglage est au Profil")
         XCTAssertTrue(el(app, "profil.saisie").buttons["Essentielle"].isSelected, "le défaut servi est coché")
         LancementCaptures.capturer("saisie-5-profil")
-        complete.tap()
+        app.toucher(complete)
         XCTAssertTrue(complete.isSelected, "le choix est retenu")
 
         ouvrirAffaires(app)
