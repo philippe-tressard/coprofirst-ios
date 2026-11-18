@@ -56,7 +56,7 @@ struct AffairesView: View {
         }
         .toolbar {
             PastilleOuSuisJe(installation: installation, cloche: true)
-            ToolbarItem(placement: .topBarLeading) { boutonNouvelle }
+            ActionDeMenu { boutonNouvelle }
         }
         .sheet(isPresented: $nouvelle) {
             NouvelleAffaireView(

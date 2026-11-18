@@ -128,6 +128,8 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(annonce.exists, "la liste reste à côté")
         XCTAssertGreaterThan(contact.frame.minX, annonce.frame.maxX, "à droite de la liste")
         XCTAssertTrue(app.elementRetenu("annonce.21").apparait(), "sa rangée est soulignée")
+        // Le titre en tête, iOS 26 retirait l'action de gauche : elle passe à droite (#223).
+        XCTAssertTrue(app.elementAcces("communaute.creer").apparait(), "« Créer » reste dans la barre")
         capture("annonces-liste-et-fiche", app)
     }
 
