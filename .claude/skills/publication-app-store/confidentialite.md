@@ -11,6 +11,7 @@ disent la même chose (`standards/14` §3 bis, déclaré = réel) :
 | Texte | Où | Qui l'écrit |
 |---|---|---|
 | le manifeste embarqué | `CoproFirst/PrivacyInfo.xcprivacy` | ce dépôt |
+| le manifeste de l'Apple TV (#218) | `CoproFirstTV/PrivacyInfo.xcprivacy` — rien de collecté ; jugé sur le code que la cible compile, sans type que l'app ne déclare (une seule fiche) | ce dépôt |
 | la fiche et les étiquettes | App Store Connect | **Philippe**, à partir de ce fichier (§9) |
 | la politique de confidentialité | <https://coprofirst.fr/confidentialite.html#t-application> | le dépôt `coprofirst-site` |
 
@@ -81,7 +82,7 @@ relais de l'éditeur, puis par Apple (§4).
 | le courriel de la dernière connexion, par résidence | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)` |
 | le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/CoffreDuCompte.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
 | l'identifiant du compte dans la résidence (`id` de `GET /auth/me`, #94), le temps d'une session : il dit quel compte d'« Utilisateurs » est celui du lecteur | avec le profil, au Trousseau ; effacé à la déconnexion | `CoproFirst/Donnees/ProfilResidence.swift` › `idCompte: moi.id` ; `CoproFirst/Session/Parcours.swift` › `connues.oublierLeCompte(installation)` |
-| Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
+| Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton, ou désappairé au hall | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
 | Face ID déjà proposé, par résidence | réglages | `CoproFirst/Session/InstallationsConnues.swift` › `reglages.set(true, forKey: "faceid-propose." + installation.hote)` |
 | l'abonnement push, par résidence | réglages | `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `private static let cle = "push-abonnements"` |

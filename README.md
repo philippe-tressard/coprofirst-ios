@@ -73,7 +73,11 @@ saisit dans l'app (Espace CS › Écrans du hall, #295) ou sur le site, avec le 
 périmètre de l'écran, et l'écran diffuse aussitôt (lot 3, RFC 8628) : une annonce toutes
 les quinze secondes, son titre, son message et ses photos, relues toutes les deux
 minutes ; l'écran reste allumé. L'appairage se garde au Trousseau : rallumée, l'Apple TV
-reprend seule ; retirée par le conseil, elle affiche un nouveau code. Elle compile les
+reprend seule ; retirée par le conseil, elle affiche un nouveau code. Au hall, un clic de
+la télécommande propose « Désappairer », confirmé : l'écran oublie son accès, que le
+conseil coupe dans l'app (lot 5). Elle embarque son propre manifeste de confidentialité
+(`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
+jugé sur le code qu'elle compile. Elle compile les
 fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
 (adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
 tvOS, avec les siens (`CoproFirstTVTests/`) :
