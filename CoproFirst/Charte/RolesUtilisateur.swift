@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), front/src/lib/roles.ts#ATTRIBUTS_ROLE, front/src/lib/roles.ts#ATTRIBUTS_STATUT, front/src/lib/roles.ts#LIBELLES_HERITES, front/src/lib/roles.ts#ROLES_MIS_EN_AVANT (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.117.0 (commit d25fa8df3721cf67b5522648fd22d000b61ca237), front/src/lib/roles.ts#ATTRIBUTS_ROLE, front/src/lib/roles.ts#ATTRIBUTS_STATUT, front/src/lib/roles.ts#LIBELLES_HERITES, front/src/lib/roles.ts#ROLES_MIS_EN_AVANT (tables-clients.json).
 
 /// Les libellés des rôles et statuts d'un utilisateur, comme le site les écrit.
 enum RolesUtilisateur {
