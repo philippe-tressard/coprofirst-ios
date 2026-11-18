@@ -75,8 +75,11 @@ final class ServiceAPI: ServiceCoproFirst {
         return Trousseau.contient(pour: installation.hote) ? protection : nil
     }
 
-    func fil(_ installation: Installation) async throws -> [ElementDuFil] {
-        let sortie = try await appeler { try await client(installation.adresse).getFlux() }
+    func fil(_ installation: Installation, periode: ClosedRange<Date>?) async throws -> [ElementDuFil] {
+        let requete = Operations.GetFlux.Input.Query(
+            du: periode.map { FormatsDuSite.jourISO($0.lowerBound) },
+            au: periode.map { FormatsDuSite.jourISO($0.upperBound) })
+        let sortie = try await appeler { try await client(installation.adresse).getFlux(query: requete) }
         switch sortie {
         case .ok(let ok):
             return try ok.body.json.items?.map(ElementDuFil.init(item:)) ?? []
@@ -185,6 +188,7 @@ extension ElementDuFil {
                 lien: item.lien),
             echeance: EcheanceDuFil(meta: item.meta?.additionalProperties)
         )
+        jourServi = item.jour
         poser(lu)
     }
 }

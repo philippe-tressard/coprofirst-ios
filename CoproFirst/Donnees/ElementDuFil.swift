@@ -34,6 +34,9 @@ struct ElementDuFil: Identifiable, Hashable, Sendable {
     var lieu: String?
     /// Ses photos et documents (`meta.photos_urls`, `meta.fichiers_urls`), comme le site les lit.
     var pieces: PiecesJointes = .aucune
+    /// Le jour où le serveur la range dans une période (`FluxItem.jour`, « 2026-11-19 », à
+    /// Paris : son échéance, sa publication sinon — coprofirst#2834) ; `nil` hors période.
+    var jourServi: String?
 
     var nature: NatureDuFil { NaturesDuFil.parType[type] ?? .inconnue }
 
