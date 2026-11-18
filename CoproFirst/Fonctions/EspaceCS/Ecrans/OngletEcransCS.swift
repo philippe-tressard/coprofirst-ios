@@ -95,7 +95,7 @@ struct OngletEcransCS: OngletDePage {
         aRetirer = nil
         erreur = nil
         do {
-            try await service.retirer(ecran.id, dans: contexte.installation)
+            try await service.retirerEcran(ecran.id, dans: contexte.installation)
             contexte.avis.dire(TextesEcransCS.retire)
             retraits += 1
             recharger()

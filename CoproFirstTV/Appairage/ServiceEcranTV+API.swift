@@ -48,7 +48,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
         switch try await appeler({ try await client(adresse, jeton: jeton).getEcransMoiAffiches() }) {
         case .ok(let ok):
             return try ok.body.json.map {
-                AfficheHall(id: $0.id, titre: $0.titre, message: $0.message, images: $0.images.count, creeLe: $0.creeLe)
+                AfficheHall(id: $0.id, titre: $0.titre, message: $0.message, images: $0.images.count, creeLe: $0.creeeLe)
             }
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }
@@ -62,7 +62,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
                 path: .init(afficheId: affiche, rang: rang))
             switch sortie {
             case .ok(let ok):
-                return try await Data(collecting: ok.body.applicationOctetStream, upTo: Self.plafondImage)
+                return try await Data(collecting: ok.body.binary, upTo: Self.plafondImage)
             case .unprocessableContent: throw ErreurService.inattendue(422)
             case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
             }

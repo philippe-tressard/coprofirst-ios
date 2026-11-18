@@ -56,7 +56,7 @@ struct EcransHallTests {
         let apres = try await service.ecrans(dans: residence)
         #expect(apres.contains { $0.nom == "Hall du parking" && $0.perimetre == "parking" })
 
-        try await service.retirer(3, dans: residence)
+        try await service.retirerEcran(3, dans: residence)
         #expect(try await service.ecrans(dans: residence).allSatisfy { $0.id != 3 })
     }
 }

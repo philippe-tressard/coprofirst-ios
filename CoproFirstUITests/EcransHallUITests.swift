@@ -20,7 +20,7 @@ final class EcransHallUITests: XCTestCase {
         app.toucher(plus)
         app.toucher(app.libelleAcces("Espace CS"))
         let onglet = app.elementAcces("onglet.ecrans")
-        app.amener(onglet)
+        XCTAssertTrue(app.amenerDansSaRangee(onglet), "l'onglet au bout de la barre")
         app.toucher(onglet)
 
         // La liste : trois écrans servis, dont un échu.

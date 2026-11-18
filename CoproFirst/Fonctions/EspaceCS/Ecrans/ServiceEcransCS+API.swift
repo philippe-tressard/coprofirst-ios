@@ -29,7 +29,7 @@ extension ServiceAPI: ServiceEcransCS {
         }
     }
 
-    func retirer(_ id: Int, dans installation: Installation) async throws {
+    func retirerEcran(_ id: Int, dans installation: Installation) async throws {
         let sortie = try await appeler {
             try await client(installation.adresse).deleteEcransEcranId(path: .init(ecranId: id))
         }

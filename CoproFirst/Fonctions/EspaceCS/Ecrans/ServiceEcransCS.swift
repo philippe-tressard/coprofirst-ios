@@ -15,7 +15,7 @@ protocol ServiceEcransCS: ServicePerimetres {
     /// POST /ecrans : le code court que l'écran affiche, son nom et son périmètre.
     func appairer(_ saisie: SaisieAppairage, dans installation: Installation) async throws -> EcranAppaire
     /// DELETE /ecrans/{id} : son accès cesse aussitôt.
-    func retirer(_ id: Int, dans installation: Installation) async throws
+    func retirerEcran(_ id: Int, dans installation: Installation) async throws
 }
 
 extension ContexteOnglet {

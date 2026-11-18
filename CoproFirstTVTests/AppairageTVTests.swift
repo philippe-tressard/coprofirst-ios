@@ -61,7 +61,7 @@ final class HorlogeSimulee: @unchecked Sendable {
 func residenceDuHall() -> Installation {
     Installation(
         adresse: URL(string: "https://tilleuls.example.com")!, nom: "Les Tilleuls", aUnLogo: false,
-        codePalette: "prune", versionContrat: "2.8.0")
+        codePalette: "prune", versionContrat: VersionContrat.plancher.description)
 }
 
 @MainActor

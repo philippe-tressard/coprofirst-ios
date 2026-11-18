@@ -33,7 +33,7 @@ extension ServiceSimule: ServiceEcransCS {
         return EcranAppaire(nom: saisie.nomSaisi, perimetreLibelle: libelle)
     }
 
-    func retirer(_ id: Int, dans installation: Installation) async throws {
+    func retirerEcran(_ id: Int, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(250))
         try modifierSimule(depuis: FixturesEcransCS.ecransLus) { $0.removeAll { $0.id == id } }
     }
