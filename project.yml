@@ -151,6 +151,20 @@ targets:
           # Les onglets des pages du site : la navigation de l'iPhone, rien à l'écran de hall.
           - OngletsDuSite.swift
       - path: CoproFirst/Commun/Texte
+      # L'entrée dans une installation (lot 2) : l'adresse, GET /config, le plancher et les
+      # phrases d'échec — les fichiers de l'iPhone, nommément.
+      - path: CoproFirst/Session/Installation.swift
+      - path: CoproFirst/Session/Decouverte.swift
+      - path: CoproFirst/Session/VersionContrat.swift
+      - path: CoproFirst/Session/ContratDuPlancher.swift
+      - path: CoproFirst/Session/ErreurService.swift
+      - path: CoproFirst/Commun/Session/RefusDuServeur.swift
+      - path: CoproFirst/Entree/Decouverte/EtatDecouverte.swift
+      - path: CoproFirst/Entree/Contenu/ContenuVitrine.swift
+      # Ce qu'une `Installation` porte de GET /config : l'ordre des pages, le profil.
+      - path: CoproFirst/Navigation/PageDeNavigation.swift
+      - path: CoproFirst/Navigation/PagesParDefaut.swift
+      - path: CoproFirst/Donnees/ProfilResidence.swift
     dependencies:
       - package: ClientAPI
     info:
@@ -182,6 +196,9 @@ targets:
       # PictogrammesTests touchent aussi des composants et la navigation de l'iPhone.
       - path: CoproFirstTests/TexteDuSiteTests.swift
       - path: CoproFirstTests/MesuresTests.swift
+      - path: CoproFirstTests/AdresseInstallationTests.swift
+      # Ce qui n'existe que sur l'Apple TV.
+      - path: CoproFirstTVTests
     dependencies:
       - target: CoproFirstTV
     settings:
