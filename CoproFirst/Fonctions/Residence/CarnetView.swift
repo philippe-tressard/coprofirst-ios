@@ -23,6 +23,8 @@ enum TextesCarnet {
     }
 
     static let echeanceDepassee = "dont l'échéance est dépassée :"
+    /// Sous « Contrat », dans la gouttière : un contrat qui n'a pas encore commencé (#259).
+    static let aVenir = "À venir"
 
     /// Où mène une entrée (`ORIGINES`) : « Ouvrir l'affaire : … ».
     static func nature(_ origine: String) -> Gouttiere.Nature {
@@ -128,12 +130,7 @@ private struct EncartAlerte: View {
             }
         }
         .foregroundStyle(palette.warningTexte)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(palette.warningFond, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous).strokeBorder(palette.warningBordure)
-        }
+        .encartAvertissement()
         .accessibilityElement(children: .combine)
     }
 }
@@ -154,7 +151,10 @@ private struct CarteEntree: View {
     }
 
     var body: some View {
-        CarteAGouttiere(gouttiere: Gouttiere(nature: TextesCarnet.nature(entree.origine), date: entree.jour)) {
+        let gouttiere = Gouttiere(
+            nature: TextesCarnet.nature(entree.origine), date: entree.jour,
+            mention: entree.aVenir ? TextesCarnet.aVenir : nil)
+        CarteAGouttiere(gouttiere: gouttiere) {
             Text(entree.libelle).font(.headline).foregroundStyle(palette.text)
             if let extrait = entree.extrait, !extrait.isEmpty {
                 Text(TexteDuSite.apercu(extrait)).font(.subheadline).lineLimit(3).foregroundStyle(palette.textMuted)
