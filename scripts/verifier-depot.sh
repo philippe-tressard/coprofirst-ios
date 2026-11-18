@@ -58,7 +58,8 @@
 #  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
 #      #135) : ni ses trois routes, ni son service, ni son délai ailleurs ;
 #  21. ce que lit coprofirst ou demande reuse : écart au plancher, logo (et sa
-#      référence, le plancher), REUSE
+#      référence, le plancher), REUSE, chacun sous une borne qui coupe son groupe de
+#      processus — autotest de scripts/borne.py (#293) —
 #      (scripts/controles-distants.sh) — et ce script est la seule étape du job
 #      « Dépôt » de la CI (scripts/verifier-ci.py, #241), qui tient aussi chaque job
 #      macOS plafonné et exigé par l'agrégat (#288). INCONNU (sortie 2) ≠ vert.
@@ -476,6 +477,7 @@ DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCE
 # la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
 python3 -I scripts/verifier-ci.py --autotest >/dev/null || echec "verifier-ci.py : autotest en échec"
 JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, ou job macOS hors de l'agrégat"; }
+python3 -I scripts/borne.py --autotest >/dev/null || echec "borne.py : autotest en échec (coupure du groupe, INCONNU)"
 DISTANTS=$(bash scripts/controles-distants.sh)
 DISTANTS_CODE=$?
 [ "$DISTANTS_CODE" -eq 0 ] || echo "$DISTANTS"
