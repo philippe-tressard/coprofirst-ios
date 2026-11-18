@@ -53,14 +53,17 @@ final class BarreLateraleUITests: XCTestCase {
     }
 
     /// Le logement du fil ouvre Mes lots & accès : l'entrée de la barre latérale suit, et la
-    /// pastille de la résidence et la cloche restent dans la barre du fil.
+    /// pastille de la résidence et la cloche restent dans la barre du fil. La fiche ouverte à
+    /// côté, le titre se pose dans la barre : le logement passe dessous (iOS 26 l'y retirait, #279).
     @MainActor
     func testLeLogementOuvreSaPageDansLaBarreLaterale() throws {
         let app = lancer("-logement-long")
         let logement = app.buttons["fil.lot"]
         XCTAssertTrue(logement.apparait())
-        XCTAssertTrue(app.buttons["pastille.residence"].apparait(), "la résidence reste dans la barre")
+        let residence = app.buttons["pastille.residence"]
+        XCTAssertTrue(residence.apparait(), "la résidence reste dans la barre")
         XCTAssertTrue(app.buttons["cloche"].apparait(), "la cloche aussi")
+        XCTAssertGreaterThan(logement.frame.minY, residence.frame.maxY, "le logement sous la barre, pas dedans")
 
         app.toucher(logement, jusqua: app.navigationBars["Mes lots & accès"])
         XCTAssertTrue(app.elementRetenu("barre.mon-lot").apparait(), "l'entrée Accès est retenue")
