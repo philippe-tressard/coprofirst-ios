@@ -16,24 +16,41 @@ struct ResidenceView: View {
     /// La fiche ouverte (document, affaire, question, syndic) : poussée sur iPhone, à côté
     /// de l'onglet sur iPad (`ListeEtFiche`, #222).
     @State private var choisie: DestinationResidence?
+    /// Dans le carnet du pliable (#278), la page ouverte à droite du sommaire.
+    @State private var page: PageDeResidence?
 
     private var droits: DroitsOnglet { DroitsOnglet(profil: parcours.ouverteAJour?.profil) }
     private var ouverts: [OngletDuSite] { OngletsResidence.ouverts(droits, accesReglement: accesReglement) }
 
+    private var sommaire: [PageDeResidence] { PageDeResidence.sommaire(droits, accesReglement: accesReglement) }
+
     var body: some View {
-        ListeEtFiche(selection: $choisie) {
-            onglets
-        } fiche: { destination in
-            destination.ecran(installation)
+        Group {
+            if parcours.presentation == .carnet, let service = parcours.service.residence {
+                ListeEtFiche(selection: $page, partage: .proportion(0.5), memoire: "sommaire") {
+                    SommaireResidence(pages: sommaire, choisie: $page)
+                } fiche: { page in
+                    PageResidence(page: page, installation: installation, service: service, droits: droits) {
+                        self.page = $0
+                    }
+                }
+                .barreDuHaut { BandeauHorsLigne() }
+            } else {
+                ListeEtFiche(selection: $choisie) {
+                    onglets
+                } fiche: { destination in
+                    destination.ecran(installation)
+                }
+                .barreDuHaut {
+                    VStack(spacing: 0) {
+                        BandeauHorsLigne()
+                        if ouverts.count > 1 { choixOnglet }
+                    }
+                }
+            }
         }
         .navigationTitle(titre)
         .titreDeMenu()
-        .barreDuHaut {
-            VStack(spacing: 0) {
-                BandeauHorsLigne()
-                if ouverts.count > 1 { choixOnglet }
-            }
-        }
         .toolbar { PastilleOuSuisJe(installation: installation, cloche: true) }
         // Un autre onglet : la fiche d'à côté n'est plus la sienne.
         .onChange(of: onglet) { choisie = nil }
