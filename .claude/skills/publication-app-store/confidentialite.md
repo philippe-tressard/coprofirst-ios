@@ -58,10 +58,12 @@ Les seuls fichiers qui ouvrent une connexion (`URLSession`, `URLRequest`) :
 | `CoproFirst/Session/ServiceAPI.swift` | l'installation choisie | une session HTTP par hôte, éphémère, cookies en mémoire |
 | `CoproFirst/Session/ServiceAPI+Detail.swift` | l'installation choisie | le téléchargement d'un document, par la même session |
 | `CoproFirst/Session/PreuveAASA.swift` | l'installation choisie | lecture de `/.well-known/apple-app-site-association`, sans cookie |
+| `CoproFirstTV/Entree/DecouverteAPI.swift` | l'installation saisie sur l'Apple TV | GET /config par le client généré, session éphémère, sans cookie ni compte |
 | `CoproFirst/Entree/Contenu/Vitrine.swift` | `coprofirst.fr` (l'éditeur) | lecture de `contenu.json` à l'ouverture de l'accueil, sans cookie ni identifiant |
 
 Preuves : `CoproFirst/Session/ServiceAPI.swift` › `let configuration = URLSessionConfiguration.ephemeral` ;
 `CoproFirst/Session/PreuveAASA.swift` › `configuration.httpCookieAcceptPolicy = .never` ;
+`CoproFirstTV/Entree/DecouverteAPI.swift` › `URLSession(configuration: .ephemeral)` ;
 `CoproFirst/Entree/Contenu/Vitrine.swift` › `static let adresse = URL(string: "https://coprofirst.fr/contenu.json")`.
 
 La lecture de `contenu.json` ne porte rien de l'utilisateur, mais c'est une requête : le

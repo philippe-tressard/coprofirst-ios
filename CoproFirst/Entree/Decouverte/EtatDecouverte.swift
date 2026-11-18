@@ -11,7 +11,7 @@ final class EtatDecouverte {
     private(set) var enCours = false
     private(set) var erreur: ErreurService?
 
-    func decouvrir(_ adresse: URL, avec service: any ServiceCoproFirst) async -> Installation? {
+    func decouvrir(_ adresse: URL, avec service: any DecouvreInstallation) async -> Installation? {
         enCours = true
         erreur = nil
         defer { enCours = false }
