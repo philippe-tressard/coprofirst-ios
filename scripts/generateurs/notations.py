@@ -20,21 +20,14 @@ Depuis v3.109.0, la saisie guidée d'un avis se lit aussi dans `tables-clients.j
   chaque groupe (`phraseForts`, `phraseFaibles`), et les quatre séparateurs que
   `AvisSaisi` compose et décompose — aucun ne s'écrit dans l'app.
 
-REPLI DATÉ (17/11/2026, #268) : sous v3.109.0, la release ne publie pas cette table ; les
-motifs et la forme se lisent alors dans `notations.ts`, dont la forme est vérifiée — le
-générateur échoue si elle change. À retirer quand le plancher atteint v3.109.0.
-
 → `CoproFirst/Fonctions/Prestataires/Genere/TablesNotations.swift`.
 """
 
 from __future__ import annotations
 
-import re
-
 from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-#: Lu seulement sous v3.109.0 (le repli daté ci-dessus).
-SOURCES = ["front/src/lib/notations.ts"]
+SOURCES: list[str] = []  # lu dans tables-clients.json de la release (#128), pas dans les sources
 #: La forme du commentaire (`FORME_COMMENTAIRE`), clé publiée → constante générée.
 FORME = {"prefixeForts": "phraseForts", "prefixeFaibles": "phraseFaibles", "entreMotifs": "entreMotifs",
          "finDeGroupe": "finDeGroupe", "entreGroupes": "entreGroupes", "avantLibre": "avantLibre"}
@@ -57,38 +50,12 @@ def _notations(ctx) -> tuple[list[str], dict, list[tuple[int | float, str]], str
     return etats, par_etat, [(x["borne"], x["etat"]) for x in seuils], au_dela
 
 
-def _motifs(texte: str, nom: str) -> list[str]:
-    m = re.search(rf"export const {nom} = \[([^\]]*)\] as const;", texte)
-    motifs = re.findall(r"'([^']+)'", m.group(1)) if m else []
-    if not motifs:
-        raise SystemExit(f"❌ {nom} illisible dans notations.ts — l'app doit l'apprendre")
-    return motifs
-
-
-def _forme_lue(texte: str) -> dict[str, str]:
-    """REPLI DATÉ (sous v3.109.0) : la forme écrite en dur dans `phraseGeneree` et
-    `commentaireComplet`, si c'est bien celle-là — sinon la génération s'arrête."""
-    m = re.search(r"export function phraseGeneree\(.*?\n\}", texte, re.S)
-    corps = m.group(0) if m else ""
-    morceaux = re.findall(r"if \((forts|faibles)\.length\) morceaux\.push\(`([^`$]+)\$\{\1\.join\(', '\)\}\.`\);", corps)
-    complet = re.search(r"export function commentaireComplet\(.*?\n\}", texte, re.S)
-    if ([n for n, _ in morceaux] != ["forts", "faibles"] or "return morceaux.join(' ');" not in corps
-            or not complet or ".join('\\n');" not in complet.group(0)):
-        raise SystemExit("❌ phraseGeneree a changé de forme dans notations.ts — AvisSaisi doit la suivre")
-    return {"prefixeForts": morceaux[0][1], "prefixeFaibles": morceaux[1][1], "entreMotifs": ", ",
-            "finDeGroupe": ".", "entreGroupes": " ", "avantLibre": "\n"}
-
-
 def _des_motifs(liste) -> bool:
     return isinstance(liste, list) and bool(liste) and all(isinstance(m, str) and m for m in liste)
 
 
 def _commentaire(ctx) -> tuple[list[str], list[str], dict[str, str], str]:
     """Les motifs à cocher, la forme du commentaire, et d'où ils viennent."""
-    if not ctx.publie("commentaireAvis"):  # REPLI DATÉ (17/11/2026) : sous v3.109.0
-        texte = ctx.lire(SOURCES[0])
-        return (_motifs(texte, "POINTS_FORTS"), _motifs(texte, "POINTS_FAIBLES"), _forme_lue(texte),
-                SOURCES[0])
     t = ctx.table("commentaireAvis")
     forts, faibles, forme = t.get("pointsForts"), t.get("pointsFaibles"), t.get("forme")
     if not (_des_motifs(forts) and _des_motifs(faibles) and isinstance(forme, dict) and set(forme) == set(FORME)

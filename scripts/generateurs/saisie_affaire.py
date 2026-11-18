@@ -8,14 +8,17 @@ Ce qui DÉCIDE vient du serveur, à l'exécution : le mode du compte
 génère que ce que le contrat ne sert pas, et ce que l'API SIMULÉE doit servir :
 
 - les choix du Profil : `OPTIONS_SAISIE` (`front/src/lib/saisie-affaire.ts`) restreintes
-  aux modes que le SERVEUR enregistre (`MODES`, `api/app/utils/saisie_affaire.py`) —
+  aux modes que le SERVEUR enregistre (`modesSaisie`, `MODES` du serveur) —
   « Selon mon rôle » n'en est pas un (coprofirst#2615 le retire), l'app ne l'offre pas ;
 - le libellé de chaque mode (`LIBELLE_MODE`) ;
 - les identifiants des sections d'une affaire, dans l'ordre du cadre (`TICKET`,
   `front/src/lib/entites/ticket.ts`) : le vocabulaire de `sections_essentielles` ;
 - la réponse simulée des catégories servies (`[CategorieServie]`), ses sections
-  essentielles CALCULÉES depuis la table du serveur (`SECTIONS_DE_BASE`,
-  `SECTIONS_ESSENTIELLES_PAR_CATEGORIE`) — jamais écrites à la main.
+  essentielles CALCULÉES depuis la table du serveur (`sectionsDeBase`,
+  `sectionsEssentiellesParCategorie`) — jamais écrites à la main.
+
+Depuis v3.117.0, les trois constantes du serveur se lisent dans `constantes-clients.json`
+(coprofirst#2686) : `api/app/utils/saisie_affaire.py` ne se lit plus (#237, #290).
 
 → `CoproFirst/Fonctions/Affaires/Genere/TablesSaisie.swift` et
 `FixturesCategoriesServies.swift` (jugée par `scripts/verifier-fixtures.py`).
@@ -23,7 +26,6 @@ génère que ce que le contrat ne sert pas, et ce que l'API SIMULÉE doit servir
 
 from __future__ import annotations
 
-import ast
 import json
 import re
 
@@ -34,42 +36,12 @@ SOURCES = [
     "front/src/lib/saisie-affaire.ts",
     "front/src/lib/entites/ticket.ts",
     "front/src/lib/tickets-categories.ts",
-    "api/app/utils/saisie_affaire.py",
 ]
+#: Les constantes du serveur, publiées (`constantes-clients.json`).
+CONSTANTES = ("modesSaisie", "sectionsDeBase", "sectionsEssentiellesParCategorie")
 GENERE = FONCTIONS / "Affaires" / "Genere"
 #: Une section du cadre d'une affaire : `id: '…'` au troisième retrait de `sections: [`.
 SECTION = re.compile(r"^\t\t\tid: '([a-z_]+)',", re.M)
-
-
-def constantes_python(texte: str) -> dict:
-    """Les affectations de premier niveau du module serveur, lues sans l'exécuter."""
-    noms: dict = {}
-    for noeud in ast.parse(texte).body:
-        cible = noeud.targets[0] if isinstance(noeud, ast.Assign) else getattr(noeud, "target", None)
-        if isinstance(cible, ast.Name) and getattr(noeud, "value", None) is not None:
-            noms[cible.id] = noeud.value
-    return noms
-
-
-def valeur(noms: dict, nom: str, constantes: dict[str, str]):
-    """Une constante littérale, ses noms (`ESSENTIELLE`) résolus par leur valeur."""
-    if nom not in noms:
-        raise SystemExit(f"❌ saisie_affaire.py : {nom} introuvable — la source a changé")
-
-    def resoudre(noeud):
-        if isinstance(noeud, ast.Name):
-            if noeud.id not in constantes:
-                raise SystemExit(f"❌ saisie_affaire.py : {noeud.id} n'est pas une chaîne connue")
-            return constantes[noeud.id]
-        if isinstance(noeud, ast.Constant):
-            return noeud.value
-        if isinstance(noeud, (ast.Tuple, ast.List)):
-            return [resoudre(e) for e in noeud.elts]
-        if isinstance(noeud, ast.Dict):
-            return {resoudre(k): resoudre(v) for k, v in zip(noeud.keys, noeud.values)}
-        raise SystemExit(f"❌ saisie_affaire.py : {nom} n'est pas une table littérale")
-
-    return resoudre(noms[nom])
 
 
 def libelles_mode(texte: str) -> dict[str, str]:
@@ -123,10 +95,10 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
     ]
     inconnues = sorted(set(par_categorie) - {c["code"] for c in servies})
     if inconnues:
-        raise SystemExit(f"❌ SECTIONS_ESSENTIELLES_PAR_CATEGORIE cite des catégories inconnues : {inconnues}")
+        raise SystemExit(f"❌ sectionsEssentiellesParCategorie cite des catégories inconnues : {inconnues}")
     lignes = ",\n".join(f"          {json.dumps(c, ensure_ascii=False)}" for c in servies)
     texte = (
-        ctx.entete("api/app/utils/saisie_affaire.py (SECTIONS_DE_BASE, SECTIONS_ESSENTIELLES_PAR_CATEGORIE) ; "
+        ctx.entete(f"{ctx.provenance_constantes(*CONSTANTES[1:])} ; "
                    "front/src/lib/tickets-categories.ts (CATEGORIES_TICKET)")
         + "// swiftlint:disable line_length\n\n"
         "#if DEBUG\n"
@@ -152,13 +124,18 @@ def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
     ctx.ecrire(GENERE / "FixturesCategoriesServies.swift", texte)
 
 
+def _liste(nom: str, valeur) -> list[str]:
+    if not (isinstance(valeur, list) and valeur and all(isinstance(v, str) and v for v in valeur)):
+        raise SystemExit(f"❌ {nom} : forme inattendue ({valeur!r}) — l'app doit l'apprendre")
+    return valeur
+
+
 def generer(ctx) -> str:
-    serveur = ctx.lire(SOURCES[3])
-    noms = constantes_python(serveur)
-    chaines = {n: v.value for n, v in noms.items() if isinstance(v, ast.Constant) and isinstance(v.value, str)}
-    modes = valeur(noms, "MODES", chaines)
-    base = valeur(noms, "SECTIONS_DE_BASE", chaines)
-    par_categorie = valeur(noms, "SECTIONS_ESSENTIELLES_PAR_CATEGORIE", chaines)
+    modes, base = (_liste(n, ctx.constante(n)) for n in CONSTANTES[:2])
+    lues = ctx.constante(CONSTANTES[2])
+    if not isinstance(lues, dict):
+        raise SystemExit(f"❌ {CONSTANTES[2]} : forme inattendue ({lues!r}) — l'app doit l'apprendre")
+    par_categorie = {c: _liste(f"{CONSTANTES[2]}.{c}", v) for c, v in lues.items()}
     sections = SECTION.findall(ctx.lire(SOURCES[1]))
     if not sections:
         raise SystemExit("❌ ticket.ts : aucune section `id: '…'` lue — la source a changé")
@@ -167,7 +144,7 @@ def generer(ctx) -> str:
         raise SystemExit(f"❌ sections essentielles hors du cadre TICKET : {hors_cadre}")
     ecrire_table(ctx, GENERE / "TablesSaisie.swift",
                  "front/src/lib/saisie-affaire.ts (OPTIONS_SAISIE, LIBELLE_MODE) et entites/ticket.ts (TICKET) ; "
-                 "api/app/utils/saisie_affaire.py (MODES)", "TablesSaisie",
+                 + ctx.provenance_constantes(CONSTANTES[0]), "TablesSaisie",
                  "La saisie d'une affaire, Essentielle ou Complète : ce que le contrat ne sert pas.",
                  tables(ctx, modes, sections))
     fixture(ctx, base, par_categorie)

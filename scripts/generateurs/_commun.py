@@ -94,11 +94,6 @@ class Contexte:
             raise SystemExit(f"❌ tables-clients.json de {self.version.etiquette} : table « {nom} » absente")
         return tables[nom]["valeur"]
 
-    def publie(self, nom: str) -> bool:
-        """La version lue publie-t-elle la table `nom` ? Pour un générateur qui lit une table
-        publiée récemment et garde, le temps que le plancher la rejoigne, un repli DATÉ."""
-        return nom in _tables_clients(self.version)
-
     def source_table(self, nom: str) -> str:
         """Le fichier du site dont la table est tirée (`front/src/lib/bail.ts#ETATS_BAIL`)."""
         self.table(nom)

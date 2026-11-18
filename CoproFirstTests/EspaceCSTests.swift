@@ -91,7 +91,7 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func lesOngletsSuiventLOrdreDuSite() {
     let ids = OngletsDuSite.ouverts(page: "espace-cs", droits: droits(["conseil_syndical"])).map(\.id)
-    #expect(ids == ["validations", "badges", "reporting", "annonces-hall", "annuaire", "courriels"])
+    #expect(ids == ["validations", "badges", "reporting", "annonces-hall", "ecrans", "annuaire", "courriels"])
 }
 
 @Test func chaqueOngletADesDescriptifsDuSite() {

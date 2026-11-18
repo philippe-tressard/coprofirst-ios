@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.108.0 (commit c61604202955c41c5adfab06dd8589657e2432e3), front/src/lib/idees.ts#STATUTS_IDEE, front/src/lib/annonces.ts#TYPES_ANNONCE, front/src/lib/annonces.ts#CATEGORIES_ANNONCE, front/src/lib/annonces.ts#TRIS_ANNONCE, front/src/lib/annonces.ts#STATUTS_ANNONCE, front/src/lib/annonces.ts#TEINTE_STATUT_ANNONCE (tables-clients.json) ; api/app/utils/avis.py#NOTE_MIN, api/app/utils/avis.py#NOTE_MAX, api/app/utils/avis.py#NOTE_REMARQUE, api/app/utils/avis.py#NOTE_PUBLIABLE (constantes-clients.json).
+// Source : philippe-tressard/coprofirst v3.117.0 (commit d25fa8df3721cf67b5522648fd22d000b61ca237), front/src/lib/idees.ts#STATUTS_IDEE, front/src/lib/annonces.ts#TYPES_ANNONCE, front/src/lib/annonces.ts#CATEGORIES_ANNONCE, front/src/lib/annonces.ts#TRIS_ANNONCE, front/src/lib/annonces.ts#STATUTS_ANNONCE, front/src/lib/annonces.ts#TEINTE_STATUT_ANNONCE (tables-clients.json) ; api/app/utils/avis.py#NOTE_MIN, api/app/utils/avis.py#NOTE_MAX, api/app/utils/avis.py#NOTE_REMARQUE, api/app/utils/avis.py#NOTE_PUBLIABLE (constantes-clients.json).
 
 /// Ce que le site écrit de la Communauté et que le contrat ne sert pas.
 enum TablesCommunaute {

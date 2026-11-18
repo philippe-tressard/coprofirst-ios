@@ -73,11 +73,8 @@ INTERDITS = re.compile(
     r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts)$)")
 #: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
 #: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
-EXCEPTIONS = {
-    "api/app/utils/saisie_affaire.py":
-        "16/11/2026 — MODES, SECTIONS_DE_BASE et SECTIONS_ESSENTIELLES_PAR_CATEGORIE ne sont pas "
-        "publiés : coprofirst#2686 (complété le 16/11/2026)",
-}
+#: La dernière (saisie_affaire.py) s'est retirée avec le plancher v3.117.0, qui publie ses constantes.
+EXCEPTIONS: dict[str, str] = {}
 
 
 def refus_sources(modules: list, exceptions: dict[str, str] = EXCEPTIONS) -> list[str]:
