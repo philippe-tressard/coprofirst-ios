@@ -8,7 +8,8 @@ de continuer sur le moindre rouge — et un INCONNU est un refus, jamais un vert
 Ce qu'elle juge, sur le commit EXACT qui sera soumis (le `HEAD`, égal à `origin/main`) :
 1. le clone : propre, `HEAD` = `origin/main` ;
 2. la version : `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` de `project.yml` ;
-   l'étiquette `vX.Y.Z` n'est sur aucun AUTRE commit ;
+   l'étiquette `vX.Y.Z` n'est sur aucun AUTRE commit, et le build monte depuis la
+   dernière version étiquetée (App Store Connect refuse un build déjà envoyé) ;
 3. la CI complète de ce commit (`ci.yml`) : terminée, chaque job vert, tests d'interface
    compris — une CI « documentation seule » qui les a sautés ne suffit pas ;
 4. la concordance avec le contrat SERVI en production (`concordance.py --plancher`, qui
@@ -18,9 +19,12 @@ Ce qu'elle juge, sur le commit EXACT qui sera soumis (le `HEAD`, égal à `origi
 7. les écrans principaux en SOMBRE et en très grand texte (`GrandTexteUITests`, au
    simulateur, captures dans `.build/Soumission/`) ;
 8. ce que seul Philippe voit — captures déposées (iPhone ; iPad 13 pouces), notes de
-   version, étiquette App Privacy saisie, parité avec l'Android (matrice
-   coprofirst-android#12), rendu validé — se CONFIRME par `--confirme`, nommément ;
-   sans confirmation : INCONNU.
+   version, étiquette App Privacy saisie, rendu validé — se CONFIRME par `--confirme`,
+   nommément ; sans confirmation : INCONNU.
+
+La parité avec l'Android (matrice coprofirst-android#12) n'est PAS une condition : sortir
+ensemble est une occasion, plus une règle (décision de Philippe, 18/11/2026). Le compte
+rendu la rappelle, sans rien juger.
 
 `--etiqueter` pose et pousse l'étiquette annotée `vX.Y.Z` sur ce commit, et seulement si
 tout est vert. Rien ne se soumet ici : la soumission reste le geste de Philippe (skill
@@ -48,7 +52,6 @@ CONFIRMATIONS = {
     "captures": "captures déposées dans App Store Connect (iPhone ; iPad 13 pouces)",
     "notes": "notes de version saisies, et description à jour (fiche de la skill)",
     "confidentialite": "étiquette App Privacy saisie, égale à la fiche (confidentialite.md)",
-    "parite": "l'Android au même niveau (matrice coprofirst-android#12, jalon du 15/11/2026)",
     "rendu": "rendu validé par Philippe pour CETTE version (simulateur, iPhone, TestFlight interne)",
 }
 
@@ -72,8 +75,16 @@ def version(project_yml: str) -> tuple[str, str] | None:
     return ".".join(nombres + ["0"] * (3 - len(nombres))), build[1]
 
 
+#: Les seuls jobs qui se sautent sur un push de main : l'agrégat (`ios`), qui ne tourne
+#: que sur une PR (`if: … github.event_name == 'pull_request'`) — sur main, chaque job
+#: parle pour lui-même. Tout autre job sauté est un rouge.
+SAUTES_PERMIS = frozenset({"Build, tests, SwiftLint"})
+LOT_INTERFACE = re.compile(r"^Interface \((\d+)/(\d+)\)$")
+
+
 def juger_ci(runs: list[dict], jobs: list[dict]) -> tuple[str, str]:
-    """Le dernier run de ci.yml du commit, et ses jobs : tous verts, interface comprise."""
+    """Le dernier run de ci.yml du commit, et ses jobs : tous verts, CHAQUE lot d'interface
+    compris (k/N, de 1 à N) — un lot remplacé dans sa file (#235) n'a pas joué."""
     if not runs:
         return INCONNU, "aucun run de ci.yml sur ce commit"
     dernier = runs[0]
@@ -81,13 +92,30 @@ def juger_ci(runs: list[dict], jobs: list[dict]) -> tuple[str, str]:
         return INCONNU, f"run {dernier.get('databaseId')} pas terminé ({dernier.get('status')})"
     if dernier.get("conclusion") != "success":
         return ROUGE, f"run {dernier.get('databaseId')} : {dernier.get('conclusion')}"
-    rouges = [j["name"] for j in jobs if j.get("conclusion") != "success" and not j["name"].startswith("Documentation")]
-    interface = [j for j in jobs if j["name"].startswith("Interface") and j.get("conclusion") == "success"]
+    rouges = [j["name"] for j in jobs if j.get("conclusion") != "success"
+              and not (j["name"] in SAUTES_PERMIS and j.get("conclusion") == "skipped")]
     if rouges:
-        return ROUGE, f"jobs non verts : {', '.join(rouges)}"
-    if not interface:
+        return ROUGE, f"jobs non verts : {', '.join(rouges)} — relancer le run (gh run rerun)"
+    lots = [LOT_INTERFACE.match(j["name"]) for j in jobs]
+    lots = [(int(m[1]), int(m[2])) for m in lots if m]
+    if not lots:
         return ROUGE, "aucun lot d'interface joué (CI « documentation seule ») : la CI complète manque"
-    return OK, f"run {dernier['databaseId']} vert, {len(jobs)} jobs dont {len(interface)} lots d'interface"
+    total = lots[0][1]
+    if sorted(lots) != [(k, total) for k in range(1, total + 1)]:
+        return ROUGE, f"lots d'interface incomplets : {sorted(k for k, _ in lots)} sur {total}"
+    return OK, f"run {dernier['databaseId']} vert, {len(jobs)} jobs dont les {total} lots d'interface"
+
+
+def juger_version(lue: tuple[str, str], etiquette: str, ailleurs: str | None, precedente: str,
+                  avant: tuple[str, str] | None) -> tuple[str, str]:
+    """L'étiquette libre, et le build au-dessus de celui de la dernière version étiquetée."""
+    if ailleurs:
+        return ROUGE, f"{etiquette} déjà posée sur {ailleurs} : monter MARKETING_VERSION"
+    if avant is None:
+        return INCONNU, "build de la dernière version étiquetée illisible"
+    if int(lue[1]) <= int(avant[1]):
+        return ROUGE, f"build {lue[1]} ≤ build {avant[1]} de {precedente} : monter CURRENT_PROJECT_VERSION"
+    return OK, f"{lue[0]} (build {lue[1]}, après {precedente} build {avant[1]})"
 
 
 def verdict(etapes: list[tuple[str, str, str]]) -> int:
@@ -117,8 +145,10 @@ def etapes(confirmees: set[str]) -> tuple[list[tuple[str, str, str]], str | None
     else:
         _, porte = lancer("git", "rev-list", "-n", "1", etiquette)
         ailleurs = porte and not porte.startswith("fatal") and porte != sha
-        faites.append(("version", ROUGE if ailleurs else OK,
-                       f"{etiquette} déjà posée sur {porte[:7]}" if ailleurs else f"{lue[0]} (build {lue[1]})"))
+        code_t, precedente = lancer("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*", f"{sha}^")
+        _, ancien_yml = lancer("git", "show", f"{precedente}:project.yml") if code_t == 0 else (1, "")
+        avant = version(ancien_yml) if code_t == 0 else None
+        faites.append(("version", *juger_version(lue, etiquette, porte[:7] if ailleurs else None, precedente, avant)))
 
     code, sortie = lancer("gh", "run", "list", "--workflow", "ci.yml", "--commit", sha,
                           "--json", "databaseId,status,conclusion", "--limit", "1")
@@ -169,18 +199,30 @@ def autotest() -> int:
         rate.append("version 1.1 / build 2")
     if version("    MARKETING_VERSION: \n") is not None:
         rate.append("version absente : None")
-    interface = {"name": "Interface (1/5)", "conclusion": "success"}
+    interface = {"name": "Interface (1/1)", "conclusion": "success"}
     vert = {"databaseId": 1, "status": "completed", "conclusion": "success"}
     cas = [
         ([], [], INCONNU), ([{**vert, "status": "in_progress"}], [], INCONNU),
         ([{**vert, "conclusion": "failure"}], [], ROUGE),
         ([vert], [{"name": "Unitaires", "conclusion": "success"}], ROUGE),
         ([vert], [interface, {"name": "Unitaires", "conclusion": "failure"}], ROUGE),
-        ([vert], [interface, {"name": "Documentation seule ?", "conclusion": "skipped"}], OK),
+        ([vert], [interface, {"name": "Documentation seule ?", "conclusion": "skipped"}], ROUGE),
+        ([vert], [interface, {"name": "Build, tests, SwiftLint", "conclusion": "skipped"}], OK),
+        ([vert], [interface, {"name": "Interface (2/2)", "conclusion": "success"}], ROUGE),
+        ([vert], [{"name": "Interface (1/2)", "conclusion": "success"},
+                  {"name": "Interface (2/2)", "conclusion": "cancelled"}], ROUGE),
+        ([vert], [{"name": "Interface (2/2)", "conclusion": "success"},
+                  {"name": "Interface (1/2)", "conclusion": "success"}], OK),
     ]
     for runs, jobs, attendu in cas:
         if juger_ci(runs, jobs)[0] != attendu:
             rate.append(f"CI {runs} {jobs} : {attendu} attendu")
+    for args, attendu in [((("1.2.0", "3"), "v1.2.0", None, "v1.1.0", ("1.1.0", "2")), OK),
+                          ((("1.2.0", "2"), "v1.2.0", None, "v1.1.0", ("1.1.0", "2")), ROUGE),
+                          ((("1.1.0", "3"), "v1.1.0", "4a3ffa7", "v1.1.0", ("1.1.0", "2")), ROUGE),
+                          ((("1.2.0", "3"), "v1.2.0", None, "v1.1.0", None), INCONNU)]:
+        if juger_version(*args)[0] != attendu:
+            rate.append(f"version {args} : {attendu} attendu")
     for etats, attendu in [([OK, OK], 0), ([OK, INCONNU], 2), ([INCONNU, ROUGE], 1), ([], 2)]:
         if verdict([("x", e, "") for e in etats]) != attendu:
             rate.append(f"verdict {etats} : {attendu} attendu")
@@ -212,6 +254,8 @@ def main() -> int:
         code = code or lancer("git", "push", "origin", etiquette)[0]
         lignes.append(f"Étiquette {etiquette} posée et poussée." if code == 0 else f"❌ étiquette : {texte}")
         sortie = sortie if code == 0 else 1
+    lignes.append("Parité avec l'Android : une occasion de sortir ensemble, pas une condition (18/11/2026) — "
+                  "matrice coprofirst-android#12.")
     lignes.append({0: "✅ tout est vert : la soumission peut être proposée à Philippe.",
                    1: "❌ un rouge : rien ne se soumet.", 2: "❓ un INCONNU : rien ne se soumet."}[sortie])
     print("\n".join(lignes))

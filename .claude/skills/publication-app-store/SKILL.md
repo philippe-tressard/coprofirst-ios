@@ -93,11 +93,12 @@ la suppression est une **demande** traitée par l'administration (arbitrage du 1
 (interface comprise), concordance avec le contrat servi en production, contrôle du dépôt,
 aucun ticket `bloque-soumission` ouvert, écrans principaux en sombre et en très grand
 texte au simulateur (captures dans `.build/Soumission/`). Ce que seul Philippe voit —
-captures déposées, notes de version, étiquette App Privacy, parité avec l'Android, rendu
-validé — se confirme nommément par `--confirme`. La liste fait foi dans le script
+captures déposées, notes de version, étiquette App Privacy, rendu validé — se confirme
+nommément par `--confirme`. La liste fait foi dans le script
 (`CONFIRMATIONS`), elle ne se recopie pas ici. Tout vert, `--etiqueter` pose et pousse
-`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. La soumission
-reste le geste de Philippe.
+`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. La parité avec
+l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
+soumission reste le geste de Philippe.
 
 ## À faire avant la première soumission (historique : tout est livré ou noté ci-dessus)
 
