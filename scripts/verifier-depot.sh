@@ -88,9 +88,10 @@ echec() { echo "❌ $*"; ECHECS=$((ECHECS + 1)); }
 
 FICHIERS=$(git ls-files --cached)
 [ -n "$FICHIERS" ] || { echo "❓ INCONNU : git ne connaît aucun fichier (rien d'indexé ?)"; exit 2; }
-# Le code Swift de l'app : l'iPhone et l'écran de hall sur Apple TV (#218). Les règles
-# du code s'appliquent aux deux — une cible neuve n'y échappe pas par son dossier.
-CODE_APP='^CoproFirst(TV)?/.*\.swift$'
+# Le code Swift de l'app : l'iPhone, l'écran de hall sur Apple TV (#218) et l'Apple Watch
+# (#226). Les règles du code s'appliquent aux trois — une cible neuve n'y échappe pas par son
+# dossier.
+CODE_APP='^CoproFirst(TV|Watch)?/.*\.swift$'
 
 # Les seuls fichiers dispensés de la limite de longueur — produits par un outil,
 # jamais écrits à la main. Toute autre exception se discute, elle ne s'ajoute pas.
@@ -358,6 +359,9 @@ python3 -I scripts/bilan_tests_ui.py --autotest >/dev/null || echec "bilan_tests
 bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateur.sh : autotest en échec"
 # Le simulateur des tests : un iPhone de série du runtime standard, ou INCONNU (#112).
 python3 -I scripts/destination_simulateur.py --autotest >/dev/null || echec "destination_simulateur.py : autotest en échec"
+# L'app montre livrée reste dépendante de l'iPhone (#226) : le contrôle lui-même, sur des
+# Info.plist faits pour (la construction Release se juge en CI, étape « Apple Watch »).
+bash scripts/verifier-montre-dependante.sh --autotest >/dev/null || echec "verifier-montre-dependante.sh : autotest en échec"
 
 # Une attente par prédicat (le focus du clavier, un onglet retenu) passe par le point
 # d'attente commun et son plafond (#123) : écrite sur place, chacune portait son délai,

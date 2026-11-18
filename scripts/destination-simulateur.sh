@@ -17,4 +17,5 @@ LISTE=$(xcrun simctl list devices available -j) \
 UDID=$(python3 -I scripts/destination_simulateur.py "$@" <<< "$LISTE") || exit $?
 PLATEFORME=iOS
 [ "${1:-}" = --tv ] && PLATEFORME=tvOS
+[ "${1:-}" = --montre ] && PLATEFORME=watchOS
 echo "platform=$PLATEFORME Simulator,id=$UDID"
