@@ -53,10 +53,9 @@ final class NotificationsPush {
     /// Branche les notifications sur le parcours, une fois l'app prête.
     func attacher(_ parcours: Parcours) async {
         self.parcours = parcours
-        parcours.push = self
         offreReporteeLe = reglages.object(forKey: Self.cleReport) as? Date
         await lireAutorisation()
-        if let ouverte = parcours.ouverte { await residenceOuverte(ouverte) }
+        await parcours.abonner(self)
         if let abonnement = toucheeEnAttente {
             toucheeEnAttente = nil
             touchee(abonnement: abonnement)
@@ -173,4 +172,9 @@ final class NotificationsPush {
         guard let parcours else { return }
         Task { await CompteurNonLues.partage.relire(installation, avec: parcours.serviceNotifications) }
     }
+}
+
+extension NotificationsPush: AbonneSession {
+    /// La résidence se ferme : l'appareil se retire (`retirer`).
+    func residenceFermee(_ installation: Installation) async { await retirer(installation) }
 }

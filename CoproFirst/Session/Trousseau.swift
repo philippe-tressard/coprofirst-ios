@@ -83,33 +83,20 @@ enum Trousseau {
     private static let serviceCompte = "fr.coprofirst.app.compte"
 
     static func lireCompte(_ cle: String) -> Data? {
-        var requete = base(cle, domaine: serviceCompte)
-        requete[kSecReturnData as String] = true
-        requete[kSecMatchLimit as String] = kSecMatchLimitOne
-        var resultat: CFTypeRef?
-        guard SecItemCopyMatching(requete as CFDictionary, &resultat) == errSecSuccess else { return nil }
-        return resultat as? Data
+        TrousseauSansInvite.lire(cle, service: serviceCompte)
     }
 
     /// Range la valeur ; `false` si le Trousseau l'a refusée.
     @discardableResult
     static func rangerCompte(_ donnees: Data, _ cle: String) -> Bool {
-        effacerCompte(cle)
-        var requete = base(cle, domaine: serviceCompte)
-        requete[kSecValueData as String] = donnees
-        requete[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        return SecItemAdd(requete as CFDictionary, nil) == errSecSuccess
+        TrousseauSansInvite.ranger(donnees, cle, service: serviceCompte)
     }
 
     static func effacerCompte(_ cle: String) {
-        SecItemDelete(base(cle, domaine: serviceCompte) as CFDictionary)
+        TrousseauSansInvite.effacer(cle, service: serviceCompte)
     }
 
-    private static func base(_ cle: String, domaine: String = service) -> [String: Any] {
-        [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: domaine,
-            kSecAttrAccount as String: cle,
-        ]
+    private static func base(_ hote: String) -> [String: Any] {
+        TrousseauSansInvite.requete(hote, service: service)
     }
 }

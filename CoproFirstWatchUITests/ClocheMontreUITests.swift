@@ -75,4 +75,13 @@ final class ClocheMontreUITests: XCTestCase {
         let app = lancer(["-api-simulee", "-cloche", "injoignable"])
         XCTAssertTrue(element(app, "montre.injoignable").apparait())
     }
+
+    /// Le serveur ne reconnaît plus le jeton (#226) : la montre ne dit pas « injoignable »,
+    /// elle oublie la liaison et dit de la relier par l'iPhone.
+    @MainActor
+    func testUnJetonRefuseRameneALaLiaison() {
+        let app = lancer(["-api-simulee", "-cloche", "refusee"])
+        XCTAssertTrue(element(app, "montre.nonReliee").apparait())
+        XCTAssertFalse(element(app, "montre.injoignable").exists)
+    }
 }

@@ -58,12 +58,14 @@ Les seuls fichiers qui ouvrent une connexion (`URLSession`, `URLRequest`) :
 | `CoproFirst/Session/ServiceAPI.swift` | l'installation choisie | une session HTTP par hôte, éphémère, cookies en mémoire |
 | `CoproFirst/Session/ServiceAPI+Detail.swift` | l'installation choisie | le téléchargement d'un document, par la même session |
 | `CoproFirst/Session/PreuveAASA.swift` | l'installation choisie | lecture de `/.well-known/apple-app-site-association`, sans cookie |
+| `CoproFirstWatch/Cloche/ClocheParJeton.swift` | la résidence reliée à l'Apple Watch (#226) | `GET /notifications` seul, par le client généré, le jeton de montre en porteur ; session éphémère, sans cookie |
 | `CoproFirstTV/Entree/DecouverteAPI.swift` | l'installation saisie sur l'Apple TV | GET /config par le client généré, session éphémère, sans cookie ni compte |
 | `CoproFirst/Entree/Contenu/Vitrine.swift` | `coprofirst.fr` (l'éditeur) | lecture de `contenu.json` à l'ouverture de l'accueil, sans cookie ni identifiant |
 
 Preuves : `CoproFirst/Session/ServiceAPI.swift` › `let configuration = URLSessionConfiguration.ephemeral` ;
 `CoproFirst/Session/PreuveAASA.swift` › `configuration.httpCookieAcceptPolicy = .never` ;
 `CoproFirstTV/Entree/DecouverteAPI.swift` › `URLSession(configuration: .ephemeral)` ;
+`CoproFirstWatch/Cloche/ClocheParJeton.swift` › `session: URLSession(configuration: .ephemeral)` ;
 `CoproFirst/Entree/Contenu/Vitrine.swift` › `static let adresse = URL(string: "https://coprofirst.fr/contenu.json")`.
 
 La lecture de `contenu.json` ne porte rien de l'utilisateur, mais c'est une requête : le
@@ -77,8 +79,10 @@ relais de l'éditeur, puis par Apple (§4).
 |---|---|---|
 | le jeton de session, **si** Face ID est activé | Trousseau, biométrie, jamais synchronisé | `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet` |
 | le courriel de la dernière connexion, par résidence | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)` |
-| le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
+| le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/TrousseauSansInvite.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
 | l'identifiant du compte dans la résidence (`id` de `GET /auth/me`, #94), le temps d'une session : il dit quel compte d'« Utilisateurs » est celui du lecteur | avec le profil, au Trousseau ; effacé à la déconnexion | `CoproFirst/Donnees/ProfilResidence.swift` › `idCompte: moi.id` ; `CoproFirst/Session/Parcours.swift` › `connues.oublierLeCompte(installation)` |
+| l'identifiant de l'Apple Watch reliée, par résidence (#226) — jamais son jeton | réglages | `CoproFirst/Fonctions/Notifications/Montre/LiaisonsMontre.swift` › `"montre:\(installation.hote)"` |
+| **sur l'Apple Watch** : la résidence reliée (adresse, nom) et son jeton de montre (#226) | Trousseau de la montre, sans invite, jamais synchronisé ; effacé quand l'iPhone ferme la résidence ou que le serveur refuse le jeton | `CoproFirstWatch/Liaison/CoffreLiaison.swift` › `private static let service = "fr.coprofirst.app.montre.liaison"` ; `CoproFirstWatch/Liaison/LiaisonDeLaMontre.swift` › `if !simulee { coffre.effacer() }` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
 | Face ID déjà proposé, par résidence | réglages | `CoproFirst/Session/InstallationsConnues.swift` › `reglages.set(true, forKey: "faceid-propose." + installation.hote)` |
 | l'abonnement push, par résidence | réglages | `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `private static let cle = "push-abonnements"` |
@@ -134,6 +138,25 @@ version du plancher) :
 - pour un avis urgent seulement, la charge porte le niveau *time-sensitive* :
   `project.yml` › `com.apple.developer.usernotifications.time-sensitive: true`.
 
+**L'Apple Watch** (#226) — elle a son propre manifeste, `CoproFirstWatch/PrivacyInfo.xcprivacy`
+(*User ID* seul, aucune API à raison requise), tenu au code par
+`scripts/confidentialite_montre.py` ; la fiche reste celle de l'app :
+
+- à l'ouverture d'une résidence, si une montre jumelée porte l'app, l'iPhone demande à la
+  résidence un **jeton de montre** (coprofirst#2771 : il ne lit que la cloche, 30 jours,
+  révocable) et le passe à la montre par WatchConnectivity — d'un appareil de la personne à
+  l'autre, par Apple, sans serveur de l'éditeur :
+  `CoproFirst/Fonctions/Notifications/Montre/ServiceMontres.swift` › `postMontres(body: .json(.init(plateforme: .watchos)))`,
+  `CoproFirst/Fonctions/Notifications/Montre/CanalMontre.swift` › `session.transferUserInfo(message.donnees)` ;
+- l'iPhone ne garde que l'identifiant de la montre ; le jeton ne s'écrit dans aucune trace :
+  `CoproFirst/Fonctions/Notifications/Montre/ServiceMontres.swift` › `"JetonDeMontre(id: \(id), jeton masqué, expireLe: \(expireLe))"` ;
+- la montre n'envoie rien d'autre que ce jeton, à la seule adresse de sa résidence, pour lire
+  la cloche ; elle ne marque rien comme lu ;
+- à la déconnexion, la montre se retire du serveur et s'efface ; une liaison pas encore remise
+  est annulée :
+  `CoproFirst/Fonctions/Notifications/Montre/LiaisonsMontre.swift` › `try? await service.retirerMontre(id, dans: installation)`,
+  `CoproFirst/Fonctions/Notifications/Montre/CanalMontre.swift` › `for transfert in session.outstandingUserInfoTransfers { transfert.cancel() }`.
+
 ## 5. Le questionnaire « App Privacy » : les réponses
 
 **« Collectez-vous des données depuis cette app ? » → Oui** (§1). Puis cocher ces neuf
@@ -149,8 +172,8 @@ utilisé pour le suivi (*tracking*) : **Non** ; finalité **App Functionality** 
 | `NSPrivacyCollectedDataTypePhoneNumber` | Contact Info › Phone Number | le téléphone du profil | `CoproFirst/Fonctions/Profil/ServiceAPI+Profil.swift` › `telephone: saisie.telephone.nulSiVide` |
 | `NSPrivacyCollectedDataTypeEmailsOrTextMessages` | User Content › Emails or Text Messages | les messages d'une affaire | `CoproFirst/Session/ServiceAPI+Detail.swift` › `postTicketsTicketIdMessages(` |
 | `NSPrivacyCollectedDataTypeOtherUserContent` | User Content › Other User Content | affaires, annonces, idées, avis, votes, questions, demandes de badge | `CoproFirst/Fonctions/Affaires/Donnees/ServiceAffaires+API.swift` › `postTickets(body: .json(corps))` |
-| `NSPrivacyCollectedDataTypeUserID` | Identifiers › User ID | le compte et sa session (cookies posés par la résidence) | `CoproFirst/Session/ServiceAPI.swift` › `poserCookie("refresh_token", valeur: jeton, installation)` |
-| `NSPrivacyCollectedDataTypeDeviceID` | Identifiers › Device ID | le jeton d'appareil d'APNs et l'abonnement | `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `abonnement: appareil.abonnement` |
+| `NSPrivacyCollectedDataTypeUserID` | Identifiers › User ID | le compte et sa session (cookies posés par la résidence), et le jeton de l'Apple Watch | `CoproFirst/Session/ServiceAPI.swift` › `poserCookie("refresh_token", valeur: jeton, installation)` |
+| `NSPrivacyCollectedDataTypeDeviceID` | Identifiers › Device ID | le jeton d'appareil d'APNs et l'abonnement ; l'Apple Watch reliée au compte (sa plateforme, ses dates) | `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `abonnement: appareil.abonnement` |
 | `NSPrivacyCollectedDataTypeOtherDataTypes` | Other Data › Other Data Types | mot de passe à la connexion, société, fonction, statut et bâtiment demandés, réglages du compte, rôles donnés par un administrateur | `CoproFirst/Fonctions/Profil/ServiceAPI+Profil.swift` › `societe: saisie.societe.nulSiVide` |
 | `NSPrivacyCollectedDataTypeProductInteraction` | Usage Data › Product Interaction | les écrans vus, sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`), et le canal « App iPhone » : la mesure d'audience de la résidence (coprofirst#2726), liée au compte comme celle du site, **jamais** si le compte l'a refusée au Profil ; ni identifiant d'appareil ni modèle | `CoproFirst/Session/Audience/ServiceAudience+API.swift` › `postTelemetryCollect(body: .json(lot))` ; `CoproFirst/Session/Audience/MesureAudience.swift` › `return installation.profil?.refusMesure == false` |
 
@@ -198,6 +221,9 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `postAppareils` | `DeviceID` |
 | `postTelemetryCollect` | `ProductInteraction` |
 | `deleteAppareilsAbonnement` | `DeviceID` |
+| `postMontres` | `DeviceID` |
+| `postMontresMontreIdRenouveler` | `DeviceID` |
+| `deleteMontresMontreId` | `DeviceID` |
 | `postTickets` | `OtherUserContent` |
 | `patchTicketsTicketId` | `OtherUserContent` |
 | `postTicketsTicketIdEvolutions` | `OtherUserContent` |
@@ -275,6 +301,7 @@ contrôle.
 | `Network` | Apple (iOS) | savoir si l'appareil est en ligne |
 | `CryptoKit` | Apple (iOS) | nommer le dossier d'une lecture gardée par l'empreinte de son hôte, sur l'appareil |
 | `UserNotifications` | Apple (iOS) | autorisation et réception des notifications |
+| `WatchConnectivity` | Apple (iOS, watchOS) | la liaison iPhone ↔ Apple Watch : la résidence et son jeton de montre, d'un appareil de la personne à l'autre (#226) |
 | `VisionKit` | Apple (iOS) | lecture du QR code, sur l'appareil |
 | `QuickLook` | Apple (iOS) | aperçu d'un document téléchargé |
 | `SafariServices` | Apple (iOS) | ouvrir une page du site dans Safari intégré |

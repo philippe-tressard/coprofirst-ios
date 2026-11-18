@@ -20,7 +20,7 @@ extension ServiceSimule: ServiceAppareils {
 
     func enregistrerAppareil(_ appareil: AppareilPush, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(100))
-        try exigerSessionOuverte(installation)
+        try exigerSession(installation)
         appareils.modifier { tables in
             var table = tables[installation.hote] ?? [:]
             // Un même jeton sous un autre abonnement change de main : une ligne par jeton.
@@ -32,14 +32,9 @@ extension ServiceSimule: ServiceAppareils {
 
     func retirerAppareil(_ abonnement: String, dans installation: Installation) async throws {
         try await Task.sleep(for: .milliseconds(100))
-        try exigerSessionOuverte(installation)
+        try exigerSession(installation)
         let retire = appareils.modifier { $0[installation.hote]?.removeValue(forKey: abonnement) }
         if retire == nil { throw ErreurService.refus(.init(phrase: "Appareil introuvable")) }
-    }
-
-    /// Une installation simulée dont on s'est déconnecté refuse, comme `get_current_user`.
-    private func exigerSessionOuverte(_ installation: Installation) throws {
-        guard aUneSessionOuverte(installation) else { throw ErreurService.sessionExpiree }
     }
 }
 #endif

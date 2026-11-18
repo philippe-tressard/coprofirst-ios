@@ -5,19 +5,31 @@ import SwiftUI
 
 /// La racine : la cloche si la montre est reliée, sinon la phrase qui dit de la relier.
 struct RacineMontre: View {
-    let etat: EtatMontre
+    let liaison: LiaisonDeLaMontre
+    @Environment(\.scenePhase) private var phase
 
     var body: some View {
-        switch etat {
-        case .nonReliee:
-            ScrollView {
-                Text(TextesMontre.nonReliee)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .accessibilityIdentifier("montre.nonReliee")
+        Group {
+            switch liaison.etat {
+            case .nonReliee:
+                ScrollView {
+                    Text(TextesMontre.nonReliee)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .accessibilityIdentifier("montre.nonReliee")
+                }
+            case .reliee(let residence, let source):
+                ClocheView(
+                    residence: residence, adresse: source.adresse,
+                    lecteur: LecteurCloche(source: source) { liaison.jetonRefuse() }
+                )
+                // Une autre résidence, ou un jeton renouvelé : une cloche neuve, sans l'ancienne liste.
+                .id(source)
             }
-        case .reliee(let residence, let source):
-            ClocheView(residence: residence, lecteur: LecteurCloche(source: source))
+        }
+        // Une liaison échue pendant que la montre dormait ne lit plus rien.
+        .onChange(of: phase) { _, apres in
+            if apres == .active { liaison.relire() }
         }
     }
 }

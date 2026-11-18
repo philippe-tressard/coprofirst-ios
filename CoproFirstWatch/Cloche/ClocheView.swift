@@ -5,9 +5,12 @@ import SwiftUI
 
 /// La liste de la cloche (#226) : en tête le nom de la résidence, puis les non lues (urgentes
 /// devant), puis « Déjà lues », repliée. Un toucher ouvre le détail ; rien ne se marque
-/// comme lu. La liste se relit à chaque retour au premier plan.
+/// comme lu. La liste se relit à chaque retour au premier plan ; l'iPhone proche propose de la
+/// continuer (Handoff).
 struct ClocheView: View {
     let residence: String
+    /// L'adresse de la résidence : « Continuer sur l'iPhone » (Handoff) ouvre sa cloche.
+    let adresse: URL?
     @State var lecteur: LecteurCloche
     @State private var luesOuvertes = false
     @Environment(\.scenePhase) private var phase
@@ -22,6 +25,13 @@ struct ClocheView: View {
             .navigationDestination(for: NotificationRecue.self) { AlerteView(alerte: $0) }
         }
         .task { await lecteur.lire() }
+        // Handoff : l'iPhone propose d'ouvrir la cloche de CETTE résidence (`ClocheSurLiPhone`).
+        .userActivity(ClocheSurLiPhone.type, isActive: adresse != nil) { activite in
+            guard let adresse else { return }
+            activite.title = residence
+            activite.isEligibleForHandoff = true
+            activite.addUserInfoEntries(from: ClocheSurLiPhone.userInfo(adresse))
+        }
         .onChange(of: phase) { avant, apres in
             // Une relecture au RETOUR au premier plan, pas au lancement : la première lecture
             // vient de partir, la liste ne se reconstruit pas sous le doigt.

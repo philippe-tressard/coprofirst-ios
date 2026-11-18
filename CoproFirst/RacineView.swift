@@ -51,6 +51,12 @@ struct RacineView: View {
         .onOpenURL { url in
             if let destination = LienUniversel.destination(url) { parcours.suivre(destination) }
         }
+        // « Continuer sur l'iPhone » depuis la montre (#226) : une résidence déjà connue seule.
+        .onContinueUserActivity(ClocheSurLiPhone.type) { activite in
+            if let destination = Destination.clocheDeLaMontre(activite.userInfo) {
+                parcours.suivre(destination, decouvrir: false)
+            }
+        }
         .sheet(item: $parcours.porte.pageWeb) { page in
             PageWebView(url: page.url).ignoresSafeArea()
         }
