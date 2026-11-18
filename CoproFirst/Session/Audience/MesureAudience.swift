@@ -21,8 +21,9 @@ import UIKit
 ///   ignorerait le canal et compterait les vues de l'app comme celles du site ;
 /// - hors ligne, en consultation (#101) : rien ne partirait.
 ///
-/// Aucun identifiant d'appareil, aucun modèle : une page, l'action `view`, le canal. Un
-/// échec ne se dit pas et ne se rejoue pas — la mesure n'impacte jamais l'usage.
+/// Aucun identifiant d'appareil, aucun modèle : une page, l'action `view`, le canal, et la
+/// classe de l'appareil — iPhone, iPad, Mac, Vision Pro (`AppareilAudience`, #229). Un échec
+/// ne se dit pas et ne se rejoue pas — la mesure n'impacte jamais l'usage.
 @MainActor
 final class MesureAudience {
     /// L'action d'une page vue — celle du site (`trackPageView`).
@@ -36,14 +37,19 @@ final class MesureAudience {
 
     private let service: (any ServiceAudience)?
     private let intervalle: Duration
+    /// La classe de l'appareil, déduite une fois : elle ne change pas pendant que l'app tourne.
+    let appareil: AppareilAudience
     /// Les chemins notés, pas encore partis, et la résidence à qui ils iront.
     private(set) var file: [String] = []
     private var destinataire: Installation?
     private var minuterie: Task<Void, Never>?
 
-    init(service: (any ServiceAudience)?, intervalle: Duration = intervalleParDefaut) {
+    init(
+        service: (any ServiceAudience)?, intervalle: Duration = intervalleParDefaut, appareil: AppareilAudience? = nil
+    ) {
         self.service = service
         self.intervalle = intervalle
+        self.appareil = appareil ?? .deduire(.actuels)
     }
 
     /// L'installation accepte-t-elle la mesure de CE compte, par ce canal ?
@@ -92,7 +98,7 @@ final class MesureAudience {
     private func envoyer(_ pages: [String], a installation: Installation) async {
         for debut in stride(from: 0, to: pages.count, by: LimitesAudience.evenementsParLot) {
             let lot = Array(pages[debut..<min(debut + LimitesAudience.evenementsParLot, pages.count)])
-            try? await service?.envoyer(lot, a: installation)
+            try? await service?.envoyer(lot, appareil: appareil, a: installation)
         }
     }
 

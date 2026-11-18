@@ -19,7 +19,8 @@ même, parce qu'elles quittent l'appareil et y sont gardées (la fiche dit pourq
 
 Les écrans vus (ProductInteraction, coprofirst#2726) partent pour la mesure d'audience de
 la résidence, liés au compte, sauf refus dans le Profil : finalité Analytics, pas de
-traçage.
+traçage. Ils portent la classe de l'appareil (iPhone, iPad, Mac, Vision Pro — #229) :
+une catégorie, jamais un modèle ni un identifiant, aucun type de donnée de plus.
 -->
 <plist version="1.0">
 <dict>

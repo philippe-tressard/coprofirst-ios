@@ -14,13 +14,19 @@ import Testing
 
 /// Un service qui garde chaque lot reçu, par résidence ; `echoue` : il lève à chaque envoi.
 private actor Enregistreur: ServiceAudience {
-    private(set) var lots: [(hote: String, pages: [String])] = []
+    /// Un lot reçu : à quelle résidence, quelles pages, de quel appareil.
+    struct Lot {
+        let hote: String
+        let pages: [String]
+        let appareil: AppareilAudience
+    }
+    private(set) var lots: [Lot] = []
     let echoue: Bool
 
     init(echoue: Bool = false) { self.echoue = echoue }
 
-    func envoyer(_ pages: [String], a installation: Installation) async throws {
-        lots.append((installation.hote, pages))
+    func envoyer(_ pages: [String], appareil: AppareilAudience, a installation: Installation) async throws {
+        lots.append(Lot(hote: installation.hote, pages: pages, appareil: appareil))
         if echoue { throw ErreurService.inattendue(500) }
     }
 
@@ -46,7 +52,7 @@ private func residence(
 private func mesure(
     _ service: any ServiceAudience, ouverte: Installation?, intervalle: Duration = .seconds(30)
 ) -> MesureAudience {
-    let mesure = MesureAudience(service: service, intervalle: intervalle)
+    let mesure = MesureAudience(service: service, intervalle: intervalle, appareil: .ipad)
     mesure.courante = { ouverte }
     return mesure
 }
@@ -61,6 +67,7 @@ struct MesureAudienceTests {
         let lots = await enregistreur.lots
         #expect(lots.count == 1)
         #expect(lots.first?.pages.count == LimitesAudience.evenementsParLot)
+        #expect(lots.first?.appareil == .ipad, "la classe de l'appareil part avec chaque lot (#229)")
         #expect(mesure.file.isEmpty)
     }
 
@@ -195,12 +202,13 @@ struct CheminsEtCorpsAudienceTests {
     @Test func leLotPorteLeCanalDeLAppEtRienDAutre() async throws {
         let transport = TransportEnregistreur()
         let service = ServiceAPI(transport: { _ in transport })
-        try await service.envoyer(["/tickets/12", "/admin#telemetry"], a: ServiceSimule.residence)
+        try await service.envoyer(["/tickets/12", "/admin#telemetry"], appareil: .ipad, a: ServiceSimule.residence)
         #expect(transport.operation == "post_telemetry_collect")
         let corps = try #require(transport.corps)
         let envoye = try #require(try JSONSerialization.jsonObject(with: corps) as? [String: Any])
-        #expect(Set(envoye.keys) == ["canal", "events"], "ni appareil ni modèle")
+        #expect(Set(envoye.keys) == ["canal", "appareil", "events"], "la classe de l'appareil, jamais son modèle")
         #expect(envoye["canal"] as? String == "ios")
+        #expect(envoye["appareil"] as? String == "ipad")
         let evenements = try #require(envoye["events"] as? [[String: String]])
         #expect(evenements.map { $0["page"] } == ["/tickets/12", "/admin#telemetry"])
         #expect(evenements.allSatisfy { $0["action"] == MesureAudience.action })
@@ -212,6 +220,33 @@ struct CheminsEtCorpsAudienceTests {
         let simule: any ServiceAudience = ServiceSimule(delai: .zero)
         // Le faux serveur refuse comme le vrai un lot hors de ses bornes.
         let tropDePages = Array(repeating: "/a", count: LimitesAudience.evenementsParLot + 1)
-        await #expect(throws: ErreurService.self) { try await simule.envoyer(tropDePages, a: ServiceSimule.residence) }
+        await #expect(throws: ErreurService.self) {
+            try await simule.envoyer(tropDePages, appareil: .iphone, a: ServiceSimule.residence)
+        }
+    }
+}
+
+// MARK: - La classe de l'appareil (#229)
+
+struct AppareilAudienceTests {
+    /// Chaque fait mène à sa classe, le plus précis d'abord : une app iPhone sur Mac ou sur
+    /// Vision Pro n'est ni un iPhone ni un iPad, même si son modèle le dit.
+    @Test(arguments: [
+        (FaitsAppareil(modele: "iPhone"), AppareilAudience.iphone),
+        (FaitsAppareil(modele: "iPad"), .ipad),
+        (FaitsAppareil(surMac: true, modele: "iPad"), .mac),
+        (FaitsAppareil(surVision: true, modele: "iPad"), .vision),
+        (FaitsAppareil(tele: true, modele: "Apple TV"), .appleTv),
+        (FaitsAppareil(modele: ""), .iphone),
+    ])
+    func chaqueAppareilASaClasse(_ faits: FaitsAppareil, _ attendu: AppareilAudience) {
+        #expect(AppareilAudience.deduire(faits) == attendu)
+    }
+
+    /// Les valeurs envoyées sont celles que le serveur accepte pour le canal `ios`
+    /// (`appareilsParCanal`, générées) — et tiennent dans le contrat (`maxLength` 20).
+    @Test func lesClassesSontCellesDuServeur() {
+        #expect(AppareilAudience.appleTv.rawValue == "apple_tv")
+        #expect(AppareilAudience.allCases.allSatisfy { $0.rawValue.count <= 20 })
     }
 }
