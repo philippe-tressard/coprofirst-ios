@@ -18,7 +18,10 @@ final class MessagesAffaireUITests: XCTestCase {
         // Le message d'un autre n'a pas de geste ; le sien, si.
         XCTAssertFalse(app.elementAcces("message.gestes.502").exists, "le message du conseil")
         let gestes = app.elementAcces("message.gestes.501")
-        XCTAssertTrue(app.amener(gestes), "son message offre ses gestes")
+        // Au-dessus du bandeau du bas (🔗 y est offert à tous) : sous son verre, le « ⋯ » ne
+        // s'ouvre pas (iOS 26.5).
+        let bandeau = app.elementAcces("affaire.lien")
+        XCTAssertTrue(app.amener(gestes, auDessusDe: bandeau), "son message offre ses gestes")
         app.toucher(gestes)
         let modifier = app.elementAcces("message.geste.modifier")
         XCTAssertTrue(modifier.apparait(), "« Modifier mon message »")
@@ -39,7 +42,7 @@ final class MessagesAffaireUITests: XCTestCase {
         XCTAssertTrue(message.attendre("label CONTAINS 'Vidé ce matin.'"), "le fil relu montre le message corrigé")
 
         // Retirer : la question du site, puis le message quitte le fil.
-        XCTAssertTrue(app.amener(gestes))
+        XCTAssertTrue(app.amener(gestes, auDessusDe: bandeau))
         app.toucher(gestes)
         let supprimer = app.elementAcces("message.geste.supprimer")
         XCTAssertTrue(supprimer.apparait())
