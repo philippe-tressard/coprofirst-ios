@@ -10,4 +10,7 @@ extension VersionContrat {
     /// Une installation qui sert un contrat plus ancien ne se décode plus : la découverte
     /// le dit (« cette résidence doit être mise à jour »), au lieu d'une erreur muette.
     static let plancher = VersionContrat(2, 8, 0)
+
+    /// Au-dessus du plancher : masquer ce que publie un résident, signaler une affaire, une suite ou la réponse de l'assistant (coprofirst#2861, #286) — servi depuis v3.118.0 (contrat 2.9.0).
+    static let moderation = VersionContrat(2, 9, 0)
 }

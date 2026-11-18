@@ -9,7 +9,9 @@ import Foundation
 /// 🔴 Elle se compare par ses NOMBRES, jamais comme une chaîne : « 1.9.0 » < « 1.15.0 »,
 /// que l'ordre des caractères inverserait. C'est la seule comparaison de versions de
 /// contrat de l'app — un geste qui dépend d'une version s'écrit
-/// `installation.contrat >= .logoSombre`, jamais avec la chaîne servie.
+/// `installation.sert(.logoSombre)`, jamais avec la chaîne servie. Les portes des routes
+/// au-dessus du plancher (`.moderation`) se GÉNÈRENT avec elles (`ContratDuPlancher.swift`,
+/// `AU_DESSUS_DU_PLANCHER` de `scripts/generateurs/contrat.py`, #286).
 struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     /// Majeure, mineure, correctif — trois nombres, un absent valant 0 (« 1.15 » = « 1.15.0 »).
     let nombres: [Int]

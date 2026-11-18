@@ -22,7 +22,8 @@ Usage :
   python3 scripts/generer.py --sources
       Les fichiers de coprofirst lus, un par ligne ; échoue si un générateur déclare un
       fichier de l'API ou une feuille de la charte hors des exceptions datées (#237), ou si
-      une exception ne sert plus — et prouve d'abord, sur des modules fictifs, qu'il refuse.
+      une exception ne sert plus — et prouve d'abord, sur des modules fictifs, qu'il refuse ;
+      joue aussi l'`autotest()` de chaque générateur qui en déclare un (#286).
 """
 
 from __future__ import annotations
@@ -88,6 +89,9 @@ def refus_sources(modules: list, exceptions: dict[str, str] = EXCEPTIONS) -> lis
 
 
 def controler_sources(modules: list) -> int:
+    for module in modules:
+        if callable(getattr(module, "autotest", None)):
+            module.autotest()
     fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
     toleree = types.SimpleNamespace(__name__="generateurs.toleree", SOURCES=["front/src/styles/socle.css"])
     if (len(refus_sources([fictif], {})) != 1 or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
