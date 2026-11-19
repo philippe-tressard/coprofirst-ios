@@ -195,7 +195,7 @@ fonctionnalité reste dans son dossier ; il monte dans `Commun/` à son deuxièm
 | `PastilleTeinte`, `LibelleTeinte` | une pastille teintée par la classe `badge-*` du site (`compacte` pour une ligne dense) ; `PastilleStatut` en est le cas des affaires ; une valeur inconnue d'une table s'affiche brute, en gris (`LibelleTeinte.brut`) (#37) | idem |
 | `Medaillon`, `MedaillonPlein` | le logo de CoproFirst (la marque), qui suit Dynamic Type — jamais modifié (sa licence) | idem |
 | `LogoResidence` | **le seul** composant du logo de la résidence (pastille, feuille, connexion) : le logo téléversé, sinon celui de CoproFirst. Au sombre, la variante `sombre` quand l'installation la sert (`Installation.adresseLogo(sombre:)` : contrat ≥ 1.15.0 et `site_logo_sombre`) ; il suit le thème sans relancer, en fondu, sans repasser par la marque. Cache `LogosEnMemoire`, une entrée par adresse donc par variante (#70) | `Commun/Composants/LogoResidence.swift` (tests : `LogoResidenceTests`) |
-| `VersionContrat`, `Installation.sert(_:)` | **la seule** comparaison de versions du contrat (`version_contrat` de GET /config), par ses nombres : un geste réservé à une version s'écrit `installation.sert(.logoSombre)` (contrat absent ou illisible : porte fermée), jamais sur la chaîne. La porte d'une ROUTE au-dessus du plancher se génère avec elle (`.moderation`, voir « Route au-dessus du plancher ») | `Session/VersionContrat.swift`, `Session/ContratDuPlancher.swift` (généré) |
+| `VersionContrat`, `Installation.sert(_:)` | **la seule** comparaison de versions du contrat (`version_contrat` de GET /config), par ses nombres : un geste réservé à une version s’écrit `installation.sert(.plancher)` ou `installation.sert(.porte)` (contrat absent ou illisible : porte fermée), jamais sur la chaîne. Une porte ne vit qu’au-dessus du plancher, retirée quand il la dépasse (#254) ; celle d’une ROUTE au-dessus du plancher se génère avec elle (`.moderation`, voir « Route au-dessus du plancher ») | `Session/VersionContrat.swift`, `Session/ContratDuPlancher.swift` (généré) |
 | `MessageErreur` | une erreur en une phrase, avec « Réessayer » au besoin | idem |
 | `BandeauHorsLigne` | l'état hors ligne, en haut, sans alerte : posé SANS condition par l'écran (`.safeAreaInset(edge: .top)`), il dit « à jour au… » en consultation (#101), « ce qui est affiché peut dater » quand le réseau tombe l'app ouverte, et rien sinon | `Commun/Composants/BandeauHorsLigne.swift` |
 | `.gesteEnLigne()` | **tout** contrôle qui agit sur le serveur (envoyer, voter, déposer, exporter, modifier, archiver…) : en consultation hors ligne, il reste en place, grisé, et VoiceOver dit pourquoi — jamais un `if horsLigne` dans un écran. Un geste oublié ne part pas pour autant : la porte du client le refuse | `Commun/Composants/GesteEnLigne.swift` |
@@ -330,7 +330,8 @@ seule la CI le dit.
    sur le même test** : signature et durées, journal contre journal. Si « App event loop
    idle notification not received » ou « main thread busy » frappe tous les tests d'un
    même écran, alors que `main` les passe sans ce signal, c'est l'app qui tourne en boucle
-   (#279). Le poste, sous une autre version d'iOS, peut rester vert (#287) : la boucle se
+   (#279). Le poste, sous une autre version d'iOS, peut rester vert — la ligne « Système »
+   du résumé le dit, et `OS_SIMULATEUR=ci` y joue celui de la CI (#287) : la boucle se
    prouve par une trace (`print` temporaire, `simctl launch --console-pty`). La cause
    type : un `if` sur un état dans un `ViewModifier` qui enveloppe une page. Chaque
    branche donne à la page une autre identité ; quand l'état change, la page se recrée,

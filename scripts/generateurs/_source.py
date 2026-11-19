@@ -31,6 +31,7 @@ import os
 import pathlib
 import re
 import tarfile
+import threading
 import urllib.error
 import urllib.request
 
@@ -45,7 +46,36 @@ class SourceIllisible(Exception):
     """La version, son archive ou une pièce jointe n'a pas pu être lue : INCONNU."""
 
 
-def _lire(url: str) -> bytes:
+#: Le délai d'UN appel, du nom à résoudre au dernier octet (#293). `timeout` d'urlopen ne
+#: borne que chaque opération de socket : ni la résolution du nom, ni une réponse qui
+#: s'égrène. Régime mesuré le 18/11/2026 au poste : toute la concordance en 4 s, l'archive
+#: du plancher comprise ; 60 s laissent quinze fois le régime à l'appel le plus long.
+DELAI_APPEL = 60
+DELAI_SOCKET = 30
+
+
+def _lire(url: str, delai: float = DELAI_APPEL) -> bytes:
+    """Le corps de `url`, lu en `delai` secondes au plus ; sinon SourceIllisible, qui la nomme."""
+    resultat: list = []
+
+    def lire() -> None:
+        try:
+            resultat.append(_lire_sans_delai(url))
+        except Exception as erreur:  # rendue au fil appelant, qui la lève
+            resultat.append(erreur)
+
+    fil = threading.Thread(target=lire, daemon=True)
+    fil.start()
+    fil.join(delai)
+    if fil.is_alive():
+        # Le fil, figé dans le réseau, meurt avec le processus (daemon) : rien n'a été lu.
+        raise SourceIllisible(f"{url} : délai de {delai:g} s dépassé, aucune réponse complète")
+    if isinstance(resultat[0], Exception):
+        raise resultat[0]
+    return resultat[0]
+
+
+def _lire_sans_delai(url: str) -> bytes:
     entetes = {"User-Agent": "coprofirst-ios-generateurs"}
     jeton = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if url.startswith("https://api.github.com/"):
@@ -54,7 +84,7 @@ def _lire(url: str) -> bytes:
         if jeton:
             entetes["Authorization"] = f"Bearer {jeton}"
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=entetes), timeout=120) as reponse:
+        with urllib.request.urlopen(urllib.request.Request(url, headers=entetes), timeout=DELAI_SOCKET) as reponse:
             return reponse.read()
     except (urllib.error.URLError, TimeoutError, OSError) as erreur:
         raise SourceIllisible(f"{url} : {erreur}") from erreur

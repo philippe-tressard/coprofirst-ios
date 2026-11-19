@@ -17,8 +17,12 @@ import UIKit
 /// - si le compte a refusé la mesure, ou si son refus n'est pas encore connu
 ///   (`ProfilResidence.refusMesure`, servi par GET /auth/me) : on ne collecte pas ce que le
 ///   serveur jetterait ;
-/// - si l'installation sert un contrat antérieur à `VersionContrat.canalAudience` : elle
-///   ignorerait le canal et compterait les vues de l'app comme celles du site ;
+/// - si l'installation ne dit pas servir au moins le plancher (`version_contrat` absent,
+///   illisible ou ancien) : une installation antérieure au contrat 1.31.0 ignorerait le
+///   canal et compterait les vues de l'app comme celles du site. Le plancher le sert ;
+///   la porte reste pourtant, comparée au plancher et non plus à 1.31.0 (#254), parce
+///   qu'une version ILLISIBLE n'arrête pas la découverte (`exigerLePlancher`) : c'est
+///   une porte de confidentialité, et elle reste fermée sur ce qu'on ne sait pas ;
 /// - hors ligne, en consultation (#101) : rien ne partirait.
 ///
 /// Aucun identifiant d'appareil, aucun modèle : une page, l'action `view`, le canal. Un
@@ -48,7 +52,7 @@ final class MesureAudience {
 
     /// L'installation accepte-t-elle la mesure de CE compte, par ce canal ?
     static func mesurable(_ installation: Installation) -> Bool {
-        guard installation.sert(.canalAudience) else { return false }
+        guard installation.sert(.plancher) else { return false }
         return installation.profil?.refusMesure == false
     }
 

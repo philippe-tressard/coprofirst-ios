@@ -58,7 +58,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// Le contrat servi, lu par ses nombres — `nil` s'il est absent ou illisible.
     var contrat: VersionContrat? { VersionContrat(versionContrat) }
 
-    /// Sert-elle ce qu'ouvre la PORTE `porte` (`.logoSombre`, `.moderation`…) ? Un contrat
+    /// Sert-elle ce qu'ouvre la PORTE `porte` (`.plancher`, `.moderation`…) ? Un contrat
     /// absent ou illisible n'ouvre aucune porte : l'app garde les gestes du plancher.
     func sert(_ porte: VersionContrat) -> Bool { contrat.map { $0 >= porte } ?? false }
 
@@ -74,18 +74,16 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// (l'app montre alors celui de CoproFirst, comme le site son logo neutre).
     ///
     /// Sur un fond sombre, la variante `sombre` n'est demandée qu'à une installation
-    /// qui la sert (contrat ≥ 1.15.0) ET qui en a téléversé une (`site_logo_sombre`),
-    /// comme `LogoResidence.svelte` : sinon le logo lui-même, à la même adresse
-    /// qu'au clair — aucune requête de plus. Le serveur rendrait d'ailleurs le logo
-    /// clair dans ces deux cas : une version antérieure ignore le paramètre, et la
-    /// 1.15.0 sans variante sert le logo téléversé (`utils/logo.logo_png`).
+    /// qui en a téléversé une (`site_logo_sombre`), comme `LogoResidence.svelte` : sinon
+    /// le logo lui-même, à la même adresse qu'au clair — aucune requête de plus. Le
+    /// plancher sert la variante (contrat 1.15.0) : aucune porte de version (#254).
     ///
-    /// ⚠️ Le paramètre `variante` (1.15.0) est au-dessus du plancher (`.plancher`) : le
-    /// client généré ne peut pas l'écrire. L'adresse s'écrit donc ici, et ici seulement.
+    /// L'adresse est la CLÉ du cache (`LogosEnMemoire`) et de la lecture
+    /// (`ServiceCoproFirst.logo`) : elle s'écrit donc ici, et ici seulement.
     func adresseLogo(sombre: Bool) -> URL? {
         guard aUnLogo else { return nil }
         let adresse = adresse.appending(path: "api/config/logo.png")
-        guard sombre, aUnLogoSombre == true, sert(.logoSombre) else { return adresse }
+        guard sombre, aUnLogoSombre == true else { return adresse }
         return adresse.appending(queryItems: [URLQueryItem(name: "variante", value: "sombre")])
     }
 }
