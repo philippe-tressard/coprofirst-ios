@@ -15,9 +15,20 @@ enum EcranDeHall {
     static let exempleAdresse = "residence.example.com"
     static let continuer = "Continuer"
     static let changer = "Changer de résidence"
-    /// La résidence reconnue, avant l'appairage (lot 3) : d'où il se règle.
-    static let attente = """
-        Cet écran s'appairera depuis l'Espace conseil syndical du site. \
-        Il fera ensuite défiler les affiches de la résidence.
+
+    // L'appairage (lot 3) : le code, et où le saisir — les mots de l'onglet du conseil (#295).
+    static let appairage = """
+        Pour afficher les annonces de hall, un membre du conseil syndical saisit ce code \
+        dans l'Espace CS, onglet « Écrans du hall » — sur le site ou dans l'app CoproFirst.
         """
+    static let demande = "Demande d'un code…"
+    static func valable(jusqua heure: String) -> String { "Code valable jusqu'à \(heure)." }
+    static let expire = "Ce code a expiré."
+    static let nouveauCode = "Afficher un nouveau code"
+
+    // La diffusion (lot 3).
+    static let aucuneTitre = "Aucune annonce en ce moment"
+    static let aucuneMessage = "Les annonces de hall de la résidence s'afficheront ici."
+    static let lecture = "Lecture des annonces…"
+    static func position(_ rang: Int, sur total: Int) -> String { "Annonce \(rang + 1) sur \(total)" }
 }

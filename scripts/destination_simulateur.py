@@ -33,6 +33,14 @@ génération la plus récente.
 Avec `--montre` (#226), la même règle sur watchOS : une « Apple Watch Series N (Mmm) » à son
 nom d'usine — ni SE, ni Ultra —, la génération la plus récente, le plus grand boîtier d'abord.
 
+Avec `--os X.Y` (#287), le runtime est celui de cette version, et lui seul : la CI joue
+`OS_SIMULATEUR_CI` d'`outillage.env`, le poste aussi sur demande. Absent : INCONNU, avec la
+commande d'installation — jamais une autre version à sa place.
+
+`--systeme UDID OS_CI` nomme le système de l'appareil (« iOS 26.5 ») et le compare à celui
+de la CI, pour le résumé d'un passage : un vert sous 27.2 ne vaut pas pour la CI, qui joue
+26.5 (#287, le défaut de #279 vu en CI seule). Illisible : INCONNU, dit.
+
 Les noms ne s'écrivent pas en dur : ils changent d'une image de runner à l'autre.
 `--autotest` rejoue la règle sur la liste du poste du 11/11/2026 (deux runtimes
 27.2, dont celui du seul iPhone Duo) : un contrôle qui ne refuse rien ne prouve rien.
@@ -91,10 +99,18 @@ def de_serie(appareil: dict, famille: str = "iphone") -> tuple[int, int] | None:
     return int(trouve["generation"]), 1 if trouve["pro"] else 0
 
 
-def choisir(liste: dict, famille: str = "iphone") -> tuple[int, str, str]:
+def nombres_os(version: str) -> tuple[int, ...] | None:
+    """« 26.5 » → (26, 5) ; None si ce n'est pas une version."""
+    return tuple(int(n) for n in version.split(".")) if re.fullmatch(r"\d+(\.\d+){1,2}", version) else None
+
+
+def choisir(liste: dict, famille: str = "iphone", systeme: str | None = None) -> tuple[int, str, str]:
     """(sortie, udid, ce qui se dit) — voir l'en-tête du module."""
     plateforme, attendu = FAMILLES[famille]
     runtime = runtime_standard(plateforme)
+    voulu = nombres_os(systeme) if systeme else None
+    if systeme and voulu is None:
+        return 2, "", f"INCONNU : version du système illisible ({systeme!r}, attendu « X.Y »)"
     try:
         runtimes = []
         for cle, appareils in liste["devices"].items():
@@ -102,9 +118,13 @@ def choisir(liste: dict, famille: str = "iphone") -> tuple[int, str, str]:
             disponibles = [a for a in appareils if a.get("isAvailable", True)]
             if version and disponibles:
                 runtimes.append((tuple(int(n or 0) for n in version.groups()), disponibles))
+        if voulu:
+            runtimes = [r for r in runtimes if r[0][:len(voulu)] == voulu]
         if not runtimes:
-            return 2, "", (f"INCONNU : aucun runtime {plateforme} standard avec un appareil disponible "
-                           f"(xcodebuild -downloadPlatform {plateforme})")
+            demande = f" {systeme}" if systeme else ""
+            return 2, "", (f"INCONNU : aucun runtime {plateforme}{demande} standard avec un appareil disponible "
+                           f"(xcodebuild -downloadPlatform {plateforme}"
+                           + (f" -buildVersion {systeme})" if systeme else ")"))
         version, appareils = max(runtimes, key=lambda r: r[0])
         os_ = ".".join(str(n) for n in version[:2])
         candidats = sorted(
@@ -118,6 +138,30 @@ def choisir(liste: dict, famille: str = "iphone") -> tuple[int, str, str]:
                        f"présents : {presents}. En créer un, ou fixer DESTINATION.")
     _, udid, nom = candidats[0]
     return 0, udid, f"Simulateur retenu : {nom}, {plateforme} {os_} ({udid})"
+
+
+def systeme_de(liste: dict, udid: str) -> str | None:
+    """« iOS 26.5 » : le système du runtime qui porte l'appareil `udid`, sinon None."""
+    try:
+        for cle, appareils in liste["devices"].items():
+            if any(a.get("udid") == udid for a in appareils):
+                trouve = re.match(r"^com\.apple\.CoreSimulator\.SimRuntime\.(iOS|tvOS|watchOS)-(\d+)-(\d+)", cle)
+                return f"{trouve[1]} {trouve[2]}.{trouve[3]}" if trouve else None
+    except (KeyError, TypeError, AttributeError):
+        return None
+    return None
+
+
+def ligne_systeme(joue: str | None, ci: str | None) -> str:
+    """La ligne « Système » du résumé d'un passage : le système joué, celui de la CI (#287)."""
+    if not joue:
+        return "Système : INCONNU — la version jouée ne se lit pas (simctl)" + (f" ; la CI joue {ci}." if ci else ".")
+    if not ci or nombres_os(ci) is None:
+        return f"Système : {joue} joué ; celui de la CI INCONNU (OS_SIMULATEUR_CI, outillage.env)."
+    if nombres_os(joue.split()[-1]) == nombres_os(ci):
+        return f"Système : {joue}, celui de la CI (OS_SIMULATEUR_CI, outillage.env)."
+    return (f"Système : {joue} joué ; la CI joue {ci} — un vert ici ne vaut pas pour la CI : "
+            "`OS_SIMULATEUR=ci bash scripts/tests-simulateur.sh`.")
 
 
 # ── Autotest ────────────────────────────────────────────────────────────────────
@@ -230,30 +274,81 @@ def autotest() -> int:
         ("montre : aucun runtime watchOS : INCONNU", {"devices": {_IOS + "27-2": POSTE["devices"][_IOS + "27-2"]}}, 2,
          "", "montre"),
     ]
+    # --os (#287) : le poste du 18/11/2026, la 26.5 de la CI installée à côté de la 27.2.
+    deux = {"devices": {**POSTE["devices"], _IOS + "26-5": [
+        _appareil("iPhone 17 (iOS 26.5, CI)", "F4E7F276", "iPhone-17"), _appareil("iPhone 17 Pro", "C1")]}}
+    cas += [
+        ("os : sans version, la plus récente — la 27.2", deux, 0, "8DE1DDC7", "iphone", None),
+        ("os : 26.5 demandée, l'iPhone de série de la 26.5", deux, 0, "C1", "iphone", "26.5"),
+        ("os : 26.5 demandée, seul un clone renommé : INCONNU",
+         {"devices": {_IOS + "26-5": deux["devices"][_IOS + "26-5"][:1]}}, 2, "", "iphone", "26.5"),
+        ("os : 26.4 absente, jamais une autre à sa place : INCONNU", deux, 2, "", "iphone", "26.4"),
+        ("os : version illisible : INCONNU", deux, 2, "", "iphone", "ci"),
+        ("os : tvOS 26.5 absente du poste : INCONNU", POSTE, 2, "", "tv", "26.5"),
+    ]
     for nom, liste, sortie, udid, *famille in cas:
         obtenu, retenu, dit = choisir(liste, *famille)
         if (obtenu, retenu) != (sortie, udid) or not dit:
             print(f"❌ {nom} : sortie {obtenu}, udid {retenu!r} ({dit})")
             rate += 1
+    _, _, dit = choisir(deux, "iphone", "26.4")
+    if "-buildVersion 26.4" not in dit:
+        print(f"❌ os : l'INCONNU d'une version absente doit dire comment l'installer ({dit})")
+        rate += 1
+    systemes = [
+        ("système : l'appareil de la 26.5", systeme_de(deux, "C1"), "iOS 26.5"),
+        ("système : l'iPhone Duo, runtime d'appareil", systeme_de(POSTE, "B1DAF8DE"), "iOS 27.2"),
+        ("système : la montre", systeme_de(MONTRES_POSTE, "FEBA1967"), "watchOS 27.2"),
+        ("système : udid inconnu", systeme_de(POSTE, "ZZZ"), None),
+        ("système : liste illisible", systeme_de({"appareils": {}}, "C1"), None),
+        ("ligne : 27.2 au poste, la CI à 26.5", ligne_systeme("iOS 27.2", "26.5"),
+         "Système : iOS 27.2 joué ; la CI joue 26.5 — un vert ici ne vaut pas pour la CI : "
+         "`OS_SIMULATEUR=ci bash scripts/tests-simulateur.sh`."),
+        ("ligne : la version de la CI jouée", ligne_systeme("tvOS 26.5", "26.5"),
+         "Système : tvOS 26.5, celui de la CI (OS_SIMULATEUR_CI, outillage.env)."),
+        ("ligne : jouée illisible", ligne_systeme(None, "26.5"),
+         "Système : INCONNU — la version jouée ne se lit pas (simctl) ; la CI joue 26.5."),
+        ("ligne : CI illisible", ligne_systeme("iOS 27.2", ""),
+         "Système : iOS 27.2 joué ; celui de la CI INCONNU (OS_SIMULATEUR_CI, outillage.env)."),
+    ]
+    for nom, obtenu, attendu in systemes:
+        if obtenu != attendu:
+            print(f"❌ {nom} : {obtenu!r}, attendu {attendu!r}")
+            rate += 1
     print("✅ destination_simulateur : autotest" if rate == 0 else f"── {rate} cas en échec")
     return 0 if rate == 0 else 1
 
 
+USAGE = ("usage : xcrun simctl list devices available -j | destination_simulateur.py [--ipad|--tv|--montre]"
+         " [--os X.Y]\n        xcrun simctl list devices -j | destination_simulateur.py --systeme UDID OS_CI"
+         "\n        destination_simulateur.py --autotest")
+
+
 def main(argv: list[str]) -> int:
-    if argv[1:] == ["--autotest"]:
+    arguments = argv[1:]
+    if arguments == ["--autotest"]:
         return autotest()
+    if len(arguments) == 3 and arguments[0] == "--systeme":
+        try:
+            liste = json.load(sys.stdin)
+        except ValueError:
+            liste = {}
+        print(ligne_systeme(systeme_de(liste, arguments[1]), arguments[2]))
+        return 0
+    systeme = None
+    if arguments[-2:-1] == ["--os"]:
+        systeme, arguments = arguments[-1], arguments[:-2]
     familles = {(): "iphone", ("--ipad",): "ipad", ("--tv",): "tv", ("--montre",): "montre"}
-    famille = familles.get(tuple(argv[1:]))
+    famille = familles.get(tuple(arguments))
     if famille is None:
-        print("usage : xcrun simctl list devices available -j | destination_simulateur.py [--ipad|--tv|--montre]"
-              " | --autotest", file=sys.stderr)
+        print(USAGE, file=sys.stderr)
         return 2
     try:
         liste = json.load(sys.stdin)
     except ValueError as erreur:
         print(f"❓ INCONNU : liste de simctl illisible ({erreur})", file=sys.stderr)
         return 2
-    sortie, udid, dit = choisir(liste, famille)
+    sortie, udid, dit = choisir(liste, famille, systeme)
     print(dit if sortie == 0 else f"❓ {dit}", file=sys.stderr)
     if sortie == 0:
         print(udid)

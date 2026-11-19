@@ -14,56 +14,45 @@ struct CarteDuFil: View {
     var installation: Installation?
     @Environment(\.palette) private var palette
 
+    @Environment(\.dynamicTypeSize) private var tailleTexte
+
+    /// Aux tailles d'accessibilité, la carte s'EMPILE (#266) : la gouttière, les pièces et le
+    /// chevron sur une rangée, puis le texte sur toute la largeur. En ligne, la gouttière et
+    /// la vignette des pièces lui laissaient une colonne où « Urgent » devenait « Urgen-t ».
+    nonisolated static func empilee(_ taille: DynamicTypeSize) -> Bool { taille.isAccessibilitySize }
+
+    /// Le retrait de la carte, et la largeur du liseré d'une urgence.
+    static let marge: CGFloat = 14
+    static let lisere: CGFloat = 4
+
     var body: some View {
         let nature = element.nature
-        HStack(alignment: .top, spacing: 12) {
-            VignetteDeNature(element: element)
-            VStack(alignment: .leading, spacing: 4) {
-                // Rubrique, heure, puis nature : sur une ligne tant qu'elle tient, sinon l'une sous
-                // l'autre (très grand texte) — un libellé ne se coupe jamais (#57).
-                ViewThatFits(in: .horizontal) {
-                    HStack(spacing: 6) { enTete(nature) }.fixedSize(horizontal: true, vertical: false)
-                    VStack(alignment: .leading, spacing: 2) { enTete(nature) }
-                }
-                // Une affaire datée dit quand elle a lieu, sous son classement (#75).
-                if let echeance = element.echeance {
-                    VignetteEcheance(echeance: echeance, teinte: palette[keyPath: nature.couleur])
-                }
-                Text(element.titre)
-                    .font(.headline)
-                    .foregroundStyle(palette.text)
-                if let detail = element.detail.map(TexteDuSite.apercu), !detail.isEmpty {
-                    Text(detail)
-                        .font(.subheadline)
-                        .foregroundStyle(palette.textMuted)
-                        .lineLimit(2)
-                }
-                // Qui la lit, puis où (#129, #130) — rien hors affaire ni pour le défaut.
-                if Lecture.aMontrer(element.lecture) != nil || element.lieu != nil {
-                    FlowEtiquettes(espace: 6) {
-                        PastilleLecture(lecture: element.lecture)
-                        EtiquetteLieu(lieu: element.lieu)
+        Group {
+            if Self.empilee(tailleTexte) {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(alignment: .center, spacing: 12) {
+                        VignetteDeNature(element: element)
+                        Spacer(minLength: 0)
+                        pieces
+                        chevron
                     }
-                    .font(.caption)
-                    .foregroundStyle(palette.textMuted)
+                    texte(nature)
+                }
+            } else {
+                HStack(alignment: .top, spacing: 12) {
+                    VignetteDeNature(element: element)
+                    texte(nature)
+                    Spacer(minLength: 0)
+                    pieces
+                    chevron.frame(maxHeight: .infinity)
                 }
             }
-            Spacer(minLength: 0)
-            if let installation, !element.pieces.vide {
-                VignettePieces(pieces: element.pieces, installation: installation)
-            }
-            // Une carte du fil s'ouvre TOUJOURS : le chevron le dit.
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(palette.textMuted)
-                .frame(maxHeight: .infinity)
-                .accessibilityHidden(true)
         }
-        .padding(14)
-        .padding(.leading, element.urgent ? 4 : 0)
+        .padding(Self.marge)
+        .padding(.leading, element.urgent ? Self.lisere : 0)
         .background(palette.surface)
         .overlay(alignment: .leading) {
-            if element.urgent { palette.danger.frame(width: 4) }
+            if element.urgent { palette.danger.frame(width: Self.lisere) }
         }
         .clipShape(.rect(cornerRadius: Mise.rayon, style: .continuous))
         .overlay {
@@ -71,6 +60,55 @@ struct CarteDuFil: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(libelleVocal(nature))
+    }
+
+    /// Rubrique et heure, l'échéance, le titre, l'aperçu, qui la lit et où.
+    private func texte(_ nature: NatureDuFil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            // Rubrique, heure, puis nature : sur une ligne tant qu'elle tient, sinon l'une sous
+            // l'autre (très grand texte) — un libellé ne se coupe jamais (#57).
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 6) { enTete(nature) }.fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 2) { enTete(nature) }
+            }
+            // Une affaire datée dit quand elle a lieu, sous son classement (#75).
+            if let echeance = element.echeance {
+                VignetteEcheance(echeance: echeance, teinte: palette[keyPath: nature.couleur])
+            }
+            Text(element.titre)
+                .font(.headline)
+                .foregroundStyle(palette.text)
+            if let detail = element.detail.map(TexteDuSite.apercu), !detail.isEmpty {
+                Text(detail)
+                    .font(.subheadline)
+                    .foregroundStyle(palette.textMuted)
+                    .lineLimit(2)
+            }
+            // Qui la lit, puis où (#129, #130) — rien hors affaire ni pour le défaut.
+            if Lecture.aMontrer(element.lecture) != nil || element.lieu != nil {
+                FlowEtiquettes(espace: 6) {
+                    PastilleLecture(lecture: element.lecture)
+                    EtiquetteLieu(lieu: element.lieu)
+                }
+                .font(.caption)
+                .foregroundStyle(palette.textMuted)
+            }
+        }
+    }
+
+    /// Les pièces jointes : une vignette, avec la session de la résidence seulement.
+    @ViewBuilder private var pieces: some View {
+        if let installation, !element.pieces.vide {
+            VignettePieces(pieces: element.pieces, installation: installation)
+        }
+    }
+
+    /// Une carte du fil s'ouvre TOUJOURS : le chevron le dit.
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.footnote.weight(.semibold))
+            .foregroundStyle(palette.textMuted)
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder

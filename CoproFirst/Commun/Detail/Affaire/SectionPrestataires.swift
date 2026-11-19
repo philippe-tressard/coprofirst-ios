@@ -98,8 +98,13 @@ struct SectionPrestataires: View {
         } label: {
             // Un Label qui porte un identifiant se résout en son image sous iOS 26 (#183) :
             // un seul élément, le libellé entier.
+            // Toute la rangée, pas le seul libellé : un `Menu` ne s'ouvre que sur son libellé,
+            // et sur iPad (feuille de 580 pt) le toucher au milieu de la rangée tombait à
+            // côté — rien ne s'ouvrait (#304).
             Label(Textes.ajouter, systemImage: "plus.circle.fill")
                 .foregroundStyle(palette.primary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(.rect)
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel(Textes.ajouter)
         }

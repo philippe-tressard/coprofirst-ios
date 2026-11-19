@@ -120,8 +120,10 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(modifier.exists)
         app.toucher(modifier)
 
+        // Sur iPad, la feuille de formulaire range le titre sous les catégories : un `Form` ne
+        // crée pas ses lignes hors de l'écran, il s'amène (#304).
         let titre = app.textFields["modifier.titre"]
-        XCTAssertTrue(titre.apparait())
+        XCTAssertTrue(app.amener(titre), "le titre de l'affaire, sous les catégories")
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
@@ -191,19 +193,12 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("affaire.message.503").exists)
     }
 
-    /// La fiche s'ouvre-t-elle à côté du fil ? La classe de taille de la fenêtre, comme
-    /// l'app la lit (`ListeEtFiche`) — jamais l'appareil.
-    @MainActor
-    private func aCote(_ app: XCUIApplication) -> Bool {
-        app.windows.firstMatch.horizontalSizeClass == .regular
-    }
-
     /// Retour au fil après une fiche : seulement si elle a été POUSSÉE par-dessus (iPhone) ;
-    /// à côté du fil (iPad, #222), le fil reste à portée — le premier bouton de la barre y
+    /// à côté du fil (iPad en paysage, #222), le fil reste à portée — le premier bouton de la barre y
     /// serait celui de la barre latérale.
     @MainActor
     private func revenirAuFil(_ app: XCUIApplication) {
-        guard !aCote(app) else { return }
+        guard !app.ficheACote else { return }
         app.toucher(app.navigationBars.buttons.firstMatch)
     }
 
@@ -223,7 +218,7 @@ final class CartesDuFilUITests: XCTestCase {
         app.toucher(document)
         // Poussé (iPhone) : son titre à la barre ; à côté du fil (iPad, #222) : sa carte choisie.
         let ouvert =
-            aCote(app)
+            app.ficheACote
             ? app.elementRetenu("fil.document:7")
             : app.navigationBars["Procès-verbal de l'assemblée générale"]
         XCTAssertTrue(ouvert.apparait())

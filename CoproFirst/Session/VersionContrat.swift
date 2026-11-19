@@ -9,7 +9,11 @@ import Foundation
 /// 🔴 Elle se compare par ses NOMBRES, jamais comme une chaîne : « 1.9.0 » < « 1.15.0 »,
 /// que l'ordre des caractères inverserait. C'est la seule comparaison de versions de
 /// contrat de l'app — un geste qui dépend d'une version s'écrit
-/// `installation.contrat >= .logoSombre`, jamais avec la chaîne servie.
+/// `installation.contrat >= .plancher`, jamais avec la chaîne servie.
+///
+/// Une porte de version ne vit ici que tant qu'elle est AU-DESSUS du plancher
+/// (`ContratDuPlancher.swift`, généré) : sous lui, toute installation qui s'ouvre la
+/// passe (`Installation.exigerLePlancher`), et la porte se retire (#254).
 struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     /// Majeure, mineure, correctif — trois nombres, un absent valant 0 (« 1.15 » = « 1.15.0 »).
     let nombres: [Int]
@@ -39,14 +43,6 @@ struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     }
 
     var description: String { nombres.map(String.init).joined(separator: ".") }
-
-    /// GET /config/logo.png?variante=sombre — la variante du logo pour un fond sombre
-    /// (coprofirst v3.77.0, #70).
-    static let logoSombre = VersionContrat(1, 15, 0)
-
-    /// Le canal d'accès d'une page vue (`canal` de POST /telemetry/collect, coprofirst#2726) :
-    /// une installation antérieure l'ignorerait, et rangerait les vues de l'app sous « Site web ».
-    static let canalAudience = VersionContrat(1, 31, 0)
 
     /// Seule l'alerte d'une actualité ⚡ urgente part vers un téléphone (coprofirst#2789,
     /// spec push §12) : sous cette version, une résidence ne reçoit pas l'appareil (#283).
