@@ -306,6 +306,8 @@ jobs:
           -only-testing:CoproFirstUITests/ListeEtFicheUITests
           -only-testing:CoproFirstTests/ListeEtFicheTests
           -only-testing:CoproFirstUITests/AffairesUITests/testCommandeNOuvreUneNouvelleAffaire
+          -only-testing:CoproFirstUITests/PrestatairesAffaireUITests
+          -only-testing:CoproFirstUITests/CartesDuFilUITests/testLeConseilModifieLAffaireDepuisLeBandeau
       - name: Écran de hall (Apple TV) — build et tests du code partagé
         # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
         # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
