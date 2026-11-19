@@ -15,8 +15,9 @@ fonctionnalités de l'application web, par étapes.
 Ce que l'app sait faire : « Écrans livrés » ci-dessous et
 [`Parite/PARITE.md`](Parite/PARITE.md) ; ce qui manque : les issues ouvertes.
 **L'app est publiée sur l'App Store** — iPhone, gratuite, version 1.0 en ligne depuis le
-14/11/2026 : <https://apps.apple.com/fr/app/coprofirst/id6834326392>. Les versions
-suivantes : « Sortir une version ».
+14/11/2026 : <https://apps.apple.com/fr/app/coprofirst/id6834326392>. La 1.1 (build 2,
+étiquette `v1.1.0`) est coupée sur `main` le 17/11/2026 et attend sa soumission (#263).
+Les versions suivantes : « Sortir une version ».
 
 ## Sortir une version
 
@@ -24,8 +25,9 @@ Une version sort sur l'App Store, et la soumission à la revue d'Apple reste un 
 Philippe :
 
 1. la version se lit dans `project.yml` (`MARKETING_VERSION`, et `CURRENT_PROJECT_VERSION`,
-   qui monte à chaque envoi) ; l'app n'a pas encore d'étiquette git — la 1.0 publiée
-   comprise —, une par version soumise est à poser (#205) ;
+   qui monte à chaque envoi) ; chaque version soumise porte son étiquette `vX.Y.Z` —
+   `v1.1.0`, posée à la main ; `v1.0.0`, à poser après coup, et la pose par la commande
+   de contrôle : #205 ;
 2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** — sauf une PR
    de documentation seule, dont la CI saute le build et les tests macOS
    (`scripts/ci_documentation_seule.py`, #204) ; qui fusionne sur `main` se lit au champ
@@ -159,7 +161,7 @@ comme sur l'iPhone.
 Dans l'Espace CS, **Écrans du hall** (#295) liste les écrans de la résidence (lieu,
 « Échu », dernière lecture des annonces), en appaire un avec le code qu'il affiche —
 un nom, un seul périmètre — et en retire un, après confirmation.
-**Sur l'iPhone pliable** ouvert (#119, en cours), l'app se lit comme un carnet : les
+**Sur l'iPhone pliable** ouvert (#119, livré par #275), l'app se lit comme un carnet : les
 pages en intercalaires sur la tranche droite, le fil une journée par double page (la
 fiche ouverte en face) ; **pincer** ouvre la semaine du lundi au dimanche (#277), chaque
 carte au jour où le serveur la range — son échéance, sa publication sinon —, et
@@ -167,6 +169,10 @@ carte au jour où le serveur la range — son échéance, sa publication sinon �
 pour VoiceOver) ; Ma résidence y a un **sommaire** à gauche — les rubriques de la Fiche, le
 carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la page et la
 fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
+**Notifications** : la cloche de chaque écran. Le push est une fonction à venir, pour les
+alertes sonores qu'émet le syndic (#283) : l'offre « Être averti sur ce téléphone »
+(#17) existe, mais ne délivre rien tant que le relais de la plateforme n'est pas branché
+(clé `.p8` du compte Apple, coprofirst#2494).
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
@@ -179,8 +185,9 @@ la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace
 résidence sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`)
 et le canal « App iPhone », par lots de 20 au plus, toutes les 30 s et au passage en
 arrière-plan — comme le site, que le tableau de bord mêle alors à l'app. Rien ne part si le
-compte l'a refusée au Profil, ni vers une résidence antérieure au contrat 1.31.0 (elle
-compterait l'app comme le site), ni hors ligne ; aucun identifiant d'appareil. L'onglet
+compte l'a refusée au Profil, ni vers une résidence qui ne dit pas servir au moins le
+plancher de l'app (une installation antérieure au contrat 1.31.0 compterait l'app comme le
+site ; une version illisible ne dit rien, #254), ni hors ligne ; aucun identifiant d'appareil. L'onglet
 Télémétrie montre la répartition servie : « Accès : site ou application », et l'accès de
 chaque page quand la période en a plusieurs.
 
