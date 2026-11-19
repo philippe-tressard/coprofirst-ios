@@ -28,12 +28,14 @@ def _jeu(v) -> object:
         "      properties:", "        CFBundleDisplayName: X", "        NSCameraUsageDescription: \"La caméra\"",
         "    entitlements:", "      path: X", "      properties:", "        # un commentaire",
         "        aps-environment: development", "    settings:", "      base:", "        A: B",
-        "  CoproFirstTV:", "    sources:", "      - path: CoproFirstTV", "    dependencies:", "      - package: X", ""])
+        "  CoproFirstTV:", "    sources:", "      - path: CoproFirstTV", "    dependencies:", "      - package: X",
+        "  CoproFirstWatch:", "    sources:", "      - path: CoproFirstWatch", "      - path: CoproFirst/A.swift", ""])
     code = {"CoproFirst/A.swift": (
         "import Foundation\n/// `UserDefaults` en commentaire seulement.\n"
         "let s = URLSession(configuration: .ephemeral)\nclient.postAuthLogin(x)\nclient.postAuthLogout()\n"
         "let r = UserDefaults.standard\n"),
-        "CoproFirstTV/T.swift": "import Foundation\nclient.postEcransAppairage()\n"}
+        "CoproFirstTV/T.swift": "import Foundation\nclient.postEcransAppairage()\n",
+        "CoproFirstWatch/M.swift": "import Foundation\nlet m = 1\n"}
     manifeste = {
         "NSPrivacyTracking": False, "NSPrivacyTrackingDomains": [],
         "NSPrivacyCollectedDataTypes": [{
@@ -45,10 +47,13 @@ def _jeu(v) -> object:
     fichiers[v.MANIFESTE] = "<plist/>"
     vide = {"NSPrivacyTracking": False, "NSPrivacyTrackingDomains": [], "NSPrivacyCollectedDataTypes": [],
             "NSPrivacyAccessedAPITypes": []}
+    # La montre compile A.swift : elle déclare ce qu'il appelle et ce qu'il envoie.
+    montre = {**vide, "NSPrivacyCollectedDataTypes": [dict(manifeste["NSPrivacyCollectedDataTypes"][0])],
+              "NSPrivacyAccessedAPITypes": [dict(manifeste["NSPrivacyAccessedAPITypes"][0])]}
     return v.Etat(
         manifeste=manifeste, fiche=fiche, projet=projet, code=code, lire=fichiers.get,
         resolu={"p-runtime": "abc123", "p-outil": "def456"}, paquets={"p-runtime": {"Sources/R/a.swift": "let a = 1\n"}},
-        cibles={"CoproFirstTV": vide})
+        cibles={"CoproFirstTV": vide, "CoproFirstWatch": montre})
 
 
 def autotest(v) -> bool:
@@ -96,20 +101,33 @@ def autotest(v) -> bool:
         ("« aucune mesure d'audience » nie NSPrivacyCollectedDataTypeProductInteraction", lambda e: e.manifeste[
             "NSPrivacyCollectedDataTypes"].append({**e.manifeste["NSPrivacyCollectedDataTypes"][0], v.TYPE: v.TYPE + "ProductInteraction"})),
         ("aucun bloc <!-- description -->", lambda e: fiche(e, "<!-- description -->", "")),
-        # Le manifeste propre de l'Apple TV (#218, lot 5), jugé sur le code qu'elle compile.
+        # Le manifeste propre d'une cible (`confidentialite_cibles.py`) : l'Apple TV (#218, lot 5)…
         ("UserDefaults est appelée par le code de CoproFirstTV", lambda e: e.code.update(
             {"CoproFirstTV/T.swift": e.code["CoproFirstTV/T.swift"] + "let r = UserDefaults.standard\n"})),
-        ("UserDefaults est appelée par le paquet p-runtime (dans CoproFirstTV)", lambda e: e.paquets[
+        ("UserDefaults est appelée par le paquet p-runtime, embarqué dans CoproFirstTV", lambda e: e.paquets[
             "p-runtime"].update({"Sources/R/b.swift": "let r = UserDefaults.standard\n"})),
-        ("CoproFirstTV/PrivacyInfo.xcprivacy : absent", lambda e: setattr(
+        ("n'est plus dans une source de la cible CoproFirstTV", lambda e: setattr(
             e, "projet", e.projet.replace("      - path: CoproFirstTV\n", ""))),
-        ("CoproFirstTV/PrivacyInfo.xcprivacy : absent", lambda e: e.cibles.update({"CoproFirstTV": None})),
-        ("CoproFirstTV — manifeste : NSPrivacyTracking", lambda e: e.cibles["CoproFirstTV"].update(
+        ("CoproFirstTV/PrivacyInfo.xcprivacy est absent", lambda e: e.cibles.update({"CoproFirstTV": None})),
+        ("manifeste de CoproFirstTV : NSPrivacyTracking", lambda e: e.cibles["CoproFirstTV"].update(
             NSPrivacyTracking=True)),
         ("que le manifeste de CoproFirstTV ne déclare pas", lambda e: fiche(
             e, "| `postEcransAppairage` | — |", "| `postEcransAppairage` | `EmailAddress` |")),
-        ("NameType que l'app ne déclare pas", lambda e: e.cibles["CoproFirstTV"].update(
+        ("NameType n'est pas déclaré par l'app", lambda e: e.cibles["CoproFirstTV"].update(
             NSPrivacyCollectedDataTypes=[{**e.manifeste["NSPrivacyCollectedDataTypes"][0], v.TYPE: v.TYPE + "NameType"}])),
+        # … et l'Apple Watch (#226), qui compile aussi un fichier partagé de l'app.
+        ("manifeste de CoproFirstWatch : NSPrivacyTracking", lambda e: e.cibles["CoproFirstWatch"].update(
+            NSPrivacyTracking=True)),
+        ("FileTimestamp est appelée par le code de CoproFirstWatch", lambda e: e.code.update(
+            {"CoproFirstWatch/M.swift": "let d = valeurs.creationDate\n"})),
+        ("UserDefaults est déclarée, mais le code de CoproFirstWatch", lambda e: e.code.update(
+            {"CoproFirst/A.swift": e.code["CoproFirst/A.swift"].replace("let r = UserDefaults.standard\n", ""),
+             "CoproFirst/B.swift": "let r = UserDefaults.standard\n"})),
+        ("PreciseLocation n'est pas déclaré par l'app", lambda e: e.cibles["CoproFirstWatch"][
+            "NSPrivacyCollectedDataTypes"].append({**e.manifeste["NSPrivacyCollectedDataTypes"][0], v.TYPE: v.TYPE + "PreciseLocation"})),
+        ("CoproFirstWatch/PrivacyInfo.xcprivacy est absent", lambda e: e.cibles.update({"CoproFirstWatch": None})),
+        ("n'est plus dans une source de la cible CoproFirstWatch", lambda e: setattr(
+            e, "projet", e.projet.replace("      - path: CoproFirstWatch\n", ""))),
     ]
     conforme = v.juger(_jeu(v))
     if conforme:

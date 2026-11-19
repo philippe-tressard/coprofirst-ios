@@ -42,6 +42,8 @@ extension Parcours {
     /// consultation hors ligne (sa reprise en décide) : rien.
     func sessionRefusee(_ hote: String) {
         guard let installation = ouverte, installation.hote == hote, consultation == nil else { return }
+        // Les abonnés oublient leur part ; leurs retraits échoueront sans session (#226).
+        Task { [abonnes] in await abonnes.fermee(installation) }
         revenirALaConnexion(installation, avis: ErreurService.sessionExpiree.phrase)
     }
 }

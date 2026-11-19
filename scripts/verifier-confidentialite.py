@@ -22,8 +22,9 @@ déclaration sans objet se retire, standards/05 §9 bis) :
     manifeste déclare (« aucune mesure d'audience » face à `ProductInteraction`, #238) ;
   - chaque paquet de `Package.resolved` ⇄ la table « paquets », à la RÉVISION examinée ;
     ses sources, quand elles sont là, sont relues ;
-  - le manifeste propre d'une cible (`CIBLES` : l'Apple TV, #218) est embarqué, et juste
-    pour le code qu'elle compile — sans type que le manifeste de l'app ne déclare.
+  - le manifeste propre d'une cible (l'Apple TV #218, l'Apple Watch #226 :
+    `confidentialite_cibles.py`) est embarqué, et juste pour le code qu'elle compile — sans
+    type que le manifeste de l'app ne déclare.
 
 Ce qui ne se mesure pas ici est dit INCONNU à chaque passage, jamais conforme. Une
 entrée illisible rend INCONNU (sortie 2).
@@ -50,10 +51,8 @@ MANIFESTE = "CoproFirst/PrivacyInfo.xcprivacy"
 RESOLU = "Paquets/ClientAPI/Package.resolved"
 CONSTRUIT = "Paquets/ClientAPI/.build"
 # L'écran de hall (CoproFirstTV/, #218) et l'Apple Watch (CoproFirstWatch/, #226) sont jugés
-# avec l'app : même identifiant, même fiche. Une cible qui embarque SON manifeste (`CIBLES`) se
-# juge en plus sur le code qu'elle compile ; la Watch y entrera avec sa liaison.
-CIBLES = {"CoproFirstTV": "CoproFirstTV/PrivacyInfo.xcprivacy"}
-CLIENT = "Paquets/ClientAPI/Sources/"
+# avec l'app : même identifiant, même fiche. Chacune embarque en plus SON manifeste, jugé sur
+# le code qu'elle compile (`confidentialite_cibles.py`).
 CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
@@ -110,15 +109,17 @@ PREUVE = re.compile(r"`([^`\s]+)` › `([^`]+)`")
 AUTORISATION = re.compile(r"^NS\w+UsageDescription$")
 
 
-def _code_seul() -> Callable[[str], str]:
-    """La ligne sans son commentaire : la fonction de verifier-simule.py, pas une copie."""
-    spec = importlib.util.spec_from_file_location("verifier_simule", RACINE / "scripts/verifier-simule.py")
+def _module(nom: str, fichier: str):
+    """Un script voisin, chargé : ses fonctions servent ici, jamais copiées."""
+    spec = importlib.util.spec_from_file_location(nom, RACINE / "scripts" / fichier)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.code_seul
+    return module
 
 
-code_seul = _code_seul()
+# La ligne sans son commentaire (verifier-simule.py) ; les manifestes propres des cibles (#218, #226).
+code_seul = _module("verifier_simule", "verifier-simule.py").code_seul
+CIBLES = _module("confidentialite_cibles", "confidentialite_cibles.py")
 
 
 @dataclass
@@ -318,7 +319,7 @@ def juger(etat: Etat) -> list[str]:
             fautes.append(f"preuve : « {chemin} » n'est pas un fichier suivi")
         elif extrait not in texte:
             fautes.append(f"preuve : « {extrait} » n'est plus dans {chemin}")
-    return fautes + juger_paquets(etat, lues["paquets"]) + juger_cibles(etat, types, classes)
+    return fautes + juger_paquets(etat, lues["paquets"]) + CIBLES.juger(etat, sys.modules[__name__], types, classes)
 
 
 def types_de(manifeste: dict) -> set[str]:
@@ -340,36 +341,6 @@ def envois_et_indices(classes: dict[str, set[str]], code: dict[str, str], types:
         lieu = next(iter(trouver(motif, code).values()), None)
         if lieu and not types & set(attendus):
             fautes.append(f"{lieu} : ce symbole porte une donnée ({' ou '.join(attendus)}) que {quel} ne déclare pas")
-    return fautes
-
-
-def sources_de_la_cible(projet: str, cible: str) -> list[str]:
-    """Les `- path:` de la cible dans project.yml (ses exclusions comptent : jugé large)."""
-    bloc = re.search(rf"^  {cible}:\n(.*?)(?=^  \S|\Z)", projet, re.M | re.S)
-    sources = bloc and re.search(r"^    sources:\n(.*?)(?=^    \S|\Z)", bloc.group(1), re.M | re.S)
-    return re.findall(r"^      - path: (\S+)", sources.group(1), re.M) if sources else []
-
-
-def juger_cibles(etat: Etat, types_app: set[str], classes: dict[str, set[str]]) -> list[str]:
-    """Le manifeste d'une cible (#218, lot 5) : embarqué, conforme, juste pour le code qu'ELLE
-    compile et les paquets, sans type que l'app ne déclare (une seule fiche App Store)."""
-    fautes = []
-    for cible, chemin in CIBLES.items():
-        manifeste, sources = etat.cibles.get(cible), sources_de_la_cible(etat.projet, cible)
-        if manifeste is None or chemin.split("/")[0] not in sources:
-            fautes.append(f"{chemin} : absent, ou hors des sources de {cible} (project.yml) — il n'est plus embarqué")
-            continue
-        code = {c: t for c, t in etat.code.items() if c.startswith(CLIENT) or any(
-            c == s or c.startswith(s.rstrip("/") + "/") for s in sources)}
-        types = types_de(manifeste)
-        fautes += [f"{cible} — {f}" for f in juger_manifeste(manifeste)]
-        fautes += juger_api(manifeste, code, f"le code de {cible}", sans_objet=True)
-        for identite, lues in sorted(etat.paquets.items()):
-            fautes += juger_api(manifeste, lues, f"le paquet {identite} (dans {cible})")
-        if etat.genere is not None:
-            fautes += juger_api(manifeste, etat.genere, f"le client généré (dans {cible})")
-        fautes += envois_et_indices(classes, code, types, f"le manifeste de {cible}")
-        fautes += [f"{chemin} : {TYPE}{t} que l'app ne déclare pas (une seule fiche)" for t in sorted(types - types_app)]
     return fautes
 
 
@@ -405,7 +376,7 @@ def lire_le_depot() -> Etat:
         resolu={p["identity"]: p["state"]["revision"] for p in epingles},
         paquets={p["identity"]: s for p in epingles if (s := sources_du_paquet(p)) is not None},
         genere={f.name: f.read_text(encoding="utf-8") for f in generes} or None,
-        cibles={c: plistlib.loads((RACINE / m).read_bytes()) if m in suivis else None for c, m in CIBLES.items()})
+        cibles={c: plistlib.loads((RACINE / m).read_bytes()) if m in suivis else None for c, m in CIBLES.MANIFESTES.items()})
 
 
 def main() -> int:
@@ -432,7 +403,7 @@ def main() -> int:
         f"✅ confidentialité déclarée = code : {len(lues['donnees'])} types de données, {len(lues['envois'])} envois"
         f" classés, {len(lues['portes'])} portes réseau, {len(lues['modules'])} modules, {len(lues['paquets'])} paquets"
         f" à la révision examinée (sources relues ici : {relus}/{len(embarques)} ; client généré :"
-        f" {'relu' if etat.genere else 'non construit ici'} ; manifeste propre : {', '.join(CIBLES)})")
+        f" {'relu' if etat.genere else 'non construit ici'} ; manifestes propres : {', '.join(CIBLES.MANIFESTES)})")
     print(f"❓ INCONNU, non mesuré ici : {NON_MESURE}")
     return 0
 

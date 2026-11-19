@@ -138,7 +138,8 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         return !horsLigneSimule
     }
 
-    private func exigerSession(_ installation: Installation) throws {
+    /// Une installation simulée dont on s'est déconnecté refuse, comme `get_current_user`.
+    func exigerSession(_ installation: Installation) throws {
         if !aUneSessionOuverte(installation) { throw ErreurService.sessionExpiree }
     }
 

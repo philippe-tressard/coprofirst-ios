@@ -89,7 +89,8 @@ reprend seule ; retirée par le conseil, elle affiche un nouveau code. Au hall, 
 la télécommande propose « Désappairer », confirmé : l'écran oublie son accès, que le
 conseil coupe dans l'app (lot 5). Elle embarque son propre manifeste de confidentialité
 (`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
-jugé sur le code qu'elle compile. Elle compile les
+jugé sur le code qu'elle compile, comme celui de l'Apple Watch
+(`scripts/confidentialite_cibles.py`). Elle compile les
 fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
 (adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
 tvOS, avec les siens (`CoproFirstTVTests/`) :
@@ -103,11 +104,24 @@ APPAREIL=tv bash scripts/tests-simulateur.sh
 La cible `CoproFirstWatch` (watchOS 10, #226) montre au poignet la cloche de la dernière
 résidence ouverte sur l'iPhone : les non lues d'abord, les urgentes devant, puis « Déjà
 lues », repliée ; un toucher ouvre l'alerte entière. Elle ne fait que lire — rien ne s'y
-marque comme lu. Elle se reliera à l'iPhone par un jeton de montre (coprofirst#2771) ;
-d'ici là, elle dit de l'ouvrir par l'iPhone. Elle compile les fichiers de l'app que
-`project.yml` nomme — la charte, le texte du site, l'alerte servie — et joue ses tests et
-ceux du code partagé sur watchOS (`-api-simulee` : une résidence inventée,
-`-cloche vide|injoignable|<nombre>`) :
+marque comme lu. Chaque alerte porte l'icône de son type (`TypesNotification`, publiée par
+coprofirst#2802).
+
+**La liaison** (lot 2), construite mais **éteinte** (`LiaisonMontre.active`) : elle
+s'allume avec celle de Wear OS, sur le geste de Philippe (#207). Allumée : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
+l'iPhone demande un jeton de montre (coprofirst#2771 : la cloche seule, 30 jours) — renouvelé
+s'il en a déjà un — et le passe à la montre par WatchConnectivity, avec l'adresse et le nom de
+la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone ne garde que
+l'identifiant de la montre ; la montre garde le jeton à son Trousseau et lit `GET
+/notifications` avec lui en porteur. Un jeton échu ou refusé : la montre dit de l'ouvrir par
+l'iPhone. « Continuer sur l'iPhone » passe par Handoff (`ClocheSurLiPhone`). Mêmes gestes que
+la montre Wear OS. Le hors ligne et le widget viennent au lot 3.
+
+Elle compile les fichiers de l'app que `project.yml` nomme — la charte, le texte du site,
+l'alerte servie, le message de liaison — et joue ses tests et ceux du code partagé sur
+watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|<nombre>`).
+Elle n'est **embarquée** dans l'app iPhone qu'à l'archive (`ARCHIVE_AVEC_MONTRE=true bash
+scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part.
 
 ```bash
 APPAREIL=montre bash scripts/tests-simulateur.sh

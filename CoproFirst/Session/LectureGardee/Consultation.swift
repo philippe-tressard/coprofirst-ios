@@ -75,9 +75,11 @@ extension Parcours {
             try await service.reprendreEnLigne(installation)
             guard ouverte == installation else { return }
             consultation = nil
-            if let push { await push.residenceOuverte(installation) }
+            await abonnes.ouverte(installation)
         } catch {
             guard ErreurService.depuis(error) == .sessionExpiree, ouverte == installation else { return }
+            // Une session refusée à la reprise : les abonnés oublient leur part, comme en ligne.
+            Task { [abonnes] in await abonnes.fermee(installation) }
             revenirALaConnexion(installation, avis: ErreurService.sessionExpiree.phrase)
         }
     }
