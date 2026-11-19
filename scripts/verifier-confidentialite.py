@@ -49,7 +49,7 @@ RESOLU = "Paquets/ClientAPI/Package.resolved"
 CONSTRUIT = "Paquets/ClientAPI/.build"
 # L'écran de hall (CoproFirstTV/, #218) est jugé avec l'app : il partage son identifiant
 # et sa fiche. Son propre manifeste viendra avec son premier envoi (lot 5 de #218).
-# L'Apple Watch (CoproFirstWatch/, #226) aussi : même fiche ; son manifeste, avec la liaison.
+# L'Apple Watch (CoproFirstWatch/, #226) aussi : même fiche, son manifeste à elle (confidentialite_montre.py).
 CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
@@ -106,15 +106,17 @@ PREUVE = re.compile(r"`([^`\s]+)` › `([^`]+)`")
 AUTORISATION = re.compile(r"^NS\w+UsageDescription$")
 
 
-def _code_seul() -> Callable[[str], str]:
-    """La ligne sans son commentaire : la fonction de verifier-simule.py, pas une copie."""
-    spec = importlib.util.spec_from_file_location("verifier_simule", RACINE / "scripts/verifier-simule.py")
+def _module(nom: str, fichier: str):
+    """Un script voisin, chargé : ses fonctions servent ici, jamais copiées."""
+    spec = importlib.util.spec_from_file_location(nom, RACINE / "scripts" / fichier)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
-    return module.code_seul
+    return module
 
 
-code_seul = _code_seul()
+# La ligne sans son commentaire (verifier-simule.py) ; le manifeste de l'Apple Watch (#226).
+code_seul = _module("verifier_simule", "verifier-simule.py").code_seul
+MONTRE = _module("confidentialite_montre", "confidentialite_montre.py")
 
 
 @dataclass
@@ -128,6 +130,7 @@ class Etat:
     resolu: dict[str, str]  # identité du paquet → révision épinglée
     paquets: dict[str, dict[str, str]] = field(default_factory=dict)  # identité → ses sources, si là
     genere: dict[str, str] | None = None  # le client généré, s'il a été construit ici
+    montre: dict | None = None  # le manifeste de l'Apple Watch (`confidentialite_montre.py`)
 
 
 def tables(fiche: str) -> dict[str, list[list[str]]]:
@@ -321,6 +324,8 @@ def juger(etat: Etat) -> list[str]:
             fautes.append(f"preuve : « {chemin} » n'est pas un fichier suivi")
         elif extrait not in texte:
             fautes.append(f"preuve : « {extrait} » n'est plus dans {chemin}")
+    if etat.montre is not None:
+        fautes += MONTRE.juger(etat, juger_manifeste, juger_api)
     return fautes + juger_paquets(etat, lues["paquets"])
 
 
@@ -408,10 +413,13 @@ def autotest() -> bool:
             "NSPrivacyCollectedDataTypes"].append({**e.manifeste["NSPrivacyCollectedDataTypes"][0], TYPE: TYPE + "ProductInteraction"})),
         ("aucun bloc <!-- description -->", lambda e: fiche(e, "<!-- description -->", "")),
     ]
-    conforme = juger(_jeu())
-    if conforme:
-        print(f"❌ autotest : le jeu conforme est refusé — {conforme}")
-        return False
+    ruptures += [(a, lambda e, r=r: (MONTRE.preparer_jeu(e), r(e))) for a, r in MONTRE.RUPTURES]
+    avec_montre = _jeu()
+    MONTRE.preparer_jeu(avec_montre)
+    for conforme in (juger(_jeu()), juger(avec_montre)):
+        if conforme:
+            print(f"❌ autotest : le jeu conforme est refusé — {conforme}")
+            return False
     for attendu, rompre in ruptures:
         etat = _jeu()
         rompre(etat)
@@ -450,11 +458,12 @@ def lire_le_depot() -> Etat:
     generes = list((RACINE / CONSTRUIT / "plugins").rglob("GeneratedSources/*.swift"))
     with open(RACINE / MANIFESTE, "rb") as flux:
         manifeste = plistlib.load(flux)
+    montre = plistlib.loads((RACINE / MONTRE.MANIFESTE).read_bytes()) if MONTRE.MANIFESTE in suivis else {}
     return Etat(
         manifeste=manifeste, fiche=lire(FICHE), projet=lire("project.yml"), code=code, lire=lire,
         resolu={p["identity"]: p["state"]["revision"] for p in epingles},
         paquets={p["identity"]: s for p in epingles if (s := sources_du_paquet(p)) is not None},
-        genere={f.name: f.read_text(encoding="utf-8") for f in generes} or None)
+        genere={f.name: f.read_text(encoding="utf-8") for f in generes} or None, montre=montre)
 
 
 def main() -> int:

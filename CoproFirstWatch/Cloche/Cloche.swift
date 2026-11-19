@@ -32,31 +32,36 @@ enum LectureCloche: Equatable, Sendable {
     case enCours
     case lue(Cloche)
     /// La résidence n'a pas répondu (réseau, serveur) : rien de gardé dans ce lot — la
-    /// dernière lecture datée vient avec la liaison, comme sur l'iPhone (#101).
+    /// dernière lecture datée vient au lot 3, comme sur l'iPhone (#101).
     case injoignable
 }
 
 /// D'où la montre lit les alertes.
-enum SourceDeLaCloche: Equatable, Sendable {
-    /// Liaison éteinte (#226, lot 1) : aucune résidence à lire — la lecture échoue, et la
-    /// montre dirait « injoignable ». Le cas existe pour que le type ne soit pas VIDE en
-    /// Release, où `simulee` n'existe pas : un type sans valeur ne se compile pas hors
-    /// optimisation globale (#292). La résidence reliée le remplace au lot de la liaison.
-    case aucune
+enum SourceDeLaCloche: Hashable, Sendable {
+    /// La résidence reliée par l'iPhone, lue par son jeton de montre (#226).
+    case jeton(LiaisonGardee)
     #if DEBUG
     /// Une résidence inventée (`-api-simulee`) : la boîte de l'iPhone simulé.
     case simulee(ClocheSimulee.Reglage)
     #endif
 
+    /// Lève `JetonRefuse` quand le serveur ne reconnaît plus le jeton.
     func alertes() async throws -> [NotificationRecue] {
         switch self {
-        case .aucune: throw LiaisonEteinte()
+        case .jeton(let liaison): try await ClocheParJeton.alertes(liaison)
         #if DEBUG
         case .simulee(let reglage): try await ClocheSimulee.alertes(reglage)
         #endif
         }
     }
-}
 
-/// La lecture d'une montre que rien ne relie (`SourceDeLaCloche.aucune`).
-struct LiaisonEteinte: Error {}
+    /// L'adresse de la résidence, pour « Continuer sur l'iPhone » ; aucune en simulation.
+    var adresse: URL? {
+        switch self {
+        case .jeton(let liaison): liaison.adresse
+        #if DEBUG
+        case .simulee: nil
+        #endif
+        }
+    }
+}

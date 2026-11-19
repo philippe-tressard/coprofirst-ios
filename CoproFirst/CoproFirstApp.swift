@@ -28,6 +28,7 @@ struct CoproFirstApp: App {
                     // Rien ne reste d'une lecture périmée, ni d'une résidence sans session gardée (#101).
                     parcours.purgerLesLectures()
                     await delegue.push.attacher(parcours)
+                    await Lancement.relierLaMontre(parcours, ProcessInfo.processInfo.arguments)
                     #if DEBUG
                     LancementSimule.toucherNotification(ProcessInfo.processInfo.arguments, delegue.push)
                     #endif

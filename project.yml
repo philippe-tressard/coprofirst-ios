@@ -4,6 +4,10 @@
 # Le projet Xcode se GÉNÈRE depuis ce fichier (XcodeGen) : CoproFirst.xcodeproj
 # n'est pas versionné. `bash scripts/generer-projet.sh` après chaque modification.
 name: CoproFirst
+# L'app montre embarquée dans l'iPhone, à l'archive seulement (project-archive.yml, #226).
+include:
+  - path: project-archive.yml
+    enable: ${ARCHIVE_AVEC_MONTRE}
 options:
   bundleIdPrefix: fr.coprofirst
   deploymentTarget:
@@ -71,6 +75,9 @@ targets:
         # Le jeton de session gardé au Trousseau ne se lit qu'après Face ID.
         NSFaceIDUsageDescription: "Face ID ouvre votre espace sans ressaisir votre mot de passe."
         UILaunchScreen: {}
+        # « Continuer sur l'iPhone » depuis l'Apple Watch (Handoff, #226) : la cloche de la
+        # résidence reliée (`ClocheSurLiPhone.type`).
+        NSUserActivityTypes: [fr.coprofirst.app.cloche]
         # iPhone : portrait seul. iPad : les quatre orientations — la condition des fenêtres
         # redimensionnables d'iPadOS (multitâche, Split View) ; pas de UIRequiresFullScreen (#220).
         UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
@@ -232,6 +239,13 @@ targets:
       - path: CoproFirst/Fonctions/Notifications/NotificationRecue.swift
       - path: CoproFirst/Fonctions/Notifications/TextesNotifications.swift
       - path: CoproFirst/Fonctions/Notifications/BoiteSimulee.swift
+      # L'icône de chaque type d'alerte, publiée par coprofirst#2802.
+      - path: CoproFirst/Fonctions/Notifications/TypeNotification.swift
+      - path: CoproFirst/Fonctions/Notifications/Genere/TypesNotification.swift
+      # La liaison avec l'iPhone (#226) : le message, écrit une fois pour les deux côtés, et
+      # le coffre sans invite de l'app (`CoffreTrousseau`), celui de l'iPhone et de l'Apple TV.
+      - path: CoproFirst/Fonctions/Notifications/Montre/MessageLiaison.swift
+      - path: CoproFirst/Session/CoffreDuCompte.swift
     dependencies:
       - package: ClientAPI
     info:

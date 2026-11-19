@@ -71,9 +71,9 @@ final class Parcours {
     var avis: String?
     /// La feuille des notifications (la cloche), une seule pour tout l'espace ouvert.
     var clocheOuverte = false
-    /// Les notifications push (#17) : enregistrer l'appareil à l'ouverture d'une
-    /// résidence, le retirer à la déconnexion. Absentes des aperçus.
-    var push: NotificationsPush?
+    /// Ce qui suit l'ouverture et la fermeture d'une résidence : les notifications push
+    /// (#17), la liaison avec l'Apple Watch (#226). Aucun dans les aperçus.
+    @ObservationIgnored var abonnes = AbonnesSession()
     /// La mesure d'audience (coprofirst#2726) : les écrans vus partent à la résidence
     /// ouverte, avec le canal de l'app (`Session/Audience/`).
     @ObservationIgnored let audience: MesureAudience
@@ -119,8 +119,8 @@ final class Parcours {
         avis = nil
         chemin = []
         clocheOuverte = false
-        // Sans réseau, l'appareil s'enregistrera à la reprise de la session.
-        if let push, consultation == nil { Task { await push.residenceOuverte(installation) } }
+        // Sans réseau, les abonnés seront prévenus à la reprise de la session.
+        if consultation == nil { Task { [abonnes] in await abonnes.ouverte(installation) } }
         if consultation == nil { Task { await relireLaSuspension(installation) } }
         if premiereConnexion, !connues.faceIDProposee(installation) {
             connues.noterFaceIDProposee(installation)
@@ -181,8 +181,8 @@ final class Parcours {
     func deconnecter(_ installation: Installation) async {
         // Les pages vues partent tant que la session les rattache au compte.
         await audience.vider()
-        // L'appareil d'abord : sa route demande la session que la déconnexion va fermer.
-        await push?.retirer(installation)
+        // Les abonnés d'abord : leurs retraits demandent la session que la déconnexion va fermer.
+        await abonnes.fermee(installation)
         let atteint = await service.deconnecter(installation)
         let injoignable =
             "Le serveur n'a pas répondu : la session est effacée de cet appareil, il la révoquera à son expiration."
@@ -208,7 +208,7 @@ final class Parcours {
         await audience.vider()
         var injoignables = 0
         for installation in connues.liste {
-            await push?.retirer(installation)
+            await abonnes.fermee(installation)
             let atteint = await service.deconnecter(installation)
             injoignables += atteint ? 0 : 1
         }
