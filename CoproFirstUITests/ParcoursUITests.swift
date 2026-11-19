@@ -101,10 +101,10 @@ final class ParcoursUITests: XCTestCase {
         XCTAssertTrue(logement.apparait(), "le logement en haut à gauche")
         XCTAssertLessThan(logement.frame.maxX, app.buttons["pastille.residence"].frame.minX, "à gauche de la résidence")
 
-        app.buttons["pastille.residence"].tap()
         let roles = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS %@", "Conseil syndical")).firstMatch
-        XCTAssertTrue(roles.apparait(), "les rôles de la résidence")
+        // Un toucher perdu sous charge se reprend, déclaré (#183 ; échantillon iPad de #312).
+        app.toucher(app.buttons["pastille.residence"], jusqua: roles)
 
         app.buttons["residence.deconnecter"].tap()
         // La feuille d'action expose son bouton deux fois (feuille et menu) : le premier.
