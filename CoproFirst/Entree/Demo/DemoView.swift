@@ -40,6 +40,7 @@ struct DemoView: View {
                 if tailleTexte.isAccessibilitySize { avertissement }
             }
             .padding(Mise.marge)
+            .largeurDeLecture()
         }
         .background(palette.bg)
         .navigationBarTitleDisplayMode(.inline)

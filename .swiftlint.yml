@@ -50,3 +50,13 @@ trailing_comma:
 # swift-format met l'accolade d'une condition sur plusieurs lignes à la ligne : idem.
 opening_brace:
   ignore_multiline_statement_conditions: true
+# Un lien optionnel déballé (`Binding($etat)`) se relit pendant la transition de sortie
+# de sa vue, quand l'état vaut déjà nil : déballage forcé, l'app tombe (semaine du carnet,
+# #277, iOS 26.5). Un lien qui garde sa dernière valeur à la place.
+custom_rules:
+  lien_deballe_de_force:
+    name: "Lien optionnel déballé"
+    regex: 'Binding\(\$'
+    match_kinds: [identifier, keyword]
+    message: "Binding($etat) se déballe de force quand l'état redevient nil : Binding(get: { etat ?? dernière }, set: …)"
+    severity: error

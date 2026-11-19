@@ -43,7 +43,7 @@ struct OngletSondages: View {
                 toutArchive: enCours.isEmpty && !liste.elements.isEmpty, textes: Self.textes
             ) { recharger() }
         }
-        .refreshable { await etat.charger(.sondages, installation, avec: parcours.serviceCommunaute) }
+        .actualisable { await etat.charger(.sondages, installation, avec: parcours.serviceCommunaute) }
         .task { await etat.charger(.sondages, installation, avec: parcours.serviceCommunaute) }
     }
 

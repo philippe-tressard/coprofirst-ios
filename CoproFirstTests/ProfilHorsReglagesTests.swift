@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import Foundation
+import LocalAuthentication
 import Testing
 
 @testable import CoproFirst
@@ -110,8 +111,9 @@ private struct CoffreQuiRefuse: CoffreDuCompte {
 /// par `ConsultationHorsLigneTests` (#101).
 let trousseauAccessible: Bool = {
     let sonde = "tests.sonde.\(UUID().uuidString)"
-    defer { Trousseau.effacerCompte(sonde) }
-    return Trousseau.rangerCompte(Data([1]), sonde)
+    let coffre = CoffreTrousseau()
+    defer { coffre.effacer(sonde) }
+    return coffre.ranger(Data([1]), sonde)
 }()
 
 /// Le coffre de l'app est le Trousseau : une valeur rangée se relit, puis s'efface.
@@ -129,11 +131,30 @@ func leCoffreDuTrousseauRangeRelitEtEfface() {
 /// L'activation dit ce qui protège la session : Face ID, ou le verrouillage de
 /// l'appareil — jamais l'un pour l'autre.
 @Test func lActivationDitCeQuiProtegeLaSession() {
-    let faceID = FaceIDFeuille.dire(.biometrie("Face ID"), nom: "Les Tilleuls")
+    let faceID = FaceIDFeuille.dire(.biometrie("Face ID"), nom: "Les Tilleuls", materiel: "Face ID")
     #expect(faceID.titre == "Protégée par Face ID" && faceID.rassurant)
-    let code = FaceIDFeuille.dire(.codeAppareil, nom: "Les Tilleuls")
+    let code = FaceIDFeuille.dire(.codeAppareil, nom: "Les Tilleuls", materiel: "Face ID")
     #expect(code.titre == "Protégée par le verrouillage de l'appareil" && !code.rassurant)
     #expect(!code.titre.contains("Face ID"))
-    let rien = FaceIDFeuille.dire(.aucune, nom: "Les Tilleuls")
+    let rien = FaceIDFeuille.dire(.aucune, nom: "Les Tilleuls", materiel: "Face ID")
     #expect(!rien.rassurant && !rien.titre.contains("Protégée"))
+}
+
+/// Un iPad Air ou mini a Touch ID : la question et le repli le nomment, jamais
+/// « Face ID » ; sans biométrie du tout, ni l'un ni l'autre (#223).
+@Test func laBiometrieSeNommeDApresLAppareil() {
+    let touchID = FaceIDFeuille.proposer("Touch ID", nom: "Les Tilleuls")
+    #expect(touchID.titre == "Ouvrir avec Touch ID ?")
+    #expect(touchID.texte.contains("une empreinte") && !touchID.texte.contains("regard"))
+    #expect(FaceIDFeuille.proposer("Face ID", nom: "Les Tilleuls").texte.contains("un regard"))
+    let code = FaceIDFeuille.dire(.codeAppareil, nom: "Les Tilleuls", materiel: "Touch ID")
+    #expect(code.texte.contains("Configurez Touch ID") && !code.texte.contains("Face ID"))
+    for protection in [ProtectionSession.codeAppareil, .aucune] {
+        let sans = FaceIDFeuille.dire(protection, nom: "Les Tilleuls", materiel: nil)
+        #expect(!sans.texte.contains("Face ID") && !sans.texte.contains("Touch ID"))
+    }
+    let sansBiometrie = FaceIDFeuille.proposer(nil, nom: "Les Tilleuls")
+    #expect(sansBiometrie.titre == "Garder votre session ?" && sansBiometrie.texte.contains("code"))
+    #expect(Biometrie.pour(.touchID) == Biometrie(nom: "Touch ID", symbole: "touchid"))
+    #expect(Biometrie.pour(.none).nom == nil)
 }

@@ -10,6 +10,8 @@
 # appareil au hasard — un test qui ne peut pas tourner n'est pas vert (#112).
 # `--ipad` : un iPad Pro 13 pouces de série à la place de l'iPhone (#220) ; `--tv` : une
 # Apple TV 4K de série, pour l'écran de hall (#218), sous `platform=tvOS Simulator`.
+# `--os X.Y`, après l'appareil : ce système et lui seul (#287) — tests-simulateur.sh le passe
+# avec `OS_SIMULATEUR`.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 LISTE=$(xcrun simctl list devices available -j) \

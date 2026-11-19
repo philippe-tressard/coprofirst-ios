@@ -9,7 +9,8 @@
 #   - la décision d'un passage, rejouée dans ce processus (`scenario`) : relance
 #     permise, refusée, ratée, INCONNU (#50) ; simulateur démarré avant le build
 #     (#48) ; passage qui ne joue rien (#96) ; filtre qui ne joue rien quand un autre
-#     joue, fichier de test absent du projet Xcode (#170) ;
+#     joue, fichier de test absent du projet Xcode (#170) ; système joué et celui de la
+#     CI nommés au résumé (#287) ;
 #   - de vrais passages, chacun dans son processus (`passage`) : deux en même temps,
 #     verrou orphelin ou sans fiche, arrêt par le pid, CI, lanceur, extinction du
 #     simulateur (#108) ; le verrou commun du poste pris d'abord, ni repris s'il est
@@ -36,7 +37,10 @@ case "$1" in
   test-without-building) exit "$(cat "$FAUX_DOSSIER/sortie-relance")" ;;
   simctl)
     case "$2" in
-      list) [ ! -f "$FAUX_DOSSIER/deja-demarre" ] || echo "    iPhone (X) (Booted)" ;;
+      list)
+        # `list devices -j` : la liste du système joué (#287), si l'essai en pose une.
+        if [ "${4:-}" = -j ]; then cat "$FAUX_DOSSIER/liste.json" 2>/dev/null; exit 0; fi
+        [ ! -f "$FAUX_DOSSIER/deja-demarre" ] || echo "    iPhone (X) (Booted)" ;;
       bootstatus) [ ! -f "$FAUX_DOSSIER/demarrage-rate" ] || exit 1 ;;
     esac
     exit 0 ;;
@@ -86,6 +90,15 @@ FAUX
   scenario "vert d'emblée" 0 "$vert" 0 0 non
   grep -q '^Tests joués : 1 passé' "$d/resume.md" \
     || { echo "❌ le compte des tests joués ne se dit pas au résumé"; rate=$((rate + 1)); }
+  # Le système joué et celui de la CI se disent au résumé (#287) ; illisible : INCONNU, dit.
+  grep -q '^Système : INCONNU — la version jouée ne se lit pas' "$d/resume.md" \
+    || { echo "❌ un système illisible ne se dit pas INCONNU au résumé"; rate=$((rate + 1)); }
+  echo '{"devices":{"com.apple.CoreSimulator.SimRuntime.iOS-27-2":[{"udid":"X","name":"iPhone 18 Pro"}]}}' \
+    > "$d/liste.json"
+  scenario "vert sous 27.2" 0 "$vert" 0 0 non
+  grep -q "^Système : iOS 27.2 joué ; la CI joue $(sed -n 's/^OS_SIMULATEUR_CI=//p' outillage.env) — un vert ici ne vaut pas" \
+    "$d/resume.md" || { echo "❌ le résumé ne nomme pas le système joué et celui de la CI"; rate=$((rate + 1)); }
+  rm -f "$d/liste.json"
   # Sortie 0 ne suffit pas : un passage qui n'a rien joué n'est pas vert (#96).
   scenario "passage qui ne joue rien : INCONNU" 0 "$rien" 0 2 non
   grep -q '^Tests joués : INCONNU : aucun test joué' "$d/resume.md" \
@@ -133,8 +146,10 @@ FAUX
   # Le simulateur se démarre AVANT le build et les tests (#48) ; non confirmé, rien ne joue.
   # Avant de le démarrer, son état se lit : un passage n'éteint que ce qu'il a démarré.
   scenario "vert d'emblée, démarrage d'abord" 0 "$vert" 0 0 non
-  if [ "$(sed -n 1p "$d/appels")" != "simctl list devices booted" ] \
-      || [ "$(sed -n 2p "$d/appels")" != "simctl bootstatus X -b" ] || ! sed -n 3p "$d/appels" | grep -q '^test '; then
+  # La lecture du système (`simctl list devices -j`, #287) ne compte pas dans l'ordre.
+  if [ "$(grep -v ' -j$' "$d/appels" | sed -n 1p)" != "simctl list devices booted" ] \
+      || [ "$(grep -v ' -j$' "$d/appels" | sed -n 2p)" != "simctl bootstatus X -b" ] \
+      || ! grep -v ' -j$' "$d/appels" | sed -n 3p | grep -q '^test '; then
     echo "❌ le simulateur n'est pas démarré avant le build et les tests"; rate=$((rate + 1))
   fi
   touch "$d/demarrage-rate"

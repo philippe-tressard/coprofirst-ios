@@ -24,8 +24,7 @@ struct RacineView: View {
                     .transition(.opacity)
                     .sheet(isPresented: $parcours.proposerFaceID) {
                         FaceIDFeuille(installation: ouverte)
-                            .presentationDetents([.medium, .large])
-                            .presentationDragIndicator(.visible)
+                            .feuilleACrans()
                     }
             } else {
                 NavigationStack(path: $parcours.chemin) {
@@ -44,8 +43,7 @@ struct RacineView: View {
         }
         .sheet(isPresented: $parcours.changerDeResidence) {
             FeuilleResidence()
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .feuilleACrans()
         }
         // Un lien universel (#18) : une seule porte, celle des notifications (#17).
         .onOpenURL { url in

@@ -15,6 +15,12 @@ pourraient le réécrire. Chaque motif nomme ce qu'on lit à la place.
 
 Une dispense se déclare avec sa raison ; une dispense qui ne couvre plus rien échoue.
 
+Une PORTE de version (`static let x = VersionContrat(1, 15, 0)`, comparée au contrat
+servi) ne vit que tant qu'elle est AU-DESSUS du plancher (`ContratDuPlancher.swift`,
+généré) : sous lui, toute installation qui s'ouvre la passe déjà, et la porte n'est plus
+qu'un repli mort qui décide encore d'un geste quand la version est illisible (#254).
+Une porte au plancher ou en dessous est refusée ; le plancher illisible : INCONNU.
+
 Usage :
   python3 scripts/verifier-regles-servies.py            juge le dépôt
   python3 scripts/verifier-regles-servies.py --autotest prouve qu'il refuse et accepte
@@ -108,6 +114,34 @@ DISPENSES: dict[str, str] = {
 }
 
 
+#: `static let nom = VersionContrat(1, 15, 0)` — une porte de version, ou le plancher.
+PORTE = re.compile(r"\bstatic let (\w+) = VersionContrat\((\d+), (\d+)(?:, (\d+))?\)")
+PLANCHER = "CoproFirst/Session/ContratDuPlancher.swift"
+
+
+def portes(texte: str) -> list[tuple[str, tuple[int, int, int]]]:
+    return [(m[1], (int(m[2]), int(m[3]), int(m[4] or 0))) for m in PORTE.finditer(texte)]
+
+
+def portes_sous_le_plancher(racine: pathlib.Path) -> list[str] | None:
+    """Les portes de version au plancher ou dessous ; `None` si le plancher est illisible."""
+    plancher_lu = dict(portes((racine / PLANCHER).read_text(encoding="utf-8"))) if (racine / PLANCHER).exists() else {}
+    plancher = plancher_lu.get("plancher")
+    if plancher is None:
+        return None
+    refus = []
+    for f in sorted((racine / "CoproFirst").rglob("*.swift")):
+        chemin = f.relative_to(racine).as_posix()
+        for nom, version in portes(f.read_text(encoding="utf-8")):
+            if chemin == PLANCHER and nom == "plancher":
+                continue
+            if version <= plancher:
+                refus.append(
+                    f"{chemin} : porte `{nom}` ({'.'.join(map(str, version))}) au plancher ou dessous "
+                    f"({'.'.join(map(str, plancher))}) — la retirer, ou comparer au plancher (#254)")
+    return refus
+
+
 def fichiers(racine: pathlib.Path) -> list[pathlib.Path]:
     return sorted([*(racine / "CoproFirst").rglob("*.swift"), *(racine / "scripts" / "generateurs").glob("*.py")])
 
@@ -189,7 +223,25 @@ def autotest() -> int:
         "        let ouvre = acces.lieu(arbre: perimetres)",
         "            lieu: LieuServi.lieu(servi?.perimetreLibelle?.valeur))",
     ]
-    echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)]
+    # Les portes : celle sous le plancher refusée, celle au-dessus gardée, le plancher exclu.
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as dossier:
+        racine = pathlib.Path(dossier)
+        (racine / "CoproFirst" / "Session").mkdir(parents=True)
+        (racine / PLANCHER).write_text("    static let plancher = VersionContrat(2, 1, 0)\n", encoding="utf-8")
+        (racine / "CoproFirst" / "Session" / "V.swift").write_text(
+            "    static let logoSombre = VersionContrat(1, 15, 0)\n    static let periode = VersionContrat(2, 9)\n",
+            encoding="utf-8")
+        jugees = portes_sous_le_plancher(racine) or []
+        if len(jugees) != 1 or "logoSombre" not in jugees[0]:
+            fautifs_portes = ["porte sous le plancher : " + repr(jugees)]
+        else:
+            fautifs_portes = []
+        (racine / PLANCHER).unlink()
+        if portes_sous_le_plancher(racine) is not None:
+            fautifs_portes.append("plancher absent : il fallait INCONNU")
+    echecs = [f for f in fautifs if not any(m.search(f) for m, _ in RETIREES)] + fautifs_portes
     echecs += [s for s in sains if any(m.search(s) for m, _ in RETIREES)]
     for e in echecs:
         print(f"❌ autotest : mal jugé — {e.strip()}")
@@ -202,14 +254,16 @@ def main() -> int:
     if "--autotest" in sys.argv[1:]:
         return autotest()
     refus, jugés = juger(RACINE)
-    if jugés == 0:
-        print("❓ INCONNU : aucun fichier à juger (CoproFirst/**/*.swift, scripts/generateurs/*.py)")
+    sous = portes_sous_le_plancher(RACINE)
+    if jugés == 0 or sous is None:
+        print(f"❓ INCONNU : aucun fichier à juger, ou plancher illisible ({PLANCHER})")
         return 2
+    refus += sous
     for r in refus:
         print(f"❌ {r}")
     if refus:
         return 1
-    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83, #105)")
+    print(f"✅ {jugés} fichiers : aucune règle servie recalculée (#83, #105), aucune porte sous le plancher (#254)")
     return 0
 
 

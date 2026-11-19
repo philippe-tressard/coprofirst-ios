@@ -52,5 +52,6 @@ struct StyleCarte: ButtonStyle {
             .opacity(configuration.isPressed ? 0.92 : 1)
             .animation(.snappy(duration: 0.18), value: configuration.isPressed)
             .contentShape(.rect(cornerRadius: Mise.rayon))
+            .survolCharte()
     }
 }

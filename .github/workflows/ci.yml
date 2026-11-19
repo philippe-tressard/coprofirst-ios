@@ -193,23 +193,24 @@ jobs:
       # lent, et le lot 4 a dépassé le budget (63 min sur c3d25e2). 98 min de tests en médiane,
       # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
       # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
-      # ListeEtFiche) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
-      # Le 18/11/2026 (#288), le lot 2 restait le plus lourd : 32 à 36,5 min de tests sur trois
-      # runs (e7875db, 148dbac, #289), contre 26 au plus pour les autres, et 57 min d'étape sur
-      # #289. CartesDuFilUITests (5,6 à 8,4 min) est passé au lot 1, SondageUITests (5,1 à
-      # 8,1) au dernier : ~24 min au pire pour le lot 2, ~31 pour le lot 1, ~32 pour le 5.
+      # ListeEtFiche, Carnet) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
+      # Le 19/11/2026 (#301), le dernier lot faisait 36 à 45 min d'étape et a dépassé le budget
+      # sur #297 (56 min, tests verts) : PrestatairesUITests y pesait 13 à 23,7 min. Répartis
+      # sur le PIRE temps de chaque classe, mesuré sur quatre runs (c4bdf79, b6f9b98, 23099de
+      # et le lot 5 de #297) : 150 min de tests au pire, ~31 par lot nommé, ~26 pour le
+      # dernier, qui garde de la place pour les classes neuves. Le build et la mise en route
+      # prennent 15 à 17 min (25 une fois) : ~48 min d'étape au pire, 7 de marge.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
-        CommunauteUITests PrestatairesAffaireUITests CartesDuFilUITests ConfirmationHoteUITests
-        NatureUITests ResidenceUITests RetourUITests
+        CommunauteUITests CartesDuFilUITests ConfirmationHoteUITests NatureUITests
+        ResidenceUITests RetourUITests AvisReglementUITests
       LOT_2: >-
-        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests LiensUITests
+        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests EcheanceUITests
       LOT_3: >-
         SuppressionCompteUITests AccesUITests AffairesUITests GrandTexteUITests EspaceCSUITests
-        LogoResidenceUITests
+        PrestatairesAffaireUITests ConnexionUITests
       LOT_4: >-
-        AdminUITests HistoriqueUITests DelegationsCSUITests HorsLigneUITests
-        AvisReglementUITests ConnexionUITests VitrineUITests
+        PrestatairesUITests DelegationsCSUITests HorsLigneUITests LiensUITests VitrineUITests
       # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
       # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
       BUDGET_LOT: 55
@@ -305,6 +306,9 @@ jobs:
           -only-testing:CoproFirstTests/PresentationNavigationTests
           -only-testing:CoproFirstUITests/ListeEtFicheUITests
           -only-testing:CoproFirstTests/ListeEtFicheTests
+          -only-testing:CoproFirstUITests/AffairesUITests/testCommandeNOuvreUneNouvelleAffaire
+          -only-testing:CoproFirstUITests/PrestatairesAffaireUITests
+          -only-testing:CoproFirstUITests/CartesDuFilUITests/testLeConseilModifieLAffaireDepuisLeBandeau
       - name: Écran de hall (Apple TV) — build et tests du code partagé
         # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
         # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU

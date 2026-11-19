@@ -47,7 +47,7 @@ struct ListeAffaires: View {
         .overlay { etatVide }
         .searchable(text: $etat.recherche, prompt: "Rechercher une affaire")
         .task(id: etat.recherche) { await etat.chercher(installation, avec: service) }
-        .refreshable { await etat.charger(installation, avec: service) }
+        .actualisable { await etat.charger(installation, avec: service) }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) { MenuFiltresAffaires(etat: etat) }
         }

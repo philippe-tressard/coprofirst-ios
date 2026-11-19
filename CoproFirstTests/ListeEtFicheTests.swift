@@ -34,6 +34,27 @@ struct ListeEtFicheTests {
         #expect(Disposition.pour(.regular, colonneFournie: false) == .coteACote, "sans colonne : le repli")
     }
 
+    /// L'iPad en portrait : deux colonnes, la fiche par-dessus la liste ; en paysage, liste
+    /// et fiche côte à côte. Liste, fiche et barre en portrait étaient illisibles.
+    @Test func enPortraitLaFicheVaParDessus() {
+        #expect(FicheParDessus.enPortrait(CGSize(width: 820, height: 1180)), "iPad 11 pouces en portrait")
+        #expect(FicheParDessus.enPortrait(CGSize(width: 1032, height: 1376)), "iPad 13 pouces en portrait")
+        #expect(!FicheParDessus.enPortrait(CGSize(width: 1180, height: 820)), "en paysage : rien ne change")
+        #expect(!FicheParDessus.enPortrait(.zero), "pas encore mesurée : côte à côte")
+        #expect(Disposition.pour(.regular, colonneFournie: true, parDessus: true) == .pile)
+        #expect(Disposition.pour(.regular, colonneFournie: false, parDessus: true) == .pile, "ni le repli")
+    }
+
+    /// Le clavier d'une feuille retranche sa hauteur des marges sûres : la fenêtre se mesure
+    /// marges rendues, sinon l'iPad en portrait passait pour un paysage et la fiche poussée
+    /// disparaissait à la saisie.
+    @Test func leClavierNeFaitPasBasculerLaPage() {
+        let avecClavier = FicheParDessus.fenetre(
+            CGSize(width: 1032, height: 900), marges: EdgeInsets(top: 24, leading: 0, bottom: 452, trailing: 0))
+        #expect(avecClavier == CGSize(width: 1032, height: 1376))
+        #expect(FicheParDessus.enPortrait(avecClavier), "toujours le portrait")
+    }
+
     /// Le titre d'un menu se règle par UN modificateur, la colonne ouverte ou non (#279) :
     /// un `if` donnait deux identités à la page, qui bouclait en s'ouvrant.
     @MainActor @Test func leTitreDeMenuSuitLaColonneEtLaTaille() {
@@ -41,6 +62,13 @@ struct ListeEtFicheTests {
         #expect(TitreDeMenu.mode(colonneOuverte: true, taille: .accessibility3) == .enTete)
         #expect(TitreDeMenu.mode(colonneOuverte: false, taille: .large) == .grand)
         #expect(TitreDeMenu.mode(colonneOuverte: false, taille: .accessibility3) == .enLigne, "le très grand texte")
+    }
+
+    /// Le titre en tête, l'action de la page passe à droite : iOS 26 retire la gauche (#223).
+    @MainActor @Test func lActionDeMenuPasseADroiteQuandLeTitreEstEnTete() {
+        #expect(TitreDeMenu.actionADroite(colonneOuverte: true, taille: .large), "une fiche à côté")
+        #expect(!TitreDeMenu.actionADroite(colonneOuverte: false, taille: .large))
+        #expect(!TitreDeMenu.actionADroite(colonneOuverte: false, taille: .accessibility3))
     }
 
     /// Une liste qui disparaît après l'apparition de la suivante ne ferme pas la colonne

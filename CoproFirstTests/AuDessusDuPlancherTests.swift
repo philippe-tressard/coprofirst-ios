@@ -119,6 +119,7 @@ private struct Temoin: Decodable, Equatable {
     #expect(modifiee.contains("bat_a_terrasse_nord"), "le lieu déjà enregistré d'une affaire modifiée reste proposé")
 }
 
+/// `niveaux_libres` est facultatif au contrat : absent, il ne ferme rien (repli gardé, #254).
 @Test func sansNiveauxServisToutNoeudSelectionnableSePropose() throws {
     let anciens = try FixturesPerimetres.lus().map {
         Perimetre(code: $0.code, libelle: $0.libelle, selectionnable: $0.selectionnable, parent: $0.parent)
@@ -126,7 +127,7 @@ private struct Temoin: Decodable, Equatable {
     // Le regroupement « Bâtiments » ne se cible jamais ; tout le reste se propose.
     #expect(
         Perimetre.aSaisir(anciens).count == anciens.filter(\.selectionnable).count,
-        "installation antérieure au contrat 1.17.0")
+        "niveaux_libres absent : aucun parent ne se ferme")
     let regroupement = [Perimetre(code: "batiments", libelle: "Bâtiments", selectionnable: false)]
     #expect(Perimetre.aSaisir(regroupement).isEmpty)
 }

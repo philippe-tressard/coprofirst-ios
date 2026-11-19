@@ -86,7 +86,8 @@ private struct ListeFAQ: View {
             sectionAide
         }
         .scrollContentBackground(.hidden)
-        .refreshable { recharger() }
+        .largeurDeLecture()
+        .actualisable { recharger() }
         .sensoryFeedback(.selection, trigger: ouverte)
     }
 

@@ -3,39 +3,44 @@
 
 import SwiftUI
 
-/// L'écran de hall : l'entrée tant qu'aucune résidence n'est reconnue, puis la résidence,
-/// à SA palette (`site_palette`), comme `RacineView` sur l'iPhone.
+/// L'écran de hall : l'entrée tant qu'aucune résidence n'est reconnue, l'appairage, puis la
+/// diffusion — à la palette de SA résidence (`site_palette`), comme `RacineView` sur l'iPhone.
 struct EcranDeHallView: View {
-    @State private var entree: EntreeTV
-
-    init(entree: EntreeTV = EntreeTV()) {
-        _entree = State(initialValue: entree)
-    }
+    let hall: HallTV
 
     var body: some View {
-        let palette = entree.residence?.palette ?? Palette.pour(code: nil)
+        let palette = hall.residence?.palette ?? Palette.pour(code: nil)
         Group {
-            if let residence = entree.residence {
-                AttenteAppairageView(residence: residence) { withAnimation(.snappy) { entree.changer() } }
-                    .transition(.opacity)
-            } else {
-                EntreeTVView(entree: entree)
-                    .transition(.opacity)
+            switch hall.etape {
+            case .entree:
+                EntreeTVView(entree: hall.entree)
+                    .padding(Mise.marge)
+            case .appairage(let residence):
+                AppairageTVView(residence: residence, service: hall.service) { jeton in
+                    hall.appairer(residence, jeton: jeton)
+                } changer: {
+                    withAnimation(.snappy) { hall.entree.changer() }
+                }
+                .padding(Mise.marge)
+                .id(residence.adresse)
+            case .diffusion(let appairage):
+                DiffusionTVView(appairage: appairage, service: hall.service) { hall.retirer() }
+                    .id(appairage.jeton)
             }
         }
-        .padding(Mise.marge)
+        .transition(.opacity)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(palette.bg)
         .tint(palette.primary)
         .environment(\.palette, palette)
         .animation(.smooth(duration: 0.4), value: palette.code)
-        .animation(.snappy, value: entree.residence)
+        .animation(.snappy, value: hall.etape)
     }
 }
 
-/// L'en-tête commun aux deux états : le nom, puis ce qu'est l'écran.
+/// L'en-tête de l'entrée et de l'appairage : le nom, puis ce qu'est l'écran.
 /// Lu de loin (trois mètres et plus) : les styles de texte de tvOS, déjà à cette échelle.
-private struct EnTeteHall: View {
+struct EnTeteHall: View {
     let titre: String
     let phrase: String
     @Environment(\.palette) private var palette
@@ -95,20 +100,6 @@ struct EntreeTVView: View {
             ProgressView()
                 .opacity(entree.decouverte.enCours ? 1 : 0)
                 .accessibilityHidden(!entree.decouverte.enCours)
-        }
-    }
-}
-
-/// La résidence reconnue, à sa palette, en attendant l'appairage (lot 3, #218).
-struct AttenteAppairageView: View {
-    let residence: Installation
-    let changer: () -> Void
-
-    var body: some View {
-        VStack(spacing: Mise.marge) {
-            EnTeteHall(titre: residence.nom, phrase: EcranDeHall.attente)
-            Button(EcranDeHall.changer, action: changer)
-                .accessibilityIdentifier("hall.changer")
         }
     }
 }

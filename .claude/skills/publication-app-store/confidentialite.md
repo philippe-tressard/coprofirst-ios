@@ -59,11 +59,13 @@ Les seuls fichiers qui ouvrent une connexion (`URLSession`, `URLRequest`) :
 | `CoproFirst/Session/ServiceAPI+Detail.swift` | l'installation choisie | le téléchargement d'un document, par la même session |
 | `CoproFirst/Session/PreuveAASA.swift` | l'installation choisie | lecture de `/.well-known/apple-app-site-association`, sans cookie |
 | `CoproFirstTV/Entree/DecouverteAPI.swift` | l'installation saisie sur l'Apple TV | GET /config par le client généré, session éphémère, sans cookie ni compte |
+| `CoproFirstTV/Appairage/ServiceEcranTV+API.swift` | l'installation de l'écran de hall (Apple TV) | l'appairage (codes tirés par le serveur), puis la lecture des affiches et de leurs images avec le jeton de l'écran — session éphémère, sans cookie ni compte de personne |
 | `CoproFirst/Entree/Contenu/Vitrine.swift` | `coprofirst.fr` (l'éditeur) | lecture de `contenu.json` à l'ouverture de l'accueil, sans cookie ni identifiant |
 
 Preuves : `CoproFirst/Session/ServiceAPI.swift` › `let configuration = URLSessionConfiguration.ephemeral` ;
 `CoproFirst/Session/PreuveAASA.swift` › `configuration.httpCookieAcceptPolicy = .never` ;
 `CoproFirstTV/Entree/DecouverteAPI.swift` › `URLSession(configuration: .ephemeral)` ;
+`CoproFirstTV/Appairage/ServiceEcranTV+API.swift` › `session: URLSession(configuration: .ephemeral)` ;
 `CoproFirst/Entree/Contenu/Vitrine.swift` › `static let adresse = URL(string: "https://coprofirst.fr/contenu.json")`.
 
 La lecture de `contenu.json` ne porte rien de l'utilisateur, mais c'est une requête : le
@@ -77,8 +79,9 @@ relais de l'éditeur, puis par Apple (§4).
 |---|---|---|
 | le jeton de session, **si** Face ID est activé | Trousseau, biométrie, jamais synchronisé | `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly, .biometryCurrentSet` |
 | le courriel de la dernière connexion, par résidence | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)` |
-| le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/Trousseau.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
+| le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/CoffreDuCompte.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
 | l'identifiant du compte dans la résidence (`id` de `GET /auth/me`, #94), le temps d'une session : il dit quel compte d'« Utilisateurs » est celui du lecteur | avec le profil, au Trousseau ; effacé à la déconnexion | `CoproFirst/Donnees/ProfilResidence.swift` › `idCompte: moi.id` ; `CoproFirst/Session/Parcours.swift` › `connues.oublierLeCompte(installation)` |
+| Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
 | Face ID déjà proposé, par résidence | réglages | `CoproFirst/Session/InstallationsConnues.swift` › `reglages.set(true, forKey: "faceid-propose." + installation.hote)` |
 | l'abonnement push, par résidence | réglages | `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `private static let cle = "push-abonnements"` |
@@ -220,6 +223,10 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `patchAnnoncesHallAnnonceId` | — |
 | `deleteAnnoncesHallAnnonceId` | — |
 | `postAnnoncesHallAnnonceIdRenvoyerEmail` | — |
+| `postEcrans` | `OtherUserContent` |
+| `deleteEcransEcranId` | — |
+| `postEcransAppairage` | — |
+| `postEcransAppairageJeton` | — |
 | `postIdees` | `OtherUserContent` |
 | `postIdeesIdeeIdVoter` | `OtherUserContent` |
 | `postIdeesCibleIdReponses` | `OtherUserContent` |
