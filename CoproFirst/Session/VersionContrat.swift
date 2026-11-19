@@ -47,4 +47,12 @@ struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     /// Le canal d'accès d'une page vue (`canal` de POST /telemetry/collect, coprofirst#2726) :
     /// une installation antérieure l'ignorerait, et rangerait les vues de l'app sous « Site web ».
     static let canalAudience = VersionContrat(1, 31, 0)
+
+    /// Seule l'alerte d'une actualité ⚡ urgente part vers un téléphone (coprofirst#2789,
+    /// spec push §12) : sous cette version, une résidence ne reçoit pas l'appareil (#283).
+    /// Le contrat 2.10.0 arrive avec v3.119.0, mais le filtre seulement avec v3.120.0, qui ne
+    /// change pas de contrat : une v3.119.0 pousserait toute la cloche. Elle n'a servi
+    /// qu'une heure, service coupé, et aucune installation connue ne la sert plus
+    /// (mesuré le 19/11/2026 : demo.coprofirst.fr en v3.120.0, 5hostachy.fr en v3.121.0).
+    static let alertesPoussees = VersionContrat(2, 10, 0)
 }

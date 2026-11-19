@@ -52,7 +52,7 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
     }
 }
 
-@Test func lEnregistrementNEnvoieQueLesTroisChampsDuContrat() async throws {
+@Test func lEnregistrementNEnvoieQueLesQuatreChampsDuContrat() async throws {
     let transport = TransportEnregistreur()
     let client = ClientCoproFirst.client(installation: URL(string: "https://demo.exemple")!, transport: transport)
     let appareil = AppareilPush(
@@ -60,7 +60,8 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
     _ = try await client.postAppareils(body: .json(.init(appareil)))
     let corps = try #require(transport.corps)
     let envoye = try #require(try JSONSerialization.jsonObject(with: corps) as? [String: String])
-    #expect(Set(envoye.keys) == ["jeton", "environnement", "abonnement"], "rien d'autre ne part (N5)")
+    #expect(Set(envoye.keys) == ["plateforme", "jeton", "environnement", "abonnement"], "rien d'autre ne part (N5)")
+    #expect(envoye["plateforme"] == "apns", "dite, même si le serveur la suppose (#283)")
     #expect(envoye["environnement"] == "developpement")
     #expect(envoye["jeton"] == appareil.jeton.hexadecimal)
     #expect(envoye["abonnement"] == appareil.abonnement)
@@ -80,6 +81,11 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
 
 // MARK: - Le parcours
 
+extension RelaisPush {
+    /// Allumé, et la résidence inventée (au plancher) servie : le parcours se joue.
+    fileprivate static let allumeAuPlancher = RelaisPush(allume: true, depuis: .plancher)
+}
+
 /// Une app neuve, la résidence inventée ouverte, l'autorisation donnée.
 @MainActor
 private struct AppOuverte {
@@ -87,12 +93,14 @@ private struct AppOuverte {
     let push: NotificationsPush
     let service = ServiceSimule(delai: .zero)
     let centre: CentreSimule
+    let reglages: UserDefaults
 
-    init(_ autorisation: AutorisationPush) async {
+    init(_ autorisation: AutorisationPush, relais: RelaisPush = .allumeAuPlancher) async {
         let suite = reglagesNeufs()
+        reglages = suite
         parcours = Parcours(service: service, connues: InstallationsConnues(reglages: suite))
         centre = CentreSimule(autorisation)
-        push = NotificationsPush(centre: centre, reglages: suite, environnement: .developpement)
+        push = NotificationsPush(centre: centre, reglages: suite, environnement: .developpement, relais: relais)
         parcours.ouvrir(ServiceSimule.residence)
         await push.attacher(parcours)
     }
@@ -263,7 +271,7 @@ private func jusqua(_ condition: () -> Bool) async {
 @MainActor
 @Test func uneNotificationToucheeAvantLeLancementAttendLApp() async {
     let suite = reglagesNeufs()
-    let push = NotificationsPush(centre: CentreSimule(.accordee), reglages: suite)
+    let push = NotificationsPush(centre: CentreSimule(.accordee), reglages: suite, relais: .allumeAuPlancher)
     push.touchee(abonnement: push.abonnements.abonnement(pour: ServiceSimule.residence))
     let parcours = Parcours(service: ServiceSimule(delai: .zero), connues: InstallationsConnues(reglages: suite))
     parcours.ouvrir(ServiceSimule.residence)
@@ -280,4 +288,65 @@ private func jusqua(_ condition: () -> Bool) async {
     #expect(push.presentation(abonnement: push.abonnements.abonnement(pour: ServiceSimule.residence)) == [.list])
     #expect(push.presentation(abonnement: push.abonnements.abonnement(pour: autre)) == [.banner, .list, .sound])
     #expect(push.presentation(abonnement: "inconnu") == [], "une résidence quittée ne sonne plus")
+}
+
+// MARK: - Le relais : éteint par défaut, et la porte de version (#283)
+
+/// 🔴 Éteint tant que Philippe n'a pas allumé le service `notifications_push`
+/// (coprofirst#2875) : l'allumer, c'est changer ce test, dans le lot qui le décide.
+@Test func leRelaisEstEteintParDefaut() {
+    #expect(!RelaisPush.courant.allume, "allumé sans la décision de Philippe (coprofirst#2875)")
+    #expect(RelaisPush.courant.depuis == .alertesPoussees)
+    #expect(VersionContrat.alertesPoussees > .plancher, "une porte au plancher ne fermerait rien")
+}
+
+@MainActor
+@Test func relaisEteintRienNeSeProposeNiNePart() async {
+    let demandee = await AppOuverte(.nonDemandee, relais: .courant)
+    #expect(!demandee.push.offreDue, "pas d'offre pour une alerte qui n'arrive pas")
+    let accordee = await AppOuverte(.accordee, relais: .courant)
+    await accordee.push.residenceOuverte(ServiceSimule.residence)
+    await accordee.push.jetonRecu(CentreSimule.jeton)
+    #expect(accordee.service.appareilsEnregistres(ServiceSimule.residence).isEmpty)
+    #expect(accordee.centre.inscriptions == 0, "aucun jeton demandé à iOS")
+}
+
+/// Une résidence sous la porte, ou qui ne dit pas sa version, ne reçoit pas l'appareil :
+/// elle pourrait faire sonner toute la cloche, pas seulement l'alerte urgente.
+@Test func seuleUneResidenceAuDessusDeLaPorteRecoitLAppareil() {
+    let relais = RelaisPush(allume: true, depuis: .alertesPoussees)
+    var residence = ServiceSimule.residence
+    for (servie, attendu) in [("2.10.0", true), ("2.11", true), ("2.9.0", false), ("2.8.0", false), ("2.x", false)] {
+        residence.versionContrat = servie
+        #expect(relais.sert(residence) == attendu, "contrat \(servie)")
+    }
+    residence.versionContrat = nil
+    #expect(!relais.sert(residence), "version absente : les gestes du plancher")
+    #expect(!relais.sert(nil), "aucune résidence ouverte")
+    residence.versionContrat = "2.10.0"
+    #expect(!RelaisPush(allume: false, depuis: .alertesPoussees).sert(residence), "éteint : rien")
+}
+
+@MainActor
+@Test func sousLaPorteLOffreSeTaitEtRienNePart() async {
+    let sousLaPorte = RelaisPush(allume: true, depuis: .alertesPoussees)
+    #expect(ServiceSimule.residence.contrat ?? .plancher < .alertesPoussees, "la résidence inventée sert le plancher")
+    let demandee = await AppOuverte(.nonDemandee, relais: sousLaPorte)
+    #expect(!demandee.push.offreDue)
+    let accordee = await AppOuverte(.accordee, relais: sousLaPorte)
+    await accordee.push.jetonRecu(CentreSimule.jeton)
+    #expect(accordee.service.appareilsEnregistres(ServiceSimule.residence).isEmpty)
+}
+
+/// Éteint, la déconnexion retire encore l'appareil qu'une version précédente a enregistré.
+@MainActor
+@Test func relaisEteintLaDeconnexionRetireEncore() async {
+    let app = await AppOuverte(.accordee)
+    let residence = ServiceSimule.residence
+    await jusqua { !app.service.appareilsEnregistres(residence).isEmpty }
+    let eteint = NotificationsPush(
+        centre: app.centre, reglages: app.reglages, environnement: .developpement, relais: .courant)
+    await eteint.attacher(app.parcours)
+    await app.parcours.deconnecter(residence)
+    #expect(app.service.appareilsEnregistres(residence).isEmpty, "retiré, relais éteint")
 }

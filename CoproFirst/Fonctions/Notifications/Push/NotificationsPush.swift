@@ -10,7 +10,9 @@ import UserNotifications
 /// - l'autorisation se DEMANDE au bon moment — jamais au lancement, toujours après un
 ///   geste de l'utilisateur dans la cloche (`OffrePush`) ;
 /// - l'appareil s'ENREGISTRE à chaque ouverture d'une résidence (POST /appareils, qui
-///   rafraîchit `vu_le` : 60 jours sans ouverture, l'installation le purge) ;
+///   rafraîchit `vu_le` : 60 jours sans ouverture, l'installation le purge) — si le relais
+///   est allumé et si elle ne fait sonner que l'alerte d'une actualité urgente (`RelaisPush`,
+///   #283) ; sinon ni offre ni enregistrement ;
 /// - il se RETIRE à la déconnexion (DELETE /appareils/{abonnement}), avant elle ;
 /// - une notification touchée OUVRE la cloche de sa résidence, retrouvée par son seul
 ///   abonnement : le détail se lit par l'API (GET /notifications), jamais dans la charge.
@@ -24,6 +26,7 @@ final class NotificationsPush {
     @ObservationIgnored let abonnements: AbonnementsPush
     @ObservationIgnored private let reglages: UserDefaults
     @ObservationIgnored private let environnement: EnvironnementAPNs
+    @ObservationIgnored private let relais: RelaisPush
     @ObservationIgnored private weak var parcours: Parcours?
     @ObservationIgnored private var jeton: JetonAPNs?
     /// Les hôtes où le jeton courant est enregistré depuis le lancement : une fois chacun.
@@ -37,9 +40,10 @@ final class NotificationsPush {
 
     init(
         centre: any CentreNotifications, reglages: UserDefaults = .standard,
-        environnement: EnvironnementAPNs = .courant
+        environnement: EnvironnementAPNs = .courant, relais: RelaisPush = .courant
     ) {
         self.centre = centre
+        self.relais = relais
         self.reglages = reglages
         self.environnement = environnement
         abonnements = AbonnementsPush(reglages: reglages)
@@ -69,9 +73,10 @@ final class NotificationsPush {
 
     // MARK: - L'autorisation, au bon moment
 
-    /// L'offre s'affiche : autorisation jamais demandée, et pas de « Plus tard » récent.
+    /// L'offre s'affiche : le relais sert la résidence ouverte, autorisation jamais
+    /// demandée, et pas de « Plus tard » récent.
     var offreDue: Bool {
-        guard autorisation == .nonDemandee else { return false }
+        guard relais.sert(parcours?.ouverte), autorisation == .nonDemandee else { return false }
         guard let reportee = offreReporteeLe else { return true }
         return Date.now.timeIntervalSince(reportee) > Double(Self.reportJours) * 86_400
     }
@@ -101,17 +106,18 @@ final class NotificationsPush {
     }
 
     /// Une résidence s'ouvre, sa session en main : l'appareil s'y enregistre — si
-    /// l'utilisateur a autorisé les notifications ; sinon rien ne part.
+    /// l'utilisateur a autorisé les notifications et que le relais la sert ; sinon rien ne part.
     func residenceOuverte(_ installation: Installation) async {
         await lireAutorisation()
         guard autorisation == .accordee else { return }
+        guard relais.sert(installation) else { return }
         await enregistrer(installation)
         // iOS redonne le jeton à chaque inscription (et le nouveau s'il a changé).
         centre.inscrire()
     }
 
     private func enregistrer(_ installation: Installation) async {
-        guard let jeton, let service = parcours?.service.serviceAppareils,
+        guard relais.sert(installation), let jeton, let service = parcours?.service.serviceAppareils,
             !enregistres.contains(installation.hote)
         else { return }
         enregistres.insert(installation.hote)
