@@ -7,7 +7,7 @@ import Observation
 /// L'entrée de l'écran de hall dans SA résidence (#218, lot 2) : l'adresse saisie — le
 /// clavier de l'iPhone s'offre à l'Apple TV — ou la démo. Ni QR, ni lien universel, ni
 /// Face ID : l'Apple TV n'a pas de caméra, et tvOS ne gère ni ces liens ni la biométrie.
-/// Aucun mot de passe ne part d'ici : l'écran n'a pas de compte, il sera appairé (lot 3).
+/// Aucun mot de passe ne part d'ici : l'écran n'a pas de compte, il est appairé (lot 3).
 @MainActor @Observable
 final class EntreeTV {
     /// L'adresse en cours de saisie.
@@ -42,6 +42,12 @@ final class EntreeTV {
     func changer() {
         if let residence { saisie = AdresseInstallation.enSaisie(residence.adresse) }
         residence = nil
+        decouverte.signaler(nil)
+    }
+
+    /// La résidence d'un écran retiré (lot 3) : l'appairage reprend, sans nouvelle saisie.
+    func reprendre(_ residence: Installation) {
+        self.residence = residence
         decouverte.signaler(nil)
     }
 
