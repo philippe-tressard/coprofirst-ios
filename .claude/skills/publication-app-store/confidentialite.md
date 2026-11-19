@@ -120,10 +120,13 @@ aucune image n'est gardée ni envoyée ; Face ID est vérifié par iOS.
 version du plancher) :
 
 - l'app envoie à la résidence, si l'utilisateur a accepté les notifications, le jeton
-  d'appareil d'APNs et un **abonnement** aléatoire tiré par l'app — rien d'autre :
+  d'appareil d'APNs, la plateforme (`apns`, une constante) et un **abonnement** aléatoire
+  tiré par l'app — rien d'autre ; et seulement si le relais est allumé dans l'app et que la
+  résidence ne fait sonner que l'alerte d'une actualité urgente (#283) :
   `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `jeton: appareil.jeton.hexadecimal`,
   `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `var generateur = SystemRandomNumberGenerator()`,
-  `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `guard autorisation == .accordee else { return }` ;
+  `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `guard autorisation == .accordee else { return }`,
+  `CoproFirst/Fonctions/Notifications/Push/RelaisPush.swift` › `static let courant = RelaisPush(allume: false, depuis: .alertesPoussees)` ;
 - le jeton ne s'écrit ni dans un journal ni sur le disque :
   `CoproFirst/Fonctions/Notifications/Push/JetonAPNs.swift` › `static let masque = "‹jeton APNs masqué›"` ;
 - à la déconnexion, l'appareil se retire :

@@ -146,6 +146,13 @@ carte au jour où le serveur la range — son échéance, sa publication sinon �
 pour VoiceOver) ; Ma résidence y a un **sommaire** à gauche — les rubriques de la Fiche, le
 carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la page et la
 fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
+**Notifications** : la cloche de chaque écran. Sur le téléphone, ne sonne que l'alerte
+d'une actualité marquée urgente par le conseil syndical ou l'administrateur (#283,
+décision du 18/11/2026), et seulement auprès d'une résidence au contrat 2.10.0 au moins :
+l'offre « Être averti sur ce téléphone » (#17) s'ouvre dans la cloche, jamais au lancement,
+et le message ne dit rien de son contenu. Le relais est **éteint** dans l'app
+(`RelaisPush`) tant que le service n'est pas allumé côté serveur (coprofirst#2875, clé
+`.p8` : coprofirst#2494) : d'ici là, ni offre ni enregistrement.
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
