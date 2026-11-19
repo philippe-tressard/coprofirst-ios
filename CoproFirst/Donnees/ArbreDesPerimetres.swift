@@ -71,11 +71,16 @@ struct ArbreDesPerimetres: Sendable {
 /// | le défaut | tout est vidé | se ferme |
 ///
 /// « Tout le bâtiment 3 » et « le toit du bâtiment 3 » sont deux cibles exclusives.
+///
+/// `unique` : le `mode="single"` du site (le lieu d'un écran de hall, #295) — un toucher
+/// REMPLACE la sélection au lieu d'y ajouter ; même rendu, mêmes pastilles.
 struct ChoixDePerimetres: Hashable, Sendable {
     /// Les codes retenus ; vide ou le seul défaut : « toute la copropriété ».
     var codes: Set<String> = []
     /// La tête touchée en dernier (`parentTouche`).
     private(set) var touchee: String?
+    /// Un seul périmètre à la fois.
+    var unique = false
 
     func estDefaut(_ arbre: ArbreDesPerimetres) -> Bool {
         codes.isEmpty || codes == Set([arbre.defaut?.code].compactMap(\.self))
@@ -100,6 +105,11 @@ struct ChoixDePerimetres: Hashable, Sendable {
 
     mutating func basculer(_ code: String, _ arbre: ArbreDesPerimetres) {
         let racine = arbre.tete(de: code)
+        if unique {
+            touchee = racine ?? code  // la rangée de sa tête reste ouverte
+            codes = [code]
+            return
+        }
         let estTete = racine == code
         var retenus = codes
         if let defaut = arbre.defaut?.code { retenus.remove(defaut) }
