@@ -65,13 +65,13 @@ struct BandeauAffaire: ViewModifier {
         switch geste {
         case .suite:
             SuiteFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
-                .presentationDetents([.medium, .large])
+                .feuilleACrans()
         case .modifier:
             // Tous les champs de l'affaire : la feuille s'ouvre en grand.
             ModifierAffaireFeuille(affaire: affaire, installation: installation, envoyee: envoyee)
         default:
             RepondreFeuille(affaire: affaire, installation: installation) { envoyee("Réponse envoyée") }
-                .presentationDetents([.medium, .large])
+                .feuilleACrans()
         }
     }
 

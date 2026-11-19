@@ -105,6 +105,7 @@ struct ConnexionView: View {
                 .frame(maxWidth: .infinity, minHeight: Mise.cible)
             }
             .padding(Mise.marge)
+            .largeurDeLecture()
         }
         .scrollDismissesKeyboard(.interactively)
         .background(palette.bg)
@@ -116,8 +117,7 @@ struct ConnexionView: View {
                 adresseAConfirmer = AdresseInstallation.normaliser(texte).map { ($0, .scan) }
                 saisieResidence = texte
             }
-            .presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
+            .feuilleACrans()
         }
         .sheet(item: hoteAConfirmer) { installation in
             ConfirmationHoteFeuille(installation: installation) { Task { await seConnecter() } }

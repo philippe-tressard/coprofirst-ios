@@ -50,4 +50,21 @@ struct ChoixDePerimetresTests {
         choix.choisirDefaut(arbre)
         #expect(choix.codes == ["copropriete"] && choix.estDefaut(arbre))
     }
+
+    /// Le `mode="single"` du site (le lieu d'un écran de hall, #295) : un toucher remplace,
+    /// jamais n'ajoute, et la rangée de la tête reste ouverte sur son espace.
+    @Test func enChoixUniqueUnToucherRemplaceLaSelection() {
+        var choix = ChoixDePerimetres(unique: true)
+        choix.choisirDefaut(arbre)
+        choix.basculer("bat_a", arbre)
+        #expect(choix.codes == ["bat_a"] && choix.ouverte(arbre) == "bat_a")
+        choix.basculer("bat_a/toit", arbre)
+        #expect(choix.codes == ["bat_a/toit"] && choix.ouverte(arbre) == "bat_a")
+        choix.basculer("parking", arbre)
+        #expect(choix.codes == ["parking"], "le parking remplace le toit, il ne s'y ajoute pas")
+        choix.basculer("parking", arbre)
+        #expect(choix.codes == ["parking"], "toucher la valeur retenue la garde : jamais vide")
+        choix.choisirDefaut(arbre)
+        #expect(choix.codes == ["copropriete"])
+    }
 }

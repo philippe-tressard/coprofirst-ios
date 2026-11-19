@@ -57,6 +57,7 @@ struct ProfilView: View {
             }
         }
         .scrollContentBackground(.hidden)
+        .largeurDeLecture()
         .background(palette.bg)
         .navigationTitle("Profil")
         .titreDeMenu()

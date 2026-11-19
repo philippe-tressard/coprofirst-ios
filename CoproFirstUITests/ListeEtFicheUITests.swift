@@ -128,6 +128,20 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(annonce.exists, "la liste reste à côté")
         XCTAssertGreaterThan(contact.frame.minX, annonce.frame.maxX, "à droite de la liste")
         XCTAssertTrue(app.elementRetenu("annonce.21").apparait(), "sa rangée est soulignée")
+        // Le titre en tête, iOS 26 retirait l'action de gauche : elle passe à droite (#223).
+        XCTAssertTrue(app.elementAcces("communaute.creer").apparait(), "« Créer » reste dans la barre")
         capture("annonces-liste-et-fiche", app)
+    }
+
+    /// Un document à côté du fil porte son titre en tête : la colonne de fiche n'a pas de
+    /// barre à elle, et l'aperçu du système n'en montre aucun (#223).
+    @MainActor
+    func testUnDocumentACoteDuFilPorteSonTitre() throws {
+        let app = lancer("fil")
+        let document = app.buttons["fil.document:7"]
+        app.toucher(document)
+        XCTAssertTrue(app.elementAcces("document.titre").apparait(), "le titre en tête de la colonne")
+        XCTAssertTrue(document.exists, "le fil reste à côté")
+        capture("fil-document-a-cote", app)
     }
 }

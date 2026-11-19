@@ -108,6 +108,12 @@ private let propresAIOS: [String: MesurePropre] = [
         raison: "l'écart de ce trait autour d'un lien dans le texte (le syndic, une annexe), pour qu'il "
             + "ne touche pas ses lettres ; le site n'a pas de liste et fiche côte à côte",
         depuis: "17/11/2026"),
+    "lecture": MesurePropre(
+        valeur: Mise.lecture, ecart: nil,
+        raison: "la colonne de lecture d'un écran sur iPad (#223), la largeur que prenaient déjà les "
+            + "onglets, les accès, les délégations et les prestataires ; le site n'a pas de jeton de "
+            + "largeur de contenu",
+        depuis: "17/11/2026"),
 ]
 
 /// Les mesures que `Mise` déclare, lues dans sa source : `static let <nom>: CGFloat`.

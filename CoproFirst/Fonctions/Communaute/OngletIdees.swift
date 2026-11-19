@@ -40,7 +40,7 @@ struct OngletIdees: View {
                 toutArchive: enCours.isEmpty && !triees.isEmpty, textes: Self.textes
             ) { Task { await etat.charger(.idees, installation, avec: parcours.serviceCommunaute) } }
         }
-        .refreshable { await etat.charger(.idees, installation, avec: parcours.serviceCommunaute) }
+        .actualisable { await etat.charger(.idees, installation, avec: parcours.serviceCommunaute) }
         .task { await etat.charger(.idees, installation, avec: parcours.serviceCommunaute) }
     }
 
