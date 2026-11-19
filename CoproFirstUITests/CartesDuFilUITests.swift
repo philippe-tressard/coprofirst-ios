@@ -120,8 +120,10 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(modifier.exists)
         app.toucher(modifier)
 
+        // Sur iPad, la feuille de formulaire range le titre sous les catégories : un `Form` ne
+        // crée pas ses lignes hors de l'écran, il s'amène (#304).
         let titre = app.textFields["modifier.titre"]
-        XCTAssertTrue(titre.apparait())
+        XCTAssertTrue(app.amener(titre), "le titre de l'affaire, sous les catégories")
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
         XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
