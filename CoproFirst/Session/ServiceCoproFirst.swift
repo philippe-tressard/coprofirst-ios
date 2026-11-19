@@ -22,8 +22,10 @@ protocol ServiceCoproFirst: DecouvreInstallation {
     /// Après la première connexion : garder la session au Trousseau, sous Face ID —
     /// et dire ce qui la protège vraiment (`nil` : elle n'a pas pu être gardée, #84).
     func activerFaceID(_ installation: Installation) async -> ProtectionSession?
-    /// GET /flux : le fil de la résidence, celui du tableau de bord du site.
-    func fil(_ installation: Installation) async throws -> [ElementDuFil]
+    /// GET /flux : le fil de la résidence, celui du tableau de bord du site. Sur une
+    /// `periode` (`du`, `au`, jours de Paris inclus, 31 au plus), les cartes que le serveur
+    /// range à ces jours, chacune avec son `jourServi` (coprofirst#2834, la semaine #277).
+    func fil(_ installation: Installation, periode: ClosedRange<Date>?) async throws -> [ElementDuFil]
     /// Entrer dans la démo sous un personnage, d'un toucher — ou `nil` quand aucune
     /// route ne sert ses identifiants (coprofirst#2460) : l'écran pré-remplit alors.
     func entrerEnDemo(_ code: String) async throws -> Installation?

@@ -79,7 +79,7 @@ private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
 @Suite struct RenouvellementTests {
     @Test func unRefusDeSessionSeRenouvelleEtLaRequeteSeRejoue() async throws {
         let serveur = ServeurAJetonCourt()
-        let fil = try await service(serveur).fil(residence)
+        let fil = try await service(serveur).fil(residence, periode: nil)
         #expect(fil.isEmpty)
         #expect(await serveur.renouvellements == 1)
         #expect(await serveur.lecturesDuFil == 2, "la requête refusée, puis la même rejouée")
@@ -87,14 +87,14 @@ private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
 
     @Test func unSecondRefusDitLaSessionExpiree() async {
         let serveur = ServeurAJetonCourt(refreshEfficace: false)
-        await #expect(throws: ErreurService.sessionExpiree) { try await service(serveur).fil(residence) }
+        await #expect(throws: ErreurService.sessionExpiree) { try await service(serveur).fil(residence, periode: nil) }
         #expect(await serveur.renouvellements == 1, "un seul renouvellement")
         #expect(await serveur.lecturesDuFil == 2, "rejouée une fois, pas davantage")
     }
 
     @Test func unRenouvellementRefuseDitLaSessionExpiree() async {
         let serveur = ServeurAJetonCourt(refreshAccepte: false)
-        await #expect(throws: ErreurService.sessionExpiree) { try await service(serveur).fil(residence) }
+        await #expect(throws: ErreurService.sessionExpiree) { try await service(serveur).fil(residence, periode: nil) }
         #expect(await serveur.renouvellements == 1)
         #expect(await serveur.lecturesDuFil == 1, "rien à rejouer sans session neuve")
     }
@@ -104,9 +104,9 @@ private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
     @Test func desRequetesConcurrentesNeRenouvellentQuUneFois() async throws {
         let serveur = ServeurAJetonCourt(delaisDuFil: [.milliseconds(10), .milliseconds(10), .milliseconds(300)])
         let api = service(serveur)
-        async let premiere = api.fil(residence)
-        async let deuxieme = api.fil(residence)
-        async let troisieme = api.fil(residence)
+        async let premiere = api.fil(residence, periode: nil)
+        async let deuxieme = api.fil(residence, periode: nil)
+        async let troisieme = api.fil(residence, periode: nil)
         _ = try await (premiere, deuxieme, troisieme)
         #expect(await serveur.renouvellements == 1, "le serveur fait tourner le jeton : un seul POST /auth/refresh")
         #expect(await serveur.lecturesDuFil == 6)
@@ -162,21 +162,21 @@ private func attendreLaConnexion(_ parcours: Parcours) async {
     @Test func unRenouvellementRefuseSeSignaleUneFois() async {
         let api = service(ServeurAJetonCourt(refreshAccepte: false))
         let signaux = Signaux(api)
-        _ = try? await api.fil(residence)
+        _ = try? await api.fil(residence, periode: nil)
         #expect(signaux.hotes == [residence.hote])
     }
 
     @Test func unSecondRefusSeSignaleAussi() async {
         let api = service(ServeurAJetonCourt(refreshEfficace: false))
         let signaux = Signaux(api)
-        _ = try? await api.fil(residence)
+        _ = try? await api.fil(residence, periode: nil)
         #expect(signaux.hotes == [residence.hote])
     }
 
     @Test func uneSessionRenouveleeNeSeSignalePas() async throws {
         let api = service(ServeurAJetonCourt())
         let signaux = Signaux(api)
-        _ = try await api.fil(residence)
+        _ = try await api.fil(residence, periode: nil)
         #expect(signaux.hotes.isEmpty)
     }
 
@@ -195,7 +195,7 @@ private func attendreLaConnexion(_ parcours: Parcours) async {
     @MainActor
     @Test func unEcranRefuseRameneALaConnexion() async {
         let parcours = ouvert(service(ServeurAJetonCourt(refreshAccepte: false)))
-        _ = try? await parcours.service.fil(residence)
+        _ = try? await parcours.service.fil(residence, periode: nil)
         await attendreLaConnexion(parcours)
         #expect(parcours.ouverte == nil)
         #expect(parcours.reconnue == residence, "adresse pré-remplie")
