@@ -77,6 +77,24 @@ extension XCUIApplication {
         }
     }
 
+    /// `amener`, jusqu'à ce que l'élément soit tout entier AU-DESSUS de `borne` (le haut d'une
+    /// barre du bas). Sous iOS 26.5, la barre `.bottomBar` d'un écran n'est pas exposée comme
+    /// `Toolbar` (des `Other` seuls) : `zoneUtile` ne la voit pas, `isHittable` la traverse, et
+    /// le toucher d'un « ⋯ » passé sous son verre ne l'ouvrait pas (#211). La borne se nomme
+    /// donc par un bouton de la barre, que le test connaît. Le défilement est un BALAYAGE lent,
+    /// pas l'appui-glisser d'`amener` : sous iOS 26.5, celui-ci partait sur un texte sélectionnable
+    /// de la fiche (`textSelection`) et la page ne bougeait pas (vidéo du xcresult, #211) — le
+    /// geste de `HistoriqueUITests` sur le même écran.
+    @discardableResult
+    func amener(_ element: XCUIElement, auDessusDe borne: XCUIElement, essais: Int = 8) -> Bool {
+        let arrive = { !borne.exists || element.frame.maxY + 8 <= borne.frame.minY }
+        _ = element.sonde()
+        for _ in 0..<essais where !(element.exists && arrive()) {
+            swipeUp(velocity: .slow)
+        }
+        return element.exists && arrive()
+    }
+
     /// `amener`, arrivé quand `arrive` le dit (l'élément existe en plus).
     @discardableResult
     fileprivate func amener(_ element: XCUIElement, essais: Int, jusqua arrive: () -> Bool) -> Bool {

@@ -24,9 +24,11 @@ final class ModerationUITests: XCTestCase {
         app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
 
+        // Au-dessus du bandeau du bas (🔗 y est offert à tous) : passé sous lui, le « ⋯ »
+        // recevait le toucher sur le bandeau (rouge en CI, iOS 26.5) — l'aide de #307.
         let gestes = app.elementAcces("historique.gestes.3")
-        for _ in 0..<6 where gestes.sonde() == false { app.swipeUp() }
-        XCTAssertTrue(gestes.exists, "la réponse du syndic offre ses gestes")
+        let bandeau = app.elementAcces("affaire.lien")
+        XCTAssertTrue(app.amener(gestes, auDessusDe: bandeau), "la réponse du syndic offre ses gestes")
         app.toucher(gestes)
         XCTAssertTrue(app.elementAcces("historique.geste.signaler").apparait(), "« Signaler cette suite »")
         let masquer = app.elementAcces("historique.geste.masquer")
