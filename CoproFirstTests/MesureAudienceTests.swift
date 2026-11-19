@@ -39,7 +39,7 @@ private actor Enregistreur: ServiceAudience {
 
 /// Une résidence qui sert `contrat`, ouverte par un compte dont le refus est `refus`.
 private func residence(
-    _ hote: String = "demo.exemple", contrat: String? = "1.31.0", refus: Bool? = false
+    _ hote: String = "demo.exemple", contrat: String? = VersionContrat.plancher.description, refus: Bool? = false
 ) -> Installation {
     var installation = Installation(
         adresse: URL(string: "https://\(hote)") ?? ServiceSimule.residence.adresse, nom: "Les Tilleuls",
@@ -103,8 +103,9 @@ struct MesureAudienceTests {
     }
 
     /// Une installation antérieure ignorerait le canal : les vues de l'app y passeraient pour
-    /// celles du site.
-    @Test(arguments: ["1.30.0", "1.27.0", nil] as [String?])
+    /// celles du site. Sous le plancher, ou sans version lisible, rien ne part : la porte de
+    /// confidentialité reste fermée sur ce qu'on ne sait pas (#254).
+    @Test(arguments: ["1.30.0", "1.27.0", "2.0.0", "illisible", nil] as [String?])
     func uneInstallationAnterieureNeNoteRien(_ contrat: String?) async {
         let enregistreur = Enregistreur()
         let mesure = mesure(enregistreur, ouverte: residence(contrat: contrat))

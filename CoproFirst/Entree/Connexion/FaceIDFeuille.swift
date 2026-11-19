@@ -5,7 +5,8 @@ import SwiftUI
 
 /// Écran 4 — proposé une fois, après la première connexion à une résidence. Une fois
 /// la session gardée, il dit ce qui la protège VRAIMENT : Face ID, ou le seul
-/// verrouillage de l'appareil quand la biométrie manque (#84).
+/// verrouillage de l'appareil quand la biométrie manque (#84). La biométrie se nomme
+/// d'après l'appareil (`Biometrie.materiel`) : Touch ID sur un iPad Air ou mini (#223).
 struct FaceIDFeuille: View {
     let installation: Installation
     @Environment(Parcours.self) private var parcours
@@ -14,6 +15,7 @@ struct FaceIDFeuille: View {
     /// `nil` : la question ; sinon, ce que l'activation a rendu.
     @State private var issue: Issue?
     @State private var enCours = false
+    @State private var biometrie = Biometrie.materiel
 
     private enum Issue: Equatable {
         case gardee(ProtectionSession)
@@ -45,11 +47,10 @@ struct FaceIDFeuille: View {
 
     private var question: some View {
         VStack(spacing: 18) {
-            pictogramme("faceid", teinte: palette.primary)
-            titre("Ouvrir avec Face ID ?")
-            texte(
-                "La prochaine fois, un regard suffira pour retrouver le fil de \(installation.nom), "
-                    + "sans ressaisir votre mot de passe.")
+            let dite = Self.proposer(biometrie.nom, nom: installation.nom)
+            pictogramme(biometrie.symbole, teinte: palette.primary)
+            titre(dite.titre)
+            texte(dite.texte)
             VStack(spacing: 10) {
                 Button("Activer") { Task { await activer() } }
                     .buttonStyle(.plein)
@@ -68,7 +69,7 @@ struct FaceIDFeuille: View {
     /// Ce qui garde la session, dit sans détour : une protection moindre que Face ID
     /// s'annonce comme telle, avec ce qui la renforcerait.
     private func resultat(_ issue: Issue) -> some View {
-        let dit = Self.dire(issue, nom: installation.nom)
+        let dit = Self.dire(issue, nom: installation.nom, materiel: biometrie.nom)
         return VStack(spacing: 18) {
             pictogramme(dit.symbole, teinte: dit.rassurant ? palette.primary : palette.textMuted)
                 .symbolEffect(.bounce, value: mouvementReduit ? nil : issue)
@@ -132,9 +133,24 @@ extension FaceIDFeuille {
         let rassurant: Bool
     }
 
-    private static func dire(_ issue: Issue, nom: String) -> Dit {
+    /// La question, au nom de la biométrie de l'appareil — sans elle, le code suffira.
+    nonisolated static func proposer(_ materiel: String?, nom: String) -> (titre: String, texte: String) {
+        let geste =
+            switch materiel {
+            case "Touch ID": "une empreinte"
+            case nil: "le code de cet appareil"
+            default: "un regard"
+            }
+        return (
+            materiel.map { "Ouvrir avec \($0) ?" } ?? "Garder votre session ?",
+            "La prochaine fois, \(geste) suffira pour retrouver le fil de \(nom), "
+                + "sans ressaisir votre mot de passe."
+        )
+    }
+
+    nonisolated private static func dire(_ issue: Issue, nom: String, materiel: String?) -> Dit {
         switch issue {
-        case .gardee(let protection): dire(protection, nom: nom)
+        case .gardee(let protection): dire(protection, nom: nom, materiel: materiel)
         case .echec:
             Dit(
                 symbole: "xmark.shield", titre: "Session non gardée",
@@ -143,7 +159,8 @@ extension FaceIDFeuille {
         }
     }
 
-    static func dire(_ protection: ProtectionSession, nom: String) -> Dit {
+    /// `materiel` : la biométrie que l'appareil sait faire, à configurer (`Biometrie.materiel`).
+    nonisolated static func dire(_ protection: ProtectionSession, nom: String, materiel: String?) -> Dit {
         switch protection {
         case .biometrie(let biometrie):
             Dit(
@@ -153,14 +170,16 @@ extension FaceIDFeuille {
         case .codeAppareil:
             Dit(
                 symbole: "lock.shield", titre: "Protégée par le verrouillage de l'appareil",
-                texte: "Face ID n'est pas configuré : quiconque connaît le code de cet appareil rouvre votre "
-                    + "session. Configurez Face ID dans Réglages pour la protéger davantage.",
+                texte: materiel.map {
+                    "\($0) n'est pas configuré : quiconque connaît le code de cet appareil rouvre votre "
+                        + "session. Configurez \($0) dans Réglages pour la protéger davantage."
+                } ?? "Quiconque connaît le code de cet appareil rouvre votre session.",
                 rassurant: false)
         case .aucune:
             Dit(
                 symbole: "exclamationmark.shield", titre: "Gardée sans protection",
-                texte: "Cet appareil n'a ni code ni Face ID : quiconque le tient rouvre votre session. "
-                    + "Ajoutez un code dans Réglages pour la protéger.",
+                texte: "Cet appareil n'a \(materiel.map { "ni code ni \($0)" } ?? "pas de code") : quiconque le "
+                    + "tient rouvre votre session. Ajoutez un code dans Réglages pour la protéger.",
                 rassurant: false)
         }
     }

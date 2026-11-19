@@ -14,16 +14,26 @@ extension XCUIApplication {
     ///
     /// Le numéro est au titre de la barre quand la fiche est poussée (iPhone) ; dans
     /// l'en-tête (`affaire.numero`) quand elle est à côté de sa liste (iPad, #222) — la
-    /// colonne de fiche n'a pas de barre à elle. La classe de taille de la fenêtre dit
-    /// laquelle, comme l'app la lit (`ListeEtFiche`) — jamais l'appareil.
+    /// colonne de fiche n'a pas de barre à elle. `ficheACote` dit laquelle.
     @MainActor
     func attendreDetailAffaire(_ numero: String) -> Bool {
         let numeroLu =
-            windows.firstMatch.horizontalSizeClass == .regular
+            ficheACote
             ? descendants(matching: .any)
                 .matching(NSPredicate(format: "identifier == 'affaire.numero' AND label == %@", numero)).firstMatch
             : navigationBars[numero]
         guard numeroLu.apparait() else { return false }
         return elementAcces("affaire.lien").apparait()
+    }
+}
+
+extension XCUIApplication {
+    /// Une fiche s'ouvre-t-elle à côté de sa liste ? Comme l'app le décide : la fenêtre en
+    /// classe régulière ET plus large que haute (`FicheParDessus`) — en portrait, l'iPad
+    /// pousse la fiche par-dessus la liste, comme l'iPhone. Jamais l'appareil.
+    @MainActor
+    var ficheACote: Bool {
+        let fenetre = windows.firstMatch
+        return fenetre.horizontalSizeClass == .regular && fenetre.frame.width > fenetre.frame.height
     }
 }

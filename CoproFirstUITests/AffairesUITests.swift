@@ -105,4 +105,13 @@ final class AffairesUITests: XCTestCase {
         XCTAssertFalse(element("affaires.carte.A-0041", dans: app).exists, "une affaire chez le syndic sort")
         XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une résolue archivée reste aux Archives")
     }
+
+    /// ⌘N au clavier matériel : « Nouvelle affaire » s'ouvre comme d'un toucher (#223).
+    @MainActor
+    func testCommandeNOuvreUneNouvelleAffaire() throws {
+        let app = lancer()
+        XCTAssertTrue(element("affaires.nouvelle", dans: app).apparait())
+        app.typeKey("n", modifierFlags: .command)
+        XCTAssertTrue(element("nouvelle.categorie.panne", dans: app).apparait(), "la saisie s'ouvre au clavier")
+    }
 }

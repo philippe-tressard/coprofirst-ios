@@ -58,7 +58,7 @@ struct ReglementView: View {
                         .padding(.vertical, 16)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                .refreshable { recharger() }
+                .actualisable { recharger() }
             },
             squelette: {
                 let etat = EtatReglement(disponible: true, texteDisponible: true)

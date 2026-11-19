@@ -101,8 +101,7 @@ extension OngletComptesCS {
                 } fait: { annonce in
                     if let annonce { contexte.avis.direApresFermeture(annonce) }
                 }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
+                .feuilleACrans()
             })
             .confirmationDialog(
                 aRejeter.map { TextesComptesCS.rejeterCompte($0.nomAffiche) } ?? "",

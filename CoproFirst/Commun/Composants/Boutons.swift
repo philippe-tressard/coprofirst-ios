@@ -30,6 +30,7 @@ struct StyleBouton: ButtonStyle {
             .opacity(actif ? 1 : 0.45)
             .appuiCharte(configuration.isPressed)
             .contentShape(.rect(cornerRadius: Mise.rayon))
+            .survolCharte()
     }
 
     private var premierPlan: Color {
@@ -63,6 +64,13 @@ private struct AppuiCharte: ViewModifier {
 
 extension View {
     func appuiCharte(_ presse: Bool) -> some View { modifier(AppuiCharte(presse: presse)) }
+
+    /// Le survol du pointeur (iPad, trackpad ou souris, #223) : la forme entière s'éclaire,
+    /// aux coins de la charte — un style de bouton propre n'en a pas d'office.
+    func survolCharte() -> some View {
+        contentShape(.hoverEffect, .rect(cornerRadius: Mise.rayon, style: .continuous))
+            .hoverEffect(.highlight)
+    }
 }
 
 /// Un bouton dont le libellé porte déjà sa forme : seul l'appui de la charte s'y ajoute.

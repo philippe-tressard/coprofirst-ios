@@ -26,5 +26,7 @@ enum OngletsEspaceCS {
         "annuaire": OngletAnnuaireCS.self,
 
         "courriels": OngletCourriels.self,
+
+        "ecrans": OngletEcransCS.self,
     ]
 }

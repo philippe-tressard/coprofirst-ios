@@ -26,7 +26,7 @@ struct CommunauteView: View {
             .safeAreaInset(edge: .bottom, spacing: 0) { BandeauCommunaute(bandeau: $etat.bandeau) }
             .toolbar {
                 PastilleOuSuisJe(installation: installation, cloche: true)
-                ToolbarItem(placement: .topBarLeading) { boutonCreer }
+                ActionDeMenu { boutonCreer }
             }
             .sheet(item: $creation) { onglet in
                 NavigationStack { formulaire(onglet) }

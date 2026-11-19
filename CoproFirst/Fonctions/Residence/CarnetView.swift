@@ -57,7 +57,7 @@ struct CarnetView: View {
                 ScrollView {
                     contenu(carnet).padding(.horizontal, Mise.marge).padding(.vertical, 16)
                 }
-                .refreshable { recharger() }
+                .actualisable { recharger() }
             },
             squelette: {
                 ScrollView {

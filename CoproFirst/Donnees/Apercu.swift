@@ -69,6 +69,24 @@ enum Apercu {
         ]
     }()
 
+    /// Le fil inventé d'une période (`GET /flux?du=&au=`, #277), rangé comme le serveur le
+    /// range (coprofirst#2834) : une carte à son échéance si elle en a une, à sa publication
+    /// sinon ; par jour, puis par heure. Seule la PÉRIODE simulée compose ce rangement —
+    /// aucun écran ne le recalcule.
+    static func filDeLaPeriode(_ periode: ClosedRange<Date>) -> [ElementDuFil] {
+        let du = FormatsDuSite.jourISO(periode.lowerBound)
+        let au = FormatsDuSite.jourISO(periode.upperBound)
+        return fil.compactMap { element -> (ElementDuFil, Date)? in
+            let instant = element.echeance.flatMap { FormatsDuSite.lire($0.debut) } ?? element.date
+            var range = element
+            range.jourServi = FormatsDuSite.jourISO(instant)
+            guard let jour = range.jourServi, du <= jour, jour <= au else { return nil }
+            return (range, instant)
+        }
+        .sorted { $0.1 < $1.1 }
+        .map(\.0)
+    }
+
     /// `meta` de l'affaire 41 : sa nature, ses quatre photos et son devis (`meta.photos_urls`,
     /// `meta.fichiers_urls`), comme le serveur les sert.
     private static let piecesDe41 =

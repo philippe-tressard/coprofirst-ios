@@ -26,14 +26,15 @@ func uneVersionIllisibleNeSeDevinePas(_ texte: String?) {
 
 @Test func lesVersionsSeComparentParNombresJamaisParCaracteres() throws {
     // L'ordre des caractères mettrait « 1.9.0 » après « 1.15.0 » : les nombres, non.
+    let reference = VersionContrat(1, 15, 0)
     #expect("1.9.0" > "1.15.0")
-    #expect(try #require(VersionContrat("1.9.0")) < .logoSombre)
-    #expect(try #require(VersionContrat("1.14.0")) < .logoSombre)
-    #expect(try #require(VersionContrat("1.15.0")) >= .logoSombre)
-    #expect(try #require(VersionContrat("1.15.1")) > .logoSombre)
-    #expect(try #require(VersionContrat("1.100.0")) > .logoSombre)
-    #expect(try #require(VersionContrat("2.0.0")) > .logoSombre)
-    #expect(try #require(VersionContrat("0.99.99")) < .logoSombre)
+    #expect(try #require(VersionContrat("1.9.0")) < reference)
+    #expect(try #require(VersionContrat("1.14.0")) < reference)
+    #expect(try #require(VersionContrat("1.15.0")) >= reference)
+    #expect(try #require(VersionContrat("1.15.1")) > reference)
+    #expect(try #require(VersionContrat("1.100.0")) > reference)
+    #expect(try #require(VersionContrat("2.0.0")) > reference)
+    #expect(try #require(VersionContrat("0.99.99")) < reference)
 }
 
 // MARK: - La variante demandée
@@ -47,18 +48,11 @@ private func installation(logo: Bool = true, sombre: Bool? = true, contrat: Stri
 private let logoClair = "https://residence.example.com/api/config/logo.png"
 private let logoSombre = "https://residence.example.com/api/config/logo.png?variante=sombre"
 
-@Test func auSombreLaVarianteSeDemandeAPartirDu1_15_0() {
-    #expect(installation(contrat: "1.15.0").adresseLogo(sombre: true)?.absoluteString == logoSombre)
-    #expect(installation(contrat: "1.16.2").adresseLogo(sombre: true)?.absoluteString == logoSombre)
-    #expect(installation(contrat: "2.0.0").adresseLogo(sombre: true)?.absoluteString == logoSombre)
-}
-
-@Test(arguments: ["1.14.0", "1.9.0", "1.12.0", "illisible", nil])
-func avantLe1_15_0LeLogoResteCeluiDuClair(_ contrat: String?) {
-    // Même adresse qu'au clair : le logo déjà lu sert, aucune requête de plus.
-    let ancienne = installation(contrat: contrat)
-    #expect(ancienne.adresseLogo(sombre: true)?.absoluteString == logoClair)
-    #expect(ancienne.adresseLogo(sombre: true) == ancienne.adresseLogo(sombre: false))
+/// Le plancher sert la variante (contrat 1.15.0) : seule la variante TÉLÉVERSÉE décide,
+/// plus la version — une version illisible ne prive plus le fond sombre de son logo (#254).
+@Test(arguments: ["1.15.0", "2.0.0", VersionContrat.plancher.description, "illisible", nil] as [String?])
+func auSombreLaVarianteTeleverseeSeDemande(_ contrat: String?) {
+    #expect(installation(contrat: contrat).adresseLogo(sombre: true)?.absoluteString == logoSombre)
 }
 
 @Test func sansVarianteTeleverseeLeLogoResteCeluiDuClair() {
@@ -84,7 +78,7 @@ func avantLe1_15_0LeLogoResteCeluiDuClair(_ contrat: String?) {
                 "version_contrat": "1.15.0",
             ]))
     #expect(recente.aUnLogo && recente.aUnLogoSombre == true)
-    #expect(recente.contrat == .logoSombre)
+    #expect(recente.contrat == VersionContrat(1, 15, 0))
     let ancienne = try #require(
         Installation(adresse: adresse, config: ["site_nom": "Résidence", "site_logo": "logo-1.png"]))
     #expect(ancienne.aUnLogoSombre == false && ancienne.versionContrat == nil)
@@ -136,11 +130,13 @@ private actor Lectures {
 }
 
 @MainActor
-@Test func uneInstallationAncienneNeLitQuUnLogo() async throws {
+@Test func sansVarianteTeleverseeUnSeulLogoSeLit() async throws {
+    // La porte de version retirée (#254), c'est la variante TÉLÉVERSÉE qui décide : sans
+    // elle, clair et sombre partagent une adresse, donc une lecture.
     let logos = LogosEnMemoire()
     let lectures = Lectures()
     let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
-    let ancienne = installation(contrat: "1.14.0")
+    let ancienne = installation(sombre: false, contrat: VersionContrat.plancher.description)
     for sombre in [false, true, false, true] {
         await logos.charger(try #require(ancienne.adresseLogo(sombre: sombre)), lire: lire)
     }

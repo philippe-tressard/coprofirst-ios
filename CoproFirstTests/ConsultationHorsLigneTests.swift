@@ -96,20 +96,21 @@ private struct Banc {
     @Test func ceQuiAEteLuEnLigneSeRelitSansReseauEtRienNePart() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        let enLigne = try await banc.service.fil(residence)
+        let enLigne = try await banc.service.fil(residence, periode: nil)
         #expect(enLigne.map(\.titre) == ["Coupure d'eau jeudi"])
 
         await banc.serveur.couper()
         #expect(banc.service.consulterHorsLigne(residence) == .gardee(banc.disque.horloge.maintenant))
         let avant = await banc.serveur.recues
-        #expect(try await banc.service.fil(residence) == enLigne, "le fil, tel que le serveur l'avait servi")
+        #expect(
+            try await banc.service.fil(residence, periode: nil) == enLigne, "le fil, tel que le serveur l'avait servi")
         #expect(await banc.serveur.recues == avant, "aucune requête n'est partie")
     }
 
     @Test func enConsultationAucunGesteNiAucuneAutreLectureNePart() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         _ = banc.service.consulterHorsLigne(residence)
         // Le réseau est là, mais la session n'est pas reprise : rien ne doit sortir.
         let avant = await banc.serveur.recues
@@ -132,7 +133,7 @@ private struct Banc {
     @Test func sansSessionGardeeAuTrousseauRienNEstEcrit() async throws {
         let banc = Banc(sessionGardee: false)
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         #expect(banc.disque.fichiers.isEmpty)
     }
 
@@ -141,7 +142,7 @@ private struct Banc {
     @Test func seDeconnecterEffaceLaLectureGardeeEtLesCopiesOuvertes() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         let copie = try await banc.service.document(7, nom: "pv-deconnexion.pdf", dans: residence)
         #expect(!banc.disque.fichiers.isEmpty)
 
@@ -154,7 +155,7 @@ private struct Banc {
     @Test func seDeconnecterSansReseauEffaceAussi() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         await banc.serveur.couper()
         _ = banc.service.consulterHorsLigne(residence)
 
@@ -170,7 +171,7 @@ private struct Banc {
     func uneSessionRefuseeALaRepriseEffaceLeJetonEtLaLecture() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         // Le Trousseau du simulateur, sans code ni biométrie : lu sans invite. Sous une
         // autre protection, ce test ne pourrait pas s'exécuter — il échoue, il ne passe pas.
         let protection = Trousseau.enregistrer("jeton-de-test", pour: residence.hote)
@@ -186,7 +187,7 @@ private struct Banc {
     @Test func unRefusAuRetourDuReseauEffaceTout() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         _ = banc.service.consulterHorsLigne(residence)
         await banc.serveur.refuserLaSession()
 
@@ -198,20 +199,20 @@ private struct Banc {
     @Test func unRefusDeSessionEnLigneEffaceLaLecture() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         await banc.serveur.refuserLaSession()
         await banc.serveur.servir(.unauthorized)
 
-        await #expect(throws: ErreurService.sessionExpiree) { try await banc.service.fil(residence) }
+        await #expect(throws: ErreurService.sessionExpiree) { try await banc.service.fil(residence, periode: nil) }
         #expect(banc.disque.fichiers.isEmpty, "un compte révoqué ne garde rien")
     }
 
     @Test func uneLectureDevenueInterditeSeRetire() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         await banc.serveur.servir(.forbidden)
-        await #expect(throws: (any Error).self) { try await banc.service.fil(residence) }
+        await #expect(throws: (any Error).self) { try await banc.service.fil(residence, periode: nil) }
         #expect(banc.disque.fichiers.isEmpty)
     }
 
@@ -220,7 +221,7 @@ private struct Banc {
     @Test func laSessionRepriseRefermeLaConsultationEtToutSeRelit() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         await banc.serveur.couper()
         _ = banc.service.consulterHorsLigne(residence)
         await #expect(throws: ErreurService.horsLigne, "toujours sans réseau : la consultation continue") {
@@ -232,7 +233,7 @@ private struct Banc {
         await banc.serveur.publier("Eau rétablie")
         try await banc.service.reprendreEnLigne(residence)
         #expect(!banc.magasin.enConsultation(residence.hote))
-        #expect(try await banc.service.fil(residence).map(\.titre) == ["Eau rétablie"], "relu du serveur")
+        #expect(try await banc.service.fil(residence, periode: nil).map(\.titre) == ["Eau rétablie"], "relu du serveur")
     }
 
     // MARK: - Ce qui est gardé, et rien d'autre
@@ -262,7 +263,7 @@ private struct Banc {
     @Test func niJetonNiCookieNAtteintLeDisque() async throws {
         let banc = Banc()
         defer { banc.disque.nettoyer() }
-        _ = try await banc.service.fil(residence)
+        _ = try await banc.service.fil(residence, periode: nil)
         let fichiers = banc.disque.tousLesFichiers
         #expect(!fichiers.isEmpty)
         for fichier in fichiers {

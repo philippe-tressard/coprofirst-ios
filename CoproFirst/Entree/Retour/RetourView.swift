@@ -34,7 +34,7 @@ struct RetourView: View {
         // Comme l'accueil : l'écran tient, et défile quand le texte grandit.
         GeometryReader { cadre in
             ScrollView {
-                contenu.frame(minHeight: cadre.size.height)
+                contenu.largeurDeLecture().frame(minHeight: cadre.size.height)
             }
             .scrollBounceBehavior(.basedOnSize)
         }
