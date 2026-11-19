@@ -58,6 +58,14 @@ struct ClocheView: View {
             .accessibilityIdentifier("montre.injoignable")
         case .lue(let cloche):
             alertes(cloche)
+        case .horsLigne(let cloche, let aJourAu):
+            // « Hors ligne — à jour au 19/11/2026 à 14:32 », le libellé de l'iPhone (#101).
+            Text(ConsultationHorsLigne(aJourAu: aJourAu).phrase)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .listRowBackground(Color.clear)
+                .accessibilityIdentifier("montre.horsLigne")
+            alertes(cloche)
         }
     }
 

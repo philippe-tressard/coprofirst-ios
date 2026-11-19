@@ -5,7 +5,7 @@ import ClientAPI
 import Foundation
 
 /// Une alerte reçue, telle que GET /notifications la sert (`NotificationRead`).
-struct NotificationRecue: Hashable, Sendable, Identifiable {
+struct NotificationRecue: Hashable, Sendable, Identifiable, Codable {
     let id: Int
     let type: String
     let titre: String

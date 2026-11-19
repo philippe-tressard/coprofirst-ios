@@ -110,11 +110,19 @@ la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone n
 l'identifiant de la montre ; la montre garde le jeton à son Trousseau et lit `GET
 /notifications` avec lui en porteur. Un jeton échu ou refusé : la montre dit de l'ouvrir par
 l'iPhone. « Continuer sur l'iPhone » passe par Handoff (`ClocheSurLiPhone`). Mêmes gestes que
-la montre Wear OS. Le hors ligne et le widget viennent au lot 3.
+la montre Wear OS.
+
+**Hors ligne et widget** (lot 3) : la dernière cloche lue se garde sur la montre (7 jours,
+comme l'iPhone ; effacée dès que la montre n'est plus reliée) et se montre sans réseau sous
+« Hors ligne — à jour au … ». Le widget watchOS dit, dans la pile, « 2 nouvelles alertes ·
+dont 1 urgente » et, sur le cadran, le logo avec un point s'il y a du non lu — jamais un
+titre ni une résidence. Il lit le résumé que l'app écrit dans l'App Group
+`group.fr.coprofirst.app` après chaque lecture, y compris au rafraîchissement d'arrière-plan
+(toutes les 30 min au mieux).
 
 Elle compile les fichiers de l'app que `project.yml` nomme — la charte, le texte du site,
 l'alerte servie, le message de liaison — et joue ses tests et ceux du code partagé sur
-watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|<nombre>`).
+watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|horsligne|<nombre>`).
 Elle n'est **embarquée** dans l'app iPhone qu'à l'archive (`ARCHIVE_AVEC_MONTRE=true bash
 scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part.
 

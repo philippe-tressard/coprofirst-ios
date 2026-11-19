@@ -50,7 +50,7 @@ CONSTRUIT = "Paquets/ClientAPI/.build"
 # L'écran de hall (CoproFirstTV/, #218) est jugé avec l'app : il partage son identifiant
 # et sa fiche. Son propre manifeste viendra avec son premier envoi (lot 5 de #218).
 # L'Apple Watch (CoproFirstWatch/, #226) aussi : même fiche, son manifeste à elle (confidentialite_montre.py).
-CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "Paquets/ClientAPI/Sources/")
+CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "CoproFirstWatchWidget/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
 TABLES = ("donnees", "envois", "portes", "droits", "autorisations", "modules", "paquets")
