@@ -10,9 +10,12 @@ import Observation
 final class LecteurCloche {
     private(set) var lecture: LectureCloche = .enCours
     private let source: SourceDeLaCloche
+    /// Le serveur ne reconnaît plus le jeton : la liaison s'oublie, la montre attend l'iPhone.
+    private let auRefus: @MainActor () -> Void
 
-    init(source: SourceDeLaCloche) {
+    init(source: SourceDeLaCloche, auRefus: @escaping @MainActor () -> Void = {}) {
         self.source = source
+        self.auRefus = auRefus
     }
 
     func lire() async {
@@ -20,6 +23,8 @@ final class LecteurCloche {
             lecture = .lue(Cloche(try await source.alertes()))
         } catch is CancellationError {
             return
+        } catch is JetonRefuse {
+            auRefus()
         } catch {
             if case .lue = lecture { return }
             lecture = .injoignable

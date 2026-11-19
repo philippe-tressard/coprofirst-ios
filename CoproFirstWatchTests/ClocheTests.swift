@@ -38,17 +38,14 @@ struct ClocheTests {
         #expect(Cloche([alerte(7)]).alerte(8) == nil)
     }
 
-    @Test func laLiaisonEteinteNeReliePas() {
-        #expect(!LiaisonMontre.active)
-        #expect(EtatMontre.auLancement([]) == .nonReliee)
-    }
-
     @Test func lApiSimuleeRelieAUneResidenceInventee() {
+        #expect(EtatMontre.simule([]) == nil)
         #expect(
-            EtatMontre.auLancement(["-api-simulee"])
+            EtatMontre.simule(["-api-simulee"])
                 == .reliee(residence: ClocheSimulee.residence, source: .simulee(.boite(nombre: nil))))
         #expect(ClocheSimulee.reglage(["-cloche", "vide"]) == .vide)
         #expect(ClocheSimulee.reglage(["-cloche", "injoignable"]) == .injoignable)
+        #expect(ClocheSimulee.reglage(["-cloche", "refusee"]) == .refusee)
         #expect(ClocheSimulee.reglage(["-cloche", "12"]) == .boite(nombre: 12))
     }
 
@@ -58,10 +55,12 @@ struct ClocheTests {
         #expect(lecteur.lecture == .injoignable)
     }
 
-    @MainActor @Test func sansLiaisonLaLectureSeDitInjoignable() async {
-        let lecteur = LecteurCloche(source: .aucune)
+    @MainActor @Test func unJetonRefuseNeSeDitPasInjoignableIlRendLaLiaison() async {
+        var rendue = false
+        let lecteur = LecteurCloche(source: .simulee(.refusee)) { rendue = true }
         await lecteur.lire()
-        #expect(lecteur.lecture == .injoignable)
+        #expect(rendue, "la liaison s'oublie")
+        #expect(lecteur.lecture == .enCours, "rien ne se dit « injoignable » : la montre attend l'iPhone")
     }
 
     @MainActor @Test func laClocheLueGardeLesAlertesDeLaBoiteSimulee() async {
