@@ -69,8 +69,9 @@ def sources(modules: list) -> list[str]:
 INTERDITS = re.compile(
     r"^(api/app/|front/src/styles/(socle|palette-sombre|palettes)\.css$"
     # #239 : publiés par tables-clients.json 1.3.0 et constantes-clients.json 1.1.0 (v3.105.0) ;
-    # fichiers.ts en entier par tables-clients.json 1.4.0 (famillesAffichageFichiers, v3.106.0).
-    r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts)$)")
+    # fichiers.ts en entier par tables-clients.json 1.4.0 (famillesAffichageFichiers, v3.106.0) ;
+    # pages.ts par la table `pages` (#2634) : le serveur peut le retirer de la release (#285).
+    r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts|pages\.ts)$)")
 #: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
 #: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
 #: La dernière (saisie_affaire.py) s'est retirée avec le plancher v3.117.0, qui publie ses constantes.
@@ -90,7 +91,9 @@ def refus_sources(modules: list, exceptions: dict[str, str] = EXCEPTIONS) -> lis
 def controler_sources(modules: list) -> int:
     fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
     toleree = types.SimpleNamespace(__name__="generateurs.toleree", SOURCES=["front/src/styles/socle.css"])
-    if (len(refus_sources([fictif], {})) != 1 or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
+    pages = types.SimpleNamespace(__name__="generateurs.pages", SOURCES=["front/src/lib/pages.ts"])
+    if (len(refus_sources([fictif], {})) != 1 or len(refus_sources([pages], {})) != 1
+            or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
             or len(refus_sources([fictif], {"front/src/styles/socle.css": "x"})) != 2):
         print("❌ autotest : une source interdite, une exception qui ne sert plus doivent être refusées")
         return 1

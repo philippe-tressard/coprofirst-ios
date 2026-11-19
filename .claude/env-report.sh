@@ -27,7 +27,7 @@ for outil in xcodegen swiftlint swift-format; do
   command -v "$outil" >/dev/null || echo "  Outillage     : 🔴 $outil absent (brew install $outil)"
 done
 if xcrun simctl list runtimes 2>/dev/null | grep -q '^iOS'; then
-  echo "  Simulateur    : $(xcrun simctl list runtimes | grep '^iOS' | tail -1 | cut -d' ' -f1-2)"
+  echo "  Simulateur    : $(xcrun simctl list runtimes | grep '^iOS' | tail -1 | cut -d' ' -f1-2) (CI : ${OS_SIMULATEUR_CI:-INCONNU}, OS_SIMULATEUR=ci)"
 else
   echo "  Simulateur    : 🔴 aucun runtime iOS — xcodebuild -downloadPlatform iOS"
 fi

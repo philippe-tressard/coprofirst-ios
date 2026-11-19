@@ -19,8 +19,10 @@ ECHECS=0
 comparer() { # chemin-local chemin-coprofirst
   local distant
   distant=$(mktemp)
-  if ! curl -fsSL --retry 3 -o "$distant" "$BRUT/$2"; then
-    echo "❓ INCONNU : $2 illisible sur coprofirst@$REF"
+  # Chaque tentative bornée à 20 s, nommée à l'expiration (#293) ; la borne de
+  # controles-distants.sh coupe le reste.
+  if ! curl -fsSL --retry 3 --max-time 20 -o "$distant" "$BRUT/$2"; then
+    echo "❓ INCONNU : $2 illisible sur coprofirst@$REF (ou plus de 20 s par tentative)"
     rm -f "$distant"
     exit 2
   fi

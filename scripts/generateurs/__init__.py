@@ -5,7 +5,7 @@
 Chaque module (hors `_*`) déclare :
 
 - `SOURCES` : les fichiers de coprofirst qu'il lit, relatifs à la racine du dépôt
-  (`front/src/lib/pages.ts`) — seuls ceux-là sont extraits de la version lue ;
+  (`front/src/lib/tickets.ts`) — seuls ceux-là sont extraits de la version lue ;
 - `generer(ctx) -> str` : il lit par `ctx.lire` (ou sous `ctx.front`), écrit par
   `ctx.ecrire`, date par `ctx.entete`, et rend une phrase de bilan.
 
