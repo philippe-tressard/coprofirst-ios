@@ -91,6 +91,26 @@ extension XCUIApplication {
         }
         return element.exists
     }
+
+    /// L'élément d'une rangée qui défile de côté (la barre d'onglets d'une page, #295), amené
+    /// dans la fenêtre par de petits glissés horizontaux SUR SA RANGÉE, à sa hauteur : `amener`
+    /// fait défiler la page de haut en bas et n'y arrive jamais. « Dans la fenêtre » se lit sur
+    /// le cadre, jamais par `isHittable` (refusé sous iOS 26.5, #242). `false` sinon.
+    @discardableResult
+    func amenerDansSaRangee(_ element: XCUIElement, essais: Int = 6) -> Bool {
+        guard element.apparait() else { return false }
+        let fenetre = windows.firstMatch
+        let origine = fenetre.coordinate(withNormalizedOffset: .zero)
+        for _ in 0..<essais where !fenetre.frame.contains(element.frame) {
+            let hauteur = element.frame.midY - fenetre.frame.minY
+            let sens: CGFloat = element.frame.minX > fenetre.frame.midX ? 1 : -1
+            let largeur = fenetre.frame.width
+            origine.withOffset(CGVector(dx: largeur * (0.5 + 0.25 * sens), dy: hauteur))
+                .press(forDuration: 0.05, thenDragTo: origine.withOffset(
+                    CGVector(dx: largeur * (0.5 - 0.25 * sens), dy: hauteur)))
+        }
+        return fenetre.frame.contains(element.frame)
+    }
 }
 
 extension XCUIApplication {

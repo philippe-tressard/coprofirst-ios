@@ -160,6 +160,8 @@ targets:
       - path: CoproFirst/Session/ErreurService.swift
       - path: CoproFirst/Commun/Session/RefusDuServeur.swift
       - path: CoproFirst/Entree/Decouverte/EtatDecouverte.swift
+      # L'appairage gardé (lot 3) : le coffre sans biométrie de l'iPhone, au Trousseau.
+      - path: CoproFirst/Session/CoffreDuCompte.swift
       - path: CoproFirst/Entree/Contenu/ContenuVitrine.swift
       # Ce qu'une `Installation` porte de GET /config : l'ordre des pages, le profil.
       - path: CoproFirst/Navigation/PageDeNavigation.swift
