@@ -15,12 +15,20 @@
 #      au poste, absente ou autre, INCONNU avec la commande d'installation.
 #
 # Sortie : 0 vert, 1 rouge, 2 INCONNU (sans réseau, sans reuse) — jamais vert.
+#
+# Chaque étape tourne sous scripts/borne.py (#293) : une limite de temps qui coupe tout le
+# GROUPE de processus — `timeout` sur ce script ne touchait que le bash, et concordance.py
+# est resté figé 32 min —, INCONNU à l'expiration, et la durée de l'étape dite au vert.
+# Régime mesuré le 18/11/2026 au poste : plancher 4 s, logo 1 s, `reuse lint` 1 à 7 s
+# (copie principale, 13 worktrees et 7 Go de .build ignorés). Les limites gardent au moins
+# quarante fois ce régime : elles coupent une attente sans fin, jamais un réseau lent.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 source outillage.env
 
 ROUGES=0
 INCONNUS=0
+DUREES=()
 juger() { # libellé code
   case $2 in
     0) ;;
@@ -28,11 +36,22 @@ juger() { # libellé code
     *) echo "❌ $1"; ROUGES=$((ROUGES + 1)) ;;
   esac
 }
+# $1 limite (s), $2 libellé, puis la commande : jouée sous la borne, jugée (0 vert, 2
+# INCONNU — l'expiration comprise —, tout autre code rouge), sa durée retenue.
+etape() {
+  local limite=$1 libelle=$2 sortie code duree
+  shift 2
+  sortie=$(python3 -I scripts/borne.py "$limite" "$libelle" -- "$@" 2>&1)
+  code=$?
+  duree=$(grep -F "⏱ $libelle : " <<< "$sortie" | tail -1)
+  DUREES+=("${duree:+${duree##* : }}")
+  [ -n "${DUREES[${#DUREES[@]}-1]}" ] || DUREES[${#DUREES[@]}-1]="durée INCONNUE"
+  [ "$code" -eq 0 ] || grep -v '^⏱ ' <<< "$sortie"
+  juger "$libelle" "$code"
+}
 
-SORTIE=$(python3 -I scripts/concordance.py --plancher 2>&1)
-code=$?
-[ "$code" -eq 0 ] || echo "$SORTIE"
-juger "écart au plancher (python3 -I scripts/concordance.py --plancher)" "$code"
+etape 300 "écart au plancher (python3 -I scripts/concordance.py --plancher)" \
+  python3 -I scripts/concordance.py --plancher
 
 # Le logo se compare et se recopie à l'étiquette du plancher (scripts/plancher.sh),
 # jamais à une branche : `dev` de coprofirst disparaît à chaque mise en production,
@@ -56,16 +75,14 @@ for f in scripts/verifier-logo.sh scripts/importer-logo.sh; do
   [ -z "$motif" ] || juger "$f : $motif" 1
 done
 
-SORTIE=$(bash scripts/verifier-logo.sh 2>&1)
-code=$?
-[ "$code" -eq 0 ] || echo "$SORTIE"
-juger "logo et sa licence (bash scripts/verifier-logo.sh)" "$code"
+etape 120 "logo et sa licence (bash scripts/verifier-logo.sh)" bash scripts/verifier-logo.sh
 
 PAQUET="reuse[charset-normalizer]==$REUSE_VERSION"
 REUSE=$(command -v reuse || true)
 if [ -z "$REUSE" ] && [ "${GITHUB_ACTIONS:-}" = true ]; then
   python3 -m venv "$RUNNER_TEMP/reuse" \
-    && "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check "$PAQUET" \
+    && python3 -I scripts/borne.py 300 "pip install $PAQUET" -- \
+      "$RUNNER_TEMP/reuse/bin/pip" install --quiet --disable-pip-version-check "$PAQUET" \
     && REUSE="$RUNNER_TEMP/reuse/bin/reuse"
 fi
 if [ -z "$REUSE" ]; then
@@ -73,12 +90,10 @@ if [ -z "$REUSE" ]; then
 elif ! "$REUSE" --version | head -1 | grep -qx "reuse, version $REUSE_VERSION"; then
   juger "reuse $("$REUSE" --version | head -1) au lieu de $REUSE_VERSION — pipx install --force '$PAQUET'" 2
 else
-  SORTIE=$("$REUSE" lint 2>&1)
-  code=$?
-  [ "$code" -eq 0 ] || { echo "$SORTIE"; code=1; }
-  juger "reuse lint" "$code"
+  # reuse lint sort en 1 sur un fichier non conforme : rouge ; en 2, c'est la borne.
+  etape 300 "reuse lint" "$REUSE" lint
 fi
 
 [ "$ROUGES" -eq 0 ] || exit 1
 [ "$INCONNUS" -eq 0 ] || exit 2
-echo "✅ plancher sans écart, logo identique à coprofirst, REUSE $REUSE_VERSION conforme"
+echo "✅ plancher sans écart (${DUREES[0]}), logo identique à coprofirst (${DUREES[1]}), REUSE $REUSE_VERSION conforme (${DUREES[2]})"

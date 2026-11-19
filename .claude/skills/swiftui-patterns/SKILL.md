@@ -327,7 +327,8 @@ seule la CI le dit.
    sur le même test** : signature et durées, journal contre journal. Si « App event loop
    idle notification not received » ou « main thread busy » frappe tous les tests d'un
    même écran, alors que `main` les passe sans ce signal, c'est l'app qui tourne en boucle
-   (#279). Le poste, sous une autre version d'iOS, peut rester vert (#287) : la boucle se
+   (#279). Le poste, sous une autre version d'iOS, peut rester vert — la ligne « Système »
+   du résumé le dit, et `OS_SIMULATEUR=ci` y joue celui de la CI (#287) : la boucle se
    prouve par une trace (`print` temporaire, `simctl launch --console-pty`). La cause
    type : un `if` sur un état dans un `ViewModifier` qui enveloppe une page. Chaque
    branche donne à la page une autre identité ; quand l'état change, la page se recrée,
