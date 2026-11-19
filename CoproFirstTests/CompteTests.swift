@@ -42,12 +42,12 @@ private func parcoursOuvert() throws -> Ouvert {
     let residence = ServiceSimule.residence
     #expect(await service.activerFaceID(residence) == .biometrie("Face ID"))
     #expect(service.aUneSessionGardee(residence))
-    _ = try await service.fil(residence)
+    _ = try await service.fil(residence, periode: nil)
 
     await parcours.deconnecter(residence)
 
     #expect(!service.aUneSessionGardee(residence), "plus de session gardée : Face ID ne rouvre rien")
-    await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(residence) }
+    await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(residence, periode: nil) }
     await #expect(throws: ErreurService.sessionExpiree) { try await service.reprendre(residence) }
     #expect(parcours.ouverte == nil)
     #expect(parcours.chemin.isEmpty, "le premier écran, sans pile")
@@ -66,7 +66,7 @@ private func parcoursOuvert() throws -> Ouvert {
     #expect(parcours.connues.liste.isEmpty)
     #expect(parcours.connues.identifiant(ServiceSimule.residence) == nil, "le courriel retenu est effacé")
     #expect(parcours.ouverte == nil && parcours.reconnue == nil && parcours.chemin.isEmpty, "retour à l'accueil")
-    await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(ServiceSimule.residence) }
+    await #expect(throws: ErreurService.sessionExpiree) { try await service.fil(ServiceSimule.residence, periode: nil) }
 }
 
 @MainActor

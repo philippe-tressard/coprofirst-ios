@@ -15,6 +15,9 @@ struct FilView: View {
     @State private var choisi: ElementDuFil?
     /// Dans le carnet du pliable (#119), le jour ouvert : son rang, du plus récent (0).
     @State private var rangDuJour = 0
+    /// La semaine ouverte d'un pincement (#277) ; `nil` : le jour.
+    @State private var semaine: SemaineDuFil?
+    @Environment(\.accessibilityReduceMotion) private var mouvementReduit
     @Environment(\.selectionsDeLaPage) private var selections
     @Namespace private var zoom
     @Environment(\.dynamicTypeSize) private var taille
@@ -39,25 +42,26 @@ struct FilView: View {
     }
 
     var body: some View {
-        // En mémoire seulement : un élément du fil ne se réécrit pas depuis son identifiant.
-        ListeEtFiche(
-            selection: $choisi, partage: parcours.presentation == .carnet ? .proportion(0.5) : .parDefaut,
-            memoire: "fil"
-        ) {
-            if enDoublePage {
-                VStack(spacing: 0) {
-                    if !logementDansLaBarre { logementSousLeTitre }
-                    PageDuJour(jours: jours, rang: $rangDuJour) { element in
-                        CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
-                    }
+        Group {
+            // La semaine sur toute la double page : sans `ListeEtFiche`, la colonne de fiche se
+            // ferme (`PageEtColonneDeFiche`).
+            // Jamais `Binding($semaine)` : la semaine qui s'en va relit son lien pendant sa
+            // transition de sortie, quand `semaine` vaut déjà `nil` — un déballage forcé, et
+            // l'app tombait au retour au jour (constaté au simulateur, iOS 26.5).
+            if enDoublePage, let ouverte = semaine {
+                PageDeLaSemaine(
+                    installation: installation,
+                    semaine: Binding(get: { self.semaine ?? ouverte }, set: { self.semaine = $0 }),
+                    plusAncienne: SemaineDuFil(contenant: jours.last?.jour ?? .now), ouvrirLeJour: ouvrirLeJour
+                ) { element in
+                    CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
                 }
+                .transition(TransitionDuCarnet.page(.semaine, mouvementReduit: mouvementReduit))
             } else {
-                fil
+                jourOuFil.transition(TransitionDuCarnet.page(.jour, mouvementReduit: mouvementReduit))
             }
-        } fiche: { element in
-            DestinationDuFil(element: element, installation: installation)
-                .destinationZoom(id: element.id, dans: zoom)
         }
+        .sensoryFeedback(.selection, trigger: semaine == nil)
         .navigationTitle(OrdrePages.libelleFil)
         .titreDeMenu()
         .sheet(item: $resume) { element in
@@ -89,6 +93,64 @@ struct FilView: View {
             ouvrirDemande()
             await parcours.rafraichirProfil()
         }
+    }
+
+    /// Le fil et sa fiche ; dans le carnet, la page du jour (`PageDuJour`).
+    private var jourOuFil: some View {
+        // En mémoire seulement : un élément du fil ne se réécrit pas depuis son identifiant.
+        ListeEtFiche(
+            selection: $choisi, partage: parcours.presentation == .carnet ? .proportion(0.5) : .parDefaut,
+            memoire: "fil"
+        ) {
+            if enDoublePage {
+                VStack(spacing: 0) {
+                    if !logementDansLaBarre { logementSousLeTitre }
+                    PageDuJour(jours: jours, rang: $rangDuJour, voirLaSemaine: voirLaSemaine) { element in
+                        CarteOuvrable(element: element, installation: installation, zoom: zoom) { ouvrir(element) }
+                    }
+                }
+            } else {
+                fil
+            }
+        } fiche: { element in
+            DestinationDuFil(element: element, installation: installation)
+                .destinationZoom(id: element.id, dans: zoom)
+        }
+    }
+
+    /// Pincer la page du jour : sa semaine (#277).
+    private func voirLaSemaine() {
+        guard let jour = jours[safe: rangDuJour] else { return }
+        withAnimation(TransitionDuCarnet.animation(mouvementReduit: mouvementReduit)) {
+            semaine = SemaineDuFil(contenant: jour.jour)
+        }
+    }
+
+    /// Écarter les doigts sur un jour de la semaine : sa page — ou, s'il n'a aucune carte
+    /// publiée ce jour-là (une échéance seule), le jour du fil le plus proche. Une fiche
+    /// ouverte d'un autre jour se referme : elle ne s'affiche jamais à côté d'un jour qui
+    /// ne la porte pas.
+    private func ouvrirLeJour(_ jour: Date) {
+        let rang = rangLePlusProche(jour)
+        let duJour = jours[safe: rang]?.elements ?? []
+        if let ouvert = choisi, !duJour.contains(where: { $0.id == ouvert.id }) { choisir(nil) }
+        withAnimation(TransitionDuCarnet.animation(mouvementReduit: mouvementReduit)) {
+            rangDuJour = rang
+            semaine = nil
+        }
+    }
+
+    /// La sélection, notée tout de suite : quand la semaine est ouverte, la liste n'est pas là
+    /// pour la noter, et la reprendrait périmée à son retour (`ListeEtFiche.reprendre`).
+    private func choisir(_ element: ElementDuFil?) {
+        choisi = element
+        if let selections { selections.memoire.noter(element, sous: selections.cle("fil")) }
+    }
+
+    /// Le rang du jour du fil le plus proche de `jour` — lui-même s'il a des cartes.
+    private func rangLePlusProche(_ jour: Date) -> Int {
+        jours.indices.min { abs(jours[$0].jour.timeIntervalSince(jour)) < abs(jours[$1].jour.timeIntervalSince(jour)) }
+            ?? 0
     }
 
     /// Le logement quand la barre n'a pas de place pour lui (`logementDansLaBarre`).
@@ -127,10 +189,25 @@ struct FilView: View {
     }
 
     /// Un résumé s'ouvre en feuille ; le reste, en fiche — et, dans le carnet, sur la page
-    /// de son jour.
+    /// de son jour, d'où qu'on la touche (la semaine se referme alors). Une carte de la
+    /// semaine se retrouve au fil par son identifiant : son jour servi la distingue.
     private func ouvrir(_ element: ElementDuFil) {
-        if let rang = jours.firstIndex(where: { $0.elements.contains(element) }) { rangDuJour = rang }
-        if case .resume = element.cible { resume = element } else { choisi = element }
+        let rang = jours.firstIndex { $0.elements.contains { $0.id == element.id } }
+        let auFil = rang.flatMap { jours[$0].elements.first { $0.id == element.id } } ?? element
+        guard semaine != nil else {
+            if let rang { rangDuJour = rang }
+            if case .resume = auFil.cible { resume = auFil } else { choisi = auFil }
+            return
+        }
+        if case .resume = auFil.cible {
+            resume = auFil
+            return
+        }
+        choisir(auFil)
+        withAnimation(TransitionDuCarnet.animation(mouvementReduit: mouvementReduit)) {
+            rangDuJour = rang ?? rangLePlusProche(element.date)
+            semaine = nil
+        }
     }
 
     /// Le jour que le carnet avait ouvert, s'il est encore au fil ; sinon le plus récent.
@@ -174,7 +251,7 @@ struct FilView: View {
 
     private func charger() async {
         do {
-            let elements = try await parcours.service.fil(installation)
+            let elements = try await parcours.service.fil(installation, periode: nil)
             withAnimation(.snappy) {
                 jours = Chronologie.parJour(elements)
                 phase = .pret

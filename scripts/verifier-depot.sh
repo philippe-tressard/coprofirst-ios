@@ -58,7 +58,8 @@
 #  20. l'aperçu servi d'une saisie passe par UNE porte, `ApercuServi` (#129, #130,
 #      #135) : ni ses trois routes, ni son service, ni son délai ailleurs ;
 #  21. ce que lit coprofirst ou demande reuse : écart au plancher, logo (et sa
-#      référence, le plancher), REUSE
+#      référence, le plancher), REUSE, chacun sous une borne qui coupe son groupe de
+#      processus — autotest de scripts/borne.py (#293) —
 #      (scripts/controles-distants.sh) — et ce script est la seule étape du job
 #      « Dépôt » de la CI (scripts/verifier-ci.py, #241), qui tient aussi chaque job
 #      macOS plafonné et exigé par l'agrégat (#288). INCONNU (sortie 2) ≠ vert.
@@ -213,10 +214,19 @@ autotest_lecture() {
   return $ok
 }
 autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofirst en échec"
-# Les tables du site se lisent dans tables-clients.json (#128) : l'autotest prouve qu'une
-# table absente, vide ou d'une autre forme arrête la génération, et qu'un module ne peut
-# plus déclarer une source du front que le site publie. Il découvre aussi chaque module.
-python3 -I scripts/concordance.py --autotest >/dev/null || echec "concordance.py : autotest en échec (comparaison, tables du site)"
+# Les autotests des scripts : leur liste se DÉRIVE (standards/04 §11), jamais tenue à la main
+# — tout script de scripts/ qui porte `--autotest` est lancé ici, avant chaque juge. Exceptions
+# déclarées : ce script, et deux morceaux sourcés que joue l'autotest de tests-simulateur.sh.
+# Ce que prouvent les autotests nommés à l'en-tête y est dit ; s'y ajoutent l'app montre
+# livrée dépendante de l'iPhone (verifier-montre-dependante.sh, #226 ; la construction
+# Release se juge en CI) et la PR de documentation seule, qu'un .swift relance (#204).
+SOURCES_AUTOTEST="scripts/verifier-depot.sh scripts/autotest-tests-simulateur.sh scripts/verrou-simulateur.sh"
+for f in $SOURCES_AUTOTEST; do grep -q -e '--autotest' "$f" || echec "$f : exception sans --autotest, à retirer"; done
+while IFS= read -r f; do
+  case " $SOURCES_AUTOTEST " in *" $f "*) continue ;; esac
+  case $f in *.py) python3 -I "$f" --autotest ;; *) bash "$f" --autotest ;; esac >/dev/null 2>&1 \
+    || echec "${f#scripts/} : autotest en échec"
+done < <(grep -l -e '--autotest' scripts/*.py scripts/*.sh)
 python3 -I scripts/generer.py --sources >/dev/null || echec "generer.py : un générateur déclare un fichier dont la release publie les constantes (#237), ou l'autotest du refus échoue"
 grep -qx "$SOURCE_UNIQUE" <<< "$FICHIERS" || echec "$SOURCE_UNIQUE absent : la règle de provenance n'a plus de source"
 while IFS= read -r f; do
@@ -229,12 +239,10 @@ bash scripts/plancher.sh > /dev/null || echec "scripts/plancher.sh : plancher il
 
 # Les réponses de l'API simulée contre le schéma du serveur : l'autotest d'abord, puis
 # le juge. INCONNU (sortie 2) est un échec, jamais un succès.
-python3 -I scripts/verifier-fixtures.py --autotest >/dev/null || echec "verifier-fixtures.py : autotest en échec"
 FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec "API simulée hors du schéma du serveur"; }
 
 # Ce que le serveur SERT ne se recalcule plus (#83) : une table ou un prédicat retiré
 # qui revient échoue. L'autotest d'abord ; INCONNU (sortie 2) est un échec.
-python3 -I scripts/verifier-regles-servies.py --autotest >/dev/null || echec "verifier-regles-servies.py : autotest en échec"
 SERVIES=$(python3 -I scripts/verifier-regles-servies.py) || { echo "$SERVIES"; echec "une règle servie est recalculée dans l'app"; }
 
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
@@ -350,18 +358,7 @@ fi
 
 # La parité : son autotest d'abord (un contrôle qui ne refuse rien ne prouve rien),
 # puis la table elle-même. INCONNU (sortie 2) est un échec, jamais un succès.
-python3 -I scripts/verifier-parite.py --autotest >/dev/null || echec "verifier-parite.py : autotest en échec"
 PARITE=$(python3 -I scripts/verifier-parite.py) || { echo "$PARITE"; echec "parité avec le site (Parite/PARITE.md)"; }
-
-# Les tests au simulateur : une relance au plus, déclarée, sur une cause déclarée
-# (#50). Les deux autotests prouvent que la décision refuse ce qu'elle doit refuser.
-python3 -I scripts/bilan_tests_ui.py --autotest >/dev/null || echec "bilan_tests_ui.py : autotest en échec"
-bash scripts/tests-simulateur.sh --autotest >/dev/null || echec "tests-simulateur.sh : autotest en échec"
-# Le simulateur des tests : un iPhone de série du runtime standard, ou INCONNU (#112).
-python3 -I scripts/destination_simulateur.py --autotest >/dev/null || echec "destination_simulateur.py : autotest en échec"
-# L'app montre livrée reste dépendante de l'iPhone (#226) : le contrôle lui-même, sur des
-# Info.plist faits pour (la construction Release se juge en CI, étape « Apple Watch »).
-bash scripts/verifier-montre-dependante.sh --autotest >/dev/null || echec "verifier-montre-dependante.sh : autotest en échec"
 
 # Une attente par prédicat (le focus du clavier, un onglet retenu) passe par le point
 # d'attente commun et son plafond (#123) : écrite sur place, chacune portait son délai,
@@ -443,45 +440,31 @@ NUS=$(grep -rn '\.refreshable' CoproFirst --include='*.swift' | grep -v "^$P_ACT
 # Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
 TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
 
-# Les tickets de la concordance quotidienne (#67) : rouge → vert et INCONNU → vert
-# ferment, vert → vert ne touche à rien, un INCONNU ne ferme jamais.
-python3 -I scripts/tickets_concordance.py --autotest >/dev/null || echec "tickets_concordance.py : autotest en échec"
-# Une PR de documentation seule n'occupe pas les exécutants macOS (#204) : la détection
-# prouve qu'un fichier .swift relance bien le build et les tests.
-python3 -I scripts/ci_documentation_seule.py --autotest >/dev/null || echec "ci_documentation_seule.py : autotest en échec"
-
 # La simulation reste aux builds Debug (#84) : l'autotest prouve que le juge refuse
 # un symbole hors de `#if DEBUG`, puis le juge lit l'app. INCONNU (2) est un échec.
-python3 -I scripts/verifier-simule.py --autotest >/dev/null || echec "verifier-simule.py : autotest en échec"
 SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simulation hors de #if DEBUG"; }
 
 # Un Label identifié est lu en un élément (#183) : sous iOS 26, son identifiant se
 # résout en son image, et la requête du test tourne jusqu'au délai.
-python3 -I scripts/verifier-identifiants.py --autotest >/dev/null || echec "verifier-identifiants.py : autotest en échec"
 IDENTIFIANTS=$(python3 -I scripts/verifier-identifiants.py) || { echo "$IDENTIFIANTS"; echec "Label identifié lu en plusieurs éléments"; }
 # Les séparateurs du site se lisent dans la table générée (#188) : aucun ne finit une ligne.
-python3 -I scripts/verifier-separateurs.py --autotest >/dev/null || echec "verifier-separateurs.py : autotest en échec"
 SEPARATEURS=$(python3 -I scripts/verifier-separateurs.py) || { echo "$SEPARATEURS"; echec "séparateur sécable ou recopié"; }
 
 # Un hôte fictif se prend dans un nom réservé (#214, standards/03 §8 quater) : exemple.fr
 # est un vrai domaine tiers, qui recevrait requêtes et cookies d'un test égaré.
-python3 -I scripts/verifier-hotes.py --autotest >/dev/null || echec "verifier-hotes.py : autotest en échec"
 HOTES=$(python3 -I scripts/verifier-hotes.py) || { echo "$HOTES"; echec "hôte fictif hors des noms réservés"; }
 
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
 # passage — la ligne s'affiche, elle ne compte pas pour conforme.
-python3 -I scripts/verifier-confidentialite.py --autotest >/dev/null || echec "verifier-confidentialite.py : autotest en échec"
 CONFIDENTIALITE=$(python3 -I scripts/verifier-confidentialite.py) || { echo "$CONFIDENTIALITE"; echec "confidentialité déclarée ≠ code"; }
 grep '^❓' <<< "$CONFIDENTIALITE" || true
 
 # L'inventaire des dépendances tenu à Package.resolved (#143) : l'autotest d'abord.
-python3 -I scripts/verifier-dependances.py --autotest >/dev/null || echec "verifier-dependances.py : autotest en échec"
 DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCES"; echec "DEPENDANCES.md ≠ Package.resolved, ou un composant tiers sans ses textes"; }
 
 # Le job « Dépôt » de la CI n'a qu'une étape, ce script (#241) : poste, hook et CI jouent
 # la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
-python3 -I scripts/verifier-ci.py --autotest >/dev/null || echec "verifier-ci.py : autotest en échec"
 JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, ou job macOS hors de l'agrégat"; }
 DISTANTS=$(bash scripts/controles-distants.sh)
 DISTANTS_CODE=$?

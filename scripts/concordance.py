@@ -34,14 +34,16 @@ import importlib.util
 import json
 import pathlib
 import re
+import socket
 import sys
 import tempfile
+import time
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(RACINE / "scripts"))
 
 import generer  # noqa: E402
-from generateurs import _plancher  # noqa: E402
+from generateurs import _plancher, _source  # noqa: E402
 from generateurs._commun import PROVENANCE, SIGNATURE  # noqa: E402
 from generateurs._source import SourceIllisible, Version, contrat_servi, derniere_version, versions_publiees  # noqa: E402
 from generateurs.contrat import CONTRAT  # noqa: E402
@@ -288,8 +290,38 @@ def autotest() -> None:
     if exigences(ancien, nouveau) != attendu or exigences(ancien, ancien):
         raise SystemExit(f"❌ autotest : exigences d'une montée ({exigences(ancien, nouveau)})")
     _autotest_mesure()
+    _autotest_delai()
     print("✅ autotest : cas zéro, version seule, écart posé exprès, orphelin, exigences d'une montée, "
-          "plancher mesuré")
+          "plancher mesuré, appel figé coupé")
+
+
+def _autotest_delai() -> None:
+    """Un serveur qui accepte et ne répond jamais (#293) : l'appel est coupé, nommé, et la
+    concordance qui en dépend rend INCONNU — jamais un vert, jamais une attente sans fin."""
+    with socket.socket() as muet:
+        muet.bind(("127.0.0.1", 0))
+        muet.listen()
+        url = f"http://127.0.0.1:{muet.getsockname()[1]}/figee"
+        debut = time.monotonic()
+        try:
+            _source._lire(url, delai=1)
+        except SourceIllisible as erreur:
+            if url not in str(erreur) or "délai de 1 s dépassé" not in str(erreur):
+                raise SystemExit(f"❌ autotest : l'appel figé coupé doit se nommer ({erreur})") from erreur
+        else:
+            raise SystemExit("❌ autotest : un appel figé doit lever SourceIllisible")
+        if time.monotonic() - debut > 5:
+            raise SystemExit("❌ autotest : l'appel figé n'est pas coupé à son délai")
+        # La première lecture de --plancher (la mesure des installations) figée : INCONNU.
+        global mesurer  # noqa: PLW0603 — remis en place ci-dessous
+        vraie = mesurer
+        mesurer = lambda: _source._lire(url, delai=0.5)  # noqa: E731
+        try:
+            code, texte = executer("plancher", False)
+        finally:
+            mesurer = vraie
+    if code != 2 or "INCONNU" not in texte or "délai de 0.5 s dépassé" not in texte:
+        raise SystemExit(f"❌ autotest : un appel coupé doit rendre la concordance INCONNU ({code}, {texte!r})")
 
 
 def _autotest_mesure() -> None:
