@@ -28,7 +28,7 @@ enum Trousseau {
     @discardableResult
     static func enregistrer(_ jeton: String, pour hote: String) -> ProtectionSession? {
         supprimer(pour: hote)
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         requete[kSecValueData as String] = Data(jeton.utf8)
         var erreur: Unmanaged<CFError>?
         if let nom = Biometrie.actuelle.nom,
@@ -51,7 +51,7 @@ enum Trousseau {
     static func lire(pour hote: String, raison: String) -> String? {
         let contexte = LAContext()
         contexte.localizedReason = raison
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         requete[kSecReturnData as String] = true
         requete[kSecMatchLimit as String] = kSecMatchLimitOne
         requete[kSecUseAuthenticationContext as String] = contexte
@@ -64,7 +64,7 @@ enum Trousseau {
 
     /// Présent, sans le lire (aucune invite Face ID).
     static func contient(pour hote: String) -> Bool {
-        var requete = base(hote)
+        var requete = CoffreTrousseau.requete(hote, service: service)
         let contexte = LAContext()
         contexte.interactionNotAllowed = true
         requete[kSecUseAuthenticationContext as String] = contexte
@@ -73,30 +73,6 @@ enum Trousseau {
     }
 
     static func supprimer(pour hote: String) {
-        SecItemDelete(base(hote) as CFDictionary)
-    }
-
-    // MARK: - Le compte, sans biométrie (#84)
-
-    /// Ce que l'app retient d'un compte (profil, courriel) : lisible après le premier
-    /// déverrouillage, sans invite — l'arrivée en a besoin avant toute requête.
-    private static let serviceCompte = "fr.coprofirst.app.compte"
-
-    static func lireCompte(_ cle: String) -> Data? {
-        TrousseauSansInvite.lire(cle, service: serviceCompte)
-    }
-
-    /// Range la valeur ; `false` si le Trousseau l'a refusée.
-    @discardableResult
-    static func rangerCompte(_ donnees: Data, _ cle: String) -> Bool {
-        TrousseauSansInvite.ranger(donnees, cle, service: serviceCompte)
-    }
-
-    static func effacerCompte(_ cle: String) {
-        TrousseauSansInvite.effacer(cle, service: serviceCompte)
-    }
-
-    private static func base(_ hote: String) -> [String: Any] {
-        TrousseauSansInvite.requete(hote, service: service)
+        SecItemDelete(CoffreTrousseau.requete(hote, service: service) as CFDictionary)
     }
 }

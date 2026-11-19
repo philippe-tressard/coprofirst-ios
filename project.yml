@@ -167,6 +167,8 @@ targets:
       - path: CoproFirst/Session/ErreurService.swift
       - path: CoproFirst/Commun/Session/RefusDuServeur.swift
       - path: CoproFirst/Entree/Decouverte/EtatDecouverte.swift
+      # L'appairage gardé (lot 3) : le coffre sans biométrie de l'iPhone, au Trousseau.
+      - path: CoproFirst/Session/CoffreDuCompte.swift
       - path: CoproFirst/Entree/Contenu/ContenuVitrine.swift
       # Ce qu'une `Installation` porte de GET /config : l'ordre des pages, le profil.
       - path: CoproFirst/Navigation/PageDeNavigation.swift
@@ -241,9 +243,9 @@ targets:
       - path: CoproFirst/Fonctions/Notifications/TypeNotification.swift
       - path: CoproFirst/Fonctions/Notifications/Genere/TypesNotification.swift
       # La liaison avec l'iPhone (#226) : le message, écrit une fois pour les deux côtés, et
-      # le Trousseau sans invite, celui du compte retenu de l'iPhone.
+      # le coffre sans invite de l'app (`CoffreTrousseau`), celui de l'iPhone et de l'Apple TV.
       - path: CoproFirst/Fonctions/Notifications/Montre/MessageLiaison.swift
-      - path: CoproFirst/Session/TrousseauSansInvite.swift
+      - path: CoproFirst/Session/CoffreDuCompte.swift
     dependencies:
       - package: ClientAPI
     info:

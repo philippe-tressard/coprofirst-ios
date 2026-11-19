@@ -89,11 +89,10 @@ struct CadreAOnglets: View {
             }
             .padding(.horizontal, Mise.marge)
             .padding(.bottom, 32)
-            .frame(maxWidth: 720)
-            .frame(maxWidth: .infinity)
+            .largeurDeLecture()
             .animation(.snappy(duration: 0.22), value: actif.id)
         }
-        .refreshable { actualisation += 1 }
+        .actualisable { actualisation += 1 }
         .avisEphemere(avis)
         // Un onglet se note comme le site (`trackTabView`) ; « Sur le site » n'en est pas un.
         .pageVue(actif == .surLeSite ? nil : CheminDuSite.onglet(actif.id, de: contexte.page.route))

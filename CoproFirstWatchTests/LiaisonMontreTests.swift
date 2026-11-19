@@ -53,7 +53,7 @@ struct LiaisonMontreTests {
     // MARK: - Ce que la montre garde
 
     @Test func laMontreGardeLaLiaisonEtNEffaceQueLaSienne() {
-        let coffre = CoffreEnMemoire()
+        let coffre = LiaisonEnMemoire()
         Liaisons.recevoir(liaison(), coffre)
         #expect(coffre.lire()?.residence == "Les Tilleuls")
         Liaisons.recevoir(.effacement(adresse: URL(string: "https://glycines.exemple")!), coffre)
@@ -64,7 +64,7 @@ struct LiaisonMontreTests {
 
     @Test func laLiaisonEteinteNeRelieNiNEcouteRien() {
         #expect(!LiaisonMontre.active, "allumée seulement sur le geste de Philippe, avec Wear OS (#207)")
-        let coffre = CoffreEnMemoire()
+        let coffre = LiaisonEnMemoire()
         let montre = LiaisonDeLaMontre(coffre: coffre)
         montre.recevoir(liaison())
         #expect(coffre.lire() == nil, "rien ne se garde")
@@ -72,7 +72,7 @@ struct LiaisonMontreTests {
     }
 
     @Test func uneLiaisonEchueNeRelieRien() {
-        let coffre = CoffreEnMemoire()
+        let coffre = LiaisonEnMemoire()
         Liaisons.recevoir(liaison(), coffre)
         #expect(Liaisons.valide(coffre, maintenant: echeance.addingTimeInterval(-1)) != nil)
         #expect(Liaisons.valide(coffre, maintenant: echeance) == nil)
@@ -81,7 +81,7 @@ struct LiaisonMontreTests {
     }
 
     @Test func laMontreSeRelieAuMessageEtSeDelieAuRefus() {
-        let coffre = CoffreEnMemoire()
+        let coffre = LiaisonEnMemoire()
         let montre = LiaisonDeLaMontre(coffre: coffre, active: true)
         #expect(montre.etat == .nonReliee)
         let futur = MessageLiaison.liaison(

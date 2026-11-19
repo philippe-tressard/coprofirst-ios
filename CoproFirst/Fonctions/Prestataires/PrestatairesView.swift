@@ -64,8 +64,7 @@ struct PrestatairesView: View {
             }
             .padding(.horizontal, Mise.marge)
             .padding(.bottom, 32)
-            .frame(maxWidth: 720)
-            .frame(maxWidth: .infinity)
+            .largeurDeLecture()
         }
         .background(palette.bg)
         .avisEphemere(avis)

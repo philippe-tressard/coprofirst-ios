@@ -47,9 +47,11 @@ struct AnnuaireView: View {
                     contenu: { annuaire, recharger in
                         ScrollViewReader { lecteur in
                             ScrollView {
-                                contenu(annuaire).padding(.horizontal, Mise.marge).padding(.vertical, 16)
+                                contenu(annuaire)
+                                    .padding(.horizontal, Mise.marge).padding(.vertical, 16)
+                                    .largeurDeLecture()
                             }
-                            .refreshable { recharger() }
+                            .actualisable { recharger() }
                             .task {
                                 guard ancre == .syndic else { return }
                                 lecteur.scrollTo(Ancre.syndic, anchor: .top)

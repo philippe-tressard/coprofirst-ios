@@ -8,6 +8,8 @@ import XCTest
 /// `-posture deplie` : un simulateur iPad sert au poste comme en CI, qui n'a ni iOS 27.1 ni
 /// l'iPhone Duo. Sur l'iPhone Duo déplié, la vraie charnière se lit, au poste seulement.
 ///
+/// La semaine du Fil (#277) et le sommaire de la résidence (#278) s'y jouent aussi.
+///
 /// Sautés sur iPhone (classe compacte) : le test choisit son appareil, l'app, elle, ne lit
 /// que la classe de taille et la charnière (`PresentationNavigation.pour`).
 final class CarnetUITests: XCTestCase {
@@ -83,6 +85,68 @@ final class CarnetUITests: XCTestCase {
         let lendemain = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND isEnabled == true", "carnet.lendemain")).firstMatch
         XCTAssertTrue(lendemain.apparait(), "la veille d'aujourd'hui : le lendemain se tourne")
+    }
+
+    /// La semaine (#277) : PINCER la page du jour l'ouvre sur toute la double page, chaque
+    /// carte à son jour ; ÉCARTER les doigts sur un jour ramène sa page ; une carte touchée
+    /// dans la semaine s'ouvre sur la page de son jour.
+    @MainActor
+    func testPincerOuvreLaSemaineEtEcarterRameneAuJour() throws {
+        let app = lancer()
+        let pageDuJour = app.elementAcces("carnet.jour")
+        XCTAssertTrue(pageDuJour.apparait(), "la page du jour")
+        pageDuJour.pinch(withScale: 0.4, velocity: -1)
+
+        let semaine = app.elementAcces("carnet.semaine")
+        XCTAssertTrue(semaine.apparait(), "pincer : la semaine")
+        let aujourdhui = app.elementAcces("carnet.semaine.\(Self.aujourdhuiISO)")
+        XCTAssertTrue(aujourdhui.apparait(), "aujourd'hui, dans sa semaine")
+        let duJour = app.buttons["fil.ticket_ouvert:41"]
+        XCTAssertTrue(duJour.apparait(), "les cartes, à leur jour")
+        XCTAssertTrue(app.elementAcces("carnet.semaine.precedente").apparait(), "le pied de page de la semaine")
+        XCTAssertTrue(app.elementAcces("carnet.veille").disparait(), "plus de page du jour")
+
+        aujourdhui.pinch(withScale: 2.5, velocity: 1)
+        XCTAssertTrue(app.elementAcces("carnet.veille").apparait(), "écarter : la page du jour")
+        XCTAssertTrue(semaine.disparait())
+
+        app.elementAcces("carnet.jour").pinch(withScale: 0.4, velocity: -1)
+        XCTAssertTrue(semaine.apparait(), "la semaine, de nouveau")
+        app.toucher(duJour)
+        XCTAssertTrue(app.elementAcces("carnet.veille").apparait(), "une carte touchée : la page de son jour")
+        XCTAssertTrue(semaine.disparait())
+    }
+
+    /// Le jour d'aujourd'hui tel que l'app l'écrit (`jourISO`, à Paris).
+    private static var aujourdhuiISO: String {
+        let format = DateFormatter()
+        format.locale = Locale(identifier: "en_US_POSIX")
+        format.timeZone = TimeZone(identifier: "Europe/Paris")
+        format.dateFormat = "yyyy-MM-dd"
+        return format.string(from: .now)
+    }
+
+    /// Ma résidence (#278) : le sommaire à gauche — les rubriques de la Fiche, puis le
+    /// Carnet d'entretien et le Règlement —, la page choisie à droite. La première s'ouvre
+    /// d'elle-même ; les onglets disparaissent, le sommaire les remplace.
+    @MainActor
+    func testLesDocumentsDeLaResidenceEnDoublePage() throws {
+        let app = lancer()
+        app.toucher(intercalaire("residence", dans: app))
+        XCTAssertTrue(app.elementAcces("residence.sommaire.rubrique.identite").apparait(), "le sommaire, à gauche")
+        XCTAssertTrue(app.elementRetenu("residence.sommaire.rubrique.identite").apparait(), "la première page, ouverte")
+        XCTAssertTrue(app.staticTexts["AA0-000-000"].apparait(), "la Fiche, à droite")
+        XCTAssertFalse(app.elementAcces("residence.onglets").sonde(), "pas d'onglets : le sommaire")
+
+        app.toucher(app.elementAcces("residence.sommaire.onglet.carnet"))
+        XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].apparait(), "le carnet d'entretien")
+        XCTAssertTrue(app.elementRetenu("residence.sommaire.onglet.carnet").apparait())
+
+        app.toucher(app.elementAcces("residence.sommaire.onglet.reglement"))
+        XCTAssertTrue(
+            app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"].apparait(),
+            "le Règlement et ses questions")
+        XCTAssertTrue(app.elementAcces("residence.sommaire.rubrique.plans").exists, "le sommaire reste")
     }
 
     /// Une page renommée par l'administration garde son nom sur la tranche aussi.

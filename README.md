@@ -65,12 +65,18 @@ autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 ### L'écran de hall (Apple TV)
 
 La cible `CoproFirstTV` (tvOS 17, #218) fait d'une Apple TV l'écran de hall d'une
-résidence : elle fera défiler les affiches d'un périmètre, en lecture seule, une fois
-l'écran appairé (serveur : coprofirst#2770). On y entre dans la résidence par son
-adresse, ou par la démo (lot 2) — ni QR, ni lien universel, ni Face ID, que tvOS n'a pas —,
-puis l'écran attend son appairage (lot 3). Elle compile les fichiers de l'app que
-`project.yml` nomme — la charte, le texte du site, l'entrée (adresse, GET /config,
-plancher) — et rejoue leurs tests sur tvOS, avec les siens (`CoproFirstTVTests/`) :
+résidence : elle fait défiler les annonces de hall d'un périmètre, en lecture seule
+(serveur : coprofirst#2770). On y entre dans la résidence par son adresse, ou par la
+démo (lot 2) — ni QR, ni lien universel, ni Face ID, que tvOS n'a pas. L'écran affiche
+alors un code de huit lettres, valable dix minutes ; un membre du conseil syndical le
+saisit dans l'app (Espace CS › Écrans du hall, #295) ou sur le site, avec le nom et le
+périmètre de l'écran, et l'écran diffuse aussitôt (lot 3, RFC 8628) : une annonce toutes
+les quinze secondes, son titre, son message et ses photos, relues toutes les deux
+minutes ; l'écran reste allumé. L'appairage se garde au Trousseau : rallumée, l'Apple TV
+reprend seule ; retirée par le conseil, elle affiche un nouveau code. Elle compile les
+fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
+(adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
+tvOS, avec les siens (`CoproFirstTVTests/`) :
 
 ```bash
 APPAREIL=tv bash scripts/tests-simulateur.sh
@@ -151,10 +157,17 @@ Split View étroit, la barre du bas revient — la page ouverte reste ouverte au
 Une liste et la fiche qu'elle ouvre s'y tiennent côte à côte (#222) : Mes affaires,
 le fil, Ma résidence (documents, carnet, règlement, syndic), les annonces, les
 documents des contrats, les courriels et le reporting de l'Espace CS.
+Dans l'Espace CS, **Écrans du hall** (#295) liste les écrans de la résidence (lieu,
+« Échu », dernière lecture des annonces), en appaire un avec le code qu'il affiche —
+un nom, un seul périmètre — et en retire un, après confirmation.
 **Sur l'iPhone pliable** ouvert (#119, en cours), l'app se lit comme un carnet : les
 pages en intercalaires sur la tranche droite, le fil une journée par double page (la
-fiche ouverte en face) ; la page et la fiche ouvertes s'y retrouvent après un arrêt par
-iOS ; plié, la barre du bas.
+fiche ouverte en face) ; **pincer** ouvre la semaine du lundi au dimanche (#277), chaque
+carte au jour où le serveur la range — son échéance, sa publication sinon —, et
+**écarter les doigts** sur un jour ramène sa page (un fondu au mouvement réduit, une action
+pour VoiceOver) ; Ma résidence y a un **sommaire** à gauche — les rubriques de la Fiche, le
+carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la page et la
+fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran

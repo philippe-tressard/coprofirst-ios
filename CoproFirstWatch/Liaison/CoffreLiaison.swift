@@ -44,29 +44,29 @@ enum Liaisons {
     }
 }
 
-/// Au Trousseau de la montre, sans invite (`TrousseauSansInvite`, partagé avec l'iPhone),
-/// jamais synchronisé. Une entrée illisible se lit comme une montre pas reliée.
-struct CoffreTrousseau: CoffreLiaison {
-    private static let service = "fr.coprofirst.app.montre.liaison"
+/// Au Trousseau de la montre, sans invite — le coffre de l'app (`CoffreTrousseau`, partagé
+/// avec l'iPhone et l'Apple TV), sous le service de la liaison —, jamais synchronisé. Une
+/// entrée illisible se lit comme une montre pas reliée.
+struct LiaisonAuTrousseau: CoffreLiaison {
+    private static let coffre = CoffreTrousseau(service: "fr.coprofirst.app.montre.liaison")
     private static let cle = "liaison"
 
     func lire() -> LiaisonGardee? {
-        TrousseauSansInvite.lire(Self.cle, service: Self.service)
-            .flatMap { try? JSONDecoder().decode(LiaisonGardee.self, from: $0) }
+        Self.coffre.lire(Self.cle).flatMap { try? JSONDecoder().decode(LiaisonGardee.self, from: $0) }
     }
 
     func garder(_ liaison: LiaisonGardee) {
         guard let donnees = try? JSONEncoder().encode(liaison) else { return }
-        TrousseauSansInvite.ranger(donnees, Self.cle, service: Self.service)
+        Self.coffre.ranger(donnees, Self.cle)
     }
 
     func effacer() {
-        TrousseauSansInvite.effacer(Self.cle, service: Self.service)
+        Self.coffre.effacer(Self.cle)
     }
 }
 
 /// En mémoire : les tests, et le simulateur sans signature (où le Trousseau refuse).
-final class CoffreEnMemoire: CoffreLiaison, @unchecked Sendable {
+final class LiaisonEnMemoire: CoffreLiaison, @unchecked Sendable {
     private var liaison: LiaisonGardee?
     private let verrou = NSLock()
 

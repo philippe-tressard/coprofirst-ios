@@ -43,6 +43,13 @@ struct ListeEtFicheTests {
         #expect(TitreDeMenu.mode(colonneOuverte: false, taille: .accessibility3) == .enLigne, "le très grand texte")
     }
 
+    /// Le titre en tête, l'action de la page passe à droite : iOS 26 retire la gauche (#223).
+    @MainActor @Test func lActionDeMenuPasseADroiteQuandLeTitreEstEnTete() {
+        #expect(TitreDeMenu.actionADroite(colonneOuverte: true, taille: .large), "une fiche à côté")
+        #expect(!TitreDeMenu.actionADroite(colonneOuverte: false, taille: .large))
+        #expect(!TitreDeMenu.actionADroite(colonneOuverte: false, taille: .accessibility3))
+    }
+
     /// Une liste qui disparaît après l'apparition de la suivante ne ferme pas la colonne
     /// de celle-ci (Liste → Archives, un onglet qui change).
     @MainActor @Test func uneSeuleListeOccupeLaColonne() {

@@ -28,13 +28,13 @@ final class LiaisonDeLaMontre: NSObject, WCSessionDelegate {
     static func auLancement(_ arguments: [String]) -> LiaisonDeLaMontre {
         #if DEBUG
         if let simule = EtatMontre.simule(arguments) {
-            let liaison = LiaisonDeLaMontre(coffre: CoffreEnMemoire())
+            let liaison = LiaisonDeLaMontre(coffre: LiaisonEnMemoire())
             liaison.simulee = true
             liaison.etat = simule
             return liaison
         }
         #endif
-        let liaison = LiaisonDeLaMontre(coffre: CoffreTrousseau())
+        let liaison = LiaisonDeLaMontre(coffre: LiaisonAuTrousseau())
         liaison.ecouter()
         return liaison
     }

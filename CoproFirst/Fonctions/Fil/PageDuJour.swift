@@ -8,14 +8,16 @@ import SwiftUI
 /// choisie s'ouvre à droite (`ListeEtFiche`, `.proportion(0.5)`).
 ///
 /// On tourne la page vers la veille ou le lendemain par les deux boutons du pied de page, ou
-/// d'un glissement horizontal qui ne part pas du bord (le bord gauche reste au geste du
-/// système, standards/11 §10). Les jours sont ceux qui ont des cartes : `GET /flux` range une
-/// carte au jour de sa publication. La semaine (pincer) attend que l'API la serve
-/// (coprofirst#2834) : aucun geste avant.
+/// d'un glissement horizontal qui ne part pas du bord (`FeuilletDuCarnet`). Les jours sont
+/// ceux qui ont des cartes : sans période, `GET /flux` range une carte au jour de sa
+/// publication. PINCER ouvre la semaine (`PageDeLaSemaine`, #277) ; VoiceOver a la même
+/// action sur l'éphéméride.
 struct PageDuJour<Carte: View>: View {
     let jours: [JourDuFil]
     /// Le rang du jour ouvert dans `jours`, du plus récent (0) au plus ancien.
     @Binding var rang: Int
+    /// Pincer : la semaine de ce jour.
+    let voirLaSemaine: () -> Void
     @ViewBuilder let carte: (ElementDuFil) -> Carte
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -29,6 +31,7 @@ struct PageDuJour<Carte: View>: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 10) {
                         Ephemeride(jour: jour.jour)
+                            .accessibilityAction(named: TextesSemaine.voirLaSemaine, voirLaSemaine)
                         ForEach(jour.elements) { element in
                             carte(element).padding(.horizontal, Mise.marge)
                         }
@@ -36,80 +39,19 @@ struct PageDuJour<Carte: View>: View {
                     .padding(.bottom)
                 }
                 .id(jour.id)
-                .transition(transition)
-                .simultaneousGesture(glissement)
+                .pageTournee(reculer: reculer, mouvementReduit: mouvementReduit)
+                .tournerLaPage(tourner)
+                .zoomDuCarnet(.resserrer, passer: voirLaSemaine)
+                .accessibilityIdentifier("carnet.jour")
                 Divider()
-                piedDePage
+                PiedDuCarnet(
+                    precedent: .init(
+                        titre: PageDuJourTextes.veille, identifiant: "carnet.veille", actif: rang + 1 < jours.count),
+                    suivant: .init(titre: PageDuJourTextes.lendemain, identifiant: "carnet.lendemain", actif: rang > 0),
+                    tourner: tourner)
             }
             .background(palette.bg)
         }
-    }
-
-    private var transition: AnyTransition {
-        if mouvementReduit { return .opacity }
-        return .asymmetric(
-            insertion: .move(edge: reculer ? .leading : .trailing).combined(with: .opacity),
-            removal: .move(edge: reculer ? .trailing : .leading).combined(with: .opacity))
-    }
-
-    /// Veille à gauche, lendemain à droite, comme les pages d'un carnet. Au très grand texte,
-    /// les mots ne tiennent plus sur une demi-page sans se couper : les chevrons seuls, leur
-    /// nom gardé pour VoiceOver.
-    private var piedDePage: some View {
-        ViewThatFits(in: .horizontal) {
-            boutons(avecTitres: true)
-            boutons(avecTitres: false)
-        }
-        .font(.subheadline.weight(.semibold))
-        .tint(palette.primary)
-        .padding(.horizontal, Mise.marge)
-        .frame(minHeight: Mise.cible)
-        .background(palette.surface)
-    }
-
-    private func boutons(avecTitres: Bool) -> some View {
-        HStack {
-            Button { tourner(reculer: true) } label: {
-                etiquette(PageDuJourTextes.veille, "chevron.backward", avecTitre: avecTitres, titreAvant: false)
-            }
-            .disabled(rang + 1 >= jours.count)
-            .accessibilityIdentifier("carnet.veille")
-            Spacer(minLength: Mise.marge)
-            Button { tourner(reculer: false) } label: {
-                etiquette(PageDuJourTextes.lendemain, "chevron.forward", avecTitre: avecTitres, titreAvant: true)
-            }
-            .disabled(rang == 0)
-            .accessibilityIdentifier("carnet.lendemain")
-        }
-    }
-
-    /// « ‹ Veille », « Lendemain › », ou le chevron seul — son titre gardé pour VoiceOver.
-    @ViewBuilder
-    private func etiquette(_ titre: String, _ icone: String, avecTitre: Bool, titreAvant: Bool) -> some View {
-        let label = Label(titre, systemImage: icone)
-        Group {
-            if !avecTitre {
-                label.labelStyle(.iconOnly)
-            } else if titreAvant {
-                label.labelStyle(TitreAvantIcone())
-            } else {
-                label.labelStyle(.titleAndIcon)
-            }
-        }
-        .frame(minWidth: Mise.cible, minHeight: Mise.cible)
-        .contentShape(.rect)
-    }
-
-    /// Un glissement franchement horizontal, loin du bord : le doigt vers la droite ramène la
-    /// veille, vers la gauche le lendemain — comme on tourne une page.
-    private var glissement: some Gesture {
-        DragGesture(minimumDistance: Mise.cible)
-            .onEnded { geste in
-                guard geste.startLocation.x > Mise.marge,
-                    abs(geste.translation.width) > 2 * abs(geste.translation.height)
-                else { return }
-                tourner(reculer: geste.translation.width > 0)
-            }
     }
 
     private func tourner(reculer: Bool) {

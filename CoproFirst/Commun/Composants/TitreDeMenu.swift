@@ -43,3 +43,25 @@ struct TitreDeMenu: ViewModifier {
         return taille.isAccessibilitySize ? .enLigne : .grand
     }
 }
+
+extension TitreDeMenu {
+    /// L'action d'une page de menu (créer…) va à droite quand le titre se pose en tête :
+    /// iOS 26 retire de la barre les éléments de gauche d'un titre `.inlineLarge`, sans menu
+    /// pour les retrouver — « Nouvelle affaire » et « Créer » disparaissaient sur iPad (#223).
+    static func actionADroite(colonneOuverte: Bool, taille: DynamicTypeSize) -> Bool {
+        mode(colonneOuverte: colonneOuverte, taille: taille) == .enTete
+    }
+}
+
+/// L'action d'une page de menu, posée dans sa barre : à gauche d'ordinaire, à droite quand
+/// une fiche est ouverte à côté (`TitreDeMenu.actionADroite`), comme « Nouvelle note » de Notes.
+struct ActionDeMenu<Contenu: View>: ToolbarContent {
+    @ViewBuilder let contenu: () -> Contenu
+    @Environment(\.colonneDeFiche) private var colonne
+    @Environment(\.dynamicTypeSize) private var taille
+
+    var body: some ToolbarContent {
+        let aDroite = TitreDeMenu.actionADroite(colonneOuverte: colonne?.ouverte == true, taille: taille)
+        ToolbarItem(placement: aDroite ? .topBarTrailing : .topBarLeading) { contenu() }
+    }
+}

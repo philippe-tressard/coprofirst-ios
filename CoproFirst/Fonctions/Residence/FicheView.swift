@@ -6,10 +6,14 @@ import SwiftUI
 /// L'onglet « Fiche » : la résidence, ses règles, ses plans, son règlement, ses
 /// comptes-rendus d'AG et ses diagnostics — dans l'ordre du site. En lecture : la
 /// fiche, les documents et les rapports se déposent et se corrigent sur le site.
+///
+/// `rubriques` : celles à montrer — toutes, sauf dans le carnet du pliable, où chacune est
+/// une page du sommaire (#278). La réserve du locataire s'applique toujours.
 struct FicheView: View {
     let installation: Installation
     let service: any ServiceResidence
     let droits: DroitsOnglet
+    var rubriques = RubriqueFiche.allCases
 
     var body: some View {
         let service = service
@@ -22,7 +26,7 @@ struct FicheView: View {
                         .padding(.horizontal, Mise.marge)
                         .padding(.vertical, 16)
                 }
-                .refreshable { recharger() }
+                .actualisable { recharger() }
             },
             squelette: {
                 ScrollView {
@@ -33,26 +37,58 @@ struct FicheView: View {
     }
 
     private func sections(_ contenu: ContenuFiche) -> some View {
-        let locataire = droits.locataire
-        return LazyVStack(alignment: .leading, spacing: 28) {
+        LazyVStack(alignment: .leading, spacing: 28) {
+            ForEach(RubriqueFiche.ouvertes(droits).filter(rubriques.contains), id: \.self) { rubrique in
+                section(rubrique, contenu)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func section(_ rubrique: RubriqueFiche, _ contenu: ContenuFiche) -> some View {
+        switch rubrique {
+        case .identite:
             VStack(alignment: .leading, spacing: 16) {
                 BanniereResidence(fiche: contenu.fiche, installation: installation)
                 CarteFiche(contenu: contenu)
             }
-            RubriqueRegles(contenu: contenu)
+        case .regles: RubriqueRegles(contenu: contenu)
+        case .plans:
             RubriqueDocuments(
-                titre: TextesResidence.plans, vide: TextesResidence.plansVide, documents: contenu.plans,
+                titre: rubrique.titre, vide: TextesResidence.plansVide, documents: contenu.plans,
                 contenu: contenu, gouttiere: .plan)
+        case .reglement:
             RubriqueDocuments(
-                titre: TextesResidence.reglement, vide: TextesResidence.reglementVide, documents: contenu.reglements,
+                titre: rubrique.titre, vide: TextesResidence.reglementVide, documents: contenu.reglements,
                 contenu: contenu, gouttiere: .reglement)
-            // Les comptes-rendus d'AG et les diagnostics ne s'affichent pas au locataire.
-            if !locataire {
-                RubriqueDocuments(
-                    titre: TextesResidence.comptesRendus, vide: TextesResidence.comptesRendusVide,
-                    documents: contenu.comptesRendus, contenu: contenu, gouttiere: .assemblee)
-                RubriqueDiagnostics(contenu: contenu, installation: installation, service: service)
-            }
+        case .comptesRendus:
+            RubriqueDocuments(
+                titre: rubrique.titre, vide: TextesResidence.comptesRendusVide,
+                documents: contenu.comptesRendus, contenu: contenu, gouttiere: .assemblee)
+        case .diagnostics: RubriqueDiagnostics(contenu: contenu, installation: installation, service: service)
+        }
+    }
+}
+
+/// Les rubriques de la Fiche, dans l'ordre du site — une section de l'onglet, une page du
+/// sommaire dans le carnet du pliable (#278).
+enum RubriqueFiche: String, CaseIterable, Sendable {
+    case identite, regles, plans, reglement, comptesRendus, diagnostics
+
+    /// Celles que ce compte lit : les comptes-rendus d'AG et les diagnostics ne s'affichent
+    /// pas au locataire, comme sur le site.
+    static func ouvertes(_ droits: DroitsOnglet) -> [RubriqueFiche] {
+        allCases.filter { !droits.locataire || ($0 != .comptesRendus && $0 != .diagnostics) }
+    }
+
+    var titre: String {
+        switch self {
+        case .identite: TextesResidence.copropriete
+        case .regles: TextesResidence.regles
+        case .plans: TextesResidence.plans
+        case .reglement: TextesResidence.reglement
+        case .comptesRendus: TextesResidence.comptesRendus
+        case .diagnostics: TextesResidence.diagnostics
         }
     }
 }

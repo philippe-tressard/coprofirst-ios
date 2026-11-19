@@ -148,10 +148,11 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
         !verrou.withLock { deconnectes.contains(installation.hote) }
     }
 
-    func fil(_ installation: Installation) async throws -> [ElementDuFil] {
+    func fil(_ installation: Installation, periode: ClosedRange<Date>?) async throws -> [ElementDuFil] {
         try await Task.sleep(for: delai)
         try exigerSession(installation)
-        return Apercu.fil
+        guard let periode else { return Apercu.fil }
+        return Apercu.filDeLaPeriode(periode)
     }
 
     func entrerEnDemo(_ code: String) async throws -> Installation? {

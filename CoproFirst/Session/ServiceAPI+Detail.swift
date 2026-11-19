@@ -141,15 +141,3 @@ extension ServiceAPI {
         }
     }
 }
-
-extension ErreurService {
-    /// Un statut d'une route de LECTURE : 401 dit une session expirée, pas des
-    /// identifiants refusés ; 403 et 404, un élément qu'on ne peut pas ouvrir.
-    static func depuisLecture(_ statut: Int) -> ErreurService {
-        switch statut {
-        case 401: .sessionExpiree
-        case 403, 404: .introuvable
-        default: depuis(statut: statut)
-        }
-    }
-}

@@ -53,6 +53,7 @@ struct EnSavoirPlusView: View {
                 }
             }
             .padding(Mise.marge)
+            .largeurDeLecture()
         }
         .background(palette.bg)
         .navigationBarTitleDisplayMode(.inline)

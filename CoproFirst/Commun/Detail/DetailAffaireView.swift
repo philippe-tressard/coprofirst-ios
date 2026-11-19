@@ -62,10 +62,11 @@ private struct ContenuAffaire: View {
                 }
             }
             .padding(Mise.marge)
+            .largeurDeLecture()
         }
         .background(palette.bg)
         .navigationTitle(affaire.numero)
-        .refreshable { recharger() }
+        .actualisable { recharger() }
     }
 }
 
