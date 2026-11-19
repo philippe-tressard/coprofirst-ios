@@ -15,7 +15,7 @@ struct AccueilView: View {
         // Le sceau tient l'écran ; quand le texte grandit, il défile au lieu de tronquer.
         GeometryReader { cadre in
             ScrollView {
-                sceau.frame(minHeight: cadre.size.height)
+                sceau.largeurDeLecture().frame(minHeight: cadre.size.height)
             }
             .scrollBounceBehavior(.basedOnSize)
         }

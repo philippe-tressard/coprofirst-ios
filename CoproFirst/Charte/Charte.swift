@@ -62,6 +62,9 @@ enum Mise {
     static let tranche: CGFloat = 84
     /// L'écart de ce trait autour d'un lien dans le texte (le syndic, une annexe).
     static let debordChoisi: CGFloat = 6
+    /// La colonne de lecture d'un écran (`largeurDeLecture`, #223), au texte par défaut :
+    /// elle suit Dynamic Type.
+    static let lecture: CGFloat = 720
 }
 
 extension Font {

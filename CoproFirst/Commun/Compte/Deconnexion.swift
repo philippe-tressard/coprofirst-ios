@@ -26,7 +26,9 @@ enum GesteDeSortie: Identifiable {
     var message: String {
         switch self {
         case .deconnecter:
-            "Vous reviendrez à l'écran de connexion. Face ID vous sera de nouveau proposé."
+            "Vous reviendrez à l'écran de connexion. "
+                + (Biometrie.materiel.nom.map { "\($0) vous sera de nouveau proposé." }
+                    ?? "Garder votre session vous sera de nouveau proposé.")
         case .oublierTout:
             "Chaque session sera fermée et l'app reviendra à son accueil, comme neuve."
         }
