@@ -166,6 +166,8 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(carte.apparait())
         XCTAssertFalse(app.staticTexts["Aucune sélection"].exists, "pas de colonne de fiche en portrait")
         XCTAssertTrue(app.elementAcces("barre.faq").exists, "la barre latérale reste à côté")
+        // Grand titre, aucune colonne ouverte : le « + » reste dans la barre (`ActionDeMenu`, #223).
+        XCTAssertTrue(app.elementAcces("affaires.nouvelle").exists, "le « + » reste visible en portrait")
         capture("affaires-portrait-liste", app)
 
         app.toucher(carte)
