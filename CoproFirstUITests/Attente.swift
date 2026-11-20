@@ -47,13 +47,13 @@ extension XCUIElement {
     func demeure(_ duree: TimeInterval) -> Bool { !waitForNonExistence(timeout: duree) }
 
     /// L'élément est dans l'état `condition` — un format de `NSPredicate`, par exemple
-    /// « hasKeyboardFocus == true » — au plus tard au plafond commun. La seule attente
-    /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont
-    /// chacune portait son propre délai.
+    /// « hasKeyboardFocus == true » — au plus tard au plafond commun (ou après `duree`, l'un des
+    /// délais d'`Attente`). La seule attente par prédicat des tests : `scripts/verifier-depot.sh`
+    /// refuse les autres, dont chacune portait son propre délai.
     @MainActor
-    func attendre(_ condition: String) -> Bool {
+    func attendre(_ condition: String, pendant duree: TimeInterval = Attente.plafond) -> Bool {
         let etat = XCTNSPredicateExpectation(predicate: NSPredicate(format: condition), object: self)
-        return XCTWaiter().wait(for: [etat], timeout: Attente.plafond) == .completed
+        return XCTWaiter().wait(for: [etat], timeout: duree) == .completed
     }
 }
 
@@ -168,8 +168,35 @@ extension XCUIApplication {
     /// ne fait pas défiler pour attendre un élément qui tarde — ce défilement fermait les
     /// feuilles. `scripts/verifier-touchers.sh` tient le plafond des `tap()` directs, qui ne
     /// fait que baisser.
+    ///
+    /// Un CHAMP de saisie touché doit prendre le focus du clavier : sinon le toucher s'est perdu
+    /// (main ab11792, ConnexionUITests : l'app occupée 7 s après le toucher du mot de passe, puis
+    /// « Neither element nor any descendant has keyboard focus » à la saisie). Il est rejoué, au
+    /// plus `Attente.reprises` fois, et chaque reprise s'écrit au journal — toucher un champ qui
+    /// a déjà le focus n'y change rien.
     @MainActor
     func toucher(_ element: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        // Le type se lit AVANT le toucher : un bouton qui ferme sa feuille n'existe plus après.
+        let saisie = element.apparait() && Self.saisies.contains(element.elementType)
+        toucherUneFois(element, essais: essais, file: file, line: line)
+        guard saisie else { return }
+        let focus = "hasKeyboardFocus == true"
+        for reprise in 1...Attente.reprises {
+            if element.attendre(focus, pendant: Attente.effet) { return }
+            tracerReprise("toucher", reprise, element, "le focus du clavier")
+            toucherUneFois(element, essais: essais, file: file, line: line)
+        }
+        XCTAssertTrue(
+            element.attendre(focus), "toucher de \(element) \(Attente.reprises + 1) fois, sans le focus du clavier",
+            file: file, line: line)
+    }
+
+    /// Les champs de saisie : un toucher leur donne le focus du clavier.
+    private static let saisies: Set<XCUIElement.ElementType> = [.textField, .secureTextField, .searchField, .textView]
+
+    /// Le toucher lui-même, sans la vérification du focus (`toucher`).
+    @MainActor
+    private func toucherUneFois(_ element: XCUIElement, essais: Int, file: StaticString, line: UInt) {
         XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
         let clavier = keyboards.firstMatch
         if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
@@ -243,14 +270,21 @@ extension XCUIApplication {
         geste()
         for reprise in 1...Attente.reprises {
             if effet.waitForExistence(timeout: Attente.effet) { return }
-            let trace = "↻ reprise du \(nom) \(reprise)/\(Attente.reprises) : \(element) sans effet "
-                + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
-            print(trace)
-            XCTContext.runActivity(named: trace) { _ in }
+            tracerReprise(nom, reprise, element, "\(effet)")
             geste()
         }
         XCTAssertTrue(
             effet.apparait(), "\(nom) de \(element) \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+    }
+
+    /// La trace d'une reprise, au journal et dans le rapport (« ↻ reprise du toucher n/N : … »),
+    /// que `scripts/bilan_tests_ui.py` déclare au résumé : une reprise muette masquerait un défaut.
+    @MainActor
+    private func tracerReprise(_ nom: String, _ reprise: Int, _ element: XCUIElement, _ effet: String) {
+        let trace = "↻ reprise du \(nom) \(reprise)/\(Attente.reprises) : \(element) sans effet "
+            + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
+        print(trace)
+        XCTContext.runActivity(named: trace) { _ in }
     }
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
