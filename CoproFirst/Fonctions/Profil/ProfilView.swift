@@ -39,6 +39,16 @@ struct ProfilView: View {
                             Label("Ce que j'affiche", systemImage: "bell.badge")
                         }
                         .listRowBackground(palette.surface)
+                        // Ce que je ne veux plus voir (#286) : si l'installation le sert.
+                        if ouverte.sert(.moderation) {
+                            NavigationLink {
+                                PersonnesMasqueesView(installation: ouverte)
+                            } label: {
+                                Label(TextesMasquage.titreListe, systemImage: TextesMasquage.symbole)
+                            }
+                            .listRowBackground(palette.surface)
+                            .accessibilityIdentifier("profil.masquees")
+                        }
                     }
                     SectionDroits(compte: compte, installation: ouverte) { self.compte = $0 }
                     SectionSuppressionCompte(installation: ouverte)

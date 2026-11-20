@@ -86,7 +86,6 @@ enum TextesSondage {
     static let commentaireInviteFil = "Votre commentaire sur ce sondage…"
     static let commentairePublie = "Commentaire publié"
     static let commentaireSupprime = "Commentaire supprimé"
-    static let signalementTransmis = "Signalement transmis au conseil syndical"
 
     /// « Clôturé le 02/04/2026 », « Clôture le 02/04/2026 ».
     static func clotureLe(_ date: Date, close: Bool) -> String {

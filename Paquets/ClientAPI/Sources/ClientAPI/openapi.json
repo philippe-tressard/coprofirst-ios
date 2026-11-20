@@ -11077,6 +11077,43 @@
         "title": "LotRead",
         "type": "object"
       },
+      "MasquageCreate": {
+        "properties": {
+          "auteur_id": {
+            "title": "Auteur Id",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "auteur_id"
+        ],
+        "title": "MasquageCreate",
+        "type": "object"
+      },
+      "MasquageRead": {
+        "properties": {
+          "auteur": {
+            "title": "Auteur",
+            "type": "string"
+          },
+          "auteur_id": {
+            "title": "Auteur Id",
+            "type": "integer"
+          },
+          "cree_le": {
+            "format": "date-time",
+            "title": "Cree Le",
+            "type": "string"
+          }
+        },
+        "required": [
+          "auteur_id",
+          "auteur",
+          "cree_le"
+        ],
+        "title": "MasquageRead",
+        "type": "object"
+      },
       "MeUpdate": {
         "properties": {
           "decor_fetes": {
@@ -32817,6 +32854,115 @@
         "summary": "Manuel Pdf",
         "tags": [
           "manuel"
+        ]
+      }
+    },
+    "/masquages": {
+      "get": {
+        "operationId": "get_masquages",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MasquageRead"
+                  },
+                  "title": "Response Get Masquages",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Lister Masquages",
+        "tags": [
+          "masquages"
+        ]
+      },
+      "post": {
+        "operationId": "post_masquages",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MasquageCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MasquageRead"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Masquer",
+        "tags": [
+          "masquages"
+        ]
+      }
+    },
+    "/masquages/{auteur_id}": {
+      "delete": {
+        "operationId": "delete_masquages_auteur_id",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "auteur_id",
+            "required": true,
+            "schema": {
+              "title": "Auteur Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Demasquer",
+        "tags": [
+          "masquages"
         ]
       }
     },

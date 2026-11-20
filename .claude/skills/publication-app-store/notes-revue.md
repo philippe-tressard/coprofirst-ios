@@ -23,7 +23,9 @@ recopie dans les champs « Sign-In Information » d'App Store Connect, pas ici.
 | Face ID ne sert qu'à rouvrir la session | `NSFaceIDUsageDescription`, `Session/Biometrie.swift` |
 | Les notifications se demandent après un geste, jamais au lancement | `Fonctions/Notifications/Push/` (`OffrePush`) |
 | Aucune donnée personnelle dans une notification | skill `publication-app-store`, liste d'avant soumission ; charge composée par le relais (coprofirst#2494) |
-| Contenu d'utilisateurs : signalement au conseil syndical | `Commun/Composants/SignalementAuConseil.swift` ; arbitrage du 12/11/2026 (#167) : pas de blocage d'un auteur |
+| Contenu d'utilisateurs : signalement au conseil syndical — une affaire, une suite, une annonce, une idée, une réponse, un commentaire | `Commun/Composants/SignalementAuConseil.swift` ; affaire et suites (#286) : `BandeauAffaire.swift`, `GestesHistorique.swift` |
+| Réponse de l'assistant (IA) : signalable depuis l'avis | `Fonctions/Residence/QuestionReglementView.swift` (#286, décision du 17/11/2026 « 2a ») |
+| Blocage d'un auteur : « Masquer ce que publie… », pour soi seul, défait dans le Profil | `Commun/Composants/MasquageAuteur.swift`, `Fonctions/Profil/PersonnesMasquees.swift` (#286, décision du 17/11/2026, qui remplace l'arbitrage du 12/11 de #167) ; **au-dessus du plancher : la démo doit servir le contrat 2.9.0 (v3.118.0) avant la soumission**, sinon ces gestes ne s'y voient pas |
 | Suppression du compte : une demande lancée depuis le Profil, traitée par l'administration de la résidence | `Fonctions/Profil/SuppressionCompte/` (#166) ; route `/auth/demande-suppression` du contrat 1.27.0 ; la démo accepte la demande sans jamais effacer son compte — **lu dans le code serveur v3.89.0, pas rejoué sur la démo : à jouer avant de soumettre** |
 | Ni suivi, ni publicité, ni achat intégré | `PrivacyInfo.xcprivacy` (`NSPrivacyTracking` faux), `scripts/verifier-confidentialite.py` |
 | Les écrans vus, comptés par la résidence, refusables au Profil (depuis la 1.1) | #199 ; `ProfilView.swift` (« Refuser la collecte de statistiques de navigation ») ; `ProductInteraction` du manifeste |
@@ -61,7 +63,19 @@ Residents can post requests, community announcements, comments and replies, visi
 only to the members of their own residence (a closed community of verified
 residents). Any content can be reported to the residence's elected council
 ("conseil syndical") from the content itself, with a mandatory reason; the council
-moderates it.
+moderates it. This covers requests and their follow-ups, announcements, ideas,
+replies and comments.
+Blocking: on an announcement, a reply or a follow-up, "Masquer ce que publie…" (hide
+what this person posts) hides everything that resident posts, for the user only; the
+other resident is not notified and nothing is deleted. The list, with "Ne plus
+masquer" (unhide), is in More > Profile > "Personnes masquées".
+
+AI-GENERATED CONTENT
+Residence > Rules ("Règlement") lets a resident ask a question about the co-ownership
+rules; the answer is written by an AI model, labelled as an indicative opinion, with
+the model named. Each answer has "Signaler la réponse de l'assistant" (report the
+assistant's answer) right below that label, with a mandatory reason, sent to the
+council.
 
 PERMISSIONS
 - Camera: only to scan the QR code of the residence's welcome sheet.

@@ -25,9 +25,8 @@ Une version sort sur l'App Store, et la soumission à la revue d'Apple reste un 
 Philippe :
 
 1. la version se lit dans `project.yml` (`MARKETING_VERSION`, et `CURRENT_PROJECT_VERSION`,
-   qui monte à chaque envoi) ; chaque version soumise porte son étiquette `vX.Y.Z` —
-   `v1.1.0`, posée à la main ; `v1.0.0`, à poser après coup, et la pose par la commande
-   de contrôle : #205 ;
+   qui monte à chaque envoi) ; chaque version soumise porte son étiquette `vX.Y.Z` (`v1.0.0`,
+   `v1.1.0`), posée par le contrôle avant soumission ;
 2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** — sauf une PR
    de documentation seule, dont la CI saute le build et les tests macOS
    (`scripts/ci_documentation_seule.py`, #204) ; qui fusionne sur `main` se lit au champ
@@ -38,7 +37,8 @@ Philippe :
    version.
 
 Le contrôle de cohérence qui précède chaque soumission, et l'étiquette qu'il pose :
-#205. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
+`python3 scripts/avant_soumission.py` (#205) — il refuse sur le moindre rouge comme sur un
+INCONNU, et ne soumet rien. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
 un geste de Philippe : skill
 [`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 
@@ -115,11 +115,19 @@ la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone n
 l'identifiant de la montre ; la montre garde le jeton à son Trousseau et lit `GET
 /notifications` avec lui en porteur. Un jeton échu ou refusé : la montre dit de l'ouvrir par
 l'iPhone. « Continuer sur l'iPhone » passe par Handoff (`ClocheSurLiPhone`). Mêmes gestes que
-la montre Wear OS. Le hors ligne et le widget viennent au lot 3.
+la montre Wear OS.
+
+**Hors ligne et widget** (lot 3) : la dernière cloche lue se garde sur la montre (7 jours,
+comme l'iPhone ; effacée dès que la montre n'est plus reliée) et se montre sans réseau sous
+« Hors ligne — à jour au … ». Le widget watchOS dit, dans la pile, « 2 nouvelles alertes ·
+dont 1 urgente » et, sur le cadran, le logo avec un point s'il y a du non lu — jamais un
+titre ni une résidence. Il lit le résumé que l'app écrit dans l'App Group
+`group.fr.coprofirst.app` après chaque lecture, y compris au rafraîchissement d'arrière-plan
+(toutes les 30 min au mieux).
 
 Elle compile les fichiers de l'app que `project.yml` nomme — la charte, le texte du site,
 l'alerte servie, le message de liaison — et joue ses tests et ceux du code partagé sur
-watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|<nombre>`).
+watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|horsligne|<nombre>`).
 Elle n'est **embarquée** dans l'app iPhone qu'à l'archive (`ARCHIVE_AVEC_MONTRE=true bash
 scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part.
 
@@ -145,6 +153,9 @@ l'administrateur — depuis son entrée, quand la résidence en sert le droit
 (coprofirst v3.84.0, contrat 1.19.0). Quand l'affaire ne suit pas la correction —
 une suite plus récente a changé son état —, une alerte le dit avec la phrase de la
 résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
+Sa propre réponse du fil des messages se modifie ou se supprime, tant que l'affaire
+n'est pas close, depuis le « ⋯ » de sa bulle (coprofirst v3.96.0, #211) ; la supprimer
+la retire aussi de l'Historique.
 Une affaire peut faire intervenir **plusieurs prestataires** (coprofirst v3.90.0,
 contrat 1.28.0, #181) : la fiche les dit un par ligne, la carte du Kanban montre le
 premier puis « +N », et « Modifier l'affaire » en ajoute, en retire et les réordonne
@@ -164,6 +175,14 @@ l'y ajoute, après confirmation), l'état (Mauvais, Neutre, Excellent), les poin
 et faibles qui composent le commentaire, un texte libre — et retire un avis, après
 confirmation. L'auteur corrige le sien : ses cases se recochent. Chaque geste suit le
 droit que la résidence sert (`est_moderateur`, `peut_modifier`).
+**Signaler et masquer** (coprofirst v3.118.0, contrat 2.9.0, #286) : une affaire se
+signale au conseil syndical (🚩 du bandeau, à qui la lit sans la corriger), comme une
+suite écrite par un autre (« ⋯ » de son entrée) et la réponse de l'assistant au
+Règlement (sous la mention de l'IA). « Masquer ce que publie… », sur une annonce, une
+réponse, un commentaire ou une suite d'un autre résident nommé, cache tout ce qu'il
+publie, pour soi seul, après confirmation ; Profil › Personnes masquées le défait.
+D'une résidence plus ancienne, rien de cela ne s'offre (porte `VersionContrat.moderation`,
+générée avec les routes `/masquages`, au-dessus du plancher).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

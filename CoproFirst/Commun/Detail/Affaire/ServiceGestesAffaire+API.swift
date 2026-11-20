@@ -6,7 +6,8 @@ import Foundation
 
 /// Les gestes du bandeau par le client généré, par les deux portes communes
 /// (`ajouterEvolution`, `modifierAffaire` — `Session/ServiceAPI+Detail.swift`) ; ceux
-/// d'une entrée de l'Historique, par les deux routes d'une évolution (PATCH, DELETE).
+/// d'une entrée de l'Historique, par les deux routes d'une évolution (PATCH, DELETE) ;
+/// ceux de son message, par les deux routes d'un message (#211).
 extension ServiceAPI: ServiceGestesAffaire {
     func ajouterSuite(_ suite: SaisieSuite, a affaire: Int, dans installation: Installation) async throws {
         var nouveau: Components.Schemas.StatutTicket?
@@ -64,6 +65,34 @@ extension ServiceAPI: ServiceGestesAffaire {
         let sortie = try await appeler {
             try await client(installation.adresse).deleteTicketsTicketIdEvolutionsEvolId(
                 path: .init(ticketId: affaire, evolId: suite))
+        }
+        switch sortie {
+        case .noContent: return
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    /// Le texte seul : les pièces jointes du message ne partent pas (`fichiers_urls` absent),
+    /// le serveur les garde.
+    func corrigerMessage(
+        _ contenuHTML: String, _ message: Int, de affaire: Int, dans installation: Installation
+    ) async throws {
+        let sortie = try await appeler {
+            try await client(installation.adresse).patchTicketsTicketIdMessagesMsgId(
+                path: .init(ticketId: affaire, msgId: message), body: .json(.init(contenu: contenuHTML)))
+        }
+        switch sortie {
+        case .ok: return
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
+
+    func supprimerMessage(_ message: Int, de affaire: Int, dans installation: Installation) async throws {
+        let sortie = try await appeler {
+            try await client(installation.adresse).deleteTicketsTicketIdMessagesMsgId(
+                path: .init(ticketId: affaire, msgId: message))
         }
         switch sortie {
         case .noContent: return

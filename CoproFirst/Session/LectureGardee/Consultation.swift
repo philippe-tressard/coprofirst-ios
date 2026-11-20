@@ -3,31 +3,6 @@
 
 import Foundation
 
-/// La résidence ouverte sans réseau, sur sa dernière lecture gardée (#101).
-struct ConsultationHorsLigne: Equatable, Sendable {
-    /// La dernière lecture fraîche de cette résidence.
-    let aJourAu: Date
-
-    /// « Hors ligne — à jour au 10/11/2026 à 14:32 » : d'où viennent les données.
-    var phrase: String {
-        "Hors ligne — à jour au \(FormatsDuSite.dateCourte(aJourAu)) à \(FormatsDuSite.heure(aJourAu))"
-    }
-}
-
-/// Les mots de la consultation hors ligne, écrits une fois.
-enum TextesHorsLigne {
-    /// Sous la date : pourquoi les gestes sont grisés.
-    static let consultationSeule = "Consultation seule : les gestes reviennent avec le réseau."
-    /// Ce que VoiceOver lit sur un geste désactivé.
-    static let raison = "Indisponible hors ligne : ce geste revient avec le réseau."
-    /// Le bandeau d'un appareil qui perd le réseau, l'app ouverte.
-    static let peutDater = "Hors ligne — ce qui est affiché peut dater."
-    /// Une lecture trop ancienne vient d'être effacée : rien à ouvrir sans réseau.
-    static let perimee =
-        "Vous êtes hors ligne, et la dernière lecture gardée sur cet appareil datait de plus de "
-        + "\(LectureGardee.joursMax) jours : elle a été effacée. Retrouvez du réseau pour rouvrir votre espace."
-}
-
 /// Ce que donne l'entrée sans réseau.
 enum EntreeHorsLigne: Equatable {
     /// La dernière lecture est ouverte, en consultation.

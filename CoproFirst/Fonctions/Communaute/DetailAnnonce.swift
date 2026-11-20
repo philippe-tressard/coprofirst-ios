@@ -14,6 +14,7 @@ struct DetailAnnonce: View {
     @Environment(\.palette) private var palette
     @Environment(\.dismiss) private var fermer
     @State private var signalee: CibleCommunaute?
+    @State private var aMasquer: AuteurAMasquer?
     @State private var aSupprimer = false
     @State private var retrait = RetraitDeReponse()
 
@@ -22,6 +23,7 @@ struct DetailAnnonce: View {
             let gestes = etat.gestesReponses(
                 .annonce(annonce.id), onglet: .annonces, installation, avec: parcours.serviceCommunaute
             ) { signalee = .reponse($0.id) }
+            .masquage(installation) { aMasquer = $0 }
             List {
                 Section {
                     VStack(alignment: .leading, spacing: 10) {
@@ -54,6 +56,7 @@ struct DetailAnnonce: View {
             .signalementAuConseil($signalee) { cible, motif in
                 Task { await etat.signaler(cible, motif: motif, installation, avec: parcours.serviceCommunaute) }
             }
+            .confirmationMasquage($aMasquer) { auteur in Task { await masquer(auteur, de: annonce) } }
             .confirmationDialog(
                 "Supprimer définitivement", isPresented: $aSupprimer, titleVisibility: .visible
             ) {
@@ -104,6 +107,13 @@ struct DetailAnnonce: View {
         }
     }
 
+    /// L'auteur de l'annonce, qu'on peut masquer (#286) : nommé, pas soi, et l'installation
+    /// le sert. Le conseil syndical se refuse au serveur, avec sa phrase.
+    private func auteurAMasquer(_ annonce: Annonce) -> AuteurAMasquer? {
+        guard annonce.estAuteur != true, installation.sert(.moderation) else { return nil }
+        return AuteurAMasquer(id: annonce.auteurId, nom: annonce.auteur, moi: etat.moi?.id)
+    }
+
     @ToolbarContentBuilder
     private func actions(_ annonce: Annonce) -> some ToolbarContent {
         let peutSupprimer = annonce.peutSupprimer
@@ -115,6 +125,12 @@ struct DetailAnnonce: View {
                         Button { signalee = .annonce(annonce.id) } label: {
                             Label("Signaler l'annonce", systemImage: "flag")
                         }
+                    }
+                    if let auteur = auteurAMasquer(annonce) {
+                        Button { aMasquer = auteur } label: {
+                            Label(TextesMasquage.geste(auteur.nom), systemImage: TextesMasquage.symbole)
+                        }
+                        .accessibilityIdentifier("annonce.masquer")
                     }
                     if peutSupprimer {
                         Button(role: .destructive) { aSupprimer = true } label: {
@@ -135,6 +151,13 @@ struct DetailAnnonce: View {
             try await service.changerStatutAnnonce(annonce.id, statut: statut, dans: installation)
             return nil
         }
+    }
+
+    /// Masquer l'auteur de CETTE annonce la retire de la liste : la fiche se ferme ; celui
+    /// d'une réponse, la fiche reste, relue.
+    private func masquer(_ auteur: AuteurAMasquer, de annonce: Annonce) async {
+        let reussi = await etat.masquer(auteur, recharger: .annonces, installation, avec: parcours.serviceCommunaute)
+        if reussi, auteur.id == annonce.auteurId { fermer() }
     }
 
     private func supprimer(_ annonce: Annonce) async {

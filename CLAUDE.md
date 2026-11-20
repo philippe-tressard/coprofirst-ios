@@ -33,7 +33,8 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   onglets, tables des menus — par `python3 scripts/generer.py`, depuis le
   **plancher** (`scripts/generateurs/_plancher.py`, une version publiée), jamais un
   clone (#34) : un module par domaine dans `scripts/generateurs/`, `_source.py` seul
-  lit coprofirst. Le plancher est la plus ancienne version servie par une
+  lit coprofirst ; une route au-dessus du plancher s'y AJOUTE, déclarée, derrière sa
+  porte de version (`AU_DESSUS_DU_PLANCHER`, #286). Le plancher est la plus ancienne version servie par une
   installation connue (l'app parle à plusieurs versions) — **mesurée** chaque jour
   (`version_contrat` de `_plancher.INSTALLATIONS`, #83) ; il ne monte que sur
   décision, quand toutes l'ont dépassé. La CI et le workflow quotidien « Concordance

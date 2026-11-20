@@ -86,6 +86,20 @@ Reste ouvert : les notifications push n'ont jamais été reçues pour de vrai (c
 relais, coprofirst#2494) ; le geste de suppression n'a été joué que sur l'API simulée ;
 la suppression est une **demande** traitée par l'administration (arbitrage du 12/11/2026).
 
+## Avant CHAQUE soumission : la commande de contrôle (#205)
+
+`python3 scripts/avant_soumission.py` juge le commit exact à soumettre (`HEAD` =
+`origin/main`) et refuse sur le moindre rouge comme sur un INCONNU : CI complète verte
+(interface comprise), concordance avec le contrat servi en production, contrôle du dépôt,
+aucun ticket `bloque-soumission` ouvert, écrans principaux en sombre et en très grand
+texte au simulateur (captures dans `.build/Soumission/`). Ce que seul Philippe voit —
+captures déposées, notes de version, étiquette App Privacy, rendu validé — se confirme
+nommément par `--confirme`. La liste fait foi dans le script
+(`CONFIRMATIONS`), elle ne se recopie pas ici. Tout vert, `--etiqueter` pose et pousse
+`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. La parité avec
+l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
+soumission reste le geste de Philippe.
+
 ## À faire avant la première soumission (historique : tout est livré ou noté ci-dessus)
 
 - [x] Manifeste de confidentialité, et texte de la fiche confronté à ce que l'app **et
@@ -99,8 +113,10 @@ la suppression est une **demande** traitée par l'administration (arbitrage du 1
       démo avant de soumettre** (jamais vue à l'écran) ; à confronter à la règle d'Apple en vigueur.
 - [x] Notes de revue : le texte est prêt dans [`notes-revue.md`](notes-revue.md), suppression
       du compte comprise (à relire contre l'app de la version soumise). Il dit que la communauté est fermée (comptes validés par la résidence),
-      que tout contenu se signale au conseil syndical, qui modère — pas de blocage d'un
-      auteur (arbitrage du 12/11/2026, #167 ; à rouvrir si la revue le demande).
+      que tout contenu se signale au conseil syndical, qui modère, la réponse de l'IA
+      comprise, et qu'un résident peut masquer ce que publie un autre (#286, décision du
+      17/11/2026, qui remplace l'arbitrage du 12/11 de #167). Ces gestes sont au-dessus du
+      plancher : **la démo doit servir le contrat 2.9.0 (v3.118.0) avant la soumission**.
 - [x] Texte et avis d'Apache-2.0 des paquets embarqués dans « À propos » (#168), tenus par
       `scripts/verifier-dependances.py`.
 - [ ] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception).

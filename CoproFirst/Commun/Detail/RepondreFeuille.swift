@@ -3,10 +3,13 @@
 
 import SwiftUI
 
-/// « Répondre » : un message du fil de l'affaire (POST …/messages), comme le site.
+/// « Répondre » : un message du fil de l'affaire (POST …/messages), comme le site. Avec
+/// `corrige`, la même feuille modifie SON message (PATCH …/messages/{id}, #211) : elle part
+/// de son texte, et n'enregistre qu'un changement.
 struct RepondreFeuille: View {
     let affaire: DetailAffaire
     let installation: Installation
+    var corrige: MessageAffaire?
     let envoyee: () -> Void
     @Environment(Parcours.self) private var parcours
     @Environment(\.palette) private var palette
@@ -40,28 +43,46 @@ struct RepondreFeuille: View {
             }
             .padding(Mise.marge)
             .background(palette.bg)
-            .navigationTitle("Répondre")
+            .navigationTitle(corrige == nil ? "Répondre" : TextesMessage.titreCorrection)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Envoyer") { Task { await envoyer() } }
-                        .disabled(texte.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || enCours)
+                    Button(corrige == nil ? "Envoyer" : TextesMessage.enregistrer) { Task { await envoyer() } }
+                        .disabled(!aEnvoyer || enCours)
                         .gesteEnLigne()
                         .accessibilityIdentifier("repondre.envoyer")
                 }
             }
-            .onAppear { actif = true }
+            .onAppear {
+                if let corrige, texte.isEmpty { texte = TexteDuSite.saisi(html: corrige.contenu) ?? "" }
+                actif = true
+            }
             .sensoryFeedback(.success, trigger: reussite)
             .sensoryFeedback(.error, trigger: erreur) { _, nouvelle in nouvelle != nil }
         }
     }
 
+    /// Un texte, et — pour une correction — un texte qui a changé.
+    private var aEnvoyer: Bool {
+        let saisi = texte.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !saisi.isEmpty else { return false }
+        return corrige.map { TexteDuSite.html(saisi: saisi) != $0.contenu } ?? true
+    }
+
     private func envoyer() async {
         enCours = true
         defer { enCours = false }
+        let saisi = texte.trimmingCharacters(in: .whitespacesAndNewlines)
         do {
-            try await parcours.service.repondre(
-                texte.trimmingCharacters(in: .whitespacesAndNewlines), a: affaire.id, dans: installation)
+            if let corrige {
+                guard let service = parcours.service.gestesAffaire else {
+                    throw ErreurService.refus(.init(phrase: AvisDuGeste.indisponible))
+                }
+                try await service.corrigerMessage(
+                    TexteDuSite.html(saisi: saisi), corrige.id, de: affaire.id, dans: installation)
+            } else {
+                try await parcours.service.repondre(saisi, a: affaire.id, dans: installation)
+            }
             reussite += 1
             envoyee()
         } catch {

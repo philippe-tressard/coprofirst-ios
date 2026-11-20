@@ -26,6 +26,12 @@ protocol ServiceGestesAffaire: Sendable {
     ) async throws -> IssueCorrection?
     /// DELETE /tickets/{id}/evolutions/{evol_id} : effacer une entrée de l'Historique.
     func supprimerSuite(_ suite: Int, de affaire: Int, dans installation: Installation) async throws
+    /// PATCH /tickets/{id}/messages/{msg_id} : SON message corrigé (#211) — le serveur
+    /// réécrit aussi son miroir de l'Historique.
+    func corrigerMessage(_ contenuHTML: String, _ message: Int, de affaire: Int, dans installation: Installation)
+        async throws
+    /// DELETE /tickets/{id}/messages/{msg_id} : SON message retiré, et son miroir avec lui.
+    func supprimerMessage(_ message: Int, de affaire: Int, dans installation: Installation) async throws
 }
 
 extension ServiceCoproFirst {

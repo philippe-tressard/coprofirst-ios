@@ -4,20 +4,6 @@
 import CryptoKit
 import Foundation
 
-/// La consultation hors ligne (#101) : la dernière lecture de chaque résidence, gardée
-/// sur l'appareil pour être relue sans réseau — jamais pour agir.
-enum LectureGardee {
-    /// La durée maximale d'une lecture gardée, en jours. Au-delà, sans lecture fraîche,
-    /// elle est effacée : un compte révoqué ne garde pas ses données indéfiniment hors
-    /// ligne. **Proposition du ticket (#101), à confirmer par Philippe.**
-    static let joursMax = 7
-    static var dureeMax: TimeInterval { TimeInterval(joursMax) * 86_400 }
-
-    /// La taille maximale d'une réponse gardée : celle d'un fichier servi
-    /// (`ClientCoproFirst.fichierServi`). Au-delà, la réponse passe sans être gardée.
-    static let plafond = 50 * 1024 * 1024
-}
-
 /// Ce que l'appareil garde d'une résidence, au moment d'y entrer sans réseau.
 enum LectureDisponible: Equatable, Sendable {
     /// Une lecture gardée, et la date de sa dernière mise à jour.

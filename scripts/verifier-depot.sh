@@ -220,7 +220,8 @@ autotest_lecture || echec "verifier-depot.sh : autotest de la lecture de coprofi
 # déclarées : ce script, et deux morceaux sourcés que joue l'autotest de tests-simulateur.sh.
 # Ce que prouvent les autotests nommés à l'en-tête y est dit ; s'y ajoutent l'app montre
 # livrée dépendante de l'iPhone (verifier-montre-dependante.sh, #226 ; la construction
-# Release se juge en CI) et la PR de documentation seule, qu'un .swift relance (#204).
+# Release se juge en CI), la PR de documentation seule, qu'un .swift relance (#204), et le
+# contrôle avant soumission, qui refuse un rouge comme un INCONNU (avant_soumission.py, #205).
 SOURCES_AUTOTEST="scripts/verifier-depot.sh scripts/autotest-tests-simulateur.sh scripts/verrou-simulateur.sh"
 for f in $SOURCES_AUTOTEST; do grep -q -e '--autotest' "$f" || echec "$f : exception sans --autotest, à retirer"; done
 while IFS= read -r f; do
