@@ -146,3 +146,19 @@ Après l'Espace CS. Quatre onglets dans l'app ; le reste du Paramétrage est « 
 | `admin` | `installation` | site seulement | #16 | Paramétrage : l'app renvoie au site |
 | `admin` | `maintenance` | fait | #16 | Santé des tâches (opérateur), dernier export (administration) ; lancer, vérifier, exporter restent au site |
 | `admin` | `installations` | site seulement | #16 | Paramétrage : l'app renvoie au site |
+
+### Hors des onglets — l'Apple Watch (#226)
+
+La montre ne porte **aucun onglet** du site : la table ci-dessus ne la compte pas, et
+`verifier-parite.py` ne la juge pas. Son périmètre se déclare ici, en lecture seule ; tout
+le reste se lit à l'iPhone. Son pendant Wear OS est la ligne 32 de coprofirst-android#12.
+
+| Sur la montre | Ce qu'elle montre | Lot |
+|---|---|---|
+| La cloche | Celle de la dernière résidence ouverte, lue par `GET /notifications` avec un jeton propre à la montre. On y voit les non lues devant, les urgentes en tête, « Déjà lues » repliée, et pour chaque alerte son détail et l'icône de son type. par Handoff, l'iPhone propose d'ouvrir la cloche de cette résidence | #292, #306 |
+| Le hors ligne | La dernière cloche lue, datée, pendant sept jours au plus (la durée de l'iPhone). Elle est effacée quand la montre n'est plus reliée | #315 |
+| Le widget | Des nombres seulement (« 2 nouvelles alertes · dont 1 urgente »), et sur le cadran le logo, avec un point s'il y a du non lu. Ni titre ni nom de résidence | #315 |
+| Ce qu'elle ne fait pas | Aucun geste : ni marquer lu, ni supprimer, ni répondre. Rien des affaires, de la résidence, de la communauté ni de l'administration | — |
+
+**Liaison éteinte** (`LiaisonMontre.active`) : en production, la montre se dit « non reliée »
+tant que Philippe ne l'allume pas, en même temps que Wear OS (coprofirst-android#207).
