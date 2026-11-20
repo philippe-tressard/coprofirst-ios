@@ -76,7 +76,7 @@ struct RepondreFeuille: View {
         do {
             if let corrige {
                 guard let service = parcours.service.gestesAffaire else {
-                    throw ErreurService.refus(.init(phrase: TextesSuite.indisponible))
+                    throw ErreurService.refus(.init(phrase: AvisDuGeste.indisponible))
                 }
                 try await service.corrigerMessage(
                     TexteDuSite.html(saisi: saisi), corrige.id, de: affaire.id, dans: installation)

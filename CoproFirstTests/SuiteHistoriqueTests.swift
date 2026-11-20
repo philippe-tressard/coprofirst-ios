@@ -81,7 +81,7 @@ struct SuiteHistoriqueTests {
         let servies = try lues(servies)
         let tout = DroitsServisSuite(modifier: true, supprimer: true)
         #expect(servies.map(\.droits) == [tout, tout, DroitsServisSuite()], "une réponse appartient à son auteur")
-        #expect(servies.map(GesteSuite.offerts) == [[.modifier, .supprimer], [.modifier, .supprimer], []])
+        #expect(servies.map { GesteSuite.offerts(pour: $0) } == [[.modifier, .supprimer], [.modifier, .supprimer], []])
     }
 
     @Test func unSeulGesteServiNOffreQueLui() throws {
@@ -96,7 +96,9 @@ struct SuiteHistoriqueTests {
               "contenu": "Un autre.", "peut_modifier": null}]
             """#
         let servies = try lues(json)
-        #expect(servies.map(GesteSuite.offerts) == [[.modifier], []], "le conseil corrige, l'administrateur efface")
+        #expect(
+            servies.map { GesteSuite.offerts(pour: $0) } == [[.modifier], []],
+            "le conseil corrige, l'administrateur efface")
     }
 
     /// Le défaut FERMÉ : une entrée servie sans ces champs (ils sont facultatifs au
@@ -108,7 +110,7 @@ struct SuiteHistoriqueTests {
               "etat_propose_libelle": "", "cree_le": "2026-11-09T11:00:00",
               "contenu": "Un mot.", "statut_avant": "en_cours"}]
             """#
-        #expect(try lues(json).map(GesteSuite.offerts) == [[]])
+        #expect(try lues(json).map { GesteSuite.offerts(pour: $0) } == [[]])
         #expect(try lues(json).first?.ancienStatut == "en_cours", "l'état d'avant, lui, est au plancher")
     }
 

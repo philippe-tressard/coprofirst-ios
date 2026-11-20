@@ -243,6 +243,8 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `patchTicketsTicketIdMessagesMsgId` | `EmailsOrTextMessages` |
 | `deleteTicketsTicketIdMessagesMsgId` | — |
 | `postSignalements` | `OtherUserContent` |
+| `postMasquages` | `OtherUserContent` |
+| `deleteMasquagesAuteurId` | — |
 | `postLecturesApercu` | `OtherUserContent` |
 | `postPerimetresLibelle` | `OtherUserContent` |
 | `postNomsAffiche` | `Name` |

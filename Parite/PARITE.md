@@ -61,7 +61,7 @@ Session parallèle (écrans des résidents). Dossier : `Fonctions/Affaires`.
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) ; sur la fiche, une suite de l'Historique se corrige et s'efface depuis son entrée, selon le droit servi avec elle (#91, #93) ; une correction que l'affaire n'a pas suivie se dit, et l'état servi se propose (#187) ; sa réponse du fil se modifie ou se supprime tant que l'affaire n'est pas close (#211) ; plusieurs prestataires (#181) : un par ligne sur la fiche, ajoutés, retirés et réordonnés dans « Modifier » selon le droit servi — la Suite n'en pose pas (site) |
+| `mes-demandes` | `liste` | fait | #11 | Recherche au serveur, Suivi, nature, « ce qui me concerne », archiver (conseil) ; « Nouvelle affaire » sans pièces jointes (site), composée selon la saisie du compte — Essentielle range dans « Plus de détails » (#69), l'Édition aussi (#110) ; sur la fiche, une suite de l'Historique se corrige et s'efface depuis son entrée, selon le droit servi avec elle (#91, #93) ; une correction que l'affaire n'a pas suivie se dit, et l'état servi se propose (#187) ; 🚩 signaler l'affaire (qui la lit sans la corriger), signaler une suite d'un autre et masquer ce que publie son auteur (#286, contrat 2.9.0) ; sa réponse du fil se modifie ou se supprime tant que l'affaire n'est pas close (#211) ; plusieurs prestataires (#181) : un par ligne sur la fiche, ajoutés, retirés et réordonnés dans « Modifier » selon le droit servi — la Suite n'en pose pas (site) |
 | `mes-demandes` | `kanban` | fait | #11, #181 | Le premier prestataire, puis « +N » ; fermé aux locataires ; le conseil déplace (glisser, ou « Déplacer vers… ») ; la fusion à la clôture reste au site |
 | `mes-demandes` | `archives` | fait | #11 | Trois ans, par année, chacune repliable |
 
@@ -73,7 +73,7 @@ Session parallèle. Dossiers : `Fonctions/Residence`, `Fonctions/Annuaire`.
 |---|---|---|---|---|
 | `residence` | `fiche` | fait | #12 | En lecture : la fiche, les documents et les rapports se déposent et se corrigent sur le site |
 | `residence` | `carnet` | fait | #12, #259 | « À venir » sous « Contrat » quand il n'a pas commencé (servi, #259) ; le bilan de l'exercice (conseil syndical) et le filtre par année restent sur le site, et l'app le dit |
-| `residence` | `reglement` | fait | #12, #71 | Poser une question et lire les avis — à renvois (fondements qui mènent aux extraits, sections pliées) ou d'avant ; publier dans la FAQ et supprimer restent sur le site |
+| `residence` | `reglement` | fait | #12, #71, #286 | Poser une question et lire les avis — à renvois (fondements qui mènent aux extraits, sections pliées) ou d'avant ; signaler la réponse de l'assistant (contrat 2.9.0) ; publier dans la FAQ et supprimer restent sur le site |
 | `annuaire` | — | fait | #12 |  |
 
 ### #13 — Mes lots & accès et Prestataires
@@ -96,12 +96,12 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 
 | Page | Onglet | État | Ticket | Note |
 |---|---|---|---|---|
-| `communaute` | `sondages` | fait | #14, #38 | Liste ; fiche comme celle du site (`SondageView`) : réponse à préciser, commentaire, charte, résultats et réponses libres (visibles avant la clôture : provisoires, au-dessus du vote), fil des commentaires (commenter, retirer, signaler) ; créer, modifier, stopper : site (conseil syndical) |
-| `communaute` | `idees` | fait | #14 | Liste, filtre, vote, réponses, signalement, proposer ; corriger, statut, supprimer : site |
-| `communaute` | `annonces` | fait | #14 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; corriger, photos : site |
+| `communaute` | `sondages` | fait | #14, #38 | Liste ; fiche comme celle du site (`SondageView`) : réponse à préciser, commentaire, charte, résultats et réponses libres (visibles avant la clôture : provisoires, au-dessus du vote), fil des commentaires (commenter, retirer, signaler, masquer ce que publie l'auteur — #286) ; créer, modifier, stopper : site (conseil syndical) |
+| `communaute` | `idees` | fait | #14, #286 | Liste, filtre, vote, réponses, signalement, proposer ; masquer ce que publie l'auteur d'une réponse (#286 ; une idée ne dit pas son auteur) ; corriger, statut, supprimer : site |
+| `communaute` | `annonces` | fait | #14, #286 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; masquer ce que publie l'auteur d'une annonce ou d'une réponse (#286, contrat 2.9.0) ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
 | `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
-| `profil` | — | fait | #14, #166 | Sous « Plus », saisie d'une affaire comprise (#69), demande de suppression du compte (#166) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
+| `profil` | — | fait | #14, #166, #286 | Sous « Plus », saisie d'une affaire comprise (#69), demande de suppression du compte (#166), personnes masquées et « Ne plus masquer » (#286, contrat 2.9.0) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
 | `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 
 ### #15 — Espace conseil syndical et Délégations

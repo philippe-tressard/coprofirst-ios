@@ -99,6 +99,8 @@ struct Annonce: Codable, Hashable, Sendable, Identifiable {
     var lecture: Lecture?
     /// Son lieu (`perimetre_libelle`, contrat 1.24.0, #130) ; `nil` pour le défaut, ou non servi.
     var lieu: String?
+    /// Son auteur (`auteur_id`) : « Masquer ce que publie… » le vise (#286).
+    var auteurId: Int?
 }
 
 /// Un avis sur l'application (`AvisRead`, typé dans le contrat).

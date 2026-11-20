@@ -71,6 +71,9 @@ struct BoutonDesGestes<Geste: GesteDeMenu>: View {
     let prefixe: String
     let id: Int
     let libelleVocal: String
+    /// Le mot d'un geste dans le menu : le sien, sauf quand il dépend de l'élément
+    /// (« Masquer ce que publie <nom> », `GesteSuite.libelle(pour:)`, #286).
+    var libelle: (Geste) -> String = { $0.libelle }
     let choisir: (Geste) -> Void
     @Environment(\.palette) private var palette
     /// La hauteur de la première ligne de l'élément : le bouton s'y aligne.
@@ -82,7 +85,7 @@ struct BoutonDesGestes<Geste: GesteDeMenu>: View {
                 Button(role: geste.destructif ? .destructive : nil) {
                     choisir(geste)
                 } label: {
-                    Label(geste.libelle, systemImage: geste.symbole)
+                    Label(libelle(geste), systemImage: geste.symbole)
                 }
                 .accessibilityIdentifier("\(prefixe).geste.\(geste.rawValue)")
             }
@@ -136,16 +139,8 @@ struct GestesDesMessages: ViewModifier {
     }
 
     private func retirer(_ message: MessageAffaire) async {
-        guard let service = parcours.service.gestesAffaire else {
-            avis.dire(TextesSuite.indisponible, ton: .error)
-            return
-        }
-        do {
-            try await service.supprimerMessage(message.id, de: affaire.id, dans: installation)
-            avis.dire(TextesMessage.supprime)
-            recharger()
-        } catch {
-            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+        await avis.agir(avec: parcours.service.gestesAffaire, reussite: TextesMessage.supprime, apres: recharger) {
+            try await $0.supprimerMessage(message.id, de: affaire.id, dans: installation)
         }
     }
 }

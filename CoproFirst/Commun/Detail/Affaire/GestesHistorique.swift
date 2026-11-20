@@ -11,6 +11,8 @@ import SwiftUI
 final class ChoixDeSuite {
     var aCorriger: SuiteAffaire?
     var aSupprimer: SuiteAffaire?
+    var aSignaler: SuiteAffaire?
+    var aMasquer: AuteurAMasquer?
     var messageACorriger: MessageAffaire?
     var messageASupprimer: MessageAffaire?
     /// Une correction que l'affaire n'a pas suivie (#187) : remise par la feuille, dite
@@ -27,6 +29,8 @@ final class ChoixDeSuite {
     func choisir(_ geste: GesteSuite, _ suite: SuiteAffaire) {
         switch geste {
         case .modifier: aCorriger = suite
+        case .signaler: aSignaler = suite
+        case .masquer: aMasquer = AuteurAMasquer(id: suite.auteurId, nom: suite.auteur, moi: nil)
         case .supprimer: aSupprimer = suite
         }
     }
@@ -50,6 +54,10 @@ final class ChoixDeSuite {
 /// l'état, l'état qu'il propose — appliqué par le geste de toujours, une Suite qui
 /// change l'état (`ajouterSuite`). L'affaire n'a pas pris l'état choisi : un avis
 /// éphémère passerait sans qu'on le lise.
+///
+/// Signaler une suite au conseil, masquer ce que publie son auteur (#286) : le motif,
+/// puis l'avis ; la confirmation, puis l'affaire relue — le serveur ne sert plus ses
+/// suites ni ses messages.
 struct GestesHistorique: ViewModifier {
     let affaire: DetailAffaire
     let installation: Installation
@@ -102,6 +110,8 @@ struct GestesHistorique: ViewModifier {
             } message: { issue in
                 Text(issue.phrase)
             }
+            .signalementAuConseil($choix.aSignaler) { suite, motif in Task { await signaler(suite, motif) } }
+            .confirmationMasquage($choix.aMasquer) { auteur in Task { await masquer(auteur) } }
             .avisEphemere(avis)
     }
 
@@ -119,30 +129,28 @@ struct GestesHistorique: ViewModifier {
 
     /// L'état que le serveur propose, appliqué à l'affaire par une Suite qui change l'état.
     private func appliquer(_ saisie: SaisieSuite) async {
-        guard let service = parcours.service.gestesAffaire else {
-            avis.dire(TextesSuite.indisponible, ton: .error)
-            return
+        await avis.agir(avec: parcours.service.gestesAffaire, reussite: TextesSuite.statutMisAJour, apres: recharger) {
+            try await $0.ajouterSuite(saisie, a: affaire.id, dans: installation)
         }
-        do {
-            try await service.ajouterSuite(saisie, a: affaire.id, dans: installation)
-            avis.dire(TextesSuite.statutMisAJour)
-            recharger()
-        } catch {
-            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+    }
+
+    private func signaler(_ suite: SuiteAffaire, _ motif: String) async {
+        await avis.agir(avec: parcours.service.signalements, reussite: TextesSignalement.transmis) {
+            try await $0.signalerAuConseil(.suite(suite.id), motif: motif, dans: installation)
+        }
+    }
+
+    /// Le serveur ne sert plus ses suites ni ses messages : l'affaire se relit.
+    private func masquer(_ auteur: AuteurAMasquer) async {
+        let reussite = TextesMasquage.masque(auteur.nom)
+        await avis.agir(avec: parcours.service.masquages, reussite: reussite, apres: recharger) {
+            try await $0.masquer(auteur, dans: installation)
         }
     }
 
     private func supprimer(_ suite: SuiteAffaire) async {
-        guard let service = parcours.service.gestesAffaire else {
-            avis.dire(TextesSuite.indisponible, ton: .error)
-            return
-        }
-        do {
-            try await service.supprimerSuite(suite.id, de: affaire.id, dans: installation)
-            avis.dire(TextesSuite.supprimee)
-            recharger()
-        } catch {
-            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+        await avis.agir(avec: parcours.service.gestesAffaire, reussite: TextesSuite.supprimee, apres: recharger) {
+            try await $0.supprimerSuite(suite.id, de: affaire.id, dans: installation)
         }
     }
 }
@@ -154,20 +162,26 @@ struct GestesHistorique: ViewModifier {
 private struct GestesSuite: ViewModifier {
     let suite: SuiteAffaire?
     @Environment(ChoixDeSuite.self) private var choix: ChoixDeSuite?
+    /// Le compte et la porte de la résidence ouverte : signaler, masquer (#286).
+    @Environment(Parcours.self) private var parcours: Parcours?
 
     func body(content: Content) -> some View {
-        let gestes = choix == nil ? [] : suite.map(GesteSuite.offerts(pour:)) ?? []
+        let ouverte = parcours?.ouverteAJour
+        let gestes = choix == nil ? [] : suite.map {
+            GesteSuite.offerts(
+                pour: $0, moi: ouverte?.profil?.idCompte, moderation: ouverte?.sert(.moderation) ?? false)
+        } ?? []
         if let suite, !gestes.isEmpty {
             HStack(alignment: .top, spacing: 8) {
                 content
                     .accessibilityActions {
                         ForEach(gestes) { geste in
-                            Button(geste.libelle) { choix?.choisir(geste, suite) }
+                            Button(geste.libelle(pour: suite)) { choix?.choisir(geste, suite) }
                         }
                     }
                 BoutonDesGestes(
-                    gestes: gestes, prefixe: "historique", id: suite.id, libelleVocal: TextesSuite.gestes
-                ) { choix?.choisir($0, suite) }
+                    gestes: gestes, prefixe: "historique", id: suite.id, libelleVocal: TextesSuite.gestes,
+                    libelle: { $0.libelle(pour: suite) }, choisir: { choix?.choisir($0, suite) })
             }
         } else {
             content

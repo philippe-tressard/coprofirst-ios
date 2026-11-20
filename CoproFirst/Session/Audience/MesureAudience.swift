@@ -58,7 +58,7 @@ final class MesureAudience {
 
     /// L'installation accepte-t-elle la mesure de CE compte, par ce canal ?
     static func mesurable(_ installation: Installation) -> Bool {
-        guard let contrat = installation.contrat, contrat >= .plancher else { return false }
+        guard installation.sert(.plancher) else { return false }
         return installation.profil?.refusMesure == false
     }
 

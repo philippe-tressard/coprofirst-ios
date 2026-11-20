@@ -113,8 +113,10 @@ soumission reste le geste de Philippe.
       démo avant de soumettre** (jamais vue à l'écran) ; à confronter à la règle d'Apple en vigueur.
 - [x] Notes de revue : le texte est prêt dans [`notes-revue.md`](notes-revue.md), suppression
       du compte comprise (à relire contre l'app de la version soumise). Il dit que la communauté est fermée (comptes validés par la résidence),
-      que tout contenu se signale au conseil syndical, qui modère — pas de blocage d'un
-      auteur (arbitrage du 12/11/2026, #167 ; à rouvrir si la revue le demande).
+      que tout contenu se signale au conseil syndical, qui modère, la réponse de l'IA
+      comprise, et qu'un résident peut masquer ce que publie un autre (#286, décision du
+      17/11/2026, qui remplace l'arbitrage du 12/11 de #167). Ces gestes sont au-dessus du
+      plancher : **la démo doit servir le contrat 2.9.0 (v3.118.0) avant la soumission**.
 - [x] Texte et avis d'Apache-2.0 des paquets embarqués dans « À propos » (#168), tenus par
       `scripts/verifier-dependances.py`.
 - [ ] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception).

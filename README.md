@@ -175,6 +175,14 @@ l'y ajoute, après confirmation), l'état (Mauvais, Neutre, Excellent), les poin
 et faibles qui composent le commentaire, un texte libre — et retire un avis, après
 confirmation. L'auteur corrige le sien : ses cases se recochent. Chaque geste suit le
 droit que la résidence sert (`est_moderateur`, `peut_modifier`).
+**Signaler et masquer** (coprofirst v3.118.0, contrat 2.9.0, #286) : une affaire se
+signale au conseil syndical (🚩 du bandeau, à qui la lit sans la corriger), comme une
+suite écrite par un autre (« ⋯ » de son entrée) et la réponse de l'assistant au
+Règlement (sous la mention de l'IA). « Masquer ce que publie… », sur une annonce, une
+réponse, un commentaire ou une suite d'un autre résident nommé, cache tout ce qu'il
+publie, pour soi seul, après confirmation ; Profil › Personnes masquées le défait.
+D'une résidence plus ancienne, rien de cela ne s'offre (porte `VersionContrat.moderation`,
+générée avec les routes `/masquages`, au-dessus du plancher).
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

@@ -45,6 +45,9 @@ private struct Factice: ServiceCommunaute {
     func supprimerReponseCommunaute(_ id: Int, de cible: CibleCommunaute, dans installation: Installation)
         async throws {}
     func signalerAuConseil(_ cible: CibleSignalement, motif: String, dans installation: Installation) async throws {}
+    func masques(dans installation: Installation) async throws -> [Masquage] { [] }
+    func masquer(_ auteur: AuteurAMasquer, dans installation: Installation) async throws {}
+    func demasquer(_ auteurId: Int, dans installation: Installation) async throws {}
     func deposerAvis(_ saisie: SaisieAvis, dans installation: Installation) async throws {}
     func corrigerAvis(_ id: Int, _ saisie: SaisieAvis, dans installation: Installation) async throws {}
     func archiverAvis(_ id: Int, archive: Bool, dans installation: Installation) async throws {}

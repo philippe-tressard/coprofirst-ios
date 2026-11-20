@@ -9,7 +9,9 @@ import Foundation
 /// 🔴 Elle se compare par ses NOMBRES, jamais comme une chaîne : « 1.9.0 » < « 1.15.0 »,
 /// que l'ordre des caractères inverserait. C'est la seule comparaison de versions de
 /// contrat de l'app — un geste qui dépend d'une version s'écrit
-/// `installation.contrat >= .plancher`, jamais avec la chaîne servie.
+/// `installation.sert(.plancher)`, jamais avec la chaîne servie.
+/// Les portes des routes au-dessus du plancher (`.moderation`) se GÉNÈRENT avec elles
+/// (`AU_DESSUS_DU_PLANCHER` de `scripts/generateurs/contrat.py`, #286).
 ///
 /// Une porte de version ne vit ici que tant qu'elle est AU-DESSUS du plancher
 /// (`ContratDuPlancher.swift`, généré) : sous lui, toute installation qui s'ouvre la

@@ -14,3 +14,4 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 | Version du contrat | `2.8.0` (`info.version` du contrat publié, servie par chaque installation en `version_contrat` de `GET /config`) |
 | Préfixe servi | `/api` : les chemins du schéma s'entendent sous `https://<hôte>/api` |
 | Normalisation | `anyOf: [X, null]` réécrit en `type: [X, "null"]` (`$ref` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres `in: cookie` retirés — iOS envoie les cookies de session seul |
+| Au-dessus du plancher | `/masquages`, `/masquages/{auteur_id}` et `MasquageCreate`, `MasquageRead`, de v3.118.0 (contrat 2.9.0) — porte `VersionContrat.moderation` |
