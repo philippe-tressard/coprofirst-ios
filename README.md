@@ -25,9 +25,8 @@ Une version sort sur l'App Store, et la soumission à la revue d'Apple reste un 
 Philippe :
 
 1. la version se lit dans `project.yml` (`MARKETING_VERSION`, et `CURRENT_PROJECT_VERSION`,
-   qui monte à chaque envoi) ; chaque version soumise porte son étiquette `vX.Y.Z` —
-   `v1.1.0`, posée à la main ; `v1.0.0`, à poser après coup, et la pose par la commande
-   de contrôle : #205 ;
+   qui monte à chaque envoi) ; chaque version soumise porte son étiquette `vX.Y.Z` (`v1.0.0`,
+   `v1.1.0`), posée par le contrôle avant soumission ;
 2. chaque PR est construite et testée par la CI (`ci.yml`), **sans signer** — sauf une PR
    de documentation seule, dont la CI saute le build et les tests macOS
    (`scripts/ci_documentation_seule.py`, #204) ; qui fusionne sur `main` se lit au champ
@@ -38,7 +37,8 @@ Philippe :
    version.
 
 Le contrôle de cohérence qui précède chaque soumission, et l'étiquette qu'il pose :
-#205. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
+`python3 scripts/avant_soumission.py` (#205) — il refuse sur le moindre rouge comme sur un
+INCONNU, et ne soumet rien. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
 un geste de Philippe : skill
 [`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 
@@ -153,6 +153,9 @@ l'administrateur — depuis son entrée, quand la résidence en sert le droit
 (coprofirst v3.84.0, contrat 1.19.0). Quand l'affaire ne suit pas la correction —
 une suite plus récente a changé son état —, une alerte le dit avec la phrase de la
 résidence, et propose d'appliquer l'état à l'affaire (contrat 1.30.0, #187).
+Sa propre réponse du fil des messages se modifie ou se supprime, tant que l'affaire
+n'est pas close, depuis le « ⋯ » de sa bulle (coprofirst v3.96.0, #211) ; la supprimer
+la retire aussi de l'Historique.
 Une affaire peut faire intervenir **plusieurs prestataires** (coprofirst v3.90.0,
 contrat 1.28.0, #181) : la fiche les dit un par ligne, la carte du Kanban montre le
 premier puis « +N », et « Modifier l'affaire » en ajoute, en retire et les réordonne

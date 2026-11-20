@@ -15,18 +15,25 @@ import SwiftUI
 /// - l'auteur : la bulle dit « Vous » pour le compte (`est_auteur` servi, contrat
 ///   1.26.0, #138), le nom servi sinon (`auteur_nom`) ; sans nom servi, la qualité servie
 ///   (`auteur_qualite`).
+///
+/// Son propre message se modifie et se retire tant que l'affaire n'est pas close (#211,
+/// `GesteMessage`) : le « ⋯ » de sa bulle ; l'écran présente la feuille et la question
+/// (`gestesHistorique`).
 struct FilMessagesAffaire: View {
-    let messages: [MessageAffaire]
+    let affaire: DetailAffaire
     let installation: Installation
 
     var body: some View {
+        let messages = affaire.messages
         if !messages.isEmpty {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Messages")
                     .styleLibelle()
                     .accessibilityAddTraits(.isHeader)
                 ForEach(messages) { message in
-                    BulleMessage(message: message, installation: installation)
+                    BulleMessage(
+                        message: message, installation: installation,
+                        gestes: GesteMessage.offerts(pour: message, dans: affaire))
                 }
             }
         }
@@ -38,35 +45,54 @@ struct FilMessagesAffaire: View {
 private struct BulleMessage: View {
     let message: MessageAffaire
     let installation: Installation
+    let gestes: [GesteMessage]
+    /// Hors d'un écran qui les présente (le squelette, un aperçu) : aucun geste.
+    @Environment(ChoixDeSuite.self) private var choix: ChoixDeSuite?
     @Environment(\.palette) private var palette
 
     var body: some View {
         HStack(spacing: 0) {
             if message.deMoi { Spacer(minLength: 32) }
             VStack(alignment: .leading, spacing: 10) {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 6) {
-                        if let auteur = message.auteur {
-                            Text(auteur)
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(palette.text)
+                HStack(alignment: .top, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) {
+                            if let auteur = message.auteur {
+                                Text(auteur)
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(palette.text)
+                            }
+                            if message.interne {
+                                PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true)
+                            }
+                            Spacer(minLength: 8)
+                            Text(FormatsDuSite.dateHeure(message.date))
+                                .font(.caption)
+                                .foregroundStyle(palette.textMuted)
                         }
-                        if message.interne { PastilleTeinte(libelle: "interne", badge: "badge-yellow", compacte: true) }
-                        Spacer(minLength: 8)
-                        Text(FormatsDuSite.dateHeure(message.date))
-                            .font(.caption)
-                            .foregroundStyle(palette.textMuted)
+                        TexteRiche(html: message.contenu)
+                            .font(.body)
+                            .foregroundStyle(palette.text)
+                            .tint(palette.primary)
+                            .textSelection(.enabled)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    TexteRiche(html: message.contenu)
-                        .font(.body)
-                        .foregroundStyle(palette.text)
-                        .tint(palette.primary)
-                        .textSelection(.enabled)
-                        .fixedSize(horizontal: false, vertical: true)
+                    // Le texte se lit d'un trait ; chaque pièce, à part, s'ouvre. Les gestes y sont
+                    // aussi des actions d'accessibilité.
+                    .accessibilityElement(children: .combine)
+                    .accessibilityActions {
+                        if let choix {
+                            ForEach(gestes) { geste in Button(geste.libelle) { choix.choisir(geste, message) } }
+                        }
+                    }
+                    .accessibilityIdentifier("affaire.message.\(message.id)")
+                    // Hors du texte lu d'un trait : le « ⋯ » reste un bouton à part (#211).
+                    if let choix, !gestes.isEmpty {
+                        BoutonDesGestes(
+                            gestes: gestes, prefixe: "message", id: message.id, libelleVocal: TextesMessage.gestes
+                        ) { choix.choisir($0, message) }
+                    }
                 }
-                // Le texte se lit d'un trait ; chaque pièce, à part, s'ouvre.
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("affaire.message.\(message.id)")
                 PiecesJointesView(pieces: message.pieces, installation: installation, format: .compact)
             }
             .padding(12)
