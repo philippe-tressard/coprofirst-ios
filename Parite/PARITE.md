@@ -36,7 +36,10 @@ parallèles ne se gênent pas.
 4. **#16** — Administration, en partie.
 5. **#17** notifications push : côté app livré (autorisation dans la cloche,
    appareil enregistré et retiré, notification touchée → la cloche de sa résidence) ;
-   réception réelle en attente du relais (coprofirst#2494, clé `.p8`).
+   **#283** : seule l'alerte d'une actualité marquée urgente par le conseil syndical ou
+   l'administrateur sonne, auprès d'une résidence au contrat 2.10.0 au moins ; l'app la
+   tient **éteinte** (`RelaisPush`) tant que le service `notifications_push` n'est pas
+   allumé (coprofirst#2875) ; réception réelle en attente de la clé `.p8` (coprofirst#2494).
    **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
    porte de navigation codées, liste des domaines en attente de décision (#18).
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
