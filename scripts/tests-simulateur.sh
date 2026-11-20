@@ -31,6 +31,10 @@
 #     `generer-projet.sh`) arrête tout AVANT le build : INCONNU, avec la commande à
 #     lancer. Le script ne régénère pas le projet lui-même : XcodeGen réécrit un projet
 #     qu'Xcode peut tenir ouvert, et en CI la génération est une étape à part (#170) ;
+#   - au poste, la machine ne s'endort pas pendant le passage (`caffeinate -i -s`), et le
+#     résumé dit si elle s'est endormie quand même (`scripts/veille_poste.py`, #322) : le
+#     20/11/2026, une passe a joué une heure sur un Mac en veille, 25 min par test et
+#     « Timed out while synthesizing event » — un rouge sous veille est INCONNU ;
 #   - le verrou COMMUN du poste d'abord (`verrou_poste.py`, #255), qui exclut aussi
 #     Gradle et le rejeu de la CI des autres projets ; puis
 #   - UN SEUL passage à la fois sur le poste (#108) : le script prend le verrou
@@ -57,7 +61,8 @@
 # (`bash scripts/tests-simulateur.sh -only-testing:CoproFirstUITests/ParcoursUITests`).
 # `--autotest` rejoue tout cela avec un faux xcodebuild
 # (scripts/autotest-tests-simulateur.sh) : relance permise, refusée, ratée, INCONNU,
-# passage vide, filtre vide, fichier de test hors projet, deux passages en même temps, verrou orphelin, arrêt par le pid. Lancé
+# passage vide, filtre vide, fichier de test hors projet, veille du poste, deux passages en même temps, verrou orphelin,
+# arrêt par le pid. Lancé
 # par verifier-depot.sh (CI et pre-commit).
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -66,6 +71,13 @@ XCODEBUILD=${XCODEBUILD:-xcodebuild}
 XCRUN=${XCRUN:-xcrun}
 MESURER=${MESURER:-1}
 RESULTATS=${RESULTATS:-.build/Resultats}
+CAFEINE=${CAFEINE:-caffeinate}
+# La veille du poste (#322) : en CI, un runner ne s'endort pas et son journal
+# d'alimentation n'est pas celui d'un poste.
+if [ -z "${VEILLE_DU_POSTE:-}" ]; then
+  VEILLE_DU_POSTE=oui
+  [ "${GITHUB_ACTIONS:-}" != true ] || VEILLE_DU_POSTE=non
+fi
 PROJET=${PROJET:-CoproFirst.xcodeproj}
 # Le schéma : celui de l'app ; avec APPAREIL=tv, celui de l'écran de hall (#218) ; avec
 # APPAREIL=montre, celui de l'Apple Watch (#226).
@@ -214,7 +226,31 @@ resumer() {
     > "$RESULTATS/$2" 2>/dev/null
 }
 
+# Le poste éveillé pendant le passage, et sa veille dite au résumé quand même (#322).
 passer() {
+  local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} debut eveil="" code motif v
+  debut=$(date +%s)
+  if [ "$VEILLE_DU_POSTE" = oui ]; then
+    if command -v "$CAFEINE" > /dev/null; then "$CAFEINE" -i -s -w $$ & eveil=$!; fi
+  fi
+  # Pas d'arrêt ici : `-w $$` le termine avec le script, et `sortir` arrête ses descendants.
+  jouer_passage "$@"
+  code=$?
+  [ "$VEILLE_DU_POSTE" = oui ] || return "$code"
+  [ -n "$eveil" ] || echo "Veille du poste : rien ne l'empêche — $CAFEINE absent." >> "$RESUME"
+  motif=$(python3 -I scripts/veille_poste.py "$debut" "$(date +%s)")
+  v=$?
+  case "$v:$code" in
+    0:*) echo "Veille du poste : aucune pendant le passage." ;;
+    1:0) echo "**Veille du poste (#322)** : $motif — le passage est vert malgré elle." ;;
+    1:*) echo "::warning title=Veille du poste (#322)::$motif — ce rouge est INCONNU." >&2
+      echo "**Veille du poste (#322)** : $motif — ce rouge est INCONNU, pas un défaut du test : à rejouer, le poste éveillé." ;;
+    *) echo "Veille du poste : INCONNU — $motif." ;;
+  esac >> "$RESUME"
+  return "$code"
+}
+
+jouer_passage() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} motif
   rm -rf "$RESULTATS" && mkdir -p "$RESULTATS" || return 2
   if [ -z "${DESTINATION:-}" ]; then

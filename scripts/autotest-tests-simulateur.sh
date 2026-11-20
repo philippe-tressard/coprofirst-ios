@@ -10,7 +10,8 @@
 #     permise, refusée, ratée, INCONNU (#50) ; simulateur démarré avant le build
 #     (#48) ; passage qui ne joue rien (#96) ; filtre qui ne joue rien quand un autre
 #     joue, fichier de test absent du projet Xcode (#170) ; système joué et celui de la
-#     CI nommés au résumé (#287) ;
+#     CI nommés au résumé (#287) ; poste gardé éveillé, et sa veille dite au résumé — un
+#     rouge sous veille INCONNU (#322) ;
 #   - de vrais passages, chacun dans son processus (`passage`) : deux en même temps,
 #     verrou orphelin ou sans fiche, arrêt par le pid, CI, lanceur, extinction du
 #     simulateur (#108) ; le verrou commun du poste pris d'abord, ni repris s'il est
@@ -30,6 +31,10 @@ echo "$*" >> "$FAUX_DOSSIER/appels"
 case "$1" in
   test)
     cat "$FAUX_DOSSIER/journal"
+    # Le poste s'endort pendant ce passage (#322) : une veille au journal d'alimentation.
+    [ ! -f "$FAUX_DOSSIER/endormir" ] \
+      || printf '%s Sleep  Entering Sleep state due to Maintenance Sleep 923 secs\n' "$(date '+%Y-%m-%d %H:%M:%S %z')" \
+        > "$FAUX_DOSSIER/pmset"
     # Un passage qui dure : retenu tant que le fichier existe, son pid dit pour l'arrêt.
     echo $$ > "$FAUX_DOSSIER/pid-test"
     while [ -f "$FAUX_DOSSIER/retenir" ]; do sleep 0.1; done
@@ -55,6 +60,11 @@ case "$1" in
 esac
 FAUX
   chmod +x "$d/faux"
+  # Le faux caffeinate (#322) : il dit ses arguments, et rend la main.
+  printf '#!/bin/bash\necho "$*" >> "$FAUX_DOSSIER/cafeine-appels"\n' > "$d/cafeine"
+  chmod +x "$d/cafeine"
+  # La veille du poste : éteinte par défaut, allumée par les seuls essais qui l'éprouvent.
+  local veille=non cafeine=$d/cafeine
   local perte='Failed to get matching snapshots: Lost connection to the application (pid 22209).'
   local acces='{"targetName":"CoproFirstUITests","testIdentifierString":"AccesUITests/testSignalerPerduPuisDeclarer()","failureText":"'$perte'","testName":"t"}'
   local assertion='{"targetName":"CoproFirstUITests","testIdentifierString":"AffairesUITests/testUn()","failureText":"XCTAssertTrue failed","testName":"t"}'
@@ -73,7 +83,8 @@ FAUX
   # $1 nom, $2 sortie du 1er passage, $3 résumé JSON (vide : illisible), $4 sortie de
   # la relance, $5 sortie attendue, $6 relance attendue (oui/non), $7 résumé de la relance
   scenario() {
-    rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json" "$d/resume.md"
+    rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json" "$d/resume.md" "$d/cafeine-appels"
+    : > "$d/pmset"
     [ -z "${7:-}" ] || echo "$7" > "$d/resume-relance.json"
     if [ -n "$journal_essai" ]; then printf '%s\n' "$journal_essai" > "$d/journal"
     else printf "Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' started.\n" > "$d/journal"; fi
@@ -83,7 +94,7 @@ FAUX
     local sortie relancee=non
     FAUX_DOSSIER=$d XCODEBUILD=$d/faux XCRUN=$d/faux MESURER=0 DESTINATION='platform=iOS Simulator,id=X' \
       RESULTATS=$d/r GITHUB_STEP_SUMMARY=$d/resume.md PROJET=$d/projet SOURCES_TESTS=$d/sources \
-      passer ${args[@]+"${args[@]}"} > "$d/sortie.txt" 2>&1
+      VEILLE_DU_POSTE=$veille CAFEINE=$cafeine PMSET_JOURNAL=$d/pmset passer ${args[@]+"${args[@]}"} > "$d/sortie.txt" 2>&1
     sortie=$?
     grep -q '^test-without-building' "$d/appels" 2>/dev/null && relancee=oui
     if [ "$sortie" != "$5" ] || [ "$relancee" != "$6" ]; then
@@ -102,6 +113,29 @@ FAUX
   grep -q "^Système : iOS 27.2 joué ; la CI joue $(sed -n 's/^OS_SIMULATEUR_CI=//p' outillage.env) — un vert ici ne vaut pas" \
     "$d/resume.md" || { echo "❌ le résumé ne nomme pas le système joué et celui de la CI"; rate=$((rate + 1)); }
   rm -f "$d/liste.json"
+  # Le poste gardé éveillé, et sa veille dite au résumé quand même (#322) ; en CI, rien.
+  if grep -q 'Veille du poste' "$d/resume.md" || [ -f "$d/cafeine-appels" ]; then
+    echo "❌ la veille du poste se lit, ou caffeinate se lance, en CI"; rate=$((rate + 1))
+  fi
+  veille=oui
+  scenario "poste éveillé, sans veille : vert" 0 "$vert" 0 0 non
+  if ! grep -qx -- '-i -s -w [0-9]*' "$d/cafeine-appels" 2>/dev/null \
+      || ! grep -q '^Veille du poste : aucune pendant le passage' "$d/resume.md"; then
+    echo "❌ le poste n'est pas gardé éveillé, ou l'absence de veille ne se dit pas"; rate=$((rate + 1))
+  fi
+  touch "$d/endormir"
+  scenario "veille pendant un passage vert : vert, dite" 0 "$vert" 0 0 non
+  grep -q '^\*\*Veille du poste (#322)\*\* : 1 veille(s) .*923 s.*vert malgré elle' "$d/resume.md" \
+    || { echo "❌ une veille pendant un passage vert ne se dit pas"; rate=$((rate + 1)); }
+  scenario "veille pendant un rouge : INCONNU, dit" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$assertion"']}' 0 65 non
+  grep -q 'ce rouge est INCONNU, pas un défaut du test' "$d/resume.md" \
+    || { echo "❌ un rouge sous veille accuse le test"; rate=$((rate + 1)); }
+  rm -f "$d/endormir"
+  cafeine=$d/absent
+  scenario "caffeinate absent : dit" 0 "$vert" 0 0 non
+  grep -q "^Veille du poste : rien ne l'empêche" "$d/resume.md" \
+    || { echo "❌ un poste que rien ne garde éveillé ne le dit pas"; rate=$((rate + 1)); }
+  veille=non cafeine=$d/cafeine
   # Sortie 0 ne suffit pas : un passage qui n'a rien joué n'est pas vert (#96).
   scenario "passage qui ne joue rien : INCONNU" 0 "$rien" 0 2 non
   grep -q '^Tests joués : INCONNU : aucun test joué' "$d/resume.md" \
@@ -185,7 +219,7 @@ FAUX
     exec env FAUX_DOSSIER="$d" XCODEBUILD="$d/faux" XCRUN="$d/faux" MESURER=0 \
       DESTINATION='platform=iOS Simulator,id=X' RESULTATS="$d/r-$nom" GITHUB_STEP_SUMMARY="$d/resume-$nom.md" \
       PROJET="$d/projet" SOURCES_TESTS="$d/sources" GITHUB_ACTIONS= VERROU="$d/verrou" VERROU_PAS=0.1 VERROU_QUI="$nom" \
-      VERROU_POSTE="$d/faux-verrou-poste.py" VERROU_POSTE_TENU=1 "$@" \
+      VERROU_POSTE="$d/faux-verrou-poste.py" VERROU_POSTE_TENU=1 VEILLE_DU_POSTE=non "$@" \
       "$BASH" scripts/tests-simulateur.sh > "$d/$nom.txt" 2>&1
   }
   # Attendre qu'une commande réussisse, 10 s au plus.
