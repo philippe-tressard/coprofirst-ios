@@ -129,7 +129,11 @@ Elle compile les fichiers de l'app que `project.yml` nomme — la charte, le tex
 l'alerte servie, le message de liaison — et joue ses tests et ceux du code partagé sur
 watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|horsligne|<nombre>`).
 Elle n'est **embarquée** dans l'app iPhone qu'à l'archive (`ARCHIVE_AVEC_MONTRE=true bash
-scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part.
+scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part,
+et refait l'archive avec la montre embarquée (`bash scripts/verifier-archive-montre.sh`, #324).
+Elle importe le client d'API sous son nom habituel, `ClientAPI`, mais reçoit le module
+`ClientAPIMontre` : le même code sous un autre nom de cible, sans quoi le greffon OpenAPI
+écrivait deux fois le même dossier dans le build commun.
 
 ```bash
 APPAREIL=montre bash scripts/tests-simulateur.sh

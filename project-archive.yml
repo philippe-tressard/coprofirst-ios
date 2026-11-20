@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Inclus par project.yml sous ARCHIVE_AVEC_MONTRE=true (#226, #324) : l'app Apple Watch
+# embarquée dans l'app iPhone. XcodeGen en déduit l'étape « Embed Watch Content ».
+targets:
+  CoproFirst:
+    dependencies:
+      - target: CoproFirstWatch
