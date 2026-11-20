@@ -57,7 +57,7 @@ struct ClocheTests {
 
     @MainActor @Test func unJetonRefuseNeSeDitPasInjoignableIlRendLaLiaison() async {
         var rendue = false
-        let lecteur = LecteurCloche(source: .simulee(.refusee)) { rendue = true }
+        let lecteur = LecteurCloche(source: .simulee(.refusee), auRefus: { rendue = true })
         await lecteur.lire()
         #expect(rendue, "la liaison s'oublie")
         #expect(lecteur.lecture == .enCours, "rien ne se dit « injoignable » : la montre attend l'iPhone")

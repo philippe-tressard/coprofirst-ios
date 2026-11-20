@@ -31,8 +31,9 @@ struct Cloche: Equatable, Sendable {
 enum LectureCloche: Equatable, Sendable {
     case enCours
     case lue(Cloche)
-    /// La résidence n'a pas répondu (réseau, serveur) : rien de gardé dans ce lot — la
-    /// dernière lecture datée vient au lot 3, comme sur l'iPhone (#101).
+    /// Sans réseau : la dernière cloche gardée, et l'heure de sa lecture (#226, lot 3).
+    case horsLigne(Cloche, aJourAu: Date)
+    /// La résidence n'a pas répondu, et rien n'est gardé (ou plus de `LectureGardee.joursMax`).
     case injoignable
 }
 
@@ -55,12 +56,12 @@ enum SourceDeLaCloche: Hashable, Sendable {
         }
     }
 
-    /// L'adresse de la résidence, pour « Continuer sur l'iPhone » ; aucune en simulation.
-    var adresse: URL? {
+    /// L'adresse de la résidence : « Continuer sur l'iPhone », et la cloche gardée.
+    var adresse: URL {
         switch self {
         case .jeton(let liaison): liaison.adresse
         #if DEBUG
-        case .simulee: nil
+        case .simulee: ClocheSimulee.adresse
         #endif
         }
     }

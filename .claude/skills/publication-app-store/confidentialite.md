@@ -87,6 +87,8 @@ relais de l'éditeur, puis par Apple (§4).
 | Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton, ou désappairé au hall | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
 | l'identifiant de l'Apple Watch reliée, par résidence (#226) — jamais son jeton | réglages | `CoproFirst/Fonctions/Notifications/Montre/LiaisonsMontre.swift` › `"montre:\(installation.hote)"` |
 | **sur l'Apple Watch** : la résidence reliée (adresse, nom) et son jeton de montre (#226) | Trousseau de la montre, sans invite, jamais synchronisé ; effacé quand l'iPhone ferme la résidence ou que le serveur refuse le jeton | `CoproFirstWatch/Liaison/CoffreLiaison.swift` › `CoffreTrousseau(service: "fr.coprofirst.app.montre.liaison")` ; `CoproFirstWatch/Liaison/LiaisonDeLaMontre.swift` › `if !simulee { coffre.effacer() }` |
+| **sur l'Apple Watch** : la dernière cloche lue en ligne (titres, corps, dates des alertes), pour la relire sans réseau (#226, lot 3) | `Application Support` de la montre, chiffré jusqu'au premier déverrouillage, **exclu des sauvegardes** ; effacée au-delà de 7 jours, et dès que la montre n'est plus reliée ou que le jeton est refusé | `CoproFirstWatch/HorsLigne/ClocheGardee.swift` › `valeurs.isExcludedFromBackup = true` ; `CoproFirstWatch/HorsLigne/ClocheGardee.swift` › `maintenant.timeIntervalSince(gardee.aJourAu) <= LectureGardee.dureeMax` ; `CoproFirstWatch/Liaison/LiaisonDeLaMontre.swift` › `garde.effacer()` |
+| **sur l'Apple Watch** : le résumé du widget — le nombre de non lues et d'urgentes, ou « non reliée », sans aucun titre ni nom de résidence | le conteneur de l'App Group, sur la montre | `CoproFirstWatch/Widget/ResumeCloche.swift` › `case compte(nonLues: Int, urgentes: Int)` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
 | Face ID déjà proposé, par résidence | réglages | `CoproFirst/Session/InstallationsConnues.swift` › `reglages.set(true, forKey: "faceid-propose." + installation.hote)` |
 | l'abonnement push, par résidence | réglages | `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `private static let cle = "push-abonnements"` |
@@ -94,7 +96,7 @@ relais de l'éditeur, puis par Apple (§4).
 | le thème choisi | réglages | `CoproFirst/Fonctions/Profil/ThemeChoisi.swift` › `@AppStorage(ThemeChoisi.cle)` |
 | la dernière lecture de la vitrine | cache de l'app | `CoproFirst/Entree/Contenu/Vitrine.swift` › `appendingPathComponent("contenu-vitrine.json")` |
 | un document ou une pièce jointe ouverts | dossier temporaire, chiffré | `CoproFirst/Commun/Session/FichierServi.swift` › `static let protection: Data.WritingOptions = [.atomic, .completeFileProtection]` |
-| la dernière lecture de la résidence, **si** Face ID est activé (#101) : fil, affaires (liste et détail, messages, Historique), profil, annuaire, documents et photos déjà ouverts — rien de l'administration ni de l'Espace CS, aucun jeton ni cookie | `Application Support`, un dossier par résidence, chiffré (`.complete`), **exclu des sauvegardes** iCloud et Finder ; effacée au-delà de 7 jours sans lecture fraîche | `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `exclue.isExcludedFromBackup = true` ; `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `static let joursMax = 7` ; `CoproFirst/Session/LectureGardee/GarderLesLectures.swift` › `static let operations: Set<String> = [` |
+| la dernière lecture de la résidence, **si** Face ID est activé (#101) : fil, affaires (liste et détail, messages, Historique), profil, annuaire, documents et photos déjà ouverts — rien de l'administration ni de l'Espace CS, aucun jeton ni cookie | `Application Support`, un dossier par résidence, chiffré (`.complete`), **exclu des sauvegardes** iCloud et Finder ; effacée au-delà de 7 jours sans lecture fraîche | `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `exclue.isExcludedFromBackup = true` ; `CoproFirst/Session/LectureGardee/HorsLigne.swift` › `static let joursMax = 7` ; `CoproFirst/Session/LectureGardee/GarderLesLectures.swift` › `static let operations: Set<String> = [` |
 
 La déconnexion efface la session — le jeton, la dernière lecture gardée et les copies des
 fichiers ouverts, à une seule porte : `CoproFirst/Session/LectureGardee/ServiceHorsLigne.swift` › `Trousseau.supprimer(pour: hote)` ;
@@ -117,6 +119,7 @@ aucune image n'est gardée ni envoyée ; Face ID est vérifié par iOS.
 | `aps-environment` | recevoir les notifications d'APNs | notifications, ci-dessous |
 | `com.apple.developer.usernotifications.time-sensitive` | laisser un avis **urgent** traverser le mode Concentration | Apple apprend qu'un avis est urgent, rien de son contenu |
 | `com.apple.developer.associated-domains` | ouvrir l'app par un lien du site d'une résidence connue | aucune donnée : iOS lit le fichier d'association chez Apple |
+| `com.apple.security.application-groups` | l'Apple Watch et son widget partagent le résumé de la cloche (`group.fr.coprofirst.app`, #226) | des nombres seulement, sur la montre ; rien ne quitte l'appareil |
 
 <!-- table:autorisations -->
 | Autorisation (`project.yml`) | Ce que l'app en fait |
@@ -312,6 +315,8 @@ contrôle.
 | `Network` | Apple (iOS) | savoir si l'appareil est en ligne |
 | `CryptoKit` | Apple (iOS) | nommer le dossier d'une lecture gardée par l'empreinte de son hôte, sur l'appareil |
 | `UserNotifications` | Apple (iOS) | autorisation et réception des notifications |
+| `WatchKit` | Apple (watchOS) | le rafraîchissement d'arrière-plan de l'app montre |
+| `WidgetKit` | Apple (watchOS) | le widget de la montre (pile et cadran), et sa relecture |
 | `WatchConnectivity` | Apple (iOS, watchOS) | la liaison iPhone ↔ Apple Watch : la résidence et son jeton de montre, d'un appareil de la personne à l'autre (#226) |
 | `VisionKit` | Apple (iOS) | lecture du QR code, sur l'appareil |
 | `QuickLook` | Apple (iOS) | aperçu d'un document téléchargé |

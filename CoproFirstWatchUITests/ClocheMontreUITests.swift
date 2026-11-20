@@ -84,4 +84,13 @@ final class ClocheMontreUITests: XCTestCase {
         XCTAssertTrue(element(app, "montre.nonReliee").apparait())
         XCTAssertFalse(element(app, "montre.injoignable").exists)
     }
+
+    /// Sans réseau, la dernière cloche gardée se montre, datée (#226, lot 3).
+    @MainActor
+    func testSansReseauLaClocheGardeeSeMontreDatee() {
+        let app = lancer(["-api-simulee", "-cloche", "horsligne"])
+        XCTAssertTrue(element(app, "montre.horsLigne").apparait())
+        XCTAssertTrue(element(app, "montre.alerte.4").apparait(), "les alertes gardées")
+        XCTAssertFalse(element(app, "montre.injoignable").exists)
+    }
 }

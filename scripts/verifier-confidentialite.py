@@ -52,8 +52,9 @@ RESOLU = "Paquets/ClientAPI/Package.resolved"
 CONSTRUIT = "Paquets/ClientAPI/.build"
 # L'écran de hall (CoproFirstTV/, #218) et l'Apple Watch (CoproFirstWatch/, #226) sont jugés
 # avec l'app : même identifiant, même fiche. Chacune embarque en plus SON manifeste, jugé sur
-# le code qu'elle compile (`confidentialite_cibles.py`).
-CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "Paquets/ClientAPI/Sources/")
+# le code qu'elle compile (`confidentialite_cibles.py`). Le widget de la montre
+# (CoproFirstWatchWidget/, #226 lot 3) est jugé avec l'app : il ne lit ni n'envoie rien.
+CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "CoproFirstWatchWidget/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
 TABLES = ("donnees", "envois", "portes", "droits", "autorisations", "modules", "paquets")
