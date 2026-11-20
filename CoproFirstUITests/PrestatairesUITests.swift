@@ -166,8 +166,8 @@ final class PrestatairesUITests: XCTestCase {
         app.toucher(app.elementAcces("onglet.contrats"))
         let contrat = app.elementAcces("contrat.1")
         XCTAssertTrue(contrat.apparait(), "les contrats")
-        app.toucher(contrat)
-        XCTAssertTrue(app.libelleAcces("Le contrat").apparait())
+        // Ouvrir le contrat : un toucher perdu sous charge se reprend, déclaré (#183, #299).
+        app.toucher(contrat, jusqua: app.libelleAcces("Le contrat"))
         XCTAssertTrue(app.libelleAcces("↺ Mensuel").exists, "la fréquence servie (`frequence_libelle`, #125)")
         XCTAssertTrue(app.elementAcces("contrat.1.noter").exists, "noter depuis le contrat : le conseil")
         app.capturerAcces("prestataires-3-contrats", dans: self)

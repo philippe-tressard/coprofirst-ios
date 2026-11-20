@@ -68,12 +68,15 @@ FAUX
   echo '7E7 /* AccesTests.swift */ = {isa = PBXFileReference; path = AccesTests.swift; };' > "$d/projet/project.pbxproj"
   # Les arguments de `passer` : les filtres d'un passage partiel (vide par défaut).
   local args=()
+  # Le journal du 1er passage, s'il n'est pas celui d'un test démarré.
+  local journal_essai=""
   # $1 nom, $2 sortie du 1er passage, $3 résumé JSON (vide : illisible), $4 sortie de
   # la relance, $5 sortie attendue, $6 relance attendue (oui/non), $7 résumé de la relance
   scenario() {
     rm -f "$d/appels" "$d/resume.json" "$d/resume-relance.json" "$d/resume.md"
     [ -z "${7:-}" ] || echo "$7" > "$d/resume-relance.json"
-    printf "Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' started.\n" > "$d/journal"
+    if [ -n "$journal_essai" ]; then printf '%s\n' "$journal_essai" > "$d/journal"
+    else printf "Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' started.\n" > "$d/journal"; fi
     echo "$2" > "$d/sortie-test"
     echo "$4" > "$d/sortie-relance"
     [ -z "$3" ] || echo "$3" > "$d/resume.json"
@@ -143,6 +146,20 @@ FAUX
   scenario "résumé de la relance illisible : rouge" 65 '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 1 oui
   scenario "une assertion : pas de relance" 65 '{"result":"Failed","failedTests":2,"testFailures":['"$acces,$assertion"']}' 0 65 non
   scenario "résumé illisible : INCONNU" 65 "" 0 65 non
+  # Le runner jamais initialisé, aucun test joué (#50, 19/11/2026) : le passage rejoué une
+  # fois, sans rebuild, déclaré ; et plus aucune relance ensuite.
+  journal_essai='CoproFirstUITests-Runner (21345) encountered an error (The test runner failed to initialize for UI testing. (Underlying Error: Timed out waiting for AX loaded notification))'
+  scenario "runner jamais initialisé : passage rejoué, vert" 65 "$vert" 0 0 oui
+  if [ "$(grep -c '^test-without-building' "$d/appels")" != 1 ] \
+      || ! grep -q 'Relance déclarée (#50).*runner de tests jamais initialisé (Timed out waiting for AX' "$d/resume.md"; then
+    echo "❌ le runner jamais initialisé ne rejoue pas le passage une fois, déclaré"; rate=$((rate + 1))
+  fi
+  scenario "runner jamais initialisé, puis une perte : pas de seconde relance" 65 \
+    '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 65 65 oui
+  if [ "$(grep -c '^test-without-building' "$d/appels")" != 1 ] || ! grep -q '^Relance : aucune de plus' "$d/resume.md"; then
+    echo "❌ une seconde relance suit celle du démarrage"; rate=$((rate + 1))
+  fi
+  journal_essai=""
   # Le simulateur se démarre AVANT le build et les tests (#48) ; non confirmé, rien ne joue.
   # Avant de le démarrer, son état se lit : un passage n'éteint que ce qu'il a démarré.
   scenario "vert d'emblée, démarrage d'abord" 0 "$vert" 0 0 non

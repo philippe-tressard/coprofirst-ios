@@ -36,7 +36,12 @@ struct ConnexionView: View {
                 .onChange(of: champ) { _, nouveau in
                     if nouveau == .motDePasse { montrerValider(defilement) }
                 }
-                .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardDidShowNotification)) { _ in
+                // Chaque changement de cadre du clavier, pas sa seule apparition : le clavier du
+                // mot de passe peut changer de hauteur après le passage du focus. En CI (iOS 26.5),
+                // le bouton est resté non défilé (540 au lieu de 513) et le toucher n'a rien fait (#183).
+                .onReceive(
+                    NotificationCenter.default.publisher(for: UIResponder.keyboardDidChangeFrameNotification)
+                ) { _ in
                     if champ == .motDePasse { montrerValider(defilement) }
                 }
         }
