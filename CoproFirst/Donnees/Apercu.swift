@@ -9,26 +9,28 @@ import Foundation
 /// simulé (`ServiceSimule`, Debug seul, #84) le sert aussi : une seule source.
 enum Apercu {
     /// Le fil inventé : trois jours, toutes les natures, une urgence.
-    static let fil: [ElementDuFil] = {
-        let calendrier = Chronologie.calendrier
-        let aujourdhui = calendrier.startOfDay(for: .now)
-        func le(_ jours: Int, _ heure: Int) -> Date {
-            let jour = calendrier.date(byAdding: .day, value: -jours, to: aujourdhui) ?? aujourdhui
+    static let fil = filInvente(.appareil)
+
+    /// Le « maintenant » et le calendrier d'où se datent le fil inventé et ses échéances :
+    /// ceux de l'appareil, sauf pour un test qui fixe l'heure et le fuseau (#316). Une seule
+    /// horloge : la publication et l'échéance ne peuvent pas se dater de deux façons.
+    struct Horloge {
+        let maintenant: Date
+        let calendrier: Calendar
+
+        static var appareil: Horloge { Horloge(maintenant: .now, calendrier: Chronologie.calendrier) }
+
+        /// `jours` jours après aujourd'hui (avant, s'il est négatif), à `heure` heures.
+        func le(_ jours: Int, a heure: Int) -> Date {
+            let aujourdhui = calendrier.startOfDay(for: maintenant)
+            let jour = calendrier.date(byAdding: .day, value: jours, to: aujourdhui) ?? aujourdhui
             return calendrier.date(byAdding: .hour, value: heure, to: jour) ?? jour
         }
-        // Le constructeur des éléments inventés : un paramètre par champ du fil.
-        // swiftlint:disable:next function_parameter_count
-        func element(
-            _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
-            badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil, meta: String? = nil
-        ) -> ElementDuFil {
-            var element = ElementDuFil(
-                id: "\(type):\(id)", type: type, date: date, titre: titre, detail: detail, badges: badges,
-                publicationUrgente: false, statut: nil, meConcerne: meConcerne, cible: cible,
-                echeance: meta.flatMap(EcheanceDuFil.init(metaJSON:)))
-            element.poser(meta.flatMap(MetaDuFil.init(json:)))
-            return element
-        }
+    }
+
+    /// Le fil inventé, daté par cette horloge.
+    static func filInvente(_ horloge: Horloge) -> [ElementDuFil] {
+        func le(_ jours: Int, _ heure: Int) -> Date { horloge.le(-jours, a: heure) }
         return [
             element(
                 "41", "ticket_ouvert", le(0, 9), "Fuite d'eau au plafond du parking",
@@ -39,11 +41,12 @@ enum Apercu {
                 "12", "publication", le(0, 8), "Coupure d'eau jeudi de 9 h à 12 h",
                 "Remplacement d'une vanne dans la cave du bâtiment A.", cible: .affaire(id: 12),
                 meta: metaAffaire(
-                    dans: 2, etat: "a_venir", libelle: "J-2", natures: ["actualite", "calendrier"])),
+                    horloge, dans: 2, etat: "a_venir", libelle: "J-2", natures: ["actualite", "calendrier"])),
             element(
                 "44", "ticket_mis_a_jour", le(0, 7), "Ramonage des conduits de cheminée",
                 "Le ramoneur passe dans les caves du bâtiment B.", cible: .affaire(id: 44),
-                meta: metaAffaire(dans: 0, etat: "jour_j", libelle: "Jour J", lecture: "copros", lieu: "Bâtiment B")),
+                meta: metaAffaire(
+                    horloge, dans: 0, etat: "jour_j", libelle: "Jour J", lecture: "copros", lieu: "Bâtiment B")),
             element(
                 "3", "sondage_ouvert", le(1, 18), "Quel jour pour la fête des voisins ?",
                 "Trois dates proposées, réponses jusqu'à vendredi.", cible: .sondage(id: 3)),
@@ -57,23 +60,37 @@ enum Apercu {
             element(
                 "38", "ticket_mis_a_jour", le(2, 10), "Ravalement de la façade côté rue",
                 "Le devis retenu sera présenté au conseil syndical.", meConcerne: true, cible: .affaire(id: 38),
-                meta: metaAffaire(dans: 8, jusquA: 10, etat: "a_venir", libelle: "J-8")),
+                meta: metaAffaire(horloge, dans: 8, jusquA: 10, etat: "a_venir", libelle: "J-8")),
             element(
                 "45", "ticket_mis_a_jour", le(3, 16), "Contrôle annuel de l'ascenseur",
                 "Le rapport du contrôleur est attendu.", cible: .affaire(id: 45),
-                meta: metaAffaire(dans: -3, etat: "passee", libelle: "Passé")),
+                meta: metaAffaire(horloge, dans: -3, etat: "passee", libelle: "Passé")),
             element(
                 "31", "ticket_resolu", le(4, 15), "Portail du garage remis en service",
                 "La carte électronique a été remplacée.", cible: .affaire(id: 31),
-                meta: metaAffaire(dans: -4, etat: "close", libelle: nil)),
+                meta: metaAffaire(horloge, dans: -4, etat: "close", libelle: nil)),
         ]
-    }()
+    }
+
+    // Le constructeur des éléments inventés : un paramètre par champ du fil.
+    // swiftlint:disable:next function_parameter_count
+    private static func element(
+        _ id: String, _ type: String, _ date: Date, _ titre: String, _ detail: String?,
+        badges: [String] = [], meConcerne: Bool = false, cible: CibleDuFil, meta: String? = nil
+    ) -> ElementDuFil {
+        var element = ElementDuFil(
+            id: "\(type):\(id)", type: type, date: date, titre: titre, detail: detail, badges: badges,
+            publicationUrgente: false, statut: nil, meConcerne: meConcerne, cible: cible,
+            echeance: meta.flatMap(EcheanceDuFil.init(metaJSON:)))
+        element.poser(meta.flatMap(MetaDuFil.init(json:)))
+        return element
+    }
 
     /// Le fil inventé d'une période (`GET /flux?du=&au=`, #277), rangé comme le serveur le
     /// range (coprofirst#2834) : une carte à son échéance si elle en a une, à sa publication
     /// sinon ; par jour, puis par heure. Seule la PÉRIODE simulée compose ce rangement —
     /// aucun écran ne le recalcule.
-    static func filDeLaPeriode(_ periode: ClosedRange<Date>) -> [ElementDuFil] {
+    static func filDeLaPeriode(_ periode: ClosedRange<Date>, dans fil: [ElementDuFil] = fil) -> [ElementDuFil] {
         let du = FormatsDuSite.jourISO(periode.lowerBound)
         let au = FormatsDuSite.jourISO(periode.upperBound)
         return fil.compactMap { element -> (ElementDuFil, Date)? in
@@ -100,13 +117,11 @@ enum Apercu {
     /// fin le jour `jusquA`. Le délai est celui du serveur simulé, écrit comme lui ; les natures,
     /// celles que `utils/nature_affaire` dérive (une actualité datée en porte deux).
     private static func metaAffaire(
-        dans: Int, jusquA: Int? = nil, etat: String, libelle: String?, natures: [String] = ["calendrier"],
-        lecture: String = "tous", lieu: String = ""
+        _ horloge: Horloge, dans: Int, jusquA: Int? = nil, etat: String, libelle: String?,
+        natures: [String] = ["calendrier"], lecture: String = "tous", lieu: String = ""
     ) -> String {
-        let calendrier = Chronologie.calendrier
         func iso(_ jours: Int, heure: Int) -> String {
-            let jour = calendrier.date(byAdding: .day, value: jours, to: calendrier.startOfDay(for: .now)) ?? .now
-            let instant = calendrier.date(byAdding: .hour, value: heure, to: jour) ?? jour
+            let instant = horloge.le(jours, a: heure)
             // UTC naïf, comme le serveur sérialise ses colonnes de date.
             return instant.formatted(
                 Date.ISO8601FormatStyle(timeZone: .gmt).year().month().day().dateTimeSeparator(.standard)

@@ -16,7 +16,31 @@ final class SondageUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("fil.ticket_ouvert:41").apparait(), "le fil est chargé")
         toucher(app.elementAcces("fil.sondage_ouvert:3"), dans: app)
         XCTAssertTrue(app.elementAcces("sondage.question").apparait())
+        // Sur iPad, le sondage s'ouvre dans la colonne de fiche, à côté du fil (#222) : on fait
+        // défiler SA liste, lue ici tant que la question y est (#296).
+        listeDuSondage = cadre(app.collectionViews.containing(.any, identifier: "sondage.question").firstMatch)
+        XCTAssertNotNil(listeDuSondage, "la liste du sondage : sans elle, on défilerait la fenêtre")
         return app
+    }
+
+    /// Le cadre de la liste du sondage, une fois ouvert ; `nil` avant (le fil défile alors).
+    private var listeDuSondage: CGRect?
+
+    /// Défiler. Le sondage ouvert À CÔTÉ du fil (iPad, colonne de fiche, #222) : un glisser
+    /// lent et tenu dans SA liste — au centre de la fenêtre, on défilait le fil (#296). Sinon
+    /// (iPhone, liste pleine largeur), le balayage d'origine : 5 gestes là où des glissers en
+    /// faisaient 37, et le test passait de 60 à 280 s.
+    @MainActor
+    private func defiler(versLeBas: Bool, dans app: XCUIApplication) {
+        let fenetre = app.windows.firstMatch.frame
+        guard let liste = listeDuSondage, liste.width < fenetre.width * 0.9 else {
+            return versLeBas ? app.swipeUp(velocity: .slow) : app.swipeDown(velocity: .slow)
+        }
+        let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
+        let haut = origine.withOffset(CGVector(dx: liste.midX, dy: liste.minY + liste.height * 0.3))
+        let bas = origine.withOffset(CGVector(dx: liste.midX, dy: liste.minY + liste.height * 0.7))
+        let (depart, arrivee) = versLeBas ? (bas, haut) : (haut, bas)
+        depart.press(forDuration: 0.05, thenDragTo: arrivee, withVelocity: .slow, thenHoldForDuration: 0.1)
     }
 
     /// Le libellé ou la valeur d'un élément de cet identifiant contient-il `texte` ? Par
@@ -45,12 +69,16 @@ final class SondageUITests: XCTestCase {
     private func cadre(_ element: XCUIElement) -> CGRect? { (try? element.snapshot())?.frame }
 
     /// La zone où un doigt touche ce qu'il voit : sous la barre de navigation (120 pt) et
-    /// au-dessus de la barre d'onglets flottante (90 pt). Lue une fois par test.
+    /// au-dessus de la barre d'onglets flottante (90 pt) — sur iPad, la barre latérale la
+    /// remplace : le bas de la liste reste touchable (20 pt, l'indicateur d'accueil, #296).
+    /// Lue une fois par test.
     @MainActor
     private func zoneTouchable(_ app: XCUIApplication) -> CGRect {
         if let zone { return zone }
         let fenetre = app.windows.firstMatch.frame
-        let lue = CGRect(x: fenetre.minX, y: fenetre.minY + 120, width: fenetre.width, height: fenetre.height - 210)
+        let bas: CGFloat = app.tabBars.firstMatch.exists ? 90 : 20
+        let lue = CGRect(
+            x: fenetre.minX, y: fenetre.minY + 120, width: fenetre.width, height: fenetre.height - 120 - bas)
         zone = lue
         return lue
     }
@@ -81,7 +109,7 @@ final class SondageUITests: XCTestCase {
                     return defile ? partieVisible(element, dans: app) : partie
                 }
                 let auDessus = (cadre(element)?.midY ?? .infinity) < milieu
-                if versLeBas && !auDessus { app.swipeUp(velocity: .slow) } else { app.swipeDown(velocity: .slow) }
+                defiler(versLeBas: versLeBas && !auDessus, dans: app)
                 defile = true
             }
         }

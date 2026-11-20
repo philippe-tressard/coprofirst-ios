@@ -20,6 +20,8 @@
 #     test d'interface tombé sur une cause déclarée — la liste et le plafond font
 #     foi dans scripts/bilan_tests_ui.py (CAUSES_RELANCE, PLAFOND_TESTS). La
 #     relance se déclare au résumé et en annotation ; jamais une relance muette ;
+#     un runner jamais initialisé, AUCUN test joué (scripts/demarrage_runner.py, #50) :
+#     c'est le passage entier qui se rejoue, sans rebuild — cette relance est alors la seule ;
 #   - un passage sorti en 0 n'est vert que s'il a JOUÉ des tests : le compte se lit au
 #     résumé de xcresult et se dit au résumé du run ; zéro test, ou un résumé qui ne
 #     se lit pas, c'est INCONNU, sortie 2 (#96). Et CHAQUE filtre `-only-testing:` doit
@@ -251,6 +253,17 @@ passer() {
   local debut=$SECONDS code seuls decision
   lancer "$RESULTATS/tests.log" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
   code=$?
+  # Le runner n'a pas démarré, aucun test joué (#50, « AX loaded notification ») : le
+  # passage se rejoue UNE fois, sans rebuild, déclaré — et c'est la seule relance permise.
+  local relance_faite=""
+  if [ "$code" -ne 0 ] && motif=$(python3 -I scripts/demarrage_runner.py "$RESULTATS/tests.log"); then
+    echo "::warning title=Relance déclarée (#50)::$motif — le passage rejoué une fois, sans rebuild."
+    echo "**Relance déclarée (#50)** : $motif — le passage rejoué une fois, sans rebuild." >> "$RESUME"
+    mv "$RESULTATS/tests.log" "$RESULTATS/demarrage.log" && rm -rf "$RESULTATS/tests.xcresult"
+    lancer "$RESULTATS/tests.log" test-without-building "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
+    code=$?
+    relance_faite=oui
+  fi
   python3 -I scripts/bilan_tests_ui.py lenteurs "$RESULTATS/tests.log" "$RESUME"
   if [ "$code" -eq 0 ]; then
     # Sortie 0 ne suffit pas : un filtre qui ne vise rien sort en 0 sans rien jouer (#96).
@@ -267,6 +280,10 @@ passer() {
   fi
 
   mesurer $((SECONDS - debut)) >> "$RESUME"
+  if [ -n "$relance_faite" ]; then
+    echo "Relance : aucune de plus — la seule permise a servi au démarrage du runner." >> "$RESUME"
+    return "$code"
+  fi
   if ! resumer tests resume.json; then
     echo "Relance : aucune — INCONNU, le résumé de xcresult ne se lit pas." >> "$RESUME"
     return "$code"

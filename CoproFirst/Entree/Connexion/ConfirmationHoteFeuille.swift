@@ -152,13 +152,7 @@ struct ConfirmationHoteFeuille: View {
             .tint(palette.warning)
             .accessibilityIdentifier("confirmationHote.secondAccord")
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(palette.warningFond, in: .rect(cornerRadius: Mise.rayon, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
-                .strokeBorder(palette.warningBordure, lineWidth: 1)
-        }
+        .encartAvertissement()
     }
 
     private var boutons: some View {

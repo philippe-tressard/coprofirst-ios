@@ -16,7 +16,9 @@ import Testing
 private let nomsCites: [(source: String, nom: String)] =
     NaturesDuFil.parType.map { ("NaturesDuFil[\($0.key)]", $0.value.icone) }
     + PagesParDefaut.toutes.map { ("PagesParDefaut[\($0.id)]", $0.icone) }
+    + TypesNotification.parType.map { ("TypesNotification[\($0.key)]", $0.value.pictogramme) }
     + [("NatureDuFil.inconnue", NatureDuFil.inconnue.icone)]
+    + [("TypesNotification.parDefaut", TypesNotification.parDefaut.pictogramme)]
 
 @Test func chaqueNomDIconeDesTablesGenereesASonSymbole() {
     let auRepli = nomsCites.filter { Pictogrammes.table[$0.nom] == nil }
@@ -28,6 +30,7 @@ private let nomsCites: [(source: String, nom: String)] =
     // Une table vide rendrait le test précédent vert sans rien vérifier (standards/04).
     #expect(NaturesDuFil.parType.count >= 10)
     #expect(PagesParDefaut.toutes.count >= 5)
+    #expect(TypesNotification.parType.count >= 5)
     #expect(nomsCites.allSatisfy { !$0.nom.isEmpty })
 }
 

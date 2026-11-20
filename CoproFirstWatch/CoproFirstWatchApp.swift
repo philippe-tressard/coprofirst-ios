@@ -11,9 +11,12 @@ import SwiftUI
 /// l'alerte servie (`project.yml`, cible `CoproFirstWatch`) : jamais une copie.
 @main
 struct CoproFirstWatchApp: App {
+    /// Créée au lancement : un message de l'iPhone arrivé app fermée est remis dès qu'elle écoute.
+    @State private var liaison = LiaisonDeLaMontre.auLancement(ProcessInfo.processInfo.arguments)
+
     var body: some Scene {
         WindowGroup {
-            RacineMontre(etat: EtatMontre.auLancement(ProcessInfo.processInfo.arguments))
+            RacineMontre(liaison: liaison)
         }
     }
 }

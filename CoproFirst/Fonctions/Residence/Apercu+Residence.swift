@@ -75,6 +75,11 @@ extension Apercu {
     }()
 
     static let carnet: [EntreeCarnet] = [
+        // Un contrat signé qui n'a pas encore commencé : « À venir » sous « Contrat » (#259).
+        EntreeCarnet(
+            date: "2027-01-01", libelle: "Contrat de surveillance de la toiture", origine: "contrat",
+            detail: "Visite annuelle.", numero: nil, equipement: "toiture", lien: nil, alerte: nil,
+            extrait: nil, aVenir: true),
         EntreeCarnet(
             date: "2026-10-28", libelle: "Révision annuelle de la chaudière", origine: "intervention",
             detail: "Remplacement du brûleur.", numero: nil, equipement: "chaufferie", lien: nil, alerte: nil,
