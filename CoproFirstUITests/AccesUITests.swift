@@ -53,7 +53,7 @@ final class AccesUITests: XCTestCase {
         app.capturerAcces("acces-3-telecommandes", dans: self)
 
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
-        app.elementAcces("onglet.telecommandes").swipeLeft()
+        // L'onglet est hors de l'écran, à droite : `toucher` fait glisser la rangée (#183).
         app.toucher(app.elementAcces("onglet.location"))
         XCTAssertTrue(app.libelleAcces("Locataire DU LOT 31").apparait(), "un bail actif")
         app.capturerAcces("acces-4-gestion-locative", dans: self)
