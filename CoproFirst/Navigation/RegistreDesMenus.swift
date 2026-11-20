@@ -57,12 +57,13 @@ enum RegistreDesMenus {
 
     /// L'écran natif de la page, ou « Bientôt » tant qu'aucun n'est inscrit. Un écran
     /// natif se note comme la page du site qu'il porte (`pageVue`, coprofirst#2726) ;
-    /// « Bientôt » ne montre rien de la page, il ne se note pas.
+    /// « Bientôt » ne montre rien de la page, il ne se note pas. L'installation suspendue
+    /// se dit sous la barre de chacune (`.bandeauInstallation()`, #262).
     static func ecran(_ contexte: ContexteDeMenu) -> AnyView {
         guard let type = ecrans[contexte.page.id] else {
-            return AnyView(Bientot(page: contexte.page, installation: contexte.installation))
+            return AnyView(Bientot(page: contexte.page, installation: contexte.installation).bandeauInstallation())
         }
-        return AnyView(AnyView(type.init(contexte: contexte)).pageVue(contexte.page.route))
+        return AnyView(AnyView(type.init(contexte: contexte)).pageVue(contexte.page.route).bandeauInstallation())
     }
 }
 

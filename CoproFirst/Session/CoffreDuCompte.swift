@@ -17,12 +17,19 @@ protocol CoffreDuCompte {
 /// Le coffre de l'app : le Trousseau de l'appareil, jamais synchronisé (`ThisDeviceOnly`),
 /// lisible après le premier déverrouillage, SANS invite — l'arrivée en a besoin avant toute
 /// requête (#84). Sans biométrie, il est compilé aussi par l'Apple TV, qui y garde son
-/// appairage (#218) ; la session de l'iPhone, protégée par Face ID, est `Trousseau`.
+/// appairage (#218), et par l'Apple Watch, qui y garde sa liaison sous son propre service
+/// (#226) ; la session de l'iPhone, protégée par Face ID, est `Trousseau`.
 struct CoffreTrousseau: CoffreDuCompte {
-    private static let service = "fr.coprofirst.app.compte"
+    /// Le service du compte retenu ; un autre usage nomme le sien.
+    static let serviceCompte = "fr.coprofirst.app.compte"
+    let service: String
+
+    init(service: String = Self.serviceCompte) {
+        self.service = service
+    }
 
     func lire(_ cle: String) -> Data? {
-        var requete = Self.requete(cle, service: Self.service)
+        var requete = Self.requete(cle, service: service)
         requete[kSecReturnData as String] = true
         requete[kSecMatchLimit as String] = kSecMatchLimitOne
         var resultat: CFTypeRef?
@@ -34,14 +41,14 @@ struct CoffreTrousseau: CoffreDuCompte {
     @discardableResult
     func ranger(_ donnees: Data, _ cle: String) -> Bool {
         effacer(cle)
-        var requete = Self.requete(cle, service: Self.service)
+        var requete = Self.requete(cle, service: service)
         requete[kSecValueData as String] = donnees
         requete[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         return SecItemAdd(requete as CFDictionary, nil) == errSecSuccess
     }
 
     func effacer(_ cle: String) {
-        SecItemDelete(Self.requete(cle, service: Self.service) as CFDictionary)
+        SecItemDelete(Self.requete(cle, service: service) as CFDictionary)
     }
 
     /// La requête d'un élément du Trousseau de l'app : un mot de passe générique, rangé par

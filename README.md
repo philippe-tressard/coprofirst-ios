@@ -99,11 +99,24 @@ APPAREIL=tv bash scripts/tests-simulateur.sh
 La cible `CoproFirstWatch` (watchOS 10, #226) montre au poignet la cloche de la dernière
 résidence ouverte sur l'iPhone : les non lues d'abord, les urgentes devant, puis « Déjà
 lues », repliée ; un toucher ouvre l'alerte entière. Elle ne fait que lire — rien ne s'y
-marque comme lu. Elle se reliera à l'iPhone par un jeton de montre (coprofirst#2771) ;
-d'ici là, elle dit de l'ouvrir par l'iPhone. Elle compile les fichiers de l'app que
-`project.yml` nomme — la charte, le texte du site, l'alerte servie — et joue ses tests et
-ceux du code partagé sur watchOS (`-api-simulee` : une résidence inventée,
-`-cloche vide|injoignable|<nombre>`) :
+marque comme lu. Chaque alerte porte l'icône de son type (`TypesNotification`, publiée par
+coprofirst#2802).
+
+**La liaison** (lot 2), construite mais **éteinte** (`LiaisonMontre.active`) : elle
+s'allume avec celle de Wear OS, sur le geste de Philippe (#207). Allumée : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
+l'iPhone demande un jeton de montre (coprofirst#2771 : la cloche seule, 30 jours) — renouvelé
+s'il en a déjà un — et le passe à la montre par WatchConnectivity, avec l'adresse et le nom de
+la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone ne garde que
+l'identifiant de la montre ; la montre garde le jeton à son Trousseau et lit `GET
+/notifications` avec lui en porteur. Un jeton échu ou refusé : la montre dit de l'ouvrir par
+l'iPhone. « Continuer sur l'iPhone » passe par Handoff (`ClocheSurLiPhone`). Mêmes gestes que
+la montre Wear OS. Le hors ligne et le widget viennent au lot 3.
+
+Elle compile les fichiers de l'app que `project.yml` nomme — la charte, le texte du site,
+l'alerte servie, le message de liaison — et joue ses tests et ceux du code partagé sur
+watchOS (`-api-simulee` : une résidence inventée, `-cloche vide|injoignable|refusee|<nombre>`).
+Elle n'est **embarquée** dans l'app iPhone qu'à l'archive (`ARCHIVE_AVEC_MONTRE=true bash
+scripts/generer-projet.sh`, `project-archive.yml`) : la CI la construit dans son job à part.
 
 ```bash
 APPAREIL=montre bash scripts/tests-simulateur.sh
@@ -188,6 +201,11 @@ l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écr
 gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la session
 reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
 la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
+**Installation suspendue** par la référence (Registre R6, #262, contrat 2.5.0) : en lecture
+seule, le bandeau du site le dit sous la barre de chaque page, à la connexion et au
+retour ; un geste
+refusé (403, ou 409 au sixième compte du mode limité) dit la phrase du serveur, mot pour
+mot. Le **carnet d'entretien** marque « À venir » un contrat qui n'a pas commencé (#259).
 
 **Mesure d'audience** (coprofirst#2726, #198, contrat 1.31.0) : chaque écran vu part à la
 résidence sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`)
@@ -195,7 +213,8 @@ et le canal « App iPhone », par lots de 20 au plus, toutes les 30 s et au pass
 arrière-plan — comme le site, que le tableau de bord mêle alors à l'app. Rien ne part si le
 compte l'a refusée au Profil, ni vers une résidence qui ne dit pas servir au moins le
 plancher de l'app (une installation antérieure au contrat 1.31.0 compterait l'app comme le
-site ; une version illisible ne dit rien, #254), ni hors ligne ; aucun identifiant d'appareil. L'onglet
+site ; une version illisible ne dit rien, #254), ni hors ligne ; aucun identifiant d'appareil,
+seulement sa classe — iPhone, iPad, Mac, Vision Pro (coprofirst#2774, #229). L'onglet
 Télémétrie montre la répartition servie : « Accès : site ou application », et l'accès de
 chaque page quand la période en a plusieurs.
 

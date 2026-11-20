@@ -102,8 +102,8 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
 
 @Test func leCarnetSeRangeParEquipementDansLOrdreDuServeur() {
     let carnet = ContenuCarnet(entrees: Apercu.carnet, libellesEquipements: ["chaufferie": "Chaufferie"])
-    #expect(carnet.groupes.map(\.titre) == ["Chaufferie", "ascenseur", "toiture", TextesCarnet.sansEquipement])
-    #expect(carnet.groupes.first?.entrees.count == 2)
+    #expect(carnet.groupes.map(\.titre) == ["toiture", "Chaufferie", "ascenseur", TextesCarnet.sansEquipement])
+    #expect(carnet.groupes.map(\.entrees.count) == [2, 2, 1, 1])
     #expect(carnet.enAlerte.map(\.libelle) == ["Contrat d'entretien de l'ascenseur"])
     #expect(TextesCarnet.visitesAttendues(1) == "1 visite attendue")
     #expect(TextesCarnet.visitesAttendues(3) == "3 visites attendues")
@@ -122,6 +122,22 @@ private func ids(_ onglets: [OngletDuSite]) -> [String] { onglets.map(\.id) }
     #expect(entrees.first?.libelle == "Ramonage")
     #expect(entrees.first?.equipement == nil)
     #expect(entrees.first?.jour != nil)
+    #expect(entrees.first?.aVenir == false, "a_venir absent : le contrat a commencé")
+}
+
+/// Un contrat qui n'a pas commencé (#259) : `a_venir` est SERVI — l'app le lit tel quel,
+/// même quand la date lui semblerait passée ; elle ne le recalcule jamais.
+@Test func unContratAVenirSeLitCommeLeServeurLeDit() throws {
+    let json = """
+        {"total": 2, "annees": ["2020"], "groupes": [], "entrees": [
+        {"date": "2020-01-01", "libelle": "Contrat d'entretien", "origine": "contrat", "categorie_libelle": "",
+        "perimetre_libelle": "", "a_venir": true},
+        {"date": "2099-01-01", "libelle": "Autre contrat", "origine": "contrat", "categorie_libelle": "",
+        "perimetre_libelle": "", "a_venir": false}]}
+        """
+    let entrees = try Relecture.generee(Components.Schemas.CarnetLu.self, json: json).entrees.map(EntreeCarnet.init)
+    #expect(entrees.map(\.aVenir) == [true, false])
+    #expect(TextesCarnet.aVenir == "À venir", "le libellé du site (`CarnetEntretien.svelte`)")
 }
 
 // MARK: - Règlement

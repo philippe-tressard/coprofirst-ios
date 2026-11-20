@@ -111,6 +111,9 @@ struct EntreeCarnet: Codable, Hashable, Sendable, Identifiable {
     var alerte: String?
     /// Un extrait du texte de l'affaire, en HTML.
     var extrait: String?
+    /// Un contrat qui n'a pas encore commencé (`a_venir`, contrat 2.2.0) : la règle est
+    /// servie par le serveur (début après le jour de Paris), jamais recalculée par l'app.
+    var aVenir = false
 
     var id: String { "\(origine)-\(lien ?? libelle)-\(date)" }
 

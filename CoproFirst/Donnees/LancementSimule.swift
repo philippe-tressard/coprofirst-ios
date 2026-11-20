@@ -28,6 +28,7 @@ import Foundation
 /// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ;
 /// `-contrat <version>` : le contrat que sert la résidence — `2.9.0` ouvre la porte
 /// `.moderation` (signaler, masquer, #286).
+/// `-installation-suspendue` : la résidence servie est suspendue, en lecture seule (#262).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -124,6 +125,7 @@ enum LancementSimule {
         var residence = ServiceSimule.residence
         if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
         if let contrat = argument("-contrat", arguments) { residence.versionContrat = contrat }
+        if arguments.contains("-installation-suspendue") { residence.suspendue = true }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true

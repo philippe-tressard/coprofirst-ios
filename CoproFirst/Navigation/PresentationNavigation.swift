@@ -87,9 +87,9 @@ enum EntreeFixe: String, CaseIterable, Identifiable, Sendable {
     @MainActor @ViewBuilder
     func ecran(_ installation: Installation) -> some View {
         switch self {
-        case .profil: ProfilView().pageVue(CheminDuSite.profil)
+        case .profil: ProfilView().pageVue(CheminDuSite.profil).bandeauInstallation()
         // Le pied de page du site : ©, mentions légales, confidentialité, logiciel libre.
-        case .aPropos: AProposView(installation: installation)
+        case .aPropos: AProposView(installation: installation).bandeauInstallation()
         }
     }
 }
