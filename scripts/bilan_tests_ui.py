@@ -258,8 +258,9 @@ def rendre_lenteurs(rangs: dict[str, int]) -> tuple[list[str], list[str]]:
         if rang >= 2:
             annotations.append(
                 f"::warning title=Requêtes d'accessibilité expirées ({test})::"
-                f"{rang} requêtes d'affilée ont expiré (~30 s chacune) ; à la suivante, "
-                "« Lost connection to the application ». Un écran trop lourd à photographier ? (#50)")
+                f"{rang} requêtes d'affilée ont expiré (~30 s chacune), une de moins que la perte de "
+                "connexion (#50). La cause est dans l'échec, s'il y en a un : un écran trop lourd "
+                "à photographier, ou l'app gelée (« main thread busy », #323).")
     return resume, annotations
 
 
