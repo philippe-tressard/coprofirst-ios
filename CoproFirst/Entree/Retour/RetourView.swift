@@ -64,6 +64,7 @@ struct RetourView: View {
                 Text(installation.hote)
                     .font(.subheadline)
                     .foregroundStyle(palette.textMuted)
+                BandeauInstallation(encartPour: installation)
             }
             .padding(.horizontal, Mise.marge)
             .opacity(apparu ? 1 : 0)

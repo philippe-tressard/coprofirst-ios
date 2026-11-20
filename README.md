@@ -85,7 +85,12 @@ saisit dans l'app (Espace CS › Écrans du hall, #295) ou sur le site, avec le 
 périmètre de l'écran, et l'écran diffuse aussitôt (lot 3, RFC 8628) : une annonce toutes
 les quinze secondes, son titre, son message et ses photos, relues toutes les deux
 minutes ; l'écran reste allumé. L'appairage se garde au Trousseau : rallumée, l'Apple TV
-reprend seule ; retirée par le conseil, elle affiche un nouveau code. Elle compile les
+reprend seule ; retirée par le conseil, elle affiche un nouveau code. Au hall, un clic de
+la télécommande propose « Désappairer », confirmé : l'écran oublie son accès, que le
+conseil coupe dans l'app (lot 5). Elle embarque son propre manifeste de confidentialité
+(`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
+jugé sur le code qu'elle compile, comme celui de l'Apple Watch
+(`scripts/confidentialite_cibles.py`). Elle compile les
 fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
 (adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
 tvOS, avec les siens (`CoproFirstTVTests/`) :
@@ -190,10 +195,13 @@ carte au jour où le serveur la range — son échéance, sa publication sinon �
 pour VoiceOver) ; Ma résidence y a un **sommaire** à gauche — les rubriques de la Fiche, le
 carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la page et la
 fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
-**Notifications** : la cloche de chaque écran. Le push est une fonction à venir, pour les
-alertes sonores qu'émet le syndic (#283) : l'offre « Être averti sur ce téléphone »
-(#17) existe, mais ne délivre rien tant que le relais de la plateforme n'est pas branché
-(clé `.p8` du compte Apple, coprofirst#2494).
+**Notifications** : la cloche de chaque écran. Sur le téléphone, ne sonne que l'alerte
+d'une actualité marquée urgente par le conseil syndical ou l'administrateur (#283,
+décision du 18/11/2026), et seulement auprès d'une résidence au contrat 2.10.0 au moins :
+l'offre « Être averti sur ce téléphone » (#17) s'ouvre dans la cloche, jamais au lancement,
+et le message ne dit rien de son contenu. Le relais est **éteint** dans l'app
+(`RelaisPush`) tant que le service n'est pas allumé côté serveur (coprofirst#2875, clé
+`.p8` : coprofirst#2494) : d'ici là, ni offre ni enregistrement.
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran
@@ -201,6 +209,11 @@ l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écr
 gestes restent en place, grisés, et disent pourquoi. Le réseau revenu, la session
 reprend et tout se relit. Cette lecture est chiffrée, hors des sauvegardes, effacée à
 la déconnexion et au-delà de 7 jours ; rien de l'administration ni de l'Espace CS.
+**Installation suspendue** par la référence (Registre R6, #262, contrat 2.5.0) : en lecture
+seule, le bandeau du site le dit sous la barre de chaque page, à la connexion et au
+retour ; un geste
+refusé (403, ou 409 au sixième compte du mode limité) dit la phrase du serveur, mot pour
+mot. Le **carnet d'entretien** marque « À venir » un contrat qui n'a pas commencé (#259).
 
 **Mesure d'audience** (coprofirst#2726, #198, contrat 1.31.0) : chaque écran vu part à la
 résidence sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`)
@@ -208,7 +221,8 @@ et le canal « App iPhone », par lots de 20 au plus, toutes les 30 s et au pass
 arrière-plan — comme le site, que le tableau de bord mêle alors à l'app. Rien ne part si le
 compte l'a refusée au Profil, ni vers une résidence qui ne dit pas servir au moins le
 plancher de l'app (une installation antérieure au contrat 1.31.0 compterait l'app comme le
-site ; une version illisible ne dit rien, #254), ni hors ligne ; aucun identifiant d'appareil. L'onglet
+site ; une version illisible ne dit rien, #254), ni hors ligne ; aucun identifiant d'appareil,
+seulement sa classe — iPhone, iPad, Mac, Vision Pro (coprofirst#2774, #229). L'onglet
 Télémétrie montre la répartition servie : « Accès : site ou application », et l'accès de
 chaque page quand la période en a plusieurs.
 

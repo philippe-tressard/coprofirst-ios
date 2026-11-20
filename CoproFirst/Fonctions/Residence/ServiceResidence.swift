@@ -158,6 +158,7 @@ extension EntreeCarnet {
     init(_ lue: Components.Schemas.EntreeCarnetLue) {
         self.init(
             date: lue.date, libelle: lue.libelle, origine: lue.origine.rawValue, detail: lue.detail,
-            numero: lue.numero, equipement: lue.equipement, lien: lue.lien, alerte: lue.alerte, extrait: lue.extrait)
+            numero: lue.numero, equipement: lue.equipement, lien: lue.lien, alerte: lue.alerte, extrait: lue.extrait,
+            aVenir: lue.aVenir ?? false)
     }
 }

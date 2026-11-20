@@ -21,7 +21,10 @@ déclaration sans objet se retire, standards/05 §9 bis) :
   - la description du magasin, versionnée dans la fiche, ne nie aucun type que le
     manifeste déclare (« aucune mesure d'audience » face à `ProductInteraction`, #238) ;
   - chaque paquet de `Package.resolved` ⇄ la table « paquets », à la RÉVISION examinée ;
-    ses sources, quand elles sont là, sont relues.
+    ses sources, quand elles sont là, sont relues ;
+  - le manifeste propre d'une cible (l'Apple TV #218, l'Apple Watch #226 :
+    `confidentialite_cibles.py`) est embarqué, et juste pour le code qu'elle compile — sans
+    type que le manifeste de l'app ne déclare.
 
 Ce qui ne se mesure pas ici est dit INCONNU à chaque passage, jamais conforme. Une
 entrée illisible rend INCONNU (sortie 2).
@@ -47,9 +50,10 @@ FICHE = ".claude/skills/publication-app-store/confidentialite.md"
 MANIFESTE = "CoproFirst/PrivacyInfo.xcprivacy"
 RESOLU = "Paquets/ClientAPI/Package.resolved"
 CONSTRUIT = "Paquets/ClientAPI/.build"
-# L'écran de hall (CoproFirstTV/, #218) est jugé avec l'app : il partage son identifiant
-# et sa fiche. Son propre manifeste viendra avec son premier envoi (lot 5 de #218).
-# L'Apple Watch (CoproFirstWatch/, #226) aussi : même fiche, son manifeste à elle (confidentialite_montre.py).
+# L'écran de hall (CoproFirstTV/, #218) et l'Apple Watch (CoproFirstWatch/, #226) sont jugés
+# avec l'app : même identifiant, même fiche. Chacune embarque en plus SON manifeste, jugé sur
+# le code qu'elle compile (`confidentialite_cibles.py`). Le widget de la montre
+# (CoproFirstWatchWidget/, #226 lot 3) est jugé avec l'app : il ne lit ni n'envoie rien.
 CODE = ("CoproFirst/", "CoproFirstTV/", "CoproFirstWatch/", "CoproFirstWatchWidget/", "Paquets/ClientAPI/Sources/")
 TYPE = "NSPrivacyCollectedDataType"
 CATEGORIE = "NSPrivacyAccessedAPICategory"
@@ -114,9 +118,9 @@ def _module(nom: str, fichier: str):
     return module
 
 
-# La ligne sans son commentaire (verifier-simule.py) ; le manifeste de l'Apple Watch (#226).
+# La ligne sans son commentaire (verifier-simule.py) ; les manifestes propres des cibles (#218, #226).
 code_seul = _module("verifier_simule", "verifier-simule.py").code_seul
-MONTRE = _module("confidentialite_montre", "confidentialite_montre.py")
+CIBLES = _module("confidentialite_cibles", "confidentialite_cibles.py")
 
 
 @dataclass
@@ -130,7 +134,7 @@ class Etat:
     resolu: dict[str, str]  # identité du paquet → révision épinglée
     paquets: dict[str, dict[str, str]] = field(default_factory=dict)  # identité → ses sources, si là
     genere: dict[str, str] | None = None  # le client généré, s'il a été construit ici
-    montre: dict | None = None  # le manifeste de l'Apple Watch (`confidentialite_montre.py`)
+    cibles: dict[str, dict | None] = field(default_factory=dict)  # cible → son manifeste, s'il est suivi
 
 
 def tables(fiche: str) -> dict[str, list[list[str]]]:
@@ -279,7 +283,7 @@ def juger(etat: Etat) -> list[str]:
     if absentes:
         return [f"fiche : table(s) absente(s) ou vide(s) : {', '.join(absentes)} (<!-- table:nom -->)"]
     premiers = {n: {(jetons(l[0]) or [l[0]])[0] for l in lues[n]} for n in TABLES}
-    types = {d.get(TYPE, "?").removeprefix(TYPE) for d in etat.manifeste.get("NSPrivacyCollectedDataTypes", [])}
+    types = types_de(etat.manifeste)
     fautes = juger_manifeste(etat.manifeste) + juger_api(etat.manifeste, etat.code, sans_objet=True)
     bloc = DESCRIPTION.search(etat.fiche)
     if bloc is None:
@@ -305,18 +309,10 @@ def juger(etat: Etat) -> list[str]:
         f"fiche : la réponse « {l[0]} » n'a aucune preuve (`fichier` › `extrait`)"
         for l in lues["donnees"] if not PREUVE.search(" ".join(l))]
     fautes += ecarts("envoi", trouver(ENVOI, etat.code), premiers["envois"], "la table « envois »")
-    portes = set()
-    for ligne in lues["envois"]:
-        classes = set(jetons(ligne[1])) if len(ligne) > 1 else set()
-        portes |= classes
-        fautes += [
-            f"envoi {ligne[0]} : classé « {t} », que le manifeste ne déclare pas"
-            for t in sorted(classes - types)]
+    classes = classes_des_envois(lues["envois"])
+    fautes += envois_et_indices(classes, etat.code, types, "le manifeste")
+    portes = set().union(*classes.values())
     fautes += [f"type de donnée : {TYPE}{t} est déclaré, mais aucun envoi ne le porte" for t in sorted(types - portes)]
-    for motif, attendus in INDICES:
-        lieu = next(iter(trouver(motif, etat.code).values()), None)
-        if lieu and not types & set(attendus):
-            fautes.append(f"{lieu} : ce symbole porte une donnée ({' ou '.join(attendus)}) que le manifeste ne déclare pas")
 
     for chemin, extrait in PREUVE.findall(etat.fiche):
         texte = etat.lire(chemin)
@@ -324,111 +320,29 @@ def juger(etat: Etat) -> list[str]:
             fautes.append(f"preuve : « {chemin} » n'est pas un fichier suivi")
         elif extrait not in texte:
             fautes.append(f"preuve : « {extrait} » n'est plus dans {chemin}")
-    if etat.montre is not None:
-        fautes += MONTRE.juger(etat, juger_manifeste, juger_api)
-    return fautes + juger_paquets(etat, lues["paquets"])
+    return fautes + juger_paquets(etat, lues["paquets"]) + CIBLES.juger(etat, sys.modules[__name__], types, classes)
 
 
-# ── Autotest : un jeu conforme, puis chaque rupture, dans les deux sens ─────────────
-
-def _jeu() -> Etat:
-    fiche = "\n".join([
-        "<!-- table:donnees -->", "| Type | Preuve |", "|---|---|",
-        "| `NSPrivacyCollectedDataTypeEmailAddress` | `CoproFirst/A.swift` › `postAuthLogin(` |",
-        "", "<!-- table:envois -->", "| Envoi | Types |", "|---|---|",
-        "| `postAuthLogin` | `EmailAddress` |", "| `postAuthLogout` | — |",
-        "", "<!-- table:portes -->", "| Fichier |", "|---|", "| `CoproFirst/A.swift` |",
-        "", "<!-- table:droits -->", "| Droit |", "|---|", "| `aps-environment` |",
-        "", "<!-- table:autorisations -->", "| Clé |", "|---|", "| `NSCameraUsageDescription` |",
-        "", "<!-- table:modules -->", "| Module |", "|---|", "| `Foundation` |",
-        "", "<!-- table:paquets -->", "| Paquet | Révision | Rôle | Sources |", "|---|---|---|---|",
-        "| `p-runtime` | `abc123` | embarqué | `Sources/R` |", "| `p-outil` | `def456` | outil | — |", "",
-        "<!-- description -->", "Aucune publicité, aucune mesure d'audience.", "<!-- /description -->", ""])
-    projet = "\n".join([
-        "targets:", "  CoproFirst:", "    sources:", "      - path: CoproFirst", "    info:",
-        "      properties:", "        CFBundleDisplayName: X", "        NSCameraUsageDescription: \"La caméra\"",
-        "    entitlements:", "      path: X", "      properties:", "        # un commentaire",
-        "        aps-environment: development", "    settings:", "      base:", "        A: B", ""])
-    code = {"CoproFirst/A.swift": (
-        "import Foundation\n/// `UserDefaults` en commentaire seulement.\n"
-        "let s = URLSession(configuration: .ephemeral)\nclient.postAuthLogin(x)\nclient.postAuthLogout()\n"
-        "let r = UserDefaults.standard\n")}
-    manifeste = {
-        "NSPrivacyTracking": False, "NSPrivacyTrackingDomains": [],
-        "NSPrivacyCollectedDataTypes": [{
-            TYPE: TYPE + "EmailAddress", TYPE + "Linked": True, TYPE + "Tracking": False,
-            TYPE + "Purposes": [TYPE + "PurposeAppFunctionality"]}],
-        "NSPrivacyAccessedAPITypes": [{
-            "NSPrivacyAccessedAPIType": CATEGORIE + "UserDefaults", "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]}]}
-    fichiers = dict(code)
-    fichiers[MANIFESTE] = "<plist/>"
-    return Etat(
-        manifeste=manifeste, fiche=fiche, projet=projet, code=code, lire=fichiers.get,
-        resolu={"p-runtime": "abc123", "p-outil": "def456"}, paquets={"p-runtime": {"Sources/R/a.swift": "let a = 1\n"}})
+def types_de(manifeste: dict) -> set[str]:
+    return {d.get(TYPE, "?").removeprefix(TYPE) for d in manifeste.get("NSPrivacyCollectedDataTypes", [])}
 
 
-def autotest() -> bool:
-    def code(e, texte): e.code["CoproFirst/A.swift"] += texte
-    def fiche(e, avant, apres): e.fiche = e.fiche.replace(avant, apres)
-    def manifeste(e, cle, valeur): e.manifeste[cle] = valeur
-    ruptures: list[tuple[str, Callable[[Etat], object]]] = [
-        ("FileTimestamp est appelée", lambda e: code(e, "let d = valeurs.creationDate\n")),
-        ("UserDefaults est appelée", lambda e: manifeste(e, "NSPrivacyAccessedAPITypes", [])),
-        ("ne l'appelle plus", lambda e: setattr(
-            e, "code", {c: t.replace("let r = UserDefaults.standard\n", "") for c, t in e.code.items()})),
-        ("raison absente ou hors", lambda e: e.manifeste["NSPrivacyAccessedAPITypes"][0].update(
-            NSPrivacyAccessedAPITypeReasons=["DDA9.1"])),
-        ("symbole de traçage", lambda e: code(e, "let i = ASIdentifierManager.shared()\n")),
-        ("NSPrivacyTracking", lambda e: manifeste(e, "NSPrivacyTracking", True)),
-        ("« Sentry »", lambda e: code(e, "@preconcurrency import Sentry\n")),
-        ("« UIKit » est déclaré", lambda e: fiche(e, "| `Foundation` |", "| `Foundation` |\n| `UIKit` |")),
-        ("porte réseau : « CoproFirst/B.swift »", lambda e: e.code.update({"CoproFirst/B.swift": "let (d, _) = try await s.data(from: u)\n"})),
-        ("droit : « com.apple.developer.x »", lambda e: setattr(
-            e, "projet", e.projet.replace("        aps-environment", "        com.apple.developer.x: true\n        aps-environment"))),
-        ("droit : « aps-environment » est déclaré", lambda e: setattr(
-            e, "projet", e.projet.replace("        aps-environment: development\n", ""))),
-        ("autorisation : « NSLocationWhenInUseUsageDescription »", lambda e: setattr(
-            e, "projet", e.projet.replace("        CFBundleDisplayName: X", "        NSLocationWhenInUseUsageDescription: X"))),
-        ("envoi : « postTickets »", lambda e: code(e, "try await client(a)\n    .postTickets(body: b)\n")),
-        ("envoi : « postAuthLogout » est déclaré", lambda e: setattr(
-            e, "code", {c: t.replace("client.postAuthLogout()\n", "") for c, t in e.code.items()})),
-        ("classé « PhoneNumber »", lambda e: fiche(e, "| `postAuthLogout` | — |", "| `postAuthLogout` | `PhoneNumber` |")),
-        ("aucun envoi ne le porte", lambda e: fiche(e, "| `postAuthLogin` | `EmailAddress` |", "| `postAuthLogin` | — |")),
-        ("type de donnée : « NSPrivacyCollectedDataTypeEmailAddress »", lambda e: fiche(
-            e, "| `NSPrivacyCollectedDataTypeEmailAddress` | `CoproFirst/A.swift` › `postAuthLogin(` |\n", "| `x` | y |\n")),
-        ("n'a aucune preuve", lambda e: fiche(e, "`CoproFirst/A.swift` › `postAuthLogin(`", "voir le code")),
-        ("n'est plus dans CoproFirst/A.swift", lambda e: fiche(e, "› `postAuthLogin(`", "› `postAuthLoginV2(`")),
-        ("n'est pas un fichier suivi", lambda e: fiche(e, "`CoproFirst/A.swift` › `postAuthLogin(`", "`CoproFirst/Z.swift` › `postAuthLogin(`")),
-        ("PhotosorVideos", lambda e: code(e, "PhotosPicker(selection: $s) {}\n")),
-        ("examiné à abc123", lambda e: e.resolu.update({"p-runtime": "999999"})),
-        ("paquet : « p-neuf »", lambda e: e.resolu.update({"p-neuf": "1"})),
-        ("paquet : « p-outil » est déclaré", lambda e: e.resolu.pop("p-outil")),
-        ("par le paquet p-runtime", lambda e: e.paquets["p-runtime"].update({"Sources/R/b.swift": "let t = ProcessInfo.processInfo.systemUptime\n"})),
-        ("n'a plus de sources", lambda e: e.paquets.update({"p-runtime": {"Sources/Autre/a.swift": ""}})),
-        ("par le client généré", lambda e: setattr(e, "genere", {"Client.swift": "let t = mach_absolute_time()\n"})),
-        ("n'est plus embarqué", lambda e: setattr(e, "projet", e.projet.replace("- path: CoproFirst", "- path: Sources"))),
-        ("table(s) absente(s)", lambda e: fiche(e, "<!-- table:envois -->", "")),
-        # La 1.0 puis #199 : vraie sans le type, la même phrase est refusée dès qu'il est déclaré.
-        ("« aucune mesure d'audience » nie NSPrivacyCollectedDataTypeProductInteraction", lambda e: e.manifeste[
-            "NSPrivacyCollectedDataTypes"].append({**e.manifeste["NSPrivacyCollectedDataTypes"][0], TYPE: TYPE + "ProductInteraction"})),
-        ("aucun bloc <!-- description -->", lambda e: fiche(e, "<!-- description -->", "")),
-    ]
-    ruptures += [(a, lambda e, r=r: (MONTRE.preparer_jeu(e), r(e))) for a, r in MONTRE.RUPTURES]
-    avec_montre = _jeu()
-    MONTRE.preparer_jeu(avec_montre)
-    for conforme in (juger(_jeu()), juger(avec_montre)):
-        if conforme:
-            print(f"❌ autotest : le jeu conforme est refusé — {conforme}")
-            return False
-    for attendu, rompre in ruptures:
-        etat = _jeu()
-        rompre(etat)
-        fautes = juger(etat)
-        if not any(attendu in f for f in fautes):
-            print(f"❌ autotest : la rupture « {attendu} » n'est pas refusée — {fautes}")
-            return False
-    print(f"✅ autotest : {len(ruptures)} ruptures refusées, le jeu conforme accepté")
-    return True
+def classes_des_envois(lignes: list[list[str]]) -> dict[str, set[str]]:
+    """Chaque envoi de la fiche → les types de donnée qu'il porte."""
+    return {(jetons(l[0]) or [l[0]])[0]: set(jetons(l[1])) if len(l) > 1 else set() for l in lignes}
+
+
+def envois_et_indices(classes: dict[str, set[str]], code: dict[str, str], types: set[str], quel: str) -> list[str]:
+    """Ce que `code` envoie, et les symboles qui trahissent une donnée, déclarés par `quel`."""
+    envoyes = set(trouver(ENVOI, code)) & set(classes)
+    fautes = [
+        f"envoi {envoi} : classé « {t} », que {quel} ne déclare pas"
+        for envoi in sorted(envoyes) for t in sorted(classes[envoi] - types)]
+    for motif, attendus in INDICES:
+        lieu = next(iter(trouver(motif, code).values()), None)
+        if lieu and not types & set(attendus):
+            fautes.append(f"{lieu} : ce symbole porte une donnée ({' ou '.join(attendus)}) que {quel} ne déclare pas")
+    return fautes
 
 
 # ── Le dépôt ───────────────────────────────────────────────────────────────────────
@@ -458,17 +372,20 @@ def lire_le_depot() -> Etat:
     generes = list((RACINE / CONSTRUIT / "plugins").rglob("GeneratedSources/*.swift"))
     with open(RACINE / MANIFESTE, "rb") as flux:
         manifeste = plistlib.load(flux)
-    montre = plistlib.loads((RACINE / MONTRE.MANIFESTE).read_bytes()) if MONTRE.MANIFESTE in suivis else {}
     return Etat(
         manifeste=manifeste, fiche=lire(FICHE), projet=lire("project.yml"), code=code, lire=lire,
         resolu={p["identity"]: p["state"]["revision"] for p in epingles},
         paquets={p["identity"]: s for p in epingles if (s := sources_du_paquet(p)) is not None},
-        genere={f.name: f.read_text(encoding="utf-8") for f in generes} or None, montre=montre)
+        genere={f.name: f.read_text(encoding="utf-8") for f in generes} or None,
+        cibles={c: plistlib.loads((RACINE / m).read_bytes()) if m in suivis else None for c, m in CIBLES.MANIFESTES.items()})
 
 
 def main() -> int:
     if "--autotest" in sys.argv[1:]:
-        return 0 if autotest() else 1
+        spec = importlib.util.spec_from_file_location("autotest", RACINE / "scripts/confidentialite_autotest.py")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return 0 if module.autotest(sys.modules[__name__]) else 1
     try:
         etat = lire_le_depot()
     except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError, plistlib.InvalidFileException) as erreur:
@@ -487,7 +404,7 @@ def main() -> int:
         f"✅ confidentialité déclarée = code : {len(lues['donnees'])} types de données, {len(lues['envois'])} envois"
         f" classés, {len(lues['portes'])} portes réseau, {len(lues['modules'])} modules, {len(lues['paquets'])} paquets"
         f" à la révision examinée (sources relues ici : {relus}/{len(embarques)} ; client généré :"
-        f" {'relu' if etat.genere else 'non construit ici'})")
+        f" {'relu' if etat.genere else 'non construit ici'} ; manifestes propres : {', '.join(CIBLES.MANIFESTES)})")
     print(f"❓ INCONNU, non mesuré ici : {NON_MESURE}")
     return 0
 

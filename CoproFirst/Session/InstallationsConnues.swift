@@ -87,6 +87,16 @@ final class InstallationsConnues {
         }
     }
 
+    /// La suspension que GET /config redit à l'ouverture (R6, #262) — le reste de la
+    /// résidence ne bouge pas : il se relit à la découverte.
+    func noterSuspension(_ suspendue: Bool?, pour installation: Installation) {
+        guard let rang = liste.firstIndex(where: { $0.adresse == installation.adresse }),
+            liste[rang].suspendue != suspendue
+        else { return }
+        liste[rang].suspendue = suspendue
+        enregistrer()
+    }
+
     /// À la fin d'une session (déconnexion, ou session refusée) : l'identifiant du compte
     /// quitte le profil gardé (#94) — il ne sert qu'à une session ouverte, et le prochain
     /// `GET /auth/me` le redit. Le reste du profil demeure, comme le courriel.
