@@ -119,6 +119,9 @@ FAUX
   fi
   veille=oui
   scenario "poste éveillé, sans veille : vert" 0 "$vert" 0 0 non
+  # Le faux caffeinate tourne en arrière-plan : son appel s'écrit parfois après la fin du
+  # passage (1 essai sur 5 rouge au poste) — on l'attend, 5 s au plus.
+  for _ in $(seq 50); do [ -s "$d/cafeine-appels" ] && break; sleep 0.1; done
   if ! grep -qx -- '-i -s -w [0-9]*' "$d/cafeine-appels" 2>/dev/null \
       || ! grep -q '^Veille du poste : aucune pendant le passage' "$d/resume.md"; then
     echo "❌ le poste n'est pas gardé éveillé, ou l'absence de veille ne se dit pas"; rate=$((rate + 1))

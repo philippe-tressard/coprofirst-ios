@@ -99,8 +99,7 @@ final class AffairesUITests: XCTestCase {
         XCTAssertTrue(element("affaires.carte.A-0041", dans: app).apparait())
         let resolues = element("affaires.suivi.résolu", dans: app)
         XCTAssertTrue(resolues.apparait())
-        if !resolues.isHittable { element("affaires.suivi.toutes", dans: app).swipeLeft() }
-        resolues.tap()
+        app.toucher(resolues)  // hors de l'écran à droite : `toucher` fait glisser la rangée (#183)
         XCTAssertTrue(element("affaires.carte.A-0031", dans: app).apparait())
         XCTAssertFalse(element("affaires.carte.A-0041", dans: app).exists, "une affaire chez le syndic sort")
         XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une résolue archivée reste aux Archives")

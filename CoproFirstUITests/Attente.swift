@@ -96,20 +96,34 @@ extension XCUIApplication {
     /// dans la fenêtre par de petits glissés horizontaux SUR SA RANGÉE, à sa hauteur : `amener`
     /// fait défiler la page de haut en bas et n'y arrive jamais. « Dans la fenêtre » se lit sur
     /// le cadre, jamais par `isHittable` (refusé sous iOS 26.5, #242). `false` sinon.
+    ///
+    /// `rangee` : une ligne qui ne se CRÉE qu'en approchant (une carte d'une colonne de kanban,
+    /// à droite) n'existe pas encore — on glisse alors vers la droite du contenu, à la hauteur
+    /// de `rangee`, jusqu'à ce qu'elle existe dans la fenêtre.
     @discardableResult
-    func amenerDansSaRangee(_ element: XCUIElement, essais: Int = 6) -> Bool {
-        guard element.apparait() else { return false }
+    func amenerDansSaRangee(_ element: XCUIElement, par rangee: XCUIElement? = nil, essais: Int = 6) -> Bool {
+        guard (rangee ?? element).apparait() else { return false }
         let fenetre = windows.firstMatch
         let origine = fenetre.coordinate(withNormalizedOffset: .zero)
-        for _ in 0..<essais where !fenetre.frame.contains(element.frame) {
-            let hauteur = element.frame.midY - fenetre.frame.minY
-            let sens: CGFloat = element.frame.minX > fenetre.frame.midX ? 1 : -1
+        let arrive = { element.exists && fenetre.frame.contains(element.frame) }
+        for _ in 0..<essais where !arrive() {
+            let repere = element.exists ? element : (rangee ?? element)
+            let hauteur = repere.frame.midY - fenetre.frame.minY
+            let sens: CGFloat = !element.exists || element.frame.minX > fenetre.frame.midX ? 1 : -1
             let largeur = fenetre.frame.width
             origine.withOffset(CGVector(dx: largeur * (0.5 + 0.25 * sens), dy: hauteur))
                 .press(forDuration: 0.05, thenDragTo: origine.withOffset(
                     CGVector(dx: largeur * (0.5 - 0.25 * sens), dy: hauteur)))
         }
-        return fenetre.frame.contains(element.frame)
+        return arrive()
+    }
+
+    /// L'élément est-il hors de la fenêtre DE CÔTÉ seulement (à sa hauteur, mais à gauche ou à
+    /// droite) ? Un onglet d'une rangée qui défile de côté : seul un glissé horizontal l'amène.
+    fileprivate func deCote(_ element: XCUIElement) -> Bool {
+        let fenetre = windows.firstMatch.frame, cadre = element.frame
+        return cadre.minY >= fenetre.minY && cadre.maxY <= fenetre.maxY
+            && (cadre.maxX > fenetre.maxX || cadre.minX < fenetre.minX)
     }
 }
 
@@ -148,7 +162,13 @@ extension XCUIApplication {
         }
         immobile(element)
         if visible(element, pendant: Attente.sonde) == nil {
-            amener(element, essais: essais) { visible(element) != nil }
+            // Hors de l'écran sur le côté (un onglet d'une rangée, #183 : main 4d9c5ac, un
+            // `swipeLeft()` perdu et 90 s de glissés verticaux sans effet) : glissés horizontaux.
+            if deCote(element) {
+                amenerDansSaRangee(element, essais: essais)
+            } else {
+                amener(element, essais: essais) { visible(element) != nil }
+            }
             immobile(element)
         }
         guard let point = visible(element) else {
@@ -177,17 +197,42 @@ extension XCUIApplication {
         _ element: XCUIElement, jusqua effet: XCUIElement, essais: Int = 10, file: StaticString = #filePath,
         line: UInt = #line
     ) {
-        toucher(element, essais: essais, file: file, line: line)
+        jusqua(effet, ("toucher", element), file: file, line: line) {
+            toucher(element, essais: essais, file: file, line: line)
+        }
+    }
+
+    /// Le balayage vers la gauche d'une ligne JUSQU'À L'EFFET : ses actions révélées (supprimer,
+    /// signaler). Un `swipeLeft()` se perd sous charge comme un toucher (#183) : il est rejoué
+    /// et chaque reprise s'écrit au journal, comme celles de `toucher(_:jusqua:)`. Idempotent :
+    /// balayer une ligne déjà ouverte la laisse ouverte.
+    @MainActor
+    func balayer(
+        _ element: XCUIElement, jusqua effet: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(element.apparait(), "à balayer : \(element) absent", file: file, line: line)
+        jusqua(effet, ("balayage", element), file: file, line: line) { element.swipeLeft() }
+    }
+
+    /// `geste`, puis l'attente de `effet`, rejoué au plus `Attente.reprises` fois — chaque reprise
+    /// au journal (« ↻ reprise du toucher n/N : … », ou du balayage), lue par `scripts/bilan_tests_ui.py`.
+    @MainActor
+    private func jusqua(
+        _ effet: XCUIElement, _ quoi: (nom: String, element: XCUIElement), file: StaticString, line: UInt,
+        geste: () -> Void
+    ) {
+        let (nom, element) = quoi
+        geste()
         for reprise in 1...Attente.reprises {
             if effet.waitForExistence(timeout: Attente.effet) { return }
-            let trace = "↻ reprise du toucher \(reprise)/\(Attente.reprises) : \(element) sans effet "
+            let trace = "↻ reprise du \(nom) \(reprise)/\(Attente.reprises) : \(element) sans effet "
                 + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
             print(trace)
             XCTContext.runActivity(named: trace) { _ in }
-            toucher(element, essais: essais, file: file, line: line)
+            geste()
         }
         XCTAssertTrue(
-            effet.apparait(), "\(element) touché \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+            effet.apparait(), "\(nom) de \(element) \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
     }
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
@@ -217,8 +262,10 @@ extension XCUIApplication {
         coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: cadre.midX, dy: cadre.midY)).tap()
     }
 
-    /// Le point à toucher, en coordonnées relatives à son cadre : son centre (0,5 ; 0,5) s'il
-    /// est dans la zone utile, sinon le centre de sa PARTIE VISIBLE ; `nil` s'il n'en montre
+    /// Le point à toucher, en coordonnées relatives à son cadre : le centre de sa PARTIE VISIBLE
+    /// — son centre (0,5 ; 0,5) s'il est entier à l'écran. Pas son propre centre dès qu'il est
+    /// dans la zone : un onglet qui déborde à droite (x 339 à 457 sur 402) était touché à 4 pt
+    /// du bord, sans effet (AdminUITests, #183) ; `nil` s'il n'en montre
     /// pas assez (22 pt de côté, ou tout l'élément s'il est plus petit), au plus tard après
     /// `duree` secondes. La zone utile : l'écran de l'app, moins la barre d'onglets (sauf
     /// pour ses propres boutons) — une ligne passée DERRIÈRE elle n'est pas à l'écran, le
@@ -236,8 +283,7 @@ extension XCUIApplication {
                     zone.size.height = max(0, min(zone.maxY, barre.frame.minY) - zone.minY)
                 }
                 let vu = cadre.intersection(zone)
-                let centre = zone.contains(CGPoint(x: cadre.midX, y: cadre.midY))
-                    ? CGPoint(x: cadre.midX, y: cadre.midY) : CGPoint(x: vu.midX, y: vu.midY)
+                let centre = CGPoint(x: vu.midX, y: vu.midY)
                 let clavier = keyboards.firstMatch
                 if !cadre.isEmpty, !vu.isNull, vu.width >= min(22, cadre.width), vu.height >= min(22, cadre.height),
                    !(clavier.exists && clavier.frame.contains(centre)) {

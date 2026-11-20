@@ -70,7 +70,7 @@ HORODATAGE = re.compile(r"\bt =\s+(?P<t>\d+(?:\.\d+)?)s\b")
 #: ~30 s) — jamais entre les deux.
 SEUIL_EXPIRATION = 15.0
 #: La ligne que `app.toucher(_:jusqua:)` écrit à chaque reprise (CoproFirstUITests/Attente.swift).
-REPRISE = re.compile(r"↻ reprise du toucher (?P<rang>\d+)/(?P<plafond>\d+) : (?P<quoi>.*)$")
+REPRISE = re.compile(r"↻ reprise du (?:toucher|balayage) (?P<rang>\d+)/(?P<plafond>\d+) : (?P<quoi>.*)$")
 #: « AccesUITests/testSignalerPerduPuisDeclarer() » : un autre format ne se relance pas,
 #: le `-only-testing:` qui en sortirait pourrait ne viser aucun test.
 IDENTIFIANT = re.compile(r"^\w+/\w+\(\)$")
@@ -284,6 +284,7 @@ Test Case '-[CoproFirstUITests.SondageUITests testUnVoteAPreciserCommenteSousLaC
     t =    12.34s     Find the "reponses.entete" Any (retry 2)
 Test Case '-[CoproFirstUITests.BarreLateraleUITests testLaBarreLateraleListeToutesLesPages]' started.
 ↻ reprise du toucher 1/2 : "barre.mon-lot" Button sans effet ("Mes lots & accès" NavigationBar) en 10 s (#282)
+↻ reprise du balayage 1/2 : "reponse.33" Any sans effet ("reponse.33.supprimer" Any) en 10 s (#282)
 """
 
 
@@ -418,10 +419,10 @@ def autotest() -> int:
         rate += 1
     lues = reprises(JOURNAL)
     if list(lues) != ["BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"] or len(lues[
-            "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"]) != 1:
+            "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"]) != 2:
         print(f"❌ reprises : {lues}")
         rate += 1
-    if len(rendre_reprises(lues)[1]) != 1 or rendre_reprises({})[1]:
+    if len(rendre_reprises(lues)[1]) != 2 or rendre_reprises({})[1]:
         print("❌ une annotation par reprise, aucune sans reprise")
         rate += 1
     saturee = _resume(("CoproFirstUITests", "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages()",
