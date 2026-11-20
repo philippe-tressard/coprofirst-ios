@@ -43,8 +43,8 @@ final class HallTV {
         appaire = appairage
     }
 
-    /// Le serveur ne reconnaît plus le jeton : l'écran oublie son accès et affiche un nouveau
-    /// code, pour la même résidence.
+    /// Le serveur ne reconnaît plus le jeton, ou on a désappairé l'écran au hall (lot 5) :
+    /// l'écran oublie son accès et affiche un nouveau code, pour la même résidence.
     func retirer() {
         guard let appaire else { return }
         memoire.oublier()

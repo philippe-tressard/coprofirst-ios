@@ -71,16 +71,39 @@ struct SemaineDuFilTests {
         #expect(semaine.titre.hasSuffix("16 novembre 2026"))
     }
 
+    /// Les cartes que l'API simulée sert sur deux mois autour d'aujourd'hui, datées par
+    /// cette horloge.
+    private func periode(_ horloge: Apercu.Horloge) -> [ElementDuFil] {
+        Apercu.filDeLaPeriode(horloge.le(-30, a: 0)...horloge.le(30, a: 0), dans: Apercu.filInvente(horloge))
+    }
+
+    /// Le jour où l'API simulée range la coupure d'eau, face à l'attendu : deux jours après
+    /// aujourd'hui, compté avec LA MÊME horloge qu'elle — même « maintenant », même
+    /// calendrier, même fuseau (#316).
+    private func coupure(_ horloge: Apercu.Horloge) -> (servi: String?, attendu: String) {
+        (periode(horloge).first { $0.id == "publication:12" }?.jourServi, iso(horloge.le(2, a: 12)))
+    }
+
     /// L'API simulée range une affaire datée à son échéance, comme le serveur.
     @Test func lApiSimuleeRangeUneEcheanceASonJour() {
+        let jour = coupure(.appareil)
+        #expect(jour.servi == jour.attendu, "« Coupure d'eau jeudi » : au jour de la coupure")
+        #expect(periode(.appareil).allSatisfy { $0.jourServi != nil })
         let semaine = SemaineDuFil(contenant: .now)
-        func dans(_ jours: Int) -> Date { calendrier.date(byAdding: .day, value: jours, to: .now) ?? .now }
-        let large = dans(-30)...dans(30)
-        let periode = Apercu.filDeLaPeriode(large)
-        let coupure = periode.first { $0.id == "publication:12" }
-        #expect(coupure?.jourServi == iso(dans(2)), "« Coupure d'eau jeudi » : au jour de la coupure")
-        #expect(periode.allSatisfy { $0.jourServi != nil })
         #expect(Apercu.filDeLaPeriode(semaine.periode).allSatisfy { semaine.ranger([$0]).joined().count == 1 })
+    }
+
+    /// Garde-fou de #316 : à 23:30 UTC un jour d'hiver, il est déjà demain à Paris. L'attendu
+    /// d'avant (maintenant + 48 h, lu à Paris) donnait le 22 sur un appareil en UTC — le runner
+    /// de la CI —, qui range la coupure au 21 : le test rougissait chaque nuit, main comprise.
+    @Test(arguments: ["UTC", "Europe/Paris"])
+    func lEcheanceSimuleeTientQuandIlEstDejaDemainAParis(_ fuseau: String) throws {
+        var calendrier = Chronologie.calendrier
+        calendrier.timeZone = try #require(TimeZone(identifier: fuseau))
+        let maintenant = try #require(FormatsDuSite.lire("2026-11-19T23:30:00Z"))
+        let jour = coupure(Apercu.Horloge(maintenant: maintenant, calendrier: calendrier))
+        #expect(jour.servi == jour.attendu)
+        #expect(jour.attendu == (fuseau == "UTC" ? "2026-11-21" : "2026-11-22"), "le jeudi de chaque appareil")
     }
 }
 

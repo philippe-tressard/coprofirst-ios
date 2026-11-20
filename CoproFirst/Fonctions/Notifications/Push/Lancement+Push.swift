@@ -19,6 +19,9 @@ extension Lancement {
 extension LancementSimule {
     /// Aucune alerte système : l'autorisation est dite par `-push non-demandee|refusee`,
     /// accordée sinon — les écrans et captures des autres lots ne voient pas l'offre.
+    /// Le relais simulé est ALLUMÉ et sert la résidence inventée, au plancher : les écrans
+    /// jouent l'offre ; l'interrupteur et la porte de version se jugent dans
+    /// `NotificationsPushTests` (#283).
     @MainActor
     static func push(_ arguments: [String]) -> NotificationsPush? {
         guard arguments.contains("-api-simulee") else { return nil }
@@ -31,7 +34,8 @@ extension LancementSimule {
         let suite = "fr.coprofirst.app.simulee.push"
         let reglages = UserDefaults(suiteName: suite) ?? .standard
         reglages.removePersistentDomain(forName: suite)
-        return NotificationsPush(centre: CentreSimule(etat), reglages: reglages)
+        return NotificationsPush(
+            centre: CentreSimule(etat), reglages: reglages, relais: RelaisPush(allume: true, depuis: .plancher))
     }
 
     /// `-push-touchee` : une notification de la résidence inventée, touchée — comme si

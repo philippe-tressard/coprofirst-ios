@@ -85,7 +85,12 @@ saisit dans l'app (Espace CS › Écrans du hall, #295) ou sur le site, avec le 
 périmètre de l'écran, et l'écran diffuse aussitôt (lot 3, RFC 8628) : une annonce toutes
 les quinze secondes, son titre, son message et ses photos, relues toutes les deux
 minutes ; l'écran reste allumé. L'appairage se garde au Trousseau : rallumée, l'Apple TV
-reprend seule ; retirée par le conseil, elle affiche un nouveau code. Elle compile les
+reprend seule ; retirée par le conseil, elle affiche un nouveau code. Au hall, un clic de
+la télécommande propose « Désappairer », confirmé : l'écran oublie son accès, que le
+conseil coupe dans l'app (lot 5). Elle embarque son propre manifeste de confidentialité
+(`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
+jugé sur le code qu'elle compile, comme celui de l'Apple Watch
+(`scripts/confidentialite_cibles.py`). Elle compile les
 fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
 (adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
 tvOS, avec les siens (`CoproFirstTVTests/`) :
@@ -190,10 +195,13 @@ carte au jour où le serveur la range — son échéance, sa publication sinon �
 pour VoiceOver) ; Ma résidence y a un **sommaire** à gauche — les rubriques de la Fiche, le
 carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la page et la
 fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
-**Notifications** : la cloche de chaque écran. Le push est une fonction à venir, pour les
-alertes sonores qu'émet le syndic (#283) : l'offre « Être averti sur ce téléphone »
-(#17) existe, mais ne délivre rien tant que le relais de la plateforme n'est pas branché
-(clé `.p8` du compte Apple, coprofirst#2494).
+**Notifications** : la cloche de chaque écran. Sur le téléphone, ne sonne que l'alerte
+d'une actualité marquée urgente par le conseil syndical ou l'administrateur (#283,
+décision du 18/11/2026), et seulement auprès d'une résidence au contrat 2.10.0 au moins :
+l'offre « Être averti sur ce téléphone » (#17) s'ouvre dans la cloche, jamais au lancement,
+et le message ne dit rien de son contenu. Le relais est **éteint** dans l'app
+(`RelaisPush`) tant que le service n'est pas allumé côté serveur (coprofirst#2875, clé
+`.p8` : coprofirst#2494) : d'ici là, ni offre ni enregistrement.
 **Sans réseau** (#101), une résidence dont la session est gardée sous Face ID se
 rouvre sur sa dernière lecture — le fil, les affaires et leur détail, le profil,
 l'annuaire, les documents et photos déjà ouverts —, datée en haut de l'écran

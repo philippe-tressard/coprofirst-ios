@@ -71,11 +71,12 @@ extension ServiceAPI: ServiceAppareils {
 }
 
 extension Components.Schemas.AppareilEnregistre {
-    /// Le corps de POST /appareils — le seul endroit où le jeton quitte sa boîte.
+    /// Le corps de POST /appareils — le seul endroit où le jeton quitte sa boîte. La
+    /// plateforme se dit (`apns`), même si le serveur la suppose absente (#283).
     init(_ appareil: AppareilPush) {
         self.init(
             abonnement: appareil.abonnement,
             environnement: appareil.environnement == .production ? .production : .developpement,
-            jeton: appareil.jeton.hexadecimal)
+            jeton: appareil.jeton.hexadecimal, plateforme: .apns)
     }
 }

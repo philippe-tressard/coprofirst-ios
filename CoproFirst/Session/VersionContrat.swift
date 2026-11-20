@@ -45,4 +45,12 @@ struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
     }
 
     var description: String { nombres.map(String.init).joined(separator: ".") }
+
+    /// Seule l'alerte d'une actualité ⚡ urgente part vers un téléphone (coprofirst#2789,
+    /// spec push §12) : sous cette version, une résidence ne reçoit pas l'appareil (#283).
+    /// Le contrat 2.10.0 arrive avec v3.119.0, mais le filtre seulement avec v3.120.0, qui ne
+    /// change pas de contrat : une v3.119.0 pousserait toute la cloche. Elle n'a servi
+    /// qu'une heure, service coupé, et aucune installation connue ne la sert plus
+    /// (mesuré le 19/11/2026 : demo.coprofirst.fr en v3.120.0, 5hostachy.fr en v3.121.0).
+    static let alertesPoussees = VersionContrat(2, 10, 0)
 }

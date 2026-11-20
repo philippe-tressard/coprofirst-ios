@@ -6,9 +6,11 @@ import SwiftUI
 /// Les textes des notifications sur le téléphone, écrits une fois.
 enum TextesPush {
     static let titre = "Être averti sur ce téléphone"
+    /// Ce qui sonne, et rien d'autre (spec push de coprofirst §12, #283) : une actualité
+    /// marquée urgente par un modérateur, c'est-à-dire le conseil syndical ou l'administrateur.
     static let explication =
-        "Quand une alerte arrive, votre téléphone vous prévient. "
-        + "Le message ne dit rien de son contenu : vous le lisez ici."
+        "Quand le conseil syndical ou l'administrateur marque une actualité urgente, "
+        + "votre téléphone sonne. Le message ne dit rien de son contenu : vous le lisez ici."
     static let activer = "Activer"
     static let plusTard = "Plus tard"
 }

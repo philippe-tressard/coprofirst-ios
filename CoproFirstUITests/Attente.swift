@@ -210,12 +210,28 @@ extension XCUIApplication {
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
     /// qu'XCUITest ajoute avant `tap()` sur un élément caché (#47) : une fois son cadre
-    /// immobile (le clavier et la mise en page bougeaient encore, #183, ex-#270).
+    /// immobile (le clavier et la mise en page bougeaient encore, #183, ex-#270) et son centre
+    /// hors du cadre du clavier ; un bouton qui y RESTE est un défaut de l'app (#47), dit ici.
+    /// Le 19/11/2026 (#299, #315, iOS 26.5), « Se connecter » était touché à y = 540 au lieu de
+    /// 513 — pas défilé — et rien ne partait. Au poste (iOS 26.5), le défilement le pose 44 pt
+    /// AU-DESSUS du cadre du clavier : ce cadre ne dit pas tout ce qui le couvre. Les cadres
+    /// s'impriment donc à chaque toucher : le prochain rouge se lit au journal, sans le rejouer.
     @MainActor
     func toucherAuDessin(_ element: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
-        immobile(element)
+        let clavier = keyboards.firstMatch
+        let sousLeClavier = {
+            clavier.exists && clavier.frame.contains(CGPoint(x: element.frame.midX, y: element.frame.midY))
+        }
+        let limite = Date().addingTimeInterval(Attente.plafond)
+        repeat { immobile(element) } while sousLeClavier() && Date() < limite
         let cadre = element.frame
+        let leClavier = clavier.exists ? "\(clavier.frame)" : "absent"
+        print("toucher au dessin : \(element.identifier) \(cadre), clavier \(leClavier)")
+        guard !sousLeClavier() else {
+            XCTFail("\(element) reste sous le clavier (#47) : \(cadre), clavier \(leClavier)", file: file, line: line)
+            return
+        }
         coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: cadre.midX, dy: cadre.midY)).tap()
     }
 
