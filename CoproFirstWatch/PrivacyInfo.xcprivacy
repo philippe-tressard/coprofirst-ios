@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 Le manifeste de confidentialité de l'app Apple Watch (#226). La montre ne lit que la cloche
 (GET /notifications) avec le jeton de montre que l'iPhone lui donne : ce jeton désigne le
 compte, d'où « User ID », lié à la personne, pour le fonctionnement de l'app. Aucune API à
-raison requise. Tenu au code par scripts/verifier-confidentialite.py (confidentialite_montre.py).
+raison requise. Tenu au code par scripts/verifier-confidentialite.py (confidentialite_cibles.py).
 -->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">

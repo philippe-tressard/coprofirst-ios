@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+
+Le manifeste de confidentialité de l'écran de hall (#218, lot 5) : la cible Apple TV
+embarque le sien, à la racine de son paquet, comme l'app iPhone.
+
+L'écran ne collecte rien : il demande un code d'appairage, attend que le conseil le
+confirme, puis lit les affiches de son périmètre avec son jeton. Aucun compte, aucune
+saisie de personne, aucun identifiant de l'appareil ; l'adresse de la résidence et le
+jeton restent au Trousseau de l'Apple TV. Aucune API « à raison requise » n'est appelée.
+
+Il ne s'écrit pas seul : scripts/verifier-confidentialite.py le juge sur le code que la
+cible COMPILE (ses sources de project.yml) et les paquets embarqués, et refuse qu'il
+déclare un type que la fiche de l'app ne porte pas (une seule fiche App Store).
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

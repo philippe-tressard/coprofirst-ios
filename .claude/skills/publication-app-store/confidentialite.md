@@ -11,6 +11,7 @@ disent la même chose (`standards/14` §3 bis, déclaré = réel) :
 | Texte | Où | Qui l'écrit |
 |---|---|---|
 | le manifeste embarqué | `CoproFirst/PrivacyInfo.xcprivacy` | ce dépôt |
+| les manifestes propres : Apple TV (#218), Apple Watch (#226) | `CoproFirstTV/PrivacyInfo.xcprivacy` (rien de collecté), `CoproFirstWatch/PrivacyInfo.xcprivacy` (*User ID* seul) — chacun jugé sur le code que SA cible compile, sans type que l'app ne déclare (une seule fiche) : `scripts/confidentialite_cibles.py` | ce dépôt |
 | la fiche et les étiquettes | App Store Connect | **Philippe**, à partir de ce fichier (§9) |
 | la politique de confidentialité | <https://coprofirst.fr/confidentialite.html#t-application> | le dépôt `coprofirst-site` |
 
@@ -83,7 +84,7 @@ relais de l'éditeur, puis par Apple (§4).
 | le courriel de la dernière connexion, par résidence | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(Data(email.utf8), Self.prefixeIdentifiant + installation.hote)` |
 | le profil dans la résidence (statut, rôles, logement) | Trousseau, sans biométrie | `CoproFirst/Session/InstallationsConnues.swift` › `coffre.ranger(donnees, Self.prefixeProfil + installation.hote)` ; `CoproFirst/Session/CoffreDuCompte.swift` › `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly` |
 | l'identifiant du compte dans la résidence (`id` de `GET /auth/me`, #94), le temps d'une session : il dit quel compte d'« Utilisateurs » est celui du lecteur | avec le profil, au Trousseau ; effacé à la déconnexion | `CoproFirst/Donnees/ProfilResidence.swift` › `idCompte: moi.id` ; `CoproFirst/Session/Parcours.swift` › `connues.oublierLeCompte(installation)` |
-| Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
+| Apple TV : l'appairage de l'écran de hall (sa résidence et le jeton de l'écran, qui ne lit que les affiches de son périmètre) ; oublié quand le serveur ne reconnaît plus le jeton, ou désappairé au hall | Trousseau, sans biométrie, jamais synchronisé | `CoproFirstTV/Appairage/MemoireEcran.swift` › `private static let cle = "ecran-de-hall"` ; `CoproFirstTV/EcranDeHall/HallTV.swift` › `memoire.oublier()` |
 | l'identifiant de l'Apple Watch reliée, par résidence (#226) — jamais son jeton | réglages | `CoproFirst/Fonctions/Notifications/Montre/LiaisonsMontre.swift` › `"montre:\(installation.hote)"` |
 | **sur l'Apple Watch** : la résidence reliée (adresse, nom) et son jeton de montre (#226) | Trousseau de la montre, sans invite, jamais synchronisé ; effacé quand l'iPhone ferme la résidence ou que le serveur refuse le jeton | `CoproFirstWatch/Liaison/CoffreLiaison.swift` › `CoffreTrousseau(service: "fr.coprofirst.app.montre.liaison")` ; `CoproFirstWatch/Liaison/LiaisonDeLaMontre.swift` › `if !simulee { coffre.effacer() }` |
 | les résidences ouvertes (adresse, nom) | réglages (`UserDefaults`) | `CoproFirst/Session/InstallationsConnues.swift` › `private static let cle = "installations-connues"` |
@@ -146,7 +147,7 @@ version du plancher) :
 
 **L'Apple Watch** (#226) — elle a son propre manifeste, `CoproFirstWatch/PrivacyInfo.xcprivacy`
 (*User ID* seul, aucune API à raison requise), tenu au code par
-`scripts/confidentialite_montre.py` ; la fiche reste celle de l'app :
+`scripts/confidentialite_cibles.py` ; la fiche reste celle de l'app :
 
 - à l'ouverture d'une résidence, si une montre jumelée porte l'app, l'iPhone demande à la
   résidence un **jeton de montre** (coprofirst#2771 : il ne lit que la cloche, 30 jours,

@@ -31,4 +31,12 @@ enum EcranDeHall {
     static let aucuneMessage = "Les annonces de hall de la résidence s'afficheront ici."
     static let lecture = "Lecture des annonces…"
     static func position(_ rang: Int, sur total: Int) -> String { "Annonce \(rang + 1) sur \(total)" }
+
+    // « Désappairer » (lot 5) : un geste local ; couper l'accès se fait dans l'Espace CS.
+    static let desappairer = "Désappairer"
+    static let desappairerTitre = "Désappairer cet écran ?"
+    static let desappairerMessage = """
+        L'écran oublie son accès et affiche un nouveau code. Pour couper l'accès lui-même, \
+        un membre du conseil retire l'écran dans l'Espace CS, onglet « Écrans du hall ».
+        """
 }
