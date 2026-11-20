@@ -5,20 +5,27 @@ import Foundation
 
 /// Un geste sur UNE entrée de l'Historique (#91, #93). L'ORDRE est celui du site
 /// (`RubriqueHistorique.svelte`) : ✏️, 🚩, 🙈 puis 🗑️, l'irréversible en dernier.
-enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
+enum GesteSuite: String, CaseIterable, Identifiable, Sendable, GesteDeMenu {
     case modifier, signaler, masquer, supprimer
 
     var id: String { rawValue }
 
-    /// Le mot du geste ; « Masquer ce que publie… » nomme l'auteur de l'entrée.
-    func libelle(pour suite: SuiteAffaire) -> String {
+    /// Le mot du geste, hors de toute entrée ; « Masquer ce que publie… », le mot du site
+    /// quand l'auteur n'est pas nommé (`TextesMasquage.ouSeTrouve`).
+    var libelle: String {
         switch self {
         // Le titre de la boîte qui corrige une Suite (`SUITE.libelleModifier` du site).
         case .modifier: "Modifier la suite"
         case .signaler: "Signaler cette suite au conseil syndical"
-        case .masquer: TextesMasquage.geste(suite.auteur ?? "")
+        case .masquer: TextesMasquage.geste("…")
         case .supprimer: TextesSuite.supprimer
         }
+    }
+
+    /// Le mot du geste sur CETTE entrée : « Masquer ce que publie… » nomme son auteur.
+    func libelle(pour suite: SuiteAffaire) -> String {
+        guard self == .masquer, let auteur = suite.auteur, !auteur.isEmpty else { return libelle }
+        return TextesMasquage.geste(auteur)
     }
 
     var symbole: String {
@@ -29,6 +36,8 @@ enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
         case .supprimer: "trash"
         }
     }
+
+    var destructif: Bool { self == .supprimer }
 
     /// Les gestes offerts sur cette entrée : ceux que le serveur a servis AVEC elle
     /// (`DroitsServisSuite`), et aucun autre — sans droit servi, l'Historique se lit sans

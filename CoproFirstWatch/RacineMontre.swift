@@ -21,7 +21,7 @@ struct RacineMontre: View {
             case .reliee(let residence, let source):
                 ClocheView(
                     residence: residence, adresse: source.adresse,
-                    lecteur: LecteurCloche(source: source) { liaison.jetonRefuse() }
+                    lecteur: liaison.lecteur(source)
                 )
                 // Une autre résidence, ou un jeton renouvelé : une cloche neuve, sans l'ancienne liste.
                 .id(source)

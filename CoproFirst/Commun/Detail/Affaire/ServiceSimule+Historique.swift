@@ -50,6 +50,60 @@ extension ServiceSimule {
         }
     }
 
+    /// SON message corrigé (#211), comme `messages.update_message` : son auteur seul, tant
+    /// que l'affaire n'est pas close ; le miroir « reponse » de l'Historique suit.
+    func corrigerMessage(
+        _ contenuHTML: String, _ message: Int, de affaire: Int, dans installation: Installation
+    ) async throws {
+        try await Task.sleep(for: .milliseconds(250))
+        try changerAffaireSimulee(affaire) { detail in
+            let rang = try Self.messageDeLAuteur(message, dans: detail)
+            let ancien = detail.messages[rang]
+            detail.messages[rang] = MessageAffaire(
+                id: ancien.id, contenu: contenuHTML, date: ancien.date, deMoi: true, nom: ancien.nom,
+                qualite: ancien.qualite, interne: ancien.interne, pieces: ancien.pieces)
+            if let miroir = Self.miroir(de: ancien, dans: detail) {
+                let entree = detail.suites[miroir]
+                var reecrite = SuiteAffaire(
+                    id: entree.id, type: entree.type, date: entree.date, auteur: entree.auteur, contenu: contenuHTML,
+                    ancienStatut: entree.ancienStatut, nouveauStatut: entree.nouveauStatut)
+                reecrite.droits = entree.droits
+                reecrite.pieces = entree.pieces
+                detail.suites[miroir] = reecrite
+            }
+        }
+    }
+
+    /// SON message retiré (#211), comme `messages.delete_message` : son miroir part avec lui.
+    func supprimerMessage(_ message: Int, de affaire: Int, dans installation: Installation) async throws {
+        try await Task.sleep(for: .milliseconds(250))
+        try changerAffaireSimulee(affaire) { detail in
+            let rang = try Self.messageDeLAuteur(message, dans: detail)
+            if let miroir = Self.miroir(de: detail.messages[rang], dans: detail) { detail.suites.remove(at: miroir) }
+            detail.messages.remove(at: rang)
+        }
+    }
+
+    /// Les deux refus de la route (`_message_de_l_auteur`) : un autre auteur, une affaire close.
+    private static func messageDeLAuteur(_ message: Int, dans detail: DetailAffaire) throws -> Int {
+        guard let rang = detail.messages.firstIndex(where: { $0.id == message }) else {
+            throw ErreurService.introuvable
+        }
+        guard detail.messages[rang].deMoi else {
+            throw ErreurService.refus(.init(phrase: "Seul l'auteur d'un message peut le modifier ou le supprimer"))
+        }
+        guard !detail.close else {
+            throw ErreurService.refus(.init(phrase: "Cette affaire est close : sa discussion ne se modifie plus"))
+        }
+        return rang
+    }
+
+    /// La suite « reponse » qui double ce message dans l'Historique (le serveur la tient par
+    /// `evolution_id`, que le fil ne sert pas : ici, le même texte).
+    private static func miroir(de message: MessageAffaire, dans detail: DetailAffaire) -> Int? {
+        message.interne ? nil : detail.suites.firstIndex { $0.type == "reponse" && $0.contenu == message.contenu }
+    }
+
     /// La correction, comme `suite_sections.corriger_suivi` : l'entrée garde sa date et
     /// son auteur ; son Suivi se déduit de l'état d'avant elle. L'affaire suit si elle est
     /// déjà dans l'état que l'entrée donne, ou si aucune transition ne suit l'entrée et que

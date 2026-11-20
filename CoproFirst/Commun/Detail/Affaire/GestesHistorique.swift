@@ -3,15 +3,18 @@
 
 import SwiftUI
 
-/// L'entrée de l'Historique qu'un geste vise : tenue par l'écran (`gestesHistorique`),
-/// posée par l'entrée touchée (`gestesSuite`). Seul l'écran présente la feuille et la
-/// question — posées sur une entrée, elles se multiplieraient avec le fil.
+/// L'entrée de l'Historique — ou le message du fil (#211) — qu'un geste vise : tenu par
+/// l'écran (`gestesHistorique`), posé par l'élément touché (`gestesSuite`, la bulle d'un
+/// message). Seul l'écran présente la feuille et la question — posées sur un élément,
+/// elles se multiplieraient avec le fil.
 @MainActor @Observable
 final class ChoixDeSuite {
     var aCorriger: SuiteAffaire?
     var aSupprimer: SuiteAffaire?
     var aSignaler: SuiteAffaire?
     var aMasquer: AuteurAMasquer?
+    var messageACorriger: MessageAffaire?
+    var messageASupprimer: MessageAffaire?
     /// Une correction que l'affaire n'a pas suivie (#187) : remise par la feuille, dite
     /// une fois la feuille fermée (`aDire`) — une alerte ne s'ouvre pas sur une feuille
     /// qui se ferme.
@@ -31,9 +34,17 @@ final class ChoixDeSuite {
         case .supprimer: aSupprimer = suite
         }
     }
+
+    func choisir(_ geste: GesteMessage, _ message: MessageAffaire) {
+        switch geste {
+        case .modifier: messageACorriger = message
+        case .supprimer: messageASupprimer = message
+        }
+    }
 }
 
-/// Les gestes des entrées de l'Historique d'une affaire (#91, #93), comme le site
+/// Les gestes des entrées de l'Historique d'une affaire (#91, #93) et de SES messages du
+/// fil (#211, `GesteMessage`), comme le site
 /// (`RubriqueHistorique.svelte`) : « Modifier la suite » ouvre la feuille de la Suite
 /// partie de l'entrée (`SuiteFeuille`), « Supprimer cette entrée » se confirme. Chacun
 /// s'annonce par l'avis du geste, puis l'affaire se relit.
@@ -78,6 +89,11 @@ struct GestesHistorique: ViewModifier {
             } message: { suite in
                 Text(TextesSuite.question(suite))
             }
+            // Son message du fil (#211) : la feuille de « Répondre », la question du site.
+            .modifier(
+                GestesDesMessages(
+                    affaire: affaire, installation: installation, recharger: recharger, choix: choix, avis: avis,
+                    fermee: feuilleFermee))
             .alert(
                 TextesSuite.corrigee,
                 isPresented: Binding(get: { choix.aDire != nil }, set: { if !$0 { choix.aDire = nil } }),
@@ -148,9 +164,6 @@ private struct GestesSuite: ViewModifier {
     @Environment(ChoixDeSuite.self) private var choix: ChoixDeSuite?
     /// Le compte et la porte de la résidence ouverte : signaler, masquer (#286).
     @Environment(Parcours.self) private var parcours: Parcours?
-    @Environment(\.palette) private var palette
-    /// La hauteur de la première ligne de l'entrée : le bouton s'y aligne.
-    @ScaledMetric(relativeTo: .subheadline) private var ligne: CGFloat = 20
 
     func body(content: Content) -> some View {
         let ouverte = parcours?.ouverteAJour
@@ -166,29 +179,9 @@ private struct GestesSuite: ViewModifier {
                             Button(geste.libelle(pour: suite)) { choix?.choisir(geste, suite) }
                         }
                     }
-                Menu {
-                    ForEach(gestes) { geste in
-                        Button(role: geste == .supprimer ? .destructive : nil) {
-                            choix?.choisir(geste, suite)
-                        } label: {
-                            Label(geste.libelle(pour: suite), systemImage: geste.symbole)
-                        }
-                        .accessibilityIdentifier("historique.geste.\(geste.rawValue)")
-                    }
-                } label: {
-                    // Le « ⋯ » des cartes de l'app (`CarteAnnonceHall`). La cible fait 44 pt ;
-                    // elle déborde dans la marge de la carte, pour rester sur la première
-                    // ligne de l'entrée sans l'épaissir.
-                    Image(systemName: "ellipsis.circle")
-                        .font(.body)
-                        .foregroundStyle(palette.primary)
-                        .frame(minWidth: Mise.cible, minHeight: Mise.cible)
-                        .contentShape(.rect)
-                        .padding(-max(0, (Mise.cible - ligne) / 2))
-                }
-                .accessibilityLabel(TextesSuite.gestes)
-                .gesteEnLigne()
-                .accessibilityIdentifier("historique.gestes.\(suite.id)")
+                BoutonDesGestes(
+                    gestes: gestes, prefixe: "historique", id: suite.id, libelleVocal: TextesSuite.gestes,
+                    libelle: { $0.libelle(pour: suite) }, choisir: { choix?.choisir($0, suite) })
             }
         } else {
             content

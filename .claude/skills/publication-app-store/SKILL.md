@@ -86,6 +86,20 @@ Reste ouvert : les notifications push n'ont jamais été reçues pour de vrai (c
 relais, coprofirst#2494) ; le geste de suppression n'a été joué que sur l'API simulée ;
 la suppression est une **demande** traitée par l'administration (arbitrage du 12/11/2026).
 
+## Avant CHAQUE soumission : la commande de contrôle (#205)
+
+`python3 scripts/avant_soumission.py` juge le commit exact à soumettre (`HEAD` =
+`origin/main`) et refuse sur le moindre rouge comme sur un INCONNU : CI complète verte
+(interface comprise), concordance avec le contrat servi en production, contrôle du dépôt,
+aucun ticket `bloque-soumission` ouvert, écrans principaux en sombre et en très grand
+texte au simulateur (captures dans `.build/Soumission/`). Ce que seul Philippe voit —
+captures déposées, notes de version, étiquette App Privacy, rendu validé — se confirme
+nommément par `--confirme`. La liste fait foi dans le script
+(`CONFIRMATIONS`), elle ne se recopie pas ici. Tout vert, `--etiqueter` pose et pousse
+`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. La parité avec
+l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
+soumission reste le geste de Philippe.
+
 ## À faire avant la première soumission (historique : tout est livré ou noté ci-dessus)
 
 - [x] Manifeste de confidentialité, et texte de la fiche confronté à ce que l'app **et

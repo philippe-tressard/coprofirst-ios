@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import SwiftUI
+import WatchKit
 
 /// L'app Apple Watch (#226) : la cloche de la dernière résidence ouverte sur l'iPhone, en
 /// LECTURE seule — rien ne s'y marque comme lu (décision de Philippe, 16/11/2026), rien ne
@@ -11,12 +12,12 @@ import SwiftUI
 /// l'alerte servie (`project.yml`, cible `CoproFirstWatch`) : jamais une copie.
 @main
 struct CoproFirstWatchApp: App {
-    /// Créée au lancement : un message de l'iPhone arrivé app fermée est remis dès qu'elle écoute.
-    @State private var liaison = LiaisonDeLaMontre.auLancement(ProcessInfo.processInfo.arguments)
+    /// La liaison et le rafraîchissement d'arrière-plan (#226, lot 3).
+    @WKApplicationDelegateAdaptor(DelegueMontre.self) private var delegue
 
     var body: some Scene {
         WindowGroup {
-            RacineMontre(liaison: liaison)
+            RacineMontre(liaison: delegue.liaison)
         }
     }
 }

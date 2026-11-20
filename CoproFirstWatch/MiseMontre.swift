@@ -12,4 +12,9 @@ enum MiseMontre {
     static let interligne: CGFloat = 2
     /// Le point des non lues — celui de l'iPhone (9 pt), réduit au poignet.
     static let point: CGFloat = 7
+    /// Le point du widget sur le logo, en part de son côté — celui de la complication Wear OS
+    /// (rayon 14 sur 96).
+    static let pointDuWidget: CGFloat = 0.29
+    /// Jusqu'où la phrase du widget rectangulaire se réduit avant de se couper (très grand texte).
+    static let reductionDuWidget: CGFloat = 0.8
 }
