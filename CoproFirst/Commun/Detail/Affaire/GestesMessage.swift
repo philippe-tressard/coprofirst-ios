@@ -139,16 +139,8 @@ struct GestesDesMessages: ViewModifier {
     }
 
     private func retirer(_ message: MessageAffaire) async {
-        guard let service = parcours.service.gestesAffaire else {
-            avis.dire(TextesSuite.indisponible, ton: .error)
-            return
-        }
-        do {
-            try await service.supprimerMessage(message.id, de: affaire.id, dans: installation)
-            avis.dire(TextesMessage.supprime)
-            recharger()
-        } catch {
-            avis.dire(ErreurService.depuis(error).phrase, ton: .error)
+        await avis.agir(avec: parcours.service.gestesAffaire, reussite: TextesMessage.supprime, apres: recharger) {
+            try await $0.supprimerMessage(message.id, de: affaire.id, dans: installation)
         }
     }
 }
