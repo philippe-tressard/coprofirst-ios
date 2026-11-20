@@ -148,8 +148,21 @@ final class EtatCommunaute {
     func signaler(
         _ cible: CibleCommunaute, motif: String, _ installation: Installation, avec service: any ServiceCommunaute
     ) async {
-        _ = await agir("Signalement transmis au conseil syndical", recharger: nil, installation, avec: service) {
+        _ = await agir(TextesSignalement.transmis, recharger: nil, installation, avec: service) {
             try await service.signalerAuConseil(cible.signalement, motif: motif, dans: installation)
+            return nil
+        }
+    }
+
+    /// « Masquer ce que publie… » (#286) : le serveur filtre, l'onglet se relit — ce que
+    /// publie cette personne le quitte.
+    @discardableResult
+    func masquer(
+        _ auteur: AuteurAMasquer, recharger onglet: OngletCommunaute, _ installation: Installation,
+        avec service: any ServiceCommunaute
+    ) async -> Bool {
+        await agir(TextesMasquage.masque(auteur.nom), recharger: onglet, installation, avec: service) {
+            try await service.masquer(auteur, dans: installation)
             return nil
         }
     }

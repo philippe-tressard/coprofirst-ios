@@ -240,7 +240,11 @@ dans coprofirst à la version du plancher, non contrôlé ici).
 | `patchTicketsTicketIdEvolutionsEvolId` | `OtherUserContent` |
 | `deleteTicketsTicketIdEvolutionsEvolId` | — |
 | `postTicketsTicketIdMessages` | `EmailsOrTextMessages` |
+| `patchTicketsTicketIdMessagesMsgId` | `EmailsOrTextMessages` |
+| `deleteTicketsTicketIdMessagesMsgId` | — |
 | `postSignalements` | `OtherUserContent` |
+| `postMasquages` | `OtherUserContent` |
+| `deleteMasquagesAuteurId` | — |
 | `postLecturesApercu` | `OtherUserContent` |
 | `postPerimetresLibelle` | `OtherUserContent` |
 | `postNomsAffiche` | `Name` |

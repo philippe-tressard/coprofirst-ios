@@ -58,7 +58,7 @@ private struct ContenuAffaire: View {
                 FilAffaire(affaire: affaire, installation: installation)
                 // Pas de messages sur une actualité : elle informe, on n'y répond pas.
                 if !affaire.estActualite {
-                    FilMessagesAffaire(messages: affaire.messages, installation: installation)
+                    FilMessagesAffaire(affaire: affaire, installation: installation)
                 }
             }
             .padding(Mise.marge)

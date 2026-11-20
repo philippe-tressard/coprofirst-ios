@@ -77,6 +77,24 @@ extension XCUIApplication {
         }
     }
 
+    /// `amener`, jusqu'à ce que l'élément soit tout entier AU-DESSUS de `borne` (le haut d'une
+    /// barre du bas). Sous iOS 26.5, la barre `.bottomBar` d'un écran n'est pas exposée comme
+    /// `Toolbar` (des `Other` seuls) : `zoneUtile` ne la voit pas, `isHittable` la traverse, et
+    /// le toucher d'un « ⋯ » passé sous son verre ne l'ouvrait pas (#211). La borne se nomme
+    /// donc par un bouton de la barre, que le test connaît. Le défilement est un BALAYAGE lent,
+    /// pas l'appui-glisser d'`amener` : sous iOS 26.5, celui-ci partait sur un texte sélectionnable
+    /// de la fiche (`textSelection`) et la page ne bougeait pas (vidéo du xcresult, #211) — le
+    /// geste de `HistoriqueUITests` sur le même écran.
+    @discardableResult
+    func amener(_ element: XCUIElement, auDessusDe borne: XCUIElement, essais: Int = 8) -> Bool {
+        let arrive = { !borne.exists || element.frame.maxY + 8 <= borne.frame.minY }
+        _ = element.sonde()
+        for _ in 0..<essais where !(element.exists && arrive()) {
+            swipeUp(velocity: .slow)
+        }
+        return element.exists && arrive()
+    }
+
     /// `amener`, arrivé quand `arrive` le dit (l'élément existe en plus).
     @discardableResult
     fileprivate func amener(_ element: XCUIElement, essais: Int, jusqua arrive: () -> Bool) -> Bool {
@@ -218,23 +236,15 @@ extension XCUIApplication {
     }
 
     /// Le point à toucher, en coordonnées relatives à son cadre : son centre (0,5 ; 0,5) s'il
-    /// est dans la zone utile, sinon le centre de sa PARTIE VISIBLE ; `nil` s'il n'en montre
-    /// pas assez (22 pt de côté, ou tout l'élément s'il est plus petit), au plus tard après
-    /// `duree` secondes. La zone utile : l'écran de l'app, moins la barre d'onglets (sauf
-    /// pour ses propres boutons) — une ligne passée DERRIÈRE elle n'est pas à l'écran, le
-    /// toucher partait sur la barre (DelegationsCSUITests, très grand texte) —, et rien sous
-    /// le clavier. Lu sur les cadres seuls (voir `toucher`).
+    /// est dans la zone utile (`zoneUtile`), sinon le centre de sa PARTIE VISIBLE ; `nil` s'il
+    /// n'en montre pas assez (22 pt de côté, ou tout l'élément s'il est plus petit), au plus
+    /// tard après `duree` secondes ; rien sous le clavier. Lu sur les cadres seuls (voir `toucher`).
     private func visible(_ element: XCUIElement, pendant duree: TimeInterval = 0) -> CGVector? {
         let limite = Date().addingTimeInterval(duree)
+        let zone = zoneUtile(pour: element)
         while true {
             if element.exists {
                 let cadre = element.frame
-                // Le cadre de l'APP, l'écran : `windows.firstMatch` peut être une autre fenêtre.
-                var zone = frame
-                let barre = tabBars.firstMatch
-                if barre.exists, !barre.frame.contains(cadre) {
-                    zone.size.height = max(0, min(zone.maxY, barre.frame.minY) - zone.minY)
-                }
                 let vu = cadre.intersection(zone)
                 let centre = zone.contains(CGPoint(x: cadre.midX, y: cadre.midY))
                     ? CGPoint(x: cadre.midX, y: cadre.midY) : CGPoint(x: vu.midX, y: vu.midY)
@@ -248,6 +258,27 @@ extension XCUIApplication {
             if Date() >= limite { return nil }
             _ = XCTWaiter().wait(for: [XCTestExpectation(description: "visible")], timeout: 0.25)
         }
+    }
+
+    /// La zone utile : l'écran de l'app (son cadre : `windows.firstMatch` peut être une autre
+    /// fenêtre), moins les barres du BAS, sauf pour leurs propres boutons. Une ligne passée
+    /// DERRIÈRE l'une d'elles n'est pas à l'écran : le toucher partait sur la barre.
+    /// - la barre d'onglets (DelegationsCSUITests, très grand texte) ;
+    /// - la barre de gestes d'un écran (`.bottomBar`, le bandeau d'une affaire) : le « ⋯ » d'un
+    ///   message passait sous elle, et le toucher archivait l'affaire (#211). XCUITest lui donne
+    ///   TOUT l'écran pour cadre (iOS 26 et 27) : son bord se lit sur ses boutons du bas.
+    private func zoneUtile(pour element: XCUIElement) -> CGRect {
+        var zone = frame
+        let onglets = tabBars.firstMatch
+        if onglets.exists, !onglets.frame.contains(element.frame) {
+            zone.size.height = max(0, min(zone.maxY, onglets.frame.minY) - zone.minY)
+        }
+        let gestes = toolbars.firstMatch
+        if gestes.exists, !gestes.buttons.matching(identifier: element.identifier).firstMatch.exists {
+            let hauts = gestes.buttons.allElementsBoundByIndex.map(\.frame.minY).filter { $0 > zone.midY }
+            if let haut = hauts.min() { zone.size.height = max(0, min(zone.maxY, haut) - zone.minY) }
+        }
+        return zone
     }
 
     /// Attend que l'élément ne bouge plus : deux cadres égaux à un quart de seconde d'écart

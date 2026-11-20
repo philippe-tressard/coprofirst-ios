@@ -7,7 +7,7 @@ import Foundation
 /// réserve au conseil syndical ou à l'administration (créer un sondage, changer le
 /// statut d'une idée, modérer, répondre aux avis) reste au site, et l'écran le dit.
 /// Signaler au conseil syndical : la lecture commune (`ServiceSignalements`, Donnees/).
-protocol ServiceCommunaute: ServiceSignalements {
+protocol ServiceCommunaute: ServiceSignalements, ServiceMasquages {
     /// GET /auth/me : statut, rôles, suspension.
     func moiCommunaute(_ installation: Installation) async throws -> MoiCommunaute
     /// GET /sondages.

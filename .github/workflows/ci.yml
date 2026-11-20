@@ -201,12 +201,16 @@ jobs:
       # et le lot 5 de #297) : 150 min de tests au pire, ~31 par lot nommé, ~26 pour le
       # dernier, qui garde de la place pour les classes neuves. Le build et la mise en route
       # prennent 15 à 17 min (25 une fois) : ~48 min d'étape au pire, 7 de marge.
+      # Le 20/11/2026 (#286), ModerationUITests (neuve, 124 à 185 s) a porté le dernier lot à
+      # 56 min (63dea6c, tests verts). Étape mesurée sur les dix derniers runs complets : lot 1
+      # 21-54 min, lot 2 17-47 (médiane 37), lot 3 35-53, lot 4 24-51, lot 5 39-56. Elle va au
+      # lot 2, le plus léger : ~40 min en médiane, ~50 au pire ; le dernier redescend à ~53 au pire.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
         CommunauteUITests CartesDuFilUITests ConfirmationHoteUITests NatureUITests
         ResidenceUITests RetourUITests AvisReglementUITests
       LOT_2: >-
-        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests EcheanceUITests
+        SaisieAffaireUITests ParcoursUITests ApercusSaisieUITests EcheanceUITests ModerationUITests
       LOT_3: >-
         SuppressionCompteUITests AccesUITests AffairesUITests GrandTexteUITests EspaceCSUITests
         PrestatairesAffaireUITests ConnexionUITests

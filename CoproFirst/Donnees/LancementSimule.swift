@@ -26,6 +26,8 @@ import Foundation
 /// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
 /// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`) ;
 /// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ;
+/// `-contrat <version>` : le contrat que sert la résidence — `2.9.0` ouvre la porte
+/// `.moderation` (signaler, masquer, #286).
 /// `-installation-suspendue` : la résidence servie est suspendue, en lecture seule (#262).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
@@ -117,10 +119,12 @@ enum LancementSimule {
 
     /// La résidence inventée ; avec `-logo-residence <contrat>`, un logo téléversé et sa
     /// variante sombre, servis à ce contrat (#70) ; avec `-instance-commune`, l'opérateur
-    /// désigné par l'exploitant (`operateur_par_exploitant`, #94).
+    /// désigné par l'exploitant (`operateur_par_exploitant`, #94) ; avec `-contrat <version>`,
+    /// ce contrat servi — une porte au-dessus du plancher ouverte (`.moderation`, #286).
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
         if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
+        if let contrat = argument("-contrat", arguments) { residence.versionContrat = contrat }
         if arguments.contains("-installation-suspendue") { residence.suspendue = true }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true

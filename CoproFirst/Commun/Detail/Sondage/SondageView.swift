@@ -47,6 +47,7 @@ private struct ContenuSondage: View {
     @State private var vote = VoteSondage()
     @State private var envoi = false
     @State private var signale: ReponseCommunaute?
+    @State private var aMasquer: AuteurAMasquer?
     @State private var avis = AvisDuGeste()
     @State private var retrait = RetraitDeReponse()
 
@@ -84,6 +85,11 @@ private struct ContenuSondage: View {
         .animation(.snappy, value: sondage.peutVoter)
         .confirmationDeRetrait(retrait, gestes: gestes)
         .signalementAuConseil($signale) { reponse, motif in Task { await signaler(reponse, motif) } }
+        .confirmationMasquage($aMasquer) { auteur in
+            Task {
+                await geste(TextesMasquage.masque(auteur.nom)) { try await service.masquer(auteur, dans: installation) }
+            }
+        }
         .avisEphemere(avis)
     }
 
@@ -101,7 +107,9 @@ private struct ContenuSondage: View {
                     try await service.supprimerCommentaireSondage(reponse.id, du: sondage.id, dans: installation)
                 }
             },
-            signaler: { signale = $0 })
+            signaler: { signale = $0 }
+        )
+        .masquage(installation) { aMasquer = $0 }
     }
 
     private func voter() async {
@@ -116,7 +124,7 @@ private struct ContenuSondage: View {
 
     private func signaler(_ reponse: ReponseCommunaute, _ motif: String) async {
         let cible = CibleSignalement(type: "commentaire", id: reponse.id)
-        await geste(TextesSondage.signalementTransmis, relire: false) {
+        await geste(TextesSignalement.transmis, relire: false) {
             try await service.signalerAuConseil(cible, motif: motif, dans: installation)
         }
     }

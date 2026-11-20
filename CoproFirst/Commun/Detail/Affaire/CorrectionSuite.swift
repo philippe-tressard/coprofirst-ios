@@ -4,34 +4,55 @@
 import Foundation
 
 /// Un geste sur UNE entrée de l'Historique (#91, #93). L'ORDRE est celui du site
-/// (`RubriqueHistorique.svelte`) : ✏️ puis 🗑️, l'irréversible en dernier.
-enum GesteSuite: String, CaseIterable, Identifiable, Sendable {
-    case modifier, supprimer
+/// (`RubriqueHistorique.svelte`) : ✏️, 🚩, 🙈 puis 🗑️, l'irréversible en dernier.
+enum GesteSuite: String, CaseIterable, Identifiable, Sendable, GesteDeMenu {
+    case modifier, signaler, masquer, supprimer
 
     var id: String { rawValue }
 
+    /// Le mot du geste, hors de toute entrée ; « Masquer ce que publie… », le mot du site
+    /// quand l'auteur n'est pas nommé (`TextesMasquage.ouSeTrouve`).
     var libelle: String {
         switch self {
         // Le titre de la boîte qui corrige une Suite (`SUITE.libelleModifier` du site).
         case .modifier: "Modifier la suite"
+        case .signaler: "Signaler cette suite au conseil syndical"
+        case .masquer: TextesMasquage.geste("…")
         case .supprimer: TextesSuite.supprimer
         }
+    }
+
+    /// Le mot du geste sur CETTE entrée : « Masquer ce que publie… » nomme son auteur.
+    func libelle(pour suite: SuiteAffaire) -> String {
+        guard self == .masquer, let auteur = suite.auteur, !auteur.isEmpty else { return libelle }
+        return TextesMasquage.geste(auteur)
     }
 
     var symbole: String {
         switch self {
         case .modifier: "pencil"
+        case .signaler: "flag"
+        case .masquer: TextesMasquage.symbole
         case .supprimer: "trash"
         }
     }
 
+    var destructif: Bool { self == .supprimer }
+
     /// Les gestes offerts sur cette entrée : ceux que le serveur a servis AVEC elle
     /// (`DroitsServisSuite`), et aucun autre — sans droit servi, l'Historique se lit sans
-    /// geste, comme avant.
-    static func offerts(pour suite: SuiteAffaire) -> [GesteSuite] {
-        allCases.filter { geste in
+    /// geste, comme avant. Signaler et masquer (#286) suivent la règle du site
+    /// (`peutSignaler` de `RubriqueHistorique.svelte`) : une entrée qui porte un texte,
+    /// écrite par un autre — `moi` connu, sinon rien —, et l'installation qui le sert
+    /// (`moderation`) ; masquer exige en plus un auteur nommé.
+    static func offerts(pour suite: SuiteAffaire, moi: Int? = nil, moderation: Bool = false) -> [GesteSuite] {
+        let signalable = moderation && !(suite.contenu ?? "").isEmpty && moi != nil
+            && suite.auteurId != nil && suite.auteurId != moi
+        return allCases.filter { geste in
             switch geste {
             case .modifier: suite.droits.modifier
+            case .signaler: signalable
+            case .masquer: signalable && AuteurAMasquer(id: suite.auteurId, nom: suite.auteur, moi: moi) != nil
             case .supprimer: suite.droits.supprimer
             }
         }
@@ -49,7 +70,6 @@ enum TextesSuite {
     /// L'avis d'une Suite qui change l'état (`affaires-en-liste.ts` du site).
     static let statutMisAJour = "Statut mis à jour"
     static let supprimee = "Entrée supprimée"
-    static let indisponible = "Ce geste n'est pas disponible ici."
     /// Le titre de la feuille : le mot du geste — « Modifier la suite » se tronquait
     /// entre « Annuler » et « Enregistrer », comme « Ajouter une suite » (`SUITE.court`).
     static let titreCorrection = "Modifier"

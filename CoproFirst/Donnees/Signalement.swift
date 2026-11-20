@@ -11,10 +11,25 @@ struct CibleSignalement: Hashable, Sendable {
     let id: Int
 }
 
-/// POST /signalements : un motif, au conseil syndical. Deux lecteurs — la Communauté
-/// et la fiche d'un sondage (#38) : leurs protocoles en héritent, comme `ServicePerimetres`.
+extension CibleSignalement {
+    /// Au-dessus du plancher, derrière la porte `VersionContrat.moderation` (coprofirst#2861,
+    /// #286) : une affaire, une suite qui porte un texte, la réponse de l'assistant à une
+    /// question au règlement — les types que le site envoie (`CibleSignalement` de
+    /// `communaute.ts`). Un contenu que le lecteur ne voit pas répond 404.
+    static func affaire(_ id: Int) -> Self { .init(type: "affaire", id: id) }
+    static func suite(_ id: Int) -> Self { .init(type: "suite", id: id) }
+    static func questionReglement(_ id: Int) -> Self { .init(type: "question_reglement", id: id) }
+}
+
+/// POST /signalements : un motif, au conseil syndical. La Communauté et la fiche d'un
+/// sondage (#38) en héritent par leur protocole, comme `ServicePerimetres` ; une affaire et
+/// le Règlement le lisent par `service.signalements` (#286).
 protocol ServiceSignalements: Sendable {
     func signalerAuConseil(_ cible: CibleSignalement, motif: String, dans installation: Installation) async throws
+}
+
+extension ServiceCoproFirst {
+    var signalements: (any ServiceSignalements)? { self as? any ServiceSignalements }
 }
 
 extension ServiceAPI: ServiceSignalements {
