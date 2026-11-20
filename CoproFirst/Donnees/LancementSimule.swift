@@ -25,7 +25,8 @@ import Foundation
 /// `-hors-ligne gardee|perimee|sans-lecture` : l'appareil sans réseau au lancement (#101) —
 /// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
 /// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`) ;
-/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119).
+/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ;
+/// `-installation-suspendue` : la résidence servie est suspendue, en lecture seule (#262).
 /// Debug seul (#84) ; hors de ces arguments, `Lancement` parle aux vraies installations.
 enum LancementSimule {
     /// Sous `-api-simulee`, la vitrine est la copie embarquée, sans réseau ni cache.
@@ -120,6 +121,7 @@ enum LancementSimule {
     private static func residenceSimulee(_ arguments: [String]) -> Installation {
         var residence = ServiceSimule.residence
         if arguments.contains("-instance-commune") { residence.operateurParExploitant = true }
+        if arguments.contains("-installation-suspendue") { residence.suspendue = true }
         if let contrat = argument("-logo-residence", arguments) {
             residence.aUnLogo = true
             residence.aUnLogoSombre = true

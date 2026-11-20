@@ -8,10 +8,13 @@ import SwiftUI
 /// ce dossier tant qu'un seul menu s'en sert (`swiftui-patterns`, « Composants »).
 
 /// La gouttière d'une carte, comme celle du site (`Gouttiere.svelte`) : la date de
-/// l'acte en trois morceaux, puis la nature — pictogramme et abrégé.
+/// l'acte en trois morceaux, puis la nature — pictogramme et abrégé —, et la mention que
+/// le serveur lui ajoute (« À venir » d'un contrat pas encore commencé, #259).
 struct Gouttiere: View {
     let nature: Nature
     var date: Date?
+    /// Sous l'abrégé, en capitales grises (`.a-venir` du site) ; servie, jamais calculée ici.
+    var mention: String?
     @Environment(\.palette) private var palette
     @ScaledMetric(relativeTo: .caption) private var largeur: CGFloat = 52
 
@@ -52,7 +55,7 @@ struct Gouttiere: View {
             // Aux très grandes tailles, la gouttière tient sur une ligne, au-dessus du contenu.
             Label {
                 Text(
-                    [date.map(FormatsDuSite.date), nature.abrege]
+                    [date.map(FormatsDuSite.date), nature.abrege, mention?.uppercased()]
                         .compactMap { $0 }.joined(separator: Separateur.point))
             } icon: {
                 Image(systemName: nature.symbole)
@@ -79,11 +82,16 @@ struct Gouttiere: View {
             }
             Image(systemName: nature.symbole).font(.footnote)
             Text(nature.abrege).font(.caption2.weight(.semibold)).tracking(0.4)
+            if let mention {
+                Text(mention.uppercased()).font(.caption2.weight(.bold)).tracking(0.6)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 2)
+            }
         }
         .foregroundStyle(palette.textMuted)
         .frame(width: largeur)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(date.map(FormatsDuSite.date) ?? "")
+        .accessibilityLabel([date.map(FormatsDuSite.date), mention].compactMap { $0 }.joined(separator: ", "))
     }
 }
 

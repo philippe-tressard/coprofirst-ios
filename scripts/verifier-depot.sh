@@ -45,7 +45,8 @@
 #      données et `-api-simulee` sous `#if DEBUG` seulement (scripts/verifier-simule.py,
 #      autotest d'abord, #84) ;
 #  16. ce que le serveur SERT ne se recalcule pas : aucune table ni aucun prédicat
-#      retiré ne revient (scripts/verifier-regles-servies.py, #83) ;
+#      retiré ne revient (scripts/verifier-regles-servies.py, #83) ; un geste refusé dit
+#      la phrase du serveur, exceptions nommées (scripts/verifier-refus.py, #262) ;
 #  17. dans les tests d'interface, toute attente passe par le point d'attente
 #      commun (CoproFirstUITests/Attente.swift) et son plafond : ni prédicat (#123),
 #      ni existence, ni délai écrits sur place, et une sonde ne s'affirme pas (#147) ;
@@ -244,6 +245,7 @@ FIXTURES=$(python3 -I scripts/verifier-fixtures.py) || { echo "$FIXTURES"; echec
 # Ce que le serveur SERT ne se recalcule plus (#83) : une table ou un prédicat retiré
 # qui revient échoue. L'autotest d'abord ; INCONNU (sortie 2) est un échec.
 SERVIES=$(python3 -I scripts/verifier-regles-servies.py) || { echo "$SERVIES"; echec "une règle servie est recalculée dans l'app"; }
+REFUS=$(python3 -I scripts/verifier-refus.py) || { echo "$REFUS"; echec "une écriture tait la phrase du serveur (#262)"; }
 
 # Le texte riche du site passe par UNE porte, sans WebKit (#22) : WKWebView exécute
 # et charge, NSAttributedString(.html) passe par WebKit et charge des ressources

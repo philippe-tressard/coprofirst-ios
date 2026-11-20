@@ -15,13 +15,17 @@ final class ResidenceUITests: XCTestCase {
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
 
-        app.tabBars.buttons["Résidence"].tap()
+        app.toucher(app.tabBars.buttons["Résidence"])
         XCTAssertTrue(app.staticTexts["AA0-000-000"].apparait(), "la Fiche s'ouvre d'abord")
 
-        app.buttons["Carnet d’entretien"].tap()
+        app.toucher(app.buttons["Carnet d’entretien"])
         XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].apparait())
+        // Un contrat pas encore commencé : « À venir » dans la gouttière, dit avec sa date (#259).
+        let aVenir = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label ENDSWITH %@", ", À venir")).firstMatch
+        XCTAssertTrue(aVenir.apparait(), "la gouttière du contrat à venir")
 
-        app.buttons["Règlement"].tap()
+        app.toucher(app.buttons["Règlement"])
         let question = app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"]
         XCTAssertTrue(question.apparait())
         XCTAssertFalse(app.buttons["reglement.poser"].isEnabled, "question vide : rien à poser")
