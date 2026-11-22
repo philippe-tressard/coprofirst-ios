@@ -84,8 +84,7 @@ final class PrestatairesAffaireUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("kanban.colonne.cs").apparait())
         // « Chez le prestataire » est une colonne à droite : on y va.
         let carte = app.elementAcces("kanban.carte.A-0040")
-        for _ in 0..<5 where !(carte.exists && carte.isHittable) { app.swipeLeft() }
-        XCTAssertTrue(carte.exists)
+        XCTAssertTrue(app.amenerDansSaRangee(carte, par: app.elementAcces("kanban.colonne.cs")))
         XCTAssertTrue(
             app.elementDisant("kanban.carte.A-0040", "Ascenseurs du Val, Dépannages Exemple").exists,
             "la liste entière au libellé")

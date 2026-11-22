@@ -57,9 +57,10 @@ final class DelegationsCSUITests: XCTestCase {
         // Renouvellements (#56) : le relevé servi, ses compteurs et ses échéances.
         // Troisième pastille de la rangée : sur un écran de 402 pt, elle déborde à droite et
         // n'est touchable qu'en partie — sous iOS 26.5, le toucher s'y perdait (CI, #64).
-        // La rangée défile d'abord jusqu'au bout : la pastille est alors entière.
-        app.elementAcces("reporting.mode.entretien").swipeLeft()
-        app.elementAcces("reporting.mode.renouvellements").tap()
+        // La rangée défile d'abord jusqu'à elle : la pastille est alors entière (#183).
+        let renouvellements = app.elementAcces("reporting.mode.renouvellements")
+        XCTAssertTrue(app.amenerDansSaRangee(renouvellements), "la pastille entière")
+        app.toucher(renouvellements)
         XCTAssertTrue(
             app.elementAcces("renouvellements.preavis").apparait(),
             "les compteurs — arbre à l'échec :\n\(app.debugDescription)")

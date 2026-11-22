@@ -195,10 +195,7 @@ final class AdminUITests: XCTestCase {
     private func toucherLOnglet(_ id: String, _ app: XCUIApplication) {
         let onglet = app.elementAcces("onglet.\(id)")
         for _ in 0..<6 where !onglet.isHittable { app.swipeDown() }
-        // La barre défile sous le doigt : on la tire par un onglet visible.
-        let barre = ["a_traiter", "utilisateurs", "telemetry", "maintenance", "sur-le-site"]
-            .map { app.elementAcces("onglet.\($0)") }
-        for _ in 0..<6 where !onglet.isHittable { barre.first(where: \.isHittable)?.swipeLeft() }
-        onglet.tap()
+        // Hors de l'écran à droite : `toucher` fait glisser la barre jusqu'à lui (#183).
+        app.toucher(onglet)
     }
 }

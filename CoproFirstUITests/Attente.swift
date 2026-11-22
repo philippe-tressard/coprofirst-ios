@@ -47,13 +47,13 @@ extension XCUIElement {
     func demeure(_ duree: TimeInterval) -> Bool { !waitForNonExistence(timeout: duree) }
 
     /// L'élément est dans l'état `condition` — un format de `NSPredicate`, par exemple
-    /// « hasKeyboardFocus == true » — au plus tard au plafond commun. La seule attente
-    /// par prédicat des tests : `scripts/verifier-depot.sh` refuse les autres, dont
-    /// chacune portait son propre délai.
+    /// « hasKeyboardFocus == true » — au plus tard au plafond commun (ou après `duree`, l'un des
+    /// délais d'`Attente`). La seule attente par prédicat des tests : `scripts/verifier-depot.sh`
+    /// refuse les autres, dont chacune portait son propre délai.
     @MainActor
-    func attendre(_ condition: String) -> Bool {
+    func attendre(_ condition: String, pendant duree: TimeInterval = Attente.plafond) -> Bool {
         let etat = XCTNSPredicateExpectation(predicate: NSPredicate(format: condition), object: self)
-        return XCTWaiter().wait(for: [etat], timeout: Attente.plafond) == .completed
+        return XCTWaiter().wait(for: [etat], timeout: duree) == .completed
     }
 }
 
@@ -114,20 +114,34 @@ extension XCUIApplication {
     /// dans la fenêtre par de petits glissés horizontaux SUR SA RANGÉE, à sa hauteur : `amener`
     /// fait défiler la page de haut en bas et n'y arrive jamais. « Dans la fenêtre » se lit sur
     /// le cadre, jamais par `isHittable` (refusé sous iOS 26.5, #242). `false` sinon.
+    ///
+    /// `rangee` : une ligne qui ne se CRÉE qu'en approchant (une carte d'une colonne de kanban,
+    /// à droite) n'existe pas encore — on glisse alors vers la droite du contenu, à la hauteur
+    /// de `rangee`, jusqu'à ce qu'elle existe dans la fenêtre.
     @discardableResult
-    func amenerDansSaRangee(_ element: XCUIElement, essais: Int = 6) -> Bool {
-        guard element.apparait() else { return false }
+    func amenerDansSaRangee(_ element: XCUIElement, par rangee: XCUIElement? = nil, essais: Int = 6) -> Bool {
+        guard (rangee ?? element).apparait() else { return false }
         let fenetre = windows.firstMatch
         let origine = fenetre.coordinate(withNormalizedOffset: .zero)
-        for _ in 0..<essais where !fenetre.frame.contains(element.frame) {
-            let hauteur = element.frame.midY - fenetre.frame.minY
-            let sens: CGFloat = element.frame.minX > fenetre.frame.midX ? 1 : -1
+        let arrive = { element.exists && fenetre.frame.contains(element.frame) }
+        for _ in 0..<essais where !arrive() {
+            let repere = element.exists ? element : (rangee ?? element)
+            let hauteur = repere.frame.midY - fenetre.frame.minY
+            let sens: CGFloat = !element.exists || element.frame.minX > fenetre.frame.midX ? 1 : -1
             let largeur = fenetre.frame.width
             origine.withOffset(CGVector(dx: largeur * (0.5 + 0.25 * sens), dy: hauteur))
                 .press(forDuration: 0.05, thenDragTo: origine.withOffset(
                     CGVector(dx: largeur * (0.5 - 0.25 * sens), dy: hauteur)))
         }
-        return fenetre.frame.contains(element.frame)
+        return arrive()
+    }
+
+    /// L'élément est-il hors de la fenêtre DE CÔTÉ seulement (à sa hauteur, mais à gauche ou à
+    /// droite) ? Un onglet d'une rangée qui défile de côté : seul un glissé horizontal l'amène.
+    fileprivate func deCote(_ element: XCUIElement) -> Bool {
+        let fenetre = windows.firstMatch.frame, cadre = element.frame
+        return cadre.minY >= fenetre.minY && cadre.maxY <= fenetre.maxY
+            && (cadre.maxX > fenetre.maxX || cadre.minX < fenetre.minX)
     }
 }
 
@@ -154,8 +168,35 @@ extension XCUIApplication {
     /// ne fait pas défiler pour attendre un élément qui tarde — ce défilement fermait les
     /// feuilles. `scripts/verifier-touchers.sh` tient le plafond des `tap()` directs, qui ne
     /// fait que baisser.
+    ///
+    /// Un CHAMP de saisie touché doit prendre le focus du clavier : sinon le toucher s'est perdu
+    /// (main ab11792, ConnexionUITests : l'app occupée 7 s après le toucher du mot de passe, puis
+    /// « Neither element nor any descendant has keyboard focus » à la saisie). Il est rejoué, au
+    /// plus `Attente.reprises` fois, et chaque reprise s'écrit au journal — toucher un champ qui
+    /// a déjà le focus n'y change rien.
     @MainActor
     func toucher(_ element: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        // Le type se lit AVANT le toucher : un bouton qui ferme sa feuille n'existe plus après.
+        let saisie = element.apparait() && Self.saisies.contains(element.elementType)
+        toucherUneFois(element, essais: essais, file: file, line: line)
+        guard saisie else { return }
+        let focus = "hasKeyboardFocus == true"
+        for reprise in 1...Attente.reprises {
+            if element.attendre(focus, pendant: Attente.effet) { return }
+            tracerReprise("toucher", reprise, element, "le focus du clavier")
+            toucherUneFois(element, essais: essais, file: file, line: line)
+        }
+        XCTAssertTrue(
+            element.attendre(focus), "toucher de \(element) \(Attente.reprises + 1) fois, sans le focus du clavier",
+            file: file, line: line)
+    }
+
+    /// Les champs de saisie : un toucher leur donne le focus du clavier.
+    private static let saisies: Set<XCUIElement.ElementType> = [.textField, .secureTextField, .searchField, .textView]
+
+    /// Le toucher lui-même, sans la vérification du focus (`toucher`).
+    @MainActor
+    private func toucherUneFois(_ element: XCUIElement, essais: Int, file: StaticString, line: UInt) {
         XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
         let clavier = keyboards.firstMatch
         if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
@@ -166,7 +207,13 @@ extension XCUIApplication {
         }
         immobile(element)
         if visible(element, pendant: Attente.sonde) == nil {
-            amener(element, essais: essais) { visible(element) != nil }
+            // Hors de l'écran sur le côté (un onglet d'une rangée, #183 : main 4d9c5ac, un
+            // `swipeLeft()` perdu et 90 s de glissés verticaux sans effet) : glissés horizontaux.
+            if deCote(element) {
+                amenerDansSaRangee(element, essais: essais)
+            } else {
+                amener(element, essais: essais) { visible(element) != nil }
+            }
             immobile(element)
         }
         guard let point = visible(element) else {
@@ -195,17 +242,49 @@ extension XCUIApplication {
         _ element: XCUIElement, jusqua effet: XCUIElement, essais: Int = 10, file: StaticString = #filePath,
         line: UInt = #line
     ) {
-        toucher(element, essais: essais, file: file, line: line)
-        for reprise in 1...Attente.reprises {
-            if effet.waitForExistence(timeout: Attente.effet) { return }
-            let trace = "↻ reprise du toucher \(reprise)/\(Attente.reprises) : \(element) sans effet "
-                + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
-            print(trace)
-            XCTContext.runActivity(named: trace) { _ in }
+        jusqua(effet, ("toucher", element), file: file, line: line) {
             toucher(element, essais: essais, file: file, line: line)
         }
+    }
+
+    /// Le balayage vers la gauche d'une ligne JUSQU'À L'EFFET : ses actions révélées (supprimer,
+    /// signaler). Un `swipeLeft()` se perd sous charge comme un toucher (#183) : il est rejoué
+    /// et chaque reprise s'écrit au journal, comme celles de `toucher(_:jusqua:)`. Idempotent :
+    /// balayer une ligne déjà ouverte la laisse ouverte.
+    @MainActor
+    func balayer(
+        _ element: XCUIElement, jusqua effet: XCUIElement, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(element.apparait(), "à balayer : \(element) absent", file: file, line: line)
+        jusqua(effet, ("balayage", element), file: file, line: line) { element.swipeLeft() }
+    }
+
+    /// `geste`, puis l'attente de `effet`, rejoué au plus `Attente.reprises` fois — chaque reprise
+    /// au journal (« ↻ reprise du toucher n/N : … », ou du balayage), lue par `scripts/bilan_tests_ui.py`.
+    @MainActor
+    private func jusqua(
+        _ effet: XCUIElement, _ quoi: (nom: String, element: XCUIElement), file: StaticString, line: UInt,
+        geste: () -> Void
+    ) {
+        let (nom, element) = quoi
+        geste()
+        for reprise in 1...Attente.reprises {
+            if effet.waitForExistence(timeout: Attente.effet) { return }
+            tracerReprise(nom, reprise, element, "\(effet)")
+            geste()
+        }
         XCTAssertTrue(
-            effet.apparait(), "\(element) touché \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+            effet.apparait(), "\(nom) de \(element) \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+    }
+
+    /// La trace d'une reprise, au journal et dans le rapport (« ↻ reprise du toucher n/N : … »),
+    /// que `scripts/bilan_tests_ui.py` déclare au résumé : une reprise muette masquerait un défaut.
+    @MainActor
+    private func tracerReprise(_ nom: String, _ reprise: Int, _ element: XCUIElement, _ effet: String) {
+        let trace = "↻ reprise du \(nom) \(reprise)/\(Attente.reprises) : \(element) sans effet "
+            + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
+        print(trace)
+        XCTContext.runActivity(named: trace) { _ in }
     }
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
@@ -235,10 +314,12 @@ extension XCUIApplication {
         coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: cadre.midX, dy: cadre.midY)).tap()
     }
 
-    /// Le point à toucher, en coordonnées relatives à son cadre : son centre (0,5 ; 0,5) s'il
-    /// est dans la zone utile (`zoneUtile`), sinon le centre de sa PARTIE VISIBLE ; `nil` s'il
-    /// n'en montre pas assez (22 pt de côté, ou tout l'élément s'il est plus petit), au plus
-    /// tard après `duree` secondes ; rien sous le clavier. Lu sur les cadres seuls (voir `toucher`).
+    /// Le point à toucher, en coordonnées relatives à son cadre : le centre de sa PARTIE VISIBLE
+    /// dans la zone utile (`zoneUtile`) — son centre (0,5 ; 0,5) s'il y est entier. Pas son propre
+    /// centre dès qu'il y entre : un onglet qui déborde à droite (x 339 à 457 sur 402) était
+    /// touché à 4 pt du bord, sans effet (AdminUITests, #183). `nil` s'il n'en montre pas assez
+    /// (22 pt de côté, ou tout l'élément s'il est plus petit), au plus tard après `duree`
+    /// secondes ; rien sous le clavier. Lu sur les cadres seuls (voir `toucher`).
     private func visible(_ element: XCUIElement, pendant duree: TimeInterval = 0) -> CGVector? {
         let limite = Date().addingTimeInterval(duree)
         let zone = zoneUtile(pour: element)
@@ -246,8 +327,7 @@ extension XCUIApplication {
             if element.exists {
                 let cadre = element.frame
                 let vu = cadre.intersection(zone)
-                let centre = zone.contains(CGPoint(x: cadre.midX, y: cadre.midY))
-                    ? CGPoint(x: cadre.midX, y: cadre.midY) : CGPoint(x: vu.midX, y: vu.midY)
+                let centre = CGPoint(x: vu.midX, y: vu.midY)
                 let clavier = keyboards.firstMatch
                 if !cadre.isEmpty, !vu.isNull, vu.width >= min(22, cadre.width), vu.height >= min(22, cadre.height),
                    !(clavier.exists && clavier.frame.contains(centre)) {

@@ -7,7 +7,10 @@ Appelé par `scripts/tests-simulateur.sh` (#50). Deux lectures :
 - `lenteurs <journal>` — les requêtes d'accessibilité qui ont expiré, test par test.
   XCTest attend environ 30 s la photographie de l'arbre d'accessibilité de l'app,
   et réessaie deux fois (« (retry 1) », « (retry 2) ») ; une troisième expiration
-  devient « Lost connection to the application ». Mesuré le 05/11/2026 : une
+  devient « Lost connection to the application ». Seul compte un nouvel essai venu
+  `SEUIL_EXPIRATION` secondes au moins après le pas d'avant : XCTest écrit aussi
+  « (retry N) » quand il résout de nouveau, ~1 s après, une requête dont l'élément est
+  absent (un défilement qui le cherche) — rien n'a expiré (#321). Mesuré le 05/11/2026 : une
   expiration isolée paraît dans la moitié des runs, toutes branches confondues ;
   deux d'affilée, rarement — sauf sur une branche qui alourdit l'app. Les deux
   d'affilée se signalent donc, même sur un run vert : c'est la marche d'avant
@@ -60,8 +63,14 @@ CIBLE_INTERFACE = "CoproFirstUITests"
 
 DEBUT_TEST = re.compile(r"Test Case '-\[(?P<cible>\w+)\.(?P<classe>\w+) (?P<methode>\w+)\]' started")
 NOUVEL_ESSAI = re.compile(r"\(retry (?P<rang>\d+)\)\s*$")
+#: L'horodatage d'un pas de XCTest : « t =    99.66s ».
+HORODATAGE = re.compile(r"\bt =\s+(?P<t>\d+(?:\.\d+)?)s\b")
+#: Mesuré le 20/11/2026 sur 17 journaux (#321) : un nouvel essai vient à moins de 5 s
+#: (élément absent, requête résolue de nouveau) ou à 25 s et plus (photographie expirée,
+#: ~30 s) — jamais entre les deux.
+SEUIL_EXPIRATION = 15.0
 #: La ligne que `app.toucher(_:jusqua:)` écrit à chaque reprise (CoproFirstUITests/Attente.swift).
-REPRISE = re.compile(r"↻ reprise du toucher (?P<rang>\d+)/(?P<plafond>\d+) : (?P<quoi>.*)$")
+REPRISE = re.compile(r"↻ reprise du (?:toucher|balayage) (?P<rang>\d+)/(?P<plafond>\d+) : (?P<quoi>.*)$")
 #: « AccesUITests/testSignalerPerduPuisDeclarer() » : un autre format ne se relance pas,
 #: le `-only-testing:` qui en sortirait pourrait ne viser aucun test.
 IDENTIFIANT = re.compile(r"^\w+/\w+\(\)$")
@@ -195,13 +204,20 @@ def filtres(arbre: dict, demandes: list[str]) -> tuple[int, str]:
 
 
 def lenteurs(journal: str) -> dict[str, int]:
-    """Par test : le rang du dernier nouvel essai d'une requête (1 ou 2), s'il y en a eu."""
-    courant, rangs = "?", {}
+    """Par test : le rang du dernier nouvel essai d'une requête EXPIRÉE (1 ou 2), s'il y en a eu.
+
+    Un nouvel essai sans pas horodaté avant lui, dans son test, compte : son écart ne se
+    mesure pas, et une alerte de trop vaut mieux qu'une expiration tue."""
+    courant, rangs, avant = "?", {}, None
     for ligne in journal.splitlines():
         if m := DEBUT_TEST.search(ligne):
-            courant = f"{m['classe']}/{m['methode']}"
-        elif m := NOUVEL_ESSAI.search(ligne):
+            courant, avant = f"{m['classe']}/{m['methode']}", None
+            continue
+        quand = float(h["t"]) if (h := HORODATAGE.search(ligne)) else None
+        expire = avant is None or quand is None or quand - avant >= SEUIL_EXPIRATION
+        if (m := NOUVEL_ESSAI.search(ligne)) and expire:
             rangs[courant] = max(rangs.get(courant, 0), int(m["rang"]))
+        avant = quand if quand is not None else avant
     return rangs
 
 
@@ -242,8 +258,9 @@ def rendre_lenteurs(rangs: dict[str, int]) -> tuple[list[str], list[str]]:
         if rang >= 2:
             annotations.append(
                 f"::warning title=Requêtes d'accessibilité expirées ({test})::"
-                f"{rang} requêtes d'affilée ont expiré (~30 s chacune) ; à la suivante, "
-                "« Lost connection to the application ». Un écran trop lourd à photographier ? (#50)")
+                f"{rang} requêtes d'affilée ont expiré (~30 s chacune), une de moins que la perte de "
+                "connexion (#50). La cause est dans l'échec, s'il y en a un : un écran trop lourd "
+                "à photographier, ou l'app gelée (« main thread busy », #323).")
     return resume, annotations
 
 
@@ -261,8 +278,13 @@ Test Case '-[CoproFirstUITests.AccesUITests testSignalerPerduPuisDeclarer]' star
     t =   132.22s     Checking existence of `"acces.declarer.code" Any` (retry 2)
 Test Case '-[CoproFirstUITests.AffairesUITests testUneCarteOuvreSonDetail]' started.
     t =    46.83s     Find the "FAQ" Any (retry 1)
+Test Case '-[CoproFirstUITests.SondageUITests testUnVoteAPreciserCommenteSousLaCharte]' started.
+    t =    10.12s Find the "reponses.entete" Any
+    t =    11.22s     Find the "reponses.entete" Any (retry 1)
+    t =    12.34s     Find the "reponses.entete" Any (retry 2)
 Test Case '-[CoproFirstUITests.BarreLateraleUITests testLaBarreLateraleListeToutesLesPages]' started.
 ↻ reprise du toucher 1/2 : "barre.mon-lot" Button sans effet ("Mes lots & accès" NavigationBar) en 10 s (#282)
+↻ reprise du balayage 1/2 : "reponse.33" Any sans effet ("reponse.33.supprimer" Any) en 10 s (#282)
 """
 
 
@@ -397,10 +419,10 @@ def autotest() -> int:
         rate += 1
     lues = reprises(JOURNAL)
     if list(lues) != ["BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"] or len(lues[
-            "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"]) != 1:
+            "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages"]) != 2:
         print(f"❌ reprises : {lues}")
         rate += 1
-    if len(rendre_reprises(lues)[1]) != 1 or rendre_reprises({})[1]:
+    if len(rendre_reprises(lues)[1]) != 2 or rendre_reprises({})[1]:
         print("❌ une annotation par reprise, aucune sans reprise")
         rate += 1
     saturee = _resume(("CoproFirstUITests", "BarreLateraleUITests/testLaBarreLateraleListeToutesLesPages()",
