@@ -213,7 +213,7 @@ final class SondageUITests: XCTestCase {
         // Mon commentaire (servi `peut_supprimer`) : balayer, supprimer, confirmer.
         let mien = app.elementAcces("reponse.33")
         ramener(mien, dans: app)
-        mien.swipeLeft()
+        app.balayer(mien, jusqua: app.elementAcces("reponse.33.supprimer"))
         XCTAssertFalse(app.elementAcces("reponse.33.signaler").exists, "on ne signale pas son propre commentaire")
         toucherApresBalayage(app.elementAcces("reponse.33.supprimer"))
         let confirmer = app.elementAcces("reponses.confirmerSuppression")
@@ -224,7 +224,7 @@ final class SondageUITests: XCTestCase {
         // Le commentaire d'un voisin : le signaler, motif obligatoire.
         let voisin = app.elementAcces("reponse.32")
         ramener(voisin, dans: app)
-        voisin.swipeLeft()
+        app.balayer(voisin, jusqua: app.elementAcces("reponse.32.signaler"))
         XCTAssertFalse(app.elementAcces("reponse.32.supprimer").exists, "le serveur ne m'ouvre pas sa suppression")
         toucherApresBalayage(app.elementAcces("reponse.32.signaler"))
         // Une alerte système : ses identifiants ne descendent pas dans l'arbre d'accessibilité ;

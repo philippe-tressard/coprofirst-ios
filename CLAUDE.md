@@ -89,11 +89,14 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   le même au hook pre-commit (armé par `git config core.hooksPath .githooks`) et
   seule étape du job « Dépôt » de la CI (#241) ; SwiftLint `--strict` ;
   tests `swift test` (ClientAPI) et `bash scripts/tests-simulateur.sh` au
-  simulateur — requêtes d'accessibilité expirées au résumé du run, et une relance
+  simulateur — requêtes d'accessibilité expirées au résumé du run (un nouvel essai à
+  15 s au moins du pas d'avant, #321), et une relance
   au plus, déclarée, sur les seules causes de `scripts/bilan_tests_ui.py`, ou du passage
   entier si le runner n'a pas démarré (`scripts/demarrage_runner.py`) (#50) ;
   un seul passage à la fois sur le poste : le verrou commun du poste d'abord
   (`verrou_poste.py`, qui exclut aussi Gradle, #255), puis celui du script (#108) ;
+  le poste gardé éveillé (`caffeinate`), sa veille dite au résumé, un rouge sous veille
+  INCONNU (`scripts/veille_poste.py`, #322) ;
   un passage filtré n'est vert que si CHAQUE filtre a joué (#96, #170) ; le résumé
   nomme le système joué et celui de la CI, que `OS_SIMULATEUR=ci` joue au poste (#287).
 - **Confidentialité** : le manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`), la
