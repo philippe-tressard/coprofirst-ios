@@ -136,16 +136,18 @@ extension XCUIApplication {
         return descendants(matching: .any).matching(predicat).firstMatch
     }
 
-    /// « Plus », puis l'entrée de ce libellé. Aux grandes tailles, la ligne est sous le pli :
-    /// la liste ne la crée qu'au défilement.
+    /// « Plus », puis l'entrée de ce libellé JUSQU'À `effet`, ce que la page ouverte montre
+    /// d'abord : un toucher de navigation perdu se reprend, déclaré, tant que la ligne est là
+    /// (`toucher(_:jusqua:)`, #183). Aux grandes tailles, la ligne est sous le pli : la liste ne
+    /// la crée qu'au défilement.
     @MainActor
-    func ouvrirDansPlus(_ libelle: String) {
+    func ouvrirDansPlus(_ libelle: String, jusqua effet: XCUIElement) {
         let plus = descendants(matching: .any)["Plus"].firstMatch
         XCTAssertTrue(plus.apparait())
         toucher(plus)
         let entree = libelleAcces(libelle)
         XCTAssertTrue(amener(entree), "« \(libelle) » dans Plus")
-        toucher(entree)
+        toucher(entree, jusqua: effet)
     }
 
     @MainActor

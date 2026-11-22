@@ -14,7 +14,7 @@ final class DelegationsCSUITests: XCTestCase {
     @MainActor
     func testLesDelegationsSAcceptentSeRevoquentEtSeCreent() throws {
         let app = LancementCaptures.lancer()
-        app.ouvrirDansPlus("Délégations")
+        app.ouvrirDansPlus("Délégations", jusqua: app.elementAcces("delegation.12.accepter"))
 
         let accepter = app.elementAcces("delegation.12.accepter")
         XCTAssertTrue(accepter.apparait(), "l'aidant accepte la délégation en attente")
@@ -43,7 +43,7 @@ final class DelegationsCSUITests: XCTestCase {
     @MainActor
     func testLeReportingLesAnnoncesHallEtLesCourriels() throws {
         let app = LancementCaptures.lancer()
-        app.ouvrirDansPlus("Espace CS")
+        app.ouvrirDansPlus("Espace CS", jusqua: app.elementAcces("onglet.reporting"))
 
         // Reporting : le Suivi des affaires, puis les entretiens périodiques.
         let reporting = app.elementAcces("onglet.reporting")

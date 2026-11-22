@@ -261,6 +261,11 @@ extension XCUIApplication {
 
     /// `geste`, puis l'attente de `effet`, rejoué au plus `Attente.reprises` fois — chaque reprise
     /// au journal (« ↻ reprise du toucher n/N : … », ou du balayage), lue par `scripts/bilan_tests_ui.py`.
+    ///
+    /// Rejoué TANT QUE l'élément touché existe : disparu, le geste a porté (la page a changé) et
+    /// l'effet tarde seulement — le rejouer finirait sur « absent » et ferait d'une page lente un
+    /// rouge. L'échec écrit l'arbre : il dit lequel des deux, geste perdu ou page jamais parue
+    /// (main 413580b, deux gestes de navigation sans effet et sans trace, #183).
     @MainActor
     private func jusqua(
         _ effet: XCUIElement, _ quoi: (nom: String, element: XCUIElement), file: StaticString, line: UInt,
@@ -270,11 +275,14 @@ extension XCUIApplication {
         geste()
         for reprise in 1...Attente.reprises {
             if effet.waitForExistence(timeout: Attente.effet) { return }
+            guard element.exists else { break }
             tracerReprise(nom, reprise, element, "\(effet)")
             geste()
         }
         XCTAssertTrue(
-            effet.apparait(), "\(nom) de \(element) \(Attente.reprises + 1) fois, sans effet", file: file, line: line)
+            effet.apparait(),
+            "\(nom) de \(element) sans effet (\(effet)) — arbre à l'échec :\n\(debugDescription)",
+            file: file, line: line)
     }
 
     /// La trace d'une reprise, au journal et dans le rapport (« ↻ reprise du toucher n/N : … »),
