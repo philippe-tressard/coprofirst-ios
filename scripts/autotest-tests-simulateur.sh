@@ -127,6 +127,14 @@ FAUX
     || { echo "❌ un binaire périmé ne se dit pas INCONNU au résumé"; rate=$((rate + 1)); }
   journal_essai="$suite"
   scenario "binaire muet : INCONNU" 0 "$vert" 0 2 non
+  # Un rouge aussi : périmé, il est INCONNU et ne se relance pas — la relance rejouerait le
+  # même binaire ; joué sur le source, il reste rouge (#328).
+  journal_essai="$suite"$'\n'"Empreinte des tests jouée : 0123456789abcdef"
+  scenario "rouge sur un binaire périmé : INCONNU, sans relance" 65 \
+    '{"result":"Failed","failedTests":1,"testFailures":['"$acces"']}' 0 2 non "$vert"
+  journal_essai="$suite"$'\n'"Empreinte des tests jouée : $juste"
+  scenario "rouge sur le binaire du source : rouge" 65 \
+    '{"result":"Failed","failedTests":1,"testFailures":['"$assertion"']}' 0 65 non
   journal_essai=""
   # Le poste gardé éveillé, et sa veille dite au résumé quand même (#322) ; en CI, rien.
   if grep -q 'Veille du poste' "$d/resume.md" || [ -f "$d/cafeine-appels" ]; then

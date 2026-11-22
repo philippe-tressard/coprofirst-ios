@@ -314,6 +314,10 @@ jouer_passage() {
     relance_faite=oui
   fi
   python3 -I scripts/bilan_tests_ui.py lenteurs "$RESULTATS/tests.log" "$RESUME"
+  # Un ROUGE ne prouve pas plus qu'un vert : sur un binaire périmé, il juge un autre code, et
+  # sa relance (sans rebuild) rejouerait le même (#328 : au poste, le 23/11, un mutant rouge a
+  # joué le binaire du passage d'avant). INCONNU, sans relance.
+  if [ "$code" -ne 0 ] && ! binaire_joue "$RESULTATS/tests.log"; then return 2; fi
   if [ "$code" -eq 0 ]; then
     # Sortie 0 ne suffit pas : un filtre qui ne vise rien sort en 0 sans rien jouer (#96).
     if ! resumer tests resume.json; then
