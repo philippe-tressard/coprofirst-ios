@@ -41,7 +41,7 @@ final class ApercusSaisieUITests: XCTestCase {
 
     func testUneFicheNeuveDeLAnnuaireSeNommeParLeServeur() throws {
         let app = LancementCaptures.lancer()
-        app.ouvrirDansPlus("Espace CS")
+        app.ouvrirDansPlus("Espace CS", jusqua: app.elementAcces("onglet.annuaire"))
         let annuaire = app.elementAcces("onglet.annuaire")
         XCTAssertTrue(annuaire.apparait(), "la barre d'onglets")
         annuaire.tap()

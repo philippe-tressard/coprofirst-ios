@@ -75,20 +75,10 @@ final class CommunauteUITests: XCTestCase {
         origine.withOffset(CGVector(dx: partie.midX, dy: partie.midY)).tap()
     }
 
-    private func ouvrirDansPlus(_ app: XCUIApplication, _ libelle: String) {
-        let plus = app.tabBars.buttons["Plus"]
-        XCTAssertTrue(plus.apparait())
-        plus.tap()
-        let ligne = el(app, libelle)
-        app.amener(ligne)
-        XCTAssertTrue(ligne.exists, "« \(libelle) » dans Plus")
-        ligne.tap()
-    }
-
     @MainActor
     func testLaCommunauteSOuvreEtUneIdeeSeSoutient() throws {
         let app = lancer()
-        ouvrirDansPlus(app, "Communauté")
+        app.ouvrirDansPlus("Communauté", jusqua: el(app, "sondage.12"))
         XCTAssertTrue(el(app, "sondage.12").apparait())
         capture("1-communaute-sondages")
 
@@ -161,7 +151,7 @@ final class CommunauteUITests: XCTestCase {
     @MainActor
     func testPlusieursNotificationsSeSuppriment() throws {
         let app = lancer()
-        ouvrirDansPlus(app, "Communauté")
+        app.ouvrirDansPlus("Communauté", jusqua: el(app, "sondage.12"))
         XCTAssertTrue(el(app, "sondage.12").apparait())
         el(app, "cloche").tap()
         let modifier = el(app, "notifications.modifier")
@@ -293,7 +283,7 @@ final class CommunauteUITests: XCTestCase {
     @MainActor
     func testLaFAQEtLeProfilSOuvrent() throws {
         let app = lancer()
-        ouvrirDansPlus(app, "FAQ")
+        app.ouvrirDansPlus("FAQ", jusqua: app.descendants(matching: .any)["faq.2"])
         let question = app.descendants(matching: .any)["faq.2"]
         app.amener(question)
         XCTAssertTrue(question.exists)

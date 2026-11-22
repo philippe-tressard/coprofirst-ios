@@ -41,7 +41,7 @@ final class AdminUITests: XCTestCase {
     @MainActor
     func testLaFicheDitLExploitantEtVotreCompte() throws {
         let app = ouvrirLeParametrage(["-compte", "administrateur", "-instance-commune"])
-        toucherLOnglet("utilisateurs", app)
+        toucherLOnglet("utilisateurs", app, jusqua: "admin.utilisateurs.recherche")
         let parExploitant = app.elementAcces("admin.fiche.operateur-exploitant")
         ouvrirLaFiche("sacha", 15, app)
         for _ in 0..<6 where !parExploitant.sonde() { app.swipeUp() }
@@ -75,7 +75,7 @@ final class AdminUITests: XCTestCase {
 
     @MainActor
     private func lesUtilisateurs(_ app: XCUIApplication) {
-        toucherLOnglet("utilisateurs", app)
+        toucherLOnglet("utilisateurs", app, jusqua: "admin.utilisateur.11")
         let camille = app.elementAcces("admin.utilisateur.11")
         XCTAssertTrue(camille.apparait(), "la liste des comptes")
         LancementCaptures.capturer("admin-2-utilisateurs")
@@ -124,7 +124,7 @@ final class AdminUITests: XCTestCase {
 
     @MainActor
     private func laTelemetrie(_ app: XCUIApplication) {
-        toucherLOnglet("telemetry", app)
+        toucherLOnglet("telemetry", app, jusqua: "admin.telemetrie.indicateurs")
         XCTAssertTrue(app.elementAcces("admin.telemetrie.indicateurs").apparait(), "les nombres clés")
         XCTAssertTrue(app.elementAcces("admin.telemetrie.filtre").exists, "le filtre que le serveur propose")
         LancementCaptures.capturer("admin-4-telemetrie-jour")
@@ -142,7 +142,8 @@ final class AdminUITests: XCTestCase {
     /// que sa route lui sert.
     @MainActor
     private func laMaintenance(_ app: XCUIApplication, operateur: Bool) {
-        toucherLOnglet("maintenance", app)
+        toucherLOnglet(
+            "maintenance", app, jusqua: operateur ? "admin.tache.backup" : "admin.maintenance.export")
         if operateur {
             XCTAssertTrue(app.elementAcces("admin.tache.backup").apparait(), "la santé des tâches")
             XCTAssertFalse(app.elementAcces("admin.maintenance.export").exists)
@@ -156,7 +157,7 @@ final class AdminUITests: XCTestCase {
 
     @MainActor
     private func surLeSite(_ app: XCUIApplication, attendus: [String]) {
-        toucherLOnglet("sur-le-site", app)
+        toucherLOnglet("sur-le-site", app, jusqua: "site.onglet.\(attendus[0])")
         for id in attendus {
             XCTAssertTrue(app.elementAcces("site.onglet.\(id)").apparait(), "le lien vers \(id)")
         }
@@ -190,12 +191,14 @@ final class AdminUITests: XCTestCase {
         return app
     }
 
-    /// Un onglet de la barre, défilée jusqu'à lui s'il est hors de l'écran.
+    /// Un onglet de la barre, défilée jusqu'à lui s'il est hors de l'écran, touché JUSQU'À
+    /// `effet` (l'identifiant de ce que l'onglet montre d'abord) : l'onglet reste à l'écran, un
+    /// toucher perdu se reprend, déclaré (#183 : main 413580b, « Utilisateurs » sans effet).
     @MainActor
-    private func toucherLOnglet(_ id: String, _ app: XCUIApplication) {
+    private func toucherLOnglet(_ id: String, _ app: XCUIApplication, jusqua effet: String) {
         let onglet = app.elementAcces("onglet.\(id)")
         for _ in 0..<6 where !onglet.isHittable { app.swipeDown() }
         // Hors de l'écran à droite : `toucher` fait glisser la barre jusqu'à lui (#183).
-        app.toucher(onglet)
+        app.toucher(onglet, jusqua: app.elementAcces(effet))
     }
 }
