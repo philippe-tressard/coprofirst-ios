@@ -226,6 +226,17 @@ resumer() {
     > "$RESULTATS/$2" 2>/dev/null
 }
 
+# Le binaire JOUÉ est-il celui du source ? Un vert n'en prouve rien sinon : le 22/11/2026, un
+# passage a joué l'app de test du passage précédent (#328). INCONNU (2) s'il ne se prouve pas.
+binaire_joue() {
+  local motif code
+  motif=$(python3 -I scripts/empreinte_tests.py verifier "$1")
+  code=$?
+  echo "Binaire joué : $motif" >> "$RESUME"
+  [ "$code" -eq 0 ] || echo "::error title=Binaire joué (#328)::$motif" >&2
+  return "$code"
+}
+
 # Le poste éveillé pendant le passage, et sa veille dite au résumé quand même (#322).
 passer() {
   local RESUME=${GITHUB_STEP_SUMMARY:-$RESULTATS/resume.md} debut eveil="" code motif v
@@ -274,6 +285,8 @@ jouer_passage() {
   motif=$(systeme_joue)
   echo "$motif"
   echo "$motif" >> "$RESUME"
+  # L'empreinte des sources, compilée dans le paquet de tests : le binaire joué la redira (#328).
+  python3 -I scripts/empreinte_tests.py ecrire > /dev/null || return 2
   if ! motif=$(hors_projet); then
     echo "❌ $motif" >&2
     echo "Projet : $motif" >> "$RESUME"
@@ -311,7 +324,8 @@ jouer_passage() {
     decision=$?
     echo "Tests joués : $motif" >> "$RESUME"
     [ "$decision" -eq 0 ] || return "$decision"
-    verifier_filtres "$@" >> "$RESUME"
+    verifier_filtres "$@" >> "$RESUME" || return $?
+    binaire_joue "$RESULTATS/tests.log"
     return $?
   fi
 
@@ -349,7 +363,8 @@ jouer_passage() {
   if resumer relance relance.json \
       && motif=$(python3 -I scripts/bilan_tests_ui.py relance-verte "$RESULTATS/relance.json" "${#relance[@]}"); then
     echo "Relance : verte ($motif). Le run passe, et cette ligne reste : la cause se suit au ticket #50." >> "$RESUME"
-    return 0
+    binaire_joue "$RESULTATS/tests.log" && binaire_joue "$RESULTATS/relance.log"
+    return $?
   fi
   echo "Relance : non prouvée — ${motif:-INCONNU, résumé de la relance illisible}. Le run échoue." >> "$RESUME"
   return 1
