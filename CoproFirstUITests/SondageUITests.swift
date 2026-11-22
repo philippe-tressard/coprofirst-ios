@@ -51,9 +51,10 @@ final class SondageUITests: XCTestCase {
     }
 
     /// `dit`, après avoir ramené l'élément à l'écran : une liste ne garde que ses rangées visibles.
+    /// `enHaut` : un élément de l'en-tête, à chercher en remontant d'abord (voir `ramener`).
     @MainActor
-    private func vu(_ app: XCUIApplication, _ identifiant: String, _ texte: String) -> Bool {
-        ramener(app.elementAcces(identifiant), dans: app)
+    private func vu(_ app: XCUIApplication, _ identifiant: String, _ texte: String, enHaut: Bool = false) -> Bool {
+        ramener(app.elementAcces(identifiant), dans: app, enHaut: enHaut)
         return dit(app, identifiant, texte)
     }
 
@@ -96,13 +97,16 @@ final class SondageUITests: XCTestCase {
     }
 
     /// L'élément ramené entre les barres (très grand texte) : une liste ne garde que ses
-    /// rangées visibles. Présent, on va vers lui ; absent, on descend, puis on remonte.
+    /// rangées visibles. Présent, on va vers lui ; absent, on descend, puis on remonte — ou
+    /// l'inverse s'il est `enHaut`. Une rangée sortie par le haut n'existe plus : après le vote,
+    /// la liste est en bas, et l'en-tête se cherchait 14 défilements vers le bas avant de
+    /// remonter (~170 s, le test à 275-375 s en CI au lieu de ~130, #323).
     /// Rend la partie qui s'en voit.
     @MainActor @discardableResult
-    private func ramener(_ element: XCUIElement, dans app: XCUIApplication) -> CGRect? {
+    private func ramener(_ element: XCUIElement, dans app: XCUIApplication, enHaut: Bool = false) -> CGRect? {
         let milieu = zoneTouchable(app).midY
         var defile = false
-        for versLeBas in [true, false] {
+        for versLeBas in enHaut ? [false, true] : [true, false] {
             for _ in 0..<14 {
                 if let partie = partieVisible(element, dans: app) {
                     if defile { immobile(element) }
@@ -192,9 +196,11 @@ final class SondageUITests: XCTestCase {
         toucher(app.elementAcces("sondage.voter"), dans: app)
         XCTAssertTrue(vu(app, "sondage.resultat.4", "Mon vote ✓"), "les résultats remplacent le vote")
         XCTAssertTrue(dit(app, "sondage.resultat.4", "Le 20 juin"), "ma précision rejoint les réponses libres")
-        XCTAssertTrue(vu(app, "sondage.total", "30 votes"), "le vote est compté")
+        // L'en-tête et les résultats sont en haut ; la liste, en bas après le vote.
+        XCTAssertTrue(vu(app, "sondage.total", "30 votes", enHaut: true), "le vote est compté")
         XCTAssertTrue(
-            vu(app, "sondage.resultatsProvisoires", "Résultats provisoires"), "encore ouvert : toujours provisoires")
+            vu(app, "sondage.resultatsProvisoires", "Résultats provisoires", enHaut: true),
+            "encore ouvert : toujours provisoires")
         LancementCaptures.capturer("3-sondage-resultats")
         XCTAssertTrue(vu(app, "reponses.entete", "Commentaires (4)"), "le commentaire du vote rejoint le fil")
     }
