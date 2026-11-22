@@ -140,6 +140,9 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.uitests
         GENERATE_INFOPLIST_FILE: "YES"
+        # Le principal du paquet imprime l'empreinte compilée des sources : le binaire JOUÉ se
+        # prouve (scripts/empreinte_tests.py, #328).
+        INFOPLIST_KEY_NSPrincipalClass: EmpreinteDesTests
         TEST_TARGET_NAME: CoproFirst
   # L'écran de hall sur Apple TV (#218) : il fait défiler, en lecture seule, les affiches
   # d'un périmètre — ce n'est pas l'app du résident. Il compile les MÊMES fichiers que
