@@ -110,7 +110,7 @@ struct DetailAnnonce: View {
     /// L'auteur de l'annonce, qu'on peut masquer (#286) : nommé, pas soi, et l'installation
     /// le sert. Le conseil syndical se refuse au serveur, avec sa phrase.
     private func auteurAMasquer(_ annonce: Annonce) -> AuteurAMasquer? {
-        guard annonce.estAuteur != true, installation.sert(.moderation) else { return nil }
+        guard annonce.estAuteur != true, installation.sert(.plancher) else { return nil }
         return AuteurAMasquer(id: annonce.auteurId, nom: annonce.auteur, moi: etat.moi?.id)
     }
 

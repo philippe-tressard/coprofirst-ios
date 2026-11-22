@@ -15671,6 +15671,33 @@
         "title": "ReponseInscription",
         "type": "object"
       },
+      "ReponseNotification": {
+        "additionalProperties": false,
+        "description": "Ce que le relais répond — sans rien répéter de la demande (§4).",
+        "properties": {
+          "motif": {
+            "default": "",
+            "description": "dire en clair pourquoi rien n'est parti",
+            "title": "Motif",
+            "type": "string"
+          },
+          "statut": {
+            "description": "retirer l'appareil sur `jeton_perime`, journaliser le reste",
+            "enum": [
+              "envoye",
+              "jeton_perime",
+              "refuse"
+            ],
+            "title": "Statut",
+            "type": "string"
+          }
+        },
+        "required": [
+          "statut"
+        ],
+        "title": "ReponseNotification",
+        "type": "object"
+      },
       "RepriseRead": {
         "description": "Ce qu'un point ouvert dans un autre mode, il y a moins de deux heures, propose.",
         "properties": {
@@ -20800,7 +20827,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "2.8.0"
+    "version": "2.10.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -33893,6 +33920,28 @@
           }
         },
         "summary": "Inscrire",
+        "tags": [
+          "plateforme"
+        ]
+      }
+    },
+    "/plateforme/notifications": {
+      "post": {
+        "description": "Avertit UN appareil d'une installation au bail cru — la charge est composée ici.",
+        "operationId": "post_plateforme_notifications",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReponseNotification"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Relayer",
         "tags": [
           "plateforme"
         ]

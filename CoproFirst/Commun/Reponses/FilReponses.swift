@@ -11,7 +11,7 @@ struct GestesReponses {
     let retirer: @MainActor (ReponseCommunaute) async -> Void
     let signaler: @MainActor (ReponseCommunaute) -> Void
     /// « Masquer ce que publie… » l'auteur d'une réponse (#286) : `nil` quand l'installation
-    /// ne le sert pas (`installation.sert(.moderation)`) — le geste ne s'offre pas.
+    /// ne le sert pas (`installation.sert(.plancher)`) — le geste ne s'offre pas.
     var masquer: (@MainActor (AuteurAMasquer) -> Void)?
 }
 
@@ -22,7 +22,7 @@ extension GestesReponses {
         _ installation: Installation, _ masquer: @escaping @MainActor (AuteurAMasquer) -> Void
     ) -> GestesReponses {
         var gestes = self
-        gestes.masquer = installation.sert(.moderation) ? masquer : nil
+        gestes.masquer = installation.sert(.plancher) ? masquer : nil
         return gestes
     }
 }

@@ -9,9 +9,9 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 
 | | |
 |---|---|
-| Source | philippe-tressard/coprofirst v3.117.0 (commit d25fa8df3721cf67b5522648fd22d000b61ca237), pièce jointe `openapi.json` de la release |
-| Commit | `d25fa8df3721cf67b5522648fd22d000b61ca237` (`v3.117.0`) |
-| Version du contrat | `2.8.0` (`info.version` du contrat publié, servie par chaque installation en `version_contrat` de `GET /config`) |
+| Source | philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), pièce jointe `openapi.json` de la release |
+| Commit | `ac4f80f6ad5c8e861e61bd892c27d129025f80fa` (`v3.121.2`) |
+| Version du contrat | `2.10.0` (`info.version` du contrat publié, servie par chaque installation en `version_contrat` de `GET /config`) |
 | Préfixe servi | `/api` : les chemins du schéma s'entendent sous `https://<hôte>/api` |
 | Normalisation | `anyOf: [X, null]` réécrit en `type: [X, "null"]` (`$ref` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres `in: cookie` retirés — iOS envoie les cookies de session seul |
-| Au-dessus du plancher | `/masquages`, `/masquages/{auteur_id}` et `MasquageCreate`, `MasquageRead`, de v3.118.0 (contrat 2.9.0) — porte `VersionContrat.moderation` |
+| Au-dessus du plancher | aucune route |

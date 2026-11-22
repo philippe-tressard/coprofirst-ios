@@ -169,7 +169,7 @@ private struct GestesSuite: ViewModifier {
         let ouverte = parcours?.ouverteAJour
         let gestes = choix == nil ? [] : suite.map {
             GesteSuite.offerts(
-                pour: $0, moi: ouverte?.profil?.idCompte, moderation: ouverte?.sert(.moderation) ?? false)
+                pour: $0, moi: ouverte?.profil?.idCompte, moderation: ouverte?.sert(.plancher) ?? false)
         } ?? []
         if let suite, !gestes.isEmpty {
             HStack(alignment: .top, spacing: 8) {

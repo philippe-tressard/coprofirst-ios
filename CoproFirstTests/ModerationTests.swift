@@ -8,8 +8,8 @@ import Testing
 @testable import CoproFirst
 
 /// Signaler une affaire, une suite ou la réponse de l'assistant ; masquer ce que publie un
-/// résident (#286, coprofirst#2861). Au-dessus du plancher : derrière la porte
-/// `VersionContrat.moderation`, générée avec les routes `/masquages`.
+/// résident (#286, coprofirst#2861). Au plancher depuis v3.121.2 (#313) : offerts à une
+/// installation qui dit son contrat (`sert(.plancher)`), la porte `.moderation` retirée.
 @MainActor
 struct ModerationTests {
     private func residence(contrat: String?) -> Installation {
@@ -24,15 +24,14 @@ struct ModerationTests {
         #expect(ServiceSimule().masquages != nil && ServiceSimule().signalements != nil)
     }
 
-    /// La porte s'ouvre à la version du contrat qui sert les routes, pas avant ; un contrat
-    /// absent ou illisible garde les gestes du plancher.
-    @Test func laPorteSuitLeContratServi() {
-        #expect(VersionContrat.moderation > .plancher, "au-dessus du plancher, sinon la déclaration se retire")
-        #expect(residence(contrat: VersionContrat.moderation.description).sert(.moderation))
-        #expect(residence(contrat: "99.0.0").sert(.moderation))
-        #expect(!residence(contrat: VersionContrat.plancher.description).sert(.moderation))
-        #expect(!residence(contrat: nil).sert(.moderation))
-        #expect(!residence(contrat: "2.x").sert(.moderation))
+    /// Le plancher sert les routes (contrat 2.10.0) : toute installation qui dit son contrat
+    /// les offre ; un contrat absent ou illisible n'en offre aucune, comme avant (#313).
+    @Test func lesGestesSuiventLeContratServi() {
+        #expect(VersionContrat.plancher >= VersionContrat(2, 9, 0), "les masquages sont au plancher")
+        #expect(residence(contrat: VersionContrat.plancher.description).sert(.plancher))
+        #expect(residence(contrat: "99.0.0").sert(.plancher))
+        #expect(!residence(contrat: nil).sert(.plancher))
+        #expect(!residence(contrat: "2.x").sert(.plancher))
     }
 
     @Test func lesCiblesSontCellesDuSite() {
@@ -107,7 +106,7 @@ struct ModerationTests {
     /// L'API simulée tient sa liste comme le serveur : masquer deux fois n'en pose qu'un.
     @Test func laListeSimuleeSeTientCommeLeServeur() async throws {
         let service = ServiceSimule()
-        let installation = residence(contrat: VersionContrat.moderation.description)
+        let installation = residence(contrat: VersionContrat.plancher.description)
         #expect(try await service.masques(dans: installation).map(\.auteur) == ["Dominique EXEMPLE"])
         let camille = try #require(AuteurAMasquer(id: 32, nom: "Camille ESSAI", moi: 7))
         try await service.masquer(camille, dans: installation)

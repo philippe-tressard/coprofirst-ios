@@ -21,7 +21,13 @@ struct RelaisPush: Sendable {
     /// Une résidence sous cette version, ou qui sert une version illisible, ne reçoit rien.
     let depuis: VersionContrat
 
-    static let courant = RelaisPush(allume: false, depuis: .alertesPoussees)
+    /// Seule l'alerte d'une actualité ⚡ urgente part vers un téléphone (coprofirst#2789, spec
+    /// push §12) : le contrat 2.10.0, devenu le PLANCHER (#313) — la porte `alertesPoussees`
+    /// s'est retirée (#254). Le contrat 2.10.0 arrive avec v3.119.0, mais le filtre seulement
+    /// avec v3.120.0 : une v3.119.0 pousserait toute la cloche. Elle n'a servi qu'une heure,
+    /// service coupé, et aucune installation connue ne la sert (mesuré le 19/11/2026, puis par
+    /// la concordance quotidienne : toutes au moins en v3.120.0).
+    static let courant = RelaisPush(allume: false, depuis: .plancher)
 
     /// L'appareil s'offre et s'enregistre auprès de cette résidence.
     func sert(_ installation: Installation?) -> Bool {

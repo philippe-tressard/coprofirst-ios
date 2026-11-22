@@ -40,7 +40,7 @@ struct ProfilView: View {
                         }
                         .listRowBackground(palette.surface)
                         // Ce que je ne veux plus voir (#286) : si l'installation le sert.
-                        if ouverte.sert(.moderation) {
+                        if ouverte.sert(.plancher) {
                             NavigationLink {
                                 PersonnesMasqueesView(installation: ouverte)
                             } label: {

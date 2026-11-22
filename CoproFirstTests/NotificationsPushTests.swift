@@ -296,8 +296,7 @@ private func jusqua(_ condition: () -> Bool) async {
 /// (coprofirst#2875) : l'allumer, c'est changer ce test, dans le lot qui le décide.
 @Test func leRelaisEstEteintParDefaut() {
     #expect(!RelaisPush.courant.allume, "allumé sans la décision de Philippe (coprofirst#2875)")
-    #expect(RelaisPush.courant.depuis == .alertesPoussees)
-    #expect(VersionContrat.alertesPoussees > .plancher, "une porte au plancher ne fermerait rien")
+    #expect(RelaisPush.courant.depuis == .plancher, "le contrat de l'alerte urgente est au plancher (#313)")
 }
 
 @MainActor
@@ -314,7 +313,7 @@ private func jusqua(_ condition: () -> Bool) async {
 /// Une résidence sous la porte, ou qui ne dit pas sa version, ne reçoit pas l'appareil :
 /// elle pourrait faire sonner toute la cloche, pas seulement l'alerte urgente.
 @Test func seuleUneResidenceAuDessusDeLaPorteRecoitLAppareil() {
-    let relais = RelaisPush(allume: true, depuis: .alertesPoussees)
+    let relais = RelaisPush(allume: true, depuis: VersionContrat(2, 10, 0))
     var residence = ServiceSimule.residence
     for (servie, attendu) in [("2.10.0", true), ("2.11", true), ("2.9.0", false), ("2.8.0", false), ("2.x", false)] {
         residence.versionContrat = servie
@@ -324,13 +323,15 @@ private func jusqua(_ condition: () -> Bool) async {
     #expect(!relais.sert(residence), "version absente : les gestes du plancher")
     #expect(!relais.sert(nil), "aucune résidence ouverte")
     residence.versionContrat = "2.10.0"
-    #expect(!RelaisPush(allume: false, depuis: .alertesPoussees).sert(residence), "éteint : rien")
+    #expect(!RelaisPush(allume: false, depuis: .plancher).sert(residence), "éteint : rien")
 }
 
 @MainActor
 @Test func sousLaPorteLOffreSeTaitEtRienNePart() async {
-    let sousLaPorte = RelaisPush(allume: true, depuis: .alertesPoussees)
-    #expect(ServiceSimule.residence.contrat ?? .plancher < .alertesPoussees, "la résidence inventée sert le plancher")
+    // Une porte au-dessus du plancher, qu'aucune version servie n'atteint encore.
+    let porte = VersionContrat(99, 0, 0)
+    let sousLaPorte = RelaisPush(allume: true, depuis: porte)
+    #expect(ServiceSimule.residence.contrat ?? .plancher < porte, "la résidence inventée sert le plancher")
     let demandee = await AppOuverte(.nonDemandee, relais: sousLaPorte)
     #expect(!demandee.push.offreDue)
     let accordee = await AppOuverte(.accordee, relais: sousLaPorte)

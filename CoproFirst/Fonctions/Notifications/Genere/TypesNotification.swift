@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.117.0 (commit d25fa8df3721cf67b5522648fd22d000b61ca237), api/app/utils/types_notification.py#TYPES_NOTIFICATION, api/app/utils/types_notification.py#TYPE_PAR_DEFAUT (constantes-clients.json).
+// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), api/app/utils/types_notification.py#TYPES_NOTIFICATION, api/app/utils/types_notification.py#TYPE_PAR_DEFAUT (constantes-clients.json).
 
 /// Ce que la cloche montre de chaque type d'alerte (coprofirst#2802, #226).
 enum TypesNotification {
@@ -16,6 +16,7 @@ enum TypesNotification {
         "sondage": TypeNotification(pictogramme: "bar-chart-3", libelle: "Sondage"),
         "system": TypeNotification(pictogramme: "settings", libelle: "Système"),
         "ticket_update": TypeNotification(pictogramme: "ticket", libelle: "Affaire"),
+        "urgence": TypeNotification(pictogramme: "zap", libelle: "Alerte"),
         "vigik": TypeNotification(pictogramme: "key-round", libelle: "Badge"),
     ]
 

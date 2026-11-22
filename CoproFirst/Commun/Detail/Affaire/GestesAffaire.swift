@@ -44,7 +44,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
     /// - 🔗 à tous : l'adresse ne donne pas plus d'accès que l'écran (`BoutonLien`) ;
     /// - 🚩 à qui la lit sans pouvoir la corriger, hors des Archives — son auteur, le
     ///   conseil et l'administration ont d'autres gestes —, si l'installation le sert
-    ///   (`moderation` : la porte `VersionContrat.moderation`, coprofirst#2861, #286) ;
+    ///   (`moderation` : `installation.sert(.plancher)`, coprofirst#2861, #286, #313) ;
     /// - 💬 au lecteur que la route accepte, sauf au conseil syndical et à
     ///   l'administration — eux suivent l'affaire par 🔄 (décision du 10/11/2026,
     ///   divergence iOS déclarée) ; jamais sur une actualité ni une affaire fusionnée
