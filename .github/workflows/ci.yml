@@ -230,7 +230,12 @@ jobs:
         PrestatairesUITests HorsLigneUITests ResidenceUITests
       # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
       # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
-      BUDGET_LOT: 55
+      # 62 depuis le 22/11/2026 : en six lots (~23 min de tests en médiane), un lot vert a fait
+      # 60 min (#326, run 44796976326, lot 3) — un runner 1,47 fois plus lent sur les tests et
+      # 24 min de mise en route (simulateur, build). 1,47 × 23 + 24 ≈ 58 à 60 : à 55, un runner
+      # lent rendait main rouge sans défaut. 62 laisse 8 min sous la coupure du job (70) pour
+      # que le bilan s'écrive ; un lot qui grossit reste nommé avant d'être coupé.
+      BUDGET_LOT: 62
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
