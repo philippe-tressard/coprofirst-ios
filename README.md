@@ -194,7 +194,10 @@ En paysage, une liste et la fiche qu'elle ouvre s'y tiennent côte à côte (#22
 affaires, le fil, Ma résidence (documents, carnet, règlement, syndic), les annonces, les
 documents des contrats, les courriels et le reporting de l'Espace CS ; en portrait, deux
 colonnes seulement, la barre et la page, dont la liste ouvre sa fiche par-dessus elle,
-comme sur l'iPhone.
+comme sur l'iPhone. Au clavier matériel (#223) : ⌘N « Nouvelle affaire », ⌘R actualise
+une liste à tirer, ⌘F ouvre la recherche de l'écran qui en a une (Mes affaires,
+Prestataires, badges de l'Espace CS, utilisateurs de l'administration, choix de l'affaire
+d'un avis) ; ⌘ tenu les liste.
 Dans l'Espace CS, **Écrans du hall** (#295) liste les écrans de la résidence (lieu,
 « Échu », dernière lecture des annonces), en appaire un avec le code qu'il affiche —
 un nom, un seul périmètre — et en retire un, après confirmation.

@@ -439,6 +439,10 @@ P_ACT=CoproFirst/Commun/Composants/Actualisable.swift
 grep -rq '\.actualisable' CoproFirst --include='*.swift' || echec "$P_ACT jamais employé : le contrôle ne contrôle rien"
 NUS=$(grep -rn '\.refreshable' CoproFirst --include='*.swift' | grep -v "^$P_ACT:" || true)
 [ -z "$NUS" ] || { echo "$NUS"; echec "\.refreshable nu : .actualisable, qui pose aussi ⌘R (#223)"; }
+# De même, une recherche passe par ChampRecherche ou .barreDeRecherche, qui posent ⌘F (#223).
+P_RECH=CoproFirst/Commun/Composants/ChampRecherche.swift
+NUS=$(grep -rnE '\.searchable\(|\.submitLabel\(\.search\)' CoproFirst --include='*.swift' | grep -v "^$P_RECH:" || true)
+[ -z "$NUS" ] || { echo "$NUS"; echec "recherche nue : ChampRecherche ou .barreDeRecherche, qui posent ⌘F (#223)"; }
 
 # Un toucher passe par le point commun (#217) : plafond décroissant des tap() directs.
 TOUCHERS=$(bash scripts/verifier-touchers.sh) || { echo "$TOUCHERS"; echec "touchers hors du point commun (#217)"; }
@@ -483,4 +487,4 @@ if [ "$ECHECS" -gt 0 ]; then
   exit 1
 fi
 [ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
