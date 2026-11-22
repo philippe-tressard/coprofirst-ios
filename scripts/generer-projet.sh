@@ -19,6 +19,10 @@ if [ "$VERSION" != "$XCODEGEN_VERSION" ]; then
   exit 1
 fi
 
+# L'empreinte des sources des tests d'interface, que leur cible compile : le fichier doit
+# exister pour entrer au projet (#328). tests-simulateur.sh la réécrit à chaque passage.
+python3 -I scripts/empreinte_tests.py ecrire >/dev/null
+
 # Sans ses préréglages, XcodeGen ne fait qu'avertir — et produit un projet dont les
 # cibles de test n'ont pas de nom. L'avertissement est donc un refus.
 SORTIE=$(xcodegen generate 2>&1) || { echo "$SORTIE" >&2; echo "❌ XcodeGen a échoué" >&2; exit 1; }
