@@ -150,6 +150,20 @@ extension XCUIApplication {
         toucher(ligne, jusqua: effet)
     }
 
+    /// Le Profil, par le chemin de l'appareil — la seule voie des tests qui partent du Profil
+    /// (#336) : « Plus » sur iPhone ; sur iPad en plein écran, la barre latérale, où « Plus »
+    /// n'existe pas (#221). Jusqu'à son titre : un toucher perdu se reprend (#183).
+    @MainActor
+    func ouvrirLeProfil() {
+        let titre = navigationBars["Profil"]
+        guard UIDevice.current.userInterfaceIdiom == .pad else {
+            return ouvrirDansPlus("Profil", jusqua: titre)
+        }
+        let entree = descendants(matching: .any).matching(identifier: "barre.profil").firstMatch
+        XCTAssertTrue(entree.apparait(), "« Profil » dans la barre latérale")
+        toucher(entree, jusqua: titre)
+    }
+
     @MainActor
     func capturerAcces(_ nom: String, dans test: XCTestCase) {
         let piece = XCTAttachment(screenshot: screenshot())

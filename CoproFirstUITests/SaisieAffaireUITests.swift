@@ -111,12 +111,7 @@ final class SaisieAffaireUITests: XCTestCase {
 
     func testLeChoixDuProfilVautAussitot() throws {
         let app = lancer()
-        let plus = app.tabBars.buttons["Plus"]
-        XCTAssertTrue(plus.apparait())
-        app.toucher(plus)
-        let profil = el(app, "plus.profil")
-        XCTAssertTrue(app.amener(profil))
-        app.toucher(profil)
+        app.ouvrirLeProfil()
         let complete = el(app, "profil.saisie").buttons["Complète"]
         XCTAssertTrue(app.amener(complete), "le réglage est au Profil")
         XCTAssertTrue(el(app, "profil.saisie").buttons["Essentielle"].isSelected, "le défaut servi est coché")

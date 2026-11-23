@@ -44,13 +44,9 @@ final class ModerationUITests: XCTestCase {
     /// Profil › Personnes masquées : la liste servie, puis « Ne plus masquer » la retire.
     func testLeProfilListeLesPersonnesMasqueesEtLesDemasque() throws {
         let app = LancementCaptures.lancer(arguments: porte)
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.apparait())
-        app.toucher(plus)
-        app.toucher(app.elementAcces("plus.profil"))
+        app.ouvrirLeProfil()
         // Sous « Ce que j'affiche », plus bas que l'écran : une liste ne crée ses rangées
         // qu'en approchant, on la fait défiler jusqu'à elle.
-        XCTAssertTrue(app.navigationBars["Profil"].apparait())
         let entree = app.elementAcces("profil.masquees")
         for _ in 0..<8 where entree.sonde() == false { app.swipeUp() }
         XCTAssertTrue(entree.exists, "l'entrée, le compte lu")

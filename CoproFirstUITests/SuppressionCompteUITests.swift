@@ -14,12 +14,7 @@ final class SuppressionCompteUITests: XCTestCase {
     @MainActor
     private func ouvrirLeProfil() -> XCUIApplication {
         let app = LancementCaptures.lancer()
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.apparait())
-        app.toucher(plus)
-        let profil = app.elementAcces("plus.profil")
-        XCTAssertTrue(app.amener(profil), "« Profil » dans la liste « Plus »")
-        app.toucher(profil)
+        app.ouvrirLeProfil()
         return app
     }
 
