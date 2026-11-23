@@ -225,7 +225,11 @@ final class SondageUITests: XCTestCase {
         let confirmer = app.elementAcces("reponses.confirmerSuppression")
         XCTAssertTrue(confirmer.apparait(), "la suppression se confirme")
         app.toucher(confirmer)
-        XCTAssertTrue(app.elementAcces("reponse.33").disparait())
+        // Rouge une fois en CI sur iPad, cause non établie (#313) : l'arbre dit si la boîte est
+        // restée ouverte, ou quel avis l'app a donné.
+        XCTAssertTrue(
+            app.elementAcces("reponse.33").disparait(),
+            "le commentaire supprimé reste — arbre à l'échec :\n\(app.debugDescription)")
 
         // Le commentaire d'un voisin : le signaler, motif obligatoire.
         let voisin = app.elementAcces("reponse.32")

@@ -12,7 +12,7 @@ struct CibleSignalement: Hashable, Sendable {
 }
 
 extension CibleSignalement {
-    /// Au-dessus du plancher, derrière la porte `VersionContrat.moderation` (coprofirst#2861,
+    /// Au plancher depuis v3.121.2 (#313 ; servi avant derrière une porte, coprofirst#2861,
     /// #286) : une affaire, une suite qui porte un texte, la réponse de l'assistant à une
     /// question au règlement — les types que le site envoie (`CibleSignalement` de
     /// `communaute.ts`). Un contenu que le lecteur ne voit pas répond 404.

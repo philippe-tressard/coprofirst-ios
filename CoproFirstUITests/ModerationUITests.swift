@@ -3,13 +3,13 @@
 
 import XCTest
 
-/// Masquer ce que publie un résident (#286), contre l'API simulée qui sert le contrat de la
-/// porte `.moderation` (`-contrat 2.9.0`) : le geste se pose depuis une suite d'affaire, se
-/// confirme, et se défait dans le Profil. Un geste se prouve par l'état qui reste, jamais
-/// par l'avis seul.
+/// Masquer ce que publie un résident (#286), contre l'API simulée, qui sert le contrat du
+/// plancher (les masquages y sont depuis v3.121.2, #313) : le geste se pose depuis une suite
+/// d'affaire, se confirme, et se défait dans le Profil. Un geste se prouve par l'état qui
+/// reste, jamais par l'avis seul.
 @MainActor
 final class ModerationUITests: XCTestCase {
-    private let porte = ["-contrat", "2.9.0", "-compte", "resident"]
+    private let porte = ["-compte", "resident"]
 
     override func setUp() {
         continueAfterFailure = false

@@ -10,7 +10,7 @@ import Foundation
 /// que l'ordre des caractères inverserait. C'est la seule comparaison de versions de
 /// contrat de l'app — un geste qui dépend d'une version s'écrit
 /// `installation.sert(.plancher)`, jamais avec la chaîne servie.
-/// Les portes des routes au-dessus du plancher (`.moderation`) se GÉNÈRENT avec elles
+/// Les portes des routes au-dessus du plancher (`.moderation` jusqu'à #313) se GÉNÈRENT avec elles
 /// (`AU_DESSUS_DU_PLANCHER` de `scripts/generateurs/contrat.py`, #286).
 ///
 /// Une porte de version ne vit ici que tant qu'elle est AU-DESSUS du plancher
@@ -46,11 +46,4 @@ struct VersionContrat: Comparable, Hashable, Sendable, CustomStringConvertible {
 
     var description: String { nombres.map(String.init).joined(separator: ".") }
 
-    /// Seule l'alerte d'une actualité ⚡ urgente part vers un téléphone (coprofirst#2789,
-    /// spec push §12) : sous cette version, une résidence ne reçoit pas l'appareil (#283).
-    /// Le contrat 2.10.0 arrive avec v3.119.0, mais le filtre seulement avec v3.120.0, qui ne
-    /// change pas de contrat : une v3.119.0 pousserait toute la cloche. Elle n'a servi
-    /// qu'une heure, service coupé, et aucune installation connue ne la sert plus
-    /// (mesuré le 19/11/2026 : demo.coprofirst.fr en v3.120.0, 5hostachy.fr en v3.121.0).
-    static let alertesPoussees = VersionContrat(2, 10, 0)
 }

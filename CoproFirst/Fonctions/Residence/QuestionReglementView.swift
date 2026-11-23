@@ -25,7 +25,7 @@ struct QuestionReglementView: View {
                     Text(question.question).font(.titre(.title2)).foregroundStyle(palette.text)
                     PiedQuestion(question: question)
                     Text(mention).font(.footnote).italic().foregroundStyle(palette.textMuted)
-                    if installation.sert(.moderation) { signaler }
+                    if installation.sert(.plancher) { signaler }
                     if question.avecRenvois {
                         AvisARenvois(question: question, defilement: defilement)
                     } else {

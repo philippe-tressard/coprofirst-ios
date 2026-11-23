@@ -64,7 +64,7 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// Le contrat servi, lu par ses nombres — `nil` s'il est absent ou illisible.
     var contrat: VersionContrat? { VersionContrat(versionContrat) }
 
-    /// Sert-elle ce qu'ouvre la PORTE `porte` (`.plancher`, `.moderation`…) ? Un contrat
+    /// Sert-elle ce qu'ouvre la PORTE `porte` (`.plancher`, une porte générée…) ? Un contrat
     /// absent ou illisible n'ouvre aucune porte : l'app garde les gestes du plancher.
     func sert(_ porte: VersionContrat) -> Bool { contrat.map { $0 >= porte } ?? false }
 

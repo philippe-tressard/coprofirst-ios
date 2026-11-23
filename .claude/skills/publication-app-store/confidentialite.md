@@ -137,7 +137,7 @@ version du plancher) :
   `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `jeton: appareil.jeton.hexadecimal`,
   `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `var generateur = SystemRandomNumberGenerator()`,
   `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `guard autorisation == .accordee else { return }`,
-  `CoproFirst/Fonctions/Notifications/Push/RelaisPush.swift` › `static let courant = RelaisPush(allume: false, depuis: .alertesPoussees)` ;
+  `CoproFirst/Fonctions/Notifications/Push/RelaisPush.swift` › `static let courant = RelaisPush(allume: false, depuis: .plancher)` ;
 - le jeton ne s'écrit ni dans un journal ni sur le disque :
   `CoproFirst/Fonctions/Notifications/Push/JetonAPNs.swift` › `static let masque = "‹jeton APNs masqué›"` ;
 - à la déconnexion, l'appareil se retire :

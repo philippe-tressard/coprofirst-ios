@@ -25,7 +25,7 @@ struct BandeauAffaire: ViewModifier {
     func body(content: Content) -> some View {
         let conseil = DroitsOnglet(profil: parcours.ouverteAJour?.profil).cs
         let gestes = GesteAffaire.offerts(
-            pour: affaire, conseil: conseil, moderation: installation.sert(.moderation))
+            pour: affaire, conseil: conseil, moderation: installation.sert(.plancher))
         Group {
             if dansLaColonne {
                 content.safeAreaInset(edge: .bottom, spacing: 0) {

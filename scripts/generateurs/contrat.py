@@ -19,7 +19,7 @@ Une route servie AU-DESSUS du plancher (#286) se déclare dans `AU_DESSUS_DU_PLA
 elle se prend telle que la publie la release qui l'introduit, avec les schémas qu'elle
 nomme, et s'AJOUTE au contrat du plancher — rien de ce qu'il porte ne change. L'app ne
 l'appelle que derrière sa PORTE, générée ici dans `ContratDuPlancher.swift` à la version
-du contrat de cette release : `installation.sert(.moderation)`.
+du contrat de cette release : `installation.sert(.<porte>)`.
 """
 
 from __future__ import annotations
@@ -43,13 +43,8 @@ VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 #: qu'elles ouvrent, et leurs chemins. Le jour où le plancher les sert, la génération
 #: échoue : la déclaration se retire, et la porte avec elle (comme `AuDessusDuPlancher`
 #: pour un champ, #89).
-AU_DESSUS_DU_PLANCHER = {
-    "moderation": (
-        "v3.118.0",
-        "masquer ce que publie un résident, signaler une affaire, une suite ou la réponse de "
-        "l'assistant (coprofirst#2861, #286)",
-        ("/masquages", "/masquages/{auteur_id}"),
-    ),
+AU_DESSUS_DU_PLANCHER: dict[str, tuple[str, str, tuple[str, ...]]] = {
+    # « moderation » (v3.118.0, /masquages) : au plancher depuis v3.121.2 (#313), retirée.
 }
 
 

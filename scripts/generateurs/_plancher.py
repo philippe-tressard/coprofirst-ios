@@ -25,11 +25,13 @@ AU-DESSUS, le ticket « a-monter » dit jusqu'où le plancher peut monter.
 # aucun, et n'en lit aucun (spec multi-coproprietes §4.1 bis de coprofirst).
 INSTALLATIONS = ("demo.coprofirst.fr", "5hostachy.fr")
 
-VERSION = "v3.117.0"
+VERSION = "v3.121.2"
 RAISON = (
-    "contrat 2.8.0 : la version que sert demo.coprofirst.fr, mesurée le 18/11/2026 (5hostachy.fr sert "
-    "v3.118.0, contrat 2.9.0) — la plus ancienne servie, donc le plancher. Elle publie les constantes "
-    "de la saisie d'une affaire (constantes-clients.json 1.4.0) : l'app ne lit plus aucune source de "
-    "l'API (#290). Montée décidée le 18/11/2026 par Philippe (« Oui, plancher d'abord »), relayée par "
-    "le coordinateur des sessions ; l'app Android suit le même plancher"
+    "contrat 2.10.0 : la version que servent demo.coprofirst.fr et 5hostachy.fr, mesurée par la "
+    "concordance quotidienne (#313, #83) — toutes deux au moins 2.10.0, donc le plancher monte à la "
+    "release la plus récente de ce contrat. Le nouveau contrat n'exige aucun champ et ne refuse aucune "
+    "réponse simulée ; il fait entrer au plancher les routes de masquage (portées jusqu'ici par "
+    "VersionContrat.moderation, #286) et le type de notification « urgence ». Montée décidée le "
+    "23/11/2026 par le coordinateur des sessions, selon la règle du plancher (aucune exigence ni "
+    "refus : pas de régression) ; l'app Android suit le même plancher"
 )

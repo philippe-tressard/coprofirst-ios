@@ -77,5 +77,6 @@ enum Pictogrammes {
         "users": "person.2.fill",
         "users-round": "person.3.fill",
         "wrench": "wrench.adjustable.fill",
+        "zap": "bolt.fill",
     ]
 }

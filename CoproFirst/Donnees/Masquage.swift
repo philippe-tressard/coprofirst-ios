@@ -38,8 +38,8 @@ struct AuteurAMasquer: Identifiable, Hashable, Sendable {
     }
 }
 
-/// GET, POST /masquages et DELETE /masquages/{auteur_id} — au-dessus du plancher, derrière
-/// la porte `VersionContrat.moderation` (`installation.sert(.moderation)`). Trois lecteurs :
+/// GET, POST /masquages et DELETE /masquages/{auteur_id} — au plancher depuis v3.121.2 (#313),
+/// offerts à une installation qui dit son contrat (`installation.sert(.plancher)`). Trois lecteurs :
 /// la Communauté, une affaire, le Profil. Le serveur refuse en 422, avec sa phrase, ce qui
 /// ne se masque pas (soi-même, le conseil syndical, l'administration, un modérateur qui
 /// masquerait) : l'app ne redit pas la règle.
