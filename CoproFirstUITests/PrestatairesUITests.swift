@@ -163,10 +163,10 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("prestataire.1").exists, "la recherche filtre, sans accents ni ordre")
         recherche.typeText(XCUIKeyboardKey.delete.rawValue)
 
-        app.toucher(app.elementAcces("onglet.contrats"))
+        // Changer d'onglet, ouvrir le contrat : un toucher perdu sous charge se reprend, déclaré
+        // (#183, #299).
         let contrat = app.elementAcces("contrat.1")
-        XCTAssertTrue(contrat.apparait(), "les contrats")
-        // Ouvrir le contrat : un toucher perdu sous charge se reprend, déclaré (#183, #299).
+        app.toucher(app.elementAcces("onglet.contrats"), jusqua: contrat)
         app.toucher(contrat, jusqua: app.libelleAcces("Le contrat"))
         XCTAssertTrue(app.libelleAcces("↺ Mensuel").exists, "la fréquence servie (`frequence_libelle`, #125)")
         XCTAssertTrue(app.elementAcces("contrat.1.noter").exists, "noter depuis le contrat : le conseil")
@@ -189,9 +189,8 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertFalse(app.elementAcces("contrat.1.remplacement.0").exists, "sans remplacement : rien")
         app.capturerAcces("prestataires-3b-remplacement", dans: self)
 
-        app.toucher(app.elementAcces("onglet.consommations"))
-        // « 47 047 » : l'espace fine insécable de `fmtNombre`.
-        XCTAssertTrue(app.libelleAcces("Index 47").apparait(), "les relevés")
+        // Les relevés ; « 47 047 » : l'espace fine insécable de `fmtNombre`.
+        app.toucher(app.elementAcces("onglet.consommations"), jusqua: app.libelleAcces("Index 47"))
         app.capturerAcces("prestataires-4-consommations", dans: self)
     }
 }

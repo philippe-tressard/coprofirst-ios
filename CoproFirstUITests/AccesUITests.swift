@@ -44,18 +44,16 @@ final class AccesUITests: XCTestCase {
         app.toucher(app.elementAcces("acces.lot.417"))
         XCTAssertTrue(app.libelleAcces("Sous-sol A").apparait(), "le lot choisi s'affiche")
 
-        app.toucher(app.elementAcces("onglet.badges"))
-        XCTAssertTrue(app.libelleAcces("A4F21C07").apparait(), "les badges détenus")
+        // Un toucher d'onglet perdu sous charge se reprend, déclaré (#183).
+        app.toucher(app.elementAcces("onglet.badges"), jusqua: app.libelleAcces("A4F21C07"))  // les badges détenus
         app.capturerAcces("acces-2-badges", dans: self)
 
-        app.toucher(app.elementAcces("onglet.telecommandes"))
-        XCTAssertTrue(app.libelleAcces("TC-2048").apparait(), "les télécommandes détenues")
+        app.toucher(app.elementAcces("onglet.telecommandes"), jusqua: app.libelleAcces("TC-2048"))  // les détenues
         app.capturerAcces("acces-3-telecommandes", dans: self)
 
         // Le compte simulé est au conseil syndical : la gestion locative lui est ouverte.
         // L'onglet est hors de l'écran, à droite : `toucher` fait glisser la rangée (#183).
-        app.toucher(app.elementAcces("onglet.location"))
-        XCTAssertTrue(app.libelleAcces("Locataire DU LOT 31").apparait(), "un bail actif")
+        app.toucher(app.elementAcces("onglet.location"), jusqua: app.libelleAcces("Locataire DU LOT 31"))  // un bail
         app.capturerAcces("acces-4-gestion-locative", dans: self)
         app.toucher(app.libelleAcces("📁 Archives"))
         XCTAssertTrue(app.libelleAcces("Ancien locataire DU LOT 31").apparait(), "les archives")
@@ -64,9 +62,8 @@ final class AccesUITests: XCTestCase {
     @MainActor
     func testSignalerPerduPuisDeclarer() throws {
         let app = ouvrirAcces()
-        app.toucher(app.elementAcces("onglet.badges"))
         let perdu = app.elementAcces("acces.perdu.12")
-        XCTAssertTrue(perdu.apparait())
+        app.toucher(app.elementAcces("onglet.badges"), jusqua: perdu)
         app.toucher(perdu)
         app.toucher(app.elementAcces("acces.perdu.confirmer"))
         XCTAssertTrue(app.libelleAcces("Signalement enregistré").apparait())
@@ -80,14 +77,14 @@ final class AccesUITests: XCTestCase {
         app.capturerAcces("acces-5-declarer", dans: self)
         app.toucher(app.elementAcces("acces.feuille.enregistrer"))
         XCTAssertTrue(app.libelleAcces("Accès enregistré").apparait())
-        app.toucher(app.elementAcces("onglet.telecommandes"))
-        XCTAssertTrue(app.libelleAcces("TC-7777").apparait(), "la liste est relue")
+        // La liste est relue : le code déclaré y paraît (sur la PR #332, ce toucher s'est perdu, #183).
+        app.toucher(app.elementAcces("onglet.telecommandes"), jusqua: app.libelleAcces("TC-7777"))
     }
 
     @MainActor
     func testNouvelAccesNeProposeQueSesLots() throws {
         let app = ouvrirAcces()
-        app.toucher(app.elementAcces("onglet.badges"))
+        app.toucher(app.elementAcces("onglet.badges"), jusqua: app.libelleAcces("A4F21C07"))
         app.toucher(app.elementAcces("acces.gestes"))
         app.toucher(app.elementAcces("acces.geste.demander"))
         XCTAssertTrue(app.navigationBars["Nouvelle demande d'accès"].apparait())
