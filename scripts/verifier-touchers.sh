@@ -11,6 +11,9 @@
 # s'amène par `app.toucher` ou `app.amenerDansSaRangee`, une ligne se balaie par `app.balayer`.
 # Un onglet d'une rangée (`onglet.…`) se touche JUSQU'À SON EFFET, `app.toucher(_:jusqua:)` :
 # nu, un toucher perdu sous charge laissait la page d'avant, sans reprise (#183, PR #332).
+# INCOMPLET, et dit : le motif ne lit que `app.toucher(app.elementAcces("onglet.…"))` sur une
+# ligne. Un onglet passé par une variable, trouvé par son libellé, ou d'identifiant préfixé
+# (`residence.sommaire.onglet.…`) lui échappe : relevé et suite dans #334.
 # Appelé par scripts/verifier-depot.sh. Sortie : 0 conforme, 1 refus.
 set -uo pipefail
 cd "$(dirname "$0")/.."
