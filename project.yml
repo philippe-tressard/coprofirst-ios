@@ -37,6 +37,11 @@ settings:
     CURRENT_PROJECT_VERSION: "2"
     LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
     SWIFT_EMIT_LOC_STRINGS: "YES"
+settingGroups:
+  # La montre importe `ClientAPI` et reçoit le module `ClientAPIMontre` : le même code sous
+  # un autre nom de cible, pour que l'iPhone l'embarque sans collision du greffon (#324).
+  clientMontre:
+    OTHER_SWIFT_FLAGS: $(inherited) -module-alias ClientAPI=ClientAPIMontre
 packages:
   ClientAPI:
     path: Paquets/ClientAPI
@@ -249,7 +254,9 @@ targets:
       # Le hors ligne (#226, lot 3) : la durée de garde et le libellé de l'iPhone (#101).
       - path: CoproFirst/Session/LectureGardee/HorsLigne.swift
     dependencies:
+      # Le client sous son nom de montre (#324, Paquets/ClientAPI/Package.swift).
       - package: ClientAPI
+        product: ClientAPIMontre
       # Le widget de la pile et du cadran (#226, lot 3), embarqué dans l'app montre.
       - target: CoproFirstWatchWidget
     # L'App Group que l'app partage avec son widget : le résumé de la cloche, des nombres
@@ -299,6 +306,7 @@ targets:
         PRODUCT_NAME: CoproFirst
         TARGETED_DEVICE_FAMILY: "4"
         GENERATE_INFOPLIST_FILE: "NO"
+      groups: [clientMontre]
   # Le widget de l'Apple Watch (#226, lot 3) : il ne lit que le résumé que l'app écrit dans
   # l'App Group — ni réseau, ni jeton. Il compile nommément ce qu'il dit et dessine.
   CoproFirstWatchWidget:
@@ -358,6 +366,7 @@ targets:
         # L'app s'appelle CoproFirst.app (voir CoproFirstWatch), pas du nom de sa cible.
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/CoproFirst.app/CoproFirst
         BUNDLE_LOADER: $(TEST_HOST)
+      groups: [clientMontre]
   # L'interface de la montre (#226), sur ses aides d'attente communes avec l'iPhone.
   CoproFirstWatchUITests:
     type: bundle.ui-testing

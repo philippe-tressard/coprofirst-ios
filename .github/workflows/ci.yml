@@ -164,6 +164,28 @@ jobs:
         # (#226). Absente, true ou illisible : rouge, ou INCONNU si la construction échoue.
         run: bash scripts/verifier-montre-dependante.sh
 
+  archive-montre:
+    # L'archive de l'app iPhone avec l'app montre embarquée (#324) : le seul chemin qui mène la
+    # montre au magasin. Jamais joué avant le 20/11/2026, il était cassé deux fois (fichier
+    # inclus absent, greffon OpenAPI lancé deux fois dans le même build). Un job à part : le
+    # build commun recompile l'iPhone ET la montre, ajouté au job Apple Watch il en doublerait
+    # la durée. Mesuré au poste le 20/11/2026 : 1 min 16 à froid (arm64, sans -O, comme
+    # verifier-montre-dependante.sh) ; le runner est plus lent, le job Apple Watch qui construit
+    # la montre seule en prend 7 à 20. Plafond aligné sur lui, 30, à reprendre sur la mesure.
+    name: Archive iPhone avec la montre (#324)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: Archive Release sans signature, montre embarquée et dépendante
+        run: bash scripts/verifier-archive-montre.sh
+
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
     needs: detection
@@ -351,7 +373,7 @@ jobs:
     # dans sa file (#235) le rendrait vert sans avoir joué, ou rouge sans faute — chaque job
     # y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [detection, unitaires, montre, echantillons, interface]
+    needs: [detection, unitaires, montre, archive-montre, echantillons, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5

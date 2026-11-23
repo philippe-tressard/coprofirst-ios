@@ -6,11 +6,34 @@
 // swift-openapi-generator : aucune route ne s'écrit à la main ici (CLAUDE.md).
 import PackageDescription
 
+// Le client, généré par le greffon. Une fonction : la cible de l'iPhone et celle de la montre
+// sont le même code, compilé deux fois.
+func client(_ nom: String, chemin: String? = nil) -> Target {
+    .target(
+        name: nom,
+        dependencies: [
+            .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
+            .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
+        ],
+        path: chemin,
+        plugins: [
+            .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
+        ]
+    )
+}
+
 let package = Package(
     name: "ClientAPI",
     platforms: [.iOS(.v17), .tvOS(.v17), .watchOS(.v10), .macOS(.v14)],
     products: [
-        .library(name: "ClientAPI", targets: ["ClientAPI"])
+        .library(name: "ClientAPI", targets: ["ClientAPI"]),
+        // La montre a son produit (#324). Embarquée dans l'iPhone, elle construisait ClientAPI
+        // pour watchOS dans le MÊME build : le greffon écrivait deux fois le même dossier
+        // d'intermédiaires (« Multiple commands produce », défaut de Xcode signalé FB13750966,
+        // toujours présent sous Xcode 27). Sous un autre nom de cible, le greffon a son dossier.
+        // `Sources/ClientAPIMontre` est un lien vers `Sources/ClientAPI` : une seule source.
+        // La montre l'importe sous le nom `ClientAPI` (`-module-alias`, project.yml).
+        .library(name: "ClientAPIMontre", targets: ["ClientAPIMontre"]),
     ],
     dependencies: [
         // Versions exactes : une montée se décide, elle ne s'importe pas (DEPENDANCES.md).
@@ -19,16 +42,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-openapi-urlsession", exact: "1.4.0"),
     ],
     targets: [
-        .target(
-            name: "ClientAPI",
-            dependencies: [
-                .product(name: "OpenAPIRuntime", package: "swift-openapi-runtime"),
-                .product(name: "OpenAPIURLSession", package: "swift-openapi-urlsession"),
-            ],
-            plugins: [
-                .plugin(name: "OpenAPIGenerator", package: "swift-openapi-generator")
-            ]
-        ),
+        client("ClientAPI"),
+        client("ClientAPIMontre", chemin: "Sources/ClientAPIMontre"),
         .testTarget(
             name: "ClientAPITests",
             dependencies: ["ClientAPI"]
