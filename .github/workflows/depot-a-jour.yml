@@ -1,0 +1,128 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Le job « Dépôt » rejoué sur l'arbre FUSIONNÉ, à chaque poussée de main (#353). `strict`
+# reste désactivé (décision du 15/11/2026, standards/09 §8 bis) : une PR fusionne sur un
+# « Dépôt » joué avant que main bouge — le 19/11, #303 a ainsi porté verifier-depot.sh à 502
+# lignes, main rouge neuf heures. Ici, sans macOS (une minute par arbre) :
+#   1. juger (lecture seule) : main, puis chaque PR armée (fusion automatique, base main,
+#      même dépôt) réunie à main — `bash scripts/verifier-depot.sh`, le même qu'au poste ;
+#   2. agir (scripts/depot_a_jour.py, décision pure et testée) : la PR qui rougirait voit sa
+#      fusion automatique DÉSARMÉE, avec un commentaire ; main rouge ouvre aussitôt un ticket
+#      « sante-main », main verte le ferme. Un INCONNU ou un conflit ne désarme ni ne ferme rien.
+# Le code d'une PR ne tourne que dans le job 1, au jeton en lecture seule ; le job 2 n'exécute
+# que les scripts de main. Complète la santé quotidienne (sante-main.yml).
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: Dépôt à jour
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: depot-a-jour
+  cancel-in-progress: true
+
+jobs:
+  juger:
+    name: Dépôt de main et des PR armées, réunies à main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      verdicts: ${{ steps.verdicts.outputs.verdicts }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Juger
+        id: verdicts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          juger() { (cd "$1" && bash scripts/verifier-depot.sh > "$2" 2>&1); echo $?; }
+          MAIN=$(juger . "$RUNNER_TEMP/main.txt")
+          echo "::group::main → $MAIN"; tail -20 "$RUNNER_TEMP/main.txt"; echo "::endgroup::"
+          NUMEROS=$(gh pr list --repo "$GITHUB_REPOSITORY" --state open --base main --limit 50 \
+            --json number,isCrossRepository,autoMergeRequest \
+            -q '.[] | select(.isCrossRepository | not) | select(.autoMergeRequest != null) | .number') \
+            || { echo "❓ INCONNU : liste des PR illisible"; NUMEROS=""; }
+          PRS=""
+          for n in $NUMEROS; do
+            d="$RUNNER_TEMP/pr-$n"
+            git fetch -q origin "pull/$n/head:pr-$n" && git worktree add -q --detach "$d" HEAD
+            if git -C "$d" -c user.name=ci -c user.email=ci@example.invalid merge -q --no-edit "pr-$n"; then
+              code=$(juger "$d" "$RUNNER_TEMP/pr-$n.txt")
+              echo "::group::#$n réunie à main → $code"; tail -20 "$RUNNER_TEMP/pr-$n.txt"; echo "::endgroup::"
+            else
+              code=conflit; echo "#$n : conflit avec main, la fusion est déjà bloquée"
+            fi
+            PRS="$PRS{\"numero\": $n, \"code\": \"$code\"},"
+          done
+          echo "verdicts={\"main\": \"$MAIN\", \"prs\": [${PRS%,}]}" | tee -a "$GITHUB_OUTPUT"
+
+  agir:
+    name: Désarmer, ticket de main
+    needs: juger
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Autotest (une PR rouge se désarme, un INCONNU ou un conflit non)
+        run: python3 -I scripts/depot_a_jour.py --autotest
+      - name: Décision et gestes (scripts/depot_a_jour.py)
+        env:
+          VERDICTS: ${{ needs.juger.outputs.verdicts }}
+        run: |
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          TITRE=$(python3 -I scripts/depot_a_jour.py titre)
+          TICKET=$(gh issue list --repo "$GITHUB_REPOSITORY" --label sante-main --state open --limit 100 \
+            --json number,title -q ".[] | select(.title == \"$TITRE\") | .number" | head -1)
+          ACTIONS=$(python3 -I -c 'import json, os, sys; v = json.loads(os.environ["VERDICTS"] or "{}"); v["ticket"] = sys.argv[1]; print(json.dumps(v))' "$TICKET" \
+            | python3 -I scripts/depot_a_jour.py decider)
+          echo "$ACTIONS"
+          while read -r geste arg; do
+            case "$geste $arg" in
+              "desarmer "*)
+                gh pr merge "$arg" --repo "$GITHUB_REPOSITORY" --disable-auto
+                gh pr comment "$arg" --repo "$GITHUB_REPOSITORY" --body "⛔ Réunie à \`main\` ($GITHUB_SHA), cette PR rend le job « Dépôt » rouge ($RUN) : fusion automatique désarmée. Réunir \`main\`, corriger, puis réarmer (#353)." ;;
+              "ticket ouvrir")
+                gh label create sante-main --repo "$GITHUB_REPOSITORY" --color B60205 --force \
+                  --description "main rouge au-delà du seuil sur ses dernières poussées (#353)"
+                gh issue create --repo "$GITHUB_REPOSITORY" --label sante-main --title "$TITRE" \
+                  --body "❌ Le job « Dépôt » est rouge sur \`main\` ($GITHUB_SHA) : $RUN. Un main rouge passe avant tout autre lot (standards/09 §8 bis)." ;;
+              "ticket completer")
+                gh issue comment "$TICKET" --repo "$GITHUB_REPOSITORY" --body "❌ Toujours rouge sur \`$GITHUB_SHA\` : $RUN." ;;
+              "ticket fermer")
+                gh issue close "$TICKET" --repo "$GITHUB_REPOSITORY" --reason completed \
+                  --comment "✅ « Dépôt » vert sur \`$GITHUB_SHA\` ($RUN). Fermé par le Dépôt à jour (#353)." ;;
+              "ticket rien") ;;
+              *) echo "❓ action illisible : « $geste $arg »"; exit 1 ;;
+            esac
+          done <<< "$ACTIONS"
+      - name: Verdict de main
+        env:
+          VERDICTS: ${{ needs.juger.outputs.verdicts }}
+        run: |
+          case "$(python3 -I -c 'import json, os; print(json.loads(os.environ["VERDICTS"] or "{}").get("main", ""))')" in
+            0) echo "✅ Dépôt vert sur main" ;;
+            1) echo "❌ Dépôt rouge sur main — ticket « sante-main »"; exit 1 ;;
+            *) echo "❓ INCONNU — le Dépôt de main n'a pas conclu : ce n'est pas un vert"; exit 1 ;;
+          esac
