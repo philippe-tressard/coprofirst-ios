@@ -92,8 +92,9 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Face ID annulé à chaque demande (`-faceid-refuse`) : la session reste gardée,
     /// rien ne s'ouvre — comme `Trousseau.lire` qui rend `nil`.
     var refuserFaceID = false
-    /// Ce qui protège la session gardée (`-protection appareil|aucune`, #84).
-    var protectionSimulee: ProtectionSession = .biometrie("Face ID")
+    /// Ce qui protège la session gardée (`-protection appareil|aucune`, #84) : d'office, la
+    /// biométrie que l'appareil sait faire — Touch ID sur un iPad Air ou mini (#223).
+    var protectionSimulee: ProtectionSession = .biometrie(Biometrie.materiel.nom ?? "Face ID")
 
     /// Une session gardée d'un passage précédent (`-ecran retour`).
     func garder(_ installation: Installation) {

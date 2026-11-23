@@ -17,12 +17,28 @@ final class ProtectionUITests: XCTestCase {
         return app
     }
 
+    /// La biométrie que le MODÈLE simulé porte — un oracle indépendant de l'app, qui lit
+    /// `LAContext` : Touch ID sur un iPad Air, un iPad mini ou l'iPad d'entrée, Face ID
+    /// ailleurs (#223).
+    private static var biometrieDuModele: String {
+        let modele = ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] ?? ""
+        let aTouchID = ["iPad Air", "iPad mini", "iPad ("].contains { modele.hasPrefix($0) }
+        return aTouchID ? "Touch ID" : "Face ID"
+    }
+
+    /// La question et le résultat nomment la biométrie de l'appareil : « Touch ID » sur un
+    /// iPad Air ou mini, jamais « Face ID » d'office (#223).
     @MainActor
-    func testAvecFaceIDLEcranDitFaceID() throws {
-        let app = activer()
+    func testAvecLaBiometrieLEcranLaNommeDApresLAppareil() throws {
+        let attendue = Self.biometrieDuModele
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "faceid"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Ouvrir avec \(attendue) ?"].apparait(), "la question nomme \(attendue)")
+        app.toucher(app.buttons["faceid.activer"])
         let protection = app.staticTexts["faceid.protection"]
         XCTAssertTrue(protection.apparait())
-        XCTAssertEqual(protection.label, "Protégée par Face ID")
+        XCTAssertEqual(protection.label, "Protégée par \(attendue)")
         app.buttons["faceid.continuer"].tap()
         XCTAssertTrue(
             app.buttons["faceid.continuer"].disparait(), "la feuille se ferme, le fil reste")

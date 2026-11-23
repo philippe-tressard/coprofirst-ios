@@ -45,7 +45,7 @@ struct ListeAffaires: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .overlay { etatVide }
-        .searchable(text: $etat.recherche, prompt: "Rechercher une affaire")
+        .barreDeRecherche($etat.recherche, invite: "Rechercher une affaire")
         .task(id: etat.recherche) { await etat.chercher(installation, avec: service) }
         .actualisable { await etat.charger(installation, avec: service) }
         .toolbar {

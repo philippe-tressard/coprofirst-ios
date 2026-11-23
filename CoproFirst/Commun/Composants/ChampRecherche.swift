@@ -5,13 +5,14 @@ import SwiftUI
 
 /// Le champ de recherche d'une liste, dans la page (et non dans la barre de
 /// navigation : il ne vaut que pour l'onglet qui le porte). La règle de recherche :
-/// `Recherche.contientTousLesMots`.
+/// `Recherche.contientTousLesMots`. ⌘F au clavier matériel y place le curseur (#223).
 struct ChampRecherche: View {
     @Binding var texte: String
     /// Ce que l'on peut y chercher (« Nom, métier, équipement… »).
     let indication: String
     let identifiant: String
     @Environment(\.palette) private var palette
+    @FocusState private var actif: Bool
 
     var body: some View {
         HStack(spacing: 8) {
@@ -19,6 +20,7 @@ struct ChampRecherche: View {
             TextField(indication, text: $texte)
                 .autocorrectionDisabled()
                 .submitLabel(.search)
+                .focused($actif)
                 .accessibilityIdentifier(identifiant)
             if !texte.isEmpty {
                 Button { texte = "" } label: { Image(systemName: "xmark.circle.fill") }
@@ -33,5 +35,26 @@ struct ChampRecherche: View {
             RoundedRectangle(cornerRadius: Mise.rayon, style: .continuous)
                 .strokeBorder(palette.borderChamp, lineWidth: 1)
         }
+        .rechercheAuClavier { actif = true }
+    }
+}
+
+extension View {
+    /// La recherche d'une liste dans la barre de navigation (`searchable`), et ⌘F au
+    /// clavier matériel qui l'ouvre (#223, `RechercheAuClavier.swift`).
+    func barreDeRecherche(_ texte: Binding<String>, invite: String) -> some View {
+        modifier(BarreDeRecherche(texte: texte, invite: invite))
+    }
+}
+
+private struct BarreDeRecherche: ViewModifier {
+    @Binding var texte: String
+    let invite: String
+    @State private var ouverte = false
+
+    func body(content: Content) -> some View {
+        content
+            .searchable(text: $texte, isPresented: $ouverte, prompt: invite)
+            .rechercheAuClavier { ouverte = true }
     }
 }

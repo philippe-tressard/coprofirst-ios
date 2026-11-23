@@ -19,18 +19,8 @@ private struct ActualiserAuClavier: ViewModifier {
     func body(content: Content) -> some View {
         content.background {
             if let actualiser {
-                // Un bouton sans surface : le clavier seul l'atteint, VoiceOver garde le geste.
-                Button(TextesClavier.actualiser) { Task { await actualiser() } }
-                    .keyboardShortcut("r")
-                    .frame(width: 0, height: 0)
-                    .opacity(0)
-                    .accessibilityHidden(true)
+                RaccourciClavier(titre: TextesClavier.actualiser, touche: "r") { Task { await actualiser() } }
             }
         }
     }
-}
-
-enum TextesClavier {
-    static let actualiser = "Actualiser"
-    static let nouvelleAffaire = "Nouvelle affaire"
 }

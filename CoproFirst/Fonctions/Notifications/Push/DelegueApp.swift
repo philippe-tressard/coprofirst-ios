@@ -39,6 +39,12 @@ final class DelegueApp: NSObject, UIApplicationDelegate, UNUserNotificationCente
         await push.touchee(abonnement: abonnement)
     }
 
+    /// ⌘F, la commande « Rechercher » du système : son action `find:` arrive ici par la chaîne
+    /// des répondeurs, que SwiftUI prolonge jusqu'au délégué ; elle ouvre la recherche de
+    /// l'écran (`RechercheAuClavier.swift`, #223). Dans le corps de la classe : c'est sous
+    /// cette forme que sa réception a été tracée au simulateur iPad (23/11/2026).
+    @objc func find(_ sender: Any?) { RecherchesMontees.partagees.ouvrirLaDerniere() }
+
     /// La seule clé de la charge que lit l'app, hors `aps` : l'abonnement (spec push §5).
     nonisolated static let cleAbonnement = "a"
 }
