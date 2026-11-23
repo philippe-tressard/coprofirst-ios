@@ -97,7 +97,8 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   (`verrou_poste.py`, qui exclut aussi Gradle, #255), puis celui du script (#108) ;
   le poste gardé éveillé (`caffeinate`), sa veille dite au résumé, un rouge sous veille
   INCONNU (`scripts/veille_poste.py`, #322) ;
-  un passage filtré n'est vert que si CHAQUE filtre a joué (#96, #170) ; le résumé
+  un passage filtré n'est vert que si CHAQUE filtre a joué (#96, #170), et que si le binaire JOUÉ
+  dit l'empreinte des sources (`scripts/empreinte_tests.py`, INCONNU sinon, #328) ; le résumé
   nomme le système joué et celui de la CI, que `OS_SIMULATEUR=ci` joue au poste (#287).
 - **Confidentialité** : le manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`), la
   fiche à saisir dans App Store Connect (skill `publication-app-store`,
