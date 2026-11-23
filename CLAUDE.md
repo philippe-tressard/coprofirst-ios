@@ -14,7 +14,7 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
 
 ## Stack et état
 
-- **Application iOS native en SwiftUI**, iOS 17 minimum, iPhone, **français seul**.
+- **Application iOS native en SwiftUI**, iOS 17 minimum, iPhone et iPad, **français seul**.
   Décision du 01/11/2026 (coprofirst#2460) : native, pas une WebView ; iOS seul.
   **Élargie le 15/11/2026 (#218)** : une cible **Apple TV** (`CoproFirstTV`, tvOS 17),
   pour le seul **écran de hall** — lecture seule des affiches d'un périmètre, appairage
