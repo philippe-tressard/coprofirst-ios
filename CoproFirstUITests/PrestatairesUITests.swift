@@ -121,7 +121,7 @@ final class PrestatairesUITests: XCTestCase {
 
     @MainActor
     private func ouvrirLaFiche(_ app: XCUIApplication) {
-        app.ouvrirDansPlus("Prestataires")
+        app.ouvrirDansPlus("Prestataires", jusqua: app.elementAcces("prestataire.1"))
         let fiche = app.elementAcces("prestataire.1")
         XCTAssertTrue(fiche.apparait())
         app.toucher(fiche)
@@ -146,7 +146,7 @@ final class PrestatairesUITests: XCTestCase {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "fil"]
         app.launch()
-        app.ouvrirDansPlus("Prestataires")
+        app.ouvrirDansPlus("Prestataires", jusqua: app.navigationBars["Prestataires"])
         XCTAssertTrue(app.navigationBars["Prestataires"].apparait())
 
         let fiche = app.elementAcces("prestataire.1")
