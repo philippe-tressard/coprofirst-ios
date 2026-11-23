@@ -21,11 +21,11 @@ recopie dans les champs « Sign-In Information » d'App Store Connect, pas ici.
 | La démo se joint depuis l'accueil, sans compte personnel | `Entree/Demo/DemoView.swift` : un personnage ouvre la connexion pré-remplie sur `demo.coprofirst.fr` |
 | La caméra ne lit que le QR code de la fiche d'arrivée | `NSCameraUsageDescription` de `project.yml`, `Entree/Decouverte/ScannerQRView.swift` |
 | Face ID ne sert qu'à rouvrir la session | `NSFaceIDUsageDescription`, `Session/Biometrie.swift` |
-| Les notifications se demandent après un geste, jamais au lancement | `Fonctions/Notifications/Push/` (`OffrePush`) |
-| Aucune donnée personnelle dans une notification | skill `publication-app-store`, liste d'avant soumission ; charge composée par le relais (coprofirst#2494) |
+| Cette version n'envoie aucune notification poussée et n'en demande pas l'autorisation : la cloche se lit dans l'app (#343) | `Fonctions/Notifications/Push/RelaisPush.swift` › `static let courant = RelaisPush(allume: false, depuis: .plancher)` ; `NotificationsPush.swift` › `offreDue` exige `relais.sert(…)`. Le jour où #318 rallume le relais, la ligne de la 1.1 revient (étiquette `v1.1.0`) : offre après un geste, charge sans donnée personnelle, niveau *time-sensitive* des avis urgents |
+| Les droits `aps-environment` et *time-sensitive* restent dans l'app, inutilisés tant que le relais est éteint | `project.yml` (droits) ; la fiche de confidentialité l'assume (`confidentialite.md` §1) |
 | Contenu d'utilisateurs : signalement au conseil syndical — une affaire, une suite, une annonce, une idée, une réponse, un commentaire | `Commun/Composants/SignalementAuConseil.swift` ; affaire et suites (#286) : `BandeauAffaire.swift`, `GestesHistorique.swift` |
 | Réponse de l'assistant (IA) : signalable depuis l'avis | `Fonctions/Residence/QuestionReglementView.swift` (#286, décision du 17/11/2026 « 2a ») |
-| Blocage d'un auteur : « Masquer ce que publie… », pour soi seul, défait dans le Profil | `Commun/Composants/MasquageAuteur.swift`, `Fonctions/Profil/PersonnesMasquees.swift` (#286, décision du 17/11/2026, qui remplace l'arbitrage du 12/11 de #167) ; **au-dessus du plancher : la démo doit servir le contrat 2.9.0 (v3.118.0) avant la soumission**, sinon ces gestes ne s'y voient pas |
+| Blocage d'un auteur : « Masquer ce que publie… », pour soi seul, défait dans le Profil | `Commun/Composants/MasquageAuteur.swift`, `Fonctions/Profil/PersonnesMasquees.swift` (#286, décision du 17/11/2026, qui remplace l'arbitrage du 12/11 de #167) ; au plancher depuis v3.121.2 (#313) : toute résidence qui s'ouvre les sert |
 | Suppression du compte : une demande lancée depuis le Profil, traitée par l'administration de la résidence | `Fonctions/Profil/SuppressionCompte/` (#166) ; route `/auth/demande-suppression` du contrat 1.27.0 ; la démo accepte la demande sans jamais effacer son compte — **lu dans le code serveur v3.89.0, pas rejoué sur la démo : à jouer avant de soumettre** |
 | Ni suivi, ni publicité, ni achat intégré | `PrivacyInfo.xcprivacy` (`NSPrivacyTracking` faux), `scripts/verifier-confidentialite.py` |
 | Les écrans vus, comptés par la résidence, refusables au Profil (depuis la 1.1) | #199 ; `ProfilView.swift` (« Refuser la collecte de statistiques de navigation ») ; `ProductInteraction` du manifeste |
@@ -80,10 +80,10 @@ council.
 PERMISSIONS
 - Camera: only to scan the QR code of the residence's welcome sheet.
 - Face ID: only to reopen the session without typing the password again.
-- Notifications: requested after the user taps the bell, never at launch. A
-  notification carries only an opaque identifier; the content is fetched from the
-  residence once the app is open. Urgent notices (water leak, stuck lift) use the
-  time-sensitive level.
+- Notifications: this version sends no push notification and never asks for the
+  notification permission; notices are read in the app, under the bell. The push and
+  time-sensitive entitlements are present but unused until the residence's relay is
+  switched on in a later version.
 
 PRIVACY
 No tracking, no advertising, no third-party analytics, no in-app purchase. Data is

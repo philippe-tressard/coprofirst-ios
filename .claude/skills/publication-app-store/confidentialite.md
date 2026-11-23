@@ -384,7 +384,7 @@ changé.
 | chaque type, l'un après l'autre | usage : **App Functionality** seule — **Analytics** seule pour *Product Interaction* ; *linked to the user's identity* : **Yes** ; *used for tracking* : **No** |
 | même page › *Publish* | publier les réponses ; relire l'étiquette affichée : « Data Linked to You », aucune ligne « Data Used to Track You » |
 | la version › *App Information* / fiche › *Description* | remplacer la description entière par le bloc « Description » ci-dessous |
-| la version › *App Review Information* › *Notes* | coller la note ci-dessous |
+| la version › *App Review Information* › *Notes* | coller le bloc « Texte à coller » de [`notes-revue.md`](notes-revue.md) |
 
 L'adresse de la politique est celle que l'app affiche déjà :
 `CoproFirst/Entree/Contenu/Genere/ContenuEmbarque.swift` › `https://coprofirst.fr/confidentialite.html`.
@@ -395,15 +395,21 @@ La description publiée ne vit pas dans App Store Connect seul : elle est versio
 `scripts/verifier-confidentialite.py` refuse qu'elle nie un type de donnée du manifeste
 (#238 — la 1.0 disait « aucune mesure d'audience », faux dès l'envoi des écrans vus,
 #199). Une phrase changée dans App Store Connect se change d'abord ici. Celle de la 1.0
-(relue le 16/11/2026) est dans l'historique de ce fichier ; le texte ci-dessous est celui
-de la version suivante, à coller à sa soumission (#205), pas avant.
+(relue le 16/11/2026) est dans l'historique de ce fichier, celle de la 1.1, en ligne, à
+l'étiquette `v1.1.0`. Le texte ci-dessous est celui de la version suivante, corrigé le
+23/11/2026 (#343), à coller à sa soumission (#205), pas avant : les affaires montrent
+leurs photos et leurs documents sans les joindre (« s'ajoutent depuis le site »,
+`NouvelleAffaireView.swift`), et l'app tient le relais des notifications éteint
+(`RelaisPush.courant`) — ni offre, ni autorisation demandée. La phrase de la 1.1 sur la
+notification générique et l'avis urgent revient quand #318 rallume le relais. La puce
+« Affaires » est celle de la fiche Play (coprofirst-android#318), à l'identique.
 
 <!-- description -->
 ```text
 CoproFirst est l'application de votre résidence. Elle se connecte au site de votre copropriété, installé par elle ou hébergé pour elle, et montre à chacun ce qui le concerne, et rien de plus.
 
 • Fil d'activité : ce qui se passe dans votre résidence, en un coup d'œil.
-• Affaires : signalez une panne, suivez-la jusqu'à sa résolution, avec photos et documents.
+• Affaires : signalez une panne et suivez-la jusqu'à sa résolution ; consultez ses photos et ses documents.
 • Résidence : le carnet d'entretien, le règlement, les informations utiles.
 • Accès : vos lots, badges et télécommandes.
 • Communauté : annonces entre voisins, idées, sondages.
@@ -414,19 +420,12 @@ Pour entrer : saisissez l'adresse de votre résidence, scannez le QR code de vot
 
 CoproFirst est un logiciel libre (AGPL-3.0), sans compte chez l'éditeur : vos données restent chez votre résidence.
 
-Confidentialité. CoproFirst se connecte au site de votre résidence, dont vous saisissez l'adresse ou scannez le QR code. Ce que vous y lisez et y écrivez est gardé par votre résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur. Comme sur son site, votre résidence compte les pages consultées pour ses statistiques de fréquentation ; vous pouvez le refuser dans votre profil. Les notifications ne contiennent aucune information personnelle : le message est toujours « Vous avez une nouvelle notification. », et le détail se lit dans l'application. Un avis urgent (une fuite, un ascenseur bloqué) est signalé comme urgent à iOS pour traverser le mode Concentration : Apple apprend qu'il est urgent, pas ce qu'il dit.
+Confidentialité. CoproFirst se connecte au site de votre résidence, dont vous saisissez l'adresse ou scannez le QR code. Ce que vous y lisez et y écrivez est gardé par votre résidence, pas par l'éditeur de l'application. Aucune publicité, aucun traceur. Comme sur son site, votre résidence compte les pages consultées pour ses statistiques de fréquentation ; vous pouvez le refuser dans votre profil. Les notifications se lisent dans l'application, sous la cloche : cette version n'en envoie aucune sur l'écran de l'appareil et n'en demande pas l'autorisation.
 ```
 <!-- /description -->
 
-**Note pour la revue (*App Review Information*) :**
-
-> L'application est le client d'un logiciel libre de gestion de copropriété : elle se
-> connecte au serveur de la résidence de l'utilisateur. Le compte de démonstration ouvre
-> la résidence fictive demo.coprofirst.fr.
-> Notifications : la charge est générique (« Vous avez une nouvelle notification. ») et
-> ne porte qu'un identifiant aléatoire propre à l'appareil ; aucun contenu, aucun nom.
-> Time Sensitive Notifications : le niveau n'est utilisé que pour les avis urgents de la
-> résidence qui demandent une action immédiate (fuite d'eau, ascenseur bloqué) ; tous les
-> autres avis partent au niveau normal.
-> Caméra : lecture, sur l'appareil, du QR code qui donne l'adresse de la résidence. Face
-> ID : réouverture de la session gardée au Trousseau.
+**Note pour la revue (*App Review Information*)** : le texte entier, en anglais, est
+[`notes-revue.md`](notes-revue.md) — un seul texte, relu contre le code de la version
+soumise. Il y avait ici une seconde note, en français, qui décrivait encore la
+notification générique et le niveau *time-sensitive* après l'extinction du relais
+(#343) : elle est retirée.
