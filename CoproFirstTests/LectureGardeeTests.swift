@@ -64,37 +64,37 @@ private let jour: TimeInterval = 86_400
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("le fil".utf8), type: "application/json", cle: "get_flux /flux", de: "a.exemple")
-        let lue = try #require(magasin.lire("get_flux /flux", de: "a.exemple"))
+        magasin.garder(Data("le fil".utf8), type: "application/json", cle: "get_flux /flux", de: "a.test")
+        let lue = try #require(magasin.lire("get_flux /flux", de: "a.test"))
         #expect(lue.corps == Data("le fil".utf8))
         #expect(lue.type == "application/json")
         #expect(lue.date == banc.horloge.maintenant)
-        #expect(magasin.lire("get_tickets /tickets", de: "a.exemple") == nil, "une autre clé ne rend rien")
+        #expect(magasin.lire("get_tickets /tickets", de: "a.test") == nil, "une autre clé ne rend rien")
     }
 
     @Test func chaqueResidenceASonDossier() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("A".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        magasin.garder(Data("B".utf8), type: nil, cle: "get_flux /flux", de: "b.exemple")
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple")?.corps == Data("A".utf8))
-        #expect(magasin.lire("get_flux /flux", de: "b.exemple")?.corps == Data("B".utf8))
-        #expect(magasin.dossier("a.exemple") != magasin.dossier("b.exemple"))
-        #expect(!magasin.dossier("a.exemple").path.contains("a.exemple"), "aucun nom d'hôte dans un chemin")
+        magasin.garder(Data("A".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        magasin.garder(Data("B".utf8), type: nil, cle: "get_flux /flux", de: "b.test")
+        #expect(magasin.lire("get_flux /flux", de: "a.test")?.corps == Data("A".utf8))
+        #expect(magasin.lire("get_flux /flux", de: "b.test")?.corps == Data("B".utf8))
+        #expect(magasin.dossier("a.test") != magasin.dossier("b.test"))
+        #expect(!magasin.dossier("a.test").path.contains("a.test"), "aucun nom d'hôte dans un chemin")
 
-        magasin.effacer("a.exemple")
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple") == nil, "effacée")
-        #expect(!FileManager.default.fileExists(atPath: magasin.dossier("a.exemple").path), "le dossier entier")
-        #expect(magasin.lire("get_flux /flux", de: "b.exemple")?.corps == Data("B".utf8), "l'autre résidence reste")
+        magasin.effacer("a.test")
+        #expect(magasin.lire("get_flux /flux", de: "a.test") == nil, "effacée")
+        #expect(!FileManager.default.fileExists(atPath: magasin.dossier("a.test").path), "le dossier entier")
+        #expect(magasin.lire("get_flux /flux", de: "b.test")?.corps == Data("B".utf8), "l'autre résidence reste")
     }
 
     @Test func chaqueFichierEstProtegeEtLeMagasinHorsDesSauvegardes() throws {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        magasin.garder(Data("les affaires".utf8), type: nil, cle: "get_tickets /tickets", de: "a.exemple")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        magasin.garder(Data("les affaires".utf8), type: nil, cle: "get_tickets /tickets", de: "a.test")
 
         // Chaque écriture passe par LA porte des fichiers, sous la protection complète.
         #expect(banc.ecritures.noms.count == 4, "deux lectures, et l'index des dates à chaque fois")
@@ -102,7 +102,7 @@ private let jour: TimeInterval = 86_400
         #expect(Fichiers.protection.contains(.atomic))
 
         // Ce que le disque en DIT : hors des sauvegardes, la racine comme le dossier de l'hôte.
-        for dossier in [banc.racine, magasin.dossier("a.exemple")] {
+        for dossier in [banc.racine, magasin.dossier("a.test")] {
             let valeurs = try dossier.resourceValues(forKeys: [.isExcludedFromBackupKey])
             #expect(valeurs.isExcludedFromBackup == true, "\(dossier.lastPathComponent) exclu des sauvegardes")
         }
@@ -122,16 +122,16 @@ private let jour: TimeInterval = 86_400
         let magasin = LecturesGardees(
             racine: banc.racine, sessionGardee: { _ in true },
             ecrire: { _, _, _ in throw CocoaError(.fileWriteNoPermission) })
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
         #expect(banc.tousLesFichiers.isEmpty)
-        #expect(magasin.consulter("a.exemple") == .aucune)
+        #expect(magasin.consulter("a.test") == .aucune)
     }
 
     @Test func sansSessionGardeeRienNEstGarde() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin(sessionGardee: false)
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
         #expect(banc.tousLesFichiers.isEmpty, "sans Face ID pour la rouvrir, la lecture ne servirait à rien")
         #expect(!FileManager.default.fileExists(atPath: banc.racine.path))
     }
@@ -155,36 +155,36 @@ private let jour: TimeInterval = 86_400
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
         let gardeeLe = banc.horloge.maintenant
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
         banc.horloge.avancer(7 * jour - 1)
-        #expect(!magasin.enConsultation("a.exemple"))
-        #expect(magasin.consulter("a.exemple") == .gardee(gardeeLe), "la date de la dernière lecture fraîche")
-        #expect(magasin.enConsultation("a.exemple"))
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple") != nil)
+        #expect(!magasin.enConsultation("a.test"))
+        #expect(magasin.consulter("a.test") == .gardee(gardeeLe), "la date de la dernière lecture fraîche")
+        #expect(magasin.enConsultation("a.test"))
+        #expect(magasin.lire("get_flux /flux", de: "a.test") != nil)
     }
 
     @Test func auDelaDeSeptJoursLaLectureEstEffaceeEtDite() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
         banc.horloge.avancer(7 * jour + 1)
-        #expect(magasin.consulter("a.exemple") == .perimee)
-        #expect(!magasin.enConsultation("a.exemple"), "rien ne s'ouvre")
+        #expect(magasin.consulter("a.test") == .perimee)
+        #expect(!magasin.enConsultation("a.test"), "rien ne s'ouvre")
         #expect(banc.tousLesFichiers.isEmpty, "effacée du disque, index compris")
-        #expect(magasin.consulter("a.exemple") == .aucune, "dite une fois")
+        #expect(magasin.consulter("a.test") == .aucune, "dite une fois")
     }
 
     @Test func uneLectureFraicheNeSauvePasUneLectureTropAncienne() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("une affaire".utf8), type: nil, cle: "get_tickets_ticket_id /tickets/41", de: "a.exemple")
+        magasin.garder(Data("une affaire".utf8), type: nil, cle: "get_tickets_ticket_id /tickets/41", de: "a.test")
         banc.horloge.avancer(7 * jour + 1)
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        #expect(magasin.consulter("a.exemple") == .gardee(banc.horloge.maintenant))
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple") != nil)
-        #expect(magasin.lire("get_tickets_ticket_id /tickets/41", de: "a.exemple") == nil, "trop ancienne")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        #expect(magasin.consulter("a.test") == .gardee(banc.horloge.maintenant))
+        #expect(magasin.lire("get_flux /flux", de: "a.test") != nil)
+        #expect(magasin.lire("get_tickets_ticket_id /tickets/41", de: "a.test") == nil, "trop ancienne")
         #expect(banc.fichiers.count == 1, "et effacée du disque")
     }
 
@@ -194,36 +194,36 @@ private let jour: TimeInterval = 86_400
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("ancienne".utf8), type: nil, cle: "get_tickets /tickets", de: "a.exemple")
+        magasin.garder(Data("ancienne".utf8), type: nil, cle: "get_tickets /tickets", de: "a.test")
         banc.horloge.avancer(7 * jour + 1)
-        magasin.garder(Data("fraîche".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        magasin.garder(Data("orpheline".utf8), type: nil, cle: "get_flux /flux", de: "b.exemple")
+        magasin.garder(Data("fraîche".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        magasin.garder(Data("orpheline".utf8), type: nil, cle: "get_flux /flux", de: "b.test")
 
-        magasin.purger(sauf: ["a.exemple"])
+        magasin.purger(sauf: ["a.test"])
         #expect(banc.fichiers.count == 1, "il ne reste que la lecture fraîche de la résidence connectée")
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple")?.corps == Data("fraîche".utf8))
-        #expect(!FileManager.default.fileExists(atPath: magasin.dossier("b.exemple").path))
+        #expect(magasin.lire("get_flux /flux", de: "a.test")?.corps == Data("fraîche".utf8))
+        #expect(!FileManager.default.fileExists(atPath: magasin.dossier("b.test").path))
     }
 
     @Test func uneLectureQueLeServeurNeSertPlusSeRetireSeule() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("une affaire".utf8), type: nil, cle: "get_tickets_ticket_id /tickets/41", de: "a.exemple")
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        magasin.retirer("get_tickets_ticket_id /tickets/41", de: "a.exemple")
-        #expect(magasin.lire("get_tickets_ticket_id /tickets/41", de: "a.exemple") == nil)
-        #expect(magasin.lire("get_flux /flux", de: "a.exemple") != nil)
+        magasin.garder(Data("une affaire".utf8), type: nil, cle: "get_tickets_ticket_id /tickets/41", de: "a.test")
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        magasin.retirer("get_tickets_ticket_id /tickets/41", de: "a.test")
+        #expect(magasin.lire("get_tickets_ticket_id /tickets/41", de: "a.test") == nil)
+        #expect(magasin.lire("get_flux /flux", de: "a.test") != nil)
     }
 
     @Test func effacerSortAussiDeLaConsultation() {
         let banc = MagasinDeTest()
         defer { banc.nettoyer() }
         let magasin = banc.magasin()
-        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.exemple")
-        _ = magasin.consulter("a.exemple")
-        magasin.effacer("a.exemple")
-        #expect(!magasin.enConsultation("a.exemple"))
-        #expect(magasin.consulter("a.exemple") == .aucune)
+        magasin.garder(Data("le fil".utf8), type: nil, cle: "get_flux /flux", de: "a.test")
+        _ = magasin.consulter("a.test")
+        magasin.effacer("a.test")
+        #expect(!magasin.enConsultation("a.test"))
+        #expect(magasin.consulter("a.test") == .aucune)
     }
 }

@@ -54,7 +54,7 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
 
 @Test func lEnregistrementNEnvoieQueLesQuatreChampsDuContrat() async throws {
     let transport = TransportEnregistreur()
-    let client = ClientCoproFirst.client(installation: URL(string: "https://demo.exemple")!, transport: transport)
+    let client = ClientCoproFirst.client(installation: URL(string: "https://demo.test")!, transport: transport)
     let appareil = AppareilPush(
         jeton: JetonAPNs(CentreSimule.jeton), environnement: .developpement, abonnement: AbonnementsPush.tirer())
     _ = try await client.postAppareils(body: .json(.init(appareil)))

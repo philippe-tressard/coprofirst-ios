@@ -24,5 +24,5 @@ struct TransportFixe: ClientTransport {
 /// Le client généré, branché sur un serveur qui sert `corps` avec `statut`.
 func client(servant corps: String, statut: HTTPResponse.Status = .ok) -> Client {
     ClientCoproFirst.client(
-        installation: URL(string: "https://demo.exemple")!, transport: TransportFixe(corps: corps, statut: statut))
+        installation: URL(string: "https://demo.test")!, transport: TransportFixe(corps: corps, statut: statut))
 }

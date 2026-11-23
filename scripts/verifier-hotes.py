@@ -4,10 +4,15 @@
 
 `exemple.fr` est un vrai domaine tiers (il répond en DNS) : un test qui se trompe d'hôte
 y envoie ses requêtes et ses cookies, un exemple copié par un utilisateur ses identifiants
-(socle `standards/03` §8 quater ; coprofirst-android#57). Ce juge lit les chaînes du code
-et des tests de l'app et refuse tout domaine qui n'est ni réservé (RFC 2606, 6761 :
-`example.com`, `example.org`, `example.net`, `.test`, `.example`, `.invalid`,
+(socle `standards/03` §8 quater ; coprofirst-android#57). Ce juge lit le code et les tests
+de l'app (`portee`) et les scripts, et refuse tout domaine qui n'est ni réservé (RFC 2606,
+6761 : `example.com`, `example.org`, `example.net`, `.test`, `.example`, `.invalid`,
 `.localhost`), ni un vrai domaine du projet ou de ses dépendances, déclaré ci-dessous.
+
+L'hôte d'une adresse (`https://…`) et le domaine d'un courriel (`…@…`) se jugent QUEL QUE
+SOIT leur suffixe (#344) : `.exemple`, `.info` ou `.paris` ne passent plus pour réservés. Un
+hôte nu dans une chaîne (`"tilleuls.example.com"`) se reconnaît à son suffixe (`NUS`) : sans
+lui, `"accueil.titre"` — un identifiant d'accessibilité — serait pris pour un domaine.
 
 Une exception se déclare avec sa raison, et échoue le jour où elle ne sert plus.
 
@@ -24,8 +29,14 @@ import tempfile
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "scripts"))
 import portee  # noqa: E402  (la liste des dossiers, #341)
-DOMAINE = re.compile(r"(?<![\w.-])((?:[a-z0-9-]+\.)+(?:fr|com|org|net|io|dev|eu|be|ch|app))(?![\w-]|\.\w)", re.IGNORECASE)
-RESERVES = re.compile(r"(^|\.)(example\.(com|org|net))$|\.(test|example|invalid|localhost)$")
+HOTE = r"[a-z0-9-]+(?:\.[a-z0-9-]+)+"
+#: L'hôte d'une adresse, le domaine d'un courriel : tout suffixe.
+ADRESSE = re.compile(rf"\b[a-z][a-z0-9+.-]*://({HOTE})|[\w.+-]@({HOTE})", re.IGNORECASE)
+#: Les suffixes d'un hôte nu, et `exemple`, le faux suffixe le plus tentant en français.
+NUS = "fr|com|org|net|io|dev|eu|be|ch|app|info|biz|paris|co|uk|de|es|it|lu|ca|us|me|xyz|exemple"
+#: Un hôte s'écrit en minuscules : `TextesReglement.exemple` est un nom Swift, pas un domaine.
+DOMAINE = re.compile(rf"(?<![\w.-])((?:[a-z0-9-]+\.)+(?:{NUS}))(?![\w@-]|\.\w)")
+RESERVES = re.compile(r"(^|\.)(example\.(com|org|net))$|\.(test|example|invalid|localhost)$|^127(\.\d+){3}$")
 #: Les vrais domaines que l'app ou ses tests nomment exprès — rien d'autre n'y entre.
 VRAIS = (
     "coprofirst.fr", "5hostachy.fr",            # le produit et ses installations connues
@@ -35,7 +46,9 @@ VRAIS = (
     "chat.whatsapp.com",                        # le lien d'un groupe, reconnu tel que servi
 )
 #: chemin → raison. Une dispense qui ne couvre plus rien échoue.
-DISPENSES: dict[str, str] = {}
+DISPENSES: dict[str, str] = {
+    "scripts/verifier-hotes.py": "son autotest écrit les hôtes qu'il doit refuser",
+}
 
 
 def autorise(domaine: str) -> bool:
@@ -46,9 +59,11 @@ def autorise(domaine: str) -> bool:
 def refus(chemin: str, texte: str) -> list[str]:
     fautes = []
     for numero, ligne in enumerate(texte.splitlines(), 1):
-        if '"' not in ligne and "@" not in ligne:
-            continue
-        for domaine in DOMAINE.findall(ligne):
+        trouves = [a or c for a, c in ADRESSE.findall(ligne)]
+        # Une chaîne : `"` en Swift ; en Python aussi `'` (une apostrophe de commentaire Swift n'en ouvre pas).
+        if '"' in ligne or (chemin.endswith(".py") and "'" in ligne):
+            trouves += DOMAINE.findall(ligne)
+        for domaine in dict.fromkeys(trouves):
             if not autorise(domaine):
                 fautes.append(f"{chemin}:{numero} : {domaine}")
     return fautes
@@ -56,7 +71,7 @@ def refus(chemin: str, texte: str) -> list[str]:
 
 def juger(racine: pathlib.Path) -> tuple[list[str], int]:
     fautes, lus, dispenses_utiles = [], 0, set()
-    for f in portee.fichiers(racine, portee.CODE + portee.TESTS):
+    for f in [*portee.fichiers(racine, portee.CODE + portee.TESTS), *portee.fichiers(racine, ("scripts",), "*.py")]:
         chemin = f.relative_to(racine).as_posix()
         trouves = refus(chemin, f.read_text(encoding="utf-8"))
         lus += 1
@@ -77,6 +92,12 @@ def autotest() -> bool:
         'email: "contact@ascenseurs.exemple.fr"',
         'let a = "https://inconnue.exemple.org/"',
         'let site = "residence-des-chenes.fr"',
+        'let a = URL(string: "https://x.exemple")',
+        'let a = URL(string: "https://x.info/chemin")',
+        'let a = "http://ailleurs.exemple"',
+        'courriel = "syndic@cabinet.paris"',
+        'magasin.lire("get_flux /flux", de: "a.exemple")',
+        "    // voir https://glycines.exemple/aide",
     ]
     sains = [
         'let r = URL(string: "https://tilleuls.example.com")!',
@@ -87,8 +108,15 @@ def autotest() -> bool:
         'let svg = "http://www.w3.org/2000/svg"',
         "    // Self.fr n'est pas une chaîne",
         'let id = "GUX8KASNTG.fr.coprofirst.autre"',
+        'let i = "accueil.titre", j = TextesReglement.exemple',
+        'email: "camille.exemple@example.com"',
+        "@dataclass(frozen=True)",
+        'let lien = "coprofirst://ouvrir?adresse=x"',
+        'let a = "https://demo.test", b = "http://localhost"',
     ]
     ok = all(refus("A.swift", f) for f in fautifs) and not any(refus("A.swift", s) for s in sains)
+    ok = ok and bool(refus("a.py", "INSTALLATIONS = {'a.fr': '1.14.0'}"))   # une chaîne Python
+    ok = ok and not refus("a.py", 'url = f"http://127.0.0.1:{port}/figee"')     # la boucle locale
     with tempfile.TemporaryDirectory() as d:
         racine = pathlib.Path(d)
         (racine / "CoproFirst").mkdir()

@@ -71,7 +71,7 @@ private struct TransportDeTest: ClientTransport {
 }
 
 private let residence = Installation(
-    adresse: URL(string: "https://lecture-gardee.exemple")!, nom: "Résidence", aUnLogo: false)
+    adresse: URL(string: "https://lecture-gardee.test")!, nom: "Résidence", aUnLogo: false)
 
 /// Le service réel sur le serveur de test, avec un magasin jetable.
 private struct Banc {

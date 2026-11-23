@@ -326,12 +326,12 @@ def _autotest_delai() -> None:
 
 def _autotest_mesure() -> None:
     """Le plancher MESURÉ (#83) : une installation sous le plancher est vue, par ses nombres."""
-    if sous_le_plancher({"a.fr": "1.14.0", "b.fr": "1.18.0"}, "1.14.0"):
+    if sous_le_plancher({"a.test": "1.14.0", "b.test": "1.18.0"}, "1.14.0"):
         raise SystemExit("❌ autotest : au plancher et au-dessus, aucun écart")
-    fautif = sous_le_plancher({"a.fr": "1.12.0", "b.fr": "1.18.0"}, "1.14.0")
-    if len(fautif) != 1 or "`a.fr`" not in fautif[0]:
+    fautif = sous_le_plancher({"a.test": "1.12.0", "b.test": "1.18.0"}, "1.14.0")
+    if len(fautif) != 1 or "`a.test`" not in fautif[0]:
         raise SystemExit(f"❌ autotest : une installation sous le plancher doit être vue ({fautif})")
-    if len(sous_le_plancher({"a.fr": "1.9.0"}, "1.15.0")) != 1:
+    if len(sous_le_plancher({"a.test": "1.9.0"}, "1.15.0")) != 1:
         raise SystemExit("❌ autotest : 1.9.0 < 1.15.0 — une version se compare par ses nombres")
     contrats = [("v4", "1.18.0"), ("v3", "1.15.0"), ("v2", "1.14.0"), ("v1", "1.14.0")]
     if cible(contrats, "1.14.0") != "v2" or cible(contrats, "1.16.0") != "v3" or cible(contrats, "1.0.0"):
