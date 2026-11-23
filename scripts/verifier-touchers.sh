@@ -12,8 +12,9 @@
 # Un onglet se touche JUSQU'À SON EFFET, `app.toucher(_:jusqua:)` : nu, un toucher perdu sous
 # charge laissait la page d'avant, sans reprise (#183, PR #332). Le juge, scripts/touchers_onglets.py
 # (#334), lit l'appel entier et reconnaît un identifiant à segment `onglet`, préfixé ou non, et
-# une variable nommée `onglet…`. Hors de sa vue, et dit : un onglet trouvé par son libellé en
-# ligne ou rangé dans une variable nommée autrement — la convention de nom le rend visible.
+# une variable nommée `onglet…`. Hors de sa vue, et dit (suite : #340) : un onglet trouvé par
+# son libellé en ligne ou rangé dans une variable nommée autrement — la convention de nom le
+# rend visible —, un `tap()` direct sur un onglet (la dette au plafond) et `toucherAuDessin`.
 # Appelé par scripts/verifier-depot.sh. Sortie : 0 conforme, 1 refus.
 set -uo pipefail
 cd "$(dirname "$0")/.."

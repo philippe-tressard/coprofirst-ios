@@ -13,9 +13,13 @@ l'appel ENTIER — swift-format le coupe parfois sur plusieurs lignes — et ref
 - une variable dont le nom commence par `onglet` (`onglet`, `onglets`, `ongletCarnet`) :
   c'est la convention qui rend lisible un onglet trouvé par son LIBELLÉ.
 
-Hors de sa vue, et dit : un onglet trouvé par son libellé en ligne
-(`app.buttons["Carnet d’entretien"]`) ou rangé dans une variable nommée autrement. Un
-texte ne dit pas qu'un libellé est un onglet ; la convention de nom le dit.
+Hors de sa vue, et dit — suite dans #340 : un onglet trouvé par son libellé en ligne
+(`app.buttons["Carnet d’entretien"]`) ou rangé dans une variable nommée autrement ; un
+`tap()` direct sur un onglet (la dette au plafond de verifier-touchers.sh) ; `toucherAuDessin`.
+Un texte ne dit pas qu'un libellé est un onglet ; la convention de nom le dit.
+
+Un appel qui ne se ferme pas (parenthèses déséquilibrées) n'est pas lu : il est refusé,
+INCONNU, jamais admis.
 
 Exceptions DÉCLARÉES (`EXCEPTIONS`) : un toucher qui n'est pas idempotent — ouvrir un menu,
 qu'une reprise refermerait — reste nu, avec sa raison ; une exception qui ne sert plus
@@ -117,7 +121,11 @@ def nus(chemin: str, texte: str) -> list[tuple[int, str]]:
         if propre[max(0, m.start() - 5) : m.start()] == "func ":
             continue
         args = arguments(propre, m.end() - 1)
-        if not args or any(a.startswith("jusqua:") for a in args[1:]):
+        if args is None:
+            ligne = propre.count("\n", 0, m.start()) + 1
+            trouves.append((ligne, "INCONNU : appel illisible, parenthèses déséquilibrées"))
+            continue
+        if any(a.startswith("jusqua:") for a in args[1:]):
             continue
         if designe_un_onglet(args[0]):
             appel = " ".join(propre[m.start() : propre.index("(", m.start())].split())
@@ -154,6 +162,7 @@ def autotest() -> int:
         "plusieurs lignes": 'app.toucher(\n    app.elementAcces("site.onglet.\\(id)"))',
         "essais sans effet": "app.toucher(ongletCarnet, essais: 3)",
         "sans objet": "toucher(onglet)",
+        "appel illisible": "app.toucher(carte",
     }
     admis = {
         "effet": 'app.toucher(app.elementAcces("onglet.x"), jusqua: carte)',
