@@ -39,7 +39,7 @@ private actor Enregistreur: ServiceAudience {
 
 /// Une résidence qui sert `contrat`, ouverte par un compte dont le refus est `refus`.
 private func residence(
-    _ hote: String = "demo.exemple", contrat: String? = VersionContrat.plancher.description, refus: Bool? = false
+    _ hote: String = "demo.test", contrat: String? = VersionContrat.plancher.description, refus: Bool? = false
 ) -> Installation {
     var installation = Installation(
         adresse: URL(string: "https://\(hote)") ?? ServiceSimule.residence.adresse, nom: "Les Tilleuls",
@@ -143,15 +143,15 @@ struct MesureAudienceTests {
 
     @Test func changerDeResidenceEnvoieLaFileChezLaResidenceQuittee() async {
         let enregistreur = Enregistreur()
-        var ouverte = residence("a.exemple")
+        var ouverte = residence("a.test")
         let mesure = MesureAudience(service: enregistreur)
         mesure.courante = { ouverte }
         mesure.noter("/tickets/1")
-        ouverte = residence("b.exemple")
+        ouverte = residence("b.test")
         mesure.noter("/annuaire")
         #expect(await enregistreur.attendreUnLot())
         let lots = await enregistreur.lots
-        #expect(lots.map(\.hote) == ["a.exemple"])
+        #expect(lots.map(\.hote) == ["a.test"])
         #expect(lots.first?.pages == ["/tickets/1"])
         #expect(mesure.file == ["/annuaire"], "la note neuve reste pour la résidence ouverte")
     }

@@ -115,7 +115,7 @@ private struct AppAvecMontre {
     let destination = Destination.clocheDeLaMontre(ClocheSurLiPhone.userInfo(adresse))
     #expect(destination?.ecran == .notifications)
     #expect(destination?.adresse.host() == adresse.host())
-    #expect(Destination.clocheDeLaMontre(["adresse": "http://ailleurs.exemple"]) == nil)
+    #expect(Destination.clocheDeLaMontre(["adresse": "http://ailleurs.test"]) == nil)
 }
 
 @Test func leJetonDeMontreNeSEcritJamais() {

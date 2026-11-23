@@ -194,7 +194,7 @@ struct FilDeLaPeriodeTests {
     @Test func laSemaineSeDemandeEnJoursDeParisEtSeLitAuJourServi() async throws {
         let serveur = ServeurDePeriode()
         let api = ServiceAPI(transport: { _ in TransportDePeriode(serveur: serveur) })
-        let adresse = try #require(URL(string: "https://periode.exemple"))
+        let adresse = try #require(URL(string: "https://periode.test"))
         let residence = Installation(adresse: adresse, nom: "Résidence", aUnLogo: false)
         let semaine = SemaineDuFil(contenant: jour("2026-11-18"))
 
