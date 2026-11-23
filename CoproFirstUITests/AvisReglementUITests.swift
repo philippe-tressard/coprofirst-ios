@@ -55,10 +55,13 @@ final class AvisReglementUITests: XCTestCase {
         let onglet = app.descendants(matching: .any)["Règlement"].firstMatch
         if !onglet.sonde() {
             // Aux tailles d'accessibilité, les onglets sont un menu (`ResidenceView.choixOnglet`).
+            // Nu, et déclaré (scripts/touchers_onglets.py) : une reprise refermerait le menu (#334).
             app.toucher(onglets)
         }
         XCTAssertTrue(onglet.apparait())
-        app.toucher(onglet)
+        // Le champ de la question, en tête de la page : la carte, plus bas, peut ne pas exister
+        // encore (`LazyVStack`), surtout en grand texte (#334).
+        app.toucher(onglet, jusqua: element(app, "reglement.question"))
         let carte = app.descendants(matching: .any)[question].firstMatch
         for _ in 0..<4 where !(carte.sonde() && carte.isHittable) {
             app.swipeUp()

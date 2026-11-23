@@ -138,14 +138,16 @@ final class CarnetUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["AA0-000-000"].apparait(), "la Fiche, à droite")
         XCTAssertFalse(app.elementAcces("residence.onglets").sonde(), "pas d'onglets : le sommaire")
 
-        app.toucher(app.elementAcces("residence.sommaire.onglet.carnet"))
-        XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].apparait(), "le carnet d'entretien")
+        // Le carnet d'entretien.
+        app.toucher(
+            app.elementAcces("residence.sommaire.onglet.carnet"),
+            jusqua: app.staticTexts["Révision annuelle de la chaudière"])
         XCTAssertTrue(app.elementRetenu("residence.sommaire.onglet.carnet").apparait())
 
-        app.toucher(app.elementAcces("residence.sommaire.onglet.reglement"))
-        XCTAssertTrue(
-            app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"].apparait(),
-            "le Règlement et ses questions")
+        // Le Règlement et ses questions.
+        app.toucher(
+            app.elementAcces("residence.sommaire.onglet.reglement"),
+            jusqua: app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"])
         XCTAssertTrue(app.elementAcces("residence.sommaire.rubrique.plans").exists, "le sommaire reste")
     }
 
