@@ -54,9 +54,11 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   mes PR moi-même — contrôles rejoués au poste, puis fusion automatique
   `--squash` une fois la CI verte, à la règle des apps de magasin
   (`~/.claude/standards/09` §8 bis ; la soumission : #205). Je suis ensuite
-  `main` : sa CI après la fusion.
+  `main` : sa CI après la fusion ; le workflow quotidien « Santé de main »
+  ouvre un ticket `sante-main` au-delà d'un seuil de rouges (`scripts/sante_main.py`, #353).
   **Contrepartie** : un compte rendu après chaque fusion (ce qui est
-  entré, l'état de la CI de `main`). Philippe oriente par la **priorité** des
+  entré, l'état de la CI de `main`, et le dire quand la fusion n'a pas eu sa CI
+  verte à elle — annulée, remplacée par la suivante). Philippe oriente par la **priorité** des
   tickets, pas par la fusion. Fusionner n'est pas soumettre : TestFlight externe
   et App Store restent suspendus à la validation du rendu.
   Les commits portent l'adresse *noreply* de GitHub, réglée dans la configuration

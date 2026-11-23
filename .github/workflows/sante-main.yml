@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# La santé de main (#353), chaque jour : les dernières poussées de main dont la CI a conclu,
+# et un ticket « sante-main » au-delà d'un seuil de rouges (scripts/sante_main.py, décision
+# pure et testée). Une poussée annulée ne compte ni en vert ni en rouge, mais le rapport la
+# nomme : une fusion sans CI verte à elle. Revenu sous le seuil, le ticket se ferme en citant
+# le run ; un INCONNU (trop peu de poussées jugées, une conclusion inconnue) ne ferme rien et
+# rend le run rouge. Léger : Linux, gh seul, aucune construction.
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: Santé de main
+
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+
+concurrency:
+  group: sante-main
+  cancel-in-progress: false
+
+jobs:
+  sante:
+    name: Rouges des dernières poussées de main
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Autotest (un seuil franchi ouvre, un retour sous le seuil ferme, trop peu est INCONNU)
+        run: python3 -I scripts/sante_main.py --autotest
+      - name: Décision (scripts/sante_main.py)
+        id: decision
+        run: |
+          TICKET=$(gh issue list --repo "$GITHUB_REPOSITORY" --label sante-main --state open --limit 100 \
+            --json number,title | python3 -I scripts/sante_main.py choisir)
+          gh run list --repo "$GITHUB_REPOSITORY" --branch main --event push --workflow ci.yml --limit 60 \
+            --json conclusion,headSha,databaseId,createdAt \
+            | python3 -I scripts/sante_main.py decider "$TICKET" --rapport "$RUNNER_TEMP/sante.md" \
+            | tee -a "$GITHUB_OUTPUT"
+          echo "numero=$TICKET" >> "$GITHUB_OUTPUT"
+      - name: Ticket
+        env:
+          DECISION: ${{ steps.decision.outputs.ticket }}
+          NUMERO: ${{ steps.decision.outputs.numero }}
+        run: |
+          RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          printf '\nExécution : %s\n' "$RUN" >> "$RUNNER_TEMP/sante.md"
+          case "$DECISION" in
+            ouvrir)
+              gh label create sante-main --repo "$GITHUB_REPOSITORY" --color B60205 --force \
+                --description "main rouge au-delà du seuil sur ses dernières poussées (#353)"
+              gh issue create --repo "$GITHUB_REPOSITORY" --label sante-main --body-file "$RUNNER_TEMP/sante.md" \
+                --title "$(python3 -I scripts/sante_main.py titre)" ;;
+            mettre-a-jour)
+              gh issue edit "$NUMERO" --repo "$GITHUB_REPOSITORY" --body-file "$RUNNER_TEMP/sante.md" ;;
+            fermer)
+              gh issue close "$NUMERO" --repo "$GITHUB_REPOSITORY" --reason completed \
+                --comment "✅ Revenu sous le seuil ($RUN). Fermé par la santé de main (#353)." ;;
+            rien) ;;
+            *) echo "❓ décision illisible : « $DECISION »"; exit 1 ;;
+          esac
+      - name: Verdict
+        env:
+          VERDICT: ${{ steps.decision.outputs.verdict }}
+        run: |
+          cat "$RUNNER_TEMP/sante.md"
+          case "$VERDICT" in
+            vert) echo "✅ main sous le seuil de rouges" ;;
+            rouge) echo "❌ main au-delà du seuil — ticket « sante-main »"; exit 1 ;;
+            *) echo "❓ INCONNU — trop peu de poussées jugées, ou une conclusion inconnue : ce n'est pas un vert"; exit 1 ;;
+          esac
