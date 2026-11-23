@@ -45,4 +45,4 @@ d'API « à raison requise » : relus à leur révision épinglée, et tenus par
 | XcodeGen | `outillage.env` | MIT |
 | SwiftLint | `outillage.env` | MIT |
 | swift-format | `outillage.env` | Apache-2.0 |
-| reuse | 6.2.0 | GPL-3.0-or-later (outil seulement) |
+| reuse | `outillage.env` | GPL-3.0-or-later (outil seulement) |

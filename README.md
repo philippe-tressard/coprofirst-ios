@@ -10,6 +10,10 @@ le logiciel libre de gestion de copropriété : présentation du produit, entré
 une installation (démo, adresse saisie, QR, lien universel), puis les
 fonctionnalités de l'application web, par étapes.
 
+Licence : AGPL-3.0-or-later, avec une permission additionnelle pour l'App Store
+(« Licence », en fin de page). GitHub l'affiche « Other » : il ne reconnaît pas l'AGPL
+quand `LICENSE` porte aussi la permission.
+
 ## État
 
 Ce que l'app sait faire : « Écrans livrés » ci-dessous et
@@ -44,13 +48,36 @@ un geste de Philippe : skill
 
 ## Construire
 
-Prérequis : Xcode 16 ou plus récent, un runtime iOS du simulateur
-(`xcodebuild -downloadPlatform iOS`), et l'outillage aux versions
-d'[`outillage.env`](outillage.env) :
+Prérequis : **Xcode 26 au moins** — le code appelle des API du SDK d'iOS 26
+(`safeAreaBar`, `navigationSubtitle`…), et la CI construit sous Xcode 26.6 ; **Xcode 27**
+compile en plus la posture de l'iPhone pliable (`#if compiler(>=6.4)`,
+`CoproFirst/Navigation/Posture.swift`), que Xcode 26 laisse de côté. Le minimum exact n'est
+pas mesuré. Puis un runtime iOS du simulateur (`xcodebuild -downloadPlatform iOS`) et
+l'outillage.
+
+### Outillage
+
+Les versions épinglées sont dans [`outillage.env`](outillage.env), la seule liste. La CI
+installe exactement celles-ci ; Homebrew pose la **dernière** version, et seul XcodeGen
+est comparé à son épingle (`scripts/generer-projet.sh`) :
 
 ```bash
 brew install xcodegen swiftlint swift-format
 ```
+
+`reuse`, à sa version épinglée — sans lui, le hook refuse le commit (INCONNU) :
+
+```bash
+( . ./outillage.env && pipx install "reuse[charset-normalizer]==$REUSE_VERSION" )
+```
+
+Armer le hook pre-commit, qui rejoue `scripts/verifier-depot.sh` :
+
+```bash
+git config core.hooksPath .githooks
+```
+
+### Ouvrir le projet
 
 ```bash
 bash scripts/generer-projet.sh
@@ -63,6 +90,8 @@ open CoproFirst.xcodeproj
 Le greffon `swift-openapi-generator` demande, à la première ouverture, d'être
 autorisé par Xcode (« Trust & Enable ») ; en ligne de commande :
 `-skipPackagePluginValidation`.
+
+### Tester au simulateur
 
 Les tests au simulateur jouent, au poste, le système le plus récent installé ; la CI joue
 le sien, `OS_SIMULATEUR_CI` d'[`outillage.env`](outillage.env). Le résumé du passage
@@ -108,7 +137,7 @@ marque comme lu. Chaque alerte porte l'icône de son type (`TypesNotification`, 
 coprofirst#2802).
 
 **La liaison** (lot 2), construite mais **éteinte** (`LiaisonMontre.active`) : elle
-s'allume avec celle de Wear OS, sur le geste de Philippe (#207). Allumée : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
+s'allume avec celle de Wear OS, sur le geste de Philippe (coprofirst-android#207). Allumée : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
 l'iPhone demande un jeton de montre (coprofirst#2771 : la cloche seule, 30 jours) — renouvelé
 s'il en a déjà un — et le passe à la montre par WatchConnectivity, avec l'adresse et le nom de
 la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone ne garde que
@@ -253,7 +282,11 @@ Pour les essayer sans réseau, un build **Debug** accepte des arguments de lance
 (`-faceid-refuse` : Face ID annulé à chaque demande ; `-protection appareil|aucune` :
 la session gardée sans biométrie ; `-saisie complete` : la saisie Complète d'une
 affaire, au lieu d'Essentielle ; avec `-ecran retour`, `-hors-ligne gardee|perimee|sans-lecture` :
-l'appareil sans réseau, et une dernière lecture gardée, trop ancienne, ou absente). Un build Release ne compile pas la simulation
+l'appareil sans réseau, et une dernière lecture gardée, trop ancienne, ou absente). Le code
+en lit d'autres (`-posture`, `-compte`, `-contrat`, `-push`, `-lien`…), décrits là où ils
+sont lus ; leur liste entière :
+`git grep -h -o -E '"-[a-z][a-z-]+"' -- CoproFirst CoproFirstWatch | sort -u`.
+Un build Release ne compile pas la simulation
 (`scripts/verifier-simule.py`, #84).
 
 Ce que l'app retient d'un compte — profil dans chaque résidence, courriel de la
@@ -276,7 +309,9 @@ refuse une couleur écrite à la main dans l'app.
 
 Une seule règle de provenance : les générateurs lisent une **version publiée** de
 CoproFirst (l'archive de son étiquette et les pièces jointes de sa release), nommée
-dans l'en-tête « GÉNÉRÉ » de chaque fichier — jamais un clone ni une branche. Il y
+dans l'en-tête « GÉNÉRÉ » de chaque fichier — jamais un clone ni une branche. Seule
+exception, déclarée : le contenu de la vitrine se lit dans `coprofirst-site` à un commit
+épinglé (`scripts/generateurs/vitrine.py`, #51). Il y
 en a un par domaine dans `scripts/generateurs/`, que `generer.py` découvre et lance
 tous ; `--sources` liste les fichiers de CoproFirst qu'ils lisent.
 
