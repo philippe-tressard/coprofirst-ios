@@ -41,7 +41,8 @@ parallèles ne se gênent pas.
    tient **éteinte** (`RelaisPush`) tant que le service `notifications_push` n'est pas
    allumé (coprofirst#2875) ; réception réelle en attente de la clé `.p8` (coprofirst#2494).
    **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
-   porte de navigation codées, liste des domaines en attente de décision (#18).
+   porte de navigation codées ; la liste des domaines (`project.yml`) n'est pas arrêtée —
+   #18 clos pour abandon le 17/11/2026.
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
    (charte, pages, onglets, contrat d'API) : un écart ouvre un ticket.
 
