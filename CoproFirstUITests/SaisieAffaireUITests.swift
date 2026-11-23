@@ -19,8 +19,7 @@ final class SaisieAffaireUITests: XCTestCase {
 
     private func ouvrirAffaires(_ app: XCUIApplication) {
         let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
-        XCTAssertTrue(onglet.apparait())
-        app.toucher(onglet)
+        app.toucher(onglet, jusqua: el(app, "affaires.nouvelle"))
     }
 
     private func el(_ app: XCUIApplication, _ identifiant: String) -> XCUIElement {

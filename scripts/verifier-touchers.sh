@@ -9,11 +9,11 @@
 # aussi (baisser le plafond dans le même lot). Une classe convertie n'en a plus aucun.
 # Un balayage de côté aussi (#183) : aucun `swipeLeft()`/`swipeRight()` direct — un onglet
 # s'amène par `app.toucher` ou `app.amenerDansSaRangee`, une ligne se balaie par `app.balayer`.
-# Un onglet d'une rangée (`onglet.…`) se touche JUSQU'À SON EFFET, `app.toucher(_:jusqua:)` :
-# nu, un toucher perdu sous charge laissait la page d'avant, sans reprise (#183, PR #332).
-# INCOMPLET, et dit : le motif ne lit que `app.toucher(app.elementAcces("onglet.…"))` sur une
-# ligne. Un onglet passé par une variable, trouvé par son libellé, ou d'identifiant préfixé
-# (`residence.sommaire.onglet.…`) lui échappe : relevé et suite dans #334.
+# Un onglet se touche JUSQU'À SON EFFET, `app.toucher(_:jusqua:)` : nu, un toucher perdu sous
+# charge laissait la page d'avant, sans reprise (#183, PR #332). Le juge, scripts/touchers_onglets.py
+# (#334), lit l'appel entier et reconnaît un identifiant à segment `onglet`, préfixé ou non, et
+# une variable nommée `onglet…`. Hors de sa vue, et dit : un onglet trouvé par son libellé en
+# ligne ou rangé dans une variable nommée autrement — la convention de nom le rend visible.
 # Appelé par scripts/verifier-depot.sh. Sortie : 0 conforme, 1 refus.
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -32,9 +32,6 @@ CoproFirstUITests/MessagesAffaireUITests.swift"
 # $@ : les fichiers à lire. Rend le nombre de `tap()` directs hors commentaires.
 compter_tap() { cat "$@" /dev/null | grep -E '\.tap\(\)' | grep -vcE '^[[:space:]]*///?' ; }
 compter_balayages() { cat "$@" /dev/null | grep -E '\.swipe(Left|Right)\(\)' | grep -vcE '^[[:space:]]*///?' ; }
-compter_onglets_nus() {
-  cat "$@" /dev/null | grep -E '\.toucher\([a-z]+\.elementAcces\("onglet\.[^"]*"\)\)' | grep -vcE '^[[:space:]]*///?'
-}
 
 autotest() {
   local d ok=0
@@ -44,8 +41,6 @@ autotest() {
   [ "$(compter_tap)" = 0 ] || ok=1
   printf '        onglet.swipeLeft()\n        // un swipeRight() se nomme ici\n' > "$d/b"
   [ "$(compter_balayages "$d/b")" = 1 ] || ok=1
-  printf '        app.toucher(app.elementAcces("onglet.badges"))\n        app.toucher(app.elementAcces("onglet.x"), jusqua: y)\n        // app.toucher(app.elementAcces("onglet.z"))\n' > "$d/c"
-  [ "$(compter_onglets_nus "$d/c")" = 1 ] || ok=1
   rm -rf "${d:?}"
   return $ok
 }
@@ -70,8 +65,9 @@ done
 # shellcheck disable=SC2086
 BALAYAGES=$(compter_balayages $FICHIERS)
 [ "$BALAYAGES" = 0 ] || { echo "❌ $BALAYAGES swipeLeft()/swipeRight() directs — app.toucher, app.balayer, $POINT_ATTENTE"; fautes=1; }
+# Son autotest est joué par verifier-depot.sh, comme celui de tout script à `--autotest`.
+command -v python3 >/dev/null || { echo "❌ INCONNU : python3 absent, touchers d'onglet non lus (#334)"; exit 1; }
 # shellcheck disable=SC2086
-NUS=$(compter_onglets_nus $FICHIERS)
-[ "$NUS" = 0 ] || { echo "❌ $NUS touchers d'onglet sans effet attendu — app.toucher(onglet, jusqua: effet) (#183)"; fautes=1; }
+python3 -I scripts/touchers_onglets.py $FICHIERS || fautes=1
 [ "$fautes" = 0 ] || exit 1
 echo "✅ touchers au point commun ($TAPS tap() directs au plafond)"

@@ -21,10 +21,8 @@ final class EcransHallUITests: XCTestCase {
         app.toucher(app.libelleAcces("Espace CS"))
         let onglet = app.elementAcces("onglet.ecrans")
         XCTAssertTrue(app.amenerDansSaRangee(onglet), "l'onglet au bout de la barre")
-        app.toucher(onglet)
-
         // La liste : trois écrans servis, dont un échu.
-        XCTAssertTrue(app.elementAcces("ecran.3").apparait(), "la liste des écrans")
+        app.toucher(onglet, jusqua: app.elementAcces("ecran.3"))
         XCTAssertTrue(app.elementAcces("ecran.1.echu").exists, "l'écran échu le dit")
         LancementCaptures.capturer("cs-ecrans-1-liste")
 
