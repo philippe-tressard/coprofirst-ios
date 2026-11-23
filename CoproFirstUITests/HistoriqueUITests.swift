@@ -41,14 +41,26 @@ final class HistoriqueUITests: XCTestCase {
             .firstMatch.exists
     }
 
+    /// La réponse du syndic (entrée 3) se signale — un texte écrit par un autre, et le
+    /// plancher sert la modération depuis v3.121.2 (#286, #313) — mais ne se corrige ni ne
+    /// s'efface : elle appartient à son auteur, le serveur ne sert aucun des deux droits.
+    @MainActor
+    private func laReponseSeSignaleSansSeCorriger(_ app: XCUIApplication) {
+        let gestes = app.elementAcces("historique.gestes.3")
+        // Au-dessus du bandeau du bas, comme dans ModerationUITests (#307).
+        XCTAssertTrue(app.amener(gestes, auDessusDe: app.elementAcces("affaire.lien")), "la réponse offre ses gestes")
+        app.toucher(gestes)
+        XCTAssertTrue(app.elementAcces("historique.geste.signaler").apparait(), "« Signaler cette suite »")
+        XCTAssertFalse(app.elementAcces("historique.geste.modifier").exists, "la réponse appartient à son auteur")
+        XCTAssertFalse(app.elementAcces("historique.geste.supprimer").exists, "aucun effacement servi")
+    }
+
     /// Le conseil ajoute une suite, puis la corrige depuis son entrée : la feuille part
     /// du texte servi, n'enregistre qu'un changement, et l'Historique relu le montre. Il
     /// n'efface pas : ce geste est à l'administrateur.
     @MainActor
     func testLeConseilCorrigeSaSuiteDepuisLHistorique() throws {
         let app = ouvrirLAffaire()
-        // La réponse appartient à son auteur : aucun geste sur elle.
-        XCTAssertFalse(app.elementAcces("historique.gestes.3").exists)
 
         app.toucher(app.elementAcces("affaire.suite"))
         let texte = app.elementAcces("suite.texte")
@@ -81,6 +93,8 @@ final class HistoriqueUITests: XCTestCase {
         // Le toucher pose le curseur où il tombe : on cherche le mot, pas sa place.
         XCTAssertTrue(entree("Jeudi", dans: app).apparait(), "l'entrée corrigée, relue")
         XCTAssertTrue(app.libelleAcces("Entrée corrigée").apparait(), "l'avis du geste")
+        // En dernier : le menu ouvert reste ouvert.
+        laReponseSeSignaleSansSeCorriger(app)
     }
 
     /// L'administrateur efface une entrée après confirmation ; l'état de l'affaire ne
@@ -159,13 +173,15 @@ final class HistoriqueUITests: XCTestCase {
         XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le prestataire", dans: app).exists, "l'entrée corrigée")
     }
 
-    /// Un résident lit l'Historique sans geste : le serveur ne lui en sert aucun.
+    /// Un résident lit l'Historique sans le corriger : le serveur ne lui sert aucun droit.
+    /// Seule la réponse du syndic, un texte écrit par un autre, se signale (#313).
     @MainActor
     func testUnResidentLitLHistoriqueSansGeste() throws {
         let app = ouvrirLAffaire(["-compte", "resident"])
         XCTAssertTrue(entree("Ouvert →\u{00A0}Chez le syndic", dans: app).exists)
-        for id in 1...3 {
+        for id in 1...2 {
             XCTAssertFalse(app.elementAcces("historique.gestes.\(id)").exists, "aucun geste servi sur l'entrée \(id)")
         }
+        laReponseSeSignaleSansSeCorriger(app)
     }
 }
