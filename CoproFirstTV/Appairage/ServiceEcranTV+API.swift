@@ -12,7 +12,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
     /// La plus grande image qu'une affiche porte : une photo téléversée sur le site.
     private static let plafondImage = 20 * 1024 * 1024
 
-    private func client(_ adresse: URL, jeton: String? = nil) -> Client {
+    private func client(_ adresse: URL, jeton: JetonMasque? = nil) -> Client {
         ClientCoproFirst.client(
             installation: adresse, session: URLSession(configuration: .ephemeral),
             middlewares: jeton.map { [JetonAppareil($0)] } ?? [])
@@ -34,7 +34,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
         switch try await appeler({ try await client(adresse).postEcransAppairageJeton(body: .json(corps)) }) {
         case .ok(let ok):
             let lu = try ok.body.json
-            return .jeton(lu.jeton, expireLe: lu.expireLe)
+            return .jeton(JetonMasque(lu.jeton), expireLe: lu.expireLe)
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, let reponse):
             // 400 et son `detail` : ce qu'il faut faire ensuite (RFC 8628 §3.5).
@@ -44,7 +44,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
         }
     }
 
-    func affiches(_ adresse: URL, jeton: String) async throws -> [AfficheHall] {
+    func affiches(_ adresse: URL, jeton: JetonMasque) async throws -> [AfficheHall] {
         switch try await appeler({ try await client(adresse, jeton: jeton).getEcransMoiAffiches() }) {
         case .ok(let ok):
             return try ok.body.json.map {
@@ -55,7 +55,7 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
         }
     }
 
-    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: String) async throws -> Data {
+    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: JetonMasque) async throws -> Data {
         // Le contrat déclare `application/octet-stream`, le serveur sert le type de l'image :
         // le client généré refuse, et son erreur porte le corps — lu sur un 200 seulement.
         do {

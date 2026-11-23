@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// L'appairage gardé d'un lancement à l'autre (#218, lot 3) : la résidence et le jeton de
@@ -10,7 +11,7 @@ struct MemoireEcran {
     /// Ce que l'écran garde : où il lit, et avec quoi.
     struct Appairage: Codable, Equatable, Sendable {
         let residence: Installation
-        let jeton: String
+        let jeton: JetonMasque
     }
 
     private static let cle = "ecran-de-hall"

@@ -461,6 +461,8 @@ SEPARATEURS=$(python3 -I scripts/verifier-separateurs.py) || { echo "$SEPARATEUR
 # Un hôte fictif se prend dans un nom réservé (#214, standards/03 §8 quater) : exemple.fr
 # est un vrai domaine tiers, qui recevrait requêtes et cookies d'un test égaré.
 HOTES=$(python3 -I scripts/verifier-hotes.py) || { echo "$HOTES"; echec "hôte fictif hors des noms réservés"; }
+# Un jeton se garde dans UN JetonMasque, l'en-tête Authorization s'écrit à UN endroit (#342).
+JETONS=$(python3 -I scripts/verifier-jetons.py) || { echo "$JETONS"; echec "jeton en clair, ou en-tête écrit hors de JetonAppareil"; }
 
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
@@ -488,4 +490,4 @@ if [ "$ECHECS" -gt 0 ]; then
   exit 1
 fi
 [ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, ${PORTEE#✅ }, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, ${PORTEE#✅ }, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, jetons masqués, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Ce que l'écran de hall demande au serveur (#218, lot 3 ; serveur coprofirst#2770) : la
@@ -14,9 +15,9 @@ protocol ServiceEcranTV: Sendable {
     func interroger(_ codeAppareil: String, _ adresse: URL) async throws -> ReponseAppairage
     /// GET /ecrans/moi/affiches : les affiches de son périmètre. Jeton retiré ou échu :
     /// `ErreurService.sessionExpiree`.
-    func affiches(_ adresse: URL, jeton: String) async throws -> [AfficheHall]
+    func affiches(_ adresse: URL, jeton: JetonMasque) async throws -> [AfficheHall]
     /// GET /ecrans/moi/affiches/{id}/images/{rang} : une image d'une affiche montrée.
-    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: String) async throws -> Data
+    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: JetonMasque) async throws -> Data
 }
 
 /// Ce que l'écran affiche et garde (`DemandeAppairage`) — rien sur l'installation.
@@ -33,7 +34,7 @@ struct DemandeAppairageTV: Equatable, Sendable {
 
 /// La réponse d'une interrogation (RFC 8628 §3.5) : le jeton, ou ce qu'il faut faire.
 enum ReponseAppairage: Equatable, Sendable {
-    case jeton(String, expireLe: Date)
+    case jeton(JetonMasque, expireLe: Date)
     /// Le conseil n'a pas encore confirmé : réinterroger après l'intervalle.
     case enAttente
     /// Trop tôt : l'intervalle a grandi de `ReponseAppairage.ralentissement` secondes.

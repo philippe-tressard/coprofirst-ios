@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Observation
 
@@ -42,7 +43,7 @@ final class AppairageTV {
 
     /// Une demande, puis les interrogations jusqu'au jeton de l'écran. `nil` si le code
     /// expire, si la demande échoue ou si la tâche s'arrête (l'écran a quitté l'appairage).
-    func suivre() async -> String? {
+    func suivre() async -> JetonMasque? {
         etat = .demande
         let demande: DemandeAppairageTV
         do {

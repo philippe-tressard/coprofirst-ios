@@ -16,7 +16,7 @@ struct LiaisonMontreTests {
     private let adresse = URL(string: "https://tilleuls.exemple")!
     private let echeance = Date(timeIntervalSince1970: 2_000_000_000)
 
-    private func liaison(_ adresse: URL? = nil, jeton: String = "jeton-secret-123") -> MessageLiaison {
+    private func liaison(_ adresse: URL? = nil, jeton: JetonMasque = "jeton-secret-123") -> MessageLiaison {
         .liaison(adresse: adresse ?? self.adresse, residence: "Les Tilleuls", jeton: jeton, expireLe: echeance)
     }
 
@@ -39,13 +39,13 @@ struct LiaisonMontreTests {
     @Test func leJetonNeParaitDansAucuneTrace() {
         let message = liaison()
         let gardee = LiaisonGardee(adresse: adresse, residence: "R", jeton: "jeton-secret-123", expireLe: echeance)
-        var vidages = ["", ""]
+        let porteur = JetonAppareil(gardee.jeton)
+        var vidages = ["", "", ""]
         dump(message, to: &vidages[0])
         dump(gardee, to: &vidages[1])
-        let porteur = JetonPorteur(jeton: "jeton-secret-123")
-        for texte in ["\(message)", String(reflecting: message), "\(gardee)", String(reflecting: gardee), "\(porteur)"]
-            + vidages
-        {
+        dump(porteur, to: &vidages[2])
+        let decrits = ["\(message)", String(reflecting: message), "\(gardee)", String(reflecting: gardee), "\(porteur)"]
+        for texte in decrits + vidages {
             #expect(!texte.contains("jeton-secret"), "le jeton paraît dans « \(texte.prefix(60))… »")
         }
     }
