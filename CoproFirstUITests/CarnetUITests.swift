@@ -5,8 +5,9 @@ import XCTest
 
 /// Le carnet de l'iPhone pliable ouvert (#119) : les intercalaires sur la tranche droite, à
 /// la place de la barre du bas. Joué en classe régulière, la charnière fixée par
-/// `-posture deplie` : un simulateur iPad sert au poste comme en CI, qui n'a ni iOS 27.1 ni
-/// l'iPhone Duo. Sur l'iPhone Duo déplié, la vraie charnière se lit, au poste seulement.
+/// `-posture deplie` : un simulateur iPad sert au poste comme en CI — l'échantillon iPad du job
+/// « Échantillons » (#350) —, qui n'a ni iOS 27.1 ni l'iPhone Duo. Sur l'iPhone Duo déplié, la
+/// vraie charnière se lit, au poste seulement.
 ///
 /// La semaine du Fil (#277) et le sommaire de la résidence (#278) s'y jouent aussi.
 ///

@@ -473,7 +473,7 @@ DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCE
 
 # Le job « Dépôt » de la CI n'a qu'une étape, ce script (#241) : poste, hook et CI jouent
 # la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
-JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, ou job macOS hors de l'agrégat"; }
+JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, job macOS hors de l'agrégat, ou classe de l'iPad seul hors de l'échantillon iPad"; }
 DISTANTS=$(bash scripts/controles-distants.sh)
 DISTANTS_CODE=$?
 [ "$DISTANTS_CODE" -eq 0 ] || echo "$DISTANTS"
@@ -488,4 +488,4 @@ if [ "$ECHECS" -gt 0 ]; then
   exit 1
 fi
 [ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, ${PORTEE#✅ }, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, ${PORTEE#✅ }, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, classes de l’iPad seul jouées sur iPad, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
