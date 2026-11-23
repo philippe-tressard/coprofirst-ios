@@ -336,6 +336,9 @@ jobs:
         # fusion d'un lot iPad (#220).
         # ParcoursUITests test par test : ses trois tests de la barre du bas n'ont pas cours
         # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
+        # ModerationUITests : le seul test du Profil, qui prouve `ouvrirLeProfil` par la barre
+        # latérale (#336). L'autre test de la classe, qui ne passe pas par la navigation de
+        # l'iPad, reste au poste : ce job a déjà atteint 56 min sur 65.
         env:
           APPAREIL: ipad
         run: >-
@@ -355,6 +358,7 @@ jobs:
           -only-testing:CoproFirstUITests/PrestatairesAffaireUITests
           -only-testing:CoproFirstUITests/CartesDuFilUITests/testLeConseilModifieLAffaireDepuisLeBandeau
           -only-testing:CoproFirstUITests/SondageUITests
+          -only-testing:CoproFirstUITests/ModerationUITests/testLeProfilListeLesPersonnesMasqueesEtLesDemasque
       - name: Écran de hall (Apple TV) — build et tests du code partagé
         # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
         # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU

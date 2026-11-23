@@ -16,13 +16,7 @@ final class ApercusSaisieUITests: XCTestCase {
 
     func testLeProfilSOuvreSurLeNomServiPuisSuitLaFrappe() throws {
         let app = LancementCaptures.lancer()
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.apparait())
-        plus.tap()
-        let profil = app.elementAcces("plus.profil")
-        _ = profil.sonde()
-        for _ in 0..<6 where !(profil.exists && profil.isHittable) { app.swipeUp() }
-        profil.tap()
+        app.ouvrirLeProfil()
         let modifier = app.elementAcces("profil.modifierIdentite")
         XCTAssertTrue(modifier.apparait(), "le Profil, une fois le compte lu")
         for _ in 0..<6 where !modifier.isHittable { app.swipeUp() }

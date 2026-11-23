@@ -18,7 +18,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-PLAFOND_TAP=108
+PLAFOND_TAP=106
 POINT_ATTENTE=CoproFirstUITests/Attente.swift
 CLASSES_TOUCHER="CoproFirstUITests/AccesUITests.swift CoproFirstUITests/SuppressionCompteUITests.swift
 CoproFirstUITests/HistoriqueUITests.swift
