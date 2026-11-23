@@ -9,6 +9,7 @@ import Foundation
 struct DecouverteAPI: DecouvreInstallation {
     func decouvrir(_ adresse: URL) async throws -> Installation {
         let session = URLSession(configuration: .ephemeral)
-        return try await Decouverte.lire(adresse, client: ClientCoproFirst.client(installation: adresse, session: session))
+        let client = ClientCoproFirst.client(installation: adresse, session: session)
+        return try await Decouverte.lire(adresse, client: client)
     }
 }

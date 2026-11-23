@@ -135,9 +135,9 @@ private final class TransportCloche: ClientTransport, @unchecked Sendable {
         self.statut = statut
     }
 
-    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
-        -> (HTTPResponse, HTTPBody?)
-    {
+    func send(
+        _ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String
+    ) async throws -> (HTTPResponse, HTTPBody?) {
         autorisation = request.headerFields[.authorization]
         chemin = request.path
         hote = baseURL.host()

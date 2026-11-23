@@ -22,7 +22,8 @@ import sys
 import tempfile
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
-DOSSIERS = ("CoproFirst", "CoproFirstTests", "CoproFirstUITests", "Paquets/ClientAPI/Sources", "Paquets/ClientAPI/Tests")
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 DOMAINE = re.compile(r"(?<![\w.-])((?:[a-z0-9-]+\.)+(?:fr|com|org|net|io|dev|eu|be|ch|app))(?![\w-]|\.\w)", re.IGNORECASE)
 RESERVES = re.compile(r"(^|\.)(example\.(com|org|net))$|\.(test|example|invalid|localhost)$")
 #: Les vrais domaines que l'app ou ses tests nomment exprès — rien d'autre n'y entre.
@@ -55,18 +56,15 @@ def refus(chemin: str, texte: str) -> list[str]:
 
 def juger(racine: pathlib.Path) -> tuple[list[str], int]:
     fautes, lus, dispenses_utiles = [], 0, set()
-    for dossier in DOSSIERS:
-        if not (racine / dossier).is_dir():
+    for f in portee.fichiers(racine, portee.CODE + portee.TESTS):
+        chemin = f.relative_to(racine).as_posix()
+        trouves = refus(chemin, f.read_text(encoding="utf-8"))
+        lus += 1
+        if chemin in DISPENSES:
+            if trouves:
+                dispenses_utiles.add(chemin)
             continue
-        for f in sorted((racine / dossier).rglob("*.swift")):
-            chemin = f.relative_to(racine).as_posix()
-            trouves = refus(chemin, f.read_text(encoding="utf-8"))
-            lus += 1
-            if chemin in DISPENSES:
-                if trouves:
-                    dispenses_utiles.add(chemin)
-                continue
-            fautes += trouves
+        fautes += trouves
     for chemin in sorted(set(DISPENSES) - dispenses_utiles):
         if (racine / chemin).exists():
             fautes.append(f"{chemin} : dispensé sans plus porter de domaine fictif — retirer la dispense")

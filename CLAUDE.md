@@ -87,7 +87,7 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   et par `scripts/controles-distants.sh` écart au plancher, logo et `reuse lint`,
   chacun sous `scripts/borne.py` : groupe de processus coupé, INCONNU à l'expiration, #293),
   le même au hook pre-commit (armé par `git config core.hooksPath .githooks`) et
-  seule étape du job « Dépôt » de la CI (#241) ; SwiftLint `--strict` ;
+  seule étape du job « Dépôt » de la CI (#241) ; SwiftLint `--strict` et les juges lisent UNE liste des dossiers, `scripts/portee.py` — une cible neuve s'y déclare (#341) ;
   tests `swift test` (ClientAPI) et `bash scripts/tests-simulateur.sh` au
   simulateur — requêtes d'accessibilité expirées au résumé du run (un nouvel essai à
   15 s au moins du pas d'avant, #321), et une relance

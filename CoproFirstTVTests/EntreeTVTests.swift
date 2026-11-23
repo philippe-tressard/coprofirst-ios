@@ -27,15 +27,15 @@ private actor DecouverteSimulee: DecouvreInstallation {
 /// en dur — une valeur écrite ici tombait sous le plancher à sa montée (2.6.0 sous 2.8.0, #294).
 private func residence(
     _ hote: String, contrat: String? = VersionContrat.plancher.description, palette: String? = "prune"
-) -> Installation {
+) throws -> Installation {
     Installation(
-        adresse: URL(string: "https://\(hote)")!, nom: "Les Tilleuls", aUnLogo: false,
+        adresse: try #require(URL(string: "https://\(hote)")), nom: "Les Tilleuls", aUnLogo: false,
         codePalette: palette, versionContrat: contrat)
 }
 
 @MainActor
-@Test func uneAdresseSaisieOuvreSaResidence() async {
-    let service = DecouverteSimulee(["tilleuls.example.com": .success(residence("tilleuls.example.com"))])
+@Test func uneAdresseSaisieOuvreSaResidence() async throws {
+    let service = DecouverteSimulee(["tilleuls.example.com": .success(try residence("tilleuls.example.com"))])
     let entree = EntreeTV(service: service)
     entree.saisie = "  HTTP://Tilleuls.example.com/connexion "
     #expect(entree.adresseSaisie == URL(string: "https://tilleuls.example.com"), "ramenée à https://<hôte>")
@@ -60,12 +60,12 @@ private func residence(
 }
 
 @MainActor
-@Test func laDemoEstCelleEcriteDansLApp() async {
+@Test func laDemoEstCelleEcriteDansLApp() async throws {
     let hote = ContenuVitrine.adresseDemo
-    let service = DecouverteSimulee([hote: .success(residence(hote))])
+    let service = DecouverteSimulee([hote: .success(try residence(hote))])
     let entree = EntreeTV(service: service)
     await entree.entrerEnDemo()
-    #expect(await service.demandees == [URL(string: "https://\(hote)")!])
+    #expect(await service.demandees == [try #require(URL(string: "https://\(hote)"))])
     #expect(entree.residence?.adresse.host() == hote)
 }
 
@@ -84,8 +84,9 @@ private func residence(
 
 /// Une installation qui sert un contrat sous le plancher ne s'ouvre pas, comme sur l'iPhone (#83).
 @MainActor
-@Test func uneResidenceSousLePlancherNeSOuvrePas() async {
-    let service = DecouverteSimulee(["ancienne.example.com": .success(residence("ancienne.example.com", contrat: "1.0.0"))])
+@Test func uneResidenceSousLePlancherNeSOuvrePas() async throws {
+    let ancienne = try residence("ancienne.example.com", contrat: "1.0.0")
+    let service = DecouverteSimulee(["ancienne.example.com": .success(ancienne)])
     let entree = EntreeTV(service: service)
     entree.saisie = "ancienne.example.com"
     await entree.entrer()
@@ -94,8 +95,8 @@ private func residence(
 }
 
 @MainActor
-@Test func changerDeResidenceRevientALaSaisiePreRemplie() async {
-    let service = DecouverteSimulee(["tilleuls.example.com": .success(residence("tilleuls.example.com"))])
+@Test func changerDeResidenceRevientALaSaisiePreRemplie() async throws {
+    let service = DecouverteSimulee(["tilleuls.example.com": .success(try residence("tilleuls.example.com"))])
     let entree = EntreeTV(service: service)
     entree.saisie = "https://tilleuls.example.com"
     await entree.entrer()

@@ -6,6 +6,12 @@ included:
   - CoproFirst
   - CoproFirstTests
   - CoproFirstUITests
+  - CoproFirstTV
+  - CoproFirstTVTests
+  - CoproFirstWatch
+  - CoproFirstWatchTests
+  - CoproFirstWatchUITests
+  - CoproFirstWatchWidget
   - Paquets/ClientAPI/Sources
   - Paquets/ClientAPI/Tests
   - Paquets/ClientAPI/Package.swift

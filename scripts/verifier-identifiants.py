@@ -24,6 +24,8 @@ import sys
 import tempfile
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 DEBUT = re.compile(r"^\s*Label\s*[({]")
 IDENTIFIANT = ".accessibilityIdentifier("
 UN_ELEMENT = ".accessibilityElement(children: .ignore)"
@@ -68,7 +70,7 @@ def refus(chemin: str, texte: str) -> list[str]:
 
 def juger(racine: pathlib.Path) -> list[str]:
     fautes = []
-    for f in sorted((racine / "CoproFirst").rglob("*.swift")):
+    for f in portee.fichiers(racine, portee.CODE):
         fautes += refus(f.relative_to(racine).as_posix(), f.read_text(encoding="utf-8"))
     return fautes
 

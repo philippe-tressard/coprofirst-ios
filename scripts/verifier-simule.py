@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""La simulation ne part pas en production (#84) : dans le code de l'app (`CoproFirst/`),
+"""La simulation ne part pas en production (#84) : dans le code de l'app (ses quatre cibles, `portee.CODE`),
 tout ce qui nomme la simulation — `ServiceSimule`, ses magasins, ses jeux de données
 (`Fixtures…`), l'argument `-api-simulee` — se trouve dans un bloc `#if DEBUG`.
 
@@ -23,6 +23,8 @@ import sys
 from pathlib import Path
 
 RACINE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 # `simul` couvre ServiceSimule, MagasinSimuleCS, AccesSimules, profilSimule,
 # -api-simulee… ; `Fixtures` les jeux de données servis par la simulation. Le
 # `simultaneousGesture` de SwiftUI n'est pas la simulation (#119).
@@ -105,7 +107,7 @@ def main() -> int:
     if "--autotest" in sys.argv[1:]:
         return 0 if autotest() else 1
     sortie = subprocess.run(
-        ["git", "ls-files", "--cached", "CoproFirst"], cwd=RACINE, capture_output=True, text=True)
+        ["git", "ls-files", "--cached", *portee.CODE], cwd=RACINE, capture_output=True, text=True)
     fichiers = [f for f in sortie.stdout.splitlines() if f.endswith(".swift")]
     if sortie.returncode != 0 or not fichiers:
         print("❓ INCONNU : aucun fichier Swift de l'app lu")
