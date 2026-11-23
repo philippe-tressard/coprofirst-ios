@@ -40,6 +40,7 @@
 
 # Écrit à chaque génération et à chaque passage, jamais versionné (#328).
 /CoproFirstUITests/EmpreinteSources.swift
+/CoproFirst/Donnees/EmpreinteApp.swift
 
 # 3. Exclus PARTOUT, même dans un dossier ré-inclus
 # Produits de build et réglages personnels d'Xcode
