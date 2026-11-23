@@ -10,7 +10,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 # Patterns d'interface — leur traduction iOS
 
-> Squelette posé à l'amorce (01/11/2026). **La source est la skill `ux-patterns` de
+> **La source est la skill `ux-patterns` de
 > coprofirst** (`.claude/skills/ux-patterns/SKILL.md` et `ARBITRAGES.md`, lus en
 > lecture seule — `standards/08` §9 bis). Cette skill ne recopie ni ses règles ni ses
 > arbitrages : elle dit **comment chacun se rend en SwiftUI**. Un arbitrage de
@@ -31,7 +31,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Pattern de coprofirst | Rendu iOS |
 |---|---|
 | **Une entité, quatre rendus** (Affichage, Création, Édition, Évolution) | Affichage : écran poussé dans la `NavigationStack` ; Création et Édition : feuille (`.sheet`) à `Form` ; Évolution : entrée de l'Historique, ajoutée par « Ajouter une suite » |
-| **Ordre des sections** | lu dans `front/src/lib/entites/types.ts` de coprofirst (`SECTIONS_ORDRE`) — à **générer**, comme les couleurs, jamais recopié |
+| **Ordre des sections** | **généré** depuis le cadre de l'affaire de coprofirst (`TICKET`, `front/src/lib/entites/ticket.ts`) par `scripts/generateurs/saisie_affaire.py`, comme les couleurs, jamais recopié |
 | **Pliage** : obligatoire → déplié, facultatif → plié ; une valeur autre que le défaut rouvre | `DisclosureGroup` dont l'état initial se **calcule** de la même règle |
 | **Saisie Essentielle ou Complète** (coprofirst#2595) : en Essentielle, ce qui n'est pas essentiel pour la catégorie se range dans « Plus de détails », en fin de formulaire ; une section éteinte n'y entre pas | le mode se **lit** (`saisie_affaire_effective`), les sections aussi (`sections_essentielles`) : `FormeDeSaisie` range, ne décide rien (#69) ; la Création et l'Édition la composent par le même initialiseur, et l'Édition l'ouvre composée (#110) |
 | **Archiver, pas supprimer** | geste de balayage « Archiver » dans la liste ; Archives repliées sous la liste ; « Restaurer » sans confirmation |

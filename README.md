@@ -14,10 +14,10 @@ fonctionnalités de l'application web, par étapes.
 
 Ce que l'app sait faire : « Écrans livrés » ci-dessous et
 [`Parite/PARITE.md`](Parite/PARITE.md) ; ce qui manque : les issues ouvertes.
-**L'app est publiée sur l'App Store** — iPhone, gratuite, version 1.0 en ligne depuis le
-14/11/2026 : <https://apps.apple.com/fr/app/coprofirst/id6834326392>. La 1.1 (build 2,
-étiquette `v1.1.0`) est coupée sur `main` le 17/11/2026 et attend sa soumission (#263).
-Les versions suivantes : « Sortir une version ».
+**L'app est publiée sur l'App Store** — iPhone et iPad, gratuite :
+<https://apps.apple.com/fr/app/coprofirst/id6834326392>. La 1.0 y est entrée le
+14/11/2026, la 1.1 (build 2, étiquette `v1.1.0`) le 18/11/2026 (#263) ; `main` prépare
+la suivante. Comment elle sort : « Sortir une version ».
 
 ## Sortir une version
 
@@ -185,8 +185,8 @@ suite écrite par un autre (« ⋯ » de son entrée) et la réponse de l'assist
 Règlement (sous la mention de l'IA). « Masquer ce que publie… », sur une annonce, une
 réponse, un commentaire ou une suite d'un autre résident nommé, cache tout ce qu'il
 publie, pour soi seul, après confirmation ; Profil › Personnes masquées le défait.
-D'une résidence plus ancienne, rien de cela ne s'offre (porte `VersionContrat.moderation`,
-générée avec les routes `/masquages`, au-dessus du plancher).
+Ces routes sont au plancher depuis v3.121.2 (#313) : toute résidence qui s'ouvre les
+sert, aucune porte ne les garde plus.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
@@ -215,8 +215,7 @@ carnet d'entretien, le règlement — et la page choisie à droite (#278) ; la p
 fiche ouvertes s'y retrouvent après un arrêt par iOS ; plié, la barre du bas.
 **Notifications** : la cloche de chaque écran. Sur le téléphone, ne sonne que l'alerte
 d'une actualité marquée urgente par le conseil syndical ou l'administrateur (#283,
-décision du 18/11/2026), et seulement auprès d'une résidence au contrat 2.10.0 au moins :
-l'offre « Être averti sur ce téléphone » (#17) s'ouvre dans la cloche, jamais au lancement,
+décision du 18/11/2026) : l'offre « Être averti sur ce téléphone » (#17) s'ouvre dans la cloche, jamais au lancement,
 et le message ne dit rien de son contenu. Le relais est **éteint** dans l'app
 (`RelaisPush`) tant que le service n'est pas allumé côté serveur (coprofirst#2875, clé
 `.p8` : coprofirst#2494) : d'ici là, ni offre ni enregistrement.

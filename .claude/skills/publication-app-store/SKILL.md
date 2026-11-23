@@ -27,7 +27,7 @@ ni de job qui soumet d'office. `scripts/verifier-depot.sh` refuse ces gestes
 dans `fastlane/` et `.github/workflows/` — la soumission reste un geste manuel,
 fait après le « oui ».
 
-> Squelette posé à l'amorce (01/11/2026). Ce qu'il faut vérifier se lit dans
+> Ce qu'il faut vérifier se lit dans
 > `standards/14` §3 bis ; les **règles d'Apple en vigueur** se relisent avant
 > chaque soumission — cette skill dit où en est CoproFirst-iOS, pas ce qu'Apple exige.
 
@@ -37,13 +37,13 @@ fait après le « oui ».
 |---|---|
 | Compte Apple Developer | ✅ ouvert le 01/11/2026, **au titre de particulier** : le vendeur affiché sur l'App Store est le nom civil du titulaire — il ne s'écrit **pas** dans ce dépôt public |
 | Équipe | `GUX8KASNTG` — pas un secret (elle figure dans chaque app signée) ; `DEVELOPMENT_TEAM` de `project.yml` |
-| Signature | automatique (`CODE_SIGN_STYLE: Automatic`), **au poste seulement** ; la CI ne signe pas (`CODE_SIGNING_ALLOWED=NO` dans `ci.yml`), aucun certificat ni secret Apple dans GitHub |
+| Signature | automatique (`CODE_SIGN_STYLE: Automatic`), **au poste seulement** ; la CI ne signe pas (`CODE_SIGNING_ALLOWED=NO`, passé par les scripts que la CI lance : `tests-simulateur.sh`, `verifier-archive-montre.sh`, `verifier-montre-dependante.sh`), aucun certificat ni secret Apple dans GitHub |
 | Identifiant d'app | `fr.coprofirst.app` — **figé** le 01/11/2026 : c'est un contrat (liens universels `GUX8KASNTG.fr.coprofirst.app`, APNs, App Store Connect) |
 | Exception App Store de la licence | ✅ posée au premier commit (`LICENSES/LicenseRef-CoproFirst-AppStore.txt`) |
 | Icône | ✅ rendue du logo du site (`scripts/importer-logo.sh`), 1024 px opaque ; licence `LicenseRef-CoproFirst-Logo`, qui couvre l'app publiée par son auteur (coprofirst#2474) ; `verifier-logo.sh` en CI |
-| Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; la liste des domaines et l'ouverture dans l'app : #18 |
-| Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive). Côté app livré par #17 : autorisation demandée dans la cloche, jamais au lancement ; appareil enregistré à l'ouverture d'une résidence, retiré à la déconnexion (`Fonctions/Notifications/Push/`). Droit `time-sensitive` (avis urgents, décision du 03/11/2026) ajouté par #17 ; capacité « Time Sensitive Notifications » **acceptée par Philippe le 11/11/2026**, enregistrée au compte à la prochaine compilation signée au poste. Réception réelle **INCONNUE** tant que le relais (coprofirst#2494) n'a pas sa clé `.p8`. Depuis #283 : seule l'alerte d'une actualité urgente sonne (résidence au contrat 2.10.0 au moins), et l'app tient le relais éteint (`RelaisPush`) jusqu'à l'allumage du service (coprofirst#2875) |
-| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; **saisis** dans App Store Connect par Philippe pour la 1.0 (voir « Fiche » plus bas), à tenir à jour à chaque version. La consultation hors ligne (#101) garde la dernière lecture **sur l'appareil** : rien ne part, la déclaration ne change pas, mais la fiche (§3) et la politique de confidentialité du site le disent |
+| Liens universels | capacité Associated Domains enregistrée le 10/11/2026 (droits dans `project.yml`) ; l'AASA est servi (coprofirst#2459) ; l'ouverture dans l'app est codée ; la liste des domaines (`project.yml`) n'est pas arrêtée — #18 clos pour abandon le 17/11/2026 |
+| Push APNs | capacité Push enregistrée le 10/11/2026 (`aps-environment` dans `project.yml`, `production` à l'archive). Côté app livré par #17 : autorisation demandée dans la cloche, jamais au lancement ; appareil enregistré à l'ouverture d'une résidence, retiré à la déconnexion (`Fonctions/Notifications/Push/`). Droit `time-sensitive` (avis urgents, décision du 03/11/2026) ajouté par #17 ; capacité « Time Sensitive Notifications » **acceptée par Philippe le 11/11/2026**, enregistrée au compte à la prochaine compilation signée au poste. Réception réelle **INCONNUE** tant que le relais (coprofirst#2494) n'a pas sa clé `.p8`. Depuis #283 : seule l'alerte d'une actualité urgente sonne, et l'app tient le relais éteint (`RelaisPush`) jusqu'à l'allumage du service (coprofirst#2875) |
+| Confidentialité | manifeste embarqué (`CoproFirst/PrivacyInfo.xcprivacy`) et texte de la fiche prêts le 11/11/2026 (#19) : [`confidentialite.md`](confidentialite.md), tenus au code par `scripts/verifier-confidentialite.py` ; **saisis** dans App Store Connect par Philippe pour la 1.0, puis pour la 1.1 (*Product Interaction*, Analytics, #199), à tenir à jour à chaque version. La consultation hors ligne (#101) garde la dernière lecture **sur l'appareil** : rien ne part, la déclaration ne change pas, mais la fiche (§3) et la politique de confidentialité du site le disent |
 
 ## Ce qui reste un geste de Philippe
 
@@ -63,14 +63,19 @@ fait après le « oui ».
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
   la CI la lit, personne ne la voit passer.
 
-## État au 14/11/2026 — la version 1.0 est publiée
+## Les versions publiées
 
-**CoproFirst 1.0 (build 1) est en ligne dans l'App Store français** (approuvée par la revue
-le 14/11/2026 à 00:27, mise en ligne le 13/11 à 23:26 UTC) :
-<https://apps.apple.com/fr/app/coprofirst/id6834326392>. Se relit sans compte :
-`curl "https://itunes.apple.com/lookup?bundleId=fr.coprofirst.app&country=fr"`.
+Chaque version soumise porte son étiquette `vX.Y.Z` ; celle qui est en ligne se relit sans
+compte, jamais ici : `curl "https://itunes.apple.com/lookup?bundleId=fr.coprofirst.app&country=fr"`
+(<https://apps.apple.com/fr/app/coprofirst/id6834326392>).
 
-Fait pour cette première version, à ne pas refaire — et à reprendre pour la suivante :
+- **1.0** (build 1, `v1.0.0`) : approuvée le 14/11/2026 à 00:27, en ligne le 13/11 à 23:26 UTC.
+- **1.1** (build 2, `v1.1.0`) : en ligne le 18/11/2026 (#263), iPhone et iPad (#219).
+
+`main` avance ensuite sous le dernier numéro : la version suivante monte
+`MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` (`project.yml`).
+
+Fait pour la 1.0, à ne pas refaire — et à reprendre pour chaque version :
 
 | Sujet | Ce qui a été fait, et ce qu'il faut savoir |
 |---|---|
@@ -78,7 +83,7 @@ Fait pour cette première version, à ne pas refaire — et à reprendre pour la
 | **Contrôler l'app construite, pas `project.yml`** | Le 12/11/2026, l'archive Release sortait **iPhone et iPad** (XcodeGen posait `1,2` sur la cible) et une version écrite en dur. `ConformiteAppStoreTests` lit le plist de l'app construite ; relire aussi `codesign -d --entitlements` et la présence des symboles de simulation (aucun). |
 | **Jouer le geste exigé par la revue** | La feuille « Supprimer mon compte » **ne s'ouvrait pas** (attachée à la `Section` d'une `List`) et aucun test ne le voyait. `SuppressionCompteUITests` joue le parcours. Toute règle d'Apple qui demande un geste dans l'app se joue **à l'écran** avant l'envoi. |
 | **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). Pas d'iPhone Duo (#119). |
-| **Fiche** | Textes, notes de revue (`notes-revue.md`), compte de démonstration `user-copro@demo.coprofirst.fr`, confidentialité (`confidentialite.md`, 8 types, tous « Fonctionnement de l'app », liés à l'identité, sans suivi), classification **4+** (contenu généré par les utilisateurs : Oui ; réseaux sociaux et messagerie : Non), gratuite, 175 pays, **Mac et Vision décochés**. |
+| **Fiche** | Textes, notes de revue (`notes-revue.md`), compte de démonstration `user-copro@demo.coprofirst.fr`, confidentialité (à la 1.0 : 8 types, tous « Fonctionnement de l'app », liés à l'identité, sans suivi ; depuis la 1.1, ce que dit `confidentialite.md` §5), classification **4+** (contenu généré par les utilisateurs : Oui ; réseaux sociaux et messagerie : Non), gratuite, 175 pays, **Mac et Vision décochés**. |
 | **Publication** | Le choix « manuelle » du 13/11 n'a **pas** tenu : l'app est sortie dès l'approbation. **Vérifier le bouton radio avant « Ajouter pour vérification »** si l'on veut garder la main. |
 | **UE (DSA)** | Statut **non-commerçant** déclaré le 13/11/2026 (Business › Conformité) : app gratuite, libre, à titre personnel. À revoir si l'offre hébergée payante démarre — ticket #194. |
 
@@ -100,13 +105,16 @@ nommément par `--confirme`. La liste fait foi dans le script
 l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
 soumission reste le geste de Philippe.
 
-## À faire avant la première soumission (historique : tout est livré ou noté ci-dessus)
+## La première soumission — historique (1.0, 13/11/2026)
+
+Tout ce qui suit a été fait pour la 1.0 ; ce qui reste à rejouer à chaque version est
+dit sur la ligne.
 
 - [x] Manifeste de confidentialité, et texte de la fiche confronté à ce que l'app **et
       chaque paquet** transmettent : [`confidentialite.md`](confidentialite.md) (#19).
-- [ ] Politique de confidentialité (URL) et étiquettes « App Privacy » **saisies** dans
-      App Store Connect par Philippe, à partir de ce fichier (§9) — après avoir relu les
-      règles d'Apple en vigueur.
+- [x] Politique de confidentialité (URL) et étiquettes « App Privacy » **saisies** dans
+      App Store Connect par Philippe (1.0, puis 1.1), à partir de `confidentialite.md` §9 —
+      à relire contre les règles d'Apple en vigueur à chaque version.
 - [x] Suppression du compte **dans l'app** : une DEMANDE lancée depuis le Profil, traitée
       par l'admin de la résidence sous un délai annoncé (arbitrage de Philippe, 12/11/2026) —
       livrée par #166 (PR #182), route coprofirst#2699 en production. **À rejouer sur la
@@ -115,12 +123,14 @@ soumission reste le geste de Philippe.
       du compte comprise (à relire contre l'app de la version soumise). Il dit que la communauté est fermée (comptes validés par la résidence),
       que tout contenu se signale au conseil syndical, qui modère, la réponse de l'IA
       comprise, et qu'un résident peut masquer ce que publie un autre (#286, décision du
-      17/11/2026, qui remplace l'arbitrage du 12/11 de #167). Ces gestes sont au-dessus du
-      plancher : **la démo doit servir le contrat 2.9.0 (v3.118.0) avant la soumission**.
+      17/11/2026, qui remplace l'arbitrage du 12/11 de #167). Ces gestes sont au plancher
+      depuis v3.121.2 (#313) : toute résidence qui s'ouvre les sert.
 - [x] Texte et avis d'Apache-2.0 des paquets embarqués dans « À propos » (#168), tenus par
       `scripts/verifier-dependances.py`.
-- [ ] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception).
-- [ ] Compte de démonstration pour la revue, sur `demo.coprofirst.fr`, sans donnée réelle.
+- [x] Accès au code source depuis l'interface (AGPL §13, condition 3 b de l'exception) :
+      À propos › « Code source de l'app » (`Fonctions/APropos/AProposView.swift`).
+- [x] Compte de démonstration pour la revue, sur `demo.coprofirst.fr`, sans donnée réelle
+      (`user-copro@demo.coprofirst.fr`, « Fiche » plus haut).
 - [ ] Aucune donnée personnelle dans une charge de notification — côté app, tenu
       (#17 : l'app ne lit que l'abonnement opaque `a`, le jeton ne s'écrit nulle part) ;
       la charge est composée par le relais (coprofirst#2494), à vérifier à sa mise en route.
