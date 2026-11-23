@@ -91,6 +91,7 @@ OS_CI=$(sed -n 's/^OS_SIMULATEUR_CI=//p' outillage.env 2>/dev/null)
 # En CI, le système déclaré, jamais celui que l'image du runner met en tête (#287).
 [ "${GITHUB_ACTIONS:-}" != true ] || OS_SIMULATEUR=${OS_SIMULATEUR:-ci}
 A_ETEINDRE=""
+DEBUT_JOURNAL=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
 source scripts/verrou-simulateur.sh
 
@@ -134,6 +135,34 @@ demarrer_simulateur() {
     return 1
   fi
   echo "Simulateur $udid démarré avant le build ($(date -u +%H:%M:%S) UTC)."
+}
+
+# Les apps du projet installées sur ce simulateur (identifiants `fr.coprofirst.app…`). Sortie 2
+# si la liste ne se lit pas : une liste vide ne prouverait rien.
+nos_apps() {
+  local liste
+  liste=$("$XCRUN" simctl listapps "$1" 2>/dev/null) && grep -q 'CFBundleIdentifier' <<< "$liste" || return 2
+  # Aucune des nôtres : grep sort en 1, ce qui n'est pas une erreur (pipefail).
+  { grep -oE 'CFBundleIdentifier = "?fr\.coprofirst\.app[A-Za-z0-9.-]*' <<< "$liste" || true; } \
+    | sed -E 's/.*= "?//' | sort -u
+}
+
+# Ni l'app ni le runner d'un passage d'avant : désinstallés, ils s'installent EN ENTIER (#328).
+# Installés par-dessus, le simulateur les met à jour par un patch différentiel (« Delta patch
+# update … from 1 (1.0) to 1 (1.0) ») : au poste, le 23/11/2026, le binaire du passage d'avant
+# a joué 3 fois sur 7 ainsi, 0 sur 4 désinstallés. INCONNU (2) s'il en reste un.
+desinstaller() {
+  local udid=${DESTINATION##*id=} ids id
+  if ! ids=$(nos_apps "$udid"); then
+    echo "❌ simulateur $udid : ses apps ne se lisent pas (simctl listapps) — INCONNU, aucun test joué." >&2
+    return 2
+  fi
+  for id in $ids; do "$XCRUN" simctl uninstall "$udid" "$id" > /dev/null 2>&1; done
+  if ! ids=$(nos_apps "$udid") || [ -n "$ids" ]; then
+    echo "❌ simulateur $udid : encore installé(s) après simctl uninstall : ${ids:-liste illisible} — INCONNU, aucun test joué." >&2
+    return 2
+  fi
+  echo "Installation : complète, rien d'un passage d'avant (#328)."
 }
 
 # Un fichier de test que le projet ne référence pas ne se compile pas : ses tests ne
@@ -234,6 +263,23 @@ binaire_joue() {
   code=$?
   echo "Binaire joué : $motif" >> "$RESUME"
   [ "$code" -eq 0 ] || echo "::error title=Binaire joué (#328)::$motif" >&2
+  [ "$code" -eq 0 ] || return "$code"
+  app_jouee "$1"
+}
+
+# L'APP jouée est-elle celle du source ? En Debug, elle dit son empreinte au journal du
+# simulateur à chaque lancement (#328) : sans elle, un correctif ou un mutant de l'app se
+# jugeait sur l'app d'avant. iPhone et iPad seuls : l'Apple TV et la montre ont la leur.
+app_jouee() {
+  case "${APPAREIL:-iphone}" in iphone | ipad) ;; *) return 0 ;; esac
+  local motif code
+  "$XCRUN" simctl spawn "${DESTINATION##*id=}" log show --start "$DEBUT_JOURNAL" --style compact \
+    --predicate 'process == "CoproFirst" AND eventMessage BEGINSWITH "Empreinte de l'"'"'app jouée"' \
+    > "$RESULTATS/empreinte-app.log" 2>&1
+  motif=$(python3 -I scripts/empreinte_tests.py verifier-app "$RESULTATS/empreinte-app.log" "$1")
+  code=$?
+  echo "App jouée : $motif" >> "$RESUME"
+  [ "$code" -eq 0 ] || echo "::error title=App jouée (#328)::$motif" >&2
   return "$code"
 }
 
@@ -294,6 +340,10 @@ jouer_passage() {
   fi
   echo "Destination : $DESTINATION"
   demarrer_simulateur || return 1
+  desinstaller | tee -a "$RESUME"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
+  # Le journal du simulateur, lu depuis ce point : l'app y dira son empreinte (#328).
+  DEBUT_JOURNAL=$(date '+%Y-%m-%d %H:%M:%S')
   local communs=(
     -project "$PROJET" -scheme "$SCHEMA" -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation

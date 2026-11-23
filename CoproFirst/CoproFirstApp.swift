@@ -11,6 +11,9 @@ struct CoproFirstApp: App {
     @State private var vitrine: Vitrine
 
     init() {
+        #if DEBUG
+        LancementSimule.direLEmpreinte()
+        #endif
         let arguments = ProcessInfo.processInfo.arguments
         _parcours = State(initialValue: Lancement.parcours(arguments))
         _vitrine = State(initialValue: Lancement.vitrine(arguments))

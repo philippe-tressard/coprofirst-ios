@@ -339,3 +339,15 @@ seule la CI le dit.
    branche donne à la page une autre identité ; quand l'état change, la page se recrée,
    avec ses `@State`, ses `onAppear` et ses `onDisappear`. Un seul modificateur, avec une
    valeur calculée (`TitreDeMenu.mode`).
+8. **Le binaire joué n'est pas toujours celui du build** (#328) : réinstallés par-dessus
+   eux-mêmes, l'app et le runner des tests sont mis à jour par un **patch différentiel**
+   du simulateur (« Delta patch update … from 1 (1.0) to 1 (1.0) »). Le 23/11/2026, au
+   poste, le binaire du passage précédent a joué 3 fois sur 7 ainsi : build juste, app
+   d'avant jouée. `scripts/tests-simulateur.sh` désinstalle donc l'app et le runner AVANT
+   chaque passage (INCONNU s'il en reste un), et prouve ce qui a joué : l'empreinte des
+   tests, imprimée par le runner, et celle de l'app, dite en Debug au journal du
+   simulateur (`LancementSimule.direLEmpreinte`) — `scripts/empreinte_tests.py`, INCONNU
+   sinon. Un `xcodebuild test` lancé à la main ne prouve rien de tel : passer par le
+   script, ou `xcrun simctl uninstall <udid> fr.coprofirst.app` (et
+   `fr.coprofirst.app.uitests.xctrunner`) avant, et ne rien conclure d'un mutant qui n'a
+   pas rougi sans avoir vu son empreinte.

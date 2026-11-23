@@ -228,5 +228,12 @@ enum LancementSimule {
     static func argument(_ nom: String, _ arguments: [String]) -> String? {
         arguments.firstIndex(of: nom).flatMap { arguments.indices.contains($0 + 1) ? arguments[$0 + 1] : nil }
     }
+
+    /// L'empreinte des sources de l'app (`EmpreinteApp`, écrite par `scripts/empreinte_tests.py`),
+    /// dite au journal du simulateur à chaque lancement : `scripts/tests-simulateur.sh` y prouve
+    /// que l'app JOUÉE est celle du source, INCONNU sinon (#328).
+    static func direLEmpreinte() {
+        NSLog("Empreinte de l'app jouée : %@", EmpreinteApp.valeur)
+    }
 }
 #endif

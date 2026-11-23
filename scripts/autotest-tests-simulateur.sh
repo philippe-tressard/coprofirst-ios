@@ -47,6 +47,16 @@ case "$1" in
         if [ "${4:-}" = -j ]; then cat "$FAUX_DOSSIER/liste.json" 2>/dev/null; exit 0; fi
         [ ! -f "$FAUX_DOSSIER/deja-demarre" ] || echo "    iPhone (X) (Booted)" ;;
       bootstatus) [ ! -f "$FAUX_DOSSIER/demarrage-rate" ] || exit 1 ;;
+      # Les apps installées (#328) : une d'Apple, et celles du projet que l'essai pose.
+      listapps)
+        [ ! -f "$FAUX_DOSSIER/listapps-ratee" ] || exit 1
+        echo '        CFBundleIdentifier = "com.apple.Bridge";'
+        sed 's/.*/        CFBundleIdentifier = "&";/' "$FAUX_DOSSIER/installees" 2>/dev/null ;;
+      uninstall)
+        [ -f "$FAUX_DOSSIER/desinstallation-ratee" ] || [ ! -f "$FAUX_DOSSIER/installees" ] \
+          || { grep -vx "$4" "$FAUX_DOSSIER/installees" > "$FAUX_DOSSIER/reste"; mv "$FAUX_DOSSIER/reste" "$FAUX_DOSSIER/installees"; } ;;
+      # Le journal du simulateur : l'empreinte que l'app y a dite (#328).
+      spawn) cat "$FAUX_DOSSIER/journal-app" 2>/dev/null ;;
     esac
     exit 0 ;;
   xcresulttool)
@@ -115,8 +125,11 @@ FAUX
   rm -f "$d/liste.json"
   # Le binaire JOUÉ doit être celui du source (#328) : son empreinte compilée, imprimée au
   # chargement du paquet, contre celle des sources. Périmé ou muet : INCONNU, jamais vert.
-  local suite="Test Suite 'CoproFirstUITests.xctest' started" juste
+  local suite="Test Suite 'CoproFirstUITests.xctest' started" juste juste_app
   juste=$(python3 -I scripts/empreinte_tests.py ecrire)
+  # L'app dit la sienne au journal du simulateur, juste par défaut (#328).
+  juste_app=$(sed -n 's/.*valeur = "\([0-9a-f]*\)".*/\1/p' CoproFirst/Donnees/EmpreinteApp.swift)
+  echo "CoproFirst: Empreinte de l'app jouée : $juste_app" > "$d/journal-app"
   journal_essai="$suite"$'\n'"Empreinte des tests jouée : $juste"
   scenario "binaire joué = source : vert" 0 "$vert" 0 0 non
   grep -q "^Binaire joué : celui du source (empreinte $juste)" "$d/resume.md" \
@@ -135,7 +148,30 @@ FAUX
   journal_essai="$suite"$'\n'"Empreinte des tests jouée : $juste"
   scenario "rouge sur le binaire du source : rouge" 65 \
     '{"result":"Failed","failedTests":1,"testFailures":['"$assertion"']}' 0 65 non
+  # L'APP jouée aussi (#328) : périmée ou muette, INCONNU ; celle du source se dit au résumé.
+  scenario "app jouée = source : vert" 0 "$vert" 0 0 non
+  grep -q "^App jouée : celle du source (empreinte $juste_app)" "$d/resume.md" \
+    || { echo "❌ l'app jouée ne se dit pas au résumé"; rate=$((rate + 1)); }
+  echo "CoproFirst: Empreinte de l'app jouée : 0123456789abcdef" > "$d/journal-app"
+  scenario "app périmée : INCONNU" 0 "$vert" 0 2 non
+  : > "$d/journal-app"
+  scenario "app muette : INCONNU" 0 "$vert" 0 2 non
+  echo "CoproFirst: Empreinte de l'app jouée : $juste_app" > "$d/journal-app"
   journal_essai=""
+  # Ni l'app ni le runner d'un passage d'avant (#328) : désinstallés AVANT le build ; s'il
+  # en reste un, ou si la liste ne se lit pas, INCONNU et rien ne se joue.
+  printf 'fr.coprofirst.app\nfr.coprofirst.app.uitests.xctrunner\n' > "$d/installees"
+  scenario "apps d'avant désinstallées : vert" 0 "$vert" 0 0 non
+  [ "$(sed -n '/^simctl uninstall/p; /^test /q' "$d/appels" | grep -c '^simctl uninstall X fr\.coprofirst\.app')" = 2 ] \
+    || { echo "❌ l'app et le runner ne sont pas désinstallés avant le build"; rate=$((rate + 1)); }
+  printf 'fr.coprofirst.app\n' > "$d/installees"
+  touch "$d/desinstallation-ratee"
+  scenario "désinstallation ratée : INCONNU" 0 "$vert" 0 2 non
+  ! grep -q '^test ' "$d/appels" || { echo "❌ un passage joue malgré une app restée"; rate=$((rate + 1)); }
+  rm -f "$d/desinstallation-ratee" "$d/installees"
+  touch "$d/listapps-ratee"
+  scenario "apps illisibles : INCONNU" 0 "$vert" 0 2 non
+  rm -f "$d/listapps-ratee"
   # Le poste gardé éveillé, et sa veille dite au résumé quand même (#322) ; en CI, rien.
   if grep -q 'Veille du poste' "$d/resume.md" || [ -f "$d/cafeine-appels" ]; then
     echo "❌ la veille du poste se lit, ou caffeinate se lance, en CI"; rate=$((rate + 1))
@@ -223,10 +259,13 @@ FAUX
   # Le simulateur se démarre AVANT le build et les tests (#48) ; non confirmé, rien ne joue.
   # Avant de le démarrer, son état se lit : un passage n'éteint que ce qu'il a démarré.
   scenario "vert d'emblée, démarrage d'abord" 0 "$vert" 0 0 non
-  # La lecture du système (`simctl list devices -j`, #287) ne compte pas dans l'ordre.
-  if [ "$(grep -v ' -j$' "$d/appels" | sed -n 1p)" != "simctl list devices booted" ] \
-      || [ "$(grep -v ' -j$' "$d/appels" | sed -n 2p)" != "simctl bootstatus X -b" ] \
-      || ! grep -v ' -j$' "$d/appels" | sed -n 3p | grep -q '^test '; then
+  # La lecture du système (`simctl list devices -j`, #287) ne compte pas dans l'ordre, ni la
+  # désinstallation (#328), éprouvée à part.
+  local ordre
+  ordre=$(grep -vE ' -j$|^simctl (listapps|uninstall) ' "$d/appels")
+  if [ "$(sed -n 1p <<< "$ordre")" != "simctl list devices booted" ] \
+      || [ "$(sed -n 2p <<< "$ordre")" != "simctl bootstatus X -b" ] \
+      || ! sed -n 3p <<< "$ordre" | grep -q '^test '; then
     echo "❌ le simulateur n'est pas démarré avant le build et les tests"; rate=$((rate + 1))
   fi
   touch "$d/demarrage-rate"
