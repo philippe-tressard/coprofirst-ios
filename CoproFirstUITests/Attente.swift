@@ -295,6 +295,27 @@ extension XCUIApplication {
         XCTContext.runActivity(named: trace) { _ in }
     }
 
+    /// DÉPLIER un en-tête posé par `.depliage(…)` (#384) : le toucher, puis attendre son ÉTAT —
+    /// sa valeur d'accessibilité, « déplié » (ou « dépliée »). Un toucher perdu sous charge ne
+    /// change pas l'état (PrestatairesUITests sur #383 : l'exercice touché, jamais ouvert) : il
+    /// est rejoué au plus `Attente.reprises` fois, chaque reprise au journal, et seulement à état
+    /// inchangé — un dépliage touché deux fois se refermerait. Déjà déplié : rien n'est touché.
+    @MainActor
+    func deplier(_ entete: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(entete.apparait(), "à déplier : \(entete) absent", file: file, line: line)
+        let deplie = "value BEGINSWITH 'dépli'"
+        if (entete.value as? String)?.hasPrefix("dépli") == true { return }
+        toucher(entete, essais: essais, file: file, line: line)
+        for reprise in 1...Attente.reprises {
+            if entete.attendre(deplie, pendant: Attente.effet) { return }
+            tracerReprise("toucher", reprise, entete, "la valeur « déplié »")
+            toucher(entete, essais: essais, file: file, line: line)
+        }
+        XCTAssertTrue(
+            entete.attendre(deplie), "dépliage de \(entete) sans effet (valeur « \(entete.value ?? "?") »)",
+            file: file, line: line)
+    }
+
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
     /// qu'XCUITest ajoute avant `tap()` sur un élément caché (#47) : une fois son cadre
     /// immobile (le clavier et la mise en page bougeaient encore, #183, ex-#270) et son centre

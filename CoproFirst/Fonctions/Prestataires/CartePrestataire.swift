@@ -40,7 +40,7 @@ struct CartePrestataire: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint(deplie ? "Replie la fiche" : "Déplie la fiche")
+                .depliage(ouvert: deplie, deplier: "Déplie la fiche", replier: "Replie la fiche")
                 .accessibilityIdentifier("prestataire.\(prestataire.id)")
                 capsules(contrats: contrats)
                 if !compact || deplie { apercuContacts }

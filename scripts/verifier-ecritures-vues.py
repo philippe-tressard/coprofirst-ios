@@ -18,7 +18,10 @@ Les règles qu'elle énonce et que rien ne tenait (audit du 23/11/2026) :
 - **recopies** (#348) : un lien `mailto:` ou `tel:` se forme par `LienDeContact` ; le chemin
   d'une affaire se lit dans la table générée (`CheminDuSite.affaires`), jamais `"/tickets…"`
   écrit ; une feuille de saisie se pose dans `FeuilleDeSaisie`, jamais son squelette recopié
-  (la phrase d'erreur en tête de formulaire en est la signature).
+  (la phrase d'erreur en tête de formulaire en est la signature) ;
+- **dépliages** (#384) : un en-tête qui déplie dit son état et son indication par
+  `.depliage(…)` — jamais une indication « Déplie… / Replie… » écrite sur place, sans l'état
+  que les tests d'interface lisent (`deplier(_:)`).
 
 Une divergence légitime se déclare dans `EXCEPTIONS` : le fichier, la règle, le NOMBRE de lignes
 qu'elle couvre et sa raison. Une ligne de plus est refusée ; une de moins aussi — l'exception
@@ -73,6 +76,11 @@ REGLES: dict[str, tuple[re.Pattern[str], str, str]] = {
         re.compile(r"MessageErreur\(texte: erreur\)\.listRowInsets"),
         "CoproFirst/Commun/Composants/FeuilleDeSaisie.swift",
         "par FeuilleDeSaisie(titre:erreur:) { … } barre: { BoutonsFeuille(…) }",
+    ),
+    "depliages": (
+        re.compile(r"accessibilityHint\([^)]*(?:\"(?:Déplie|Replie)|\.(?:deplier|replier)\b)"),
+        "CoproFirst/Commun/Composants/Depliage.swift",
+        "par .depliage(ouvert:deplier:replier:) — l'état en valeur, que deplier(_:) lit",
     ),
 }
 
@@ -178,6 +186,9 @@ def autotest() -> bool:
         ("CoproFirst/V.swift", 'static let routeAffaires = "/tickets"'): {"chemins"},
         ("CoproFirst/V.swift", 'Text("Mes tickets")'): set(),
         ("CoproFirst/V.swift", "Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }"): {"feuilles"},
+        ("CoproFirst/V.swift", '.accessibilityHint(ouvert ? "Replie l\'exercice" : "Déplie l\'exercice")'): {"depliages"},
+        ("CoproFirst/V.swift", ".accessibilityHint(ouvert ? Textes.replier : Textes.deplier)"): {"depliages"},
+        ("CoproFirst/V.swift", '.accessibilityHint("Ouvre la fiche")'): set(),
         ("CoproFirst/V.swift", "    // Text(n, format: .number) en commentaire"): set(),
         ("CoproFirst/M/Genere/T.swift", "Text(n, format: .number)"): set(),
     }
@@ -207,7 +218,7 @@ def main() -> int:
         print(ligne)
     if refus:
         return 1
-    print(f"✅ formats, mesures, lectures, contacts, chemins et feuilles par leur point commun ({lus} fichiers, {len(EXCEPTIONS)} exceptions)")
+    print(f"✅ formats, mesures, lectures, contacts, chemins, feuilles et dépliages par leur point commun ({lus} fichiers, {len(EXCEPTIONS)} exceptions)")
     return 0
 
 
