@@ -14,7 +14,7 @@ struct LigneResidence: View {
                 .font(.body.weight(.semibold))
                 .foregroundStyle(palette.primary)
                 .frame(width: 40, height: 40)
-                .background(palette.primaryLight, in: .rect(cornerRadius: 10, style: .continuous))
+                .background(palette.primaryLight, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(installation.nom)

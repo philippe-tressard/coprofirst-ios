@@ -84,14 +84,18 @@ struct Installation: Codable, Hashable, Sendable, Identifiable {
     /// le logo lui-même, à la même adresse qu'au clair — aucune requête de plus. Le
     /// plancher sert la variante (contrat 1.15.0) : aucune porte de version (#254).
     ///
-    /// L'adresse est la CLÉ du cache (`LogosEnMemoire`) et de la lecture
-    /// (`ServiceCoproFirst.logo`) : elle s'écrit donc ici, et ici seulement.
-    func adresseLogo(sombre: Bool) -> URL? {
+    /// La demande est la CLÉ du cache (`LogosEnMemoire`) et ce que lit
+    /// `ServiceCoproFirst.logo`, par le client généré (#345) : la règle s'écrit ici seulement.
+    func logo(sombre: Bool) -> LogoDemande? {
         guard aUnLogo else { return nil }
-        let adresse = adresse.appending(path: "api/config/logo.png")
-        guard sombre, aUnLogoSombre == true else { return adresse }
-        return adresse.appending(queryItems: [URLQueryItem(name: "variante", value: "sombre")])
+        return LogoDemande(installation: adresse, sombre: sombre && aUnLogoSombre == true)
     }
+}
+
+/// Le logo d'une installation, au clair ou dans sa variante du fond sombre (#70).
+struct LogoDemande: Hashable, Sendable {
+    let installation: URL
+    let sombre: Bool
 }
 
 extension Installation {

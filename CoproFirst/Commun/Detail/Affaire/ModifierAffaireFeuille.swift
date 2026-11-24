@@ -40,43 +40,32 @@ struct ModifierAffaireFeuille: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                        .listRowBackground(Color.clear)
-                }
-                if affaire.contenuFige {
-                    Section {
-                        Label(Self.contenuFige, systemImage: "lock")
-                            .font(.subheadline)
-                            .foregroundStyle(palette.textMuted)
-                            .elementIdentifie("modifier.contenuFige", lu: Self.contenuFige)
-                    }
-                }
-                ChampsAffaire(
-                    saisie: $saisie, categories: affaire.referentiels.permises(enModifiant: affaire.categorie),
-                    installation: installation, service: parcours.service as? any ServicePerimetres,
-                    prefixe: "modifier",
-                    descriptionFigee: affaire.descriptionSaisie == nil ? affaire.description : nil,
-                    lieuModifiable: affaire.lieuModifiable, contenuFige: affaire.contenuFige, forme: forme)
-                // Ajouter, retirer un prestataire : selon le droit servi seul (#181).
-                if affaire.droits.changerPrestataires {
-                    SectionPrestataires(choisis: $saisie.prestataires, installation: installation)
+        // Le mot du bouton (« Modifier ») : « Modifier l'affaire » se tronquait entre les boutons.
+        FeuilleDeSaisie(titre: "Modifier", erreur: erreur) {
+            if affaire.contenuFige {
+                Section {
+                    Label(Self.contenuFige, systemImage: "lock")
+                        .font(.subheadline)
+                        .foregroundStyle(palette.textMuted)
+                        .elementIdentifie("modifier.contenuFige", lu: Self.contenuFige)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            // Le mot du bouton (« Modifier ») : « Modifier l'affaire » se tronquait entre les boutons.
-            .navigationTitle("Modifier")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(
-                    envoi: envoi, actif: saisie.prete(depuis: affaire), identifiant: "modifier.enregistrer",
-                    envoyer: envoyer)
+            ChampsAffaire(
+                saisie: $saisie, categories: affaire.referentiels.permises(enModifiant: affaire.categorie),
+                installation: installation, service: parcours.service as? any ServicePerimetres,
+                prefixe: "modifier",
+                descriptionFigee: affaire.descriptionSaisie == nil ? affaire.description : nil,
+                lieuModifiable: affaire.lieuModifiable, contenuFige: affaire.contenuFige, forme: forme)
+            // Ajouter, retirer un prestataire : selon le droit servi seul (#181).
+            if affaire.droits.changerPrestataires {
+                SectionPrestataires(choisis: $saisie.prestataires, installation: installation)
             }
-            .interactiveDismissDisabled(!saisie.edition(depuis: affaire).vide)
+        } barre: {
+            BoutonsFeuille(
+                envoi: envoi, actif: saisie.prete(depuis: affaire), identifiant: "modifier.enregistrer",
+                envoyer: envoyer)
         }
+        .interactiveDismissDisabled(!saisie.edition(depuis: affaire).vide)
     }
 
     /// Le refus que le serveur opposerait (« Modification impossible : le ticket n'est

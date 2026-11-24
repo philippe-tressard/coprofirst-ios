@@ -1,7 +1,10 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
+import HTTPTypes
+import OpenAPIRuntime
 import Testing
 import UIKit
 
@@ -45,25 +48,26 @@ private func installation(logo: Bool = true, sombre: Bool? = true, contrat: Stri
         versionContrat: contrat, aUnLogoSombre: sombre)
 }
 
-private let logoClair = "https://residence.example.com/api/config/logo.png"
-private let logoSombre = "https://residence.example.com/api/config/logo.png?variante=sombre"
+private let residenceTest = URL(string: "https://residence.example.com")!
+private let logoClair = LogoDemande(installation: residenceTest, sombre: false)
+private let logoSombre = LogoDemande(installation: residenceTest, sombre: true)
 
 /// Le plancher sert la variante (contrat 1.15.0) : seule la variante TÉLÉVERSÉE décide,
 /// plus la version — une version illisible ne prive plus le fond sombre de son logo (#254).
 @Test(arguments: ["1.15.0", "2.0.0", VersionContrat.plancher.description, "illisible", nil] as [String?])
 func auSombreLaVarianteTeleverseeSeDemande(_ contrat: String?) {
-    #expect(installation(contrat: contrat).adresseLogo(sombre: true)?.absoluteString == logoSombre)
+    #expect(installation(contrat: contrat).logo(sombre: true) == logoSombre)
 }
 
 @Test func sansVarianteTeleverseeLeLogoResteCeluiDuClair() {
-    #expect(installation(sombre: false, contrat: "1.15.0").adresseLogo(sombre: true)?.absoluteString == logoClair)
-    #expect(installation(sombre: nil, contrat: "1.15.0").adresseLogo(sombre: true)?.absoluteString == logoClair)
+    #expect(installation(sombre: false, contrat: "1.15.0").logo(sombre: true) == logoClair)
+    #expect(installation(sombre: nil, contrat: "1.15.0").logo(sombre: true) == logoClair)
 }
 
 @Test func auClairEtSansLogoRienNeChange() {
-    #expect(installation(contrat: "1.15.0").adresseLogo(sombre: false)?.absoluteString == logoClair)
-    #expect(installation(logo: false, contrat: "1.15.0").adresseLogo(sombre: true) == nil)
-    #expect(installation(logo: false, contrat: "1.15.0").adresseLogo(sombre: false) == nil)
+    #expect(installation(contrat: "1.15.0").logo(sombre: false) == logoClair)
+    #expect(installation(logo: false, contrat: "1.15.0").logo(sombre: true) == nil)
+    #expect(installation(logo: false, contrat: "1.15.0").logo(sombre: false) == nil)
 }
 
 // MARK: - Ce que sert GET /config
@@ -90,20 +94,19 @@ func auSombreLaVarianteTeleverseeSeDemande(_ contrat: String?) {
     let json = #"{"adresse":"https://residence.example.com","nom":"Résidence","aUnLogo":true}"#
     let relue = try JSONDecoder().decode(Installation.self, from: Data(json.utf8))
     #expect(relue.versionContrat == nil && relue.aUnLogoSombre == nil)
-    #expect(relue.adresseLogo(sombre: true)?.absoluteString == logoClair)
+    #expect(relue.logo(sombre: true) == logoClair)
 }
 
 // MARK: - Le cache distingue les deux variantes
 
 /// Compte les lectures, et peut échouer.
 private actor Lectures {
-    var adresses: [URL] = []
+    var adresses: [LogoDemande] = []
     private var enEchec = false
-    func lire(_ adresse: URL) throws -> Data {
-        adresses.append(adresse)
+    func lire(_ demande: LogoDemande) throws -> Data {
+        adresses.append(demande)
         if enEchec { throw ErreurService.injoignable }
-        let sombre = adresse.query()?.contains("variante=sombre") ?? false
-        return ServiceSimule.logoDessine(sombre: sombre)
+        return ServiceSimule.logoDessine(sombre: demande.sombre)
     }
     func echouer(_ oui: Bool) { enEchec = oui }
 }
@@ -112,10 +115,10 @@ private actor Lectures {
 @Test func leCacheGardeLesDeuxVariantesCoteACote() async throws {
     let logos = LogosEnMemoire()
     let lectures = Lectures()
-    let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
+    let lire: @Sendable (LogoDemande) async throws -> Data = { try await lectures.lire($0) }
     let residence = installation(contrat: "1.15.0")
-    let clair = try #require(residence.adresseLogo(sombre: false))
-    let sombre = try #require(residence.adresseLogo(sombre: true))
+    let clair = try #require(residence.logo(sombre: false))
+    let sombre = try #require(residence.logo(sombre: true))
     #expect(clair != sombre)
 
     let imageClaire = await logos.charger(clair, lire: lire)
@@ -135,20 +138,20 @@ private actor Lectures {
     // elle, clair et sombre partagent une adresse, donc une lecture.
     let logos = LogosEnMemoire()
     let lectures = Lectures()
-    let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
+    let lire: @Sendable (LogoDemande) async throws -> Data = { try await lectures.lire($0) }
     let ancienne = installation(sombre: false, contrat: VersionContrat.plancher.description)
     for sombre in [false, true, false, true] {
-        await logos.charger(try #require(ancienne.adresseLogo(sombre: sombre)), lire: lire)
+        await logos.charger(try #require(ancienne.logo(sombre: sombre)), lire: lire)
     }
-    #expect(await lectures.adresses.map(\.absoluteString) == [logoClair])
+    #expect(await lectures.adresses == [logoClair])
 }
 
 @MainActor
 @Test func deuxDemandesSimultaneesNeLisentQuUneFois() async throws {
     let logos = LogosEnMemoire()
     let lectures = Lectures()
-    let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
-    let adresse = try #require(URL(string: logoSombre))
+    let lire: @Sendable (LogoDemande) async throws -> Data = { try await lectures.lire($0) }
+    let adresse = logoSombre
     async let premiere = logos.charger(adresse, lire: lire)
     async let seconde = logos.charger(adresse, lire: lire)
     let (une, autre) = await (premiere, seconde)
@@ -161,8 +164,8 @@ private actor Lectures {
     let logos = LogosEnMemoire()
     let lectures = Lectures()
     await lectures.echouer(true)
-    let lire: @Sendable (URL) async throws -> Data = { try await lectures.lire($0) }
-    let adresse = try #require(URL(string: logoClair))
+    let lire: @Sendable (LogoDemande) async throws -> Data = { try await lectures.lire($0) }
+    let adresse = logoClair
     #expect(await logos.charger(adresse, lire: lire) == nil)
     #expect(logos.image(adresse) == nil)
     await lectures.echouer(false)
@@ -172,10 +175,43 @@ private actor Lectures {
 
 // MARK: - Les deux services lisent le logo
 
+/// Un serveur qui sert une IMAGE à GET /config/logo.png, et note les requêtes reçues.
+private actor RequetesLogo {
+    var recues: [String] = []
+    func noter(_ chemin: String) { recues.append(chemin) }
+}
+
+private struct TransportLogo: ClientTransport {
+    let requetes: RequetesLogo
+    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
+        -> (HTTPResponse, HTTPBody?) {
+        await requetes.noter("\(operationID) \(request.path ?? "")")
+        var reponse = HTTPResponse(status: .ok)
+        reponse.headerFields[.contentType] = "image/png"
+        return (reponse, HTTPBody(ServiceSimule.logoDessine(sombre: request.path?.contains("sombre") ?? false)))
+    }
+}
+
+/// Le logo passe par la route GÉNÉRÉE (#345) : l'image servie se lit malgré le JSON que
+/// déclare le contrat, la variante part en paramètre — et seulement pour le sombre.
+@Test func lApiLitLeLogoParLaRouteGeneree() async throws {
+    let requetes = RequetesLogo()
+    let service = ServiceAPI(transport: { _ in TransportLogo(requetes: requetes) })
+    let clair = try await service.logo(logoClair)
+    let sombre = try await service.logo(logoSombre)
+    #expect(UIImage(data: clair) != nil && UIImage(data: sombre) != nil && clair != sombre)
+    // Le transport reçoit le chemin relatif à l'adresse de l'API (`…/api`, `ClientCoproFirst.adresseAPI`).
+    let attendues = [
+        "\(Operations.GetConfigLogoPng.id) /config/logo.png",
+        "\(Operations.GetConfigLogoPng.id) /config/logo.png?variante=sombre",
+    ]
+    #expect(await requetes.recues == attendues)
+}
+
 @Test func lApiSimuleeSertLesDeuxDessins() async throws {
     let service = ServiceSimule(delai: .zero)
-    let clair = try await service.logo(try #require(URL(string: logoClair)))
-    let sombre = try await service.logo(try #require(URL(string: logoSombre)))
+    let clair = try await service.logo(logoClair)
+    let sombre = try await service.logo(logoSombre)
     #expect(UIImage(data: clair) != nil && UIImage(data: sombre) != nil)
     #expect(clair != sombre)
     let services: [any ServiceCoproFirst] = [ServiceAPI(), service]

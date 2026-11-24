@@ -110,7 +110,7 @@ struct OngletConsommations: View {
                     Button { photo = chemin } label: {
                         PhotoProtegee(chemin: chemin, installation: installation)
                             .frame(width: 64, height: 64)
-                            .clipShape(.rect(cornerRadius: 10, style: .continuous))
+                            .clipShape(.rect(cornerRadius: Mise.rayonTuile, style: .continuous))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(TextesPrestataires.photoDuReleve)

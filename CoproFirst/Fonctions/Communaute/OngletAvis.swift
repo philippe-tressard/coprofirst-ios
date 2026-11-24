@@ -142,7 +142,7 @@ private struct CarteAvis: View {
                     .foregroundStyle(palette.orangeTexte)
                     .padding(10)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(palette.orangeFond, in: .rect(cornerRadius: 10, style: .continuous))
+                    .background(palette.orangeFond, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
             }
             if let reponse = avis.reponse?.nonVide {
                 VStack(alignment: .leading, spacing: 4) {
@@ -154,7 +154,7 @@ private struct CarteAvis: View {
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(palette.infoFond, in: .rect(cornerRadius: 10, style: .continuous))
+                .background(palette.infoFond, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
             }
         }
         .padding(.vertical, 4)

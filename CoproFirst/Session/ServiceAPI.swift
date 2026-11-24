@@ -99,13 +99,21 @@ final class ServiceAPI: ServiceCoproFirst {
     /// et ses lectures passent par LA porte des lectures gardées (#101), la plus
     /// extérieure : elle voit la réponse finale, renouvellement compris.
     func client(_ adresse: URL) -> Client {
-        let renouveler: [any ClientMiddleware] = [garderLesLectures(adresse), renouvelerSurRefus(adresse)]
+        client(adresse, middlewares: [garderLesLectures(adresse), renouvelerSurRefus(adresse)])
+    }
+
+    /// Le client d'une route PUBLIQUE, lue comme une page du site (le logo, #345) : ni
+    /// renouvellement, ni porte des lectures gardées — rien n'en est écrit sur l'appareil,
+    /// et elle part encore pendant une consultation hors ligne.
+    func clientPublic(_ adresse: URL) -> Client { client(adresse, middlewares: []) }
+
+    private func client(_ adresse: URL, middlewares: [any ClientMiddleware]) -> Client {
         if let transport {
             return ClientCoproFirst.client(
-                installation: adresse, transport: transport(adresse), middlewares: renouveler)
+                installation: adresse, transport: transport(adresse), middlewares: middlewares)
         }
         return ClientCoproFirst.client(
-            installation: adresse, session: sessions.session(pour: adresse), middlewares: renouveler)
+            installation: adresse, session: sessions.session(pour: adresse), middlewares: middlewares)
     }
 
     func appeler<T>(_ appel: () async throws -> T) async throws -> T {
