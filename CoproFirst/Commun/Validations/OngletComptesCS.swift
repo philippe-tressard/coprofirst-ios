@@ -123,7 +123,8 @@ extension OngletComptesCS {
             ) { commande in
                 Button(TextesEspaceCS.rejeter, role: .destructive) {
                     contexte.avis.traiter($echec) {
-                        PhraseAvis(texte: try await etat.traiter(commande, accepter: nil, service, contexte.installation))
+                        let annonce = try await etat.traiter(commande, accepter: nil, service, contexte.installation)
+                        return PhraseAvis(texte: annonce)
                     }
                 }
             }
@@ -138,7 +139,8 @@ extension OngletComptesCS {
                 Button(TextesComptesCS.accepter) {
                     let saisis = EtatComptesCS.codes(codes)
                     contexte.avis.traiter($echec) {
-                        PhraseAvis(texte: try await etat.traiter(commande, accepter: saisis, service, contexte.installation))
+                        let annonce = try await etat.traiter(commande, accepter: saisis, service, contexte.installation)
+                        return PhraseAvis(texte: annonce)
                     }
                 }
             } message: { _ in

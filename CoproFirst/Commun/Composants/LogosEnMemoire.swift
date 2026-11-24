@@ -27,7 +27,9 @@ final class LogosEnMemoire {
     /// L'image de cette demande : de la mémoire, sinon lue par `lire` — `nil` si elle
     /// n'a pas pu l'être (réseau, réponse illisible).
     @discardableResult
-    func charger(_ demande: LogoDemande, lire: @escaping @Sendable (LogoDemande) async throws -> Data) async -> UIImage? {
+    func charger(
+        _ demande: LogoDemande, lire: @escaping @Sendable (LogoDemande) async throws -> Data
+    ) async -> UIImage? {
         if let image = images[demande] { return image }
         if let tache = enCours[demande] { return await tache.value }
         let tache = Task { () -> UIImage? in
