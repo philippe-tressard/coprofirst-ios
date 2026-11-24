@@ -23,7 +23,7 @@ echo "  Dépôt/branche : $(git config --get remote.origin.url 2>/dev/null || ec
   && echo "  Hook pre-commit : armé" \
   || echo "  Hook pre-commit : 🔴 NON ARMÉ — git config core.hooksPath .githooks"
 source outillage.env 2>/dev/null
-for outil in xcodegen swiftlint swift-format; do
+for outil in xcodegen swiftlint; do
   command -v "$outil" >/dev/null || echo "  Outillage     : 🔴 $outil absent (brew install $outil)"
 done
 if xcrun simctl list runtimes 2>/dev/null | grep -q '^iOS'; then

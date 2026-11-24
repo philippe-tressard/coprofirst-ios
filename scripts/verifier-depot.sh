@@ -465,6 +465,8 @@ ECRITURES=$(python3 -I scripts/verifier-ecritures-vues.py) || { echo "$ECRITURES
 HOTES=$(python3 -I scripts/verifier-hotes.py) || { echo "$HOTES"; echec "hôte fictif hors des noms réservés"; }
 # Une personne nommée dans le code ou un test est inventée et déclarée (#352, standards/14 §9).
 IDENTITES=$(python3 -I scripts/verifier-identites.py) || { echo "$IDENTITES"; echec "nom de personne hors de la liste blanche"; }
+# Un numéro de téléphone se prend dans la tranche fixe réservée à la fiction, 01 99 00 (#359).
+NUMEROS=$(python3 -I scripts/verifier-numeros.py) || { echo "$NUMEROS"; echec "numéro de téléphone hors de la tranche fictive"; }
 
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
