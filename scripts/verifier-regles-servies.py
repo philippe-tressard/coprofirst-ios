@@ -81,6 +81,10 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
      "`FormatsDuSite.nom(servi:)` : le repli prénom-nom est réservé à l'annuaire (dispensé)"),
     (re.compile(r"\\\([^()]*\bprenom\b[^()]*\) \\\([^()]*\bnom\b"),
      "le nom servi (`nom_affiche`) par `FormatsDuSite.nom(affiche:prenom:nom:)`, jamais un prénom et un nom accolés"),
+    # #378 : la même composition par `joined` d'un tableau (`[auteurPrenom, auteurNom]…joined`),
+    # que le motif de l'interpolation ne voyait pas : `auteur_affiche` est servi.
+    (re.compile(r"\[\s*\w*[Pp]renom\w*\s*,\s*\w*[Nn]om\w*\s*\][^\n]*\.joined\("),
+     "le nom servi (`auteur_affiche`, `nom_affiche`…) par `FormatsDuSite.nom(servi:)`, jamais un prénom et un nom joints"),
     # #136 : « CS ou admin » est SERVI (`est_moderateur`, contrat 1.25.0) ; `rolesCS` n'est
     # plus généré depuis v3.89.0 — la règle reste, garde contre son retour.
     (re.compile(r"\bOngletsDuSite\.rolesCS\b"),
@@ -200,6 +204,7 @@ def autotest() -> int:
         "        ProvisoireAcces.gravites.first { $0.code == constat.gravite }?.teinte",
         "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
         "            deMoi: message.estAuteur ?? (moi != nil && message.auteurId == moi), nom: message.auteurNom,",
+        '        let nom = [auteurPrenom, auteurNom].compactMap { $0 }.joined(separator: " ")',
     ]
     sains = [
         "        TablesAcces.gravites.first { $0.code == constat.gravite }?.teinte",
@@ -224,6 +229,8 @@ def autotest() -> int:
         "                deMoi: servi?.estAuteur ?? false, nom: servi?.auteurNom,",
         "        let ouvre = acces.lieu(arbre: perimetres)",
         "            lieu: LieuServi.lieu(servi?.perimetreLibelle?.valeur))",
+        "        let nom = FormatsDuSite.nom(servi: auteurAffiche)",
+        '        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }',
     ]
     # Les portes : celle sous le plancher refusée, celle au-dessus gardée, le plancher exclu.
     import tempfile
