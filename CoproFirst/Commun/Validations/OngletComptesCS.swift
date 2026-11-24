@@ -108,7 +108,9 @@ extension OngletComptesCS {
                 isPresented: presente($aRejeter), titleVisibility: .visible, presenting: aRejeter
             ) { compte in
                 Button(TextesEspaceCS.rejeter, role: .destructive) {
-                    geste { try await etat.rejeter(compte, service, contexte.installation) }
+                    contexte.avis.traiter($echec) {
+                        PhraseAvis(texte: try await etat.rejeter(compte, service, contexte.installation))
+                    }
                 }
             }
     }
@@ -120,7 +122,9 @@ extension OngletComptesCS {
                 isPresented: presente($aRefuser), titleVisibility: .visible, presenting: aRefuser
             ) { commande in
                 Button(TextesEspaceCS.rejeter, role: .destructive) {
-                    geste { try await etat.traiter(commande, accepter: nil, service, contexte.installation) }
+                    contexte.avis.traiter($echec) {
+                        PhraseAvis(texte: try await etat.traiter(commande, accepter: nil, service, contexte.installation))
+                    }
                 }
             }
             .alert(
@@ -133,24 +137,13 @@ extension OngletComptesCS {
                 Button(TextesEspaceCS.annuler, role: .cancel) {}
                 Button(TextesComptesCS.accepter) {
                     let saisis = EtatComptesCS.codes(codes)
-                    geste { try await etat.traiter(commande, accepter: saisis, service, contexte.installation) }
+                    contexte.avis.traiter($echec) {
+                        PhraseAvis(texte: try await etat.traiter(commande, accepter: saisis, service, contexte.installation))
+                    }
                 }
             } message: { _ in
                 Text(TextesComptesCS.accepterMessage + "\n" + TextesComptesCS.codesLibelle)
             }
-    }
-
-    /// Un geste : son annonce en cas de succès, la phrase du serveur sinon.
-    private func geste(_ faire: @escaping () async throws -> String) {
-        Task {
-            do {
-                let annonce = try await faire()
-                withAnimation(.snappy) { echec = nil }
-                contexte.avis.dire(annonce)
-            } catch {
-                withAnimation(.snappy) { echec = ErreurService.depuis(error).phrase }
-            }
-        }
     }
 
     private func presente<T>(_ element: Binding<T?>) -> Binding<Bool> {

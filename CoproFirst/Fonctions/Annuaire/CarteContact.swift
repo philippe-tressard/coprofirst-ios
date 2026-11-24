@@ -105,12 +105,11 @@ struct Coordonnees: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            if let email = personne.email, !email.isEmpty, let lien = URL(string: "mailto:\(email)") {
+            if let email = personne.email, let lien = LienDeContact.courriel(email) {
                 action(email, symbole: "envelope", lien: lien, aide: "Écrit un courriel", id: "annuaire.courriel")
             }
             ForEach(personne.telephones, id: \.self) { numero in
-                let chiffres = numero.filter { $0.isNumber || $0 == "+" }
-                if let lien = URL(string: "tel:\(chiffres)") {
+                if let lien = LienDeContact.appel(numero) {
                     action("📞 \(numero)", symbole: nil, lien: lien, aide: "Appelle ce numéro", id: "annuaire.appeler")
                 }
             }

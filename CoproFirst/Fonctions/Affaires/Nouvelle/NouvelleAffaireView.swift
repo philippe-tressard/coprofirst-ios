@@ -41,56 +41,47 @@ struct NouvelleAffaireView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                        .listRowBackground(Color.clear)
-                }
-                if let categories {
-                    ChampsAffaire(
-                        saisie: $saisie, categories: categories, installation: installation, service: service,
-                        prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
-                    QuiLaLira(saisie: aLire, identifiant: "nouvelle.quiLaLira")
-                } else if let erreurCategories {
-                    Section { MessageErreur(texte: erreurCategories.phrase).listRowInsets(EdgeInsets()) }
-                        .listRowBackground(Color.clear)
-                } else {
-                    ProgressView()
-                        .frame(maxWidth: .infinity)
-                        .listRowBackground(Color.clear)
-                        .accessibilityLabel("Chargement des catégories")
-                }
-                Section {
-                    Label {
-                        Text(aPoserSurLeSite)
-                    } icon: {
-                        Image(systemName: "safari")
-                    }
-                    .font(.footnote)
-                    .foregroundStyle(palette.textMuted)
-                    // Un seul élément, lu d'un trait : sans lui, iOS 26 porte l'identifiant
-                    // sur l'icône seule, jamais touchable (SaisieAffaireUITests rouge en CI).
-                    .accessibilityElement(children: .combine)
-                    .accessibilityIdentifier("nouvelle.depuisLeSite")
-                } header: {
-                    Text("Depuis le site")
-                }
+        FeuilleDeSaisie(titre: "Nouvelle affaire", erreur: erreur) {
+            if let categories {
+                ChampsAffaire(
+                    saisie: $saisie, categories: categories, installation: installation, service: service,
+                    prefixe: "nouvelle", poserLeDefaut: true, forme: forme)
+                QuiLaLira(saisie: aLire, identifiant: "nouvelle.quiLaLira")
+            } else if let erreurCategories {
+                Section { MessageErreur(texte: erreurCategories.phrase).listRowInsets(EdgeInsets()) }
+                    .listRowBackground(Color.clear)
+            } else {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+                    .accessibilityLabel("Chargement des catégories")
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle("Nouvelle affaire")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { barre }
-            .interactiveDismissDisabled(entamee)
-            .confirmationDialog("Abandonner cette affaire ?", isPresented: $abandon, titleVisibility: .visible) {
-                Button("Abandonner la saisie", role: .destructive) { fermer() }
-                Button("Continuer la saisie", role: .cancel) {}
+            Section {
+                Label {
+                    Text(aPoserSurLeSite)
+                } icon: {
+                    Image(systemName: "safari")
+                }
+                .font(.footnote)
+                .foregroundStyle(palette.textMuted)
+                // Un seul élément, lu d'un trait : sans lui, iOS 26 porte l'identifiant
+                // sur l'icône seule, jamais touchable (SaisieAffaireUITests rouge en CI).
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("nouvelle.depuisLeSite")
+            } header: {
+                Text("Depuis le site")
             }
-            .sensoryFeedback(.success, trigger: envoyees)
-            .task {
-                if service == nil { erreur = ErreurAffaires.serviceAbsent.phrase }
-            }
+        } barre: {
+            barre
+        }
+        .interactiveDismissDisabled(entamee)
+        .confirmationDialog("Abandonner cette affaire ?", isPresented: $abandon, titleVisibility: .visible) {
+            Button("Abandonner la saisie", role: .destructive) { fermer() }
+            Button("Continuer la saisie", role: .cancel) {}
+        }
+        .sensoryFeedback(.success, trigger: envoyees)
+        .task {
+            if service == nil { erreur = ErreurAffaires.serviceAbsent.phrase }
         }
     }
 

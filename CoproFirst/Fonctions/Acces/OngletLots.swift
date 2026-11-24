@@ -259,18 +259,15 @@ struct CoordonneesView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let titre { Text(titre).font(.subheadline.weight(.semibold)).foregroundStyle(palette.text) }
-            if let email, !email.isEmpty, let lien = URL(string: "mailto:\(email)") {
+            if let email, let lien = LienDeContact.courriel(email) {
                 Link(destination: lien) { Label(email, systemImage: "envelope") }
                     .font(.subheadline)
                     .frame(minHeight: Mise.cible, alignment: .leading)
             }
-            if let telephone, !telephone.isEmpty {
-                let chiffres = telephone.filter { $0.isNumber || $0 == "+" }
-                if let lien = URL(string: "tel:\(chiffres)") {
-                    Link(destination: lien) { Label(telephone, systemImage: "phone") }
-                        .font(.subheadline)
-                        .frame(minHeight: Mise.cible, alignment: .leading)
-                }
+            if let telephone, let lien = LienDeContact.appel(telephone) {
+                Link(destination: lien) { Label(telephone, systemImage: "phone") }
+                    .font(.subheadline)
+                    .frame(minHeight: Mise.cible, alignment: .leading)
             }
         }
         .tint(palette.primary)

@@ -17,45 +17,37 @@ struct ValidationCompteFeuille: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
+        FeuilleDeSaisie(titre: compte.nomAffiche, erreur: erreur) {
+            Section {
+                Toggle(isOn: $nouvelArrivant.animation(.snappy)) {
+                    Label(TextesComptesCS.nouvelArrivant, systemImage: "house")
+                        .font(.headline)
                 }
-                Section {
-                    Toggle(isOn: $nouvelArrivant.animation(.snappy)) {
-                        Label(TextesComptesCS.nouvelArrivant, systemImage: "house")
-                            .font(.headline)
-                    }
-                    .tint(palette.primaryPlein)
-                    .accessibilityIdentifier("cs.validation.nouvel-arrivant")
-                } footer: {
-                    let miseEnGarde = Text(TextesComptesCS.nouvelArrivantMiseEnGarde).italic()
-                    Text("\(TextesComptesCS.nouvelArrivantAide) \(miseEnGarde)")
-                }
-                if nouvelArrivant {
-                    Section {
-                        LabeledContent(TextesComptesCS.batimentLogement) {
-                            TextField(TextesComptesCS.batimentIndication, text: $accueil.batiment)
-                                .multilineTextAlignment(.trailing)
-                        }
-                        LabeledContent(TextesComptesCS.ancienResident) {
-                            TextField(TextesComptesCS.ancienResidentIndication, text: $accueil.ancienResident)
-                                .multilineTextAlignment(.trailing)
-                        }
-                    }
-                    .transition(.opacity)
-                }
+                .tint(palette.primaryPlein)
+                .accessibilityIdentifier("cs.validation.nouvel-arrivant")
+            } footer: {
+                let miseEnGarde = Text(TextesComptesCS.nouvelArrivantMiseEnGarde).italic()
+                Text("\(TextesComptesCS.nouvelArrivantAide) \(miseEnGarde)")
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle(compte.nomAffiche)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { BoutonsFeuille(
-                    envoi: envoi, libelle: TextesEspaceCS.approuver, identifiant: "cs.validation.enregistrer",
-                    envoyer: envoyer) }
-            .disabled(envoi)
+            if nouvelArrivant {
+                Section {
+                    LabeledContent(TextesComptesCS.batimentLogement) {
+                        TextField(TextesComptesCS.batimentIndication, text: $accueil.batiment)
+                            .multilineTextAlignment(.trailing)
+                    }
+                    LabeledContent(TextesComptesCS.ancienResident) {
+                        TextField(TextesComptesCS.ancienResidentIndication, text: $accueil.ancienResident)
+                            .multilineTextAlignment(.trailing)
+                    }
+                }
+                .transition(.opacity)
+            }
+        } barre: {
+            BoutonsFeuille(
+                envoi: envoi, libelle: TextesEspaceCS.approuver, identifiant: "cs.validation.enregistrer",
+                envoyer: envoyer)
         }
+        .disabled(envoi)
     }
 
     private func envoyer() async {
