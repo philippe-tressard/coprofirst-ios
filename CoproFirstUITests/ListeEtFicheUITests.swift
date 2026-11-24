@@ -120,8 +120,10 @@ final class ListeEtFicheUITests: XCTestCase {
         capture("residence-liste-et-fiche", app)
 
         // Un autre onglet : la fiche d'à côté n'est plus la sienne.
-        app.toucher(app.buttons["Carnet d’entretien"])
-        XCTAssertTrue(app.staticTexts["Aucune sélection"].apparait(), "l'onglet change, la fiche se vide")
+        // L'onglet change, la fiche se vide. Trouvé par son libellé : nommé `onglet…`, pour que
+        // scripts/touchers_onglets.py le lise comme un onglet (#334).
+        let ongletCarnet = app.buttons["Carnet d’entretien"]
+        app.toucher(ongletCarnet, jusqua: app.staticTexts["Aucune sélection"])
     }
 
     /// Une rangée de `List` (les annonces) : l'annonce à côté, la liste gardée.
@@ -129,8 +131,8 @@ final class ListeEtFicheUITests: XCTestCase {
     func testUneAnnonceSOuvreACoteDeSaListe() throws {
         let app = lancer("fil")
         app.toucher(app.elementAcces("barre.communaute"))
-        app.toucher(app.elementAcces("communaute.onglet.annonces"))
         let annonce = app.elementAcces("annonce.21")
+        app.toucher(app.elementAcces("communaute.onglet.annonces"), jusqua: annonce)
         app.toucher(annonce)
         let contact = app.elementAcces("annonce.contact")
         XCTAssertTrue(contact.apparait(), "l'annonce dans la colonne")
