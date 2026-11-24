@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Ce que la skill `swiftui-patterns` interdit d'écrire dans le code de l'app (#345, #346, #347).
+"""Ce que la skill `swiftui-patterns` interdit d'écrire dans le code de l'app (#345 à #348).
 
-Trois règles qu'elle énonce et que rien ne tenait (audit du 23/11/2026) :
+Les règles qu'elle énonce et que rien ne tenait (audit du 23/11/2026) :
 
 - **formats** : une date, un nombre, un montant s'écrivent par `FormatsDuSite`, fr-FR et fuseau
   de Paris — jamais `.formatted(`, `format: .dateTime`, `format: .number`, un `DateFormatter` ou
@@ -14,7 +14,11 @@ Trois règles qu'elle énonce et que rien ne tenait (audit du 23/11/2026) :
   (`spacing:`, `padding`) restent libres : la skill le dit ;
 - **lectures à la main** : l'API se lit par le client généré — jamais `.data(from:` ou
   `.data(for:` d'une `URLSession` hors des lectures nommées ici, ni le préfixe `"api/` hors de
-  `ClientCoproFirst.swift` (#345 : le logo demandé à la main).
+  `ClientCoproFirst.swift` (#345 : le logo demandé à la main) ;
+- **recopies** (#348) : un lien `mailto:` ou `tel:` se forme par `LienDeContact` ; le chemin
+  d'une affaire se lit dans la table générée (`CheminDuSite.affaires`), jamais `"/tickets…"`
+  écrit ; une feuille de saisie se pose dans `FeuilleDeSaisie`, jamais son squelette recopié
+  (la phrase d'erreur en tête de formulaire en est la signature).
 
 Une divergence légitime se déclare dans `EXCEPTIONS` : le fichier, la règle, le NOMBRE de lignes
 qu'elle couvre et sa raison. Une ligne de plus est refusée ; une de moins aussi — l'exception
@@ -55,6 +59,21 @@ REGLES: dict[str, tuple[re.Pattern[str], str, str]] = {
         "Paquets/ClientAPI/Sources/ClientAPI/ClientCoproFirst.swift",
         "par le client généré (ServiceAPI.client, ou clientPublic pour une route publique)",
     ),
+    "contacts": (
+        re.compile(r"\"(?:mailto|tel):"),
+        "CoproFirst/Commun/Composants/LienDeContact.swift",
+        "par LienDeContact.courriel(_:) ou .appel(_:)",
+    ),
+    "chemins": (
+        re.compile(r"\"/?tickets(?:[/\"]|\\\()"),
+        "CoproFirst/Navigation/PagesParDefaut.swift",
+        "par CheminDuSite.affaires, .affaire(_:), .adresse(affaire:sur:) — la route générée",
+    ),
+    "feuilles": (
+        re.compile(r"MessageErreur\(texte: erreur\)\.listRowInsets"),
+        "CoproFirst/Commun/Composants/FeuilleDeSaisie.swift",
+        "par FeuilleDeSaisie(titre:erreur:) { … } barre: { BoutonsFeuille(…) }",
+    ),
 }
 
 #: (fichier, règle) → (nombre de lignes, raison). Une raison dit pourquoi, et depuis quand.
@@ -82,6 +101,8 @@ EXCEPTIONS: dict[tuple[str, str], tuple[int, str]] = {
            "le rendu validé de l'accueil (24/11/2026)"),
     ("CoproFirst/Fonctions/EspaceCS/Reporting/RepartitionCroisee.swift", "mesures"): (
         3, "les barres d'un graphique (4 et 2 pt), à l'échelle de leur épaisseur (24/11/2026)"),
+    ("CoproFirst/Fonctions/Residence/Apercu+Residence.swift", "chemins"): (
+        2, "des entrées SIMULÉES du carnet, à la forme que sert le serveur (`lien`) (24/11/2026)"),
     ("CoproFirst/Entree/Contenu/Vitrine.swift", "lectures"): (
         1, "`contenu.json` du SITE coprofirst.fr, pas l'API d'une installation (#51)"),
     ("CoproFirst/Session/PreuveAASA.swift", "lectures"): (
@@ -150,6 +171,13 @@ def autotest() -> bool:
         ("CoproFirst/V.swift", "let (d, r) = try await session.data(from: url)"): {"lectures"},
         ("CoproFirst/V.swift", "try await session.data(for: requete)"): {"lectures"},
         ("Paquets/ClientAPI/Sources/ClientAPI/ClientCoproFirst.swift", 'appending(path: "api")'): set(),
+        ("CoproFirst/V.swift", 'URL(string: "mailto:\\(email)")'): {"contacts"},
+        ("CoproFirst/V.swift", 'URL(string: "tel:\\(chiffres)")'): {"contacts"},
+        ("CoproFirst/V.swift", 'adresse.appending(path: "tickets/\\(id)")'): {"chemins"},
+        ("CoproFirst/V.swift", 'lien.hasPrefix("/tickets/")'): {"chemins"},
+        ("CoproFirst/V.swift", 'static let routeAffaires = "/tickets"'): {"chemins"},
+        ("CoproFirst/V.swift", 'Text("Mes tickets")'): set(),
+        ("CoproFirst/V.swift", "Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }"): {"feuilles"},
         ("CoproFirst/V.swift", "    // Text(n, format: .number) en commentaire"): set(),
         ("CoproFirst/M/Genere/T.swift", "Text(n, format: .number)"): set(),
     }
@@ -179,7 +207,7 @@ def main() -> int:
         print(ligne)
     if refus:
         return 1
-    print(f"✅ formats, mesures et lectures par leur point commun ({lus} fichiers, {len(EXCEPTIONS)} exceptions)")
+    print(f"✅ formats, mesures, lectures, contacts, chemins et feuilles par leur point commun ({lus} fichiers, {len(EXCEPTIONS)} exceptions)")
     return 0
 
 
