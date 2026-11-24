@@ -8,7 +8,7 @@
 # dans sa PR, parce qu'elle mérite d'être regardée. Toute PR passe par la même CI
 # que les autres (main est protégée) — et rien ne part chez Apple.
 #
-# Les versions de l'outillage (XcodeGen, SwiftLint, swift-format, outillage.env) ne
+# Les versions de l'outillage (XcodeGen, SwiftLint, REUSE, outillage.env) ne
 # sont pas des paquets : Dependabot ne les voit pas, elles montent à la main.
 version: 2
 updates:
