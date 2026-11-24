@@ -121,9 +121,10 @@ private struct BoutonEtat: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(choisi ? palette.surPlein : palette.text)
                 .frame(maxWidth: .infinity, minHeight: Mise.cible)
-                .background(choisi ? plein : palette.surface, in: .rect(cornerRadius: 10, style: .continuous))
+                .background(
+                    choisi ? plein : palette.surface, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
                 .overlay {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: Mise.rayonTuile, style: .continuous)
                         .strokeBorder(choisi ? plein : palette.border, lineWidth: 2)
                 }
                 .contentShape(.rect)

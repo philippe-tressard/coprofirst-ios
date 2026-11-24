@@ -43,40 +43,29 @@ struct SuiteFeuille: View {
         // En correction, le Suivi ne se montre que si la liste sait dire les deux états de l'entrée.
         let proposes = SaisieSuite.etats(pour: affaire)
         let etats = corrigee == nil || saisie.suiviCorrigeable(parmi: proposes.map(\.code)) ? proposes : []
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                        .listRowBackground(Color.clear)
-                }
-                if !etats.isEmpty {
-                    Section {
-                        Picker("État", selection: $saisie.statut) {
-                            ForEach(etats, id: \.code) { etat in
-                                Text(etat.libelle).tag(etat.code)
-                            }
+        // Le mot court du site (`SUITE.court`) : le libellé entier se tronquait entre les boutons.
+        FeuilleDeSaisie(titre: corrigee == nil ? "Suite" : TextesSuite.titreCorrection, erreur: erreur) {
+            if !etats.isEmpty {
+                Section {
+                    Picker("État", selection: $saisie.statut) {
+                        ForEach(etats, id: \.code) { etat in
+                            Text(etat.libelle).tag(etat.code)
                         }
-                        .accessibilityIdentifier("suite.etat")
-                    } header: {
-                        Text("Suivi")
-                    } footer: {
-                        Text(piedDuSuivi)
                     }
+                    .accessibilityIdentifier("suite.etat")
+                } header: {
+                    Text("Suivi")
+                } footer: {
+                    Text(piedDuSuivi)
                 }
-                commentaire
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            // Le mot court du site (`SUITE.court`) : le libellé entier se tronquait entre les boutons.
-            .navigationTitle(corrigee == nil ? "Suite" : TextesSuite.titreCorrection)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(envoi: envoi, actif: prete, identifiant: "suite.enregistrer", envoyer: envoyer)
-            }
-            .onAppear { actif = etats.isEmpty }
-            // Une correction commencée ne se perd pas d'un glissement.
-            .interactiveDismissDisabled(corrigee.map { !saisie.correction(depuis: $0, de: affaire).vide } ?? false)
+            commentaire
+        } barre: {
+            BoutonsFeuille(envoi: envoi, actif: prete, identifiant: "suite.enregistrer", envoyer: envoyer)
         }
+        .onAppear { actif = etats.isEmpty }
+        // Une correction commencée ne se perd pas d'un glissement.
+        .interactiveDismissDisabled(corrigee.map { !saisie.correction(depuis: $0, de: affaire).vide } ?? false)
     }
 
     private var prete: Bool {

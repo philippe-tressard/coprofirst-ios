@@ -18,57 +18,47 @@ struct FeuilleAppairage: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                }
+        FeuilleDeSaisie(titre: TextesEcransCS.appairer, erreur: erreur) {
+            Section {
+                TextField(TextesEcransCS.codeExemple, text: $saisie.code)
+                    .font(.body.monospaced())
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+                    .textContentType(.oneTimeCode)
+                    .accessibilityLabel(TextesEcransCS.code)
+                    .accessibilityIdentifier("ecrans.feuille.code")
+            } header: {
+                Text(TextesEcransCS.code)
+            } footer: {
+                Text(TextesEcransCS.aideCode)
+            }
+            Section(TextesEcransCS.nom) {
+                TextField(TextesEcransCS.nomExemple, text: $saisie.nom)
+                    .accessibilityLabel(TextesEcransCS.nom)
+                    .accessibilityIdentifier("ecrans.feuille.nom")
+            }
+            if !arbre.noeuds.isEmpty {
                 Section {
-                    TextField(TextesEcransCS.codeExemple, text: $saisie.code)
-                        .font(.body.monospaced())
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                        .textContentType(.oneTimeCode)
-                        .accessibilityLabel(TextesEcransCS.code)
-                        .accessibilityIdentifier("ecrans.feuille.code")
+                    ChoixPerimetres(
+                        arbre: arbre, choix: $saisie.perimetres, identifiant: "ecrans.feuille.perimetre")
                 } header: {
-                    Text(TextesEcransCS.code)
+                    Text(TextesEcransCS.perimetre)
                 } footer: {
-                    Text(TextesEcransCS.aideCode)
-                }
-                Section(TextesEcransCS.nom) {
-                    TextField(TextesEcransCS.nomExemple, text: $saisie.nom)
-                        .accessibilityLabel(TextesEcransCS.nom)
-                        .accessibilityIdentifier("ecrans.feuille.nom")
-                }
-                if !arbre.noeuds.isEmpty {
-                    Section {
-                        ChoixPerimetres(
-                            arbre: arbre, choix: $saisie.perimetres, identifiant: "ecrans.feuille.perimetre")
-                    } header: {
-                        Text(TextesEcransCS.perimetre)
-                    } footer: {
-                        Text(TextesEcransCS.aidePerimetre)
-                    }
+                    Text(TextesEcransCS.aidePerimetre)
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle(TextesEcransCS.appairer)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(envoi: envoi, actif: saisie.complete, identifiant: "ecrans.feuille.enregistrer") {
-                    await envoyer()
-                }
+        } barre: {
+            BoutonsFeuille(envoi: envoi, actif: saisie.complete, identifiant: "ecrans.feuille.enregistrer") {
+                await envoyer()
             }
-            .disabled(envoi)
-            .animation(.snappy, value: erreur)
-            .task {
-                // Le défaut d'abord (`perimetreDefautListe` du site) : un écran de toute la
-                // copropriété se confirme sans toucher au choix.
-                arbre = ArbreDesPerimetres((try? await service.perimetres(installation)) ?? [])
-                if saisie.perimetres.codes.isEmpty { saisie.perimetres.choisirDefaut(arbre) }
-            }
+        }
+        .disabled(envoi)
+        .animation(.snappy, value: erreur)
+        .task {
+            // Le défaut d'abord (`perimetreDefautListe` du site) : un écran de toute la
+            // copropriété se confirme sans toucher au choix.
+            arbre = ArbreDesPerimetres((try? await service.perimetres(installation)) ?? [])
+            if saisie.perimetres.codes.isEmpty { saisie.perimetres.choisirDefaut(arbre) }
         }
     }
 

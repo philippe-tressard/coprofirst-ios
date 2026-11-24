@@ -76,6 +76,20 @@ func lHeureSeuleEstCelleDuSite(iso: String, heure: String) throws {
     #expect(FormatsDuSite.heure(instant) == heure, "une date déjà décodée s'écrit pareil")
 }
 
+/// Les deux formats longs des fiches (#346) : à Paris et en français, quels que soient la
+/// langue et le fuseau de l'appareil — ils les suivaient.
+@Test(arguments: [
+    ("2026-04-02T14:30:00Z", "2 avril 2026 à 16:30", "jeudi 2 avril à 16:30"),
+    ("2026-07-25T22:00:00Z", "26 juillet 2026 à 00:00", "dimanche 26 juillet à 00:00"),
+    ("2026-11-17T08:05:00Z", "17 novembre 2026 à 09:05", "mardi 17 novembre à 09:05"),
+])
+func lesFormatsLongsDesFichesSontAParis(iso: String, dateHeure: String, jourHeure: String) throws {
+    let instant = try #require(FormatsDuSite.lire(iso))
+    #expect(FormatsDuSite.dateHeureLongue(instant) == dateHeure)
+    #expect(FormatsDuSite.jourHeureLong(instant) == jourHeure)
+    #expect(FormatsDuSite.dateHeureLongue(nil) == "—" && FormatsDuSite.jourHeureLong(nil) == "—")
+}
+
 @Test func uneDateAbsenteSEcritParUnTiret() {
     #expect(FormatsDuSite.date(nil as String?) == "—")
     #expect(FormatsDuSite.dateCourte("") == "—")

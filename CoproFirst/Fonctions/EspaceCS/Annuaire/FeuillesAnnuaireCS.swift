@@ -60,7 +60,7 @@ struct FeuilleEnteteConseil: View {
     private func envoyer() async throws {
         var nouveau = conseil.avecPresident(president)
         nouveau.agAnnee = Int(annee.trimmingCharacters(in: .whitespaces))
-        nouveau.agDate = aUneDate ? AnnuaireCS.jour(date) : nil
+        nouveau.agDate = aUneDate ? FormatsDuSite.jourISO(date) : nil
         nouveau.whatsappUrl = whatsapp.nulSiVide
         try await enregistrer(nouveau)
     }
@@ -322,41 +322,25 @@ private struct FeuilleAnnuaire<Champs: View>: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                }
-                champs()
-            }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle(titre)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(envoi: envoi, actif: complete, identifiant: identifiant) {
-                    envoi = true
-                    defer { envoi = false }
-                    do {
-                        try await envoyer()
-                        fermer()
-                    } catch {
-                        withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
-                    }
+        FeuilleDeSaisie(titre: titre, erreur: erreur) {
+            champs()
+        } barre: {
+            BoutonsFeuille(envoi: envoi, actif: complete, identifiant: identifiant) {
+                envoi = true
+                defer { envoi = false }
+                do {
+                    try await envoyer()
+                    fermer()
+                } catch {
+                    withAnimation(.snappy) { erreur = ErreurService.depuis(error).phrase }
                 }
             }
-            .disabled(envoi)
         }
+        .disabled(envoi)
     }
 }
 
 extension AnnuaireCS {
-    /// « 2026-06-12 » : le jour de l'AG, à Paris, tel que le serveur le reçoit.
-    static func jour(_ date: Date) -> String {
-        let format = Date.ISO8601FormatStyle(dateSeparator: .dash, timeZone: FormatsDuSite.paris)
-        return date.formatted(format.year().month().day())
-    }
-
     /// Une fiche se nomme : un prénom ou un nom, au moins.
     static func nomme(_ prenom: String?, _ nom: String?) -> Bool {
         prenom?.nulSiVide != nil || nom?.nulSiVide != nil

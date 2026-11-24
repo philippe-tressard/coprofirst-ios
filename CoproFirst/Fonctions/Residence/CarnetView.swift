@@ -146,8 +146,8 @@ private struct CarteEntree: View {
     /// Une affaire s'ouvre dans l'app ; un contrat ou une intervention, sur le site
     /// (Prestataires n'est pas encore porté).
     private var affaire: Int? {
-        guard entree.origine == "affaire", let lien = entree.lien, lien.hasPrefix("/tickets/") else { return nil }
-        return Int(lien.dropFirst("/tickets/".count).prefix { $0.isNumber })
+        guard entree.origine == "affaire", let lien = entree.lien else { return nil }
+        return CheminDuSite.affaire(chemin: lien)
     }
 
     var body: some View {

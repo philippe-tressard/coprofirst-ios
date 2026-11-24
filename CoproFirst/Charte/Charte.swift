@@ -32,10 +32,14 @@ struct RVBA: Sendable {
 enum Mise {
     /// Rayon des cartes, des champs et des boutons (coins continus).
     static let rayon: CGFloat = 14
+    /// Rayon d'une tuile posée DANS une carte : vignette de nature, choix d'un état, encadré (#347).
+    static let rayonTuile: CGFloat = 10
     /// Marge latérale des écrans.
     static let marge: CGFloat = 20
     /// Hauteur minimale d'une cible tactile (Human Interface Guidelines).
     static let cible: CGFloat = 44
+    /// Le côté d'un médaillon d'en-tête : le logo d'une résidence, le symbole d'un personnage (#347).
+    static let medaillon: CGFloat = 44
     /// L'approche des libellés en capitales (`styleLibelle`).
     static let approcheLibelle: CGFloat = 0.6
     /// La hauteur de la mosaïque des photos d'un élément ouvert (`MosaiquePhotos`).

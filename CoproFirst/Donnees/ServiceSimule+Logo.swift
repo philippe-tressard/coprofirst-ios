@@ -10,12 +10,9 @@ import SwiftUI
 /// (un logo « composé sur fond blanc ») ; au sombre, la feuille seule, claire, sur fond
 /// transparent — le dessin que la 1.15.0 sert pour le fond sombre.
 extension ServiceSimule {
-    func logo(_ adresse: URL) async throws -> Data {
+    func logo(_ demande: LogoDemande) async throws -> Data {
         try await Task.sleep(for: .milliseconds(150))
-        let sombre =
-            URLComponents(url: adresse, resolvingAgainstBaseURL: false)?
-            .queryItems?.contains { $0.name == "variante" && $0.value == "sombre" } ?? false
-        return Self.logoDessine(sombre: sombre)
+        return Self.logoDessine(sombre: demande.sombre)
     }
 
     /// Le dessin, aux teintes de la palette de la résidence simulée (`bouteille`).

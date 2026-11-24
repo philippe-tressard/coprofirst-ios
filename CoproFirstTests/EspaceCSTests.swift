@@ -255,7 +255,7 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func leJourDeLAGPartALaFormeDuServeur() throws {
     let date = try #require(FormatsDuSite.lire("2026-06-12"))
-    #expect(AnnuaireCS.jour(date) == "2026-06-12")
+    #expect(FormatsDuSite.jourISO(date) == "2026-06-12", "le jour de l'AG part par le format commun (#346)")
 }
 
 @MainActor

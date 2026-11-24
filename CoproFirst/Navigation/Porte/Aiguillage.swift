@@ -30,7 +30,7 @@ enum Aiguillage: Equatable {
         case .page(let id):
             return .onglet(place(id) ?? OrdrePages.idFil)
         case .affaire(let id, _):
-            let affaires = LienUniversel.idDeLaPage(route: LienUniversel.routeAffaires)
+            let affaires = CheminDuSite.affaires.flatMap(LienUniversel.idDeLaPage(route:))
             if let affaires, place(affaires) == affaires {
                 return .affaireDansLOnglet(onglet: affaires, id: id)
             }
