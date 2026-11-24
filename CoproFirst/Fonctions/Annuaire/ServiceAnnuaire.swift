@@ -130,11 +130,11 @@ extension Apercu {
             membres: [
                 .init(
                     id: 10, genre: "Mme", prenom: "Elsa", nom: "Gestion", fonction: "Gestionnaire de copropriété",
-                    email: "gestion@syndic.example.com", telephone: "01 00 00 00 01, 06 00 00 00 02",
+                    email: "gestion@syndic.example.com", telephone: "01 99 00 00 01, 01 99 00 00 02",
                     estPrincipal: true),
                 .init(
                     id: 11, genre: "M.", prenom: "Firmin", nom: "Compta", fonction: "Comptabilité",
-                    email: "compta@syndic.example.com", telephone: "01 00 00 00 03"),
+                    email: "compta@syndic.example.com", telephone: "01 99 00 00 03"),
             ]),
         whatsappUrl: "https://chat.whatsapp.com/exemple")
 }
