@@ -200,9 +200,10 @@ private struct TransportLogo: ClientTransport {
     let clair = try await service.logo(logoClair)
     let sombre = try await service.logo(logoSombre)
     #expect(UIImage(data: clair) != nil && UIImage(data: sombre) != nil && clair != sombre)
+    // Le transport reçoit le chemin relatif à l'adresse de l'API (`…/api`, `ClientCoproFirst.adresseAPI`).
     let attendues = [
-        "\(Operations.GetConfigLogoPng.id) /api/config/logo.png",
-        "\(Operations.GetConfigLogoPng.id) /api/config/logo.png?variante=sombre",
+        "\(Operations.GetConfigLogoPng.id) /config/logo.png",
+        "\(Operations.GetConfigLogoPng.id) /config/logo.png?variante=sombre",
     ]
     #expect(await requetes.recues == attendues)
 }
