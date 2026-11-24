@@ -19,7 +19,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 | Sujet | Règle | Où |
 |---|---|---|
 | Dossiers | voir « Arborescence » ci-dessous : un dossier par fonctionnalité, la vue et ses textes ensemble | `CoproFirst/` |
-| Textes | écrits **une fois**, dans un `enum` du domaine (`Accueil.titre`) ; la vue et les tests les lisent là | `AccueilView.swift` |
+| Textes | écrits **une fois**, dans un `enum` du domaine (`TextesReglement.exemple`) ; la vue et les tests les lisent là | `AccueilView.swift` |
 | Langue | français seul : `developmentLanguage: fr`, `CFBundleLocalizations: [fr]` | `project.yml` |
 | API | **le client généré** (`ClientCoproFirst.client(installation:)`), jamais `URLSession` à la main ; une route absente = un ticket dans coprofirst | `Paquets/ClientAPI` |
 | Vitrine (#51) | les textes d'« En savoir plus » et de la démo viennent de `https://coprofirst.fr/contenu.json` : `Vitrine` (cache, puis le site, une lecture réussie par lancement, à la porte de l'accueil) et `PagesVitrine` (les pages, ou rien si un `id` de `ContenuVitrine.idsRequis` manque) ; copie embarquée **générée** (`generateurs/vitrine.py`, coprofirst-site à un commit épinglé). Une des deux `URLSession` écrites à la main de l'app (l'autre : la preuve d'un hôte, #82) : un fichier statique du site, pas l'API, en session éphémère, dont aucune adresse n'est ouverte ni contactée. Symboles et ordre accrochés aux `id`, jamais aux titres ; liste figée, protégée côté site (coprofirst-site#66) | `Entree/Contenu/` |

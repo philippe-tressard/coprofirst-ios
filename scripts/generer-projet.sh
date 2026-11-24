@@ -18,6 +18,15 @@ if [ "$VERSION" != "$XCODEGEN_VERSION" ]; then
   echo "❌ XcodeGen $VERSION, attendu $XCODEGEN_VERSION (outillage.env)" >&2
   exit 1
 fi
+# Xcode au moins à XCODE_MINIMUM (#369) : comparé nombre par nombre ; illisible, INCONNU.
+XCODE=$(xcodebuild -version 2>/dev/null | awk 'NR == 1 { print $2 }')
+code=0
+python3 -I scripts/version_au_moins.py "$XCODE_MINIMUM" "${XCODE:-}" || code=$?
+case $code in
+  0) ;;
+  1) echo "❌ Xcode $XCODE, au moins $XCODE_MINIMUM (outillage.env)" >&2; exit 1 ;;
+  *) echo "❓ INCONNU : version de Xcode illisible (« ${XCODE:-} », xcodebuild -version)" >&2; exit 2 ;;
+esac
 
 # L'empreinte des sources des tests d'interface, que leur cible compile : le fichier doit
 # exister pour entrer au projet (#328). tests-simulateur.sh la réécrit à chaque passage.

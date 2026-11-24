@@ -48,11 +48,11 @@ un geste de Philippe : skill
 
 ## Construire
 
-Prérequis : **Xcode 26 au moins** — le code appelle des API du SDK d'iOS 26
-(`safeAreaBar`, `navigationSubtitle`…), et la CI construit sous Xcode 26.6 ; **Xcode 27**
+Prérequis : **Xcode au moins à la version `XCODE_MINIMUM` d'`outillage.env`** — la plus
+ancienne prouvée, celle de la CI ; `scripts/generer-projet.sh` refuse un Xcode plus ancien. Le
+code appelle des API du SDK d'iOS 26 (`safeAreaBar`, `navigationSubtitle`…) ; **Xcode 27**
 compile en plus la posture de l'iPhone pliable (`#if compiler(>=6.4)`,
-`CoproFirst/Navigation/Posture.swift`), que Xcode 26 laisse de côté. Le minimum exact n'est
-pas mesuré. Puis un runtime iOS du simulateur (`xcodebuild -downloadPlatform iOS`) et
+`CoproFirst/Navigation/Posture.swift`), que Xcode 26 laisse de côté. Puis un runtime iOS du simulateur (`xcodebuild -downloadPlatform iOS`) et
 l'outillage.
 
 ### Outillage
