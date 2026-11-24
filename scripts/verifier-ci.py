@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Deux règles de la CI, lues dans `.github/workflows/ci.yml`.
 
-1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241).
+1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241) — outre l'alerte
+   d'un rouge, le dernier pas de chaque job.
 
 Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : le
 16/11/2026, #240 est passée au poste puis a rougi en CI sur `verifier-logo.sh`, une
@@ -14,6 +15,9 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
    (`ios`, le check que la protection de `main` exige), qui juge `toJSON(needs)` en
    entier (#288). Sinon un job neuf — les échantillons, la montre — peut rougir sans
    rendre la PR rouge.
+
+Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
+(`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
 
 Lecture au texte, sans PyYAML (absent de `python3 -I` sur le runner Linux) : le bloc
 du job va de `  depot:` à la clé de job suivante, au même retrait.
@@ -27,6 +31,9 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import signaler_rouge  # noqa: E402  (l'alerte d'un rouge, #362)
 
 WORKFLOW = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "ci.yml"
 JOB = "depot"
@@ -55,6 +62,7 @@ def refus_depot(texte: str) -> tuple[int, list[str]]:
     if bloc is None:
         return 2, [f"❓ INCONNU : job « {JOB} » introuvable dans {WORKFLOW.name}"]
     runs = [l.split("run:", 1)[1].strip() for l in bloc if re.match(r"^\s+(- )?run:", l)]
+    runs = [r for r in runs if r != signaler_rouge.PAS]
     if runs == [ATTENDU]:
         return 0, [f"✅ job « {JOB} » : une seule étape, {ATTENDU}"]
     return 1, [
@@ -146,6 +154,10 @@ def main() -> int:
         print(f"❓ INCONNU : {WORKFLOW} absent")
         return 2
     code, messages = refus(WORKFLOW.read_text(encoding="utf-8"))
+    alertes = signaler_rouge.ecarts({f.name: f.read_text(encoding="utf-8")
+                                     for f in sorted(WORKFLOW.parent.glob("*.yml"))})
+    messages += alertes or ["✅ chaque job de chaque workflow finit par l'alerte d'un rouge (#362)"]
+    code = 1 if code == 1 or any(m.startswith("❌") for m in alertes) else max(code, 2 if alertes else 0)
     print("\n".join(messages))
     return code
 

@@ -7,9 +7,10 @@
 # lignes, main rouge neuf heures. Ici, sans macOS (une minute par arbre) :
 #   1. juger (lecture seule) : main, puis chaque PR armée (fusion automatique, base main,
 #      même dépôt) réunie à main — `bash scripts/verifier-depot.sh`, le même qu'au poste ;
-#   2. agir (scripts/depot_a_jour.py, décision pure et testée) : la PR qui rougirait voit sa
-#      fusion automatique DÉSARMÉE, avec un commentaire ; main rouge ouvre aussitôt un ticket
-#      « sante-main », main verte le ferme. Un INCONNU ou un conflit ne désarme ni ne ferme rien.
+#   2. agir (scripts/depot_a_jour.py, décision pure et testée) : main verte, la PR qui rougirait
+#      voit sa fusion automatique DÉSARMÉE, avec un commentaire. Main rouge ne désarme rien (la
+#      réparation doit passer) : son ticket s'ouvre par l'alerte de chaque job (#362). Un
+#      INCONNU ou un conflit ne désarme rien.
 # Le code d'une PR ne tourne que dans le job 1, au jeton en lecture seule ; le job 2 n'exécute
 # que les scripts de main. Complète la santé quotidienne (sante-main.yml).
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
@@ -71,8 +72,9 @@ jobs:
           echo "verdicts={\"main\": \"$MAIN\", \"prs\": [${PRS%,}]}" | tee -a "$GITHUB_OUTPUT"
 
   agir:
-    name: Désarmer, ticket de main
+    name: Désarmer la PR qui rougirait
     needs: juger
+    if: always()
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -85,44 +87,20 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - name: Autotest (une PR rouge se désarme, un INCONNU ou un conflit non)
+      - name: Autotest (main verte et une PR rouge une fois réunie, désarmer ; sinon rien)
         run: python3 -I scripts/depot_a_jour.py --autotest
       - name: Décision et gestes (scripts/depot_a_jour.py)
         env:
           VERDICTS: ${{ needs.juger.outputs.verdicts }}
         run: |
           RUN="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          TITRE=$(python3 -I scripts/depot_a_jour.py titre)
-          TICKET=$(gh issue list --repo "$GITHUB_REPOSITORY" --label sante-main --state open --limit 100 \
-            --json number,title -q ".[] | select(.title == \"$TITRE\") | .number" | head -1)
-          ACTIONS=$(python3 -I -c 'import json, os, sys; v = json.loads(os.environ["VERDICTS"] or "{}"); v["ticket"] = sys.argv[1]; print(json.dumps(v))' "$TICKET" \
-            | python3 -I scripts/depot_a_jour.py decider)
-          echo "$ACTIONS"
-          while read -r geste arg; do
-            case "$geste $arg" in
-              "desarmer "*)
-                gh pr merge "$arg" --repo "$GITHUB_REPOSITORY" --disable-auto
-                gh pr comment "$arg" --repo "$GITHUB_REPOSITORY" --body "⛔ Réunie à \`main\` ($GITHUB_SHA), cette PR rend le job « Dépôt » rouge ($RUN) : fusion automatique désarmée. Réunir \`main\`, corriger, puis réarmer (#353)." ;;
-              "ticket ouvrir")
-                gh label create sante-main --repo "$GITHUB_REPOSITORY" --color B60205 --force \
-                  --description "main rouge au-delà du seuil sur ses dernières poussées (#353)"
-                gh issue create --repo "$GITHUB_REPOSITORY" --label sante-main --title "$TITRE" \
-                  --body "❌ Le job « Dépôt » est rouge sur \`main\` ($GITHUB_SHA) : $RUN. Un main rouge passe avant tout autre lot (standards/09 §8 bis)." ;;
-              "ticket completer")
-                gh issue comment "$TICKET" --repo "$GITHUB_REPOSITORY" --body "❌ Toujours rouge sur \`$GITHUB_SHA\` : $RUN." ;;
-              "ticket fermer")
-                gh issue close "$TICKET" --repo "$GITHUB_REPOSITORY" --reason completed \
-                  --comment "✅ « Dépôt » vert sur \`$GITHUB_SHA\` ($RUN). Fermé par le Dépôt à jour (#353)." ;;
-              "ticket rien") ;;
-              *) echo "❓ action illisible : « $geste $arg »"; exit 1 ;;
-            esac
-          done <<< "$ACTIONS"
-      - name: Verdict de main
+          echo "${VERDICTS:-{\}}"
+          for n in $(printf '%s' "${VERDICTS:-{\}}" | python3 -I scripts/depot_a_jour.py decider | sed -n 's/^desarmer //p'); do
+            gh pr merge "$n" --repo "$GITHUB_REPOSITORY" --disable-auto
+            gh pr comment "$n" --repo "$GITHUB_REPOSITORY" --body "⛔ Réunie à \`main\` ($GITHUB_SHA), cette PR rend le job « Dépôt » rouge ($RUN) : fusion automatique désarmée. Réunir \`main\`, corriger, puis réarmer (#353)."
+          done
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure() || needs.juger.result != 'success'
         env:
-          VERDICTS: ${{ needs.juger.outputs.verdicts }}
-        run: |
-          case "$(python3 -I -c 'import json, os; print(json.loads(os.environ["VERDICTS"] or "{}").get("main", ""))')" in
-            0) echo "✅ Dépôt vert sur main" ;;
-            1) echo "❌ Dépôt rouge sur main — ticket « sante-main »"; exit 1 ;;
-            *) echo "❓ INCONNU — le Dépôt de main n'a pas conclu : ce n'est pas un vert"; exit 1 ;;
-          esac
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler

@@ -76,3 +76,8 @@ jobs:
             rouge) echo "❌ main au-delà du seuil — ticket « sante-main »"; exit 1 ;;
             *) echo "❓ INCONNU — trop peu de poussées jugées, ou une conclusion inconnue : ce n'est pas un vert"; exit 1 ;;
           esac
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
