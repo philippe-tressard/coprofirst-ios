@@ -121,6 +121,8 @@ def _module(nom: str, fichier: str):
 # La ligne sans son commentaire (verifier-simule.py) ; les manifestes propres des cibles (#218, #226).
 code_seul = _module("verifier_simule", "verifier-simule.py").code_seul
 CIBLES = _module("confidentialite_cibles", "confidentialite_cibles.py")
+# Ce que la fiche du magasin promet, contre ce que l'app fait (#343).
+FICHE_MAGASIN = _module("fiche_magasin", "fiche_magasin.py")
 
 
 @dataclass
@@ -391,7 +393,7 @@ def main() -> int:
     except (OSError, ValueError, KeyError, TypeError, subprocess.CalledProcessError, plistlib.InvalidFileException) as erreur:
         print(f"❓ INCONNU : manifeste, fiche ou dépôt illisible — {erreur}")
         return 2
-    fautes = juger(etat)
+    fautes = juger(etat) + FICHE_MAGASIN.juger(etat.fiche, etat.code, etat.lire)
     for faute in fautes:
         print(f"❌ {faute}")
     if fautes:

@@ -21,9 +21,14 @@ struct EspaceCSView: View {
         CadreAOnglets(
             contexte: contexte,
             page: PageAOnglets(
-                id: "espace-cs", ecrans: OngletsEspaceCS.ecrans, descriptifs: TablesEspaceCS.descriptifs,
+                id: "espace-cs", ecrans: OngletsEspaceCS.ecrans, descriptifs: Self.descriptifs,
                 reserve: TextesEspaceCS.reserve))
     }
+
+    /// Les descriptifs du site, moins celui du Reporting : il promet l'export (« à consulter
+    /// ou à exporter »), que l'app laisse au site et dit sous le suivi
+    /// (`TextesReporting.surLeSite`, #358) — écarté, comme ceux des onglets d'accès (`AccesView`).
+    static let descriptifs = TablesEspaceCS.descriptifs.filter { $0.key != "reporting" }
 }
 
 extension EspaceCSView: EcranDeMenu {}

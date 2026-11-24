@@ -75,13 +75,11 @@ final class PrestatairesAffaireUITests: XCTestCase {
     func testLaCarteDuKanbanDitLePremierEtPlusN() throws {
         let app = lancer(["-ecran", "affaires"])
         // L'écran s'ouvre sur la barre : le menu Affaires d'abord, comme AffairesUITests.
-        let menu = app.descendants(matching: .any)["Affaires"].firstMatch
-        XCTAssertTrue(menu.apparait())
-        app.toucher(menu)
+        // L'onglet Kanban, une fois la liste chargée.
+        let ongletAffaires = app.descendants(matching: .any)["Affaires"].firstMatch
         let onglet = app.descendants(matching: .any)["Kanban"].firstMatch
-        XCTAssertTrue(onglet.apparait(), "l'onglet, une fois la liste chargée")
-        app.toucher(onglet)
-        XCTAssertTrue(app.elementAcces("kanban.colonne.cs").apparait())
+        app.toucher(ongletAffaires, jusqua: onglet)
+        app.toucher(onglet, jusqua: app.elementAcces("kanban.colonne.cs"))
         // « Chez le prestataire » est une colonne à droite : on y va.
         let carte = app.elementAcces("kanban.carte.A-0040")
         XCTAssertTrue(app.amenerDansSaRangee(carte, par: app.elementAcces("kanban.colonne.cs")))

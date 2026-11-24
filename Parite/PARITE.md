@@ -37,11 +37,12 @@ parallèles ne se gênent pas.
 5. **#17** notifications push : côté app livré (autorisation dans la cloche,
    appareil enregistré et retiré, notification touchée → la cloche de sa résidence) ;
    **#283** : seule l'alerte d'une actualité marquée urgente par le conseil syndical ou
-   l'administrateur sonne, auprès d'une résidence au contrat 2.10.0 au moins ; l'app la
+   l'administrateur sonne ; l'app la
    tient **éteinte** (`RelaisPush`) tant que le service `notifications_push` n'est pas
    allumé (coprofirst#2875) ; réception réelle en attente de la clé `.p8` (coprofirst#2494).
    **#18** liens universels : le serveur sert l'AASA (coprofirst#2459) ; réception et
-   porte de navigation codées, liste des domaines en attente de décision (#18).
+   porte de navigation codées ; la liste des domaines (`project.yml`) n'est pas arrêtée —
+   #18 clos pour abandon le 17/11/2026.
 6. **#20** — concordance quotidienne des fichiers générés avec coprofirst
    (charte, pages, onglets, contrat d'API) : un écart ouvre un ticket.
 
@@ -100,7 +101,7 @@ Session parallèle. Dossiers : `Fonctions/Communaute`, `Fonctions/FAQ`, `Fonctio
 | `communaute` | `idees` | fait | #14, #286 | Liste, filtre, vote, réponses, signalement, proposer ; masquer ce que publie l'auteur d'une réponse (#286 ; une idée ne dit pas son auteur) ; corriger, statut, supprimer : site |
 | `communaute` | `annonces` | fait | #14, #286 | Filtres, tri, détail, contact, statut (auteur), réponses, déposer sans photo ; masquer ce que publie l'auteur d'une annonce ou d'une réponse (#286, contrat 2.9.0) ; corriger, photos : site |
 | `communaute` | `avis` | fait | #14 | Liste, filtre, donner, corriger, archiver, restaurer ; répondre, retenir, exporter : site |
-| `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Le masquage des catégories selon le statut ne vit que dans le front : non porté (coprofirst#2506) |
+| `faq` | — | fait | #14 | Lecture ; rédaction et réorganisation : site. Les catégories qu'un statut ne lit pas ne sont pas servies (`GET /faq`, coprofirst#2506, livré le 04/11/2026) : l'app n'affiche que ce qu'elle reçoit, rien à masquer |
 | `profil` | — | fait | #14, #166, #286 | Sous « Plus », saisie d'une affaire comprise (#69), demande de suppression du compte (#166), personnes masquées et « Ne plus masquer » (#286, contrat 2.9.0) ; photo, étages, démarche nouvel arrivant, décor des fêtes : site |
 | `notifications` | — | fait | #14, #17 | La cloche de chaque écran ; une notification push la rouvre au toucher, sur sa résidence (#17) |
 

@@ -18,16 +18,16 @@ final class ResidenceUITests: XCTestCase {
         app.toucher(app.tabBars.buttons["Résidence"])
         XCTAssertTrue(app.staticTexts["AA0-000-000"].apparait(), "la Fiche s'ouvre d'abord")
 
-        app.toucher(app.buttons["Carnet d’entretien"])
-        XCTAssertTrue(app.staticTexts["Révision annuelle de la chaudière"].apparait())
+        // Trouvés par leur libellé : nommés `onglet…`, lus comme des onglets (#334).
+        let ongletCarnet = app.buttons["Carnet d’entretien"]
+        app.toucher(ongletCarnet, jusqua: app.staticTexts["Révision annuelle de la chaudière"])
         // Un contrat pas encore commencé : « À venir » dans la gouttière, dit avec sa date (#259).
         let aVenir = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label ENDSWITH %@", ", À venir")).firstMatch
         XCTAssertTrue(aVenir.apparait(), "la gouttière du contrat à venir")
 
-        app.toucher(app.buttons["Règlement"])
-        let question = app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"]
-        XCTAssertTrue(question.apparait())
+        let ongletReglement = app.buttons["Règlement"]
+        app.toucher(ongletReglement, jusqua: app.staticTexts["Puis-je installer une climatisation sur mon balcon ?"])
         XCTAssertFalse(app.buttons["reglement.poser"].isEnabled, "question vide : rien à poser")
     }
 

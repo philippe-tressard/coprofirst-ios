@@ -43,8 +43,8 @@ extension ServiceAPI: ServiceGestesAffaire {
         try await modifierAffaire(affaire, .init(archiveManuel: true), dans: installation)
     }
 
-    /// La réponse se garde (`CorpsServi.garder`) : ce que l'affaire a fait de la correction
-    /// y est servi au-dessus du plancher (contrat 1.30.0, #187).
+    /// Ce que l'affaire a fait de la correction (#187, contrat 1.30.0) se lit par le type
+    /// généré : le plancher le sert (#313).
     @discardableResult
     func corrigerSuite(
         _ correction: CorrectionSuite, _ suite: Int, de affaire: Int, dans installation: Installation

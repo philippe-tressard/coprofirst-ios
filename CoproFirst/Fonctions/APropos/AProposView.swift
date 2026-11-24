@@ -40,7 +40,7 @@ struct AProposView: View {
             Section {
                 lienExterne(TextesDuPied.site.libelle, aide: TextesDuPied.site.aide, vers: TextesDuPied.sitePlateforme)
                 lienExterne(TextesDuPied.source.libelle, aide: TextesDuPied.source.aide, vers: TextesDuPied.depotSource)
-                lienExterne("Code source de l'app", aide: "Le code de cette app iPhone", vers: Self.depotApp)
+                lienExterne("Code source de l'app", aide: "Le code de cette app", vers: Self.depotApp)
             } footer: {
                 Text("\(TextesDuPied.nomPlateforme) est distribué sous la \(TextesDuPied.licenceNom).")
             }
