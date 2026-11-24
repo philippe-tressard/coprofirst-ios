@@ -309,7 +309,10 @@ seule la CI le dit.
    Un toucher qui OUVRE une page (idempotent) et peut se perdre sous charge passe par
    `app.toucher(élément, jusqua: effet)` : rejoué au plus `Attente.reprises` fois, chaque
    reprise déclarée au résumé du run (`bilan_tests_ui.py`, #282) — jamais pour un
-   interrupteur ni un envoi. Un ONGLET s'y touche toujours ; trouvé par son libellé, il se
+   interrupteur ni un envoi. Un DÉPLIAGE (année, exercice, fiche, avis) se déplie par
+   `app.deplier(en-tête)` : il lit l'état que pose `.depliage(…)` dans la vue (« déplié »), et
+   ne rejoue un toucher perdu qu'à état inchangé (#384 ; le juge des écritures refuse une
+   indication « Déplie… » écrite sur place). Un ONGLET s'y touche toujours ; trouvé par son libellé, il se
    range dans une variable nommée `onglet…` — le juge (`scripts/touchers_onglets.py`, #334)
    ne reconnaît un onglet qu'à son identifiant et à ce nom. Un toucher voulu aux COORDONNÉES (sans le défilement
    d'XCUITest, #47) : `app.toucherAuDessin(élément)`, une fois son cadre immobile.
