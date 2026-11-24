@@ -316,12 +316,14 @@ jobs:
     # dépassement coûte une relance de 70 min. Seul, sans build iPhone à réutiliser : 27 min
     # sur #289 (iPad 22,6 + Apple TV 4,1), puis coupé à 40 sur un runner ~1,35 fois plus lent
     # (iPad 32,2 min, dont 13,8 de tests ; Apple TV encore au build à 7,7). Au pire mesuré,
-    # ~42 min ; plafond à 1,5 fois : 65.
+    # ~42 min ; plafond à 1,5 fois : 65. Le 23/11/2026, coupé à 65 sans test rouge (#364, run
+    # 45256597018 : échantillon iPad 62 min, Apple TV interrompue) ; six runs verts de main : 26 à
+    # 59. Avec CarnetUITests à venir (#350, ~3,5 min) et ~7 pour l'Apple TV : ~73 au pire ; 85.
     name: Échantillons (iPad, Apple TV)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
-    timeout-minutes: 65
+    timeout-minutes: 85
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Xcode du runner
