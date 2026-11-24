@@ -96,6 +96,10 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func chaqueOngletADesDescriptifsDuSite() {
     #expect(TablesEspaceCS.descriptifs["validations"]?.isEmpty == false)
+    // Le Reporting : le site promet l'export, l'app le laisse au site (#358).
+    #expect(TablesEspaceCS.descriptifs["reporting"] != nil)
+    #expect(EspaceCSView.descriptifs["reporting"] == nil)
+    #expect(EspaceCSView.descriptifs.count == TablesEspaceCS.descriptifs.count - 1)
     #expect(TablesEspaceCS.civilites.first == AnnuaireCS.civiliteParDefaut)
 }
 

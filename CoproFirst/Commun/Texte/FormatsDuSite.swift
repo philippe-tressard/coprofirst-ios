@@ -5,7 +5,7 @@ import Foundation
 
 /// Les formats du site, à la MÊME règle que lui (#37) — fr-FR, fuseau de Paris :
 ///
-/// | App | Site (coprofirst v3.61.0) | Rendu |
+/// | App | Site (`front/src/lib/date.ts`, relu à v3.61.0) | Rendu |
 /// |---|---|---|
 /// | `date(_:)` | `fmtDate`, `front/src/lib/date.ts` | « 2 avr. 2026 » |
 /// | `dateCourte(_:)` | `fmtDateShort`, idem | « 02/04/2026 » |
