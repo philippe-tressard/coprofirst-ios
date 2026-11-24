@@ -30,18 +30,27 @@ import re
 from generateurs import charte
 from generateurs._commun import SIGNATURE
 
-# Le catalogue des tracés et les licences ne sont pas des tables : ils se lisent dans
-# l'archive. Le reste vient de `tables-clients.json` (#128).
-SOURCES = [
-    "front/src/lib/icones-svg.json",
-    "LICENSES/ISC.txt",
-    "LICENSES/MIT.txt",
-]
+# Le catalogue des tracés et les licences ne sont pas des tables : ce sont des pièces jointes
+# de la release (#356), plus des fichiers de l'archive. Le reste vient de `tables-clients.json`
+# (#128).
+SOURCES: list[str] = []
+PIECES_JOINTES = ["icones-svg.json", "ISC.txt", "MIT.txt"]
+#: Ce que l'en-tête « Source : » nomme : le fichier du site que la pièce jointe recopie,
+#: inchangé (la concordance compare l'en-tête au-delà de la version, #356).
+CATALOGUE_DU_SITE = "front/src/lib/icones-svg.json"
 
 CATALOGUE = pathlib.Path("CoproFirst/Ressources/Pictogrammes.xcassets")
 ESPACE = "Lucide"
 #: Les attributs du <svg> (`attributsTrace`), lus et non recopiés : le trait suit le site.
 ATTRIBUTS = ("viewBox", "fill", "stroke-width", "stroke-linecap", "stroke-linejoin")
+
+
+def _piece(ctx, nom: str) -> str:
+    """Une pièce jointe de la release, en texte (`PIECES_JOINTES`)."""
+    try:
+        return ctx.version.piece_jointe(nom).decode("utf-8")
+    except UnicodeDecodeError as erreur:
+        raise SystemExit(f"❌ {nom} de {ctx.version.etiquette} illisible : {erreur}") from erreur
 
 
 def _json(objet: dict) -> str:
@@ -70,7 +79,10 @@ def noms(ctx) -> list[str]:
 
 
 def generer(ctx) -> str:
-    catalogue = json.loads(ctx.lire(SOURCES[0]))
+    try:
+        catalogue = json.loads(_piece(ctx, PIECES_JOINTES[0]))
+    except ValueError as erreur:
+        raise SystemExit(f"❌ {PIECES_JOINTES[0]} de {ctx.version.etiquette} illisible : {erreur}") from erreur
     attributs = attributs_du_site(ctx)
     retenus = noms(ctx)
     absents = [nom for nom in retenus if nom not in catalogue]
@@ -87,7 +99,7 @@ def generer(ctx) -> str:
         svg = (
             '<?xml version="1.0" encoding="UTF-8"?>\n'
             f"<!-- {SIGNATURE} -->\n"
-            f"<!-- Source : {ctx.provenance}, {SOURCES[0]} ({nom}). -->\n"
+            f"<!-- Source : {ctx.provenance}, {CATALOGUE_DU_SITE} ({nom}). -->\n"
             f'<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" {attributs} '
             f'stroke="#000000">{catalogue[nom]}</svg>\n'
         )
@@ -103,7 +115,7 @@ def generer(ctx) -> str:
 
 def licences(ctx) -> None:
     """Les licences des tracés, telles que coprofirst les déclare — pour REUSE et pour l'app."""
-    textes = {spdx: ctx.lire(f"LICENSES/{spdx}.txt") for spdx in ("ISC", "MIT")}
+    textes = {spdx: _piece(ctx, f"{spdx}.txt") for spdx in ("ISC", "MIT")}
     corps = ctx.entete("LICENSES/ISC.txt et MIT.txt")
     corps += "\n/// Les licences des pictogrammes Lucide de l'app (`Pictogrammes.xcassets`), avec\n"
     corps += "/// leurs titulaires : l'avis doit accompagner chaque copie (ISC, MIT).\n"

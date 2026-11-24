@@ -46,8 +46,9 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   issues ouvertes. Signature **au poste** seulement, jamais en CI ; identifiant
   `fr.coprofirst.app` **figé** (contrat : liens universels, APNs) ; compte Apple
   et TestFlight : skill `publication-app-store`.
-- **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint,
-  swift-format) ; Homebrew sur le poste, binaires vérifiés par empreinte en CI.
+- **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint, REUSE,
+  et le Xcode de la CI) ; Homebrew sur le poste ; ce qui est vérifié par empreinte en CI,
+  et ce qui ne l'est pas, se lit dans `outillage.env`.
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
   fusionne : champ `fusion` du registre. **Décision du 11/11/2026** (Philippe :
   « tu es plus à même de fusionner et de voir les conséquences ») : je fusionne

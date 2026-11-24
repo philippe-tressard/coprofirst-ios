@@ -466,6 +466,9 @@ HOTES=$(python3 -I scripts/verifier-hotes.py) || { echo "$HOTES"; echec "hôte f
 # Un jeton se garde dans UN JetonMasque, l'en-tête Authorization s'écrit à UN endroit (#342).
 JETONS=$(python3 -I scripts/verifier-jetons.py) || { echo "$JETONS"; echec "jeton en clair, ou en-tête écrit hors de JetonAppareil"; }
 
+# Un numéro de téléphone se prend dans la tranche fixe réservée à la fiction, 01 99 00 (#359).
+NUMEROS=$(python3 -I scripts/verifier-numeros.py) || { echo "$NUMEROS"; echec "numéro de téléphone hors de la tranche fictive"; }
+
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque
 # passage — la ligne s'affiche, elle ne compte pas pour conforme.

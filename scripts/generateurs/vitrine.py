@@ -14,7 +14,10 @@ le test `ContenuVitrineTests` dit si la copie porte encore chaque `id` dont l'ap
 dépend (`ContenuVitrine.idsRequis`).
 
 Le JSON est réécrit sans en changer une valeur : l'en-tête sur une ligne, puis une
-section par ligne, pour qu'un diff dise quelle section a changé.
+section par ligne, pour qu'un diff dise quelle section a changé. Une seule chose en est
+RETIRÉE : le lien vers une release de CoproFirst (« Version 3.101.3 · 15/11/2026 »), qui
+daterait le repli — le site la monte à chaque version, la copie ne monte que par décision
+(#359). En ligne, l'app lit le contenu servi, mention comprise.
 """
 
 from __future__ import annotations
@@ -44,6 +47,18 @@ def une_section_par_ligne(donnees: dict) -> str:
     return texte
 
 
+def sans_mention_de_version(donnees: dict) -> dict:
+    """Le contenu sans les liens vers une release (`…/releases/tag/v…`) : ils dateraient la copie."""
+    sections = []
+    for section in donnees["sections"]:
+        liens = section.get("liens")
+        if isinstance(liens, list):
+            garde = [l for l in liens if "/releases/tag/" not in str(l.get("adresse", ""))]
+            section = {**section, "liens": garde}
+        sections.append(section)
+    return {**donnees, "sections": sections}
+
+
 def litteral_brut(texte: str, retrait: str) -> str:
     """Une chaîne brute Swift sur plusieurs lignes (`#\"\"\"…\"\"\"#`), avec assez de `#`
     pour que rien du texte ne la ferme ni ne s'y lise comme un échappement."""
@@ -62,7 +77,7 @@ def generer(ctx) -> str:
         raise SystemExit(f"❌ vitrine : {CHEMIN} illisible au commit {COMMIT} ({erreur})") from erreur
     if donnees.get("format") != FORMAT_CONNU or not isinstance(donnees.get("sections"), list):
         raise SystemExit(f"❌ vitrine : {CHEMIN} n'est pas au format {FORMAT_CONNU} — l'app ne saurait pas le lire")
-    texte = une_section_par_ligne(donnees)
+    texte = une_section_par_ligne(sans_mention_de_version(donnees))
     corps = (
         f"    /// `{CHEMIN}` au commit épinglé par `scripts/generateurs/vitrine.py` ({RAISON}).\n"
         f"    static let json = {litteral_brut(texte, '    ')}\n"
