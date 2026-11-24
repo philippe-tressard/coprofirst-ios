@@ -57,7 +57,7 @@ Les seuls fichiers qui ouvrent une connexion (`URLSession`, `URLRequest`) :
 |---|---|---|
 | `Paquets/ClientAPI/Sources/ClientAPI/ClientCoproFirst.swift` | l'installation choisie | le client généré : toutes les routes de l'API, sous `/api` |
 | `CoproFirst/Session/ServiceAPI.swift` | l'installation choisie | une session HTTP par hôte, éphémère, cookies en mémoire |
-| `CoproFirst/Session/ServiceAPI+Detail.swift` | l'installation choisie | le téléchargement d'un document, par la même session |
+| `CoproFirst/Session/ServiceAPI+Detail.swift` | l'installation choisie | les photos et pièces jointes de `/uploads/`, hors du contrat, par la même session (le logo et les documents passent par le client généré, #345) |
 | `CoproFirst/Session/PreuveAASA.swift` | l'installation choisie | lecture de `/.well-known/apple-app-site-association`, sans cookie |
 | `CoproFirstWatch/Cloche/ClocheParJeton.swift` | la résidence reliée à l'Apple Watch (#226) | `GET /notifications` seul, par le client généré, le jeton de montre en porteur ; session éphémère, sans cookie |
 | `CoproFirstTV/Entree/DecouverteAPI.swift` | l'installation saisie sur l'Apple TV | GET /config par le client généré, session éphémère, sans cookie ni compte |

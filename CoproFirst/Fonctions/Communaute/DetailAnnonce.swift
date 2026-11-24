@@ -77,7 +77,7 @@ struct DetailAnnonce: View {
     @ViewBuilder
     private func contact(_ annonce: Annonce) -> some View {
         if let auteur = annonce.auteur {
-            if let courriel = annonce.auteurEmail, let lien = URL(string: "mailto:\(courriel)") {
+            if let lien = LienDeContact.courriel(annonce.auteurEmail) {
                 Link(destination: lien) { Label(auteur, systemImage: "envelope") }
                     .tint(palette.primary)
                     .accessibilityIdentifier("annonce.contact")

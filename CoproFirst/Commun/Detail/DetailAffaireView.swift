@@ -114,7 +114,7 @@ private struct EnTeteAffaire: View {
             VStack(alignment: .leading, spacing: 4) {
                 EtiquetteLieu(lieu: affaire.lieu)
                 Label {
-                    Text(affaire.creeLe, format: .dateTime.day().month(.wide).year().hour().minute())
+                    Text(FormatsDuSite.dateHeureLongue(affaire.creeLe))
                 } icon: {
                     Image(systemName: "calendar")
                 }

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
-import Foundation
+import SwiftUI
 
 extension AvisDuGeste {
     /// Un service que la session ne réalise pas (l'aperçu, une session sans API).
@@ -28,6 +28,21 @@ extension AvisDuGeste {
         } catch {
             dire(ErreurService.depuis(error).phrase, ton: .error)
             return false
+        }
+    }
+
+    /// Un geste d'une FILE à traiter (Espace CS › Comptes, Admin › À traiter), écrit une fois
+    /// (#348) : réussite → l'annonce se dit et l'erreur de la page s'efface ; échec → la
+    /// phrase du serveur va à la page (`echec`, au-dessus de la file), pas à l'avis.
+    func traiter(_ echec: Binding<String?>, _ faire: @escaping () async throws -> PhraseAvis) {
+        Task {
+            do {
+                let annonce = try await faire()
+                withAnimation(.snappy) { echec.wrappedValue = nil }
+                dire(annonce)
+            } catch {
+                withAnimation(.snappy) { echec.wrappedValue = ErreurService.depuis(error).phrase }
+            }
         }
     }
 }

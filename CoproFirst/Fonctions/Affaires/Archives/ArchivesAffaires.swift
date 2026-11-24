@@ -64,7 +64,7 @@ struct ArchivesAffaires: View {
                 Text(String(annee))
                     .font(.titre(.title3))
                     .foregroundStyle(palette.text)
-                Text(compte, format: .number)
+                Text(FormatsDuSite.nombre(compte))
                     .font(.footnote.weight(.semibold).monospacedDigit())
                     .foregroundStyle(palette.textMuted)
                     .padding(.horizontal, 8)

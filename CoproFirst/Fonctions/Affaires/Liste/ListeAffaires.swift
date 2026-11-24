@@ -73,7 +73,7 @@ struct ListeAffaires: View {
     private var inclureArchives: some View {
         Toggle(isOn: $etat.avecArchives.animation(.snappy)) {
             Label {
-                Text("Inclure les archives (\(etat.archiveesTrouvees, format: .number))")
+                Text("Inclure les archives (\(FormatsDuSite.nombre(etat.archiveesTrouvees)))")
             } icon: {
                 Image(systemName: "archivebox")
             }
@@ -139,8 +139,8 @@ struct ListeAffaires: View {
         } label: {
             Label("Copier le numéro", systemImage: "number")
         }
-        ShareLink(item: installation.adresse.appending(path: "tickets/\(affaire.id)")) {
-            Label("Partager le lien", systemImage: "square.and.arrow.up")
+        if let adresse = CheminDuSite.adresse(affaire: affaire.id, sur: installation.adresse) {
+            ShareLink(item: adresse) { Label("Partager le lien", systemImage: "square.and.arrow.up") }
         }
         actionArchiver(affaire)
     }

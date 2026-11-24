@@ -112,25 +112,27 @@ extension ServiceAPI {
         return try await lireFichier(adresse, session: installation.adresse)
     }
 
-    /// Le logo de la résidence, à l'adresse que donne `Installation.adresseLogo(sombre:)`
-    /// — une image servie par l'API, que le contrat déclare en JSON : la session de
-    /// l'hôte la lit, comme une photo. Une route publique : rien à renouveler.
-    func logo(_ adresse: URL) async throws -> Data {
-        try await lireFichier(adresse, session: nil)
+    /// Le logo de la résidence que dit `Installation.logo(sombre:)` : GET /config/logo.png par
+    /// le client généré (#345), la variante en paramètre. Le contrat déclare du JSON, le
+    /// serveur sert l'image : ses octets se lisent par `octetsServis`. Une route publique.
+    func logo(_ demande: LogoDemande) async throws -> Data {
+        let client = clientPublic(demande.installation)
+        return try await Self.octetsServis {
+            switch try await client.getConfigLogoPng(query: .init(variante: demande.sombre ? .sombre : nil)) {
+            case .ok: break
+            case .unprocessableContent: throw ErreurService.inattendue(422)
+            case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
+            }
+        }
     }
 
-    /// Un fichier de l'hôte (image, photo), lu par la session HTTP de son installation ;
-    /// derrière la `session` de cette installation, un 401 s'y renouvelle (#81).
-    private func lireFichier(_ adresse: URL, session installation: URL?) async throws -> Data {
+    /// Un fichier de l'hôte (photo, pièce jointe), lu par la session HTTP de son installation ;
+    /// un 401 s'y renouvelle (#81).
+    private func lireFichier(_ adresse: URL, session installation: URL) async throws -> Data {
         let lire = { [sessions] in try await sessions.session(pour: adresse).data(from: adresse) }
         let statutLu: ((Data, URLResponse)) -> Int = { ($0.1 as? HTTPURLResponse)?.statusCode ?? 0 }
         do {
-            let (donnees, reponse) =
-                if let installation {
-                    try await rejouerSurRefus(installation, statut: statutLu, envoyer: lire)
-                } else {
-                    try await lire()
-                }
+            let (donnees, reponse) = try await rejouerSurRefus(installation, statut: statutLu, envoyer: lire)
             let statut = statutLu((donnees, reponse))
             guard statut == 200 else { throw ErreurService.depuisLecture(statut) }
             return donnees

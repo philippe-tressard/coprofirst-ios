@@ -17,9 +17,6 @@ import Foundation
 /// HTTPS passe, l'hôte est normalisé, et un hôte inconnu suit la découverte, avec
 /// confirmation (#82) — `Parcours.suivre`.
 enum LienUniversel {
-    /// La route de la vue Affaires sur le site — celle d'une affaire est `/tickets/<id>`.
-    static let routeAffaires = "/tickets"
-
     /// La page du menu qu'ouvre cette route du site, d'après la table générée.
     static func idDeLaPage(route: String) -> String? {
         PagesParDefaut.toutes.first { $0.route == route }?.id
@@ -36,17 +33,18 @@ enum LienUniversel {
 
     private static func ecran(_ composants: URLComponents, url: URL) -> Destination.Ecran {
         let segments = composants.path.split(separator: "/").map(String.init)
+        // `/tickets/<id>` : la route de la vue Affaires, lue dans la table générée (#348).
+        if segments.count == 2, "/\(segments[0])" == CheminDuSite.affaires, let id = Int(segments[1]) {
+            return .affaire(id: id, message: ancre("msg-", composants.fragment))
+        }
         switch segments.first {
         case nil:
             return .accueil
-        case "tickets" where segments.count == 2:
-            guard let id = Int(segments[1]) else { break }
-            return .affaire(id: id, message: ancre("msg-", composants.fragment))
         // « Les actualités sont des affaires » (coprofirst, 23/09/2026) : le site renvoie
         // `/actualites` et `/actualites#pub-N` vers la vue Affaires. Une publication N
         // n'est pas reprise ici (elle demande GET /publications/{id}, réponse non typée).
         case "actualites":
-            return page(route: routeAffaires) ?? .accueil
+            return CheminDuSite.affaires.flatMap(page(route:)) ?? .accueil
         case "auth" where segments == ["auth", "connexion"]:
             return .connexion
         default:

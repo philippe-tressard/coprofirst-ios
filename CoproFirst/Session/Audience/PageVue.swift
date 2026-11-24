@@ -17,8 +17,24 @@ enum CheminDuSite {
     /// Un onglet d'une page : `/admin#telemetry`, comme `trackTabView` du site.
     static func onglet(_ onglet: String, de route: String) -> String { "\(route)#\(onglet)" }
 
+    /// La vue Affaires : `/tickets`, la route générée de sa page (`DroitsAffaires.page`) —
+    /// jamais écrite à la main (#348).
+    static var affaires: String? { page(DroitsAffaires.page) }
+
     /// Une affaire : `/tickets/123` (`routes/(app)/tickets/[id]` du site).
-    static func affaire(_ id: Int) -> String { "\(LienUniversel.routeAffaires)/\(id)" }
+    static func affaire(_ id: Int) -> String? { affaires.map { "\($0)/\(id)" } }
+
+    /// L'affaire que désigne un chemin du site (`/tickets/123`, `/tickets/123#msg-4`), `nil` sinon.
+    static func affaire(chemin: String) -> Int? {
+        guard let affaires, chemin.hasPrefix(affaires + "/") else { return nil }
+        return Int(chemin.dropFirst(affaires.count + 1).prefix { $0.isNumber })
+    }
+
+    /// L'adresse de la page d'une affaire sur son installation — celle de `lien_ticket()`
+    /// côté serveur : le lien qui se copie et se partage.
+    static func adresse(affaire id: Int, sur installation: URL) -> URL? {
+        affaire(id).map { installation.appending(path: String($0.dropFirst())) }
+    }
 
     /// Un sondage : `/sondages/12` (`routes/(app)/sondages/[id]`), sous la route de la Communauté.
     static func sondage(_ id: Int) -> String? { page(OngletCommunaute.page).map { "\($0)/\(id)" } }

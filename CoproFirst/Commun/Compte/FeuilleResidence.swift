@@ -17,7 +17,8 @@ struct FeuilleResidence: View {
                     Section {
                         VStack(alignment: .leading, spacing: 12) {
                             HStack(spacing: 12) {
-                                LogoResidence(installation: ouverte).frame(width: 44, height: 44)
+                                LogoResidence(installation: ouverte)
+                                    .frame(width: Mise.medaillon, height: Mise.medaillon)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(ouverte.nom).font(.headline).foregroundStyle(palette.text)
                                     Text(ouverte.hote).font(.subheadline).foregroundStyle(palette.textMuted)

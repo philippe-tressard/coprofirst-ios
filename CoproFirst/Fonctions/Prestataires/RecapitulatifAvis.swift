@@ -194,7 +194,7 @@ struct RecapitulatifAvis: View {
                 avis: avis, retirable: gestes.conseil, modifier: { corrige = avis }, retirer: { aRetirer = avis })
         }
         .padding(10)
-        .background(palette.neutreFond, in: .rect(cornerRadius: 10, style: .continuous))
+        .background(palette.neutreFond, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
         .transition(.opacity)
     }
 }

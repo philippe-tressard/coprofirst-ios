@@ -125,7 +125,7 @@ struct BoutonCoeur: View {
                     .font(.title3)
                     .foregroundStyle(idee.monVote ? palette.danger : palette.textMuted)
                     .symbolEffect(.bounce, value: mouvementReduit ? false : idee.monVote)
-                Text(idee.nbVotes, format: .number)
+                Text(FormatsDuSite.nombre(idee.nbVotes))
                     .font(.caption.weight(.semibold))
                     .monospacedDigit()
                     .contentTransition(.numericText(value: Double(idee.nbVotes)))

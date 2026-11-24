@@ -59,37 +59,26 @@ struct FeuilleAvis: View {
     private var ajoutRequis: Bool { choisie.map { !$0.intervient } ?? false }
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
-                        .listRowBackground(Color.clear)
+        FeuilleDeSaisie(titre: titre, erreur: erreur) {
+            ChoixAffaireAvis(
+                affaires: affaires, affaire: $saisie.affaire, prestataire: prestataire.nom,
+                rechercher: rechercheDetaillee)
+            if let choisie, ajoutRequis {
+                Section {
+                    CaseACocher(
+                        libelle: TextesSaisieAvis.ajouter(prestataire.nom, a: choisie.titre),
+                        identifiant: "avis.confirmerAjout", coche: $saisie.confirmeAjout)
                 }
-                ChoixAffaireAvis(
-                    affaires: affaires, affaire: $saisie.affaire, prestataire: prestataire.nom,
-                    rechercher: rechercheDetaillee)
-                if let choisie, ajoutRequis {
-                    Section {
-                        CaseACocher(
-                            libelle: TextesSaisieAvis.ajouter(prestataire.nom, a: choisie.titre),
-                            identifiant: "avis.confirmerAjout", coche: $saisie.confirmeAjout)
-                    }
-                }
-                ChampsAvis(saisie: $saisie, refus: saisie.refus(ajoutRequis: ajoutRequis, prestataire: prestataire.nom))
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .animation(.snappy(duration: 0.2), value: ajoutRequis)
-            .navigationTitle(titre)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(
-                    envoi: envoi, actif: saisie.refus(ajoutRequis: ajoutRequis, prestataire: "") == nil,
-                    identifiant: "avis.enregistrer", envoyer: envoyer)
-            }
-            .interactiveDismissDisabled(saisie != initiale)
-            .task { affaires = (try? await service.affairesANoter(de: prestataire.id, dans: installation)) ?? [] }
+            ChampsAvis(saisie: $saisie, refus: saisie.refus(ajoutRequis: ajoutRequis, prestataire: prestataire.nom))
+        } barre: {
+            BoutonsFeuille(
+                envoi: envoi, actif: saisie.refus(ajoutRequis: ajoutRequis, prestataire: "") == nil,
+                identifiant: "avis.enregistrer", envoyer: envoyer)
         }
+        .animation(.snappy(duration: 0.2), value: ajoutRequis)
+        .interactiveDismissDisabled(saisie != initiale)
+        .task { affaires = (try? await service.affairesANoter(de: prestataire.id, dans: installation)) ?? [] }
     }
 
     private var titre: String {

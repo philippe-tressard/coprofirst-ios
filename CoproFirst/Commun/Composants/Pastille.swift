@@ -16,7 +16,7 @@ struct Pastille: View {
             HStack(spacing: 6) {
                 Text(libelle)
                 if retenue, let compte {
-                    Text(compte, format: .number)
+                    Text(FormatsDuSite.nombre(compte))
                         .monospacedDigit()
                         .fontWeight(.bold)
                 }

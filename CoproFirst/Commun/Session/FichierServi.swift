@@ -17,7 +17,12 @@ extension ServiceAPI {
     static func fichierServi(
         nom: String?, defaut: String, appel: () async throws -> Void
     ) async throws -> URL {
-        let donnees: Data
+        let donnees = try await octetsServis(appel)
+        return try Fichiers.ecrire(donnees, sous: ["documents"], nom: Fichiers.nomSur(nom, defaut: defaut))
+    }
+
+    /// Les octets d'une telle route, sans les écrire : le logo d'une résidence (#345).
+    static func octetsServis(_ appel: () async throws -> Void) async throws -> Data {
         do {
             try await appel()
             // Le client a décodé du JSON là où un fichier était attendu.
@@ -28,9 +33,8 @@ extension ServiceAPI {
             guard let fichier = try await ClientCoproFirst.fichierServi(error) else {
                 throw ErreurService.depuis(ClientCoproFirst.cause(error))
             }
-            donnees = fichier
+            return fichier
         }
-        return try Fichiers.ecrire(donnees, sous: ["documents"], nom: Fichiers.nomSur(nom, defaut: defaut))
     }
 }
 
