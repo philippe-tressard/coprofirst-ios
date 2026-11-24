@@ -4,9 +4,10 @@
 
 Chaque module (hors `_*`) déclare :
 
-- `SOURCES` : les fichiers de coprofirst qu'il lit, relatifs à la racine du dépôt
-  (`front/src/lib/tickets.ts`) — seuls ceux-là sont extraits de la version lue ;
-- `generer(ctx) -> str` : il lit par `ctx.lire` (ou sous `ctx.front`), écrit par
+- `SOURCES` : les fichiers de coprofirst qu'il lit, relatifs à la racine du dépôt — seuls
+  ceux-là sont extraits de la version lue ; vides partout depuis #356 : `INTERDITS` refuse
+  l'API et le front, que la release publie (`ctx.table`, `ctx.constante`) ;
+- `generer(ctx) -> str` : il lit par `ctx.table`, `ctx.constante` (ou `ctx.lire`), écrit par
   `ctx.ecrire`, date par `ctx.entete`, et rend une phrase de bilan.
 
 Un module peut aussi déclarer `PIECES_JOINTES` (les fichiers joints à la release
