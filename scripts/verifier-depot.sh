@@ -457,6 +457,8 @@ SIMULE=$(python3 -I scripts/verifier-simule.py) || { echo "$SIMULE"; echec "simu
 IDENTIFIANTS=$(python3 -I scripts/verifier-identifiants.py) || { echo "$IDENTIFIANTS"; echec "Label identifié lu en plusieurs éléments"; }
 # Les séparateurs du site se lisent dans la table générée (#188) : aucun ne finit une ligne.
 SEPARATEURS=$(python3 -I scripts/verifier-separateurs.py) || { echo "$SEPARATEURS"; echec "séparateur sécable ou recopié"; }
+# Formats, mesures et lectures par leur point commun, exceptions comptées (#345, #346, #347).
+ECRITURES=$(python3 -I scripts/verifier-ecritures-vues.py) || { echo "$ECRITURES"; echec "format, mesure ou lecture écrits à la main"; }
 
 # Un hôte fictif se prend dans un nom réservé (#214, standards/03 §8 quater) : exemple.fr
 # est un vrai domaine tiers, qui recevrait requêtes et cookies d'un test égaré.
