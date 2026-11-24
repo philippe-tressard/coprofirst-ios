@@ -463,6 +463,8 @@ ECRITURES=$(python3 -I scripts/verifier-ecritures-vues.py) || { echo "$ECRITURES
 # Un hôte fictif se prend dans un nom réservé (#214, standards/03 §8 quater) : exemple.fr
 # est un vrai domaine tiers, qui recevrait requêtes et cookies d'un test égaré.
 HOTES=$(python3 -I scripts/verifier-hotes.py) || { echo "$HOTES"; echec "hôte fictif hors des noms réservés"; }
+# Un numéro de téléphone se prend dans la tranche fixe réservée à la fiction, 01 99 00 (#359).
+NUMEROS=$(python3 -I scripts/verifier-numeros.py) || { echo "$NUMEROS"; echec "numéro de téléphone hors de la tranche fictive"; }
 
 # Confidentialité déclarée = confidentialité réelle (#19) : l'autotest d'abord, puis le
 # manifeste, la fiche et le code. Ce que le juge ne mesure pas, il le dit INCONNU à chaque

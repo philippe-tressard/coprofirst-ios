@@ -59,10 +59,12 @@ l'outillage.
 
 Les versions épinglées sont dans [`outillage.env`](outillage.env), la seule liste. La CI
 installe exactement celles-ci ; Homebrew pose la **dernière** version, et seul XcodeGen
-est comparé à son épingle (`scripts/generer-projet.sh`) :
+est comparé à son épingle (`scripts/generer-projet.sh`). `.swift-format` règle le
+formateur intégré à Xcode (Editor › Structure › Format File) ; aucun contrôle ne le
+lance, SwiftLint `--strict` juge le style (#357) :
 
 ```bash
-brew install xcodegen swiftlint swift-format
+brew install xcodegen swiftlint
 ```
 
 `reuse`, à sa version épinglée — sans lui, le hook refuse le commit (INCONNU) :

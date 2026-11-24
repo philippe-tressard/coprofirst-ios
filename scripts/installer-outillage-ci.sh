@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
 # installer-outillage-ci.sh — XcodeGen et SwiftLint pour la CI, aux versions
-# d'outillage.env, empreinte SHA-256 vérifiée avant tout usage. Homebrew n'épingle
+# d'outillage.env, empreinte SHA-256 vérifiée avant tout usage ; puis le Xcode du runner
+# comparé à `XCODE_CI` (#359) : un autre est dit, pas refusé. Homebrew n'épingle
 # pas une version : sur le runner, il installerait la dernière, et la CI jugerait
 # avec un autre outil que le poste.
 #
@@ -46,3 +47,7 @@ if [ -n "${GITHUB_PATH:-}" ]; then
 fi
 "$OUTILS/xcodegen/bin/xcodegen" --version
 "$OUTILS/bin/swiftlint" version
+XCODE_LU=$(xcodebuild -version 2>/dev/null | sed -n 's/^Xcode //p' | head -1)
+if [ "$XCODE_LU" != "$XCODE_CI" ]; then
+  echo "::warning::Xcode ${XCODE_LU:-illisible} sur le runner, ${XCODE_CI} dans outillage.env — à relever (XCODE_CI)"
+fi
