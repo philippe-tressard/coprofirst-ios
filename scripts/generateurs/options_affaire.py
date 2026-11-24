@@ -4,27 +4,29 @@
 le site offre à une affaire (`OPTIONS_TICKET`, `tickets.ts`), avec leurs mots
 (`OPTIONS_PUBLICATION`, `options-publication.ts`) → `CoproFirst/Charte/OptionsDuSite.swift`,
 lu par le menu Options du bandeau d'une affaire (`Commun/Detail/Affaire/`).
+
+Les deux tables se lisent dans `tables-clients.json` de la release (`ctx.table`, #356) :
+`optionsTicket`, `optionsPublication`.
 """
 
 from __future__ import annotations
 
-import re
-
-import lecture_ts
 from generateurs._commun import CHARTE, chaine, ecrire_table
 
-SOURCES = ["front/src/lib/tickets.ts", "front/src/lib/options-publication.ts"]
+SOURCES: list[str] = []  # tables-clients.json de la release (#356), pas les sources du site
 
 
 def generer(ctx) -> str:
-    m = re.search(r"\bconst OPTIONS_TICKET\b[^=]*=\s*\[([^\]]*)\]", ctx.lire(SOURCES[0]))
-    if not m:
-        raise SystemExit("❌ OPTIONS_TICKET introuvable dans tickets.ts")
-    cles = re.findall(r"'([^']+)'", m.group(1))
-    options = {o["cle"]: o for o in lecture_ts.table(ctx.lire(SOURCES[1]), "OPTIONS_PUBLICATION")}
+    cles = ctx.table("optionsTicket")
+    if not (isinstance(cles, list) and cles and all(isinstance(c, str) and c for c in cles)):
+        raise SystemExit(f"❌ optionsTicket : forme inattendue ({cles!r}) — l'app doit l'apprendre")
+    publiees = ctx.table("optionsPublication")
+    if not (isinstance(publiees, list) and all(isinstance(o, dict) and "cle" in o for o in publiees)):
+        raise SystemExit(f"❌ optionsPublication : forme inattendue ({publiees!r}) — l'app doit l'apprendre")
+    options = {o["cle"]: o for o in publiees}
     manquantes = [c for c in cles if c not in options]
     if manquantes:
-        raise SystemExit(f"❌ OPTIONS_PUBLICATION ne décrit pas {manquantes}")
+        raise SystemExit(f"❌ optionsPublication ne décrit pas {manquantes}")
     lignes = "".join(
         f"        Option(\n"
         f"            cle: {chaine(c)}, action: {chaine(options[c]['action'])}, etat: {chaine(options[c]['etat'])},\n"
