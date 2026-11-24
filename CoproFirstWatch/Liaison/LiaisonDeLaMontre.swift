@@ -20,8 +20,19 @@ final class LiaisonDeLaMontre: NSObject, WCSessionDelegate {
     @ObservationIgnored private let active: Bool
     @ObservationIgnored let garde: any GardeDeLaCloche
     @ObservationIgnored private let surfaces: Surfaces
+    #if DEBUG
     /// En Debug, sous l'API simulée : l'état ne vient pas du coffre.
     @ObservationIgnored private var simulee = false
+    #endif
+    /// L'état se lit au coffre — partout hors de l'API simulée, qu'un build Release ne compile
+    /// pas (#84).
+    private var luAuCoffre: Bool {
+        #if DEBUG
+        !simulee
+        #else
+        true
+        #endif
+    }
 
     init(
         coffre: any CoffreLiaison, garde: any GardeDeLaCloche = GardeEnMemoire(),
@@ -69,13 +80,13 @@ final class LiaisonDeLaMontre: NSObject, WCSessionDelegate {
 
     /// Le serveur ne reconnaît plus le jeton : la liaison s'oublie.
     func jetonRefuse() {
-        if !simulee { coffre.effacer() }
+        if luAuCoffre { coffre.effacer() }
         poser(.nonReliee)
     }
 
     /// Au retour au premier plan : une liaison échue entre-temps ne lit plus rien.
     func relire() {
-        guard !simulee else { return }
+        guard luAuCoffre else { return }
         poser(EtatMontre.depuis(coffre, active: active))
     }
 

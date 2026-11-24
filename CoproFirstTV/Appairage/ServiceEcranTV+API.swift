@@ -48,7 +48,8 @@ struct ServiceEcranAPI: ServiceEcranTV, LitLesRefus {
         switch try await appeler({ try await client(adresse, jeton: jeton).getEcransMoiAffiches() }) {
         case .ok(let ok):
             return try ok.body.json.map {
-                AfficheHall(id: $0.id, titre: $0.titre, message: $0.message, images: $0.images.count, creeLe: $0.creeeLe)
+                AfficheHall(
+                    id: $0.id, titre: $0.titre, message: $0.message, images: $0.images.count, creeLe: $0.creeeLe)
             }
         case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
         }

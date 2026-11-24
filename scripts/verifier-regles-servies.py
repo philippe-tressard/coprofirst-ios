@@ -35,6 +35,8 @@ import re
 import sys
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 
 #: (motif, ce qu'on lit à la place). Un motif vise la COPIE, jamais le champ servi :
 #: `lu.colonnesKanban` (le type généré du contrat) reste permis.
@@ -130,7 +132,7 @@ def portes_sous_le_plancher(racine: pathlib.Path) -> list[str] | None:
     if plancher is None:
         return None
     refus = []
-    for f in sorted((racine / "CoproFirst").rglob("*.swift")):
+    for f in portee.fichiers(racine, portee.CODE):
         chemin = f.relative_to(racine).as_posix()
         for nom, version in portes(f.read_text(encoding="utf-8")):
             if chemin == PLANCHER and nom == "plancher":
@@ -143,7 +145,7 @@ def portes_sous_le_plancher(racine: pathlib.Path) -> list[str] | None:
 
 
 def fichiers(racine: pathlib.Path) -> list[pathlib.Path]:
-    return sorted([*(racine / "CoproFirst").rglob("*.swift"), *(racine / "scripts" / "generateurs").glob("*.py")])
+    return sorted([*portee.fichiers(racine, portee.CODE), *(racine / "scripts" / "generateurs").glob("*.py")])
 
 
 def juger(racine: pathlib.Path) -> tuple[list[str], int]:

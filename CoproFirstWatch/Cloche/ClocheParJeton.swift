@@ -16,9 +16,9 @@ struct JetonRefuse: Error {}
 /// cookie : un cookie présent l'emporterait côté serveur. Le jeton ne part que vers l'adresse
 /// de la liaison.
 enum ClocheParJeton {
-    static func alertes(_ liaison: LiaisonGardee, transport: (any ClientTransport)? = nil) async throws
-        -> [NotificationRecue]
-    {
+    static func alertes(
+        _ liaison: LiaisonGardee, transport: (any ClientTransport)? = nil
+    ) async throws -> [NotificationRecue] {
         let porteur = [JetonPorteur(jeton: liaison.jeton)]
         let client =
             if let transport {

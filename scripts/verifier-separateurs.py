@@ -30,9 +30,10 @@ import sys
 import tempfile
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 # Les tests aussi : un test d'interface qui cherche « Ouvert → Chez le syndic » à l'espace
 # sécable ne trouve plus le libellé de l'app (CI de #200, 15/11/2026).
-DOSSIERS = ("CoproFirst", "CoproFirstTests", "CoproFirstUITests")
 # Un séparateur du site entre deux espaces ordinaires (U+0020) : l'espace d'après doit
 # être insécable — `Separateur.point`, `.tiret` ou `.fleche`.
 SECABLES = (
@@ -52,7 +53,7 @@ def refus(chemin: str, texte: str) -> list[str]:
         return []
     # Un test ÉCRIT la valeur attendue (la constante y est voulue) et ses messages sont de la
     # prose : on n'y refuse que « · » et « → » suivis d'une espace sécable.
-    test = chemin.startswith(("CoproFirstTests/", "CoproFirstUITests/"))
+    test = any(portee.sous(chemin, d) for d in portee.TESTS)
     regles = SECABLES[:1] if test else SECABLES
     fautes = []
     for numero, ligne in enumerate(texte.splitlines(), 1):
@@ -71,11 +72,8 @@ def refus(chemin: str, texte: str) -> list[str]:
 
 def juger(racine: pathlib.Path) -> list[str]:
     fautes = []
-    for dossier in DOSSIERS:
-        if not (racine / dossier).is_dir():
-            continue
-        for f in sorted((racine / dossier).rglob("*.swift")):
-            fautes += refus(f.relative_to(racine).as_posix(), f.read_text(encoding="utf-8"))
+    for f in portee.fichiers(racine, portee.CODE + portee.TESTS):
+        fautes += refus(f.relative_to(racine).as_posix(), f.read_text(encoding="utf-8"))
     return fautes
 
 

@@ -4,14 +4,14 @@
 import Foundation
 
 /// La liaison que l'iPhone a donnée : la résidence et son jeton de montre (coprofirst#2771).
-struct LiaisonGardee: Codable, Hashable, Sendable, CustomStringConvertible, CustomDebugStringConvertible,
-    CustomReflectable
-{
+struct LiaisonGardee: Codable, Hashable, Sendable {
     let adresse: URL
     let residence: String
     let jeton: String
     let expireLe: Date
+}
 
+extension LiaisonGardee: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
     var description: String { "LiaisonGardee(\(adresse.absoluteString), \(residence), jeton masqué, \(expireLe))" }
     var debugDescription: String { description }
     var customMirror: Mirror { Mirror(self, children: [], displayStyle: .struct) }

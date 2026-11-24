@@ -60,6 +60,8 @@ import sys
 import tempfile
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 CONTRAT = RACINE / "Paquets" / "ClientAPI" / "Sources" / "ClientAPI" / "openapi.json"
 JSON_BRUT = re.compile(r'static let (\w+) = #"""\n(.*?)\n\s*"""#', re.S)
 DECLAREE = re.compile(r'Reponse\(nom: "(\w+)", schema: "(\w+)", json: (\w+)\)')
@@ -158,7 +160,7 @@ class Juge:
 def fixtures(racine: pathlib.Path) -> list[tuple[str, str, str, object]]:
     """(fichier, nom, schéma, réponse lue) de chaque réponse simulée déclarée."""
     trouvees = []
-    for fichier in sorted((racine / "CoproFirst").rglob("Fixtures*.swift")):
+    for fichier in portee.fichiers(racine, portee.CODE, "Fixtures*.swift"):
         texte = fichier.read_text(encoding="utf-8")
         brutes = dict(JSON_BRUT.findall(texte))
         declarees = {variable: (nom, schema) for nom, schema, variable in DECLAREE.findall(texte)}

@@ -13,7 +13,9 @@ private func affiche(_ id: Int, images: Int = 0) -> AfficheHall {
 }
 
 @MainActor
-private func diffusion(_ serveur: ServeurEcranSimule, attendre: @escaping @Sendable (Duration) async throws -> Void = { _ in }) -> DiffusionTV {
+private func diffusion(
+    _ serveur: ServeurEcranSimule, attendre: @escaping @Sendable (Duration) async throws -> Void = { _ in }
+) -> DiffusionTV {
     DiffusionTV(residence: residenceDuHall(), jeton: "jeton-1", service: serveur, attendre: attendre)
 }
 

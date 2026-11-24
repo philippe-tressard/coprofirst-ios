@@ -23,6 +23,8 @@ import sys
 import tempfile
 
 RACINE = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 #: Un appel d'écriture du client généré : `.postAdminComptes…(`, `.deleteIdees…(`.
 ECRITURE = re.compile(r"\.((?:post|put|patch|delete)[A-Z]\w*)\(")
 #: La lecture du refus : la porte commune, ou l'échec d'écriture qui y mène (Communauté).
@@ -54,7 +56,7 @@ def fonctions(texte: str):
 def ecarts(racine: pathlib.Path, exceptions: dict[str, str]) -> list[str]:
     trouves: list[str] = []
     servies: set[str] = set()
-    fichiers = sorted((racine / "CoproFirst").rglob("*.swift"))
+    fichiers = portee.fichiers(racine, portee.CODE)
     if not fichiers:
         return ["aucun fichier Swift sous CoproFirst/ : rien n'a été mesuré (INCONNU)"]
     for fichier in fichiers:

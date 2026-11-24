@@ -90,10 +90,11 @@ echec() { echo "❌ $*"; ECHECS=$((ECHECS + 1)); }
 
 FICHIERS=$(git ls-files --cached)
 [ -n "$FICHIERS" ] || { echo "❓ INCONNU : git ne connaît aucun fichier (rien d'indexé ?)"; exit 2; }
-# Le code Swift de l'app : l'iPhone, l'écran de hall sur Apple TV (#218) et l'Apple Watch
-# (#226). Les règles du code s'appliquent aux trois — une cible neuve n'y échappe pas par son
-# dossier.
-CODE_APP='^CoproFirst(TV|Watch)?/.*\.swift$'
+# Le code Swift de l'app, ses quatre cibles : la liste des dossiers est UNE, dans
+# scripts/portee.py, que SwiftLint et chaque juge lisent aussi (#341) — une cible neuve n'y
+# échappe pas par son dossier : non déclarée, portee.py la refuse.
+CODE_APP=$(python3 -I scripts/portee.py --motif code) || { echo "❓ INCONNU : scripts/portee.py illisible"; exit 2; }
+PORTEE=$(python3 -I scripts/portee.py) || { echo "$PORTEE"; echec "portée des contrôles : une cible hors de SwiftLint ou d'un juge (#341)"; }
 
 # Les seuls fichiers dispensés de la limite de longueur — produits par un outil,
 # jamais écrits à la main. Toute autre exception se discute, elle ne s'ajoute pas.
@@ -487,4 +488,4 @@ if [ "$ECHECS" -gt 0 ]; then
   exit 1
 fi
 [ "$DISTANTS_CODE" -eq 0 ] || { echo "❓ INCONNU : le reste est conforme, les contrôles distants n'ont pas joué"; exit 2; }
-echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
+echo "✅ dépôt conforme : longueur, encodage, modes, syntaxe, LICENSE, aucune soumission automatisée, ${PORTEE#✅ }, aucune couleur à la main, coprofirst lu à une version publiée, aucun moteur web, ce qu'une session laisse effacé à une porte, aperçus d'une saisie à une porte, aucun worktree suivi, relance des tests bornée, passage vide refusé, un passage à la fois, simulateur choisi sans hasard, attentes par le point commun, tickets de la concordance, simulation sous #if DEBUG, règles servies lues, séparateurs générés, Label identifiés lus en un élément, mise en page sur la classe de taille, actualiser par .actualisable (⌘R), rechercher par le point commun (⌘F), hôtes fictifs réservés, détection « documentation seule », job « Dépôt » à une étape, jobs macOS plafonnés et exigés par l’agrégat, ${DISTANTS#✅ }, ${TOUCHERS#✅ } ; ${PARITE#✅ } ; ${FIXTURES#✅ } ; $(grep '^✅' <<< "$CONFIDENTIALITE" | sed 's/^✅ //') ; ${DEPENDANCES#✅ } ($(wc -l <<< "$FICHIERS" | tr -d ' ') fichiers)"
