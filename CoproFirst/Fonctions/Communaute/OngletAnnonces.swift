@@ -184,9 +184,10 @@ struct EtiquettesAnnonce: View {
 }
 
 extension Annonce {
-    /// Le nom de l'auteur tel que le serveur le sert (prénom, nom).
+    /// Le nom de l'auteur tel que le serveur l'affiche (`auteur_affiche`), jamais composé ici
+    /// (#378) ; `nil` s'il n'est pas servi, comme l'Android (coprofirst-android#356).
     var auteur: String? {
-        let nom = [auteurPrenom, auteurNom].compactMap { $0 }.joined(separator: " ")
-        return nom.isEmpty ? nil : nom
+        let nom = FormatsDuSite.nom(servi: auteurAffiche)
+        return nom == FormatsDuSite.tiret ? nil : nom
     }
 }
