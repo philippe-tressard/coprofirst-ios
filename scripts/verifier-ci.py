@@ -3,7 +3,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 """Trois règles de la CI, lues dans `.github/workflows/ci.yml`.
 
-1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241).
+1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241) — outre l'alerte
+   d'un rouge, le dernier pas de chaque job.
 
 Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : le
 16/11/2026, #240 est passée au poste puis a rougi en CI sur `verifier-logo.sh`, une
@@ -19,6 +20,9 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
    en entier dans l'échantillon iPad (l'étape `APPAREIL: ipad`, #350) : le dernier lot
    d'interface tourne sur iPhone, où elle ne joue rien — sans l'échantillon, elle ne se
    jouait nulle part (`CarnetUITests`, jamais en CI jusqu'au 23/11/2026).
+
+Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
+(`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
 
 Lecture au texte, sans PyYAML (absent de `python3 -I` sur le runner Linux) : le bloc
 du job va de `  depot:` à la clé de job suivante, au même retrait.
@@ -36,6 +40,7 @@ from pathlib import Path
 RACINE = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RACINE / "scripts"))
 import portee  # noqa: E402  (la liste des dossiers, #341)
+import signaler_rouge  # noqa: E402  (l'alerte d'un rouge, #362)
 
 WORKFLOW = RACINE / ".github" / "workflows" / "ci.yml"
 #: La garde d'une classe de l'iPad seul, dans son `setUp`.
@@ -66,6 +71,7 @@ def refus_depot(texte: str) -> tuple[int, list[str]]:
     if bloc is None:
         return 2, [f"❓ INCONNU : job « {JOB} » introuvable dans {WORKFLOW.name}"]
     runs = [l.split("run:", 1)[1].strip() for l in bloc if re.match(r"^\s+(- )?run:", l)]
+    runs = [r for r in runs if r != signaler_rouge.PAS]
     if runs == [ATTENDU]:
         return 0, [f"✅ job « {JOB} » : une seule étape, {ATTENDU}"]
     return 1, [
@@ -200,6 +206,10 @@ def main() -> int:
         print(f"❓ INCONNU : {WORKFLOW} absent")
         return 2
     code, messages = refus(WORKFLOW.read_text(encoding="utf-8"), classes_ipad_seul())
+    alertes = signaler_rouge.ecarts({f.name: f.read_text(encoding="utf-8")
+                                     for f in sorted(WORKFLOW.parent.glob("*.yml"))})
+    messages += alertes or ["✅ chaque job de chaque workflow finit par l'alerte d'un rouge (#362)"]
+    code = 1 if code == 1 or any(m.startswith("❌") for m in alertes) else max(code, 2 if alertes else 0)
     print("\n".join(messages))
     return code
 

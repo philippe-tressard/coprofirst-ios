@@ -20,12 +20,12 @@ final class ApercusSaisieUITests: XCTestCase {
         let modifier = app.elementAcces("profil.modifierIdentite")
         XCTAssertTrue(modifier.apparait(), "le Profil, une fois le compte lu")
         for _ in 0..<6 where !modifier.isHittable { app.swipeUp() }
-        modifier.tap()
+        app.toucher(modifier)
         XCTAssertTrue(
             app.elementDisant("profil.identite.nom-affiche", "Résident EXEMPLE").apparait(),
             "le nom servi avec le compte, d'emblée")
         let prenom = app.elementAcces("profil.identite.prenom")
-        prenom.tap()
+        app.toucher(prenom)
         prenom.typeText("e")
         XCTAssertTrue(
             app.elementDisant("profil.identite.nom-affiche", "Camille EXEMPLE").apparait(),
@@ -36,19 +36,19 @@ final class ApercusSaisieUITests: XCTestCase {
     func testUneFicheNeuveDeLAnnuaireSeNommeParLeServeur() throws {
         let app = LancementCaptures.lancer()
         app.ouvrirDansPlus("Espace CS", jusqua: app.elementAcces("onglet.annuaire"))
-        let annuaire = app.elementAcces("onglet.annuaire")
-        XCTAssertTrue(annuaire.apparait(), "la barre d'onglets")
-        annuaire.tap()
+        let ongletAnnuaire = app.elementAcces("onglet.annuaire")
+        XCTAssertTrue(ongletAnnuaire.apparait(), "la barre d'onglets")
         let ajouter = app.elementAcces("cs.annuaire.conseil.ajouter")
+        app.toucherLOnglet(ongletAnnuaire, jusqua: ajouter)
         XCTAssertTrue(ajouter.apparait(), "le conseil")
         for _ in 0..<8 where !ajouter.isHittable { app.swipeUp() }
         app.toucher(ajouter)
         let prenom = app.elementAcces("cs.feuille.prenom")
         XCTAssertTrue(prenom.apparait(), "la feuille d'une fiche neuve")
-        prenom.tap()
+        app.toucher(prenom)
         prenom.typeText("Camille")
         let nom = app.elementAcces("cs.feuille.nom")
-        nom.tap()
+        app.toucher(nom)
         nom.typeText("Exemple")
         XCTAssertTrue(
             app.elementDisant("cs.feuille.nom-affiche", "Camille EXEMPLE").apparait(),

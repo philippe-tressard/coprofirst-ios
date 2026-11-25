@@ -51,7 +51,7 @@ struct CarteAffaire: View {
                 EtiquetteLieu(lieu: affaire.lieu)
                 if let messages = affaire.messages {
                     Label {
-                        Text(messages, format: .number).monospacedDigit()
+                        Text(FormatsDuSite.nombre(messages)).monospacedDigit()
                     } icon: {
                         Image(systemName: "bubble.left.and.bubble.right")
                     }

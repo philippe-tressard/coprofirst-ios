@@ -48,7 +48,7 @@ struct CarteAnnonceHall: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint(ouverte ? "Replie l'annonce" : "Montre le message et ses envois")
+                .depliage(ouvert: ouverte, deplier: "Montre le message et ses envois", replier: "Replie l'annonce")
                 .accessibilityIdentifier("annonce-hall.\(annonce.id)")
                 if ouverte { corps.transition(.opacity.combined(with: .move(edge: .top))) }
                 marqueurs

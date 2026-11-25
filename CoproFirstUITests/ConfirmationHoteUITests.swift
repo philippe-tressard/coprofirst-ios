@@ -26,10 +26,10 @@ final class ConfirmationHoteUITests: XCTestCase {
     func testSansPreuveUnSecondAccordEstDemande() throws {
         // Depuis l'accueil : le champ de la résidence est vide, l'adresse s'y tape entière.
         let app = LancementCaptures.lancer(ecran: "accueil")
-        app.elementAcces("accueil.entrer").tap()
+        app.toucher(app.elementAcces("accueil.entrer"), jusqua: app.elementAcces("connexion.residence"))
         let residence = app.elementAcces("connexion.residence")
         XCTAssertTrue(residence.apparait())
-        residence.tap()
+        app.toucher(residence)
         residence.typeText("imitation.example.com")
         XCTAssertTrue(app.staticTexts["Résidence Les Tilleuls"].apparait(), "l'imitation répond")
         Self.saisirIdentifiants(app)
@@ -41,7 +41,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         LancementCaptures.capturer("confirmation-hote-2-avertissement")
 
         // Le libellé donne l'accord, comme l'interrupteur — au grand texte, l'écran défile jusqu'à lui.
-        app.elementAcces("confirmationHote.secondAccord").tap()
+        app.toucher(app.elementAcces("confirmationHote.secondAccord"))
         XCTAssertTrue(Self.etat(app, "confirmationHote.confirmer", actif: true), "le second accord ouvre la connexion")
         LancementCaptures.capturer("confirmation-hote-3-second-accord")
         app.toucher(app.elementAcces("confirmationHote.confirmer"))
@@ -54,7 +54,7 @@ final class ConfirmationHoteUITests: XCTestCase {
         Self.saisirIdentifiants(app)
         let annuler = app.elementAcces("confirmationHote.annuler")
         XCTAssertTrue(annuler.apparait())
-        annuler.tap()
+        app.toucher(annuler)
         XCTAssertTrue(app.elementAcces("connexion.valider").apparait(), "retour à la connexion")
         XCTAssertFalse(app.buttons["faceid.plusTard"].sonde(), "rien ne s'est ouvert")
     }
@@ -83,7 +83,7 @@ final class ConfirmationHoteUITests: XCTestCase {
     static func saisirIdentifiants(_ app: XCUIApplication) {
         let email = app.elementAcces("connexion.email")
         XCTAssertTrue(email.apparait())
-        email.tap()
+        app.toucher(email)
         email.typeText("resident@example.com\n")
         app.elementAcces("connexion.motDePasse").typeText("secret\n")
     }

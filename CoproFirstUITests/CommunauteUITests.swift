@@ -39,24 +39,6 @@ final class CommunauteUITests: XCTestCase {
         app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", texte)).firstMatch
     }
 
-    /// Une rubrique de la Communauté : la barre défile jusqu'à elle (très grand texte).
-    private func rubrique(_ app: XCUIApplication, _ id: String) {
-        let onglet = el(app, "communaute.onglet.\(id)")
-        XCTAssertTrue(onglet.apparait())
-        var essais = 0
-        // Hors de l'écran, l'élément n'a pas de point d'activation : on compare les cadres.
-        let ecran = app.windows.firstMatch.frame
-        while !ecran.contains(onglet.frame), essais < 4 {
-            // Un glissé du doigt sur la barre, de droite à gauche, à sa hauteur.
-            let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
-            let depart = origine.withOffset(CGVector(dx: ecran.width * 0.85, dy: onglet.frame.midY))
-            depart.press(forDuration: 0.05, thenDragTo: origine.withOffset(
-                CGVector(dx: ecran.width * 0.15, dy: onglet.frame.midY)))
-            essais += 1
-        }
-        onglet.tap()
-    }
-
     /// La partie d'un élément qui se voit, entre les barres du haut et du bas (une
     /// marge de 140 pt chacune) ; `nil` s'il n'en montre pas assez pour un doigt.
     private func visible(_ app: XCUIApplication, _ element: XCUIElement) -> CGRect? {
@@ -67,14 +49,6 @@ final class CommunauteUITests: XCTestCase {
         return partie.height >= 44 ? partie : nil
     }
 
-    /// Toucher au milieu de ce qui se voit : une ligne en très grand texte dépasse
-    /// l'écran, et son centre peut tomber sous une barre.
-    private func toucherLaPartieVisible(_ app: XCUIApplication, _ element: XCUIElement) {
-        guard let partie = visible(app, element) else { return XCTFail("\(element) ne se voit pas") }
-        let origine = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
-        origine.withOffset(CGVector(dx: partie.midX, dy: partie.midY)).tap()
-    }
-
     @MainActor
     func testLaCommunauteSOuvreEtUneIdeeSeSoutient() throws {
         let app = lancer()
@@ -82,34 +56,34 @@ final class CommunauteUITests: XCTestCase {
         XCTAssertTrue(el(app, "sondage.12").apparait())
         capture("1-communaute-sondages")
 
-        rubrique(app, "idees")
+        app.toucherLOnglet(el(app, "communaute.onglet.idees"))
         let coeur = el(app, "idee.5.voter")
         app.amener(coeur)
         XCTAssertTrue(coeur.exists)
         XCTAssertEqual(coeur.label, "Voter pour cette idée")
-        coeur.tap()
+        app.toucher(coeur)
         XCTAssertTrue(
             lu(app, "idee.5.voter", contient: "Retirer mon vote"), "le cœur se remplit, le vote se voit")
         capture("2-communaute-idees")
 
         let cible = el(app, "idee.3")
         app.amener(cible)
-        cible.tap()
+        app.toucher(cible)
         XCTAssertTrue(app.amener(texte(app, "Excellente idée, je veux bien m'en occuper.")))
         capture("3-idee-et-reponses")
-        app.navigationBars.buttons.firstMatch.tap()
+        app.toucher(app.navigationBars.buttons.firstMatch)
 
-        rubrique(app, "annonces")
+        app.toucherLOnglet(el(app, "communaute.onglet.annonces"))
         let annonce = el(app, "annonce.21")
         app.amener(annonce)
         XCTAssertTrue(annonce.exists)
         capture("4-communaute-annonces")
-        annonce.tap()
+        app.toucher(annonce)
         XCTAssertTrue(app.amener(el(app, "annonce.contact")), "le contact est un lien")
         capture("5-annonce")
-        app.navigationBars.buttons.firstMatch.tap()
+        app.toucher(app.navigationBars.buttons.firstMatch)
 
-        rubrique(app, "avis")
+        app.toucherLOnglet(el(app, "communaute.onglet.avis"))
         XCTAssertTrue(app.descendants(matching: .any)["avis.4"].apparait())
         capture("6-communaute-avis")
         app.toucher(el(app, "communaute.creer"))
@@ -131,7 +105,7 @@ final class CommunauteUITests: XCTestCase {
             "la cloche dit 12 non lues — lu : \(cloche.label) / \(cloche.value ?? "")")
         Thread.sleep(forTimeInterval: 3)  // la pastille de la barre apparaît en fondu
         capture("7b-cloche")
-        cloche.tap()
+        app.toucher(cloche)
         let tout = el(app, "notifications.toutMarquerLu")
         // La feuille monte en glissant : « se touche » s'attend comme un état, pas une
         // lecture unique (main 865eed4 rouge sur un runner lent, #123).
@@ -140,9 +114,9 @@ final class CommunauteUITests: XCTestCase {
         let modifier = el(app, "notifications.modifier")
         XCTAssertTrue(modifier.attendre("isHittable == true"), "« Modifier » se voit et se touche, en haut")
         capture("8-notifications")
-        tout.tap()
+        app.toucher(tout)
         XCTAssertTrue(tout.disparait(), "plus rien à marquer")
-        el(app, "notifications.ok").tap()
+        app.toucher(el(app, "notifications.ok"))
         XCTAssertFalse(lu(app, "cloche", contient: "12", sonde: true), "la cloche n'a plus de pastille")
     }
 
@@ -153,11 +127,11 @@ final class CommunauteUITests: XCTestCase {
         let app = lancer()
         app.ouvrirDansPlus("Communauté", jusqua: el(app, "sondage.12"))
         XCTAssertTrue(el(app, "sondage.12").apparait())
-        el(app, "cloche").tap()
+        app.toucher(el(app, "cloche"))
         let modifier = el(app, "notifications.modifier")
         XCTAssertTrue(modifier.apparait())
         XCTAssertTrue(modifier.isHittable, "« Modifier » se voit et se touche, en haut")
-        modifier.tap()
+        app.toucher(modifier)
         for id in [5, 4, 3] {
             // Un cran à la fois : en très grand texte, une ligne vaut un écran, et un
             // balayage rapide sortirait la voisine de la liste.
@@ -167,7 +141,9 @@ final class CommunauteUITests: XCTestCase {
                 app.swipeUp(velocity: .slow)
                 crans += 1
             }
-            toucherLaPartieVisible(app, ligne)
+            // Le point commun touche le milieu de ce qui se voit : une ligne en très grand texte
+            // dépasse l'écran, et son centre peut tomber sous une barre.
+            app.toucher(ligne)
         }
         let supprimer = el(app, "notifications.supprimerSelection")
         XCTAssertTrue(supprimer.apparait())
@@ -199,7 +175,7 @@ final class CommunauteUITests: XCTestCase {
     func testLesLuesSeSupprimentDUnGeste() throws {
         let app = lancer()
         XCTAssertTrue(el(app, "cloche").apparait())
-        el(app, "cloche").tap()
+        app.toucher(el(app, "cloche"))
         let lues = el(app, "notifications.supprimerLues")
         XCTAssertTrue(lues.apparait(), "le geste se voit dès l'ouverture, en tête de la liste")
         XCTAssertTrue(lues.isHittable, "et se touche, sans passer par « Modifier »")
@@ -229,10 +205,10 @@ final class CommunauteUITests: XCTestCase {
     ) {
         let modifier = el(app, "notifications.modifier")
         XCTAssertTrue(modifier.apparait())
-        modifier.tap()
+        app.toucher(modifier)
         let toutes = el(app, "notifications.toutSelectionner")
         XCTAssertTrue(toutes.apparait())
-        toutes.tap()
+        app.toucher(toutes)
         let supprimer = el(app, "notifications.supprimerSelection")
         XCTAssertTrue(supprimer.apparait())
         if let nombre {
@@ -251,7 +227,7 @@ final class CommunauteUITests: XCTestCase {
     func testUneGrandeSelectionSeSupprimeEntiere() throws {
         let app = LancementCaptures.lancer(arguments: ["-notifications", "520"])
         XCTAssertTrue(el(app, "cloche").apparait())
-        el(app, "cloche").tap()
+        app.toucher(el(app, "cloche"))
         supprimerToutesLesNotifications(app, nombre: "520", capture: "8f-notifications-grande-selection")
         XCTAssertTrue(texte(app, "Aucune notification").apparait(), "les 520 sont parties")
         XCTAssertFalse(el(app, "notifications.echec").exists, "et aucune erreur ne s'affiche")
@@ -264,7 +240,7 @@ final class CommunauteUITests: XCTestCase {
     func testUneGrandeSuppressionInterrompueLeDit() throws {
         let app = LancementCaptures.lancer(arguments: ["-notifications", "520", "-panne-suppression", "2"])
         XCTAssertTrue(el(app, "cloche").apparait())
-        el(app, "cloche").tap()
+        app.toucher(el(app, "cloche"))
         supprimerToutesLesNotifications(app, nombre: "520")
         XCTAssertTrue(
             lu(app, "notifications.echec", contient: "sur 520 ont été supprimées"),
@@ -287,21 +263,21 @@ final class CommunauteUITests: XCTestCase {
         let question = app.descendants(matching: .any)["faq.2"]
         app.amener(question)
         XCTAssertTrue(question.exists)
-        question.tap()
+        app.toucher(question)
         let reponse = texte(app, "Pas de gravats")
         XCTAssertTrue(app.amener(reponse), "la réponse s'est dépliée")
         capture("9-faq")
-        app.navigationBars.buttons.firstMatch.tap()
+        app.toucher(app.navigationBars.buttons.firstMatch)
 
         let cible = el(app, "plus.profil")
         app.amener(cible)
-        cible.tap()
+        app.toucher(cible)
         XCTAssertTrue(app.amener(texte(app, "resident@example.com")))
         capture("10-profil")
         let sombre = el(app, "profil.theme").buttons["Sombre"]
         app.amener(sombre)
         XCTAssertTrue(sombre.exists)
-        sombre.tap()
+        app.toucher(sombre)
         XCTAssertTrue(sombre.isSelected, "le thème choisi est retenu")
         capture("11-profil-theme-sombre")
     }

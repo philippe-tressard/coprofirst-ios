@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Observation
 
@@ -37,7 +38,7 @@ final class HallTV {
     var residence: Installation? { appaire?.residence ?? entree.residence }
 
     /// Le conseil a confirmé : l'écran garde son accès et diffuse.
-    func appairer(_ residence: Installation, jeton: String) {
+    func appairer(_ residence: Installation, jeton: JetonMasque) {
         let appairage = MemoireEcran.Appairage(residence: residence, jeton: jeton)
         memoire.ranger(appairage)
         appaire = appairage

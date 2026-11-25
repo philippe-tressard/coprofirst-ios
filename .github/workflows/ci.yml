@@ -15,6 +15,8 @@ on:
 
 permissions:
   contents: read
+  # Le seul ticket qu'un job ouvre : l'alerte d'un rouge de main (scripts/signaler_rouge.py, #362).
+  issues: write
 
 # Une PR : sa nouvelle tête annule l'exécution périmée. `main` : jamais — chaque fusion se
 # valide jusqu'au bout. Le filet de `main` après fusion (standards/09 §8 bis) n'existe que
@@ -42,6 +44,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/verifier-depot.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   # Documentation seule ? Lue sur la liste des fichiers de la PR ; un push sur main, une
   # liste vide ou illisible lancent tout (défaut fermé, scripts/ci_documentation_seule.py).
@@ -70,6 +77,11 @@ jobs:
           fi
           cat "$RUNNER_TEMP/changes.txt"
           python3 -I scripts/ci_documentation_seule.py < "$RUNNER_TEMP/changes.txt" | tee -a "$GITHUB_OUTPUT"
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   # Les tests au simulateur en jobs parallèles, chacun sous son plafond (décision du
   # 12/11/2026, #139) : un job unique dépassait 85 min — 14 de build, plus de 70 de tests
@@ -125,6 +137,11 @@ jobs:
           done
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   montre:
     # Un job à part, en parallèle des autres (#226) : la montre a son propre build, comme les
@@ -163,6 +180,11 @@ jobs:
         # false : l'étape qui la déclare indépendante ne vaut que pour le Debug du simulateur
         # (#226). Absente, true ou illisible : rouge, ou INCONNU si la construction échoue.
         run: bash scripts/verifier-montre-dependante.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   archive-montre:
     # L'archive de l'app iPhone avec l'app montre embarquée (#324) : le seul chemin qui mène la
@@ -185,6 +207,11 @@ jobs:
         run: bash scripts/installer-outillage-ci.sh
       - name: Archive Release sans signature, montre embarquée et dépendante
         run: bash scripts/verifier-archive-montre.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
@@ -309,6 +336,11 @@ jobs:
             echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer les LOT_ sur les durées mesurées (#243)"
             exit 1
           fi
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   echantillons:
     # Hors du job Unitaires depuis #288 : l'iPad et l'Apple TV construisent chacun pour leur
@@ -374,6 +406,11 @@ jobs:
           APPAREIL: tv
           RESULTATS: .build/ResultatsTV
         run: bash scripts/tests-simulateur.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si CHAQUE job

@@ -39,7 +39,7 @@ enum FixturesAnnuaireCS {
          "membres": [
            {"id": 35, "ordre": 0, "genre": "Mme", "prenom": "Désirée", "nom": "Modèle", "nom_affiche": "Désirée Modèle",
             "fonction": "Gestionnaire de copropriété", "email": "gestion@example.com",
-            "telephone": "01 99 00 12 34,06 99 00 12 34", "telephones": ["01 99 00 12 34", "06 99 00 12 34"],
+            "telephone": "01 99 00 12 34,01 99 00 12 35", "telephones": ["01 99 00 12 34", "01 99 00 12 35"],
             "est_principal": true, "photo_url": null, "user_id": null},
            {"id": 36, "ordre": 1, "genre": "Mr", "prenom": "Eudes", "nom": "Fictif", "nom_affiche": "Eudes Fictif",
             "fonction": "Comptable", "email": "compta@example.com", "telephone": "01 99 00 56 78",

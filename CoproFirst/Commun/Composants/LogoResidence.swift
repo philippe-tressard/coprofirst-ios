@@ -9,7 +9,7 @@ import SwiftUI
 /// connexion, écran de retour (`RetourView`). Le logo de CoproFirst lui-même (la marque) est `Medaillon`.
 ///
 /// Au thème sombre, la variante du fond sombre quand l'installation la sert (#70, règle
-/// dans `Installation.adresseLogo(sombre:)`). Le logo suit le thème sans relancer
+/// dans `Installation.logo(sombre:)`). Le logo suit le thème sans relancer
 /// l'app : au changement, l'ancien reste affiché jusqu'à ce que l'autre soit lu, puis
 /// un fondu les échange — jamais un passage par le logo de CoproFirst.
 struct LogoResidence: View {
@@ -18,16 +18,16 @@ struct LogoResidence: View {
     @Environment(\.colorScheme) private var schema
     @Environment(\.accessibilityReduceMotion) private var reduireMouvement
     @Environment(\.palette) private var palette
-    /// La dernière adresse affichée : gardée à l'écran pendant la lecture de la suivante.
-    @State private var affichee: URL?
-    /// L'adresse dont la lecture a échoué : le logo de CoproFirst prend sa place.
-    @State private var echec: URL?
+    /// Le dernier logo affiché : gardé à l'écran pendant la lecture du suivant.
+    @State private var affichee: LogoDemande?
+    /// Le logo dont la lecture a échoué : celui de CoproFirst prend sa place.
+    @State private var echec: LogoDemande?
     private var logos: LogosEnMemoire { .commun }
 
     var body: some View {
-        let voulue = installation?.adresseLogo(sombre: schema == .dark)
-        // L'ancienne adresse ne sert que pour la MÊME résidence : jamais le logo d'une autre.
-        let repli = affichee.flatMap { $0.host() == voulue?.host() ? $0 : nil }
+        let voulue = installation?.logo(sombre: schema == .dark)
+        // L'ancien logo ne sert que pour la MÊME résidence : jamais le logo d'une autre.
+        let repli = affichee.flatMap { $0.installation.host() == voulue?.installation.host() ? $0 : nil }
         let montree = [voulue, repli].compactMap { $0 }.first { logos.image($0) != nil }
         ZStack {
             if let montree, let image = logos.image(montree) {

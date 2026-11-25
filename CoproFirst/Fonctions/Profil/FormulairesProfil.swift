@@ -46,7 +46,7 @@ struct FormulaireIdentite: View {
                 }
             }
             Section {
-                TextField("Téléphone", text: $saisie.telephone, prompt: Text("+33 6 00 00 00 00"))
+                TextField("Téléphone", text: $saisie.telephone, prompt: Text("+33 1 99 00 00 00"))
                     .textContentType(.telephoneNumber).keyboardType(.phonePad)
                 TextField("Société", text: $saisie.societe, prompt: Text("Ex : Agence Dupont, Cabinet ABC…"))
                     .textContentType(.organizationName)

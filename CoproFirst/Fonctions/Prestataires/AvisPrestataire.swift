@@ -120,5 +120,6 @@ enum TextesAvisPrestataire {
     static func badge(_ avis: AvisPrestataire) -> String {
         "Avis \(EtatAvis.libelle(avis.etat))"
     }
-    static func indice(ouvert: Bool) -> String { ouvert ? "Replie l'avis" : "Déplie l'avis" }
+    static let deplier = "Déplie l'avis"
+    static let replier = "Replie l'avis"
 }

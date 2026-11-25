@@ -74,7 +74,7 @@ struct AProposView: View {
     private var marque: some View {
         HStack(spacing: 14) {
             LogoResidence(installation: installation)
-                .frame(width: 44, height: 44)
+                .frame(width: Mise.medaillon, height: Mise.medaillon)
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(installation.nom).font(.titre(.headline)).foregroundStyle(palette.text)

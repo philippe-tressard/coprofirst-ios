@@ -114,7 +114,7 @@ private struct FileDemandesProfil: View {
                 CarteDeFile(
                     enCours: etat.enCours == demande.id,
                     approuver: {
-                        geste {
+                        contexte.avis.traiter($echec) {
                             try await etat.traiter(demande, approuver: true, motif: nil, service, contexte.installation)
                         }
                     },
@@ -137,25 +137,12 @@ private struct FileDemandesProfil: View {
             Button(TextesEspaceCS.annuler, role: .cancel) {}
             Button(TextesEspaceCS.rejeter, role: .destructive) {
                 let saisi = motif
-                geste {
+                contexte.avis.traiter($echec) {
                     try await etat.traiter(demande, approuver: false, motif: saisi, service, contexte.installation)
                 }
             }
         } message: { _ in
             Text(TextesATraiter.motif)
-        }
-    }
-
-    /// Un geste : son annonce en cas de succès, la phrase du serveur sinon.
-    private func geste(_ faire: @escaping () async throws -> PhraseAvis) {
-        Task {
-            do {
-                let annonce = try await faire()
-                withAnimation(.snappy) { echec = nil }
-                contexte.avis.dire(annonce)
-            } catch {
-                withAnimation(.snappy) { echec = ErreurService.depuis(error).phrase }
-            }
         }
     }
 }

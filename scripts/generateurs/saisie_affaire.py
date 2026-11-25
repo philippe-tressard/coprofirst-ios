@@ -18,7 +18,11 @@ génère que ce que le contrat ne sert pas, et ce que l'API SIMULÉE doit servir
   `sectionsEssentiellesParCategorie`) — jamais écrites à la main.
 
 Depuis v3.117.0, les trois constantes du serveur se lisent dans `constantes-clients.json`
-(coprofirst#2686) : `api/app/utils/saisie_affaire.py` ne se lit plus (#237, #290).
+(coprofirst#2686) : `api/app/utils/saisie_affaire.py` ne se lit plus (#237, #290). Et ce
+que le site écrit se lit dans `tables-clients.json` (#356) : `optionsSaisie`,
+`libellesModeSaisie`, `sectionsAffaire` (son `ordre`, `SECTIONS_ORDRE` de
+`entites/types.ts`, l'ordre dans lequel `TICKET` déclare ses sections) et
+`categoriesTicket` — plus aucun fichier du site ne se lit ici.
 
 → `CoproFirst/Fonctions/Affaires/Genere/TablesSaisie.swift` et
 `FixturesCategoriesServies.swift` (jugée par `scripts/verifier-fixtures.py`).
@@ -27,38 +31,31 @@ Depuis v3.117.0, les trois constantes du serveur se lisent dans `constantes-clie
 from __future__ import annotations
 
 import json
-import re
 
-import lecture_ts
 from generateurs._commun import FONCTIONS, chaine, ecrire_table
 
-SOURCES = [
-    "front/src/lib/saisie-affaire.ts",
-    "front/src/lib/entites/ticket.ts",
-    "front/src/lib/tickets-categories.ts",
-]
+SOURCES: list[str] = []  # tables-clients.json et constantes-clients.json de la release (#356)
 #: Les constantes du serveur, publiées (`constantes-clients.json`).
 CONSTANTES = ("modesSaisie", "sectionsDeBase", "sectionsEssentiellesParCategorie")
 GENERE = FONCTIONS / "Affaires" / "Genere"
-#: Une section du cadre d'une affaire : `id: '…'` au troisième retrait de `sections: [`.
-SECTION = re.compile(r"^\t\t\tid: '([a-z_]+)',", re.M)
+#: L'en-tête « Source : » de `TablesSaisie.swift`, inchangé par la lecture des tables publiées
+#: (la concordance compare l'en-tête au-delà de la version, #356).
+PROVENANCE_TABLES = "front/src/lib/saisie-affaire.ts (OPTIONS_SAISIE, LIBELLE_MODE) et entites/ticket.ts (TICKET)"
 
 
-def libelles_mode(texte: str) -> dict[str, str]:
-    m = re.search(r"\bconst LIBELLE_MODE\b[^=]*=\s*\{(.*?)\};", texte, re.S)
-    if not m:
-        raise SystemExit("❌ LIBELLE_MODE introuvable dans saisie-affaire.ts")
-    return dict(re.findall(r"(\w+):\s*'([^']*)'", m.group(1)))
+def _objets(nom: str, valeur) -> list[dict]:
+    if not (isinstance(valeur, list) and valeur and all(isinstance(v, dict) for v in valeur)):
+        raise SystemExit(f"❌ {nom} : forme inattendue ({valeur!r}) — l'app doit l'apprendre")
+    return valeur
 
 
 def tables(ctx, modes: list[str], sections: list[str]) -> str:
-    front = ctx.lire(SOURCES[0])
-    options = [o for o in lecture_ts.table(front, "OPTIONS_SAISIE") if o["val"] in modes]
+    options = [o for o in _objets("optionsSaisie", ctx.table("optionsSaisie")) if o.get("val") in modes]
     if [o["val"] for o in options] != modes:
-        raise SystemExit(f"❌ OPTIONS_SAISIE ne décrit pas les modes du serveur {modes} dans leur ordre")
-    libelles = libelles_mode(front)
-    if sorted(libelles) != sorted(modes):
-        raise SystemExit(f"❌ LIBELLE_MODE ({sorted(libelles)}) ≠ modes du serveur ({modes})")
+        raise SystemExit(f"❌ optionsSaisie ne décrit pas les modes du serveur {modes} dans leur ordre")
+    libelles = ctx.table("libellesModeSaisie")
+    if not isinstance(libelles, dict) or sorted(libelles) != sorted(modes):
+        raise SystemExit(f"❌ libellesModeSaisie ({libelles!r}) ≠ modes du serveur ({modes})")
     return (
         "    /// Les choix du Profil, dans l'ordre du site : les modes que le serveur ENREGISTRE\n"
         "    /// (`MODES`) — « Selon mon rôle » n'en est pas un (coprofirst#2615).\n"
@@ -82,7 +79,7 @@ def tables(ctx, modes: list[str], sections: list[str]) -> str:
 
 def fixture(ctx, base: list[str], par_categorie: dict[str, list[str]]) -> None:
     """La réponse simulée : chaque catégorie du site, telle que le serveur la sert."""
-    categories = lecture_ts.table(ctx.lire(SOURCES[2]), "CATEGORIES_TICKET")
+    categories = _objets("categoriesTicket", ctx.table("categoriesTicket"))
     servies = [
         {
             "code": c["value"], "libelle": c["label"], "emoji": c["emoji"], "description": c["description"],
@@ -136,15 +133,13 @@ def generer(ctx) -> str:
     if not isinstance(lues, dict):
         raise SystemExit(f"❌ {CONSTANTES[2]} : forme inattendue ({lues!r}) — l'app doit l'apprendre")
     par_categorie = {c: _liste(f"{CONSTANTES[2]}.{c}", v) for c, v in lues.items()}
-    sections = SECTION.findall(ctx.lire(SOURCES[1]))
-    if not sections:
-        raise SystemExit("❌ ticket.ts : aucune section `id: '…'` lue — la source a changé")
+    publiees = ctx.table("sectionsAffaire")
+    sections = _liste("sectionsAffaire.ordre", publiees.get("ordre") if isinstance(publiees, dict) else None)
     hors_cadre = sorted({s for liste in [base, *par_categorie.values()] for s in liste} - set(sections))
     if hors_cadre:
         raise SystemExit(f"❌ sections essentielles hors du cadre TICKET : {hors_cadre}")
     ecrire_table(ctx, GENERE / "TablesSaisie.swift",
-                 "front/src/lib/saisie-affaire.ts (OPTIONS_SAISIE, LIBELLE_MODE) et entites/ticket.ts (TICKET) ; "
-                 + ctx.provenance_constantes(CONSTANTES[0]), "TablesSaisie",
+                 f"{PROVENANCE_TABLES} ; {ctx.provenance_constantes(CONSTANTES[0])}", "TablesSaisie",
                  "La saisie d'une affaire, Essentielle ou Complète : ce que le contrat ne sert pas.",
                  tables(ctx, modes, sections))
     fixture(ctx, base, par_categorie)

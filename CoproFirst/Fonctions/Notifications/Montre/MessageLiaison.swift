@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 /// Le drapeau de la liaison iPhone ↔ Apple Watch (#226) — UN drapeau pour les deux côtés :
@@ -20,8 +21,8 @@ enum LiaisonMontre {
 /// nom) et son jeton de montre (coprofirst#2771 : `GET /notifications` seul, révocable,
 /// 30 jours) ; ou l'effacement, quand la résidence se ferme. Écrit UNE fois pour les deux
 /// côtés : l'iPhone l'écrit, la montre le lit — à la forme de `MessageLiaison` de Wear OS.
-enum MessageLiaison: Equatable, Sendable, CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
-    case liaison(adresse: URL, residence: String, jeton: String, expireLe: Date)
+enum MessageLiaison: Equatable, Sendable {
+    case liaison(adresse: URL, residence: String, jeton: JetonMasque, expireLe: Date)
     /// La résidence se ferme sur l'iPhone : la montre oublie la liaison de cette adresse.
     case effacement(adresse: URL)
 
@@ -45,7 +46,7 @@ enum MessageLiaison: Equatable, Sendable, CustomStringConvertible, CustomDebugSt
         case .liaison(let adresse, let residence, let jeton, let expireLe):
             [
                 Cle.geste: Geste.liaison, Cle.adresse: adresse.absoluteString, Cle.residence: residence,
-                Cle.jeton: jeton, Cle.expireLe: expireLe,
+                Cle.jeton: jeton.enClair, Cle.expireLe: expireLe,
             ]
         case .effacement(let adresse):
             [Cle.geste: Geste.effacement, Cle.adresse: adresse.absoluteString]
@@ -63,26 +64,13 @@ enum MessageLiaison: Equatable, Sendable, CustomStringConvertible, CustomDebugSt
                 let jeton = donnees[Cle.jeton] as? String, !jeton.isEmpty,
                 let expireLe = donnees[Cle.expireLe] as? Date
             else { return nil }
-            self = .liaison(adresse: adresse, residence: residence, jeton: jeton, expireLe: expireLe)
+            self = .liaison(adresse: adresse, residence: residence, jeton: JetonMasque(jeton), expireLe: expireLe)
         case Geste.effacement:
             self = .effacement(adresse: adresse)
         default:
             return nil
         }
     }
-
-    // MARK: - Le jeton n'apparaît dans aucune trace
-
-    var description: String {
-        switch self {
-        case .liaison(let adresse, let residence, _, let expireLe):
-            "liaison(\(adresse.absoluteString), \(residence), jeton masqué, \(expireLe))"
-        case .effacement(let adresse): "effacement(\(adresse.absoluteString))"
-        }
-    }
-
-    var debugDescription: String { description }
-    var customMirror: Mirror { Mirror(self, children: [], displayStyle: .enum) }
 }
 
 /// « Continuer sur l'iPhone » (Handoff, #226) : watchOS ne peut pas ouvrir l'app iPhone, mais

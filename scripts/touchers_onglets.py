@@ -13,10 +13,13 @@ l'appel ENTIER — swift-format le coupe parfois sur plusieurs lignes — et ref
 - une variable dont le nom commence par `onglet` (`onglet`, `onglets`, `ongletCarnet`) :
   c'est la convention qui rend lisible un onglet trouvé par son LIBELLÉ.
 
-Hors de sa vue, et dit — suite dans #340 : un onglet trouvé par son libellé en ligne
-(`app.buttons["Carnet d’entretien"]`) ou rangé dans une variable nommée autrement ; un
-`tap()` direct sur un onglet (la dette au plafond de verifier-touchers.sh) ; `toucherAuDessin`.
-Un texte ne dit pas qu'un libellé est un onglet ; la convention de nom le dit.
+Il refuse aussi (#340) un `tap()` DIRECT sur un onglet — ni attente qu'il soit immobile, ni
+reprise —, et un `toucherAuDessin(…)` sur un onglet : le point commun d'un onglet est
+`app.toucherLOnglet(_:jusqua:)` (Attente.swift), ou `app.toucher(_:jusqua:)`.
+
+Hors de sa vue, et dit : un onglet trouvé par son libellé en ligne
+(`app.buttons["Carnet d’entretien"]`) ou rangé dans une variable nommée autrement. Un texte ne
+dit pas qu'un libellé est un onglet ; la convention de nom le dit — `onglet…` pour la variable.
 
 Un appel qui ne se ferme pas (parenthèses déséquilibrées) n'est pas lu : il est refusé,
 INCONNU, jamais admis.
@@ -47,6 +50,11 @@ EXCEPTIONS = {
 }
 
 APPEL = re.compile(r"(?<![\w])toucher\s*\(")
+#: Un toucher au dessin, sans attente d'effet : jamais sur un onglet (#340).
+APPEL_DESSIN = re.compile(r"(?<![\w])toucherAuDessin\s*\(")
+#: Un `tap()` direct : son receveur est ce qui précède, sur la même ligne, depuis le début
+#: de l'expression (#340).
+TAP = re.compile(r"(?:^|[\s=(,])([\w.]+(?:\([^\n]*?\))?(?:\.[\w]+)*)\.tap\(\)", re.MULTILINE)
 SEGMENT_ONGLET = re.compile(r"(?:^|\.)onglets?(?:\.|$)")
 VARIABLE_ONGLET = re.compile(r"^onglet\w*$")
 LITTERAL = re.compile(r'"((?:[^"\\\n]|\\.)*)"')
@@ -133,7 +141,15 @@ def nus(chemin: str, texte: str) -> list[tuple[int, str]]:
             objet = re.search(r"([\w.]*\.)$", prefixe)
             nom = (objet.group(1) if objet else "") + appel
             trouves.append((propre.count("\n", 0, m.start()) + 1, f"{nom}({', '.join(args)})"))
-    return trouves
+    for m in APPEL_DESSIN.finditer(propre):
+        args = arguments(propre, m.end() - 1)
+        if args and designe_un_onglet(args[0]):
+            trouves.append((propre.count("\n", 0, m.start()) + 1, f"toucherAuDessin({args[0]})"))
+    for m in TAP.finditer(propre):
+        receveur = m.group(1)
+        if designe_un_onglet(receveur):
+            trouves.append((propre.count("\n", 0, m.start(1)) + 1, f"{receveur}.tap()"))
+    return sorted(trouves)
 
 
 def juger(racine: pathlib.Path, fichiers: list[str]) -> int:
@@ -143,7 +159,8 @@ def juger(racine: pathlib.Path, fichiers: list[str]) -> int:
             if (f, appel) in EXCEPTIONS:
                 servies.add((f, appel))
                 continue
-            print(f"❌ {f}:{ligne} : {appel} — app.toucher(onglet, jusqua: effet) (#183, #334)")
+            print(f"❌ {f}:{ligne} : {appel} — app.toucherLOnglet(onglet) ou app.toucher(onglet, jusqua: effet) "
+                  "(#183, #334, #340)")
             fautes += 1
     for f, appel in sorted(set(EXCEPTIONS) - servies):
         if f in fichiers:
@@ -163,6 +180,11 @@ def autotest() -> int:
         "essais sans effet": "app.toucher(ongletCarnet, essais: 3)",
         "sans objet": "toucher(onglet)",
         "appel illisible": "app.toucher(carte",
+        "tap direct": "onglet.tap()",
+        "tap direct, identifiant": '        app.elementAcces("onglet.badges").tap()',
+        "tap direct, autre outil": '    el(app, "communaute.onglet.idees").tap()',
+        "tap direct, variable": "ongletReporting.tap()",
+        "au dessin": "app.toucherAuDessin(onglet)",
     }
     admis = {
         "effet": 'app.toucher(app.elementAcces("onglet.x"), jusqua: carte)',
@@ -173,7 +195,9 @@ def autotest() -> int:
         "pas un onglet": 'app.toucher(app.elementAcces("barre.communaute"))',
         "mot voisin": 'app.toucher(app.elementAcces("ongletsx.y"))',
         "déclaration": "func toucher(_ onglet: XCUIElement)",
-        "autre fonction": "app.toucherAuDessin(onglet)",
+        "point commun": 'app.toucherLOnglet(app.elementAcces("onglet.badges"))',
+        "tap d'autre chose": 'app.elementAcces("cs.annuaire.conseil.modifier").tap()',
+        "au dessin d'autre chose": "app.toucherAuDessin(carte)",
     }
     ok = True
     for nom, code in refuses.items():

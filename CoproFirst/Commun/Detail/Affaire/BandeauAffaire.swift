@@ -86,13 +86,15 @@ struct BandeauAffaire: ViewModifier {
         switch geste {
         case .lien:
             // Un toucher COPIE, comme le site (`BoutonLien`) ; l'appui long offre le partage.
-            Menu {
-                ShareLink(item: adresse) { Label("Partager…", systemImage: "square.and.arrow.up") }
-            } label: {
-                icone
-            } primaryAction: {
-                UIPasteboard.general.url = adresse
-                avis.dire("Lien copié")
+            if let adresse {
+                Menu {
+                    ShareLink(item: adresse) { Label("Partager…", systemImage: "square.and.arrow.up") }
+                } label: {
+                    icone
+                } primaryAction: {
+                    UIPasteboard.general.url = adresse
+                    avis.dire("Lien copié")
+                }
             }
         case .options:
             Menu {
@@ -118,7 +120,7 @@ struct BandeauAffaire: ViewModifier {
     }
 
     /// L'adresse de la page de l'affaire — celle de `lien_ticket()` côté serveur.
-    private var adresse: URL { installation.adresse.appending(path: "tickets/\(affaire.id)") }
+    private var adresse: URL? { CheminDuSite.adresse(affaire: affaire.id, sur: installation.adresse) }
 
     private func envoyee(_ phrase: String) {
         avis.direApresFermeture(phrase)

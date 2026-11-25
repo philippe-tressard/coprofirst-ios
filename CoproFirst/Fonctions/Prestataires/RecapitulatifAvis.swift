@@ -124,7 +124,7 @@ struct RecapitulatifAvis: View {
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isHeader)
-            .accessibilityHint(ouvert ? "Replie l'exercice" : "Déplie l'exercice")
+            .depliage(ouvert: ouvert, deplier: "Déplie l'exercice", replier: "Replie l'exercice")
             .accessibilityIdentifier("avis.exercice.\(exercice.annee)")
             if ouvert {
                 ForEach(exercice.lignes) { ligne in ligneIntervention(ligne) }
@@ -173,7 +173,7 @@ struct RecapitulatifAvis: View {
         .buttonStyle(.plain)
         .elementIdentifie("avis.\(avis.id)", lu: TextesAvisPrestataire.badge(avis))
         .accessibilityAddTraits(.isButton)
-        .accessibilityHint(TextesAvisPrestataire.indice(ouvert: ouvert))
+        .depliage(ouvert: ouvert, deplier: TextesAvisPrestataire.deplier, replier: TextesAvisPrestataire.replier)
     }
 
     private func detail(_ avis: AvisPrestataire) -> some View {
@@ -194,7 +194,7 @@ struct RecapitulatifAvis: View {
                 avis: avis, retirable: gestes.conseil, modifier: { corrige = avis }, retirer: { aRetirer = avis })
         }
         .padding(10)
-        .background(palette.neutreFond, in: .rect(cornerRadius: 10, style: .continuous))
+        .background(palette.neutreFond, in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
         .transition(.opacity)
     }
 }

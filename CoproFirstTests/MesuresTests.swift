@@ -36,6 +36,16 @@ private let propresAIOS: [String: MesurePropre] = [
         raison: "coins continus de 14 pt, à l'échelle des cartes du système — le site arrondit à 0,5 rem ; "
             + "rendu validé au simulateur avec le parcours v2 (#4)",
         depuis: "02/11/2026"),
+    "rayonTuile": MesurePropre(
+        valeur: Mise.rayonTuile, ecart: nil,
+        raison: "une tuile DANS une carte (vignette de nature, choix d'un état d'avis, encadré) : un cran sous "
+            + "`rayon`, que huit vues écrivaient en dur (#347) ; le site n'a qu'un jeton de rayon",
+        depuis: "24/11/2026"),
+    "medaillon": MesurePropre(
+        valeur: Mise.medaillon, ecart: nil,
+        raison: "le logo d'une résidence ou le symbole d'un personnage en tête d'une ligne : trois vues "
+            + "l'écrivaient en dur (#347) ; il n'est pas une cible tactile, il en a la taille",
+        depuis: "24/11/2026"),
     "marge": MesurePropre(
         valeur: Mise.marge, ecart: nil,
         raison: "la marge latérale des écrans iOS ; le site n'a pas de jeton (1,25 rem écrit dans `.card`)",

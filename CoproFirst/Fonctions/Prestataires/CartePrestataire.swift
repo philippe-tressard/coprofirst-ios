@@ -40,7 +40,7 @@ struct CartePrestataire: View {
                     .contentShape(.rect)
                 }
                 .buttonStyle(.plain)
-                .accessibilityHint(deplie ? "Replie la fiche" : "Déplie la fiche")
+                .depliage(ouvert: deplie, deplier: "Déplie la fiche", replier: "Replie la fiche")
                 .accessibilityIdentifier("prestataire.\(prestataire.id)")
                 capsules(contrats: contrats)
                 if !compact || deplie { apercuContacts }
@@ -88,7 +88,7 @@ struct CartePrestataire: View {
             } else {
                 ForEach(prestataire.telephones, id: \.self) { lien("📞 \($0)", tel: $0) }
             }
-            if let email = prestataire.email, !email.isEmpty, let url = URL(string: "mailto:\(email)") {
+            if let email = prestataire.email, let url = LienDeContact.courriel(email) {
                 Link("✉️ \(email)", destination: url).font(.subheadline).frame(minHeight: Mise.cible)
             }
         }
@@ -97,7 +97,7 @@ struct CartePrestataire: View {
 
     @ViewBuilder
     private func lien(_ texte: String, tel: String?) -> some View {
-        if let tel, let url = URL(string: "tel:\(tel.filter { $0.isNumber || $0 == "+" })") {
+        if let url = LienDeContact.appel(tel) {
             Link(texte, destination: url).font(.subheadline).frame(minHeight: Mise.cible, alignment: .leading)
         } else {
             Text(texte).font(.subheadline).foregroundStyle(palette.textMuted)

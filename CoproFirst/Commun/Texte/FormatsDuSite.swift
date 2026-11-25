@@ -12,6 +12,8 @@ import Foundation
 /// | `dateLongue(_:)` | `fmtDateLong`, idem | « 2 avril 2026 » |
 /// | `dateHeure(_:)` | `fmtDatetime`, idem | « 2 avr. 2026, 16:30 » |
 /// | `dateHeureCourte(_:)` | `fmtDatetimeShort`, idem | « 02/04/2026 16:30 » |
+/// | `dateHeureLongue(_:)` | — (fiche d'une affaire, #346) | « 2 avril 2026 à 16:30 » |
+/// | `jourHeureLong(_:)` | — (résumé d'un élément du fil, #346) | « jeudi 2 avril à 16:30 » |
 /// | `heure(_:)` | `fmtTime`, idem | « 16:30 » |
 /// | `relatif(_:)` | — (propre aux apps, #226) | « il y a 2 heures », « hier » |
 /// | `jourCourt(_:semaine:)` | `fmtJourCourt`, idem (v3.79.0) | « mar. 17 nov. », « 19 nov. » |
@@ -62,6 +64,20 @@ enum FormatsDuSite {
     static func dateHeureCourte(_ valeur: Date?) -> String {
         guard let valeur else { return tiret }
         return "\(dateCourte(valeur)) \(heure(valeur))"
+    }
+
+    /// « 2 avril 2026 à 16:30 » : la date de création en tête de la fiche d'une affaire —
+    /// les mots de `dateLongue`, l'heure de Paris (#346 : elle suivait l'appareil).
+    static func dateHeureLongue(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.day().month(.wide).year().hour().minute())
+    }
+
+    /// « jeudi 2 avril à 16:30 » : le jour de la semaine, le quantième et l'heure de Paris —
+    /// l'en-tête du résumé d'un élément du fil (#346 : il suivait l'appareil).
+    static func jourHeureLong(_ valeur: Date?) -> String {
+        guard let valeur else { return tiret }
+        return valeur.formatted(style.weekday(.wide).day().month(.wide).hour().minute())
     }
 
     /// `fmtTime` : « 16:30 » — l'heure seule, sur 24 h à Paris (#41) : une

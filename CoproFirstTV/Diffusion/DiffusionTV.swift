@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Observation
 
@@ -22,13 +23,13 @@ final class DiffusionTV {
     private(set) var retire = false
 
     let residence: Installation
-    private let jeton: String
+    private let jeton: JetonMasque
     private let service: any ServiceEcranTV
     private let attendre: @Sendable (Duration) async throws -> Void
     private var images: [Int: [Data]] = [:]
 
     init(
-        residence: Installation, jeton: String, service: any ServiceEcranTV,
+        residence: Installation, jeton: JetonMasque, service: any ServiceEcranTV,
         attendre: @escaping @Sendable (Duration) async throws -> Void = { try await Task.sleep(for: $0) }
     ) {
         self.residence = residence

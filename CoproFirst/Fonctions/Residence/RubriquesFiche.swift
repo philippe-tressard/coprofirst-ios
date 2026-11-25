@@ -47,7 +47,7 @@ struct RubriqueRegles: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(!depliable)
-                .accessibilityHint(depliable ? (depliee ? "Replie la règle" : "Déplie la règle") : "")
+                .depliage(ouvert: depliee, deplier: "Déplie la règle", replier: "Replie la règle", actif: depliable)
             }
         }
         .animationEtat(ouverte, reduit: mouvementReduit)

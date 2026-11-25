@@ -19,7 +19,7 @@ struct ResumeFeuille: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(nature.libelle).font(.caption.weight(.bold)).foregroundStyle(
                             palette[keyPath: nature.couleur])
-                        Text(element.date, format: .dateTime.weekday(.wide).day().month(.wide).hour().minute())
+                        Text(FormatsDuSite.jourHeureLong(element.date))
                             .font(.caption)
                             .foregroundStyle(palette.textMuted)
                     }

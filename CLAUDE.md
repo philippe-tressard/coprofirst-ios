@@ -46,8 +46,9 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   issues ouvertes. Signature **au poste** seulement, jamais en CI ; identifiant
   `fr.coprofirst.app` **figé** (contrat : liens universels, APNs) ; compte Apple
   et TestFlight : skill `publication-app-store`.
-- **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint,
-  swift-format) ; Homebrew sur le poste, binaires vérifiés par empreinte en CI.
+- **Outillage** : versions épinglées dans `outillage.env` (XcodeGen, SwiftLint, REUSE,
+  et le Xcode de la CI) ; Homebrew sur le poste ; ce qui est vérifié par empreinte en CI,
+  et ce qui ne l'est pas, se lit dans `outillage.env`.
 - **Dépôt** : `philippe-tressard/coprofirst-ios`, public, branche `main`. Qui
   fusionne : champ `fusion` du registre. **Décision du 11/11/2026** (Philippe :
   « tu es plus à même de fusionner et de voir les conséquences ») : je fusionne
@@ -56,8 +57,9 @@ affichés à chaque session. Déclencheurs du projet : `.claude/coprofirst-ios-p
   (`~/.claude/standards/09` §8 bis ; la soumission : #205). Je suis ensuite
   `main` : sa CI après la fusion. `strict` reste désactivé (décision du 15/11/2026), sans
   `update-branch` sauf conflit ; à sa place, à chaque poussée de `main`, « Dépôt à jour »
-  rejoue le job « Dépôt » sur chaque PR armée réunie à `main` et DÉSARME celle qui rougirait,
-  et un `main` rouge ouvre aussitôt un ticket `sante-main` (`scripts/depot_a_jour.py`) ; chaque
+  rejoue le job « Dépôt » sur chaque PR armée réunie à `main` et DÉSARME celle qui rougirait
+  (`scripts/depot_a_jour.py`) ; tout job rouge sur `main` ou en passage planifié ouvre aussitôt
+  un ticket « CI rouge : <workflow> » par son dernier pas (`scripts/signaler_rouge.py`, #362) ; chaque
   jour, « Santé de main » en ouvre un au-delà de 3 rouges sur 20 poussées (`scripts/sante_main.py`, #353).
   **Contrepartie** : un compte rendu après chaque fusion (ce qui est
   entré, l'état de la CI de `main`, et le dire quand la fusion n'a pas eu sa CI

@@ -9,7 +9,6 @@ import pathlib
 import re
 from dataclasses import dataclass, field
 
-import lecture_ts
 from generateurs._source import DEPOT, DEPOT_SITE, Version, fichier_du_site
 
 CHARTE = pathlib.Path("CoproFirst/Charte")
@@ -86,8 +85,8 @@ class Contexte:
         """Une table que coprofirst PUBLIE pour ses clients (`tables-clients.json`, jointe à
         chaque release depuis v3.88.0, coprofirst#2634) : sa `valeur`, telle que servie.
 
-        La lecture par motif dans les sources du site (`lire` + `lecture_ts`) ne vaut plus
-        que pour ce que le fichier ne publie pas (#128). Une table absente, ou un format que
+        Aucun générateur ne lit plus le front par motif (#356) : `INTERDITS` de `generer.py`
+        refuse `front/src/lib/` et `front/src/styles/`. Une table absente, ou un format que
         ce script ne connaît pas, arrête la génération : la source a changé de forme."""
         tables = _tables_clients(self.version)
         if nom not in tables:
@@ -192,15 +191,6 @@ def booleen(valeur) -> str:
 def sans_pictogramme(libelle: str) -> str:
     """Un libellé du site sans l'émoji qui le précède."""
     return re.sub(r"^[^\w«(]+", "", libelle).strip()
-
-
-def objet(texte: str, motif: str) -> dict:
-    """L'objet littéral `{ … }` qui suit la première occurrence de `motif` (une expression
-    régulière), lu par `lecture_ts` — mêmes règles que ses tables."""
-    m = re.search(motif, texte)
-    if not m:
-        raise SystemExit(f"❌ {motif} introuvable")
-    return lecture_ts._Lecteur(lecture_ts._jetons(texte[texte.index("{", m.end() - 1):])).objet()
 
 
 def camel(nom: str) -> str:
