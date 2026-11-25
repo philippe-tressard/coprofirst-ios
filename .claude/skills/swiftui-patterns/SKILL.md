@@ -302,7 +302,10 @@ seule la CI le dit.
    Un **toucher** passe par `app.toucher(élément)` : l'élément existe, sort de sous le
    clavier, est amené à l'écran (lu sur son cadre, jamais `isHittable`, qui fait échouer le
    test sous iOS 26.5), ne bouge plus, puis il est touché — et le test
-   vérifie l'EFFET. Un `tap()` direct partait sur une feuille qui montait encore et ne
+   vérifie l'EFFET. Le clavier couvre PLUS que son cadre : la barre des prédictions est
+   au-dessus, et `toucher` la retranche de la zone utile. Un clavier que la barre de
+   navigation ne ferme pas reste donc ouvert sans dommage ; un test ne le ferme pas lui-même
+   par un retour (`typeText("…\n")`) pour atteindre le champ suivant (#379). Un `tap()` direct partait sur une feuille qui montait encore et ne
    faisait rien, sans erreur (#217). Les `tap()` directs restants sont une dette au
    plafond décroissant (`scripts/verifier-touchers.sh`) : une classe touchée par un lot se
    convertit entière et s'ajoute à `CLASSES_TOUCHER`, et le plafond baisse d'autant.
