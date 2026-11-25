@@ -257,7 +257,8 @@ jobs:
       # lent, et le lot 4 a dépassé le budget (63 min sur c3d25e2). 98 min de tests en médiane,
       # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
       # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
-      # ListeEtFiche, Carnet) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
+      # ListeEtFiche, Carnet) restent au dernier lot, où l'iPhone les saute : elles se jouent dans
+      # l'échantillon iPad (job echantillons), que scripts/verifier-ci.py tient (#350).
       # Le 19/11/2026 (#301), le dernier lot faisait 36 à 45 min d'étape et a dépassé le budget
       # sur #297 (56 min, tests verts) : PrestatairesUITests y pesait 13 à 23,7 min. Répartis
       # sur le PIRE temps de chaque classe, mesuré sur quatre runs (c4bdf79, b6f9b98, 23099de
@@ -364,7 +365,7 @@ jobs:
     # (iPad 32,2 min, dont 13,8 de tests ; Apple TV encore au build à 7,7). Au pire mesuré,
     # ~42 min ; plafond à 1,5 fois : 65. Le 23/11/2026, coupé à 65 sans test rouge (#364, run
     # 45256597018 : échantillon iPad 62 min, Apple TV interrompue) ; six runs verts de main : 26 à
-    # 59. Avec CarnetUITests à venir (#350, ~3,5 min) et ~7 pour l'Apple TV : ~73 au pire ; 85.
+    # 59. Avec CarnetUITests (#350, ~3,5 min ; 127 s au poste) et ~7 pour l'Apple TV : ~73 au pire ; 85.
     name: Échantillons (iPad, Apple TV)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
@@ -390,7 +391,10 @@ jobs:
         # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
         # ModerationUITests : le seul test du Profil, qui prouve `ouvrirLeProfil` par la barre
         # latérale (#336). L'autre test de la classe, qui ne passe pas par la navigation de
-        # l'iPad, reste au poste : ce job a déjà atteint 56 min sur 65.
+        # l'iPad, reste au poste : ce job a déjà atteint 65 min (#350).
+        # CarnetUITests (#350) : le carnet de l'iPhone pliable, joué en classe régulière
+        # (`-posture deplie`) ; il ne se jouait nulle part en CI. Chaque classe de l'iPad seul
+        # est nommée ici en entier, scripts/verifier-ci.py le tient.
         env:
           APPAREIL: ipad
         run: >-
@@ -405,6 +409,7 @@ jobs:
           -only-testing:CoproFirstUITests/BarreLateraleUITests
           -only-testing:CoproFirstTests/PresentationNavigationTests
           -only-testing:CoproFirstUITests/ListeEtFicheUITests
+          -only-testing:CoproFirstUITests/CarnetUITests
           -only-testing:CoproFirstTests/ListeEtFicheTests
           -only-testing:CoproFirstUITests/AffairesUITests/testCommandeNOuvreUneNouvelleAffaire
           -only-testing:CoproFirstUITests/PrestatairesAffaireUITests

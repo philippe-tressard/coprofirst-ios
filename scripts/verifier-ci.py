@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Deux règles de la CI, lues dans `.github/workflows/ci.yml`.
+"""Trois règles de la CI, lues dans `.github/workflows/ci.yml`.
 
 1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241) — outre l'alerte
    d'un rouge, le dernier pas de chaque job.
@@ -19,6 +19,11 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
    sans elle, chaque fusion rapprochée rejouait ~100 min-macOS sur 5 places (8 exécutions en
    file le 25/11/2026).
 
+3. Une classe de tests qui se saute hors de l'iPad (`XCTSkipUnless(… == .pad`) est nommée
+   en entier dans l'échantillon iPad (l'étape `APPAREIL: ipad`, #350) : le dernier lot
+   d'interface tourne sur iPhone, où elle ne joue rien — sans l'échantillon, elle ne se
+   jouait nulle part (`CarnetUITests`, jamais en CI jusqu'au 23/11/2026).
+
 Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
 (`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
 
@@ -35,10 +40,14 @@ import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+RACINE = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(RACINE / "scripts"))
+import portee  # noqa: E402  (la liste des dossiers, #341)
 import signaler_rouge  # noqa: E402  (l'alerte d'un rouge, #362)
 
-WORKFLOW = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "ci.yml"
+WORKFLOW = RACINE / ".github" / "workflows" / "ci.yml"
+#: La garde d'une classe de l'iPad seul, dans son `setUp`.
+IPAD_SEUL = re.compile(r"XCTSkipUnless\(\s*UIDevice\.current\.userInterfaceIdiom\s*==\s*\.pad\b")
 JOB = "depot"
 ATTENDU = "bash scripts/verifier-depot.sh"
 AGREGAT = "ios"
@@ -118,9 +127,42 @@ def refus_agregat(texte: str) -> tuple[int, list[str]]:
     return 0, [f"✅ {len(macos)} job(s) macOS ({', '.join(macos)}) : plafonnés, exigés par « {AGREGAT} », une file chacun sur main"]
 
 
-def refus(texte: str) -> tuple[int, list[str]]:
-    """Les deux règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
-    codes, messages = zip(*(r(texte) for r in (refus_depot, refus_agregat)))
+def nommees_sur_ipad(texte: str) -> set[str]:
+    """Les `-only-testing:<cible>/<Classe>` entiers des étapes `APPAREIL: ipad`."""
+    nommees: set[str] = set()
+    for etape in re.split(r"\n\s+- (?=name:|uses:|run:)", texte):
+        if re.search(r"^\s+APPAREIL:\s*ipad\s*$", etape, re.MULTILINE):
+            nommees |= set(re.findall(r"-only-testing:([A-Za-z0-9_]+/[A-Za-z0-9_]+)\s*$", etape, re.MULTILINE))
+    return nommees
+
+
+def classes_ipad_seul(racine: Path = RACINE) -> list[str]:
+    """`<cible>/<Classe>` de chaque classe de tests qui se saute hors de l'iPad."""
+    trouvees = []
+    for f in portee.fichiers(racine, portee.TESTS):
+        texte = f.read_text(encoding="utf-8")
+        if IPAD_SEUL.search(texte):
+            cible = f.relative_to(racine).parts[0]
+            trouvees += [f"{cible}/{c}" for c in re.findall(r"class\s+(\w+)\s*:\s*XCTestCase", texte)]
+    return sorted(trouvees)
+
+
+def refus_ipad(texte: str, classes: list[str]) -> tuple[int, list[str]]:
+    """Règle 3 — chaque classe de l'iPad seul est nommée dans l'échantillon iPad."""
+    if not classes:
+        return 2, ["❓ INCONNU : aucune classe de l'iPad seul lue (BarreLaterale, ListeEtFiche, Carnet…)"]
+    nommees = nommees_sur_ipad(texte)
+    manquantes = [c for c in classes if c not in nommees]
+    if manquantes:
+        return 1, [f"❌ {c} se saute hors de l'iPad et n'est pas nommée dans l'échantillon iPad : "
+                   "elle ne se joue nulle part en CI (#350)" for c in manquantes]
+    return 0, [f"✅ {len(classes)} classe(s) de l'iPad seul, toutes dans l'échantillon iPad"]
+
+
+def refus(texte: str, classes: list[str] | None = None) -> tuple[int, list[str]]:
+    """Les trois règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
+    regles = [refus_depot, refus_agregat] + ([lambda t: refus_ipad(t, classes)] if classes is not None else [])
+    codes, messages = zip(*(r(texte) for r in regles))
     code = 1 if 1 in codes else max(codes)
     return code, [m for ms in messages for m in ms]
 
@@ -158,7 +200,17 @@ def autotest() -> int:
                           "cancel-in-progress: true\n    steps:\n      - run: x\n  " + AGREGAT), 1,
          "une file qui annule la poussée en cours"),
     ]
+    etape = "      - name: iPad\n        env:\n          APPAREIL: ipad\n        run: >-\n          bash t.sh\n"
+    ipad = conforme.replace("      - run: x\n  " + AGREGAT, etape + "          -only-testing:UI/CarnetUITests\n  " + AGREGAT)
     ko = [nom for texte, code, nom in cas if refus(texte)[0] != code]
+    cas_ipad = [
+        (ipad, ["UI/CarnetUITests"], 0, "une classe de l'iPad seul nommée"),
+        (conforme, ["UI/CarnetUITests"], 1, "une classe de l'iPad seul absente"),
+        (ipad.replace("CarnetUITests", "CarnetUITests/testUn"), ["UI/CarnetUITests"], 1, "un seul de ses tests nommé"),
+        (ipad.replace("APPAREIL: ipad", "APPAREIL: tv"), ["UI/CarnetUITests"], 1, "nommée sur l'Apple TV"),
+        (ipad, [], 2, "aucune classe lue"),
+    ]
+    ko += [nom for texte, classes, code, nom in cas_ipad if refus_ipad(texte, classes)[0] != code]
     for nom in ko:
         print(f"❌ autotest : {nom} mal jugé")
     return 1 if ko else 0
@@ -170,7 +222,7 @@ def main() -> int:
     if not WORKFLOW.is_file():
         print(f"❓ INCONNU : {WORKFLOW} absent")
         return 2
-    code, messages = refus(WORKFLOW.read_text(encoding="utf-8"))
+    code, messages = refus(WORKFLOW.read_text(encoding="utf-8"), classes_ipad_seul())
     alertes = signaler_rouge.ecarts({f.name: f.read_text(encoding="utf-8")
                                      for f in sorted(WORKFLOW.parent.glob("*.yml"))})
     messages += alertes or ["✅ chaque job de chaque workflow finit par l'alerte d'un rouge (#362)"]
