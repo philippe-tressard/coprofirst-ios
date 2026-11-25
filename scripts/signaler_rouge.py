@@ -19,7 +19,10 @@ workflow, reconnu à son titre exact ; un échec suivant le complète, au plus u
 `DELAI_HEURES` (standards/07 §3). Il se ferme à la main, avec le passage vert qui le prouve.
 
 `--verifier` (lancé par `scripts/verifier-ci.py`) refuse un job sans ce pas en dernier, et un
-workflow sans `issues: write`. Une seule dispense, déclarée (`DISPENSES`) : un job qui exécute
+workflow sans `issues: write`. Un job qui ouvre déjà SON ticket (`gh issue create` : la
+concordance, la santé de main) tait l'alerte quand ce pas a réussi — `steps.<id>.outcome !=
+'success'` dans sa condition, `<id>` un pas du job : sinon un même rouge fait deux tickets
+(#395, doublon de #380 le 25/11/2026). Une seule dispense, déclarée (`DISPENSES`) : un job qui exécute
 le code d'une PR au jeton en lecture seule — son rouge est signalé par le job qui le suit.
 
 Sortie : 0 signalé ou rien à signaler, 1 envoi impossible ou écart. `--autotest`.
@@ -40,6 +43,8 @@ from datetime import datetime, timedelta, timezone
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 WORKFLOWS = RACINE / ".github" / "workflows"
 PAS = "python3 -I scripts/signaler_rouge.py --signaler"
+#: La condition qui tait l'alerte quand le job a ouvert son propre ticket.
+TAIRE = re.compile(r"steps\.([A-Za-z0-9_-]+)\.outcome != 'success'")
 ETIQUETTE = "priorité haute"
 DELAI_HEURES = 12
 #: (workflow, job) → raison. Une dispense sans objet échoue.
@@ -129,6 +134,11 @@ def ecarts(fichiers: dict[str, str]) -> list[str]:
             dernier = etapes[-1] if etapes else ""
             if PAS not in dernier or not re.search(r"^\s+if: failure\(\)", dernier, re.M):
                 fautes.append(f"❌ {nom}, job « {job} » : son dernier pas n'est pas l'alerte `if: failure()` → {PAS}")
+            elif "gh issue create" in corps_job:
+                taire = TAIRE.search(dernier)
+                if not taire or not re.search(rf"^\s+id: {re.escape(taire.group(1))}\s*$", corps_job, re.M):
+                    fautes.append(f"❌ {nom}, job « {job} » : il ouvre son propre ticket — l'alerte se tait quand ce "
+                                  "pas a réussi (`steps.<id>.outcome != 'success'`), sinon deux tickets (#395)")
     fautes += [f"❌ dispense {n} « {j} » sans objet — la retirer"
                for n, j in sorted(set(DISPENSES) - servies) if n in fichiers]
     return fautes
@@ -153,6 +163,10 @@ def autotest() -> bool:
     ok &= len(ecarts({"w.yml": sain.replace("  issues: write\n", "")})) == 1                # sans le droit
     ok &= len(ecarts({"depot-a-jour.yml": sain})) == 1                                         # dispense sans objet
     ok &= ecarts({}) != []
+    propre = sain.replace("      - run: x\n", "      - name: Ticket\n        id: t\n        run: gh issue create\n")
+    ok &= len(ecarts({"w.yml": propre})) == 1                                                  # deux tickets
+    ok &= ecarts({"w.yml": propre.replace("if: failure()", "if: failure() && steps.t.outcome != 'success'")}) == []
+    ok &= len(ecarts({"w.yml": propre.replace("if: failure()", "if: failure() && steps.u.outcome != 'success'")})) == 1
     sortie: list[list[str]] = []
 
     def gh(args: list[str]) -> str:
