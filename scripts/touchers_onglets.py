@@ -24,6 +24,10 @@ dit pas qu'un libellé est un onglet ; la convention de nom le dit — `onglet�
 Un appel qui ne se ferme pas (parenthèses déséquilibrées) n'est pas lu : il est refusé,
 INCONNU, jamais admis.
 
+Il tient de même (#400) les touchers qui OUVRENT une feuille, nommés dans `OUVERTURES` par
+leur identifiant exact : nu, un toucher de ✏️ perdu sous charge laissait le détail sans
+feuille (main 1c47c05, échantillon iPad du 25/11). Leur point commun est nommé à côté.
+
 Exceptions DÉCLARÉES (`EXCEPTIONS`) : un toucher qui n'est pas idempotent — ouvrir un menu,
 qu'une reprise refermerait — reste nu, avec sa raison ; une exception qui ne sert plus
 est refusée.
@@ -47,6 +51,11 @@ EXCEPTIONS = {
         "aux tailles d'accessibilité, les onglets de la Résidence sont un MENU : une reprise "
         "le refermerait (toucher non idempotent, Attente.swift) — 23/11/2026, #334"
     ),
+}
+
+#: identifiant exact d'un toucher qui ouvre une feuille → son point commun, qui attend l'effet (#400).
+OUVERTURES = {
+    "affaire.modifier": "app.ouvrirModificationAffaire() (AttenteDetailAffaire.swift)",
 }
 
 APPEL = re.compile(r"(?<![\w])toucher\s*\(")
@@ -115,8 +124,15 @@ def arguments(texte: str, debut: int) -> list[str] | None:
     return None
 
 
+def ouverture(argument: str) -> str | None:
+    """L'identifiant d'OUVERTURES que l'argument désigne, ou None."""
+    return next((m.group(1) for m in LITTERAL.finditer(argument) if m.group(1) in OUVERTURES), None)
+
+
 def designe_un_onglet(argument: str) -> bool:
-    if VARIABLE_ONGLET.match(argument):
+    """Un onglet, ou un toucher qui ouvre une feuille (`OUVERTURES`) : l'un et l'autre se
+    touchent jusqu'à leur effet."""
+    if VARIABLE_ONGLET.match(argument) or ouverture(argument):
         return True
     return any(SEGMENT_ONGLET.search(m.group(1)) for m in LITTERAL.finditer(argument))
 
@@ -159,8 +175,10 @@ def juger(racine: pathlib.Path, fichiers: list[str]) -> int:
             if (f, appel) in EXCEPTIONS:
                 servies.add((f, appel))
                 continue
-            print(f"❌ {f}:{ligne} : {appel} — app.toucherLOnglet(onglet) ou app.toucher(onglet, jusqua: effet) "
-                  "(#183, #334, #340)")
+            ident = ouverture(appel)
+            conseil = (f"{OUVERTURES[ident]} (#400)" if ident else
+                       "app.toucherLOnglet(onglet) ou app.toucher(onglet, jusqua: effet) (#183, #334, #340)")
+            print(f"❌ {f}:{ligne} : {appel} — {conseil}")
             fautes += 1
     for f, appel in sorted(set(EXCEPTIONS) - servies):
         if f in fichiers:
@@ -185,6 +203,8 @@ def autotest() -> int:
         "tap direct, autre outil": '    el(app, "communaute.onglet.idees").tap()',
         "tap direct, variable": "ongletReporting.tap()",
         "au dessin": "app.toucherAuDessin(onglet)",
+        "ouverture nue": 'app.toucher(app.elementAcces("affaire.modifier"))',
+        "ouverture, tap direct": 'app.elementAcces("affaire.modifier").tap()',
     }
     admis = {
         "effet": 'app.toucher(app.elementAcces("onglet.x"), jusqua: carte)',
@@ -198,6 +218,9 @@ def autotest() -> int:
         "point commun": 'app.toucherLOnglet(app.elementAcces("onglet.badges"))',
         "tap d'autre chose": 'app.elementAcces("cs.annuaire.conseil.modifier").tap()',
         "au dessin d'autre chose": "app.toucherAuDessin(carte)",
+        "ouverture jusqu'à son effet": 'toucher(elementAcces("affaire.modifier"), jusqua: buttons["modifier.enregistrer"])',
+        "ouverture lue sans toucher": 'XCTAssertTrue(app.elementAcces("affaire.modifier").exists)',
+        "identifiant voisin": 'app.toucher(app.elementAcces("affaire.modifier.x"))',
     }
     ok = True
     for nom, code in refuses.items():

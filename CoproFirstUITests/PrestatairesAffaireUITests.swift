@@ -29,7 +29,7 @@ final class PrestatairesAffaireUITests: XCTestCase {
                 "affaire.intervenant", "Intervenants : Ascenseurs du Parc (fictif), Contrôles Sécurité Exemple"
             ).exists, "une ligne par prestataire, lue d'un bloc")
 
-        app.toucher(app.elementAcces("affaire.modifier"))
+        app.ouvrirModificationAffaire()
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertTrue(enregistrer.apparait())
         let retirer = app.elementAcces("modifier.prestataire.2.retirer")
@@ -65,7 +65,7 @@ final class PrestatairesAffaireUITests: XCTestCase {
         XCTAssertTrue(carte.apparait())
         app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-        app.toucher(app.elementAcces("affaire.modifier"))
+        app.ouvrirModificationAffaire()
         XCTAssertTrue(app.buttons["modifier.enregistrer"].apparait())
         XCTAssertFalse(app.amener(app.elementAcces("modifier.prestataires.ajouter"), essais: 4))
     }
