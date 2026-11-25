@@ -10,7 +10,7 @@ import Testing
 // L'Espace conseil syndical (#15) : qui le voit, son cadre, ses trois premiers
 // onglets — services, relectures, gestes.
 
-// MARK: - Qui voit l'Espace CS (la barre du site, `Nav.svelte`)
+// MARK: - Les droits d'onglet (qui voit la page : `PagesOuvertesTests`, #355)
 
 /// `moderateur` : `est_moderateur` tel que le serveur le sert au conseil et à l'administration (#136).
 private func droits(_ roles: [String], statut: String? = nil, moderateur: Bool = false) -> DroitsOnglet {
@@ -18,49 +18,6 @@ private func droits(_ roles: [String], statut: String? = nil, moderateur: Bool =
 }
 
 private let toutes = PagesParDefaut.toutes
-
-@Test func leConseilVoitLEspaceCSEtLesPrestataires() {
-    let conseil = droits(["résident", "propriétaire", "conseil_syndical"], moderateur: true)
-    let ids = PagesOuvertes.filtrer(toutes, droits: conseil).map(\.id)
-    #expect(ids.contains("espace-cs"))
-    #expect(ids.contains("prestataires"))
-    #expect(!ids.contains("admin"), "un membre du conseil n'est pas administrateur")
-}
-
-@Test func unResidentNeVoitNiLEspaceCSNiLesPrestataires() {
-    let ids = PagesOuvertes.filtrer(toutes, droits: droits(["résident", "propriétaire"])).map(\.id)
-    #expect(!ids.contains("espace-cs"))
-    #expect(!ids.contains("prestataires"))
-    #expect(!ids.contains("delegations"))
-    #expect(ids.contains("mon-lot"), "les pages des résidents restent ouvertes")
-}
-
-@Test func leCompteTechniqueNAPasLesOutilsDuConseil() {
-    let technique = droits(["admin"], moderateur: true)
-    #expect(technique.adminSeul)
-    #expect(technique.cs, "`$isCS` inclut l'administrateur…")
-    #expect(!PagesOuvertes.ouverte("espace-cs", droits: technique), "…mais pas le compte technique")
-    #expect(PagesOuvertes.ouverte("admin", droits: technique))
-}
-
-@Test func unAdministrateurCoproprietaireALEspaceCS() {
-    let admin = droits(["propriétaire", "admin"], moderateur: true)
-    #expect(!admin.adminSeul)
-    #expect(PagesOuvertes.ouverte("espace-cs", droits: admin))
-    #expect(PagesOuvertes.ouverte("admin", droits: admin))
-}
-
-@Test func lOperateurOuvreLAdministration() {
-    #expect(PagesOuvertes.ouverte("admin", droits: droits(["operateur"])))
-    #expect(!PagesOuvertes.ouverte("espace-cs", droits: droits(["operateur"])))
-}
-
-@Test func sansProfilLesPagesReserveesSeFerment() {
-    let rien = DroitsOnglet(profil: nil)
-    let ids = PagesOuvertes.filtrer(toutes, droits: rien).map(\.id)
-    #expect(!ids.contains("espace-cs"))
-    #expect(ids.contains(OrdrePages.idFil))
-}
 
 /// Les pages réservées viennent de `PAGES_ROLES`, après celles de `PAGES` (générées).
 @Test func lesPagesReserveesFermentLaBarre() {
@@ -96,10 +53,12 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func chaqueOngletADesDescriptifsDuSite() {
     #expect(TablesEspaceCS.descriptifs["validations"]?.isEmpty == false)
-    // Le Reporting : le site promet l'export, l'app le laisse au site (#358).
-    #expect(TablesEspaceCS.descriptifs["reporting"] != nil)
-    #expect(EspaceCSView.descriptifs["reporting"] == nil)
-    #expect(EspaceCSView.descriptifs.count == TablesEspaceCS.descriptifs.count - 1)
+    // Le Reporting et les Badges : le site promet l'export, l'app le laisse au site (#358, #355).
+    for ecarte in ["reporting", "badges"] {
+        #expect(TablesEspaceCS.descriptifs[ecarte] != nil, "« \(ecarte) » : l'écart ne sert plus")
+        #expect(EspaceCSView.descriptifs[ecarte] == nil)
+    }
+    #expect(EspaceCSView.descriptifs.count == TablesEspaceCS.descriptifs.count - 2)
     #expect(TablesEspaceCS.civilites.first == AnnuaireCS.civiliteParDefaut)
 }
 

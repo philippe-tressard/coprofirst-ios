@@ -79,8 +79,9 @@ extension Parcours {
         case .affaireEnFeuille(let affaire):
             porte.affaireEnFeuille = AffaireEnFeuille(id: affaire)
         case .elementDuFil(let cle):
-            aOuvrir = cle
-            onglet = OrdrePages.idFil
+            // Sans le fil dans la barre, l'élément n'a pas où s'ouvrir : l'accueil seul.
+            aOuvrir = pages.contains(OrdrePages.idFil) ? cle : nil
+            onglet = OrdrePages.accueil(pages)
         case .cloche:
             break
         }

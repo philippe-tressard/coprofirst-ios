@@ -15,10 +15,10 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// CoproFirst ≥ 3.61.0, coprofirst#2500) : l'app l'affiche sans règle à elle. Absent
     /// ou `null` — serveur plus ancien, rien à dire — : rien ne s'affiche.
     var libelleLogement: String?
-    /// Les délégations ACTIVES où le compte est l'aidant (`delegations_aidant` de
-    /// `GET /auth/me`) : elles lui ouvrent la page Délégations (`Nav.svelte`, #15).
-    /// Facultatif : un profil gardé avant #15 se relit sans lui.
-    var delegationsAidant: Int?
+    /// Les PUBLICS du menu auxquels le compte appartient (`acces_menu` de GET /auth/me,
+    /// contrat 2.11.0, coprofirst#3003) — calculés par le serveur, lus par `PagesOuvertes`
+    /// (#355). `nil` : un profil gardé avant #355, jusqu'à sa relecture à l'ouverture.
+    var accesMenu: [String]?
     /// La saisie d'une affaire qui s'applique au compte, `essentielle` ou `complete`
     /// (`saisie_affaire_effective`, contrat ≥ 1.14.0, #69) : le choix du Profil, sinon le
     /// défaut — calculé par le SERVEUR, l'app le lit. Facultatif : un profil gardé avant
@@ -39,12 +39,6 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// l'app ne note alors aucune page vue (`MesureAudience`, coprofirst#2726). `nil` (profil
     /// gardé avant, jusqu'à sa relecture à l'ouverture) : refus inconnu, rien ne se note.
     var refusMesure: Bool?
-
-    /// Un proche aidant : par son statut (`aidant`, valeur du contrat), ou par une
-    /// délégation active — la condition de `Nav.svelte` pour la page Délégations.
-    var estAidant: Bool {
-        statut == Components.Schemas.StatutUtilisateur.aidant.rawValue || (delegationsAidant ?? 0) > 0
-    }
 
     /// Les rôles comme l'en-tête de l'accueil les annonce : le statut, puis les rôles
     /// qui ajoutent quelque chose (`misEnAvant`), sans doublon — `EnteteAccueil.svelte`.
@@ -69,7 +63,7 @@ extension ProfilResidence {
         // affiché tel quel. Un serveur plus ancien ne le sert pas — `nil`, rien ne s'affiche.
         self.init(
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
-            libelleLogement: moi.libelleLogement, delegationsAidant: moi.delegationsAidant?.count ?? 0,
+            libelleLogement: moi.libelleLogement, accesMenu: moi.accesMenu ?? [],
             saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id,
             refusMesure: moi.optOutTelemetrie ?? false)
     }

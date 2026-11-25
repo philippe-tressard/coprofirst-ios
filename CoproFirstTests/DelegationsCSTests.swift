@@ -16,20 +16,6 @@ import Testing
     let _: any ServiceDelegations = ServiceSimule(delai: .zero)
 }
 
-/// La page Délégations s'ouvre au conseil et à l'aidant (`Nav.svelte`), pas au résident.
-@Test func laPageDesDelegationsSOuvreALAidant() {
-    let resident = ProfilResidence(statut: "copropriétaire_résident", roles: ["propriétaire"])
-    #expect(!PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: resident)))
-    var aide = resident
-    aide.delegationsAidant = 1
-    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aide)))
-    let aidant = ProfilResidence(statut: "aidant", roles: [])
-    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: aidant)))
-    let conseil = ProfilResidence(
-        statut: "copropriétaire_résident", roles: ["propriétaire", "conseil_syndical"], estModerateur: true)
-    #expect(PagesOuvertes.ouverte("delegations", droits: DroitsOnglet(profil: conseil)))
-}
-
 // MARK: - Délégations
 
 /// `GET /delegations` est typé (`DelegationRead`, contrat 1.8.0) : la réponse traverse le

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), front/src/lib/pages.ts#PAGES, front/src/lib/roles.ts#ROLES_DU_DROIT, front/src/lib/roles.ts#STATUTS_DU_PROFIL (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/pages.ts#PAGES, front/src/lib/roles.ts#ROLES_DU_DROIT, front/src/lib/roles.ts#STATUTS_DU_PROFIL (tables-clients.json).
 
 /// Les onglets de chaque page du site, dans leur ordre, avec leur réserve (#29).
 /// La règle qui en décide l'ouverture : `OngletsDuSite.ouverts` (Navigation/OngletsOuverts.swift).
@@ -80,9 +80,6 @@ enum OngletsDuSite {
     static let rolesAdministrateur: Set<String> = ["admin"]
     static let rolesOperateur: Set<String> = ["operateur"]
     static let rolesProprietaire: Set<String> = ["propriétaire"]
-    /// `isAdminOnly` : un de ces rôles, et aucun des suivants (le compte technique).
-    static let rolesAdminSeul: Set<String> = ["admin"]
-    static let rolesSansAdminSeul: Set<String> = ["propriétaire", "résident", "conseil_syndical"]
     static let statutsLocataire: Set<String> = ["locataire"]
     static let statutsGestionnaire: Set<String> = ["syndic", "mandataire"]
 }

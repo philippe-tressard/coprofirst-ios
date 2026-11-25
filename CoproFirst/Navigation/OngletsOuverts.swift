@@ -34,15 +34,13 @@ struct DroitsOnglet: Hashable, Sendable {
     /// SERVI (contrat 1.25.0, #136). Aucune réserve d'onglet ne l'emploie ; un écran le
     /// lit (le Règlement, #12). Un geste fin servi avec l'objet (`peut_*`) prime toujours.
     var cs = false
-    /// Le compte technique de l'installation : administrateur, sans lot ni conseil
-    /// (`$isAdminOnly` du site). Il n'a pas les outils du conseil (`PagesOuvertes`).
-    var adminSeul = false
-    /// Un proche aidant (`ProfilResidence.estAidant`) : la page Délégations lui est ouverte.
-    var aidant = false
+    /// Les publics du menu que le serveur SERT à ce compte (`acces_menu` de GET /auth/me,
+    /// #355), lus par `PagesOuvertes` — jamais recomposés des rôles.
+    var accesMenu: Set<String> = []
 
     init(
         administrateur: Bool = false, operateur: Bool = false, proprioOuCS: Bool = false,
-        locataire: Bool = false, gestionnaire: Bool = false, cs: Bool = false, adminSeul: Bool = false
+        locataire: Bool = false, gestionnaire: Bool = false, cs: Bool = false, accesMenu: Set<String> = []
     ) {
         self.administrateur = administrateur
         self.operateur = operateur
@@ -50,7 +48,7 @@ struct DroitsOnglet: Hashable, Sendable {
         self.locataire = locataire
         self.gestionnaire = gestionnaire
         self.cs = cs
-        self.adminSeul = adminSeul
+        self.accesMenu = accesMenu
     }
 
     /// Depuis le compte servi par `GET /auth/me` : `roles` (ou, à défaut, `role` seul —
@@ -69,9 +67,7 @@ struct DroitsOnglet: Hashable, Sendable {
             proprioOuCS: !portes.isDisjoint(with: OngletsDuSite.rolesProprietaire) || (estModerateur ?? false),
             locataire: OngletsDuSite.statutsLocataire.contains(statut),
             gestionnaire: OngletsDuSite.statutsGestionnaire.contains(statut),
-            cs: estModerateur ?? false,
-            adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)
-                && portes.isDisjoint(with: OngletsDuSite.rolesSansAdminSeul))
+            cs: estModerateur ?? false)
     }
 }
 
@@ -109,6 +105,6 @@ extension DroitsOnglet {
     /// range le rôle principal dans `roles`, ce qu'il fait.
     init(profil: ProfilResidence?) {
         self.init(roles: profil?.roles ?? [], role: nil, statut: profil?.statut, estModerateur: profil?.estModerateur)
-        aidant = profil?.estAidant ?? false
+        accesMenu = Set(profil?.accesMenu ?? PagesOuvertes.avantRelecture)
     }
 }

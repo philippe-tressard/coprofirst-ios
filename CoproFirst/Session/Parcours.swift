@@ -174,6 +174,12 @@ final class Parcours {
         // Une lecture partie avant la déconnexion ne redit pas le compte qu'elle a effacé (#94).
         guard ouverte?.adresse == installation.adresse else { return }
         connues.noter(profil, pour: installation)
+        // Les publics servis (`acces_menu`, #355) peuvent retirer la page affichée — celle
+        // d'un profil pas encore lu : l'app se pose alors sur l'accueil de la barre.
+        let pages = pagesDeLaBarre(installation).map(\.id)
+        if !pages.contains(onglet), onglet != Aiguillage.idPlus, EntreeFixe(rawValue: onglet) == nil {
+            onglet = OrdrePages.accueil(pages)
+        }
     }
 
     /// Quitter CETTE résidence : retour à la connexion, adresse et courriel pré-remplis —
