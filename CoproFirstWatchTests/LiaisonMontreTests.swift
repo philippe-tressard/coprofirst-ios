@@ -13,7 +13,7 @@ import Testing
 /// la lecture de la cloche par le jeton de montre (coprofirst#2771).
 @MainActor
 struct LiaisonMontreTests {
-    private let adresse = URL(string: "https://tilleuls.exemple")!
+    private let adresse = URL(string: "https://tilleuls.test")!
     private let echeance = Date(timeIntervalSince1970: 2_000_000_000)
 
     private func liaison(_ adresse: URL? = nil, jeton: JetonMasque = "jeton-secret-123") -> MessageLiaison {
@@ -31,7 +31,7 @@ struct LiaisonMontreTests {
         var donnees = liaison().donnees
         donnees["jeton"] = ""
         #expect(MessageLiaison(donnees) == nil, "jamais une liaison à moitié")
-        #expect(MessageLiaison(liaison(URL(string: "http://tilleuls.exemple")!).donnees) == nil, "https seul")
+        #expect(MessageLiaison(liaison(URL(string: "http://tilleuls.test")!).donnees) == nil, "https seul")
         #expect(MessageLiaison(["geste": "autre", "adresse": adresse.absoluteString]) == nil)
         #expect(MessageLiaison([:]) == nil)
     }
@@ -56,7 +56,7 @@ struct LiaisonMontreTests {
         let coffre = LiaisonEnMemoire()
         Liaisons.recevoir(liaison(), coffre)
         #expect(coffre.lire()?.residence == "Les Tilleuls")
-        Liaisons.recevoir(.effacement(adresse: URL(string: "https://glycines.exemple")!), coffre)
+        Liaisons.recevoir(.effacement(adresse: URL(string: "https://glycines.test")!), coffre)
         #expect(coffre.lire() != nil, "l'effacement d'une autre résidence n'efface pas celle-ci")
         Liaisons.recevoir(.effacement(adresse: adresse), coffre)
         #expect(coffre.lire() == nil)
@@ -107,7 +107,7 @@ struct LiaisonMontreTests {
         #expect(alertes.map(\.id) == [7])
         #expect(transport.autorisation == "Bearer jeton-de-montre")
         #expect(transport.chemin == "/notifications", "la seule route que le jeton ouvre")
-        #expect(transport.hote == "tilleuls.exemple", "vers l'adresse de la liaison, et elle seule")
+        #expect(transport.hote == "tilleuls.test", "vers l'adresse de la liaison, et elle seule")
     }
 
     @Test func unRefusDuServeurDitLeJetonRefuse() async {
@@ -119,7 +119,7 @@ struct LiaisonMontreTests {
 
     @Test func leHandoffNePorteQuUneAdresseHttps() {
         #expect(ClocheSurLiPhone.adresse(ClocheSurLiPhone.userInfo(adresse)) == adresse)
-        #expect(ClocheSurLiPhone.adresse(["adresse": "http://tilleuls.exemple"]) == nil)
+        #expect(ClocheSurLiPhone.adresse(["adresse": "http://tilleuls.test"]) == nil)
         #expect(ClocheSurLiPhone.adresse(nil) == nil)
     }
 }
