@@ -88,7 +88,7 @@ extension Apercu {
             affaire(
                 18, "Infiltration en toiture", "<p>Reprise de l'étanchéité au-dessus du 5ᵉ étage.</p>", 300,
                 "résolu", "sinistre", "Sinistre", colonne: "termine", close: true, archivee: true, activite: 280,
-                prestataires: ["Toitures Dupuis"]),
+                prestataires: ["Toitures Exemple"]),
             affaire(
                 9, "Élagage des tilleuls", "Les quatre tilleuls de la cour ont été élagués.", 520, "résolu",
                 "espaces_verts", "Espaces verts", colonne: "termine", close: true, archivee: true, activite: 500),

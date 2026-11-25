@@ -70,7 +70,7 @@ private struct TransportDuServeur: ClientTransport {
 }
 
 private let residence = Installation(
-    adresse: URL(string: "https://jeton-court.exemple")!, nom: "Résidence", aUnLogo: false)
+    adresse: URL(string: "https://jeton-court.test")!, nom: "Résidence", aUnLogo: false)
 
 private func service(_ serveur: ServeurAJetonCourt) -> ServiceAPI {
     ServiceAPI(transport: { _ in TransportDuServeur(serveur: serveur) })
@@ -205,7 +205,7 @@ private func attendreLaConnexion(_ parcours: Parcours) async {
     @MainActor
     @Test func uneAutreResidenceNeFermeRien() {
         let parcours = ouvert(ServiceSimule(delai: .zero))
-        parcours.sessionRefusee("autre.exemple")
+        parcours.sessionRefusee("autre.test")
         #expect(parcours.ouverte == residence)
         #expect(parcours.avis == nil)
     }
