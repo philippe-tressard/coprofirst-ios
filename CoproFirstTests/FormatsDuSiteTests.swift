@@ -136,6 +136,11 @@ func lesMontantsSontCeuxDuSite(valeur: Double, attendu: String) {
 @Test func unMontantDIAGardeQuatreDecimales() {
     #expect(FormatsDuSite.montant(0.0041, devise: "USD", decimales: 4) == "0,0041\u{00A0}$US")
     #expect(FormatsDuSite.montant(nil) == "—")
+    // En centimes entiers (#376) : le même rendu, sans passer par un flottant.
+    #expect(FormatsDuSite.montant(centimes: 18000) == FormatsDuSite.montant(180))
+    #expect(FormatsDuSite.montant(centimes: 1999) == FormatsDuSite.montant(19.99))
+    #expect(FormatsDuSite.montant(centimes: 5) == FormatsDuSite.montant(0.05))
+    #expect(FormatsDuSite.montant(centimes: nil) == "—")
 }
 
 /// `PastilleStatut` est devenue un cas de `PastilleTeinte` : les teintes des

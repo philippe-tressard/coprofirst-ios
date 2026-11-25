@@ -114,6 +114,12 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
                 r'|case "(prestataires|espace-cs|delegations|communaute)"'
                 r"|'rolesDuDroit', '(adminSeul|sansAdminSeul)'"),
      "`acces_menu` servi, croisé avec le public généré de chaque page (`PagesOuvertes`)"),
+    # #391 : la part d'une option de sondage est SERVIE (`part`, contrat 2.14.0), arrondie par
+    # l'API en arithmétique entière ; #376 : le prix d'une annonce, en centimes (`prix_centimes`).
+    (re.compile(r"\bpourcentage\([^)]*\bsur:|\bDouble\(\w+\) / Double\(\w+\) \* 100\b"),
+     "la part servie (`OptionSondage.part`, `options[].part` de GET /sondages/{id})"),
+    (re.compile(r"\blue\.prix\b(?!Centimes)"),
+     "le prix servi en centimes (`lue.prixCentimes`), rendu par `FormatsDuSite.montant(centimes:)`"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -216,6 +222,9 @@ def autotest() -> int:
         '        case "delegations": droits.cs || droits.aidant',
         "        aidant = profil?.estAidant ?? false",
         "            adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)",
+        "    private var pourcentage: Int { TextesSondage.pourcentage(votes, sur: total) }",
+        "        total == 0 ? 0 : Int((Double(votes) / Double(total) * 100).rounded())",
+        "            categorie: lue.categorie.rawValue, prix: lue.prix, negotiable: lue.negotiable,",
         "    corps += f\"    static let rolesAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'adminSeul'))}\\n\"",
     ]
     sains = [
@@ -244,6 +253,8 @@ def autotest() -> int:
         "        let nom = FormatsDuSite.nom(servi: auteurAffiche)",
         '        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }',
         "        pages.filter { droits.accesMenu.contains($0.acces) }",
+        "    private var pourcentage: Int { option.part ?? 0 }",
+        "            categorie: lue.categorie.rawValue, prixCentimes: lue.prixCentimes, negotiable: lue.negotiable,",
         '        case "admin": return palette.orange',
     ]
     # Les portes : celle sous le plancher refusée, celle au-dessus gardée, le plancher exclu.

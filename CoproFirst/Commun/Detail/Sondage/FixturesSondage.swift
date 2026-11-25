@@ -29,10 +29,10 @@ enum FixturesSondage {
            "cree_le": "2026-11-08T09:00:00", "mon_vote": null, "nouveau": true, "perimetre_cible": [],
            "public_cible": [], "resultats_publics": true, "resultats_visibles": true,
            "options": [
-             {"id": 1, "libelle": "Samedi 6 juin", "ordre": 0, "champ_libre": false, "nb_votes": 14},
-             {"id": 2, "libelle": "Samedi 13 juin", "ordre": 1, "champ_libre": false, "nb_votes": 9},
-             {"id": 3, "libelle": "Dimanche 14 juin", "ordre": 2, "champ_libre": false, "nb_votes": 4},
-             {"id": 4, "libelle": "Une autre date", "ordre": 3, "champ_libre": true, "nb_votes": 2,
+             {"id": 1, "libelle": "Samedi 6 juin", "ordre": 0, "champ_libre": false, "nb_votes": 14, "part": 48},
+             {"id": 2, "libelle": "Samedi 13 juin", "ordre": 1, "champ_libre": false, "nb_votes": 9, "part": 31},
+             {"id": 3, "libelle": "Dimanche 14 juin", "ordre": 2, "champ_libre": false, "nb_votes": 4, "part": 14},
+             {"id": 4, "libelle": "Une autre date", "ordre": 3, "champ_libre": true, "nb_votes": 2, "part": 7,
               "reponses_libres": ["Le samedi 20 juin, après la brocante", "Plutôt un vendredi soir"]}
            ],
            "commentaires": [
@@ -62,9 +62,9 @@ enum FixturesSondage {
            "cree_le": "2026-10-01T09:00:00", "mon_vote": 26, "nouveau": false, "perimetre_cible": [],
            "public_cible": [], "resultats_publics": true, "resultats_visibles": true,
            "options": [
-             {"id": 25, "libelle": "De 7 h à 22 h", "ordre": 0, "champ_libre": false, "nb_votes": 29},
-             {"id": 26, "libelle": "Sans restriction", "ordre": 1, "champ_libre": false, "nb_votes": 9},
-             {"id": 27, "libelle": "Autre", "ordre": 2, "champ_libre": true, "nb_votes": 3,
+             {"id": 25, "libelle": "De 7 h à 22 h", "ordre": 0, "champ_libre": false, "nb_votes": 29, "part": 71},
+             {"id": 26, "libelle": "Sans restriction", "ordre": 1, "champ_libre": false, "nb_votes": 9, "part": 22},
+             {"id": 27, "libelle": "Autre", "ordre": 2, "champ_libre": true, "nb_votes": 3, "part": 7,
               "reponses_libres": ["Fermé la nuit en hiver seulement"]}
            ],
            "commentaires": [
