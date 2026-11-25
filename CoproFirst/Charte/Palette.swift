@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
 
 import SwiftUI
 
@@ -32,6 +32,8 @@ struct Palette: Sendable {
     let dangerPlein: Color
     /// `--color-fond-logo`
     let fondLogo: Color
+    /// `--color-hachure-sur-plein`
+    let hachureSurPlein: Color
     /// `--color-import-lie`
     let importLie: Color
     /// `--color-info`
@@ -50,6 +52,8 @@ struct Palette: Sendable {
     let neutreBordure: Color
     /// `--color-neutre-fond`
     let neutreFond: Color
+    /// `--color-ombre-defilement`
+    let ombreDefilement: Color
     /// `--color-orange`
     let orange: Color
     /// `--color-orange-bordure`
@@ -96,6 +100,8 @@ struct Palette: Sendable {
     let surPlein: Color
     /// `--color-sur-plein-discret`
     let surPleinDiscret: Color
+    /// `--color-sur-plein-secondaire`
+    let surPleinSecondaire: Color
     /// `--color-sur-voile`
     let surVoile: Color
     /// `--color-surface`
@@ -110,8 +116,14 @@ struct Palette: Sendable {
     let violet: Color
     /// `--color-violet-fond`
     let violetFond: Color
+    /// `--color-voile-menu`
+    let voileMenu: Color
     /// `--color-voile-modale`
     let voileModale: Color
+    /// `--color-voile-sur-plein`
+    let voileSurPlein: Color
+    /// `--color-voile-sur-plein-survol`
+    let voileSurPleinSurvol: Color
     /// `--color-warning`
     let warning: Color
     /// `--color-warning-bordure`
