@@ -16,13 +16,11 @@ final class EspaceCSUITests: XCTestCase {
     @MainActor
     func testLesTroisOngletsDuConseil() throws {
         let app = LancementCaptures.lancer()
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertTrue(plus.apparait())
-        plus.tap()
-        app.libelleAcces("Espace CS").tap()
+        // Par le chemin de l'appareil : « Plus » sur iPhone, la barre latérale sur iPad (#336).
+        let validations = app.elementAcces("onglet.validations")
+        app.ouvrirDansPlus("Espace CS", jusqua: validations)
 
         // Le cadre : les six onglets du site, dans son ordre.
-        let validations = app.elementAcces("onglet.validations")
         XCTAssertTrue(validations.apparait(), "la barre d'onglets")
         for id in ["badges", "reporting", "annonces-hall", "annuaire", "courriels"] {
             XCTAssertTrue(app.elementAcces("onglet.\(id)").exists, "l'onglet \(id)")
@@ -33,11 +31,11 @@ final class EspaceCSUITests: XCTestCase {
         XCTAssertTrue(compte.apparait(), "la file des comptes")
         XCTAssertTrue(app.elementAcces("cs.compteur.comptes").exists)
         LancementCaptures.capturer("cs-1-comptes-et-acces")
-        app.elementAcces("cs.compte.501.approuver").tap()
         let nouvelArrivant = app.elementAcces("cs.validation.nouvel-arrivant")
+        app.toucher(app.elementAcces("cs.compte.501.approuver"), jusqua: nouvelArrivant)
         XCTAssertTrue(nouvelArrivant.apparait(), "la feuille d'approbation")
         // L'interrupteur, à droite de la ligne : toucher son libellé ne le bascule pas.
-        nouvelArrivant.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+        app.basculer(nouvelArrivant)
         LancementCaptures.capturer("cs-2-approuver-nouvel-arrivant")
         app.toucher(app.elementAcces("cs.validation.enregistrer"))
         XCTAssertTrue(compte.disparait(), "le compte quitte la file")
@@ -71,12 +69,12 @@ final class EspaceCSUITests: XCTestCase {
     @MainActor
     private func chercherUnBadge(_ app: XCUIApplication) {
         // Badges & télécommandes : la recherche filtre, sans accents.
-        app.elementAcces("onglet.badges").tap()
         let badge = app.elementAcces("cs.badge.vigik-1")
+        app.toucherLOnglet(app.elementAcces("onglet.badges"), jusqua: badge)
         XCTAssertTrue(badge.apparait(), "le parc")
         LancementCaptures.capturer("cs-3-badges")
         let recherche = app.elementAcces("cs.badges.recherche")
-        recherche.tap()
+        app.toucher(recherche)
         recherche.typeText("celeste")
         XCTAssertTrue(app.elementAcces("cs.badge.vigik-4").apparait())
         XCTAssertFalse(badge.exists, "la recherche filtre")
@@ -85,10 +83,12 @@ final class EspaceCSUITests: XCTestCase {
     @MainActor
     private func ouvrirLAnnuaire(_ app: XCUIApplication) {
         // Annuaire CS & Syndic : les fiches, l'en-tête du conseil en feuille.
-        app.elementAcces("onglet.annuaire").tap()
-        XCTAssertTrue(app.elementAcces("cs.annuaire.conseil.0").apparait(), "le conseil")
+        let conseil = app.elementAcces("cs.annuaire.conseil.0")
+        app.toucherLOnglet(app.elementAcces("onglet.annuaire"), jusqua: conseil)
+        XCTAssertTrue(conseil.apparait(), "le conseil")
         LancementCaptures.capturer("cs-4-annuaire-conseil")
-        app.elementAcces("cs.annuaire.conseil.modifier").tap()
+        app.toucher(
+            app.elementAcces("cs.annuaire.conseil.modifier"), jusqua: app.elementAcces("cs.feuille.entete-conseil"))
         XCTAssertTrue(app.elementAcces("cs.feuille.entete-conseil").apparait(), "l'en-tête")
         LancementCaptures.capturer("cs-5-annuaire-entete")
         app.toucher(app.descendants(matching: .any)["Annuler"].firstMatch)

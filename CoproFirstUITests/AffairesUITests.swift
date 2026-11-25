@@ -9,13 +9,13 @@ import XCTest
 /// `CAPTURES_AFFAIRES` (passé par `TEST_RUNNER_CAPTURES_AFFAIRES`) : le dossier où
 /// chaque étape dépose sa capture — celles de la PR.
 final class AffairesUITests: XCTestCase {
+    @MainActor
     private func lancer() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = ["-api-simulee", "-ecran", "affaires"]
         app.launch()
-        let onglet = app.descendants(matching: .any)["Affaires"].firstMatch
-        XCTAssertTrue(onglet.apparait())
-        onglet.tap()
+        let ongletAffaires = app.descendants(matching: .any)["Affaires"].firstMatch
+        app.toucherLOnglet(ongletAffaires, jusqua: element("affaires.nouvelle", dans: app))
         return app
     }
 
@@ -49,29 +49,33 @@ final class AffairesUITests: XCTestCase {
         XCTAssertFalse(element("affaires.carte.A-0022", dans: app).exists, "une archivée n'est pas dans la Liste")
         capturer("1-liste")
 
-        app.descendants(matching: .any)["Kanban"].firstMatch.tap()
+        // Les trois onglets, trouvés par leur libellé : nommés `onglet…`, le juge les voit (#340).
+        let ongletKanban = app.descendants(matching: .any)["Kanban"].firstMatch
+        app.toucherLOnglet(ongletKanban, jusqua: element("kanban.colonne.cs", dans: app))
         XCTAssertTrue(element("kanban.colonne.cs", dans: app).apparait())
         XCTAssertTrue(element("kanban.carte.A-0035", dans: app).exists, "« Ouvert » se range dans la colonne CS")
         capturer("2-kanban")
 
-        app.descendants(matching: .any)["Archives"].firstMatch.tap()
+        let ongletArchives = app.descendants(matching: .any)["Archives"].firstMatch
+        app.toucherLOnglet(ongletArchives, jusqua: element("archives.carte.A-0022", dans: app))
         XCTAssertTrue(element("archives.carte.A-0022", dans: app).apparait())
         capturer("3-archives")
 
-        app.descendants(matching: .any)["Liste"].firstMatch.tap()
-        element("affaires.nouvelle", dans: app).tap()
+        let ongletListe = app.descendants(matching: .any)["Liste"].firstMatch
+        app.toucherLOnglet(ongletListe, jusqua: carte)
         let panne = element("nouvelle.categorie.panne", dans: app)
+        app.toucher(element("affaires.nouvelle", dans: app), jusqua: panne)
         XCTAssertTrue(panne.apparait())
         XCTAssertTrue(desactive("nouvelle.envoyer", dans: app), "rien n'est saisi : Envoyer est désactivé")
-        panne.tap()
+        app.toucher(panne)
         capturer("4-categories")
         let titre = element("nouvelle.titre", dans: app)
         app.amener(titre)
-        titre.tap()
+        app.toucher(titre)
         titre.typeText("Porte du local vélos bloquée")
         let description = element("nouvelle.description", dans: app)
         app.amener(description)
-        description.tap()
+        app.toucher(description)
         description.typeText("La serrure ne tourne plus depuis ce matin.")
         capturer("5-saisie")
         XCTAssertFalse(desactive("nouvelle.envoyer", dans: app), "titre et description saisis : Envoyer s'active")
@@ -87,7 +91,7 @@ final class AffairesUITests: XCTestCase {
         let app = lancer()
         let carte = element("affaires.carte.A-0041", dans: app)
         XCTAssertTrue(carte.apparait())
-        carte.tap()
+        app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
         // Qui la lit, telle que servie (#129) : dans l'en-tête, chargée avec le détail.
         XCTAssertTrue(element("lecture.detail", dans: app).exists, "la phrase de la pastille servie")
