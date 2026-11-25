@@ -134,12 +134,13 @@ version du plancher) :
   d'appareil d'APNs, la plateforme (`apns`, une constante) et un **abonnement** aléatoire
   tiré par l'app — rien d'autre ; et seulement si le relais est allumé dans l'app et que la
   résidence ne fait sonner que l'alerte d'une actualité urgente (#283) :
-  `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `jeton: appareil.jeton.hexadecimal`,
+  `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `jeton: appareil.jeton.hexadecimal.enClair`,
   `CoproFirst/Fonctions/Notifications/Push/AbonnementsPush.swift` › `var generateur = SystemRandomNumberGenerator()`,
   `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `guard autorisation == .accordee else { return }`,
   `CoproFirst/Fonctions/Notifications/Push/RelaisPush.swift` › `static let courant = RelaisPush(allume: false, depuis: .plancher)` ;
 - le jeton ne s'écrit ni dans un journal ni sur le disque :
-  `CoproFirst/Fonctions/Notifications/Push/JetonAPNs.swift` › `static let masque = "‹jeton APNs masqué›"` ;
+  `CoproFirst/Fonctions/Notifications/Push/JetonAPNs.swift` › `let hexadecimal: JetonMasque`,
+  `Paquets/ClientAPI/Sources/ClientAPI/JetonMasque.swift` › `public static let masque = "‹jeton masqué›"` ;
 - à la déconnexion, l'appareil se retire :
   `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `retirerAppareil(abonnement, dans: installation)` ;
 - ce qui part chez Apple est composé par le relais, pas par l'app ni par la résidence : le
@@ -159,7 +160,7 @@ version du plancher) :
   `CoproFirst/Fonctions/Notifications/Montre/ServiceMontres.swift` › `postMontres(body: .json(.init(plateforme: .watchos)))`,
   `CoproFirst/Fonctions/Notifications/Montre/CanalMontre.swift` › `session.transferUserInfo(message.donnees)` ;
 - l'iPhone ne garde que l'identifiant de la montre ; le jeton ne s'écrit dans aucune trace :
-  `CoproFirst/Fonctions/Notifications/Montre/ServiceMontres.swift` › `"JetonDeMontre(id: \(id), jeton masqué, expireLe: \(expireLe))"` ;
+  `CoproFirst/Fonctions/Notifications/Montre/ServiceMontres.swift` › `let jeton: JetonMasque` ;
 - la montre n'envoie rien d'autre que ce jeton, à la seule adresse de sa résidence, pour lire
   la cloche ; elle ne marque rien comme lu ;
 - à la déconnexion, la montre se retire du serveur et s'efface ; une liaison pas encore remise
@@ -182,7 +183,7 @@ utilisé pour le suivi (*tracking*) : **Non** ; finalité **App Functionality** 
 | `NSPrivacyCollectedDataTypePhoneNumber` | Contact Info › Phone Number | le téléphone du profil | `CoproFirst/Fonctions/Profil/ServiceAPI+Profil.swift` › `telephone: saisie.telephone.nulSiVide` |
 | `NSPrivacyCollectedDataTypeEmailsOrTextMessages` | User Content › Emails or Text Messages | les messages d'une affaire | `CoproFirst/Session/ServiceAPI+Detail.swift` › `postTicketsTicketIdMessages(` |
 | `NSPrivacyCollectedDataTypeOtherUserContent` | User Content › Other User Content | affaires, annonces, idées, avis, votes, questions, demandes de badge | `CoproFirst/Fonctions/Affaires/Donnees/ServiceAffaires+API.swift` › `postTickets(body: .json(corps))` |
-| `NSPrivacyCollectedDataTypeUserID` | Identifiers › User ID | le compte et sa session (cookies posés par la résidence), et le jeton de l'Apple Watch | `CoproFirst/Session/ServiceAPI.swift` › `poserCookie("refresh_token", valeur: jeton, installation)` |
+| `NSPrivacyCollectedDataTypeUserID` | Identifiers › User ID | le compte et sa session (cookies posés par la résidence), et le jeton de l'Apple Watch | `CoproFirst/Session/ServiceAPI.swift` › `poserCookie("refresh_token", valeur: jeton.enClair, installation)` |
 | `NSPrivacyCollectedDataTypeDeviceID` | Identifiers › Device ID | le jeton d'appareil d'APNs et l'abonnement ; l'Apple Watch reliée au compte (sa plateforme, ses dates) | `CoproFirst/Fonctions/Notifications/Push/ServiceAppareils.swift` › `abonnement: appareil.abonnement` |
 | `NSPrivacyCollectedDataTypeOtherDataTypes` | Other Data › Other Data Types | mot de passe à la connexion, société, fonction, statut et bâtiment demandés, réglages du compte, rôles donnés par un administrateur | `CoproFirst/Fonctions/Profil/ServiceAPI+Profil.swift` › `societe: saisie.societe.nulSiVide` |
 | `NSPrivacyCollectedDataTypeProductInteraction` | Usage Data › Product Interaction | les écrans vus, sous le chemin de la page équivalente du site (`/tickets/12`, `/admin#telemetry`), et le canal « App iPhone » : la mesure d'audience de la résidence (coprofirst#2726), liée au compte comme celle du site, **jamais** si le compte l'a refusée au Profil ; la classe de l'appareil (iPhone, iPad, Mac, Vision Pro — coprofirst#2774, #229), une catégorie qui ne fait pas un type de plus ; ni identifiant d'appareil ni modèle | `CoproFirst/Session/Audience/ServiceAudience+API.swift` › `postTelemetryCollect(body: .json(lot))` ; `CoproFirst/Session/Audience/MesureAudience.swift` › `return installation.profil?.refusMesure == false` |

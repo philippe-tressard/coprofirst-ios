@@ -119,7 +119,7 @@ extension ServiceAPI {
             guard case .ok = sortie else { return false }
             let hote = SessionsParHote.cle(adresse)
             if Trousseau.contient(pour: hote), let neuf = cookie("refresh_token", adresse) {
-                Trousseau.enregistrer(neuf, pour: hote)
+                Trousseau.enregistrer(JetonMasque(neuf), pour: hote)
             }
             return true
         }

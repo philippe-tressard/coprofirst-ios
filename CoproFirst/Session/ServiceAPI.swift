@@ -60,7 +60,7 @@ final class ServiceAPI: ServiceCoproFirst {
             let jeton = Trousseau.lire(
                 pour: installation.hote, raison: "Ouvrir votre espace à \(installation.nom)")
         else { throw ErreurService.sessionExpiree }
-        poserCookie("refresh_token", valeur: jeton, installation)
+        poserCookie("refresh_token", valeur: jeton.enClair, installation)
         // La porte du 401 (`Renouvellement`) : le jeton neuf y remplace l'ancien au Trousseau.
         guard try await appeler({ try await renouveler(installation.adresse) }) else {
             // Session refusée : le jeton ET la lecture gardée s'effacent, par la même porte (#101).
@@ -71,7 +71,7 @@ final class ServiceAPI: ServiceCoproFirst {
 
     func activerFaceID(_ installation: Installation) async -> ProtectionSession? {
         guard let jeton = cookie("refresh_token", installation.adresse) else { return nil }
-        let protection = Trousseau.enregistrer(jeton, pour: installation.hote)
+        let protection = Trousseau.enregistrer(JetonMasque(jeton), pour: installation.hote)
         return Trousseau.contient(pour: installation.hote) ? protection : nil
     }
 

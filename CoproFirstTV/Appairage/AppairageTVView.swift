@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import SwiftUI
 
 /// L'appairage à l'écran (#218, lot 3) : le nom de la résidence, le code en très grand, lettre
@@ -9,12 +10,12 @@ import SwiftUI
 struct AppairageTVView: View {
     @State private var appairage: AppairageTV
     @State private var essai = 0
-    let appaire: (String) -> Void
+    let appaire: (JetonMasque) -> Void
     let changer: () -> Void
     @Environment(\.palette) private var palette
 
     init(
-        residence: Installation, service: any ServiceEcranTV, appaire: @escaping (String) -> Void,
+        residence: Installation, service: any ServiceEcranTV, appaire: @escaping (JetonMasque) -> Void,
         changer: @escaping () -> Void
     ) {
         _appairage = State(initialValue: AppairageTV(residence: residence, service: service))

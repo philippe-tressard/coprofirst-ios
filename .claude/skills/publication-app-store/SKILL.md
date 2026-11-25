@@ -103,7 +103,12 @@ texte au simulateur (captures dans `.build/Soumission/`). Ce que seul Philippe v
 captures déposées, notes de version, étiquette App Privacy, rendu validé — se confirme
 nommément par `--confirme`. La liste fait foi dans le script
 (`CONFIRMATIONS`), elle ne se recopie pas ici. Tout vert, `--etiqueter` pose et pousse
-`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. La parité avec
+`vX.Y.Z` ; le compte rendu (`--rapport`) va dans la note de publication. **Dans la foulée de
+l'étiquette**, la version se déclare dans coprofirst, comme le compte rendu le dit : ticket ou
+PR « contrat figé de coprofirst-ios X.Y au plancher vA.B.C » (son entrée `EN_CIRCULATION` et
+son contrat figé, coprofirst#3023). Sans elle, la CI du serveur refuse l'étiquette et rougit
+toutes ses PR ; le ticket de la version ne se ferme qu'avec ce renvoi (#354). Une version
+refusée à la revue garde son étiquette : elle se déclare de même, ou sort par `SORTIES`. La parité avec
 l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
 soumission reste le geste de Philippe.
 

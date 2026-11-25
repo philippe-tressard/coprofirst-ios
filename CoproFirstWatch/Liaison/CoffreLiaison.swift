@@ -1,20 +1,16 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
-/// La liaison que l'iPhone a donnée : la résidence et son jeton de montre (coprofirst#2771).
+/// La liaison que l'iPhone a donnée : la résidence et son jeton de montre (coprofirst#2771),
+/// masqué dans toute trace (`JetonMasque`, #342) et rangé tel quel au Trousseau.
 struct LiaisonGardee: Codable, Hashable, Sendable {
     let adresse: URL
     let residence: String
-    let jeton: String
+    let jeton: JetonMasque
     let expireLe: Date
-}
-
-extension LiaisonGardee: CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
-    var description: String { "LiaisonGardee(\(adresse.absoluteString), \(residence), jeton masqué, \(expireLe))" }
-    var debugDescription: String { description }
-    var customMirror: Mirror { Mirror(self, children: [], displayStyle: .struct) }
 }
 
 /// Où la montre garde sa liaison : une seule, celle de la dernière résidence ouverte sur
