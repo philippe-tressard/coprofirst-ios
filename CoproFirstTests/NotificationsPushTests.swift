@@ -38,7 +38,7 @@ private func champDuContrat(_ champ: String) throws -> [String: Any] {
     for tire in tires { #expect(tire.wholeMatch(of: abonnement) != nil, "abonnement hors du motif") }
     #expect(Set(tires).count == tires.count, "un tirage aléatoire, jamais deux fois le même")
     let longueur = try #require(try champDuContrat("jeton")["maxLength"] as? Int)
-    let jeton = JetonAPNs(CentreSimule.jeton).hexadecimal
+    let jeton = JetonAPNs(CentreSimule.jeton).hexadecimal.enClair
     #expect(!jeton.isEmpty && jeton.count <= longueur)
 }
 
@@ -63,7 +63,7 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
     #expect(Set(envoye.keys) == ["plateforme", "jeton", "environnement", "abonnement"], "rien d'autre ne part (N5)")
     #expect(envoye["plateforme"] == "apns", "dite, même si le serveur la suppose (#283)")
     #expect(envoye["environnement"] == "developpement")
-    #expect(envoye["jeton"] == appareil.jeton.hexadecimal)
+    #expect(envoye["jeton"] == appareil.jeton.hexadecimal.enClair)
     #expect(envoye["abonnement"] == appareil.abonnement)
 }
 
@@ -74,8 +74,8 @@ private final class TransportEnregistreur: ClientTransport, @unchecked Sendable 
     dump(jeton, to: &vidage)
     let appareil = AppareilPush(jeton: jeton, environnement: .production, abonnement: "a")
     for texte in ["\(jeton)", String(reflecting: jeton), vidage, "\(appareil)", String(reflecting: appareil)] {
-        #expect(!texte.contains(jeton.hexadecimal), "le jeton paraît dans « \(texte.prefix(40))… »")
-        #expect(!texte.contains(String(jeton.hexadecimal.prefix(12))), "même tronqué")
+        #expect(!texte.contains(jeton.hexadecimal.enClair), "le jeton paraît dans « \(texte.prefix(40))… »")
+        #expect(!texte.contains(String(jeton.hexadecimal.enClair.prefix(12))), "même tronqué")
     }
 }
 

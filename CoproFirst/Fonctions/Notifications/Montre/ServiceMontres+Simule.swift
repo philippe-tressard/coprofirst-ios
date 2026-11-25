@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 
 #if DEBUG
@@ -68,7 +69,7 @@ extension ServiceSimule: ServiceMontres {
     private static func jeton(_ id: Int, _ echeance: Date, _ magasin: inout MontresSimulees) -> JetonDeMontre {
         let brut = "jeton-simule-\(id)-\(UUID().uuidString)"
         magasin.jetons[id] = brut
-        return JetonDeMontre(id: id, jeton: brut, expireLe: echeance)
+        return JetonDeMontre(id: id, jeton: JetonMasque(brut), expireLe: echeance)
     }
 }
 #endif
