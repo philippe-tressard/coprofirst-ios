@@ -14,7 +14,10 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
 2. Chaque job macOS a son `timeout-minutes` et figure dans les `needs` de l'agrégat
    (`ios`, le check que la protection de `main` exige), qui juge `toJSON(needs)` en
    entier (#288). Sinon un job neuf — les échantillons, la montre — peut rougir sans
-   rendre la PR rouge.
+   rendre la PR rouge. Et chacun a, sur `main`, SA file (`concurrency` du job, `cancel-in-progress:
+   false`) : la poussée en cours va au bout, seule la dernière en attente se joue (#235, #397) —
+   sans elle, chaque fusion rapprochée rejouait ~100 min-macOS sur 5 places (8 exécutions en
+   file le 25/11/2026).
 
 Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
 (`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
@@ -39,6 +42,8 @@ WORKFLOW = Path(__file__).resolve().parent.parent / ".github" / "workflows" / "c
 JOB = "depot"
 ATTENDU = "bash scripts/verifier-depot.sh"
 AGREGAT = "ios"
+#: Le groupe d'un job macOS sur `main` : un nom fixe par job (et par lot), jamais par commit.
+FILE_DE_MAIN = re.compile(r"github\.event_name == 'push' && (?:format\()?'ci-[\w{}-]*-main\b")
 
 
 def bloc_du_job(texte: str, job: str) -> list[str] | None:
@@ -102,11 +107,15 @@ def refus_agregat(texte: str) -> tuple[int, list[str]]:
             messages.append(f"❌ job macOS « {job} » absent des needs de « {AGREGAT} » : il rougirait sans rougir la PR")
         if not any(re.match(r"^    timeout-minutes: \d+", l) for l in bloc_du_job(texte, job) or []):
             messages.append(f"❌ job macOS « {job} » sans timeout-minutes : il tiendrait 6 h un exécutant rare")
+        file = re.search(r"^    concurrency:\n(?:      .*\n)+", "\n".join(bloc_du_job(texte, job) or []) + "\n", re.M)
+        if not file or not FILE_DE_MAIN.search(file.group(0)) or "cancel-in-progress: false" not in file.group(0):
+            messages.append(f"❌ job macOS « {job} » sans sa file sur main (concurrency du job, la dernière poussée "
+                            "en attente seule) : chaque fusion le rejouerait en entier (#397)")
     if not any("toJSON(needs)" in l for l in agregat):
         messages.append(f"❌ « {AGREGAT} » ne juge pas toJSON(needs) : un job de needs pourrait n'être lu par personne")
     if messages:
         return 1, messages
-    return 0, [f"✅ {len(macos)} job(s) macOS ({', '.join(macos)}) : plafonnés et exigés par « {AGREGAT} »"]
+    return 0, [f"✅ {len(macos)} job(s) macOS ({', '.join(macos)}) : plafonnés, exigés par « {AGREGAT} », une file chacun sur main"]
 
 
 def refus(texte: str) -> tuple[int, list[str]]:
@@ -117,12 +126,15 @@ def refus(texte: str) -> tuple[int, list[str]]:
 
 
 def autotest() -> int:
+    FILE = "    concurrency:\n      group: ${{ github.event_name == 'push' && 'ci-%s-main' || github.run_id }}\n      cancel-in-progress: false\n"  # noqa: N806
     conforme = (
         "jobs:\n  depot:\n    runs-on: ubuntu-latest\n    steps:\n"
         "      - uses: actions/checkout@x\n      - name: Dépôt\n"
         f"        run: {ATTENDU}\n  detection:\n    steps:\n      - run: autre\n"
-        "  unitaires:\n    runs-on: macos-latest\n    timeout-minutes: 70\n    steps:\n      - run: x\n"
-        "  echantillons:\n    runs-on: macos-latest\n    timeout-minutes: 40\n    steps:\n      - run: x\n"
+        "  unitaires:\n    runs-on: macos-latest\n    timeout-minutes: 70\n" + FILE % "unitaires" +
+        "    steps:\n      - run: x\n"
+        "  echantillons:\n    runs-on: macos-latest\n    timeout-minutes: 40\n" + FILE % "echantillons" +
+        "    steps:\n      - run: x\n"
         f"  {AGREGAT}:\n    needs: [detection, unitaires, echantillons]\n    runs-on: ubuntu-latest\n"
         "    steps:\n      - env:\n          BESOINS: ${{ toJSON(needs) }}\n        run: juger\n"
     )
@@ -140,6 +152,11 @@ def autotest() -> int:
         (conforme.replace("${{ toJSON(needs) }}", "${{ needs.unitaires.result }}"), 1, "un agrégat qui ne juge pas tout"),
         (conforme.replace(f"  {AGREGAT}:", "  agregat:"), 2, "un agrégat introuvable"),
         (conforme.replace("macos-latest", "ubuntu-latest"), 2, "aucun job macOS"),
+        (conforme.replace(FILE % "echantillons", ""), 1, "un job macOS sans sa file sur main"),
+        (conforme.replace("'ci-echantillons-main'", "github.sha"), 1, "une file par commit"),
+        (conforme.replace("cancel-in-progress: false\n    steps:\n      - run: x\n  " + AGREGAT,
+                          "cancel-in-progress: true\n    steps:\n      - run: x\n  " + AGREGAT), 1,
+         "une file qui annule la poussée en cours"),
     ]
     ko = [nom for texte, code, nom in cas if refus(texte)[0] != code]
     for nom in ko:

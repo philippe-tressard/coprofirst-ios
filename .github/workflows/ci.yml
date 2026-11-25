@@ -24,7 +24,7 @@ permissions:
 # la fusion suivante, aucune fusion n'était validée. Sur main, un groupe PAR COMMIT : GitHub
 # ne garde qu'une exécution en attente par groupe, et deux fusions rapprochées évinçaient
 # encore la précédente, sans annulation demandée (coprofirst-android#62). Les jobs
-# d'interface ont, sur main, leur propre file (voir `interface`, #235).
+# macOS ont, sur main, leur propre file (voir `interface`, #235 ; les autres, #397).
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -93,6 +93,12 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui, comme l'interface (#235) : la poussée en cours va au bout, seule
+    # la dernière en attente se joue — elle juge toute la plage. Le 25/11/2026, 8 exécutions
+    # attendaient 5 places macOS, chaque fusion rejouant ~100 min-macOS hors interface (#397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-unitaires-main' || format('ci-unitaires-{0}', github.run_id) }}
+      cancel-in-progress: false
     # Mesuré sur main le 18/11/2026 (#288) : 58 à 67 min avec l'échantillon iPad et l'Apple
     # TV, si près du plafond qu'une PR un peu lente le coupait sans défaut. Ces deux-là ont
     # leur propre build : ils sont passés au job « Échantillons ». Reste ici le très grand
@@ -157,6 +163,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-montre-main' || format('ci-montre-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -198,6 +208,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-archive-montre-main' || format('ci-archive-montre-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -355,6 +369,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-echantillons-main' || format('ci-echantillons-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 85
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
