@@ -77,6 +77,6 @@ extension Components.Schemas.AppareilEnregistre {
         self.init(
             abonnement: appareil.abonnement,
             environnement: appareil.environnement == .production ? .production : .developpement,
-            jeton: appareil.jeton.hexadecimal, plateforme: .apns)
+            jeton: appareil.jeton.hexadecimal.enClair, plateforme: .apns)
     }
 }

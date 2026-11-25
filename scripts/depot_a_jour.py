@@ -12,16 +12,16 @@ plus fusionnées dessus. Le « Dépôt » ne demande ni Xcode ni macOS (une minu
 chaque PR armée (fusion automatique, base `main`, même dépôt) réunie à `main`. Ce script est
 sa décision, pure et testée :
 
-- une PR dont l'arbre réuni rougit : sa fusion automatique se DÉSARME, avec un commentaire —
-  sa session réunit `main`, corrige, et réarme ; un INCONNU (réseau, outil) ou un conflit ne
-  désarme rien (le conflit bloque déjà la fusion) ;
-- `main` rouge : un ticket « sante-main » s'ouvre aussitôt, ou se complète ; `main` verte :
-  il se ferme ; INCONNU : rien ne se ferme.
+- `main` verte, une PR dont l'arbre réuni rougit : sa fusion automatique se DÉSARME, avec un
+  commentaire — sa session réunit `main`, corrige, et réarme ;
+- `main` rouge ou INCONNUE : rien ne se désarme — toutes les PR réunies rougiraient, celle qui
+  répare comprise ; le rouge de `main` ouvre son ticket par l'alerte commune de chaque job
+  (`scripts/signaler_rouge.py`, #362) ;
+- un INCONNU (réseau, outil) ou un conflit ne désarme rien (le conflit bloque déjà la fusion).
 
-Entrée (stdin, JSON) : {"main": code, "ticket": "N" ou "", "prs": [{"numero": N, "code": c}]},
-codes de `verifier-depot.sh` (0 vert, 1 rouge, 2 INCONNU) et « conflit ». Sortie : une action
-par ligne — `desarmer N`, `ticket ouvrir|completer|fermer|rien`.
-Usage : depot_a_jour.py decider < verdicts.json | depot_a_jour.py titre | depot_a_jour.py --autotest
+Entrée (stdin, JSON) : {"main": code, "prs": [{"numero": N, "code": c}]}, codes de
+`verifier-depot.sh` (0 vert, 1 rouge, 2 INCONNU) et « conflit ». Sortie : `desarmer N` par ligne.
+Usage : depot_a_jour.py decider < verdicts.json | depot_a_jour.py --autotest
 """
 
 from __future__ import annotations
@@ -29,33 +29,20 @@ from __future__ import annotations
 import json
 import sys
 
-TITRE = "main : le job « Dépôt » est rouge"
-
-
 def decider(verdicts: dict) -> list[str]:
-    actions = [f"desarmer {pr['numero']}" for pr in verdicts.get("prs", []) if str(pr.get("code")) == "1"]
-    code, ouvert = str(verdicts.get("main")), bool(verdicts.get("ticket"))
-    if code == "1":
-        actions.append("ticket completer" if ouvert else "ticket ouvrir")
-    elif code == "0" and ouvert:
-        actions.append("ticket fermer")
-    else:
-        actions.append("ticket rien")
-    return actions
+    if str(verdicts.get("main")) != "0":
+        return []
+    return [f"desarmer {pr['numero']}" for pr in verdicts.get("prs", []) if str(pr.get("code")) == "1"]
 
 
 def autotest() -> bool:
     cas = [
-        ({"main": 0, "ticket": "", "prs": []}, ["ticket rien"]),
-        ({"main": 0, "ticket": "", "prs": [{"numero": 7, "code": 1}, {"numero": 8, "code": 0}]},
-         ["desarmer 7", "ticket rien"]),
-        ({"main": 0, "ticket": "", "prs": [{"numero": 7, "code": 2}, {"numero": 8, "code": "conflit"}]},
-         ["ticket rien"]),                                    # INCONNU, conflit : rien ne se désarme
-        ({"main": 1, "ticket": "", "prs": []}, ["ticket ouvrir"]),
-        ({"main": 1, "ticket": "12", "prs": []}, ["ticket completer"]),
-        ({"main": 0, "ticket": "12", "prs": []}, ["ticket fermer"]),
-        ({"main": 2, "ticket": "12", "prs": []}, ["ticket rien"]),   # INCONNU ne ferme rien
-        ({"ticket": "12"}, ["ticket rien"]),                          # rien de lu
+        ({"main": 0, "prs": []}, []),
+        ({"main": 0, "prs": [{"numero": 7, "code": 1}, {"numero": 8, "code": 0}]}, ["desarmer 7"]),
+        ({"main": 0, "prs": [{"numero": 7, "code": 2}, {"numero": 8, "code": "conflit"}]}, []),  # INCONNU, conflit
+        ({"main": 1, "prs": [{"numero": 7, "code": 1}]}, []),        # main rouge : la réparation passe
+        ({"main": 2, "prs": [{"numero": 7, "code": 1}]}, []),        # main INCONNUE : rien
+        ({}, []),                                                     # rien de lu
     ]
     return all(decider(entree) == attendu for entree, attendu in cas)
 
@@ -66,9 +53,6 @@ def main() -> int:
         ok = autotest()
         print("✅ autotest du Dépôt à jour" if ok else "❌ autotest du Dépôt à jour en échec")
         return 0 if ok else 1
-    if args == ["titre"]:
-        print(TITRE)
-        return 0
     if args == ["decider"]:
         try:
             verdicts = json.load(sys.stdin)

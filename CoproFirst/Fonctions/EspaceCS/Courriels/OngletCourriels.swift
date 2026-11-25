@@ -101,7 +101,7 @@ private struct LigneCourriel: View {
                 tete
             }
             .buttonStyle(.plain)
-            .accessibilityHint(ouvert ? TextesCourriels.replier : TextesCourriels.deplier)
+            .depliage(ouvert: ouvert, deplier: TextesCourriels.deplier, replier: TextesCourriels.replier)
             .accessibilityIdentifier("courriel.\(message.id)")
             if ouvert {
                 corps.transition(.opacity.combined(with: .move(edge: .top)))

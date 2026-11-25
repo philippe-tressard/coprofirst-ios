@@ -247,6 +247,34 @@ extension XCUIApplication {
         }
     }
 
+    /// Un INTERRUPTEUR d'une ligne de formulaire (#340) : toucher son libellé ne le bascule pas,
+    /// il se touche à droite de la ligne, une fois celle-ci à l'écran et immobile. Pas de
+    /// reprise : basculer deux fois défait le geste.
+    @MainActor
+    func basculer(_ ligne: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(ligne.apparait(), "à basculer : \(ligne) absent", file: file, line: line)
+        immobile(ligne)
+        ligne.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+    }
+
+    /// Le toucher d'un ONGLET (#340) : la barre, remontée jusqu'à lui s'il est caché au-dessus
+    /// (une page défilée), puis `toucher(_:jusqua:)` — par défaut jusqu'à l'onglet RETENU (le
+    /// trait `isSelected` que posent les rangées d'onglets de l'app : `RangeeChoisie`, la
+    /// Communauté), sinon jusqu'à ce que l'onglet montre d'abord. Un onglet ne se touche que par
+    /// ici ou par `toucher(_:jusqua:)` : `scripts/touchers_onglets.py` refuse un `tap()`, un
+    /// `toucher` sans effet et un `toucherAuDessin` sur un onglet.
+    @MainActor
+    func toucherLOnglet(
+        _ onglet: XCUIElement, jusqua effet: XCUIElement? = nil, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(onglet.apparait(), "à toucher : l'onglet \(onglet) absent", file: file, line: line)
+        // De côté, `toucher` fait glisser la rangée ; au-dessus (la page a défilé), on la remonte.
+        for _ in 0..<6 where !onglet.isHittable && !deCote(onglet) { swipeDown() }
+        let retenu = descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", onglet.identifier)).firstMatch
+        toucher(onglet, jusqua: effet ?? retenu, file: file, line: line)
+    }
+
     /// Le balayage vers la gauche d'une ligne JUSQU'À L'EFFET : ses actions révélées (supprimer,
     /// signaler). Un `swipeLeft()` se perd sous charge comme un toucher (#183) : il est rejoué
     /// et chaque reprise s'écrit au journal, comme celles de `toucher(_:jusqua:)`. Idempotent :
@@ -293,6 +321,27 @@ extension XCUIApplication {
             + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
         print(trace)
         XCTContext.runActivity(named: trace) { _ in }
+    }
+
+    /// DÉPLIER un en-tête posé par `.depliage(…)` (#384) : le toucher, puis attendre son ÉTAT —
+    /// sa valeur d'accessibilité, « déplié » (ou « dépliée »). Un toucher perdu sous charge ne
+    /// change pas l'état (PrestatairesUITests sur #383 : l'exercice touché, jamais ouvert) : il
+    /// est rejoué au plus `Attente.reprises` fois, chaque reprise au journal, et seulement à état
+    /// inchangé — un dépliage touché deux fois se refermerait. Déjà déplié : rien n'est touché.
+    @MainActor
+    func deplier(_ entete: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(entete.apparait(), "à déplier : \(entete) absent", file: file, line: line)
+        let deplie = "value BEGINSWITH 'dépli'"
+        if (entete.value as? String)?.hasPrefix("dépli") == true { return }
+        toucher(entete, essais: essais, file: file, line: line)
+        for reprise in 1...Attente.reprises {
+            if entete.attendre(deplie, pendant: Attente.effet) { return }
+            tracerReprise("toucher", reprise, entete, "la valeur « déplié »")
+            toucher(entete, essais: essais, file: file, line: line)
+        }
+        XCTAssertTrue(
+            entete.attendre(deplie), "dépliage de \(entete) sans effet (valeur « \(entete.value ?? "?") »)",
+            file: file, line: line)
     }
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement

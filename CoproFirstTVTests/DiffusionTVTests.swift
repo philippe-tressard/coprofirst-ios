@@ -115,3 +115,19 @@ private func diffusion(
     #expect(rallume.etape == .appairage(residenceDuHall()))
     #expect(MemoireEcran(coffre: coffre).lire() == nil, "le jeton retiré ne se garde pas")
 }
+
+/// Le jeton de l'écran ne s'écrit dans aucune trace (#342) : ni l'appairage gardé, ni la
+/// diffusion qui le présente, ni l'étape du hall.
+@MainActor
+@Test func leJetonDeLEcranNeParaitDansAucuneTrace() {
+    let garde = MemoireEcran.Appairage(residence: residenceDuHall(), jeton: "jeton-secret-ecran")
+    let diffusion = DiffusionTV(residence: residenceDuHall(), jeton: garde.jeton, service: ServeurEcranSimule())
+    let porteurs: [Any] = [garde, diffusion, HallTV.Etape.diffusion(garde)]
+    for porteur in porteurs {
+        var vidage = ""
+        dump(porteur, to: &vidage)
+        for texte in ["\(porteur)", String(reflecting: porteur), vidage] {
+            #expect(!texte.contains("jeton-secret"), "le jeton paraît dans « \(texte.prefix(80)) »")
+        }
+    }
+}

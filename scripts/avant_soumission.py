@@ -28,7 +28,9 @@ rendu la rappelle, sans rien juger.
 
 `--etiqueter` pose et pousse l'étiquette annotée `vX.Y.Z` sur ce commit, et seulement si
 tout est vert. Rien ne se soumet ici : la soumission reste le geste de Philippe (skill
-`publication-app-store`).
+`publication-app-store`). L'étiquette posée, le compte rendu dit la déclaration à faire
+dans coprofirst (`declaration`, #354) : la CI du serveur refuse toute étiquette de l'app
+qui n'est pas dans `EN_CIRCULATION` (`check_versions_en_circulation.py`, coprofirst#3023).
 
 Usage : python3 scripts/avant_soumission.py [--confirme a,b,…] [--etiqueter] [--rapport F.md]
         python3 scripts/avant_soumission.py --autotest
@@ -45,6 +47,8 @@ import subprocess
 import sys
 
 RACINE = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(RACINE / "scripts"))
+from generateurs import _plancher  # noqa: E402  (la version sur laquelle l'app se génère)
 OK, ROUGE, INCONNU = "✅", "❌", "❓"
 LABEL = "bloque-soumission"
 #: Ce que seul Philippe peut voir : il le confirme, nommément (`--confirme`).
@@ -116,6 +120,15 @@ def juger_version(lue: tuple[str, str], etiquette: str, ailleurs: str | None, pr
     if int(lue[1]) <= int(avant[1]):
         return ROUGE, f"build {lue[1]} ≤ build {avant[1]} de {precedente} : monter CURRENT_PROJECT_VERSION"
     return OK, f"{lue[0]} (build {lue[1]}, après {precedente} build {avant[1]})"
+
+
+def declaration(etiquette: str, plancher: str) -> str:
+    """Ce que la version étiquetée doit trouver dans coprofirst (#354, coprofirst#3023)."""
+    version = ".".join(etiquette.lstrip("v").split(".")[:2])
+    return (f"→ À déclarer dans philippe-tressard/coprofirst : « contrat figé de coprofirst-ios {version} au "
+            f"plancher {plancher} » — son entrée dans `EN_CIRCULATION` (étiquette {etiquette}) et son contrat "
+            "figé. Sans elle, `check_versions_en_circulation.py` rougit toute PR du serveur ; le ticket de "
+            "version ne se ferme pas avant.")
 
 
 def verdict(etapes: list[tuple[str, str, str]]) -> int:
@@ -223,6 +236,9 @@ def autotest() -> int:
                           ((("1.2.0", "3"), "v1.2.0", None, "v1.1.0", None), INCONNU)]:
         if juger_version(*args)[0] != attendu:
             rate.append(f"version {args} : {attendu} attendu")
+    texte = declaration("v1.2.0", "v3.121.2")
+    if not all(m in texte for m in ("coprofirst-ios 1.2 au plancher v3.121.2", "EN_CIRCULATION", "v1.2.0")):
+        rate.append(f"déclaration : {texte}")
     for etats, attendu in [([OK, OK], 0), ([OK, INCONNU], 2), ([INCONNU, ROUGE], 1), ([], 2)]:
         if verdict([("x", e, "") for e in etats]) != attendu:
             rate.append(f"verdict {etats} : {attendu} attendu")
@@ -253,6 +269,8 @@ def main() -> int:
         code, texte = lancer("git", "tag", "-a", etiquette, sha, "-m", f"Version {etiquette[1:]} soumise (contrôle #205)")
         code = code or lancer("git", "push", "origin", etiquette)[0]
         lignes.append(f"Étiquette {etiquette} posée et poussée." if code == 0 else f"❌ étiquette : {texte}")
+        if code == 0:
+            lignes.append(declaration(etiquette, _plancher.VERSION))
         sortie = sortie if code == 0 else 1
     lignes.append("Parité avec l'Android : une occasion de sortir ensemble, pas une condition (18/11/2026) — "
                   "matrice coprofirst-android#12.")
