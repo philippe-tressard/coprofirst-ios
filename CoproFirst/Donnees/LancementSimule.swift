@@ -138,6 +138,7 @@ enum LancementSimule {
     /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
     /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire) ;
     /// `-compte locataire` : un locataire, et son bail (`FixturesAcces.monBail`, #127).
+    /// `-compte temporaire` : un compte au mot de passe temporaire, mené à le choisir (#377).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
     /// Face ID annulé à chaque demande ; `-protection appareil|aucune` : la session gardée
     /// sans biométrie, sous le code de l'appareil ou sans rien (#84) ; `-delai-detail <ms>` :
@@ -192,6 +193,9 @@ enum LancementSimule {
             simule.profilSimule.roles = ["résident"]
             simule.profilSimule.estModerateur = false
             simule.profilSimule.accesMenu = ["tous", "resident"]
+        case "temporaire":
+            // Un compte initial d'une installation neuve : son mot de passe est à changer (#377).
+            simule.profilSimule.motDePasseAChanger = true
         case "operateur":
             // Le compte technique n'habite pas la résidence : l'administration seule.
             simule.profilSimule.statut = "admin_technique"

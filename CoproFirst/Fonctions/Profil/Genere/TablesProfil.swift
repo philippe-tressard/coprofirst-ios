@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/theme.ts#COOKIE_THEME, front/src/lib/theme.ts#THEME_PAR_DEFAUT, front/src/lib/theme.ts#OPTIONS_THEME, front/src/lib/preferences.ts#CANAUX_NOTIFS, front/src/lib/roles.ts#STATUTS_DEMANDABLES (tables-clients.json) ; api/app/utils/preferences_mail.py#DEFAUTS, api/app/utils/mots_de_passe.py#LONGUEUR_MIN_MOT_DE_PASSE (constantes-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/theme.ts#COOKIE_THEME, front/src/lib/theme.ts#THEME_PAR_DEFAUT, front/src/lib/theme.ts#OPTIONS_THEME, front/src/lib/preferences.ts#CANAUX_NOTIFS, front/src/lib/roles.ts#STATUTS_DEMANDABLES (tables-clients.json) ; api/app/utils/preferences_mail.py#DEFAUTS, api/app/utils/mots_de_passe.py#LONGUEUR_MIN_MOT_DE_PASSE, api/app/auth/mot_de_passe_a_changer.py#MOTIF (constantes-clients.json).
 
 /// Ce que le site écrit du Profil et que le contrat ne sert pas.
 enum TablesProfil {
@@ -43,4 +43,6 @@ enum TablesProfil {
     ]
     /// La longueur minimale d'un nouveau mot de passe (`LONGUEUR_MIN_MOT_DE_PASSE`, serveur).
     static let longueurMinimaleMotDePasse = 8
+    /// Le `detail.code` du 403 d'un compte au mot de passe temporaire (`MOTIF`, serveur, #377).
+    static let motifMotDePasseAChanger = "mot_de_passe_a_changer"
 }

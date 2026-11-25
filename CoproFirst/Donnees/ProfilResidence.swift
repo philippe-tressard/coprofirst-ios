@@ -39,6 +39,10 @@ struct ProfilResidence: Codable, Hashable, Sendable {
     /// l'app ne note alors aucune page vue (`MesureAudience`, coprofirst#2726). `nil` (profil
     /// gardé avant, jusqu'à sa relecture à l'ouverture) : refus inconnu, rien ne se note.
     var refusMesure: Bool?
+    /// Le mot de passe est TEMPORAIRE (`mot_de_passe_a_changer`, contrat 2.12.0, #377) : les
+    /// deux comptes initiaux d'une installation neuve. Tant qu'il tient, l'app n'ouvre que
+    /// « Choisir votre mot de passe » (`MotDePasseTemporaireView`) ; `nil` vaut « non ».
+    var motDePasseAChanger: Bool?
 
     /// Les rôles comme l'en-tête de l'accueil les annonce : le statut, puis les rôles
     /// qui ajoutent quelque chose (`misEnAvant`), sans doublon — `EnteteAccueil.svelte`.
@@ -65,7 +69,7 @@ extension ProfilResidence {
             statut: moi.statut.rawValue, roles: (moi.roles ?? []) + [moi.role.rawValue],
             libelleLogement: moi.libelleLogement, accesMenu: moi.accesMenu ?? [],
             saisieAffaire: moi.saisieAffaireEffective, estModerateur: moi.estModerateur, idCompte: moi.id,
-            refusMesure: moi.optOutTelemetrie ?? false)
+            refusMesure: moi.optOutTelemetrie ?? false, motDePasseAChanger: moi.motDePasseAChanger ?? false)
     }
 }
 

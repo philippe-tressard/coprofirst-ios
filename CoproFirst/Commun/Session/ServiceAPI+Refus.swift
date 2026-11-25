@@ -15,8 +15,8 @@ extension ServiceAPI: LitLesRefus {
     static func refusSousValidation(_ erreur: any Error) async -> ErreurService? {
         guard let erreur = erreur as? ClientError, erreur.response?.status.code == 422,
             let flux = erreur.responseBody, let corps = try? await Data(collecting: flux, upTo: RefusDuServeur.plafond),
-            let phrase = RefusDuServeur.detail(corps)
+            let refus = RefusDuServeur.lu(corps)
         else { return nil }
-        return .refus(RefusDuServeur(phrase: phrase))
+        return .refus(refus)
     }
 }

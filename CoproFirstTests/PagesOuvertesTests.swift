@@ -72,6 +72,7 @@ private func ids(_ acces: [String]) -> [String] { PagesOuvertes.filtrer(toutes, 
         """#
     let profil = ProfilResidence(try Relecture.generee(Components.Schemas.UserRead.self, json: json))
     #expect(profil.accesMenu == ["admin"])
+    #expect(profil.motDePasseAChanger == false, "non servi : non (#377)")
 }
 
 @Test func uneDemandeHorsDeLaBarreSePoseSurLAccueil() {
