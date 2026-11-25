@@ -198,12 +198,15 @@ extension XCUIApplication {
     @MainActor
     private func toucherUneFois(_ element: XCUIElement, essais: Int, file: StaticString, line: UInt) {
         XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
-        let clavier = keyboards.firstMatch
-        if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
-           navigationBars.firstMatch.exists {
+        if element.elementType != .key, let couvert = couvertParLeClavier(), !couvert.contains(element.frame),
+           element.frame.intersects(couvert), navigationBars.firstMatch.exists {
             // Le titre de la barre de navigation : une zone neutre, hors du clavier, qui ne valide rien.
+            // Il ne le ferme pas partout (l'Espace CS, #379) : l'attente est bornée, et un clavier
+            // resté ouvert laisse au champ sa partie visible AU-DESSUS de ce qu'il couvre (`zoneUtile`).
             navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            _ = clavier.disparait()
+            if !keyboards.firstMatch.waitForNonExistence(timeout: Attente.effet) {
+                print("clavier resté ouvert après la barre de navigation : \(element.identifier) touché au-dessus")
+            }
         }
         immobile(element)
         if visible(element, pendant: Attente.sonde) == nil {
@@ -403,9 +406,14 @@ extension XCUIApplication {
     /// - la barre d'onglets (DelegationsCSUITests, très grand texte) ;
     /// - la barre de gestes d'un écran (`.bottomBar`, le bandeau d'une affaire) : le « ⋯ » d'un
     ///   message passait sous elle, et le toucher archivait l'affaire (#211). XCUITest lui donne
-    ///   TOUT l'écran pour cadre (iOS 26 et 27) : son bord se lit sur ses boutons du bas.
+    ///   TOUT l'écran pour cadre (iOS 26 et 27) : son bord se lit sur ses boutons du bas ;
+    /// - le clavier ouvert, barre des prédictions comprise (`couvertParLeClavier`), sauf pour ce
+    ///   qui est DANS le clavier (ses touches, son retour).
     private func zoneUtile(pour element: XCUIElement) -> CGRect {
         var zone = frame
+        if let couvert = couvertParLeClavier(), !couvert.contains(element.frame) {
+            zone.size.height = max(0, min(zone.maxY, couvert.minY) - zone.minY)
+        }
         let onglets = tabBars.firstMatch
         if onglets.exists, !onglets.frame.contains(element.frame) {
             zone.size.height = max(0, min(zone.maxY, onglets.frame.minY) - zone.minY)
@@ -416,6 +424,21 @@ extension XCUIApplication {
             if let haut = hauts.min() { zone.size.height = max(0, min(zone.maxY, haut) - zone.minY) }
         }
         return zone
+    }
+
+    /// Ce que le clavier ouvert couvre, `nil` s'il est fermé : de la barre des prédictions de
+    /// saisie (`SystemInputAssistantView`) au bas de l'écran. Le cadre du clavier
+    /// (`keyboards.firstMatch.frame`) ne la compte pas : un champ dont le centre était à 32 pt
+    /// AU-DESSUS de ce cadre tombait sous elle, touché trois fois sans prendre le focus (#379 ;
+    /// iOS 27.2, prédictions à y 546, clavier annoncé à y 590). Sans barre des prédictions (le
+    /// clavier d'un champ qui la refuse), le cadre du clavier seul.
+    private func couvertParLeClavier() -> CGRect? {
+        let clavier = keyboards.firstMatch
+        guard clavier.exists else { return nil }
+        var haut = clavier.frame.minY
+        let predictions = descendants(matching: .any).matching(identifier: "SystemInputAssistantView").firstMatch
+        if predictions.exists, !predictions.frame.isEmpty { haut = min(haut, predictions.frame.minY) }
+        return CGRect(x: frame.minX, y: haut, width: frame.width, height: max(0, frame.maxY - haut))
     }
 
     /// Attend que l'élément ne bouge plus : deux cadres égaux à un quart de seconde d'écart

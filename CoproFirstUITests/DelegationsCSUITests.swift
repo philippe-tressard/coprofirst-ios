@@ -85,20 +85,13 @@ final class DelegationsCSUITests: XCTestCase {
         app.toucherLOnglet(app.elementAcces("onglet.annonces-hall"), jusqua: titre)
         XCTAssertTrue(titre.apparait(), "le formulaire")
         app.toucher(titre)
-        // Le retour valide le titre et ferme le clavier, qui couvrait le message : la barre de
-        // navigation de l'Espace CS, touchée par `toucher` pour le fermer, ne le ferme pas (#340).
-        titre.typeText("Ascenseur à l'arrêt\n")
+        titre.typeText("Ascenseur à l'arrêt")
         let message = app.elementAcces("nouvelle-annonce-hall.message")
         app.toucher(message)
         message.typeText("Intervention prévue lundi matin.")
-        // Sur plusieurs lignes, le message garde le clavier au retour ; le titre le ferme : le
-        // périmètre, plus bas, n'est plus sous le clavier (#340, #379).
-        app.toucher(titre)
-        titre.typeText("\n")
-        XCTAssertTrue(app.keyboards.firstMatch.disparait(), "le clavier fermé avant le périmètre")
-        // Le périmètre : une tête, puis l'un de ses espaces — « Bâtiment A › Toit ».
+        // Le périmètre : une tête, puis l'un de ses espaces — « Bâtiment A › Toit ». Sous le
+        // clavier resté ouvert, `toucher` l'amène au-dessus de ce qu'il couvre (#379).
         let batiment = app.elementAcces("nouvelle-annonce-hall.perimetre.bat_a")
-        for _ in 0..<4 where !batiment.isHittable { app.swipeUp() }
         app.toucher(batiment)
         let toit = app.elementAcces("nouvelle-annonce-hall.perimetre.bat_a/toit")
         XCTAssertTrue(toit.apparait(), "les espaces du bâtiment A")
