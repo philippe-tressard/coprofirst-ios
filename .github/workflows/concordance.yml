@@ -86,6 +86,7 @@ jobs:
             echo "ticket=$ROUGE"
             echo "ticket_a_monter=$A_MONTER"; } | tee -a "$GITHUB_OUTPUT"
       - name: Tickets
+        id: tickets
         if: ${{ !inputs.simuler_ecart || inputs.ouvrir_ticket }}
         env:
           PLANCHER: ${{ steps.plancher.outputs.code }}
@@ -148,3 +149,9 @@ jobs:
             rouge) echo "❌ écart au plancher — ticket « concordance »"; exit 1 ;;
             *) echo "❓ INCONNU — rien n'a pu être comparé : ce n'est pas un vert"; exit 1 ;;
           esac
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        # Le ticket du job dit déjà ce rouge quand « Tickets » a réussi : l'alerte se tait (#395).
+        if: failure() && steps.tickets.outcome != 'success' && !inputs.simuler_ecart
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler

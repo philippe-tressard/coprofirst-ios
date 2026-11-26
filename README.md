@@ -38,7 +38,10 @@ Philippe :
 3. au poste : l'archive Release, signée automatiquement (équipe `GUX8KASNTG`) ; Philippe
    l'envoie à App Store Connect, juge le rendu (simulateur, son iPhone, TestFlight
    interne), puis la soumet — rien ne part en revue sans son « oui » écrit pour cette
-   version.
+   version ;
+4. l'étiquette posée, la version se déclare dans coprofirst (`EN_CIRCULATION` et son contrat
+   figé, coprofirst#3023) : la CI du serveur refuse une étiquette de l'app non déclarée. Le
+   contrôle avant soumission dit la ligne à ouvrir (#354).
 
 Le contrôle de cohérence qui précède chaque soumission, et l'étiquette qu'il pose :
 `python3 scripts/avant_soumission.py` (#205) — il refuse sur le moindre rouge comme sur un
@@ -59,10 +62,12 @@ l'outillage.
 
 Les versions épinglées sont dans [`outillage.env`](outillage.env), la seule liste. La CI
 installe exactement celles-ci ; Homebrew pose la **dernière** version, et seul XcodeGen
-est comparé à son épingle (`scripts/generer-projet.sh`) :
+est comparé à son épingle (`scripts/generer-projet.sh`). `.swift-format` règle le
+formateur intégré à Xcode (Editor › Structure › Format File) ; aucun contrôle ne le
+lance, SwiftLint `--strict` juge le style (#357) :
 
 ```bash
-brew install xcodegen swiftlint swift-format
+brew install xcodegen swiftlint
 ```
 
 `reuse`, à sa version épinglée — sans lui, le hook refuse le commit (INCONNU) :

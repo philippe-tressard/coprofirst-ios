@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -15,7 +16,7 @@ actor ServeurEcranSimule: ServiceEcranTV {
     private(set) var interrogees = 0
     var lecture: Result<[AfficheHall], ErreurService> = .success([])
     private(set) var lectures = 0
-    private(set) var jetonsPresentes: [String] = []
+    private(set) var jetonsPresentes: [JetonMasque] = []
     var imagesEnEchec: Set<Int> = []
 
     func regler(interrogations: [ReponseAppairage]) { self.interrogations = interrogations }
@@ -30,13 +31,13 @@ actor ServeurEcranSimule: ServiceEcranTV {
         return interrogations.isEmpty ? .enAttente : interrogations.removeFirst()
     }
 
-    func affiches(_ adresse: URL, jeton: String) async throws -> [AfficheHall] {
+    func affiches(_ adresse: URL, jeton: JetonMasque) async throws -> [AfficheHall] {
         lectures += 1
         jetonsPresentes.append(jeton)
         return try lecture.get()
     }
 
-    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: String) async throws -> Data {
+    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: JetonMasque) async throws -> Data {
         if imagesEnEchec.contains(rang) { throw ErreurService.injoignable }
         return Data([UInt8(affiche), UInt8(rang)])
     }

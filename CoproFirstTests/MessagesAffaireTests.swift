@@ -60,7 +60,7 @@ struct MessagesAffaireTests {
     @Test func repondrePosteUnMessageEtNonUneEvolution() async throws {
         let enregistrement = Enregistrement()
         let client = ClientCoproFirst.client(
-            installation: URL(string: "https://demo.exemple")!, transport: TransportEnregistreur(enregistrement))
+            installation: URL(string: "https://demo.test")!, transport: TransportEnregistreur(enregistrement))
         _ = try await client.postTicketsTicketIdMessages(
             path: .init(ticketId: 41), body: .json(ServiceAPI.corpsReponse("Merci\nà demain")))
         let requete = try #require(enregistrement.requete)

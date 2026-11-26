@@ -24,41 +24,33 @@ struct DemanderAccesView: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
+        FeuilleDeSaisie(titre: TextesAcces.nouvelleDemande, erreur: erreur) {
+            Section(TextesAcces.typeDAcces) {
+                Picker(TextesAcces.typeDAcces, selection: $demande.type) {
+                    ForEach(TypeAcces.allCases) { Text($0.libelle).tag($0) }
                 }
-                Section(TextesAcces.typeDAcces) {
-                    Picker(TextesAcces.typeDAcces, selection: $demande.type) {
-                        ForEach(TypeAcces.allCases) { Text($0.libelle).tag($0) }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
+                .pickerStyle(.inline)
+                .labelsHidden()
+            }
+            Section {
+                Picker(TextesAcces.lotConcerne, selection: $demande.lotId) {
+                    Text(TextesAcces.selectionner).tag(Int?.none)
+                    // Seuls SES lots : `/lots/mes-lots` ne sert jamais celui d'un voisin.
+                    ForEach(lots) { Text(TextesAcces.lot($0.numero)).tag(Int?.some($0.id)) }
                 }
-                Section {
-                    Picker(TextesAcces.lotConcerne, selection: $demande.lotId) {
-                        Text(TextesAcces.selectionner).tag(Int?.none)
-                        // Seuls SES lots : `/lots/mes-lots` ne sert jamais celui d'un voisin.
-                        ForEach(lots) { Text(TextesAcces.lot($0.numero)).tag(Int?.some($0.id)) }
-                    }
-                    .accessibilityIdentifier("acces.demande.lot")
-                    Stepper(value: $demande.quantite, in: 1...5) {
-                        LabeledContent(TextesAcces.quantite, value: demande.quantite.formatted())
-                    }
-                }
-                Section(TextesAcces.motif) {
-                    TextField(TextesAcces.motifIndication, text: $demande.motif, axis: .vertical)
-                        .lineLimit(2...6)
+                .accessibilityIdentifier("acces.demande.lot")
+                Stepper(value: $demande.quantite, in: 1...5) {
+                    LabeledContent(TextesAcces.quantite, value: FormatsDuSite.nombre(demande.quantite))
                 }
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle(TextesAcces.nouvelleDemande)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer) }
-            .disabled(envoi)
+            Section(TextesAcces.motif) {
+                TextField(TextesAcces.motifIndication, text: $demande.motif, axis: .vertical)
+                    .lineLimit(2...6)
+            }
+        } barre: {
+            BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer)
         }
+        .disabled(envoi)
         .onAppear { if lots.count == 1 { demande.lotId = lots[0].id } }
     }
 
@@ -93,40 +85,32 @@ struct DeclarerAccesView: View {
     @Environment(\.palette) private var palette
 
     var body: some View {
-        NavigationStack {
-            Form {
-                if let erreur {
-                    Section { MessageErreur(texte: erreur).listRowInsets(EdgeInsets()) }
+        FeuilleDeSaisie(titre: TextesAcces.declarerExistant, erreur: erreur) {
+            Section(TextesAcces.typeDAcces) {
+                Picker(TextesAcces.typeDAcces, selection: $type) {
+                    ForEach(TypeAcces.allCases) { Text($0.libelle).tag($0) }
                 }
-                Section(TextesAcces.typeDAcces) {
-                    Picker(TextesAcces.typeDAcces, selection: $type) {
-                        ForEach(TypeAcces.allCases) { Text($0.libelle).tag($0) }
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                }
-                Section {
-                    TextField(TextesAcces.codeIndication, text: $code)
-                        .font(.body.monospaced())
-                        .textInputAutocapitalization(.characters)
-                        .autocorrectionDisabled()
-                        .focused($champ)
-                        .submitLabel(.done)
-                        .onSubmit { Task { await envoyer() } }
-                        .accessibilityIdentifier("acces.declarer.code")
-                } header: {
-                    Text(TextesAcces.codeReference)
-                } footer: {
-                    Text(TextesAcces.codeAide)
-                }
+                .pickerStyle(.inline)
+                .labelsHidden()
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle(TextesAcces.declarerExistant)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar { BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer) }
-            .disabled(envoi)
+            Section {
+                TextField(TextesAcces.codeIndication, text: $code)
+                    .font(.body.monospaced())
+                    .textInputAutocapitalization(.characters)
+                    .autocorrectionDisabled()
+                    .focused($champ)
+                    .submitLabel(.done)
+                    .onSubmit { Task { await envoyer() } }
+                    .accessibilityIdentifier("acces.declarer.code")
+            } header: {
+                Text(TextesAcces.codeReference)
+            } footer: {
+                Text(TextesAcces.codeAide)
+            }
+        } barre: {
+            BoutonsFeuille(envoi: envoi, identifiant: "acces.feuille.enregistrer", envoyer: envoyer)
         }
+        .disabled(envoi)
         .onAppear { champ = true }
     }
 

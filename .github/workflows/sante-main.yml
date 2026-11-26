@@ -46,6 +46,7 @@ jobs:
             | tee -a "$GITHUB_OUTPUT"
           echo "numero=$TICKET" >> "$GITHUB_OUTPUT"
       - name: Ticket
+        id: ticket
         env:
           DECISION: ${{ steps.decision.outputs.ticket }}
           NUMERO: ${{ steps.decision.outputs.numero }}
@@ -76,3 +77,10 @@ jobs:
             rouge) echo "❌ main au-delà du seuil — ticket « sante-main »"; exit 1 ;;
             *) echo "❓ INCONNU — trop peu de poussées jugées, ou une conclusion inconnue : ce n'est pas un vert"; exit 1 ;;
           esac
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        # Un verdict rouge a déjà son ticket « sante-main » quand « Ticket » a réussi : l'alerte se
+        # tait (#395). Un INCONNU n'en a pas : il alerte.
+        if: failure() && (steps.ticket.outcome != 'success' || steps.decision.outputs.verdict != 'rouge')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler

@@ -198,12 +198,15 @@ extension XCUIApplication {
     @MainActor
     private func toucherUneFois(_ element: XCUIElement, essais: Int, file: StaticString, line: UInt) {
         XCTAssertTrue(element.apparait(), "à toucher : \(element) absent", file: file, line: line)
-        let clavier = keyboards.firstMatch
-        if element.elementType != .key, clavier.exists, element.frame.intersects(clavier.frame),
-           navigationBars.firstMatch.exists {
+        if element.elementType != .key, let couvert = couvertParLeClavier(), !couvert.contains(element.frame),
+           element.frame.intersects(couvert), navigationBars.firstMatch.exists {
             // Le titre de la barre de navigation : une zone neutre, hors du clavier, qui ne valide rien.
+            // Il ne le ferme pas partout (l'Espace CS, #379) : l'attente est bornée, et un clavier
+            // resté ouvert laisse au champ sa partie visible AU-DESSUS de ce qu'il couvre (`zoneUtile`).
             navigationBars.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            _ = clavier.disparait()
+            if !keyboards.firstMatch.waitForNonExistence(timeout: Attente.effet) {
+                print("clavier resté ouvert après la barre de navigation : \(element.identifier) touché au-dessus")
+            }
         }
         immobile(element)
         if visible(element, pendant: Attente.sonde) == nil {
@@ -245,6 +248,34 @@ extension XCUIApplication {
         jusqua(effet, ("toucher", element), file: file, line: line) {
             toucher(element, essais: essais, file: file, line: line)
         }
+    }
+
+    /// Un INTERRUPTEUR d'une ligne de formulaire (#340) : toucher son libellé ne le bascule pas,
+    /// il se touche à droite de la ligne, une fois celle-ci à l'écran et immobile. Pas de
+    /// reprise : basculer deux fois défait le geste.
+    @MainActor
+    func basculer(_ ligne: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(ligne.apparait(), "à basculer : \(ligne) absent", file: file, line: line)
+        immobile(ligne)
+        ligne.coordinate(withNormalizedOffset: CGVector(dx: 0.92, dy: 0.5)).tap()
+    }
+
+    /// Le toucher d'un ONGLET (#340) : la barre, remontée jusqu'à lui s'il est caché au-dessus
+    /// (une page défilée), puis `toucher(_:jusqua:)` — par défaut jusqu'à l'onglet RETENU (le
+    /// trait `isSelected` que posent les rangées d'onglets de l'app : `RangeeChoisie`, la
+    /// Communauté), sinon jusqu'à ce que l'onglet montre d'abord. Un onglet ne se touche que par
+    /// ici ou par `toucher(_:jusqua:)` : `scripts/touchers_onglets.py` refuse un `tap()`, un
+    /// `toucher` sans effet et un `toucherAuDessin` sur un onglet.
+    @MainActor
+    func toucherLOnglet(
+        _ onglet: XCUIElement, jusqua effet: XCUIElement? = nil, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(onglet.apparait(), "à toucher : l'onglet \(onglet) absent", file: file, line: line)
+        // De côté, `toucher` fait glisser la rangée ; au-dessus (la page a défilé), on la remonte.
+        for _ in 0..<6 where !onglet.isHittable && !deCote(onglet) { swipeDown() }
+        let retenu = descendants(matching: .any)
+            .matching(NSPredicate(format: "identifier == %@ AND isSelected == true", onglet.identifier)).firstMatch
+        toucher(onglet, jusqua: effet ?? retenu, file: file, line: line)
     }
 
     /// Le balayage vers la gauche d'une ligne JUSQU'À L'EFFET : ses actions révélées (supprimer,
@@ -293,6 +324,27 @@ extension XCUIApplication {
             + "(\(effet)) en \(Int(Attente.effet)) s (#282)"
         print(trace)
         XCTContext.runActivity(named: trace) { _ in }
+    }
+
+    /// DÉPLIER un en-tête posé par `.depliage(…)` (#384) : le toucher, puis attendre son ÉTAT —
+    /// sa valeur d'accessibilité, « déplié » (ou « dépliée »). Un toucher perdu sous charge ne
+    /// change pas l'état (PrestatairesUITests sur #383 : l'exercice touché, jamais ouvert) : il
+    /// est rejoué au plus `Attente.reprises` fois, chaque reprise au journal, et seulement à état
+    /// inchangé — un dépliage touché deux fois se refermerait. Déjà déplié : rien n'est touché.
+    @MainActor
+    func deplier(_ entete: XCUIElement, essais: Int = 10, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(entete.apparait(), "à déplier : \(entete) absent", file: file, line: line)
+        let deplie = "value BEGINSWITH 'dépli'"
+        if (entete.value as? String)?.hasPrefix("dépli") == true { return }
+        toucher(entete, essais: essais, file: file, line: line)
+        for reprise in 1...Attente.reprises {
+            if entete.attendre(deplie, pendant: Attente.effet) { return }
+            tracerReprise("toucher", reprise, entete, "la valeur « déplié »")
+            toucher(entete, essais: essais, file: file, line: line)
+        }
+        XCTAssertTrue(
+            entete.attendre(deplie), "dépliage de \(entete) sans effet (valeur « \(entete.value ?? "?") »)",
+            file: file, line: line)
     }
 
     /// Un toucher LÀ OÙ l'élément est dessiné, comme un doigt — sans le défilement
@@ -354,9 +406,14 @@ extension XCUIApplication {
     /// - la barre d'onglets (DelegationsCSUITests, très grand texte) ;
     /// - la barre de gestes d'un écran (`.bottomBar`, le bandeau d'une affaire) : le « ⋯ » d'un
     ///   message passait sous elle, et le toucher archivait l'affaire (#211). XCUITest lui donne
-    ///   TOUT l'écran pour cadre (iOS 26 et 27) : son bord se lit sur ses boutons du bas.
+    ///   TOUT l'écran pour cadre (iOS 26 et 27) : son bord se lit sur ses boutons du bas ;
+    /// - le clavier ouvert, barre des prédictions comprise (`couvertParLeClavier`), sauf pour ce
+    ///   qui est DANS le clavier (ses touches, son retour).
     private func zoneUtile(pour element: XCUIElement) -> CGRect {
         var zone = frame
+        if let couvert = couvertParLeClavier(), !couvert.contains(element.frame) {
+            zone.size.height = max(0, min(zone.maxY, couvert.minY) - zone.minY)
+        }
         let onglets = tabBars.firstMatch
         if onglets.exists, !onglets.frame.contains(element.frame) {
             zone.size.height = max(0, min(zone.maxY, onglets.frame.minY) - zone.minY)
@@ -367,6 +424,21 @@ extension XCUIApplication {
             if let haut = hauts.min() { zone.size.height = max(0, min(zone.maxY, haut) - zone.minY) }
         }
         return zone
+    }
+
+    /// Ce que le clavier ouvert couvre, `nil` s'il est fermé : de la barre des prédictions de
+    /// saisie (`SystemInputAssistantView`) au bas de l'écran. Le cadre du clavier
+    /// (`keyboards.firstMatch.frame`) ne la compte pas : un champ dont le centre était à 32 pt
+    /// AU-DESSUS de ce cadre tombait sous elle, touché trois fois sans prendre le focus (#379 ;
+    /// iOS 27.2, prédictions à y 546, clavier annoncé à y 590). Sans barre des prédictions (le
+    /// clavier d'un champ qui la refuse), le cadre du clavier seul.
+    private func couvertParLeClavier() -> CGRect? {
+        let clavier = keyboards.firstMatch
+        guard clavier.exists else { return nil }
+        var haut = clavier.frame.minY
+        let predictions = descendants(matching: .any).matching(identifier: "SystemInputAssistantView").firstMatch
+        if predictions.exists, !predictions.frame.isEmpty { haut = min(haut, predictions.frame.minY) }
+        return CGRect(x: frame.minX, y: haut, width: frame.width, height: max(0, frame.maxY - haut))
     }
 
     /// Attend que l'élément ne bouge plus : deux cadres égaux à un quart de seconde d'écart

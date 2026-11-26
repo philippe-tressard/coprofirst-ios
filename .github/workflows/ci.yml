@@ -15,6 +15,8 @@ on:
 
 permissions:
   contents: read
+  # Le seul ticket qu'un job ouvre : l'alerte d'un rouge de main (scripts/signaler_rouge.py, #362).
+  issues: write
 
 # Une PR : sa nouvelle tête annule l'exécution périmée. `main` : jamais — chaque fusion se
 # valide jusqu'au bout. Le filet de `main` après fusion (standards/09 §8 bis) n'existe que
@@ -22,7 +24,7 @@ permissions:
 # la fusion suivante, aucune fusion n'était validée. Sur main, un groupe PAR COMMIT : GitHub
 # ne garde qu'une exécution en attente par groupe, et deux fusions rapprochées évinçaient
 # encore la précédente, sans annulation demandée (coprofirst-android#62). Les jobs
-# d'interface ont, sur main, leur propre file (voir `interface`, #235).
+# macOS ont, sur main, leur propre file (voir `interface`, #235 ; les autres, #397).
 concurrency:
   group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -42,6 +44,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/verifier-depot.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   # Documentation seule ? Lue sur la liste des fichiers de la PR ; un push sur main, une
   # liste vide ou illisible lancent tout (défaut fermé, scripts/ci_documentation_seule.py).
@@ -70,6 +77,11 @@ jobs:
           fi
           cat "$RUNNER_TEMP/changes.txt"
           python3 -I scripts/ci_documentation_seule.py < "$RUNNER_TEMP/changes.txt" | tee -a "$GITHUB_OUTPUT"
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   # Les tests au simulateur en jobs parallèles, chacun sous son plafond (décision du
   # 12/11/2026, #139) : un job unique dépassait 85 min — 14 de build, plus de 70 de tests
@@ -81,6 +93,12 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui, comme l'interface (#235) : la poussée en cours va au bout, seule
+    # la dernière en attente se joue — elle juge toute la plage. Le 25/11/2026, 8 exécutions
+    # attendaient 5 places macOS, chaque fusion rejouant ~100 min-macOS hors interface (#397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-unitaires-main' || format('ci-unitaires-{0}', github.run_id) }}
+      cancel-in-progress: false
     # Mesuré sur main le 18/11/2026 (#288) : 58 à 67 min avec l'échantillon iPad et l'Apple
     # TV, si près du plafond qu'une PR un peu lente le coupait sans défaut. Ces deux-là ont
     # leur propre build : ils sont passés au job « Échantillons ». Reste ici le très grand
@@ -125,6 +143,11 @@ jobs:
           done
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   montre:
     # Un job à part, en parallèle des autres (#226) : la montre a son propre build, comme les
@@ -140,6 +163,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-montre-main' || format('ci-montre-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -163,6 +190,11 @@ jobs:
         # false : l'étape qui la déclare indépendante ne vaut que pour le Debug du simulateur
         # (#226). Absente, true ou illisible : rouge, ou INCONNU si la construction échoue.
         run: bash scripts/verifier-montre-dependante.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   archive-montre:
     # L'archive de l'app iPhone avec l'app montre embarquée (#324) : le seul chemin qui mène la
@@ -176,6 +208,10 @@ jobs:
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-archive-montre-main' || format('ci-archive-montre-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -185,6 +221,11 @@ jobs:
         run: bash scripts/installer-outillage-ci.sh
       - name: Archive Release sans signature, montre embarquée et dépendante
         run: bash scripts/verifier-archive-montre.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
@@ -216,7 +257,8 @@ jobs:
       # lent, et le lot 4 a dépassé le budget (63 min sur c3d25e2). 98 min de tests en médiane,
       # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
       # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
-      # ListeEtFiche, Carnet) restent au dernier lot : nommées, elles ne joueraient rien sur l'iPhone.
+      # ListeEtFiche, Carnet) restent au dernier lot, où l'iPhone les saute : elles se jouent dans
+      # l'échantillon iPad (job echantillons), que scripts/verifier-ci.py tient (#350).
       # Le 19/11/2026 (#301), le dernier lot faisait 36 à 45 min d'étape et a dépassé le budget
       # sur #297 (56 min, tests verts) : PrestatairesUITests y pesait 13 à 23,7 min. Répartis
       # sur le PIRE temps de chaque classe, mesuré sur quatre runs (c4bdf79, b6f9b98, 23099de
@@ -308,6 +350,11 @@ jobs:
             echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer les LOT_ sur les durées mesurées (#243)"
             exit 1
           fi
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   echantillons:
     # Hors du job Unitaires depuis #288 : l'iPad et l'Apple TV construisent chacun pour leur
@@ -318,11 +365,15 @@ jobs:
     # (iPad 32,2 min, dont 13,8 de tests ; Apple TV encore au build à 7,7). Au pire mesuré,
     # ~42 min ; plafond à 1,5 fois : 65. Le 23/11/2026, coupé à 65 sans test rouge (#364, run
     # 45256597018 : échantillon iPad 62 min, Apple TV interrompue) ; six runs verts de main : 26 à
-    # 59. Avec CarnetUITests à venir (#350, ~3,5 min) et ~7 pour l'Apple TV : ~73 au pire ; 85.
+    # 59. Avec CarnetUITests (#350, ~3,5 min ; 127 s au poste) et ~7 pour l'Apple TV : ~73 au pire ; 85.
     name: Échantillons (iPad, Apple TV)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-echantillons-main' || format('ci-echantillons-{0}', github.run_id) }}
+      cancel-in-progress: false
     timeout-minutes: 85
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -340,7 +391,10 @@ jobs:
         # sur iPad, où la barre latérale les remplace (BarreLateraleUITests, #221).
         # ModerationUITests : le seul test du Profil, qui prouve `ouvrirLeProfil` par la barre
         # latérale (#336). L'autre test de la classe, qui ne passe pas par la navigation de
-        # l'iPad, reste au poste : ce job a déjà atteint 56 min sur 65.
+        # l'iPad, reste au poste : ce job a déjà atteint 65 min (#350).
+        # CarnetUITests (#350) : le carnet de l'iPhone pliable, joué en classe régulière
+        # (`-posture deplie`) ; il ne se jouait nulle part en CI. Chaque classe de l'iPad seul
+        # est nommée ici en entier, scripts/verifier-ci.py le tient.
         env:
           APPAREIL: ipad
         run: >-
@@ -355,6 +409,7 @@ jobs:
           -only-testing:CoproFirstUITests/BarreLateraleUITests
           -only-testing:CoproFirstTests/PresentationNavigationTests
           -only-testing:CoproFirstUITests/ListeEtFicheUITests
+          -only-testing:CoproFirstUITests/CarnetUITests
           -only-testing:CoproFirstTests/ListeEtFicheTests
           -only-testing:CoproFirstUITests/AffairesUITests/testCommandeNOuvreUneNouvelleAffaire
           -only-testing:CoproFirstUITests/PrestatairesAffaireUITests
@@ -369,6 +424,11 @@ jobs:
           APPAREIL: tv
           RESULTATS: .build/ResultatsTV
         run: bash scripts/tests-simulateur.sh
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
 
   ios:
     # Le nom que la protection de main exige : il ne change pas. Vert seulement si CHAQUE job

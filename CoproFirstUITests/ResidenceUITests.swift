@@ -44,7 +44,7 @@ final class ResidenceUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Gestionnaire de copropriété"].apparait())
         // Par l'identifiant, pas par le type : un `Link` est un lien sous iOS 27, pas sous iOS 26.
         let appeler = app.descendants(matching: .any).matching(identifier: "annuaire.appeler")
-            .matching(NSPredicate(format: "label CONTAINS '01 00 00 00 01'")).firstMatch
+            .matching(NSPredicate(format: "label CONTAINS '01 99 00 00 01'")).firstMatch
         XCTAssertTrue(appeler.apparait())
     }
 }

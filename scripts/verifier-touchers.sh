@@ -12,14 +12,17 @@
 # Un onglet se touche JUSQU'À SON EFFET, `app.toucher(_:jusqua:)` : nu, un toucher perdu sous
 # charge laissait la page d'avant, sans reprise (#183, PR #332). Le juge, scripts/touchers_onglets.py
 # (#334), lit l'appel entier et reconnaît un identifiant à segment `onglet`, préfixé ou non, et
-# une variable nommée `onglet…`. Hors de sa vue, et dit (suite : #340) : un onglet trouvé par
-# son libellé en ligne ou rangé dans une variable nommée autrement — la convention de nom le
-# rend visible —, un `tap()` direct sur un onglet (la dette au plafond) et `toucherAuDessin`.
+# une variable nommée `onglet…` ; il refuse aussi un `tap()` direct et un `toucherAuDessin` sur
+# un onglet (#340) — le point commun d'un onglet est `app.toucherLOnglet`. Hors de sa vue, et
+# dit : un onglet trouvé par son libellé en ligne ou rangé dans une variable nommée autrement —
+# la convention de nom `onglet…` le rend visible.
+# Il tient aussi les touchers qui OUVRENT une feuille (`OUVERTURES`, #400) : ✏️ d'une affaire se
+# touche par `app.ouvrirModificationAffaire()`, jusqu'à la feuille lue.
 # Appelé par scripts/verifier-depot.sh. Sortie : 0 conforme, 1 refus.
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-PLAFOND_TAP=106
+PLAFOND_TAP=46
 POINT_ATTENTE=CoproFirstUITests/Attente.swift
 CLASSES_TOUCHER="CoproFirstUITests/AccesUITests.swift CoproFirstUITests/SuppressionCompteUITests.swift
 CoproFirstUITests/HistoriqueUITests.swift
@@ -28,7 +31,10 @@ CoproFirstUITests/PrestatairesUITests.swift
 CoproFirstUITests/HorsLigneUITests.swift CoproFirstUITests/ConnexionUITests.swift
 CoproFirstUITests/BarreLateraleUITests.swift
 CoproFirstUITests/CartesDuFilUITests.swift CoproFirstUITests/SaisieAffaireUITests.swift
-CoproFirstUITests/MessagesAffaireUITests.swift"
+CoproFirstUITests/MessagesAffaireUITests.swift
+CoproFirstUITests/DelegationsCSUITests.swift CoproFirstUITests/EspaceCSUITests.swift
+CoproFirstUITests/ApercusSaisieUITests.swift CoproFirstUITests/CommunauteUITests.swift
+CoproFirstUITests/AffairesUITests.swift CoproFirstUITests/ConfirmationHoteUITests.swift"
 
 # $@ : les fichiers à lire. Rend le nombre de `tap()` directs hors commentaires.
 compter_tap() { cat "$@" /dev/null | grep -E '\.tap\(\)' | grep -vcE '^[[:space:]]*///?' ; }

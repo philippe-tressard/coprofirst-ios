@@ -137,8 +137,8 @@ private let toutes = PagesParDefaut.toutes
     #expect(conseil.membres[1].etageLibelle == nil, "un libellé vide se tait")
     let syndic = SyndicCS(try await client(servant: FixturesAnnuaireCS.syndic).getAdminAnnuaireSyndic().ok.body.json)
     #expect(syndic.nomDuContrat)
-    #expect(syndic.membres.first?.telephones == ["01 99 00 12 34", "06 99 00 12 34"], "servis un par un")
-    #expect(AnnuaireCS.champsTelephone(syndic.membres.first?.telephones ?? []) == ["01 99 00 12 34", "06 99 00 12 34"])
+    #expect(syndic.membres.first?.telephones == ["01 99 00 12 34", "01 99 00 12 35"], "servis un par un")
+    #expect(AnnuaireCS.champsTelephone(syndic.membres.first?.telephones ?? []) == ["01 99 00 12 34", "01 99 00 12 35"])
 }
 
 /// Le serveur refuse un interlocuteur sans téléphone en 422 avec SA phrase — pas la liste
@@ -249,13 +249,13 @@ private let toutes = PagesParDefaut.toutes
 
 @Test func lesTelephonesFontLAllerRetour() {
     #expect(AnnuaireCS.champsTelephone([]) == [""], "au moins un champ")
-    #expect(AnnuaireCS.champTelephone([" 01 99 00 00 01 ", "", "06 99 00 00 02"]) == "01 99 00 00 01,06 99 00 00 02")
+    #expect(AnnuaireCS.champTelephone([" 01 99 00 00 01 ", "", "01 99 00 00 02"]) == "01 99 00 00 01,01 99 00 00 02")
     #expect(AnnuaireCS.champTelephone(["  "]) == nil)
 }
 
 @Test func leJourDeLAGPartALaFormeDuServeur() throws {
     let date = try #require(FormatsDuSite.lire("2026-06-12"))
-    #expect(AnnuaireCS.jour(date) == "2026-06-12")
+    #expect(FormatsDuSite.jourISO(date) == "2026-06-12", "le jour de l'AG part par le format commun (#346)")
 }
 
 @MainActor

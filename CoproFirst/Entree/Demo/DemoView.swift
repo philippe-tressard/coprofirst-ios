@@ -106,7 +106,7 @@ private struct CartePersonnage: View {
                     .font(.title3)
                     .foregroundStyle(palette.primary)
                     .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
-                    .frame(width: 44, height: 44)
+                    .frame(width: Mise.medaillon, height: Mise.medaillon)
                     .background(palette.primaryLight, in: .circle)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 3) {

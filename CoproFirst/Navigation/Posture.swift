@@ -59,8 +59,13 @@ private struct LecteurDePosture: UIViewRepresentable {
         let vue = UIView()
         vue.isUserInteractionEnabled = false
         #if DEBUG
-        if let fixee = LancementSimule.posture(ProcessInfo.processInfo.arguments) {
-            Task { @MainActor in posture = fixee }
+        let arguments = ProcessInfo.processInfo.arguments
+        if let fixee = LancementSimule.posture(arguments) {
+            let tardive = LancementSimule.charniereTardive(arguments)
+            Task { @MainActor in
+                if tardive { try? await Task.sleep(for: .seconds(2)) }
+                posture = fixee
+            }
             return vue
         }
         #endif

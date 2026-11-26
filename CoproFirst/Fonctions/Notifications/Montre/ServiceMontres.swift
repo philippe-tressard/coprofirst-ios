@@ -6,14 +6,10 @@ import Foundation
 
 /// Un jeton de montre émis ou renouvelé (`MontreEmise`) : le brut n'est rendu qu'à ce moment,
 /// et ne fait que passer — vers la montre, jamais sur le disque de l'iPhone ni dans une trace.
-struct JetonDeMontre: Equatable, Sendable, CustomStringConvertible, CustomDebugStringConvertible, CustomReflectable {
+struct JetonDeMontre: Equatable, Sendable {
     let id: Int
-    let jeton: String
+    let jeton: JetonMasque
     let expireLe: Date
-
-    var description: String { "JetonDeMontre(id: \(id), jeton masqué, expireLe: \(expireLe))" }
-    var debugDescription: String { description }
-    var customMirror: Mirror { Mirror(self, children: [], displayStyle: .struct) }
 }
 
 /// Les montres du compte connecté (coprofirst#2771), demandées par l'iPhone SEUL : la montre
@@ -73,6 +69,6 @@ extension ServiceAPI: ServiceMontres {
 extension JetonDeMontre {
     /// La seule lecture du type généré.
     init(_ emise: Components.Schemas.MontreEmise) {
-        self.init(id: emise.id, jeton: emise.jeton, expireLe: emise.expireLe)
+        self.init(id: emise.id, jeton: JetonMasque(emise.jeton), expireLe: emise.expireLe)
     }
 }

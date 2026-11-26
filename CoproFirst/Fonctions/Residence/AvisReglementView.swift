@@ -222,8 +222,7 @@ private struct SectionPliee<Contenu: View>: View {
                 .contentShape(.rect)
             }
             .buttonStyle(.plain)
-            .accessibilityValue(ouverte ? "déplié" : "replié")
-            .accessibilityHint(ouverte ? "Replie la section" : "Déplie la section")
+            .depliage(ouvert: ouverte, deplier: "Déplie la section", replier: "Replie la section")
             .accessibilityIdentifier(identifiant)
             if ouverte {
                 VStack(alignment: .leading, spacing: 14) { contenu }

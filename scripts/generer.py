@@ -21,7 +21,8 @@ Usage :
       plancher, lui, ne monte que par `_plancher.py`.
   python3 scripts/generer.py --sources
       Les fichiers de coprofirst lus, un par ligne ; échoue si un générateur déclare un
-      fichier de l'API ou une feuille de la charte hors des exceptions datées (#237), ou si
+      fichier de l'API ou du front (`front/src/lib/`, `front/src/styles/`) hors des
+      exceptions datées (#237, #356), ou si
       une exception ne sert plus — et prouve d'abord, sur des modules fictifs, qu'il refuse ;
       joue aussi l'`autotest()` de chaque générateur qui en déclare un (#286).
 """
@@ -61,18 +62,15 @@ def sources(modules: list) -> list[str]:
     return sorted({s for m in modules for s in m.SOURCES})
 
 
-#: Ce qu'aucun générateur ne lit dans les sources de coprofirst : l'API (`api/app/**`) et les
-#: feuilles de la charte (`socle.css`, `palette-sombre.css`, `palettes.css`, remplacées par
-#: `palettesResolues`, #227). Leur forme change sans prévenir et
-#: la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
-#: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`) — `ctx.constante`,
-#: `ctx.table`. À la lecture, `Contexte.lire` refuse aussi la source d'une constante publiée.
-INTERDITS = re.compile(
-    r"^(api/app/|front/src/styles/(socle|palette-sombre|palettes)\.css$"
-    # #239 : publiés par tables-clients.json 1.3.0 et constantes-clients.json 1.1.0 (v3.105.0) ;
-    # fichiers.ts en entier par tables-clients.json 1.4.0 (famillesAffichageFichiers, v3.106.0) ;
-    # pages.ts par la table `pages` (#2634) : le serveur peut le retirer de la release (#285).
-    r"|front/src/lib/(components/BadgeVerdict\.svelte|separateurs\.ts|fichiers\.ts|pages\.ts)$)")
+#: Ce qu'aucun générateur ne lit dans les sources de coprofirst : l'API (`api/app/**`), et le
+#: front entier — `front/src/lib/**` et `front/src/styles/**` (#356 ; avant, les seules feuilles
+#: de la charte, #227, et quatre fichiers de `#lib`, #239, #285). Leur forme change sans
+#: prévenir — un remaniement du site casse la montée du plancher sans que la CI du serveur le
+#: dise — et la concordance devenait INCONNUE (#237) : la release publie de quoi s'en passer
+#: (`constantes-clients.json`, `tables-clients.json`, `openapi.json`, `icones-svg.json`) —
+#: `ctx.constante`, `ctx.table`, `ctx.version.piece_jointe`. À la lecture, `Contexte.lire`
+#: refuse aussi la source d'une constante publiée.
+INTERDITS = re.compile(r"^(api/app/|front/src/(lib|styles)/)")
 #: Les lectures encore tolérées : date, raison, et ce qui les retirera. Une exception qui ne
 #: couvre plus aucune source déclarée échoue — elle se retire avec la lecture.
 #: La dernière (saisie_affaire.py) s'est retirée avec le plancher v3.117.0, qui publie ses constantes.
@@ -96,7 +94,12 @@ def controler_sources(modules: list) -> int:
     fictif = types.SimpleNamespace(__name__="generateurs.fictif", SOURCES=["api/app/utils/mots_de_passe.py"])
     toleree = types.SimpleNamespace(__name__="generateurs.toleree", SOURCES=["front/src/styles/socle.css"])
     pages = types.SimpleNamespace(__name__="generateurs.pages", SOURCES=["front/src/lib/pages.ts"])
+    # #356 : tout le front, plus seulement quelques fichiers nommés.
+    front = types.SimpleNamespace(__name__="generateurs.front", SOURCES=[
+        "front/src/lib/tickets.ts", "front/src/lib/entites/ticket.ts", "front/src/styles/normes.css"])
     if (len(refus_sources([fictif], {})) != 1 or len(refus_sources([pages], {})) != 1
+            or len(refus_sources([front], {})) != 3
+            or refus_sources([types.SimpleNamespace(__name__="generateurs.permise", SOURCES=["LICENSES/ISC.txt"])], {})
             or refus_sources([toleree], {"front/src/styles/socle.css": "x"})
             or len(refus_sources([fictif], {"front/src/styles/socle.css": "x"})) != 2):
         print("❌ autotest : une source interdite, une exception qui ne sert plus doivent être refusées")

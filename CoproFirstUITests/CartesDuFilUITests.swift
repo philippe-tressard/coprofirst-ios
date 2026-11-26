@@ -65,7 +65,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(carte.apparait())
         app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-        app.toucher(app.elementAcces("affaire.modifier"))
+        app.ouvrirModificationAffaire()
         XCTAssertTrue(app.elementAcces("modifier.contenuFige").apparait())
         let titreFige = NSPredicate(format: "identifier == %@ AND isEnabled == false", "modifier.titre")
         // Un `Form` ne crée pas ses lignes hors de l'écran : sur iPad, la feuille de formulaire
@@ -116,17 +116,18 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(carte.apparait())
         app.toucher(carte)
         XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-        let modifier = app.elementAcces("affaire.modifier")
-        XCTAssertTrue(modifier.exists)
-        app.toucher(modifier)
+        XCTAssertTrue(app.elementAcces("affaire.modifier").exists)
+        app.ouvrirModificationAffaire()
 
-        // Sur iPad, la feuille de formulaire range le titre sous les catégories : un `Form` ne
-        // crée pas ses lignes hors de l'écran, il s'amène (#304).
+        // Les catégories d'abord, en tête de la feuille : sur iPad, le titre est rangé dessous, et
+        // l'amener peut faire sortir la catégorie de l'écran — un `Form` ne crée pas ses lignes
+        // hors de l'écran, elle cessait d'exister (#304, #372 : échantillon iPad du 24/11).
+        XCTAssertTrue(
+            app.elementAcces("nouvelle.categorie.sinistre").apparait(), "le conseil peut changer la catégorie")
         let titre = app.textFields["modifier.titre"]
         XCTAssertTrue(app.amener(titre), "le titre de l'affaire, sous les catégories")
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertFalse(enregistrer.isEnabled, "rien n'a changé : rien à enregistrer")
-        XCTAssertTrue(app.elementAcces("nouvelle.categorie.sinistre").exists, "le conseil peut changer la catégorie")
         app.toucher(titre)
         titre.typeText(" nord")
         app.toucher(enregistrer)
@@ -150,7 +151,7 @@ final class CartesDuFilUITests: XCTestCase {
             XCTAssertTrue(carte.apparait())
             app.toucher(carte)
             XCTAssertTrue(app.attendreDetailAffaire("A-0041"))
-            app.toucher(app.elementAcces("affaire.modifier"))
+            app.ouvrirModificationAffaire()
 
             let mode = app.elementAcces("modifier.modeSaisie")
             XCTAssertTrue(mode.apparait(), "la phrase dit la saisie")

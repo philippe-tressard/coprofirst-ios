@@ -64,7 +64,7 @@ struct ArchivesAffaires: View {
                 Text(String(annee))
                     .font(.titre(.title3))
                     .foregroundStyle(palette.text)
-                Text(compte, format: .number)
+                Text(FormatsDuSite.nombre(compte))
                     .font(.footnote.weight(.semibold).monospacedDigit())
                     .foregroundStyle(palette.textMuted)
                     .padding(.horizontal, 8)
@@ -83,8 +83,7 @@ struct ArchivesAffaires: View {
         .textCase(nil)
         .listRowInsets(EdgeInsets(top: 0, leading: Mise.marge, bottom: 0, trailing: Mise.marge))
         .accessibilityLabel("\(annee), \(compte) affaire(s)")
-        .accessibilityValue(ouverte ? "dépliée" : "repliée")
-        .accessibilityHint(ouverte ? "Replie l'année" : "Déplie l'année")
+        .depliage(ouvert: ouverte, deplier: "Déplie l'année", replier: "Replie l'année", etats: ("dépliée", "repliée"))
         .accessibilityIdentifier("archives.annee.\(annee)")
     }
 

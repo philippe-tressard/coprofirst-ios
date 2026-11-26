@@ -17,7 +17,7 @@ struct VignetteDeNature: View {
         PictogrammeDuSite(nom: element.pictogramme, cote: trace)
             .foregroundStyle(palette[keyPath: nature.couleur])
             .frame(width: cote, height: cote)
-            .background(palette[keyPath: nature.fond], in: .rect(cornerRadius: 10, style: .continuous))
+            .background(palette[keyPath: nature.fond], in: .rect(cornerRadius: Mise.rayonTuile, style: .continuous))
             // Une vignette ne grandit pas sans fin : la nature se lit aussi dans le libellé.
             .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
             .accessibilityHidden(true)

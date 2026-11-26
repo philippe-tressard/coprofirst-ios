@@ -109,37 +109,30 @@ private struct DemandeSuppressionFeuille: View {
     @State private var refus: String?
 
     var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    ForEach(Array(etat.consequences.enumerated()), id: \.offset) { _, consequence in
-                        Text(consequence).font(.subheadline)
-                    }
+        FeuilleDeSaisie(titre: "Supprimer mon compte", erreur: nil) {
+            Section {
+                ForEach(Array(etat.consequences.enumerated()), id: \.offset) { _, consequence in
+                    Text(consequence).font(.subheadline)
                 }
-                Section {
-                    SecureField("Votre mot de passe, pour confirmer", text: $motDePasse)
-                        .textContentType(.password)
-                        .accessibilityIdentifier("suppression.motDePasse")
-                    TextField("Motif (facultatif)", text: $motif, axis: .vertical)
-                        .lineLimit(2...4)
-                        .accessibilityIdentifier("suppression.motif")
-                }
-                if let refus { MessageErreur(texte: refus) }
             }
-            .scrollContentBackground(.hidden)
-            .background(palette.bg)
-            .navigationTitle("Supprimer mon compte")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                BoutonsFeuille(
-                    envoi: envoi, libelle: "Confirmer la demande", actif: !motDePasse.isEmpty,
-                    identifiant: "suppression.confirmer"
-                ) {
-                    envoi = true
-                    defer { envoi = false }
-                    refus = await demander(motDePasse, motif)
-                    if refus == nil { fermer() }
-                }
+            Section {
+                SecureField("Votre mot de passe, pour confirmer", text: $motDePasse)
+                    .textContentType(.password)
+                    .accessibilityIdentifier("suppression.motDePasse")
+                TextField("Motif (facultatif)", text: $motif, axis: .vertical)
+                    .lineLimit(2...4)
+                    .accessibilityIdentifier("suppression.motif")
+            }
+            if let refus { MessageErreur(texte: refus) }
+        } barre: {
+            BoutonsFeuille(
+                envoi: envoi, libelle: "Confirmer la demande", actif: !motDePasse.isEmpty,
+                identifiant: "suppression.confirmer"
+            ) {
+                envoi = true
+                defer { envoi = false }
+                refus = await demander(motDePasse, motif)
+                if refus == nil { fermer() }
             }
         }
         .interactiveDismissDisabled(envoi)

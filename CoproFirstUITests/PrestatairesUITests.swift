@@ -21,7 +21,7 @@ final class PrestatairesUITests: XCTestCase {
         ouvrirLaFiche(app)
         XCTAssertTrue(app.elementAcces("avis.exercice.2026").apparait(), "l'exercice le plus récent")
         LancementCaptures.capturer("prestataires-2a-recapitulatif")
-        app.toucher(app.elementAcces("avis.11"), essais: Self.loin)
+        app.deplier(app.elementAcces("avis.11"), essais: Self.loin)
         let detail = app.elementAcces("avis.11.detail")
         XCTAssertTrue(detail.apparait(), "l'avis déplié")
         XCTAssertTrue(detail.label.contains("délai respecté"), detail.label)
@@ -85,8 +85,9 @@ final class PrestatairesUITests: XCTestCase {
     func testCorrigerPuisRetirerSonAvis() throws {
         let app = LancementCaptures.lancer()
         ouvrirLaFiche(app)
-        app.toucher(app.elementAcces("avis.exercice.2025"), essais: Self.loin)
-        app.toucher(app.elementAcces("avis.9"), essais: Self.loin)
+        // Deux dépliages (#384) : l'exercice, puis l'avis — chacun jusqu'à son état.
+        app.deplier(app.elementAcces("avis.exercice.2025"), essais: Self.loin)
+        app.deplier(app.elementAcces("avis.9"), essais: Self.loin)
         app.toucher(app.elementAcces("avis.9.modifier"), essais: Self.loin)
         XCTAssertTrue(app.navigationBars["Modifier cet avis"].apparait())
         XCTAssertTrue(app.elementAcces("avis.affaire.retenue").apparait(), "son affaire, retenue")
@@ -123,8 +124,7 @@ final class PrestatairesUITests: XCTestCase {
     private func ouvrirLaFiche(_ app: XCUIApplication) {
         app.ouvrirDansPlus("Prestataires", jusqua: app.elementAcces("prestataire.1"))
         let fiche = app.elementAcces("prestataire.1")
-        XCTAssertTrue(fiche.apparait())
-        app.toucher(fiche)
+        app.deplier(fiche)
     }
 
     /// Une rangée de la feuille qui dit `texte`, amenée à l'écran pour exister.
@@ -152,7 +152,7 @@ final class PrestatairesUITests: XCTestCase {
         let fiche = app.elementAcces("prestataire.1")
         XCTAssertTrue(fiche.apparait(), "les fiches")
         app.capturerAcces("prestataires-1-liste", dans: self)
-        app.toucher(fiche)
+        app.deplier(fiche)
         XCTAssertTrue(app.libelleAcces("Avis du conseil syndical (3)").apparait(), "la fiche dépliée")
         app.capturerAcces("prestataires-2-fiche", dans: self)
 

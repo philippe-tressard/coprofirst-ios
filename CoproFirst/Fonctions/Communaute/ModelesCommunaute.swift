@@ -84,8 +84,8 @@ struct Annonce: Codable, Hashable, Sendable, Identifiable {
     let negotiable: Bool?
     let photos: [String]?
     var statut: String
-    let auteurPrenom: String?
-    let auteurNom: String?
+    /// Le nom de l'auteur tel que le SERVEUR l'affiche (`auteur_affiche`, contrat 1.25.0, #378).
+    let auteurAffiche: String?
     /// Absent quand l'auteur masque ses coordonnées.
     let auteurEmail: String?
     let estAuteur: Bool?

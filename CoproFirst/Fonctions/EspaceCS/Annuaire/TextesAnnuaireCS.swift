@@ -58,7 +58,7 @@ enum TextesAnnuaireCS {
     static let fonction = "Fonction"
     static let fonctionIndication = "Fonction — ex. Directeur de gérance"
     static let email = "Email"
-    static let telephoneIndication = "ex. 01 23 45 67 89"
+    static let telephoneIndication = "ex. 01 99 00 12 34"
     static let ajouterTelephone = "N° de téléphone"
 
     static func telephones(_ n: Int) -> String { n > 1 ? "Téléphones" : "Téléphone" }

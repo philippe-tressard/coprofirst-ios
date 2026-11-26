@@ -96,7 +96,7 @@ struct KanbanAffaires: View {
                             HStack(spacing: 6) {
                                 Circle().fill(palette[keyPath: colonne.teinte]).frame(width: 8, height: 8)
                                 Text(colonne.libelleCourt)
-                                Text(etat.cartes(de: colonne).count, format: .number)
+                                Text(FormatsDuSite.nombre(etat.cartes(de: colonne).count))
                                     .monospacedDigit()
                                     .foregroundStyle(palette.textMuted)
                             }
@@ -218,7 +218,7 @@ private struct ColonneDuKanban: View {
                     .foregroundStyle(palette.text)
                 Spacer()
                 if let cartes {
-                    Text(cartes.count, format: .number)
+                    Text(FormatsDuSite.nombre(cartes.count))
                         .font(.footnote.weight(.semibold).monospacedDigit())
                         .foregroundStyle(palette.textMuted)
                 }

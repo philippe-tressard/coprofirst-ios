@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import ClientAPI
 import Foundation
 import Testing
 
@@ -51,10 +52,10 @@ private struct AppAvecMontre {
     }
     #expect(adresse == app.residence.adresse)
     #expect(nom == app.residence.nom)
-    #expect(!jeton.isEmpty)
+    #expect(!jeton.enClair.isEmpty)
     let gardees = app.suite.dictionaryRepresentation().values.map { "\($0)" }
     #expect(gardees.contains("\(id)"), "l'identifiant se garde")
-    #expect(!gardees.contains { $0.contains(jeton) }, "le jeton ne se garde pas sur l'iPhone")
+    #expect(!gardees.contains { $0.contains(jeton.enClair) }, "le jeton ne se garde pas sur l'iPhone")
 }
 
 @MainActor
@@ -115,7 +116,7 @@ private struct AppAvecMontre {
     let destination = Destination.clocheDeLaMontre(ClocheSurLiPhone.userInfo(adresse))
     #expect(destination?.ecran == .notifications)
     #expect(destination?.adresse.host() == adresse.host())
-    #expect(Destination.clocheDeLaMontre(["adresse": "http://ailleurs.exemple"]) == nil)
+    #expect(Destination.clocheDeLaMontre(["adresse": "http://ailleurs.test"]) == nil)
 }
 
 @Test func leJetonDeMontreNeSEcritJamais() {

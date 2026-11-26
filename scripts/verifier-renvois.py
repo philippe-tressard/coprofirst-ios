@@ -49,6 +49,7 @@ EXCEPTIONS = {
     ("CLAUDE.md", "multi-coproprietes.md"): "une spécification de coprofirst (specs/), pas de ce dépôt",
     ("CLAUDE.md", "verrou_poste.py"): "l'outil du poste, ~/.claude/bin (claude-config)",
     (".claude/skills/publication-app-store/confidentialite.md", "contenu.json"): "le fichier servi par coprofirst.fr",
+    (".claude/skills/publication-app-store/SKILL.md", "SORTIES"): "la liste des versions sorties du contrat en circulation, dans coprofirst (api/app/contrat/circulation.py)",
 }
 #: Un fichier nommé par son extension : jugé à son nom, ou hors de vue (le site, le projet généré).
 FICHIER = re.compile(r"[\w+-]+\.(swift|md|py|sh|json|yml|yaml|plist|xcprivacy|svelte|xcodeproj|ts|txt|toml|env)")

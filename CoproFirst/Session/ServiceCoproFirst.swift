@@ -7,9 +7,9 @@ import Foundation
 /// généré (`ServiceAPI`) et une API simulée pour les aperçus et les tests
 /// (`ServiceSimule`) — aucun écran n'appelle le réseau lui-même.
 protocol ServiceCoproFirst: DecouvreInstallation {
-    /// GET /config/logo.png : les octets du logo à cette adresse
-    /// (`Installation.adresseLogo(sombre:)`) — une route publique.
-    func logo(_ adresse: URL) async throws -> Data
+    /// GET /config/logo.png : les octets du logo demandé (`Installation.logo(sombre:)`) —
+    /// une route publique.
+    func logo(_ demande: LogoDemande) async throws -> Data
     /// POST /auth/login : ouvre la session de cette installation (cookies). Le mot de
     /// passe ne part qu'à un hôte passé par `GardeHote` (#82).
     func connecter(_ hote: HoteConfirme, email: String, motDePasse: String) async throws
