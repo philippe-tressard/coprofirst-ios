@@ -4,7 +4,7 @@
 
 - `pages` (`PAGES` de `front/src/lib/pages.ts`, `PAGES_ROLES` étalées à leur place,
   libellés résolus) : l'ordre par défaut des pages, que `pages_order` de GET /config
-  réordonne — `PagesOuvertes` (Navigation/) décide ensuite qui les voit (#15)
+  réordonne — chacune avec son public (`acces`), que `PagesOuvertes` croise avec `acces_menu` servi (#355)
   → `CoproFirst/Navigation/PagesParDefaut.swift` ;
 - `titreFil` (`TITRE_FIL` de `flux.ts`) : le TITRE du fil d'activité, la section du
   tableau de bord que l'app ouvre en premier → `PagesParDefaut.titreDuFil` ;
@@ -100,9 +100,6 @@ def _swift(ctx, pages: list[dict]) -> tuple[str, int]:
     corps += f"    static let rolesAdministrateur: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'admin'))}\n"
     corps += f"    static let rolesOperateur: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'operateur'))}\n"
     corps += f"    static let rolesProprietaire: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'proprietaire'))}\n"
-    corps += "    /// `isAdminOnly` : un de ces rôles, et aucun des suivants (le compte technique).\n"
-    corps += f"    static let rolesAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'adminSeul'))}\n"
-    corps += f"    static let rolesSansAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'sansAdminSeul'))}\n"
     statuts_locataire = _liste(ctx, "statutsDuProfil", "locataire")
     corps += f"    static let statutsLocataire: Set<String> = {_ensemble(statuts_locataire)}\n"
     statuts_gestionnaire = _liste(ctx, "statutsDuProfil", "gestionnaire")
@@ -124,9 +121,13 @@ def pages(ctx) -> int:
     for p in _pages(ctx):
         if p.get("href") is None:
             continue  # sans entrée de navigation : ni ordonnée, ni dans la barre
+        # Le PUBLIC de la page (`acces`, #355) : elle s'affiche si `acces_menu` de GET /auth/me
+        # le sert. Une page du menu sans public ne s'afficherait jamais : la génération s'arrête.
+        if not isinstance(p.get("acces"), str) or not p["acces"]:
+            raise SystemExit(f"❌ tables-clients.json : la page {p['id']!r} du menu n'a pas de public (acces)")
         lignes.append(
             f'        PageDeNavigation(id: "{p["id"]}", route: "{p["href"]}", '
-            f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}"),\n'
+            f'libelle: "{p["navLabel"]}", titre: "{p["titre"]}", icone: "{p["icone"]}", acces: "{p["acces"]}"),\n'
         )
     corps = ctx.entete(f"{ctx.source_table('pages')} et {ctx.source_table('titreFil')} (tables-clients.json)")
     corps += "\n/// Les pages de navigation du site, dans l'ordre par défaut ; `pages_order` le remplace.\n"

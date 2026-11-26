@@ -54,6 +54,24 @@ private func refus(_ statut: Int, _ corps: String?) -> ErreurService {
     #expect(ErreurService.depuis(erreur).phraseDuServeur == "Réservé au conseil syndical")
 }
 
+/// Le 403 d'un compte au mot de passe temporaire (#377) : un `detail` OBJET, dont le message
+/// est la phrase et le code celui que publie le serveur (`TablesProfil.motifMotDePasseAChanger`).
+@Test func unRefusStructureDitSonMessageEtGardeSonCode() {
+    let corps = #"{"detail": {"code": "mot_de_passe_a_changer", "message": "Votre mot de passe est temporaire."}}"#
+    let erreur = refus(403, corps)
+    #expect(erreur.phrase == "Votre mot de passe est temporaire.")
+    guard case .refus(let lu) = erreur else { Issue.record("un refus attendu"); return }
+    #expect(lu.code == TablesProfil.motifMotDePasseAChanger)
+    #expect(refus(403, #"{"detail": {"code": "x"}}"#) == .depuisLecture(403), "sans message : rien à dire")
+}
+
+@Test func leMotDePasseTemporaireSeLitEtTombeQuandIlEstChoisi() async throws {
+    let service = ServiceSimule(delai: .zero)
+    service.profilSimule.motDePasseAChanger = true
+    try await service.changerMotDePasse(actuel: "temporaire1", nouveau: "choisi-2026", dans: ServiceSimule.residence)
+    #expect(try await service.profil(ServiceSimule.residence).motDePasseAChanger == false)
+}
+
 @Test func sansPhraseLeStatutDecide() {
     #expect(refus(401, #"{"detail": "x"}"#) == .sessionExpiree, "401 : la session")
     #expect(refus(403, nil) == .introuvable)

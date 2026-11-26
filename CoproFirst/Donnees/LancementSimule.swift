@@ -139,6 +139,7 @@ enum LancementSimule {
     /// `-compte operateur` : l'opérateur de la plateforme seul, compte technique (#16) ;
     /// `-compte resident` : un copropriétaire hors du conseil (le bandeau d'une affaire) ;
     /// `-compte locataire` : un locataire, et son bail (`FixturesAcces.monBail`, #127).
+    /// `-compte temporaire` : un compte au mot de passe temporaire, mené à le choisir (#377).
     /// `-logement-long` : un libellé qui ne tient pas dans la barre ; `-faceid-refuse` :
     /// Face ID annulé à chaque demande ; `-protection appareil|aucune` : la session gardée
     /// sans biométrie, sous le code de l'appareil ou sans rien (#84) ; `-delai-detail <ms>` :
@@ -175,22 +176,33 @@ enum LancementSimule {
     }
 
     /// Le profil de `-compte` (voir `compteSimule`) ; sans lui, un membre du conseil.
+    ///
+    /// `est_moderateur` (#136) et `acces_menu` (#355) sont ce que le serveur SERT à ce
+    /// compte — `acces_du_menu` de coprofirst, lu cas par cas, jamais recalculé ici.
     @MainActor
     private static func profilChoisi(_ compte: String?, _ simule: ServiceSimule) {
         switch compte {
-        case "administrateur": simule.profilSimule.roles.append("admin")
-        // `est_moderateur` est ce que le serveur sert pour ce compte (#136) — pas recalculé.
+        case "administrateur":
+            simule.profilSimule.roles.append("admin")
+            simule.profilSimule.accesMenu?.append("admin")
         case "resident":
             simule.profilSimule.roles.removeAll { $0 == "conseil_syndical" }
             simule.profilSimule.estModerateur = false
+            simule.profilSimule.accesMenu = ["tous", "resident"]
         case "locataire":
             simule.profilSimule.statut = "locataire"
             simule.profilSimule.roles = ["résident"]
             simule.profilSimule.estModerateur = false
+            simule.profilSimule.accesMenu = ["tous", "resident"]
+        case "temporaire":
+            // Un compte initial d'une installation neuve : son mot de passe est à changer (#377).
+            simule.profilSimule.motDePasseAChanger = true
         case "operateur":
+            // Le compte technique n'habite pas la résidence : l'administration seule.
             simule.profilSimule.statut = "admin_technique"
             simule.profilSimule.roles = ["operateur"]
             simule.profilSimule.estModerateur = false
+            simule.profilSimule.accesMenu = ["admin"]
         default: break
         }
     }

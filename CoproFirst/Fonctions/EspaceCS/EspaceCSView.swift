@@ -25,10 +25,13 @@ struct EspaceCSView: View {
                 reserve: TextesEspaceCS.reserve))
     }
 
-    /// Les descriptifs du site, moins celui du Reporting : il promet l'export (« à consulter
-    /// ou à exporter »), que l'app laisse au site et dit sous le suivi
-    /// (`TextesReporting.surLeSite`, #358) — écarté, comme ceux des onglets d'accès (`AccesView`).
-    static let descriptifs = TablesEspaceCS.descriptifs.filter { $0.key != "reporting" }
+    /// Les descriptifs du site, moins ceux qui promettent un geste que l'app laisse au site —
+    /// écartés, comme ceux des onglets d'accès (`AccesView`) :
+    /// - le Reporting promet l'export (« à consulter ou à exporter »), que l'app dit sous le
+    ///   suivi (`TextesReporting.surLeSite`, #358) ;
+    /// - les Badges, depuis v3.126.5 (#355) : « à tenir à jour et à exporter », quand l'app
+    ///   n'en est que la consultation (`OngletBadgesCS`, `Parite/PARITE.md`).
+    static let descriptifs = TablesEspaceCS.descriptifs.filter { !["reporting", "badges"].contains($0.key) }
 }
 
 extension EspaceCSView: EcranDeMenu {}

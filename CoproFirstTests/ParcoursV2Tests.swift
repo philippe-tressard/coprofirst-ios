@@ -8,7 +8,7 @@ import Testing
 @testable import CoproFirst
 
 private func page(_ id: String) -> PageDeNavigation {
-    PageDeNavigation(id: id, route: "/\(id)", libelle: id, titre: id, icone: "circle")
+    PageDeNavigation(id: id, route: "/\(id)", libelle: id, titre: id, icone: "circle", acces: "tous")
 }
 
 @Test func laBarreSuitLOrdreRegleParLAdministration() {

@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), front/src/lib/tickets.ts#STATUTS_TICKET, front/src/lib/tickets.ts#STATUTS_TICKET_HISTORIQUES, front/src/lib/tickets.ts#STATUTS_TICKET_SANS_CYCLE (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/tickets.ts#STATUTS_TICKET, front/src/lib/tickets.ts#STATUTS_TICKET_HISTORIQUES, front/src/lib/tickets.ts#STATUTS_TICKET_SANS_CYCLE (tables-clients.json).
 
 /// La pastille de chaque statut d'une affaire (sa classe `badge-*`), comme le site l'écrit.
 enum StatutsAffaire {

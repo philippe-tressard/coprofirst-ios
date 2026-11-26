@@ -1534,6 +1534,13 @@
               "null"
             ]
           },
+          "prix_centimes": {
+            "title": "Prix Centimes",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "public_cible": {
             "default": [],
             "items": {
@@ -12522,7 +12529,7 @@
         "type": "object"
       },
       "OptionFiche": {
-        "description": "Une option sur la FICHE d'un sondage.\n\n`nb_votes` et `reponses_libres` sont ABSENTS — pas à zéro — quand les\nrésultats ne sont pas visibles : « 0 vote » se lirait « personne n'a voté ».\nLa route rend donc sans les champs non posés (`response_model_exclude_unset`).",
+        "description": "Une option sur la FICHE d'un sondage.\n\n`nb_votes`, `part` et `reponses_libres` sont ABSENTS — pas à zéro — quand les\nrésultats ne sont pas visibles : « 0 vote » se lirait « personne n'a voté ».\n`part` est le pour-cent des votes, arrondi par `utils/pourcentages` (#3060).\nLa route rend donc sans les champs non posés (`response_model_exclude_unset`).",
         "properties": {
           "champ_libre": {
             "default": false,
@@ -12547,6 +12554,13 @@
           "ordre": {
             "title": "Ordre",
             "type": "integer"
+          },
+          "part": {
+            "title": "Part",
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "reponses_libres": {
             "items": {
@@ -19440,6 +19454,14 @@
       },
       "UserRead": {
         "properties": {
+          "acces_menu": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Acces Menu",
+            "type": "array"
+          },
           "actif": {
             "title": "Actif",
             "type": "boolean"
@@ -19567,6 +19589,11 @@
               "string",
               "null"
             ]
+          },
+          "mot_de_passe_a_changer": {
+            "default": false,
+            "title": "Mot De Passe A Changer",
+            "type": "boolean"
           },
           "nom": {
             "title": "Nom",
@@ -19708,6 +19735,14 @@
       "UtilisateurAdminRead": {
         "description": "Un compte dans la liste de l'administration — et les menus mandant / aidant.\n\nTypé depuis #2525 : la route rendait des `dict`, que le contrat annonçait `{}`.",
         "properties": {
+          "acces_menu": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Acces Menu",
+            "type": "array"
+          },
           "actif": {
             "title": "Actif",
             "type": "boolean"
@@ -19857,6 +19892,11 @@
               "string",
               "null"
             ]
+          },
+          "mot_de_passe_a_changer": {
+            "default": false,
+            "title": "Mot De Passe A Changer",
+            "type": "boolean"
           },
           "nom": {
             "title": "Nom",
@@ -20827,7 +20867,7 @@
   "info": {
     "description": "API de gestion de copropriétés",
     "title": "CoproFirst API",
-    "version": "2.10.0"
+    "version": "2.14.0"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -23097,7 +23137,7 @@
     },
     "/admin/db/integrite": {
       "get": {
-        "description": "Le contrôle d'intégrité de la base, in-process (`dialecte.verifier_integrite`).",
+        "description": "Le contrôle d'intégrité de la base, in-process — le verdict de la sauvegarde (#2949).",
         "operationId": "get_admin_db_integrite",
         "responses": {
           "200": {
@@ -26416,6 +26456,7 @@
     },
     "/auth/logout": {
       "post": {
+        "description": "Ferme la session présentée, jetons d'accès compris — pas les autres sessions du\ncompte, ni ses montres ni ses appareils push (arbitré le 23/11/2026) :\n`auth/jetons_rafraichissement.fermer_session`.",
         "operationId": "post_auth_logout",
         "responses": {
           "200": {
@@ -26857,7 +26898,7 @@
     },
     "/auth/verifier-acces": {
       "get": {
-        "description": "Réservé au `forward_auth` de Caddy : 204 si CE fichier se lit, 401 ou 404 sinon.\n\nCaddy interroge cet endpoint avant de servir un fichier de `/uploads/*`, qui\nétait jusqu'ici public. Il ne renvoie **aucun contenu** : seul le code compte,\net un corps vide évite d'exposer quoi que ce soit sur le porteur du cookie.\n\n🔴 Il juge le FICHIER, plus seulement la session (#2154, 23/10/2026) : Caddy\ntransmet l'adresse demandée (`X-Forwarded-Uri`), et `exiger_fichier_lisible`\napplique le droit de lire l'objet qui le cite. Une session valide lisait\njusque-là la pièce jointe d'une affaire qu'elle ne voyait pas. Sans adresse\n(un appel direct), la réponse est 404 : il n'y a rien à autoriser.\n\nIl s'appuie volontairement sur `get_current_user`, la dépendance d'authentification\ncommune, et non sur une vérification allégée maison. Une seconde façon de valider\nune session serait une seconde sémantique à maintenir — et à faire diverger. Le\ncoût dominant est le trajet HTTP interne, pas la lecture en base qu'elle effectue :\nl'économiser ne rapporterait presque rien et laisserait un compte désactivé\nconserver l'accès jusqu'à l'expiration de son jeton (120 min).",
+        "description": "Réservé au `forward_auth` de Caddy : 204 si CE fichier se lit, 401 ou 404 sinon.\n\nCaddy interroge cet endpoint avant de servir un fichier de `/uploads/*`, qui\nétait jusqu'ici public. Il ne renvoie **aucun contenu** : seul le code compte,\net un corps vide évite d'exposer quoi que ce soit sur le porteur du cookie.\n\n🔴 Il juge le FICHIER, plus seulement la session (#2154, 23/10/2026) : Caddy\ntransmet l'adresse demandée (`X-Forwarded-Uri`), et `exiger_fichier_lisible`\napplique le droit de lire l'objet qui le cite. Une session valide lisait\njusque-là la pièce jointe d'une affaire qu'elle ne voyait pas. Sans adresse\n(un appel direct), la réponse est 404 : il n'y a rien à autoriser.\n\nIl s'appuie volontairement sur `get_current_user`, la dépendance d'authentification\ncommune, et non sur une vérification allégée maison. Une seconde façon de valider\nune session serait une seconde sémantique à maintenir — et à faire diverger. Le\ncoût dominant est le trajet HTTP interne, pas la lecture en base qu'elle effectue :\nl'économiser ne rapporterait presque rien et laisserait un compte désactivé\nconserver l'accès jusqu'à l'expiration de son jeton (120 min).\n\n🔴 Sur une installation COMMUNE, toujours 404 (claude-config#604) : Caddy n'y sert\npas les fichiers, il les relaie à l'API (`installation_commune/fichiers`), qui lit\nla racine de la copropriété que l'hôte désigne. Une configuration de Caddy qui\nservirait encore sa racine unique ne sert donc rien — le sens fermé.",
         "operationId": "get_auth_verifier_acces",
         "responses": {
           "204": {

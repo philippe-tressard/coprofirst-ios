@@ -73,6 +73,25 @@ compte, jamais ici : `curl "https://itunes.apple.com/lookup?bundleId=fr.coprofir
 
 - **1.0** (build 1, `v1.0.0`) : approuvée le 14/11/2026 à 00:27, en ligne le 13/11 à 23:26 UTC.
 - **1.1** (build 2, `v1.1.0`) : en ligne le 18/11/2026 (#263), iPhone et iPad (#219).
+- **1.2** (build 3, `v1.2.0` à poser par `avant_soumission.py`) : préparée le 26/11/2026,
+  iOS seul (décision de Philippe du 26/11 : la règle de sortie commune avec l'Android levée
+  pour cette version). **Sans l'app Apple Watch** (« Oui » de Philippe, 26/11 vers 07:40 :
+  archive sans `ARCHIVE_AVEC_MONTRE`, la liaison de #226 étant éteinte), **sans l'Apple TV**
+  (#320 : licences, code source et icône manquent), relais des notifications éteint (#318).
+
+Nouveautés de la 1.2 (*What's New in This Version*), à coller par Philippe :
+
+```text
+• Signalez au conseil syndical une affaire, une suite ou la réponse de l'assistant. Masquez ce que publie un voisin, pour vous seul.
+• Affaires : modifiez ou supprimez votre réponse.
+• Carnet d'entretien : un contrat qui n'a pas encore commencé est marqué « À venir ».
+• Le menu ne montre que les pages auxquelles vous avez accès, comme sur le site.
+• Premier accès avec un mot de passe temporaire : vous choisissez le vôtre avant tout.
+• Sondages et annonces : pourcentages et prix identiques à ceux du site.
+• iPad : la liste et la fiche côte à côte sur tous les écrans, en portrait aussi ; ⌘F pour chercher.
+• iPhone pliable : le Fil en carnet, une journée par double page.
+• Meilleure lecture en très grand texte, et de nombreuses corrections.
+```
 
 `main` avance ensuite sous le dernier numéro : la version suivante monte
 `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` (`project.yml`).

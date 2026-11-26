@@ -12,28 +12,47 @@ import OpenAPIRuntime
 /// (`project.yml`, cible `CoproFirstTV`), qui lit ainsi les refus de son appairage.
 struct RefusDuServeur: Equatable, Sendable {
     let phrase: String
+    /// Le `code` d'un refus STRUCTURÉ (`{"detail": {"code": …, "message": …}}`) — le compte
+    /// au mot de passe temporaire (#377) ; `nil` pour une phrase seule.
+    var code: String?
 }
 
 extension RefusDuServeur {
     /// La plus longue phrase de refus qu'un corps porte : au-delà, ce n'en est pas une.
     static let plafond = 64 * 1024
 
-    /// Le `detail` d'un corps de refus, s'il est une phrase (une erreur de validation
-    /// sert une liste : elle ne s'affiche pas).
-    static func detail(_ corps: Data) -> String? {
-        struct Detail: Decodable { let detail: String }
-        guard let lu = try? JSONDecoder().decode(Detail.self, from: corps) else { return nil }
-        let phrase = lu.detail.trimmingCharacters(in: .whitespacesAndNewlines)
-        return phrase.isEmpty ? nil : phrase
+    /// Le refus d'un corps : `detail` en phrase, ou en objet `{"code", "message"}` (le
+    /// message est la phrase, #377). Une erreur de validation sert une LISTE : elle ne
+    /// s'affiche pas.
+    static func lu(_ corps: Data) -> RefusDuServeur? {
+        struct Phrase: Decodable { let detail: String }
+        struct Structure: Decodable { let detail: DetailStructure }
+        let decodeur = JSONDecoder()
+        let (texte, code): (String, String?)
+        if let lu = try? decodeur.decode(Phrase.self, from: corps) {
+            (texte, code) = (lu.detail, nil)
+        } else if let lu = try? decodeur.decode(Structure.self, from: corps) {
+            (texte, code) = (lu.detail.message, lu.detail.code)
+        } else {
+            return nil
+        }
+        let phrase = texte.trimmingCharacters(in: .whitespacesAndNewlines)
+        return phrase.isEmpty ? nil : RefusDuServeur(phrase: phrase, code: code)
     }
+}
+
+/// Le `detail` d'un refus structuré : `{"code": "…", "message": "…"}` (#377).
+private struct DetailStructure: Decodable {
+    let code: String?
+    let message: String
 }
 
 extension ErreurService {
     /// Le refus d'un geste, lu dans son statut et son corps (`{"detail": "…"}`).
     static func depuisRefus(_ statut: Int, corps: Data?) -> ErreurService {
         if statut == 401 { return .sessionExpiree }
-        guard let phrase = corps.flatMap(RefusDuServeur.detail) else { return .depuisLecture(statut) }
-        return .refus(RefusDuServeur(phrase: phrase))
+        guard let refus = corps.flatMap(RefusDuServeur.lu) else { return .depuisLecture(statut) }
+        return .refus(refus)
     }
 }
 

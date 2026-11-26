@@ -106,6 +106,9 @@ def profil(ctx) -> str:
             if canal[cle] not in defauts:
                 raise SystemExit(f"❌ CANAUX_NOTIFS : {canal[cle]} n'a pas de défaut côté serveur")
     longueur = entier(ctx, "longueurMinMotDePasse")
+    motif = ctx.constante("motifMotDePasseAChanger")
+    if not isinstance(motif, str) or not motif:
+        raise SystemExit(f"❌ constantes-clients.json : motifMotDePasseAChanger n'est pas un code : {motif!r}")
     return (
         "    /// Le thème : une préférence de l'APPAREIL (le cookie du site), ses choix (`OPTIONS_THEME`).\n"
         f"    static let cleTheme = {chaine(ctx.table('cookieTheme'))}\n"
@@ -129,6 +132,8 @@ def profil(ctx) -> str:
         + "    ]\n"
         "    /// La longueur minimale d'un nouveau mot de passe (`LONGUEUR_MIN_MOT_DE_PASSE`, serveur).\n"
         f"    static let longueurMinimaleMotDePasse = {longueur}\n"
+        "    /// Le `detail.code` du 403 d'un compte au mot de passe temporaire (`MOTIF`, serveur, #377).\n"
+        f"    static let motifMotDePasseAChanger = {chaine(motif)}\n"
     )
 
 
@@ -139,7 +144,8 @@ def generer(ctx) -> str:
                  "Ce que le site écrit de la Communauté et que le contrat ne sert pas.", communaute(ctx))
     ecrire_table(ctx, FONCTIONS / "Profil" / "Genere" / "TablesProfil.swift",
                  ctx.provenance_tables("cookieTheme", "themeParDefaut", "optionsTheme", "canauxNotifications", "statutsDemandables")
-                 + " ; " + ctx.provenance_constantes("defautsPreferences", "longueurMinMotDePasse"),
+                 + " ; " + ctx.provenance_constantes("defautsPreferences", "longueurMinMotDePasse",
+                                             "motifMotDePasseAChanger"),
                  "TablesProfil",
                  "Ce que le site écrit du Profil et que le contrat ne sert pas.", profil(ctx))
     return "idées, annonces, avis, thème, préférences et profils"

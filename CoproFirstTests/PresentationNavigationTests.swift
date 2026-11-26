@@ -60,7 +60,7 @@ struct PresentationNavigationTests {
         #expect(
             PresentationNavigation.traduire(
                 Place(onglet: "profil"), vers: .barreDuBas, pages: ["tableau-de-bord", "faq"])
-                == Place(onglet: OrdrePages.idFil), "pas de « Plus » où la poser : le fil")
+                == Place(onglet: Aiguillage.idPlus, dansPlus: "profil"), "« Plus » toujours là (#355)")
     }
 
     @Test func unAllerRetourRendLaMemePage() {

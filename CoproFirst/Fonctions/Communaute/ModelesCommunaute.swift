@@ -80,7 +80,9 @@ struct Annonce: Codable, Hashable, Sendable, Identifiable {
     let description: String
     let typeAnnonce: String
     let categorie: String
-    let prix: Double?
+    /// Le prix en CENTIMES ENTIERS (`prix_centimes`, contrat 2.13.0, coprofirst#3011) — plus
+    /// de flottant (#376) ; rendu en euros par `FormatsDuSite.montant(centimes:)`.
+    let prixCentimes: Int?
     let negotiable: Bool?
     let photos: [String]?
     var statut: String

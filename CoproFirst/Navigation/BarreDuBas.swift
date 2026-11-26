@@ -5,7 +5,8 @@ import SwiftUI
 
 /// La navigation en classe compacte (iPhone, iPad en Split View étroit) : la barre du bas
 /// suit l'ORDRE RÉGLÉ PAR L'ADMINISTRATION (`pages_order`) ; au-delà de quatre entrées,
-/// « Plus ».
+/// « Plus » — toujours là, puisqu'il porte le Profil et À propos : un compte qui n'a
+/// qu'une page (le compte technique, #355) doit pouvoir se déconnecter.
 struct BarreDuBas: View {
     let pages: [PageDeNavigation]
     let installation: Installation
@@ -20,13 +21,11 @@ struct BarreDuBas: View {
                     .tabItem { Label(page.libelle, systemImage: Pictogrammes.symbole(page.icone)) }
                     .tag(page.id)
             }
-            if pages.count > visibles {
-                PlusView(
-                    pages: Array(pages.dropFirst(visibles)), installation: installation,
-                    ouverte: parcours.ouverteDansPlus)
-                    .tabItem { Label("Plus", systemImage: "ellipsis.circle") }
-                    .tag(Aiguillage.idPlus)
-            }
+            PlusView(
+                pages: Array(pages.dropFirst(visibles)), installation: installation,
+                ouverte: parcours.ouverteDansPlus)
+                .tabItem { Label("Plus", systemImage: "ellipsis.circle") }
+                .tag(Aiguillage.idPlus)
         }
     }
 }

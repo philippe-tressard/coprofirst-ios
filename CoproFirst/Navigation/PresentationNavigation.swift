@@ -41,8 +41,8 @@ enum PresentationNavigation: Equatable, Sendable {
     /// La même page, d'une présentation à l'autre (rotation, Split View, pliage) : la page
     /// ouverte reste ouverte. Dans « Plus », elle s'y rouvre ; « Plus » seul, sans page
     /// ouverte, devient la première page qu'il portait — la barre latérale et le carnet
-    /// n'ont pas de liste « Plus ». Une page que la barre du bas n'a pas où poser (pas de
-    /// « Plus ») : le fil.
+    /// n'ont pas de liste « Plus ». La barre du bas a toujours « Plus » : il porte le Profil
+    /// et À propos, même quand toutes les pages tiennent devant (#355).
     static func traduire(_ place: Place, vers cible: Self, pages: [String]) -> Place {
         switch cible {
         case .barreLaterale, .carnet:
@@ -54,7 +54,6 @@ enum PresentationNavigation: Equatable, Sendable {
                 return Place(onglet: place.onglet)
             }
             if place.onglet == Aiguillage.idPlus { return place }
-            guard pages.count > cible.visibles else { return Place(onglet: OrdrePages.idFil) }
             let connue = pages.contains(place.onglet) || EntreeFixe(rawValue: place.onglet) != nil
             return Place(onglet: Aiguillage.idPlus, dansPlus: connue ? place.onglet : nil)
         }
@@ -109,5 +108,15 @@ struct EcranDePage: View {
         }
         // L'élément ouvert de ses listes survit au changement de présentation (#119).
         .environment(\.selectionsDeLaPage, SelectionsDeLaPage(memoire: parcours.selections, page: page.id))
+    }
+}
+
+extension OrdrePages {
+    /// L'ACCUEIL de la barre — où l'app se pose quand rien d'autre n'est demandé, ou quand
+    /// la page demandée n'est pas dans la barre : le fil, s'il y est ; sinon la première
+    /// page servie (le compte technique n'a que l'administration, #355) ; une barre vide,
+    /// le Profil, d'où l'on se déconnecte. Écrit ICI, et nulle part ailleurs.
+    static func accueil(_ pages: [String]) -> String {
+        pages.contains(idFil) ? idFil : pages.first ?? EntreeFixe.profil.rawValue
     }
 }
