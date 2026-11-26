@@ -33,10 +33,19 @@ enum EcranDeHall {
     static func position(_ rang: Int, sur total: Int) -> String { "Annonce \(rang + 1) sur \(total)" }
 
     // « Désappairer » (lot 5) : un geste local ; couper l'accès se fait dans l'Espace CS.
+    // Le même dialogue offre « À propos » (#320) : aucun bouton à l'écran pendant la diffusion.
     static let desappairer = "Désappairer"
-    static let desappairerTitre = "Désappairer cet écran ?"
+    static let gestesTitre = "Cet écran de hall"
     static let desappairerMessage = """
-        L'écran oublie son accès et affiche un nouveau code. Pour couper l'accès lui-même, \
-        un membre du conseil retire l'écran dans l'Espace CS, onglet « Écrans du hall ».
+        « Désappairer » : l'écran oublie son accès et affiche un nouveau code. Pour couper \
+        l'accès lui-même, un membre du conseil retire l'écran dans l'Espace CS, onglet \
+        « Écrans du hall ».
         """
+
+    // « À propos » (#320) : le code de l'app et sa licence, puis les composants tiers.
+    static let aPropos = "À propos"
+    static let composantsTiers = "Composants tiers"
+    static func versionApp(_ version: String?) -> String {
+        version.map { "\(sousTitre)\(Separateur.point)version \($0)" } ?? sousTitre
+    }
 }

@@ -29,22 +29,49 @@ MANIFESTES = {
 CLIENT = "Paquets/ClientAPI/Sources/"  # le paquet ClientAPI, embarqué par chaque cible
 
 
-def sources(projet: str, cible: str) -> list[str]:
-    """Les `- path:` des sources de la cible, lus par retrait (sans PyYAML)."""
+def _bloc(projet: str, cible: str, cle: str) -> list[str] | None:
+    """Les lignes sous `cle:` (retrait 4) de la cible (retrait 2), lues par retrait (sans
+    PyYAML) ; `None` : la cible n'est pas dans le projet. Lu aussi par
+    `verifier-dependances.py` (les textes de ce qu'une cible embarque, #320)."""
     lignes = [l for l in projet.splitlines() if l.strip() and not l.strip().startswith("#")]
     retrait = lambda l: len(l) - len(l.lstrip())  # noqa: E731
     debut = next((r for r, l in enumerate(lignes) if l.strip() == f"{cible}:" and retrait(l) == 2), None)
     if debut is None:
-        return []
-    chemins, dans_sources = [], False
+        return None
+    bloc, dedans = [], False
     for ligne in lignes[debut + 1:]:
         if retrait(ligne) <= 2:
             break
         if retrait(ligne) == 4:
-            dans_sources = ligne.strip() == "sources:"
-        elif dans_sources and (m := re.match(r"-\s*path:\s*(\S+)", ligne.strip())):
-            chemins.append(m.group(1))
-    return chemins
+            dedans = ligne.strip() == f"{cle}:" or ligne.strip().startswith(f"{cle}: ")
+            if dedans and ":" in ligne.strip() and ligne.strip() != f"{cle}:":
+                bloc.append(ligne.strip().split(":", 1)[1].strip())
+        elif dedans:
+            bloc.append(ligne.strip())
+    return bloc
+
+
+def cibles(projet: str) -> list[str]:
+    """Les noms des cibles, dans l'ordre de `targets:`."""
+    bloc = re.search(r"^targets:\n(.*?)(?=^\S|\Z)", projet, re.M | re.S)
+    return re.findall(r"^  (\w+):\s*$", bloc.group(1), re.M) if bloc else []
+
+
+def sources(projet: str, cible: str) -> list[str]:
+    """Les `- path:` des sources de la cible."""
+    return [m.group(1) for l in _bloc(projet, cible, "sources") or [] if (m := re.match(r"-\s*path:\s*(\S+)", l))]
+
+
+def dependances(projet: str, cible: str, genre: str = "package") -> list[str]:
+    """Les `- package:` (paquets Swift) ou `- target:` (cibles embarquées) de ses `dependencies`."""
+    motif = rf"-\s*{genre}:\s*(\S+)"
+    return [m.group(1) for l in _bloc(projet, cible, "dependencies") or [] if (m := re.match(motif, l))]
+
+
+def type_de(projet: str, cible: str) -> str | None:
+    """Le `type:` de la cible (`application`, `bundle.unit-test`…) ; `None` : inconnue."""
+    bloc = _bloc(projet, cible, "type")
+    return bloc[0] if bloc else None
 
 
 def code_de_la_cible(code: dict[str, str], projet: str, cible: str) -> dict[str, str]:

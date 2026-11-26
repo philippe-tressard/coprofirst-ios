@@ -36,6 +36,7 @@ struct AppairageTVView: View {
                 }
                 Button(EcranDeHall.changer, action: changer)
                     .accessibilityIdentifier("hall.changer")
+                BoutonAProposTV()
             }
         }
         .animation(.snappy, value: appairage.etat)

@@ -20,6 +20,26 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
 SPDX-License-Identifier = "LicenseRef-CoproFirst-Logo"
 
+# Les rendus du LOGO pour l'Apple TV (#320) — l'icône de l'écran de hall (sa couche avant) et
+# l'image de l'étagère —, posés sur le fond blanc de sa tuile ou sans fond : le même dessin,
+# redimensionné (scripts/images_logo.py, scripts/importer-logo.sh). L'Apple TV est une
+# plateforme de l'app CoproFirst publiée par son auteur (même fiche, `fr.coprofirst.app`).
+[[annotations]]
+path = [
+  "CoproFirstTV/Ressources/Assets.xcassets/**/Front.imagestacklayer/Content.imageset/*.png",
+  "CoproFirstTV/Ressources/Assets.xcassets/**/Top Shelf Image*.imageset/*.png",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "LicenseRef-CoproFirst-Logo"
+
+# La couche ARRIÈRE de cette icône : un fond blanc, sans rien du dessin.
+[[annotations]]
+path = "CoproFirstTV/Ressources/Assets.xcassets/**/Back.imagestacklayer/Content.imageset/*.png"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"
+
 # Les PICTOGRAMMES de la gouttière du fil : les tracés Lucide du site
 # (front/src/lib/icones-svg.json de coprofirst), GÉNÉRÉS par
 # scripts/generateurs/pictogrammes.py. Lucide est sous ISC, MIT pour la part issue
@@ -52,7 +72,11 @@ SPDX-License-Identifier = "Apache-2.0"
 
 # Les descriptions des catalogues d'images : du JSON, sans en-tête possible.
 [[annotations]]
-path = ["CoproFirst/Ressources/Assets.xcassets/**/Contents.json", "CoproFirst/Ressources/Pictogrammes.xcassets/**/Contents.json"]
+path = [
+  "CoproFirst/Ressources/Assets.xcassets/**/Contents.json",
+  "CoproFirst/Ressources/Pictogrammes.xcassets/**/Contents.json",
+  "CoproFirstTV/Ressources/Assets.xcassets/**/Contents.json",
+]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
 SPDX-License-Identifier = "AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore"

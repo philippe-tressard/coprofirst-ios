@@ -14,10 +14,6 @@ struct AProposView: View {
     @State private var lu: AProposResidence?
     @State private var erreur: ErreurService?
 
-    /// Le code de CETTE app (AGPLv3 §13 : offrir le source de ce qu'on distribue) — le
-    /// dépôt du serveur, lui, est celui du site (`TextesDuPied.depotSource`).
-    static let depotApp = "https://github.com/philippe-tressard/coprofirst-ios"
-
     var body: some View {
         List {
             Section { marque }.listRowBackground(palette.surface)
@@ -40,9 +36,9 @@ struct AProposView: View {
             Section {
                 lienExterne(TextesDuPied.site.libelle, aide: TextesDuPied.site.aide, vers: TextesDuPied.sitePlateforme)
                 lienExterne(TextesDuPied.source.libelle, aide: TextesDuPied.source.aide, vers: TextesDuPied.depotSource)
-                lienExterne("Code source de l'app", aide: "Le code de cette app", vers: Self.depotApp)
+                lienExterne(SourceDeLApp.libelle, aide: SourceDeLApp.aide, vers: SourceDeLApp.depot)
             } footer: {
-                Text("\(TextesDuPied.nomPlateforme) est distribué sous la \(TextesDuPied.licenceNom).")
+                Text(SourceDeLApp.licence)
             }
             .listRowBackground(palette.surface)
             Section("Composants tiers") {
@@ -89,10 +85,7 @@ struct AProposView: View {
         let annee = Calendar.current.component(.year, from: .now)
         var morceaux = [AProposResidence.mentionAnnee(debut: lu?.anneeDebut, courante: annee)]
         if let texte = lu?.texte { morceaux.append(texte) }
-        let info = Bundle.main.infoDictionary
-        if let version = info?["CFBundleShortVersionString"] as? String {
-            morceaux.append("app \(version)")
-        }
+        if let version = SourceDeLApp.version() { morceaux.append("app \(version)") }
         return morceaux.joined(separator: Separateur.point)
     }
 
