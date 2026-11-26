@@ -21,7 +21,7 @@ Ce que l'app sait faire : « Écrans livrés » ci-dessous et
 **L'app est publiée sur l'App Store** — iPhone et iPad, gratuite :
 <https://apps.apple.com/fr/app/coprofirst/id6834326392>. La 1.0 y est entrée le
 14/11/2026, la 1.1 (build 2, étiquette `v1.1.0`) le 18/11/2026 (#263) ; `main` prépare
-la suivante. Comment elle sort : « Sortir une version ».
+la 1.2 (build 3), iPhone et iPad, sans la montre ni l'Apple TV. Comment elle sort : « Sortir une version ».
 
 ## Sortir une version
 
