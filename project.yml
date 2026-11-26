@@ -34,8 +34,8 @@ settings:
     DEVELOPMENT_TEAM: GUX8KASNTG
     CODE_SIGN_STYLE: Automatic
     # La version publiée suivante ; chaque version soumise porte son étiquette vX.Y.Z.
-    MARKETING_VERSION: "1.1"
-    CURRENT_PROJECT_VERSION: "2"
+    MARKETING_VERSION: "1.2"
+    CURRENT_PROJECT_VERSION: "3"
     LOCALIZATION_PREFERS_STRING_CATALOGS: "YES"
     SWIFT_EMIT_LOC_STRINGS: "YES"
 settingGroups:
