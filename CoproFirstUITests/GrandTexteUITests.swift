@@ -63,18 +63,22 @@ final class GrandTexteUITests: XCTestCase {
     }
 
     /// Les identifiants des entrées de « Plus », dans l'ordre. En AX5 la liste dépasse
-    /// l'écran, et une cellule hors de l'écran n'existe pas encore : on la fait défiler.
+    /// l'écran, et une cellule hors de l'écran n'existe pas encore : on la fait défiler JUSQU'À
+    /// SA DERNIÈRE ENTRÉE LUE, « À propos » (`PresentationNavigationTests` tient qu'elle ferme la
+    /// liste). « Rien de neuf après un glisser » n'est pas la fin : un glisser perdu sous charge
+    /// laisse aussi les mêmes entrées (PR #396, exécution 45564835015, #390).
     @MainActor
     private func entreesDePlus(_ app: XCUIApplication) -> [String] {
         let entrees = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'plus.'"))
         XCTAssertTrue(entrees.firstMatch.apparait(), "la liste « Plus » est là")
+        let derniere = "plus.a-propos"
         var vus: [String] = []
         for _ in 0..<8 {
-            let nouveaux = entrees.allElementsBoundByIndex.map(\.identifier).filter { !vus.contains($0) }
-            if nouveaux.isEmpty, !vus.isEmpty { break }
-            vus += nouveaux
+            vus += entrees.allElementsBoundByIndex.map(\.identifier).filter { !vus.contains($0) }
+            if vus.contains(derniere) { break }
             app.swipeUp()
         }
+        XCTAssertTrue(vus.contains(derniere), "la fin de « Plus », lue à sa dernière entrée (\(derniere))")
         return vus
     }
 
