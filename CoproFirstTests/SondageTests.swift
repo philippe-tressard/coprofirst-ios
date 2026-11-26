@@ -29,10 +29,7 @@ import Testing
     #expect(VoteSondage.nettoye("  ") == nil && VoteSondage.nettoye(" a ") == "a")
 }
 
-@Test func lesPourcentagesEtLesMotsSontCeuxDuSite() {
-    #expect(TextesSondage.pourcentage(1, sur: 3) == 33)
-    #expect(TextesSondage.pourcentage(2, sur: 3) == 67)
-    #expect(TextesSondage.pourcentage(0, sur: 0) == 0, "aucun vote : 0, jamais une division par zéro")
+@Test func lesMotsSontCeuxDuSite() {
     #expect(TextesSondage.votes(1) == "1 vote" && TextesSondage.votes(12) == "12 votes")
     #expect(TextesSondage.commentaires(3) == "💬 Commentaires (3)")
 }
@@ -46,6 +43,9 @@ import Testing
     let masquee = try #require(fiches.first { $0.id == 11 })
     #expect(masquee.options.allSatisfy { $0.nbVotes == nil }, "masqués : absents, jamais 0")
     #expect(fiches.first { $0.id == 9 }?.peutVoter == false)
+    // La part est SERVIE (`part`, contrat 2.14.0) : lue telle quelle, jamais recalculée (#391).
+    #expect(ouverte.options.map(\.part) == [48, 31, 14, 7])
+    #expect(masquee.options.allSatisfy { $0.part == nil }, "masquée : absente, comme le décompte")
 }
 
 /// Les résultats avant le vote (le site, 16/11/2026) : visibles avant la clôture, ils
@@ -78,6 +78,8 @@ import Testing
     let apres = try await service.sondage(12, dans: residence)
     #expect(apres.monVote == 4 && !apres.peutVoter)
     #expect(apres.options.last?.nbVotes == 3)
+    // Le serveur simulé redit les parts comme `part_en_pourcent` : demi au supérieur, entier.
+    #expect(apres.options.map(\.part) == [47, 30, 13, 10])
     #expect(apres.options.last?.reponsesLibres.last == "Le 20 juin")
     #expect(apres.commentaires.last?.contenu == "Avec plaisir", "le commentaire du vote rejoint le fil")
 

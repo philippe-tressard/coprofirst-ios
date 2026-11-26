@@ -44,4 +44,6 @@ private func date(_ texte: String) -> Date? { ISO8601DateFormatter().date(from: 
     #expect(try await simule.idees(installation) == lues)
     let annonces = try await reel(FixturesCommunaute.annonces).annonces(installation)
     #expect(try await simule.annonces(installation) == annonces)
+    // Le prix se lit en centimes entiers (`prix_centimes`, #376), jamais par le flottant `prix`.
+    #expect(annonces.first { $0.id == 21 }?.prixCentimes == 18000)
 }

@@ -58,14 +58,13 @@ struct MarquesPages: @unchecked Sendable {
 
 extension Parcours {
     /// La page où rouvrir une résidence : son marque-page sur un pliable, traduit vers la
-    /// présentation en vigueur (`PresentationNavigation.traduire`) ; le Fil sinon.
+    /// présentation en vigueur (`PresentationNavigation.traduire`) ; l'accueil de la barre sinon.
     func pageARouvrir(_ installation: Installation) -> PresentationNavigation.Place {
-        guard posture != .sansPli, let page = marques.lire(installation.hote) else {
-            return .init(onglet: OrdrePages.idFil)
-        }
         let pages = pagesDeLaBarre(installation).map(\.id)
-        guard pages.contains(page) || EntreeFixe(rawValue: page) != nil else {
-            return .init(onglet: OrdrePages.idFil)
+        guard posture != .sansPli, let page = marques.lire(installation.hote),
+            pages.contains(page) || EntreeFixe(rawValue: page) != nil
+        else {
+            return .init(onglet: OrdrePages.accueil(pages))
         }
         return PresentationNavigation.traduire(.init(onglet: page), vers: presentation, pages: pages)
     }

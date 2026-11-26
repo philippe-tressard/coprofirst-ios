@@ -16,7 +16,11 @@ struct RacineView: View {
         @Bindable var parcours = parcours
         let palette = parcours.palette
         Group {
-            if let ouverte = parcours.ouverte {
+            if let ouverte = parcours.ouverte, parcours.ouverteAJour?.profil?.motDePasseAChanger == true {
+                // Le mot de passe est temporaire (#377) : rien d'autre ne s'ouvre avant d'en choisir un.
+                MotDePasseTemporaireView(installation: ouverte)
+                    .transition(.opacity)
+            } else if let ouverte = parcours.ouverte {
                 OngletsView(installation: ouverte)
                     // Le réseau revenu, la session reprise : l'espace se reconstruit, tout se relit (#101).
                     .id(parcours.consultation == nil)
@@ -61,6 +65,7 @@ struct RacineView: View {
         .environment(\.palette, palette)
         .themeChoisi()
         .animation(.smooth(duration: 0.35), value: parcours.ouverte)
+        .animation(.smooth(duration: 0.35), value: parcours.ouverteAJour?.profil?.motDePasseAChanger)
         .animation(.smooth(duration: 0.4), value: palette.code)
         .onChange(of: palette.code, initial: true) { ApparenceNavigation.appliquer(palette) }
         .lecturePosture($parcours.posture)

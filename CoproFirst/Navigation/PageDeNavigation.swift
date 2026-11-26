@@ -10,6 +10,9 @@ struct PageDeNavigation: Hashable, Sendable, Identifiable {
     var libelle: String
     var titre: String
     let icone: String
+    /// Le PUBLIC de la page (`acces` de `pages.ts`, #355) : elle s'affiche si `acces_menu`
+    /// de GET /auth/me le sert (`PagesOuvertes`).
+    let acces: String
 }
 
 /// Ce que l'administration a écrit pour une page (`page_config_<id>`, du JSON) :

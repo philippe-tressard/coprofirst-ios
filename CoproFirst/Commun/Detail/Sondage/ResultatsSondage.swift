@@ -22,7 +22,7 @@ struct ResultatsSondage: View {
                         .accessibilityIdentifier("sondage.resultatsProvisoires")
                 }
                 ForEach(sondage.options) { option in
-                    LigneResultat(option: option, total: sondage.totalVotes, mienne: option.id == sondage.monVote)
+                    LigneResultat(option: option, mienne: option.id == sondage.monVote)
                 }
             } else {
                 Text(TextesSondage.resultatsMasques)
@@ -46,7 +46,6 @@ struct ResultatsSondage: View {
 /// puis ses réponses libres, entre guillemets.
 private struct LigneResultat: View {
     let option: OptionSondage
-    let total: Int
     let mienne: Bool
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -54,7 +53,8 @@ private struct LigneResultat: View {
     @State private var deploye = false
 
     private var votes: Int { option.nbVotes ?? 0 }
-    private var pourcentage: Int { TextesSondage.pourcentage(votes, sur: total) }
+    /// La part servie (#391) ; absente, la barre reste vide.
+    private var pourcentage: Int { option.part ?? 0 }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {

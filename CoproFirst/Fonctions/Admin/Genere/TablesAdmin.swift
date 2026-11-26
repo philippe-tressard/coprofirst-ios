@@ -3,18 +3,18 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), front/src/lib/pages.ts#PAGES, front/src/lib/taches.ts#LIBELLE_TACHE, front/src/lib/taches.ts#STATUTS_TACHE, front/src/lib/roles.ts#ATTRIBUTS_ROLE, front/src/lib/roles.ts#ATTRIBUTS_STATUT (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/pages.ts#PAGES, front/src/lib/taches.ts#LIBELLE_TACHE, front/src/lib/taches.ts#STATUTS_TACHE, front/src/lib/roles.ts#ATTRIBUTS_ROLE, front/src/lib/roles.ts#ATTRIBUTS_STATUT (tables-clients.json).
 // swiftlint:disable line_length
 
 /// Ce que le site écrit du Paramétrage et que le contrat ne sert pas.
 enum TablesAdmin {
     /// Le descriptif de chaque onglet de la page `admin` (texte du site).
     static let descriptifs: [String: String] = [
-        "a_traiter": "Ce qui attend un geste de l'administrateur : comptes à valider, commandes d'accès, demandes de modification de profil.",
+        "a_traiter": "Ce qui attend un geste de l'administrateur : chaque demande en attente, rangée dans sa file.",
         "utilisateurs": "Tous les comptes : statut, bâtiment, rôles, modification et suppression.",
         "audit_lots": "Les associations entre comptes et lots, pour repérer et retirer les affectations erronées.",
         "telemetry": "Statistiques d'utilisation : qui utilise quoi, et quand — par jour, sur 30 jours, sur 12 mois ou par année.",
-        "imports": "Charger un tableur du syndic — lots et copropriétaires, télécommandes ou badges Vigik — et le rapprocher des lots.",
+        "imports": "Charger un tableur du syndic ou du règlement de copropriété, et le rapprocher des lots.",
         "copropriete": "L'identité et les références de la copropriété : nom, adresse, logo, syndic.",
         "perimetres": "L'arborescence des bâtiments et des espaces que l'on peut viser.",
         "equipements": "Ce sur quoi l’on intervient — ascenseur, chauffage, plomberie… : leur nom, leur icône, et les périmètres où ils se trouvent.",
@@ -29,7 +29,7 @@ enum TablesAdmin {
         "connexion": "Le sous-titre de la page de connexion, et ce que dit le pied de chaque page.",
         "emails": "Le texte et la mise en page de chaque courriel envoyé par le site, avec l'historique des envois.",
         "installation": "Cette installation : son rôle, sa version, son inscription au registre et son bail.",
-        "maintenance": "Les tâches automatiques, leur historique et leur déclenchement manuel.",
+        "maintenance": "Le suivi technique de l'installation et la garde de ses données — chacun y voit ce que son rôle lui ouvre.",
         "installations": "Les installations CoproFirst inscrites au registre de la référence : leur état, leur contrat, leurs services.",
     ]
     /// L'adresse de chaque onglet sur le site, sous celle de la résidence.

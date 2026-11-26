@@ -107,6 +107,19 @@ RETIREES: list[tuple[re.Pattern[str], str]] = [
     # v3.61.0 (#13), sont publiés dans tables-clients.json depuis v3.102.0.
     (re.compile(r"\bProvisoire[A-Z]\w*"),
      "les tables générées `TablesAcces.typesObjet`, `.statutsObjet`, `.gravites` (tables-clients.json)"),
+    # #355 : qui voit quelle page est SERVI (`acces_menu` de GET /auth/me, contrat 2.11.0, au
+    # plancher depuis v3.126.5), chaque page déclare son public (`acces`, généré) : la copie du
+    # menu du site — un `switch` sur des identifiants de page, ses populations — ne revient pas.
+    (re.compile(r'\b(outilDuConseil|rolesAdminSeul|rolesSansAdminSeul|estAidant)\b'
+                r'|case "(prestataires|espace-cs|delegations|communaute)"'
+                r"|'rolesDuDroit', '(adminSeul|sansAdminSeul)'"),
+     "`acces_menu` servi, croisé avec le public généré de chaque page (`PagesOuvertes`)"),
+    # #391 : la part d'une option de sondage est SERVIE (`part`, contrat 2.14.0), arrondie par
+    # l'API en arithmétique entière ; #376 : le prix d'une annonce, en centimes (`prix_centimes`).
+    (re.compile(r"\bpourcentage\([^)]*\bsur:|\bDouble\(\w+\) / Double\(\w+\) \* 100\b"),
+     "la part servie (`OptionSondage.part`, `options[].part` de GET /sondages/{id})"),
+    (re.compile(r"\blue\.prix\b(?!Centimes)"),
+     "le prix servi en centimes (`lue.prixCentimes`), rendu par `FormatsDuSite.montant(centimes:)`"),
 ]
 
 #: chemin → raison. Une dispense dit pourquoi le motif n'y est pas une règle recopiée.
@@ -205,6 +218,14 @@ def autotest() -> int:
         "    var nomAffiche: String { FormatsDuSite.nom(affiche: nomServi, prenom: prenom, nom: nom) }",
         "            deMoi: message.estAuteur ?? (moi != nil && message.auteurId == moi), nom: message.auteurNom,",
         '        let nom = [auteurPrenom, auteurNom].compactMap { $0 }.joined(separator: " ")',
+        '        case "prestataires", "espace-cs": droits.outilDuConseil',
+        '        case "delegations": droits.cs || droits.aidant',
+        "        aidant = profil?.estAidant ?? false",
+        "            adminSeul: !portes.isDisjoint(with: OngletsDuSite.rolesAdminSeul)",
+        "    private var pourcentage: Int { TextesSondage.pourcentage(votes, sur: total) }",
+        "        total == 0 ? 0 : Int((Double(votes) / Double(total) * 100).rounded())",
+        "            categorie: lue.categorie.rawValue, prix: lue.prix, negotiable: lue.negotiable,",
+        "    corps += f\"    static let rolesAdminSeul: Set<String> = {_ensemble(_liste(ctx, 'rolesDuDroit', 'adminSeul'))}\\n\"",
     ]
     sains = [
         "        TablesAcces.gravites.first { $0.code == constat.gravite }?.teinte",
@@ -231,6 +252,10 @@ def autotest() -> int:
         "            lieu: LieuServi.lieu(servi?.perimetreLibelle?.valeur))",
         "        let nom = FormatsDuSite.nom(servi: auteurAffiche)",
         '        let morceaux = [prenom, nom].compactMap { $0?.trimmingCharacters(in: .whitespaces) }',
+        "        pages.filter { droits.accesMenu.contains($0.acces) }",
+        "    private var pourcentage: Int { option.part ?? 0 }",
+        "            categorie: lue.categorie.rawValue, prixCentimes: lue.prixCentimes, negotiable: lue.negotiable,",
+        '        case "admin": return palette.orange',
     ]
     # Les portes : celle sous le plancher refusée, celle au-dessus gardée, le plancher exclu.
     import tempfile

@@ -179,6 +179,9 @@ Accueil, En savoir plus, connexion en un écran (résidence reconnue par son
 adresse ou son QR code — aucun annuaire), Face ID proposé après la première
 connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
+Un compte au mot de passe temporaire (les deux comptes initiaux d'une installation neuve,
+`mot_de_passe_a_changer`, #377) n'ouvre que « Choisir votre mot de passe » et la
+déconnexion ; choisi, la résidence s'ouvre.
 « Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
 Pendant la saisie, la résidence dit ce qu'elle en fera, à mesure qu'on écrit
@@ -225,7 +228,10 @@ L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucun
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La
 barre du bas suit l'ordre réglé par l'administration de la résidence
-(`pages_order`) ; les entrées non livrées annoncent « Bientôt ». **Sur iPad** en plein
+(`pages_order`) et ne montre à chaque compte que les pages que la résidence lui ouvre
+(`acces_menu`, servi depuis le contrat 2.11.0, au plancher depuis v3.126.5, #355) ;
+« Plus » y porte toujours le Profil et À propos ; les entrées non livrées annoncent
+« Bientôt ». **Sur iPad** en plein
 écran (#221), une barre latérale liste toutes les pages, puis Profil et À propos ; en
 Split View étroit, la barre du bas revient — la page ouverte reste ouverte au passage.
 En paysage, une liste et la fiche qu'elle ouvre s'y tiennent côte à côte (#222) : Mes

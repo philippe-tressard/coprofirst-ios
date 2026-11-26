@@ -37,6 +37,9 @@ struct OptionSondage: Hashable, Sendable, Identifiable {
     let champLibre: Bool
     /// Absent quand les résultats sont masqués — jamais 0 : « personne n'a voté » serait faux.
     var nbVotes: Int?
+    /// La part de l'option, de 0 à 100, ARRONDIE PAR LE SERVEUR (`part`, contrat 2.14.0,
+    /// coprofirst#3060) — jamais recalculée ici (#391). Absente avec `nbVotes`.
+    var part: Int?
     /// Les précisions des votants, servies avec les résultats.
     var reponsesLibres: [String]
 }
@@ -99,11 +102,6 @@ enum TextesSondage {
 
     /// « 💬 Commentaires (3) ».
     nonisolated static func commentaires(_ nombre: Int) -> String { "💬 Commentaires (\(nombre))" }
-
-    /// Le pourcentage du site : arrondi, 0 sans aucun vote.
-    static func pourcentage(_ votes: Int, sur total: Int) -> Int {
-        total == 0 ? 0 : Int((Double(votes) / Double(total) * 100).rounded())
-    }
 }
 
 extension DetailSondage {
@@ -121,7 +119,7 @@ extension DetailSondage {
 extension OptionSondage {
     init(_ lue: Components.Schemas.OptionFiche) {
         self.init(
-            id: lue.id, libelle: lue.libelle, champLibre: lue.champLibre ?? false, nbVotes: lue.nbVotes,
+            id: lue.id, libelle: lue.libelle, champLibre: lue.champLibre ?? false, nbVotes: lue.nbVotes, part: lue.part,
             reponsesLibres: lue.reponsesLibres ?? [])
     }
 }

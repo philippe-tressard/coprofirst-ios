@@ -25,12 +25,6 @@ private func droits(_ roles: [String], statut: String? = nil) -> DroitsOnglet {
     #expect(Set(OngletsAdmin.ecrans.keys) == ["a_traiter", "utilisateurs", "telemetry", "maintenance"])
 }
 
-@Test func lAdministrateurEtLOperateurOuvrentLeParametrage() {
-    #expect(PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "admin"])))
-    #expect(PagesOuvertes.ouverte("admin", droits: droits(["operateur"], statut: "admin_technique")))
-    #expect(!PagesOuvertes.ouverte("admin", droits: droits(["propriétaire", "conseil_syndical"])))
-}
-
 /// L'opérateur qui n'est pas administrateur n'ouvre que l'Exploitation : dans l'app, la
 /// Maintenance — et « Sur le site » pour les deux autres.
 @Test func lOperateurNOuvreQueLExploitation() {

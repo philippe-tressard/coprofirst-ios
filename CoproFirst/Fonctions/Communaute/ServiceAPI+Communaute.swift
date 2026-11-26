@@ -315,7 +315,8 @@ extension Annonce {
     init(_ lue: Components.Schemas.AnnonceRead) {
         self.init(
             id: lue.id, titre: lue.titre, description: lue.description, typeAnnonce: lue.typeAnnonce.rawValue,
-            categorie: lue.categorie.rawValue, prix: lue.prix, negotiable: lue.negotiable, photos: lue.photos,
+            categorie: lue.categorie.rawValue, prixCentimes: lue.prixCentimes, negotiable: lue.negotiable,
+            photos: lue.photos,
             statut: lue.statut.rawValue, auteurAffiche: lue.auteurAffiche,
             auteurEmail: lue.auteurEmail, estAuteur: lue.estAuteur, peutSupprimer: lue.peutSupprimer ?? false,
             archivee: lue.archivee, creeLe: lue.creeLe,
