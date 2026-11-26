@@ -25,7 +25,8 @@ import Foundation
 /// `-hors-ligne gardee|perimee|sans-lecture` : l'appareil sans réseau au lancement (#101) —
 /// avec `-ecran retour`, Face ID passe et la reprise échoue : la dernière lecture s'ouvre
 /// en consultation (`gardee`), a passé sa durée (`perimee`), ou manque (`sans-lecture`) ;
-/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ;
+/// `-posture deplie|entrouvert|plie` : la charnière d'un iPhone pliable (#119) ; avec
+/// `-charniere-tardive`, lue après le Fil chargé, comme sur l'appareil (#350) ;
 /// `-contrat <version>` : le contrat que sert la résidence (une porte au-dessus du plancher,
 /// le jour où il y en a une ; #286, #313).
 /// `-installation-suspendue` : la résidence servie est suspendue, en lecture seule (#262).
@@ -234,6 +235,12 @@ enum LancementSimule {
         case "plie": .plie
         default: nil
         }
+    }
+
+    /// `-charniere-tardive` : la posture fixée arrive après le premier écran ET le Fil chargé,
+    /// comme la vraie charnière (#119) — la course qu'un runner lent faisait voir au carnet (#350).
+    static func charniereTardive(_ arguments: [String]) -> Bool {
+        arguments.contains("-api-simulee") && arguments.contains("-charniere-tardive")
     }
 
     /// La valeur qui suit `nom` dans les arguments de lancement.

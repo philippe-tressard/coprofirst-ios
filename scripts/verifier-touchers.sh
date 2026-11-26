@@ -16,6 +16,8 @@
 # un onglet (#340) — le point commun d'un onglet est `app.toucherLOnglet`. Hors de sa vue, et
 # dit : un onglet trouvé par son libellé en ligne ou rangé dans une variable nommée autrement —
 # la convention de nom `onglet…` le rend visible.
+# Il tient aussi les touchers qui OUVRENT une feuille (`OUVERTURES`, #400) : ✏️ d'une affaire se
+# touche par `app.ouvrirModificationAffaire()`, jusqu'à la feuille lue.
 # Appelé par scripts/verifier-depot.sh. Sortie : 0 conforme, 1 refus.
 set -uo pipefail
 cd "$(dirname "$0")/.."

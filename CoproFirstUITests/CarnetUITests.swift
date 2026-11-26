@@ -5,8 +5,9 @@ import XCTest
 
 /// Le carnet de l'iPhone pliable ouvert (#119) : les intercalaires sur la tranche droite, à
 /// la place de la barre du bas. Joué en classe régulière, la charnière fixée par
-/// `-posture deplie` : un simulateur iPad sert au poste comme en CI, qui n'a ni iOS 27.1 ni
-/// l'iPhone Duo. Sur l'iPhone Duo déplié, la vraie charnière se lit, au poste seulement.
+/// `-posture deplie` : un simulateur iPad sert au poste comme en CI — l'échantillon iPad du job
+/// « Échantillons » (#350) —, qui n'a ni iOS 27.1 ni l'iPhone Duo. Sur l'iPhone Duo déplié, la
+/// vraie charnière se lit, au poste seulement.
 ///
 /// La semaine du Fil (#277) et le sommaire de la résidence (#278) s'y jouent aussi.
 ///
@@ -79,8 +80,24 @@ final class CarnetUITests: XCTestCase {
     /// arrive après le premier écran (#119).
     @MainActor
     func testUnElementDemandeAuLancementSOuvreSurLaPageDeSonJour() throws {
-        let app = lancer("-ouvrir", "sondage_ouvert:3")
-        XCTAssertTrue(app.elementAcces("sondage.option.1").apparait(), "la fiche demandée, à droite")
+        verifierLElementDemande(lancer("-ouvrir", "sondage_ouvert:3"))
+    }
+
+    /// La même demande, la charnière lue APRÈS le Fil chargé (`-charniere-tardive`) : la
+    /// barre latérale sert la demande, puis le carnet reconstruit le Fil — l'élément doit
+    /// le suivre. Un runner lent faisait cette course au hasard (#350).
+    @MainActor
+    func testUnElementDemandeAvantLaCharniereSuitLeCarnet() throws {
+        verifierLElementDemande(lancer("-ouvrir", "sondage_ouvert:3", "-charniere-tardive"))
+    }
+
+    @MainActor
+    private func verifierLElementDemande(_ app: XCUIApplication) {
+        // Rouge en CI sur iPad (Xcode 26.6), vert au poste (Xcode 27.2) même en iOS 26.5 : l'arbre
+        // dit ce que l'écran montrait (#350).
+        XCTAssertTrue(
+            app.elementAcces("sondage.option.1").apparait(),
+            "la fiche demandée, à droite — arbre à l'échec :\n\(app.debugDescription)")
         XCTAssertTrue(app.buttons["fil.sondage_ouvert:3"].apparait(), "la page de son jour, à gauche")
         let lendemain = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == %@ AND isEnabled == true", "carnet.lendemain")).firstMatch

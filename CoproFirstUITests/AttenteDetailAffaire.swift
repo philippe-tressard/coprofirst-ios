@@ -25,6 +25,17 @@ extension XCUIApplication {
         guard numeroLu.apparait() else { return false }
         return elementAcces("affaire.lien").apparait()
     }
+
+    /// ✏️ du bandeau, JUSQU'À la feuille « Modifier » lue (son « Enregistrer ») — le seul
+    /// toucher de `affaire.modifier`, que `scripts/touchers_onglets.py` tient. Nu, un toucher
+    /// perdu sous charge laissait le détail sans feuille, et le test rougissait 30 s plus loin
+    /// sur sa première ligne (main 1c47c05, échantillon iPad du 25/11, #400). Ouvrir une
+    /// feuille est idempotent : la reprise est déclarée au résumé, et ne part que si la feuille
+    /// n'est toujours pas là (`toucher(_:jusqua:)`).
+    @MainActor
+    func ouvrirModificationAffaire(file: StaticString = #filePath, line: UInt = #line) {
+        toucher(elementAcces("affaire.modifier"), jusqua: buttons["modifier.enregistrer"], file: file, line: line)
+    }
 }
 
 extension XCUIApplication {
