@@ -59,7 +59,8 @@ EXCEPTIONS = {
 #: motif entier de l'identifiant d'un toucher → son point commun, qui attend l'effet.
 POINTS_COMMUNS = {
     r"affaire\.modifier": "app.ouvrirModificationAffaire() (AttenteDetailAffaire.swift, #400)",
-    r"modifier\.prestataire\.\d+\.retirer": "app.retirerPrestataire(id) (AttenteDetailAffaire.swift, #390)",
+    # L'id en clair ou interpolé (`\\(id)`) : le point commun lui-même l'interpole, avec `jusqua:`.
+    r"modifier\.prestataire\.(?:\d+|\\\(\w+\))\.retirer": "app.retirerPrestataire(id) (AttenteDetailAffaire.swift, #390)",
 }
 #: `let x = …` ou `var x = …`, jusqu'à la fin de la ligne.
 LIAISON = re.compile(r"\b(?:let|var)\s+(\w+)\s*=\s*([^\n]*)")
@@ -224,6 +225,7 @@ def autotest() -> int:
         "× d'un prestataire nu": 'app.toucher(app.elementAcces("modifier.prestataire.12.retirer"))',
         "× par une variable": 'let retirer = app.elementAcces("modifier.prestataire.2.retirer")\napp.toucher(retirer)',
         "× par une variable, tap direct": 'let x = app.elementAcces("modifier.prestataire.2.retirer")\nx.tap()',
+        "× interpolé nu": 'app.toucher(app.elementAcces("modifier.prestataire.\\(id).retirer"))',
         "ouverture par une variable": 'let modifier = app.elementAcces("affaire.modifier")\napp.toucher(modifier)',
     }
     admis = {
