@@ -121,7 +121,13 @@ les quinze secondes, son titre, son message et ses photos, relues toutes les deu
 minutes ; l'écran reste allumé. L'appairage se garde au Trousseau : rallumée, l'Apple TV
 reprend seule ; retirée par le conseil, elle affiche un nouveau code. Au hall, un clic de
 la télécommande propose « Désappairer », confirmé : l'écran oublie son accès, que le
-conseil coupe dans l'app (lot 5). Elle embarque son propre manifeste de confidentialité
+conseil coupe dans l'app (lot 5). « À propos » (#320), offert à l'entrée, à l'appairage et
+par ce même clic, dit l'adresse du code de l'app et sa licence, puis les paquets embarqués
+avec leurs avis et le texte d'Apache-2.0 — la liste et les fichiers de l'iPhone
+(`scripts/verifier-dependances.py`). Son icône en couches et l'image de l'étagère sont
+rendues depuis le logo (`scripts/importer-logo.sh`, table `scripts/images_logo.py`). En
+Debug, `-api-simulee -hall appairage|diffusion|vide`, `-a-propos`, `-composant <paquet>` et
+`-theme clair|sombre` la montrent sans serveur, pour les captures. Elle embarque son propre manifeste de confidentialité
 (`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
 jugé sur le code qu'elle compile, comme celui de l'Apple Watch
 (`scripts/confidentialite_cibles.py`). Elle compile les

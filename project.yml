@@ -184,6 +184,17 @@ targets:
       - path: CoproFirst/Navigation/PageDeNavigation.swift
       - path: CoproFirst/Navigation/PagesParDefaut.swift
       - path: CoproFirst/Donnees/ProfilResidence.swift
+      # « À propos » de l'écran de hall (#320) : le code de l'app et sa licence (condition 3 b
+      # de la permission App Store), et les paquets embarqués avec leurs textes entiers — la
+      # liste, les mots et les FICHIERS de l'iPhone, jamais une copie.
+      # scripts/verifier-dependances.py refuse une cible qui embarque un paquet sans eux.
+      - path: CoproFirst/Fonctions/APropos/ComposantsTiers.swift
+      - path: CoproFirst/Fonctions/APropos/SourceDeLApp.swift
+      - path: CoproFirst/Fonctions/APropos/Genere/TextesDuPied.swift
+      - path: CoproFirst/Ressources/AvisTiers
+        buildPhase: resources
+      - path: LICENSES/Apache-2.0.txt
+        buildPhase: resources
     dependencies:
       - package: ClientAPI
     info:
@@ -205,6 +216,9 @@ targets:
         # Apple TV seule.
         TARGETED_DEVICE_FAMILY: "3"
         GENERATE_INFOPLIST_FILE: "NO"
+        # L'icône en couches et l'image de l'étagère (#320), rendues depuis le logo par
+        # scripts/importer-logo.sh : `CoproFirstTV/Ressources/Assets.xcassets`.
+        ASSETCATALOG_COMPILER_APPICON_NAME: "App Icon & Top Shelf Image"
   # Les tests du code PARTAGÉ, rejoués sur tvOS : les mêmes fichiers que CoproFirstTests,
   # nommément — jamais une copie (#218).
   CoproFirstTVTests:
@@ -216,6 +230,8 @@ targets:
       - path: CoproFirstTests/TexteDuSiteTests.swift
       - path: CoproFirstTests/MesuresTests.swift
       - path: CoproFirstTests/AdresseInstallationTests.swift
+      # Les avis et la licence des paquets, DANS l'app construite (#320).
+      - path: CoproFirstTests/ComposantsTiersTests.swift
       # Ce qui n'existe que sur l'Apple TV.
       - path: CoproFirstTVTests
     dependencies:

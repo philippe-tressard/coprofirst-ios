@@ -5,8 +5,10 @@
 # importer-logo.sh [ref] — le logo de CoproFirst et sa licence, recopiés À
 # L'IDENTIQUE depuis coprofirst, lus sur GitHub à l'étiquette du PLANCHER par défaut
 # (scripts/plancher.sh, #133 ; le clone local d'une autre session peut être en
-# retard, et on n'en change pas la branche), puis l'icône de l'app rendue depuis le
-# dessin. Un logo plus récent que le plancher s'importe sur décision : `[ref]`.
+# retard, et on n'en change pas la branche), puis les images rendues depuis le dessin :
+# l'icône de l'iPhone, l'icône en couches et l'étagère de l'Apple TV (#320) — la table de
+# scripts/images_logo.py, qui écrit aussi le catalogue de l'Apple TV. Un logo plus récent
+# que le plancher s'importe sur décision : `[ref]`.
 #
 # Le logo n'est pas sous l'AGPL : LicenseRef-CoproFirst-Logo (MARQUE.md de
 # coprofirst, PR coprofirst#2474) couvre l'app iOS publiée par son auteur.
@@ -24,5 +26,13 @@ curl -fsSL --retry 3 -o "$ASSETS/Logo.imageset/logo.svg" "$BRUT/front/static/fav
 TRAVAIL=$(mktemp -d)
 trap 'rm -rf "$TRAVAIL"' EXIT
 swiftc -O scripts/rendre-icone.swift -o "$TRAVAIL/rendre-icone"
-"$TRAVAIL/rendre-icone" "$ASSETS/Logo.imageset/logo.svg" "$ASSETS/AppIcon.appiconset/icone-1024.png" 1024
+python3 -I scripts/images_logo.py --catalogue
+python3 -I scripts/images_logo.py --liste | while IFS=$'\t' read -r chemin largeur hauteur part mode; do
+  if [ "$mode" = icone ]; then
+    "$TRAVAIL/rendre-icone" "$ASSETS/Logo.imageset/logo.svg" "$chemin" "$largeur"
+  else
+    "$TRAVAIL/rendre-icone" "$ASSETS/Logo.imageset/logo.svg" "$chemin" "$largeur" "$hauteur" "$part" "$mode"
+  fi
+done
+python3 -I scripts/images_logo.py --verifier
 echo "✅ logo et licence recopiés depuis coprofirst@$REF"

@@ -7,42 +7,6 @@ import Testing
 
 @testable import CoproFirst
 
-/// Un serveur d'écran simulé : les réponses d'interrogation se servent dans l'ordre, les
-/// affiches et les images se règlent par test. Aucun réseau.
-actor ServeurEcranSimule: ServiceEcranTV {
-    var demande: Result<DemandeAppairageTV, ErreurService> = .success(
-        DemandeAppairageTV(codeAppareil: "secret", codeCourt: "BCDF-GHJK", expireDans: 600, intervalle: 5))
-    var interrogations: [ReponseAppairage] = []
-    private(set) var interrogees = 0
-    var lecture: Result<[AfficheHall], ErreurService> = .success([])
-    private(set) var lectures = 0
-    private(set) var jetonsPresentes: [JetonMasque] = []
-    var imagesEnEchec: Set<Int> = []
-
-    func regler(interrogations: [ReponseAppairage]) { self.interrogations = interrogations }
-    func regler(demande: Result<DemandeAppairageTV, ErreurService>) { self.demande = demande }
-    func regler(lecture: Result<[AfficheHall], ErreurService>) { self.lecture = lecture }
-    func regler(imagesEnEchec: Set<Int>) { self.imagesEnEchec = imagesEnEchec }
-
-    func demander(_ adresse: URL) async throws -> DemandeAppairageTV { try demande.get() }
-
-    func interroger(_ codeAppareil: String, _ adresse: URL) async throws -> ReponseAppairage {
-        interrogees += 1
-        return interrogations.isEmpty ? .enAttente : interrogations.removeFirst()
-    }
-
-    func affiches(_ adresse: URL, jeton: JetonMasque) async throws -> [AfficheHall] {
-        lectures += 1
-        jetonsPresentes.append(jeton)
-        return try lecture.get()
-    }
-
-    func image(_ affiche: Int, rang: Int, _ adresse: URL, jeton: JetonMasque) async throws -> Data {
-        if imagesEnEchec.contains(rang) { throw ErreurService.injoignable }
-        return Data([UInt8(affiche), UInt8(rang)])
-    }
-}
-
 /// Une horloge que le test avance : chaque attente la fait avancer de sa durée, sans dormir.
 final class HorlogeSimulee: @unchecked Sendable {
     private let verrou = NSLock()
@@ -59,11 +23,8 @@ final class HorlogeSimulee: @unchecked Sendable {
     }
 }
 
-func residenceDuHall() -> Installation {
-    Installation(
-        adresse: URL(string: "https://tilleuls.example.com")!, nom: "Les Tilleuls", aUnLogo: false,
-        codePalette: "prune", versionContrat: VersionContrat.plancher.description)
-}
+/// La résidence des tests : celle de l'écran simulé (`LancementTVSimule`), une seule écriture.
+func residenceDuHall() -> Installation { LancementTVSimule.residence }
 
 @MainActor
 private func appairage(_ serveur: ServeurEcranSimule, _ horloge: HorlogeSimulee) -> AppairageTV {

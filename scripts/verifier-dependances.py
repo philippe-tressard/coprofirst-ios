@@ -32,6 +32,16 @@ Et, depuis #168, que ce que l'app embarque d'autrui y soit accompagné de ses te
      est le leur à l'octet, et un paquet qui en porte un a le sien dans l'app. Sinon :
      dit « non relu ici », jamais conforme.
 
+Et, depuis #320, que chaque APPLICATION de `project.yml` qui dépend d'un paquet (l'iPhone,
+l'écran de hall sur Apple TV) emporte ces textes et les montre — le fichier qui nomme les
+paquets, les avis, le texte d'Apache-2.0, et un écran de la cible qui lit `ComposantsTiers` :
+  8. chaque source requise est dans les `sources` de la cible (nommée, ou sous un dossier
+     nommé) ;
+  9. une application dont le paquet voyage DANS celui d'une autre (la montre, embarquée par
+     l'iPhone à l'archive, #226) se déclare dans `EMBARQUEE_DANS`, et l'archive qui l'y
+     embarque le prouve ; sinon, elle est jugée comme les autres.
+Que les textes soient DANS l'app construite, c'est `ComposantsTiersTests`, rejoué sur tvOS.
+
 La forme du tableau ne change pas : `scripts/verifier-app-ios.py` de coprofirst-site
 lit sa colonne « Licence ».
 
@@ -44,6 +54,7 @@ Sortie : 0 conforme, 1 écart, 2 INCONNU (fichier, section ou tableau illisible)
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import pathlib
 import os
@@ -60,6 +71,15 @@ OUTILS = "Outils de construction (non embarqués)"
 ECRAN = "CoproFirst/Fonctions/APropos/ComposantsTiers.swift"
 AVIS = "CoproFirst/Ressources/AvisTiers"
 CONSTRUIT = "Paquets/ClientAPI/.build"
+PROJET, ARCHIVE = "project.yml", "project-archive.yml"
+#: Ce qu'une application qui embarque un paquet compile et copie, pour montrer ses textes.
+#: Le texte d'Apache-2.0 : la licence de chaque paquet embarqué (`ComposantsTiers.apache`).
+REQUIS = (ECRAN, AVIS, "LICENSES/Apache-2.0.txt")
+#: Une application dont le paquet voyage dans celui d'une autre, qui en montre les textes :
+#: cible → (l'application hôte, le fichier XcodeGen qui l'y embarque).
+EMBARQUEE_DANS = {"CoproFirstWatch": ("CoproFirst", ARCHIVE)}
+#: Un écran qui montre les paquets : `ComposantsTiers.tous` ou `.paquets`, hors commentaire.
+MONTRE = re.compile(r"^(?!\s*//).*\bComposantsTiers\.(tous|paquets)\b", re.M)
 #: `paquet("swift-http-types", role: "…", avis: true)` → (nom, avis).
 PAQUET = re.compile(r'paquet\(\s*"([\w.-]+)"[^)]*?avis:\s*(true|false)')
 #: « ISC, MIT (part issue de Feather) » → ISC, MIT : l'identifiant SPDX en tête de chaque part.
@@ -73,6 +93,49 @@ DEPOT = re.compile(r"\b[\w.-]+/([\w.-]+)")
 
 class Illisible(Exception):
     """Ce qui empêche de juger : INCONNU, jamais conforme."""
+
+
+def _lecteur_du_projet():
+    """Le lecteur de `project.yml` de `confidentialite_cibles.py`, écrit une fois."""
+    spec = importlib.util.spec_from_file_location("confidentialite_cibles", RACINE / "scripts" / "confidentialite_cibles.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+CIBLES = _lecteur_du_projet()
+
+
+def juger_cibles(projet: str, archive: str, code: dict[str, str]) -> tuple[list[str], str]:
+    """Les applications qui embarquent un paquet emportent ses textes et les montrent (8, 9).
+
+    `code` : chemin → texte de chaque fichier Swift suivi."""
+    applications = [c for c in CIBLES.cibles(projet)
+                    if CIBLES.type_de(projet, c) == "application" and CIBLES.dependances(projet, c)]
+    if not applications:
+        raise Illisible(f"{PROJET} : aucune application qui dépende d'un paquet (forme changée ?)")
+    fautes: list[str] = []
+    jugees, portees = [], []
+    for cible in applications:
+        if cible in EMBARQUEE_DANS:
+            hote, fichier = EMBARQUEE_DANS[cible]
+            if cible not in CIBLES.dependances(archive, hote, "target"):
+                fautes.append(f"{cible} est déclarée embarquée dans {hote} (EMBARQUEE_DANS), "
+                              f"{fichier} ne l'y embarque pas : elle doit montrer les textes elle-même")
+            portees.append(f"{cible} dans {hote}")
+            continue
+        racines = [r.rstrip("/") for r in CIBLES.sources(projet, cible)]
+        couvre = lambda chemin: any(chemin == r or chemin.startswith(r + "/") for r in racines)  # noqa: E731
+        for chemin in REQUIS:
+            if not couvre(chemin):
+                fautes.append(f"{PROJET} : {cible} embarque {', '.join(CIBLES.dependances(projet, cible))} "
+                              f"sans {chemin} dans ses sources")
+        if not any(couvre(c) and c != ECRAN and MONTRE.search(texte) for c, texte in code.items()):
+            fautes.append(f"{cible} : aucun écran de la cible ne montre `ComposantsTiers` (l'avis et la licence"
+                          " suivent chaque copie)")
+        jugees.append(cible)
+    bilan = f"textes emportés par {', '.join(jugees)}"
+    return fautes, bilan + (f" ; {', '.join(portees)} (archive)" if portees else "")
 
 
 def cellules(lignes: list[str]) -> list[list[str]]:
@@ -208,6 +271,15 @@ def lire_les_textes() -> tuple[str, set[str], dict[str, str], dict[str, str | No
     return ecran, licences, avis, sources
 
 
+def lire_les_cibles() -> tuple[str, str, dict[str, str]]:
+    """`project.yml`, `project-archive.yml`, et le code Swift suivi."""
+    suivis = subprocess.run(["git", "-C", str(RACINE), "ls-files", "*.swift"], capture_output=True, text=True, check=True)
+    code = {c: (RACINE / c).read_text(encoding="utf-8") for c in suivis.stdout.split("\n") if c and (RACINE / c).is_file()}
+    if not code:
+        raise Illisible("aucun fichier Swift suivi (git illisible ?)")
+    return (RACINE / PROJET).read_text(encoding="utf-8"), (RACINE / ARCHIVE).read_text(encoding="utf-8"), code
+
+
 def autotest_textes(deps: str, resolu: str) -> bool:
     ecran = 'paquet("p-runtime", role: "Types.", avis: true),\n paquet("p-collections", role: "File.", avis: false),'
     licences, avis = {"Apache-2.0", "ISC"}, {"p-runtime": "avis"}
@@ -235,6 +307,50 @@ def autotest_textes(deps: str, resolu: str) -> bool:
         if obtenu != attendu:
             print(f"❌ autotest des textes « {nom} » : attendu {attendu}, obtenu {obtenu}")
             reussi = False
+    return reussi
+
+
+def autotest_cibles() -> bool:
+    projet = (
+        "name: P\ntargets:\n"
+        "  App:\n    type: application\n    sources:\n      - path: CoproFirst\n"
+        "      - path: LICENSES/Apache-2.0.txt\n        buildPhase: resources\n"
+        "    dependencies:\n      - package: ClientAPI\n"
+        "  TV:\n    type: application\n    sources:\n      - path: CoproFirstTV\n"
+        f"      - path: {ECRAN}\n      - path: {AVIS}\n      - path: LICENSES/Apache-2.0.txt\n"
+        "    dependencies:\n      - package: ClientAPI\n"
+        "  Montre:\n    type: application\n    sources:\n      - path: CoproFirstWatch\n"
+        "    dependencies:\n      - package: ClientAPI\n        product: ClientAPIMontre\n"
+        "  Tests:\n    type: bundle.unit-test\n    dependencies:\n      - target: App\n"
+        "schemes:\n  App:\n")
+    archive = "targets:\n  App:\n    dependencies:\n      - target: Montre\n"
+    code = {"CoproFirst/A/AProposView.swift": "ForEach(ComposantsTiers.tous) { _ in }",
+            "CoproFirstTV/A/AProposTVView.swift": "ForEach(ComposantsTiers.paquets) { _ in }"}
+    global EMBARQUEE_DANS
+    reel, EMBARQUEE_DANS = EMBARQUEE_DANS, {"Montre": ("App", ARCHIVE)}
+    cas = [
+        ("conforme", projet, archive, code, CONFORME),
+        ("cible sans la licence", projet.replace("      - path: LICENSES/Apache-2.0.txt\n    dependencies", "    dependencies"),
+         archive, code, ECART),
+        ("cible sans les avis", projet.replace(f"      - path: {AVIS}\n", ""), archive, code, ECART),
+        ("cible sans écran", projet, archive, {**code, "CoproFirstTV/A/AProposTVView.swift": "// ComposantsTiers.paquets"},
+         ECART),
+        ("montre plus embarquée", projet, "targets:\n  App:\n    dependencies: []\n", code, ECART),
+        ("aucune application", "targets:\n  Tests:\n    type: bundle.unit-test\n", archive, code, INCONNU),
+    ]
+    reussi = True
+    try:
+        for nom, p, a, c, attendu in cas:
+            try:
+                fautes, _ = juger_cibles(p, a, c)
+                obtenu = ECART if fautes else CONFORME
+            except Illisible:
+                obtenu = INCONNU
+            if obtenu != attendu:
+                print(f"❌ autotest des cibles « {nom} » : attendu {attendu}, obtenu {obtenu}")
+                reussi = False
+    finally:
+        EMBARQUEE_DANS = reel
     return reussi
 
 
@@ -275,7 +391,7 @@ def autotest() -> bool:
         if obtenu != attendu:
             print(f"❌ autotest « {nom} » : attendu {attendu}, obtenu {obtenu}")
             reussi = False
-    return autotest_textes(deps, resolu) and reussi
+    return autotest_textes(deps, resolu) and autotest_cibles() and reussi
 
 
 def main(arguments: list[str]) -> int:
@@ -291,8 +407,9 @@ def main(arguments: list[str]) -> int:
         textes = [(RACINE / chemin).read_text(encoding="utf-8") for chemin in (DEPENDANCES, FICHE, RESOLU)]
         fautes, bilan = juger(*textes)
         fautes_textes, bilan_textes = juger_textes(textes[0], textes[2], *lire_les_textes())
-        fautes, bilan = fautes + fautes_textes, f"{bilan} ; {bilan_textes}"
-    except (OSError, ValueError, KeyError, Illisible) as erreur:
+        fautes_cibles, bilan_cibles = juger_cibles(*lire_les_cibles())
+        fautes, bilan = fautes + fautes_textes + fautes_cibles, f"{bilan} ; {bilan_textes} ; {bilan_cibles}"
+    except (OSError, ValueError, KeyError, Illisible, subprocess.CalledProcessError) as erreur:
         print(f"❓ INCONNU : {erreur}")
         return INCONNU
     for faute in fautes:

@@ -11,11 +11,31 @@ import SwiftUI
 /// (`project.yml`, cible `CoproFirstTV`) : jamais une copie.
 @main
 struct CoproFirstTVApp: App {
-    @State private var hall = HallTV(memoire: MemoireEcran(coffre: CoffreTrousseau()))
+    @State private var hall = Self.lancement()
 
     var body: some Scene {
         WindowGroup {
             EcranDeHallView(hall: hall)
+                .preferredColorScheme(Self.themeImpose)
         }
+    }
+
+    /// Le Trousseau et les vraies installations ; en Debug seulement, l'écran simulé des
+    /// captures (`-api-simulee`, `LancementTVSimule`).
+    private static func lancement() -> HallTV {
+        #if DEBUG
+        if let simule = LancementTVSimule.hall(ProcessInfo.processInfo.arguments) { return simule }
+        #endif
+        return HallTV(memoire: MemoireEcran(coffre: CoffreTrousseau()))
+    }
+
+    /// Le thème du système ; en Debug, `-theme clair|sombre` l'impose aux captures : le
+    /// simulateur Apple TV ne se règle pas par `simctl ui appearance`.
+    private static var themeImpose: ColorScheme? {
+        #if DEBUG
+        LancementTVSimule.theme(ProcessInfo.processInfo.arguments)
+        #else
+        nil
+        #endif
     }
 }

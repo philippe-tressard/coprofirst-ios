@@ -96,6 +96,7 @@ struct EntreeTVView: View {
                 Button(ContenuVitrine.essayerDemo) { Task { await entree.entrerEnDemo() } }
                     .disabled(entree.decouverte.enCours)
                     .accessibilityIdentifier("hall.demo")
+                BoutonAProposTV()
             }
             ProgressView()
                 .opacity(entree.decouverte.enCours ? 1 : 0)

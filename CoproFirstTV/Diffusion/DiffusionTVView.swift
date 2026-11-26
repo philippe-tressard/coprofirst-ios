@@ -10,11 +10,12 @@ import UIKit
 /// L'écran reste allumé tant qu'il diffuse (`isIdleTimerDisabled`, rendu en quittant) : une
 /// Apple TV en veille ne montrerait rien au hall.
 ///
-/// Un clic de la télécommande propose « Désappairer » (#218, lot 5), confirmé : rien à
-/// l'écran ne l'annonce, l'écran est fait pour être lu, pas manié.
+/// Un clic de la télécommande propose « Désappairer » (#218, lot 5), confirmé, et « À propos »
+/// (#320) : rien à l'écran ne l'annonce, l'écran est fait pour être lu, pas manié.
 struct DiffusionTVView: View {
     @State private var diffusion: DiffusionTV
-    @State private var desappairer = false
+    @State private var gestes = false
+    @State private var aPropos = false
     let retire: () -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -37,13 +38,16 @@ struct DiffusionTVView: View {
         .padding(Mise.marge * 3)
         .focusable()
         .focusEffectDisabled()
-        .onTapGesture { desappairer = true }
-        .confirmationDialog(EcranDeHall.desappairerTitre, isPresented: $desappairer, titleVisibility: .visible) {
+        .onTapGesture { gestes = true }
+        .confirmationDialog(EcranDeHall.gestesTitre, isPresented: $gestes, titleVisibility: .visible) {
             Button(EcranDeHall.desappairer, role: .destructive, action: retire)
                 .accessibilityIdentifier("hall.desappairer")
+            Button(EcranDeHall.aPropos) { aPropos = true }
+                .accessibilityIdentifier("hall.a-propos")
         } message: {
             Text(EcranDeHall.desappairerMessage)
         }
+        .modifier(AProposTVPresente(ouvert: $aPropos))
         .task { await diffusion.diffuser() }
         .onChange(of: diffusion.retire) { _, retiree in if retiree { retire() } }
         .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
