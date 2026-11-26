@@ -42,8 +42,10 @@ final class ConnexionUITests: XCTestCase {
         let app = LancementCaptures.lancer(arguments: ["-compte", "temporaire"])
         let actuel = app.secureTextFields["motDePasse.actuel"]
         XCTAssertTrue(actuel.apparait(), "« Choisir votre mot de passe », seul")
-        let plus = app.descendants(matching: .any)["Plus"].firstMatch
-        XCTAssertFalse(plus.exists, "la barre de la résidence ne s'ouvre pas encore")
+        // La pastille de la résidence, en tête du Fil : sur iPhone comme sur iPad, où la barre
+        // latérale n'a pas de « Plus ».
+        let residence = app.buttons["pastille.residence"]
+        XCTAssertFalse(residence.exists, "la résidence ne s'ouvre pas encore")
         XCTAssertTrue(app.buttons["residence.deconnecter"].exists, "la déconnexion reste offerte")
 
         app.toucher(actuel)
@@ -54,7 +56,7 @@ final class ConnexionUITests: XCTestCase {
         let confirmation = app.secureTextFields["motDePasse.confirmation"]
         app.toucher(confirmation)
         confirmation.typeText("choisi-2026")
-        app.toucher(app.buttons["motDePasse.valider"], jusqua: plus)
+        app.toucher(app.buttons["motDePasse.valider"], jusqua: residence)
         XCTAssertFalse(actuel.exists, "la porte se lève : la résidence s'ouvre")
     }
 }
