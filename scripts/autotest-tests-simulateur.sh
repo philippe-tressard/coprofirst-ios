@@ -15,7 +15,9 @@
 #   - de vrais passages, chacun dans son processus (`passage`) : deux en même temps,
 #     verrou orphelin ou sans fiche, arrêt par le pid, CI, lanceur, extinction du
 #     simulateur (#108) ; le verrou commun du poste pris d'abord, ni repris s'il est
-#     tenu, ni en CI, et son absence dite (#255).
+#     tenu, ni en CI, et son absence dite (#255) ;
+#   - un build pour six lots (#408) : le build seul, les produits reçus, absents, mêlés ou
+#     d'un autre Xcode.
 #
 # Un contrôle qui ne refuse rien ne prouve rien : chaque cas a été vu rouge en
 # retirant la ligne qu'il éprouve.
@@ -40,6 +42,9 @@ case "$1" in
     while [ -f "$FAUX_DOSSIER/retenir" ]; do sleep 0.1; done
     exit "$(cat "$FAUX_DOSSIER/sortie-test")" ;;
   test-without-building) exit "$(cat "$FAUX_DOSSIER/sortie-relance")" ;;
+  # Un build pour six lots (#408) : la version de Xcode, et le build seul.
+  -version) printf 'Xcode 26.6\nBuild version 17F00\n' ;;
+  build-for-testing) exit 0 ;;
   simctl)
     case "$2" in
       list)
@@ -274,6 +279,43 @@ FAUX
     echo "❌ des tests joués sur un simulateur au démarrage non confirmé"; rate=$((rate + 1))
   fi
   rm -f "$d/demarrage-rate"
+
+  # Un build pour six lots (#408) : le build seul ne joue rien et écrit la version de Xcode ;
+  # un lot SANS_BUILD ne lance jamais `test`, et des produits absents, mêlés ou d'un autre
+  # Xcode rendent INCONNU, sans un test joué. $1 nom, $2 sortie attendue, $3 la variable.
+  produits() {
+    rm -f "$d/appels"
+    echo 0 > "$d/sortie-relance"
+    echo "$vert" > "$d/resume.json"
+    local sortie
+    ( export "$3=oui"
+      FAUX_DOSSIER=$d XCODEBUILD=$d/faux XCRUN=$d/faux MESURER=0 DESTINATION='platform=iOS Simulator,id=X' \
+        RESULTATS=$d/r GITHUB_STEP_SUMMARY=$d/resume.md PROJET=$d/projet SOURCES_TESTS=$d/sources \
+        VEILLE_DU_POSTE=non CAFEINE=$cafeine PMSET_JOURNAL=$d/pmset PRODUITS=$d/produits passer ) > "$d/sortie.txt" 2>&1
+    sortie=$?
+    [ "$sortie" = "$2" ] || { echo "❌ $1 : sortie $sortie (attendu $2)"; rate=$((rate + 1)); }
+    if grep -q '^test ' "$d/appels" 2>/dev/null; then echo "❌ $1 : un build par \`test\`"; rate=$((rate + 1)); fi
+  }
+  rm -rf "$d/produits"
+  produits "build seul" 0 CONSTRUIRE_SEUL
+  grep -q '^build-for-testing -project' "$d/appels" && ! grep -q '^test-without-building' "$d/appels" \
+    && [ "$(cat "$d/produits/version-xcode.txt" 2>/dev/null)" = "Xcode 26.6 Build version 17F00" ] \
+    || { echo "❌ le build seul ne construit pas, joue des tests ou n'écrit pas sa version de Xcode"; rate=$((rate + 1)); }
+  produits "produits sans .xctestrun : INCONNU" 2 SANS_BUILD
+  ! grep -q '^test-without-building' "$d/appels" \
+    || { echo "❌ des tests joués sans produits"; rate=$((rate + 1)); }
+  touch "$d/produits/CoproFirst_iphonesimulator.xctestrun"
+  produits "produits reçus : vert" 0 SANS_BUILD
+  grep -q '^test-without-building -xctestrun '"$d"'/produits/CoproFirst_iphonesimulator.xctestrun' "$d/appels" \
+    && grep -q '^Produits reçus : CoproFirst_iphonesimulator.xctestrun, Xcode 26.6' "$d/resume.md" \
+    || { echo "❌ les produits reçus ne se jouent pas par leur .xctestrun, ou ne se disent pas"; rate=$((rate + 1)); }
+  touch "$d/produits/Autre.xctestrun"
+  produits "produits mêlés : INCONNU" 2 SANS_BUILD
+  rm "$d/produits/Autre.xctestrun"
+  echo "Xcode 27.2 Build version 18A00" > "$d/produits/version-xcode.txt"
+  produits "produits d'un autre Xcode : INCONNU" 2 SANS_BUILD
+  ! grep -q '^test-without-building' "$d/appels" \
+    || { echo "❌ des produits d'un autre Xcode joués"; rate=$((rate + 1)); }
 
   # ── Le verrou, l'arrêt et l'extinction : de vrais passages, chacun dans son processus ──
   # $1 nom (sa sortie va dans $d/$1.txt), puis des variables d'environnement en plus.
