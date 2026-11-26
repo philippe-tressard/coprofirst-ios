@@ -104,11 +104,16 @@ from the watch. Signing out on the iPhone revokes the watch's access.
 APPLE TV
 The Apple TV app is the hall screen of a residence: it shows the residence's current
 hall announcements, read-only, with no account on the TV. To try it:
-1. Open the app on the Apple TV: it shows an eight-letter pairing code, valid ten minutes.
+1. Open the app on the Apple TV and choose "Essayer la démo" (or type a residence's
+   address, then "Continuer"): it shows an eight-letter pairing code, valid ten minutes.
 2. On the iPhone, sign in to the demo with the "Conseil syndical" persona (user-cs),
    then More > Espace CS > "Écrans du hall" > "Appairer un écran"; type the code, a
    name and the announcements to show.
-3. The TV then shows the hall announcements. "Retirer" on the iPhone unpairs it.
+3. The TV then shows the hall announcements, or "Aucune annonce en ce moment" when there
+   are none. "Retirer" on the iPhone unpairs it; on the TV, a click of the remote offers
+   "Désappairer".
+The TV's "À propos" (on the pairing screen, or a click of the remote while announcements
+play) shows the app's source code address, its licence and the third-party components.
 
 SOURCE CODE
 The app is free software (AGPL-3.0 with an additional permission for App Store
