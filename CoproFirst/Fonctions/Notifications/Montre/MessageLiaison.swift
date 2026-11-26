@@ -10,11 +10,11 @@ import Foundation
 ///
 /// Le lot 2 de #226 la construit entière : le plancher sert les routes `/montres` (contrat
 /// 2.4.0, coprofirst#2771), et le manifeste comme la fiche de confidentialité disent ce que la
-/// montre reçoit et lit (`scripts/verifier-confidentialite.py`). Elle reste ÉTEINTE : Philippe a
-/// reporté l'allumage côté Wear OS (#207, 18/11/2026 : « le wear n'est pas prioritaire ») ; les
-/// deux s'allument ensemble, sur son geste. Les tests l'allument par `active:`.
+/// montre reçoit et lit (`scripts/verifier-confidentialite.py`). ALLUMÉE le 26/11/2026 pour la
+/// 1.2, sur le geste de Philippe (« Oui, allume-la ») : l'iPhone et sa montre sortent sans
+/// attendre Wear OS, dont le drapeau reste le sien (#207). Les tests l'éteignent par `active:`.
 enum LiaisonMontre {
-    static let active = false
+    static let active = true
 }
 
 /// Ce que l'iPhone transmet à la montre par WatchConnectivity (#226) : la résidence (adresse,

@@ -10,8 +10,8 @@ import Testing
 // La liaison de l'iPhone à l'Apple Watch (#226) : un jeton de montre émis ou renouvelé à
 // l'ouverture d'une résidence, retiré à sa fermeture ; l'iPhone n'en garde que l'identifiant.
 
-@Test func laLiaisonResteEteinteJusquAuGesteDePhilippe() {
-    #expect(!LiaisonMontre.active, "allumée avec Wear OS, sur le geste de Philippe (#207)")
+@Test func laLiaisonEstAllumeeDepuisLeGesteDePhilippe() {
+    #expect(LiaisonMontre.active, "allumée pour la 1.2 sur le geste de Philippe (26/11/2026, #226)")
 }
 
 @Test func lesDeuxServicesRealisentLesMontres() {

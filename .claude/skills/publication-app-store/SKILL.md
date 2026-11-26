@@ -74,10 +74,11 @@ compte, jamais ici : `curl "https://itunes.apple.com/lookup?bundleId=fr.coprofir
 - **1.0** (build 1, `v1.0.0`) : approuvée le 14/11/2026 à 00:27, en ligne le 13/11 à 23:26 UTC.
 - **1.1** (build 2, `v1.1.0`) : en ligne le 18/11/2026 (#263), iPhone et iPad (#219).
 - **1.2** (build 3, `v1.2.0` à poser par `avant_soumission.py`) : préparée le 26/11/2026,
-  iOS seul (décision de Philippe du 26/11 : la règle de sortie commune avec l'Android levée
-  pour cette version). **Sans l'app Apple Watch** (« Oui » de Philippe, 26/11 vers 07:40 :
-  archive sans `ARCHIVE_AVEC_MONTRE`, la liaison de #226 étant éteinte), **sans l'Apple TV**
-  (#320 : licences, code source et icône manquent), relais des notifications éteint (#318).
+  sans l'Android (décision de Philippe du 26/11 : la règle de sortie commune avec l'Android
+  levée pour cette version). **Avec l'app Apple Watch et l'Apple TV** (Philippe, 26/11 après-midi :
+  « la livraison doit watch et tv », puis « Oui, allume-la » pour la liaison de #226), qui
+  remplace son « Oui » du matin à une 1.2 sans la montre. Archive iPhone avec
+  `ARCHIVE_AVEC_MONTRE=true`, archive tvOS à part (#320) ; relais des notifications éteint (#318).
 
 Nouveautés de la 1.2 (*What's New in This Version*), à coller par Philippe :
 
@@ -90,6 +91,8 @@ Nouveautés de la 1.2 (*What's New in This Version*), à coller par Philippe :
 • Sondages et annonces : pourcentages et prix identiques à ceux du site.
 • iPad : la liste et la fiche côte à côte sur tous les écrans, en portrait aussi ; ⌘F pour chercher.
 • iPhone pliable : le Fil en carnet, une journée par double page.
+• Apple Watch : les alertes de votre résidence au poignet, en lecture seule, même sans réseau.
+• Apple TV : l'écran du hall diffuse les affiches de la résidence, appairé par un code depuis l'Espace du conseil syndical.
 • Meilleure lecture en très grand texte, et de nombreuses corrections.
 ```
 

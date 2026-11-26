@@ -161,5 +161,5 @@ le reste se lit à l'iPhone. Son pendant Wear OS est la ligne 32 de coprofirst-a
 | Le widget | Des nombres seulement (« 2 nouvelles alertes · dont 1 urgente »), et sur le cadran le logo, avec un point s'il y a du non lu. Ni titre ni nom de résidence | #315 |
 | Ce qu'elle ne fait pas | Aucun geste : ni marquer lu, ni supprimer, ni répondre. Rien des affaires, de la résidence, de la communauté ni de l'administration | — |
 
-**Liaison éteinte** (`LiaisonMontre.active`) : en production, la montre se dit « non reliée »
-tant que Philippe ne l'allume pas, en même temps que Wear OS (coprofirst-android#207).
+**Liaison allumée** (`LiaisonMontre.active`) depuis la 1.2, sur le geste de Philippe du
+26/11/2026 ; celle de Wear OS s'allume de son côté (coprofirst-android#207).

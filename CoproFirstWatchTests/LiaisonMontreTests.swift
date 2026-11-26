@@ -63,9 +63,8 @@ struct LiaisonMontreTests {
     }
 
     @Test func laLiaisonEteinteNeRelieNiNEcouteRien() {
-        #expect(!LiaisonMontre.active, "allumée seulement sur le geste de Philippe, avec Wear OS (#207)")
         let coffre = LiaisonEnMemoire()
-        let montre = LiaisonDeLaMontre(coffre: coffre)
+        let montre = LiaisonDeLaMontre(coffre: coffre, active: false)
         montre.recevoir(liaison())
         #expect(coffre.lire() == nil, "rien ne se garde")
         #expect(montre.etat == .nonReliee)

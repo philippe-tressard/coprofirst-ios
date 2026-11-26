@@ -31,6 +31,8 @@ recopie dans les champs « Sign-In Information » d'App Store Connect, pas ici.
 | Les écrans vus, comptés par la résidence, refusables au Profil (depuis la 1.1) | #199 ; `ProfilView.swift` (« Refuser la collecte de statistiques de navigation ») ; `ProductInteraction` du manifeste |
 | Sur iPad, Profil et À propos sont dans la barre latérale, pas sous « Plus » | `BarreLateraleUITests` (#221) |
 | Code source ouvert, lien dans l'app | Plus › À propos › « Code source de l'app » (AGPL §13) |
+| Apple Watch (depuis la 1.2) : la cloche de la dernière résidence ouverte, en lecture seule ; un jeton de montre (cloche seule, 30 jours, révocable) remis par l'iPhone, retiré à la déconnexion | `CoproFirst/Fonctions/Notifications/Montre/` (`LiaisonMontre.active`, allumée le 26/11/2026) ; `CoproFirstWatch/` ; route `/montres` (coprofirst#2771) |
+| Apple TV (depuis la 1.2) : l'écran du hall, sans compte, appairé par un code de huit lettres (dix minutes) saisi dans Espace CS › « Écrans du hall » › « Appairer un écran » ; lecture seule des annonces de hall | `CoproFirstTV/` ; `CoproFirst/Fonctions/EspaceCS/Ecrans/TextesEcransCS.swift` ; décision du 20/11/2026 dans #320 (compte de démo du conseil) — **l'accès de `user-cs` à l'onglet et des annonces de hall en cours sur la démo : à constater avant de soumettre** |
 
 ## Texte à coller
 
@@ -91,6 +93,22 @@ sent only to the residence the user chose, never to the developer. Like its webs
 the residence counts the screens viewed for its own visit statistics (declared as
 Usage Data > Product Interaction, Analytics); the user can opt out in Profile >
 "Vos droits (RGPD)" > "Refuser la collecte de statistiques de navigation".
+
+APPLE WATCH
+The Apple Watch app is read-only: it shows the notices (the bell) of the last
+residence opened on the paired iPhone. To try it, sign in to the demo on the iPhone and
+open the residence: the iPhone gives the watch a token that can only read the notices
+(30 days, revocable), and the watch lists them, unread first. Nothing can be changed
+from the watch. Signing out on the iPhone revokes the watch's access.
+
+APPLE TV
+The Apple TV app is the hall screen of a residence: it shows the residence's current
+hall announcements, read-only, with no account on the TV. To try it:
+1. Open the app on the Apple TV: it shows an eight-letter pairing code, valid ten minutes.
+2. On the iPhone, sign in to the demo with the "Conseil syndical" persona (user-cs),
+   then More > Espace CS > "Écrans du hall" > "Appairer un écran"; type the code, a
+   name and the announcements to show.
+3. The TV then shows the hall announcements. "Retirer" on the iPhone unpairs it.
 
 SOURCE CODE
 The app is free software (AGPL-3.0 with an additional permission for App Store
