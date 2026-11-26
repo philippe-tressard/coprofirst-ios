@@ -129,6 +129,19 @@ final class Parcours {
         suivreLeLienEnAttente(installation)
     }
 
+    /// Une connexion fraîche (#405) : le compte se lit (GET /auth/me) AVANT que la résidence
+    /// s'ouvre. Un mot de passe temporaire mène droit à sa porte, sans le Fil refusé avant
+    /// elle ; la barre est celle du compte dès l'arrivée. L'écran de connexion reste pendant
+    /// la lecture, son bouton en attente. Un échec n'empêche rien : la résidence s'ouvre,
+    /// et `OngletsView` relit le compte.
+    func ouvrirApresLeCompte(_ installation: Installation) async {
+        if let profil = try? await service.profil(installation) {
+            connues.retenir(installation)
+            connues.noter(profil, pour: installation)
+        }
+        ouvrir(installation, premiereConnexion: true)
+    }
+
     /// Change de présentation (rotation, Split View, pliage) en gardant la page ouverte
     /// (`PresentationNavigation.traduire`).
     func presenter(_ nouvelle: PresentationNavigation) {

@@ -59,4 +59,26 @@ final class ConnexionUITests: XCTestCase {
         app.toucher(app.buttons["motDePasse.valider"], jusqua: residence)
         XCTAssertFalse(actuel.exists, "la porte se lève : la résidence s'ouvre")
     }
+
+    /// La connexion FRAÎCHE d'un compte temporaire (#405) : le compte se lit avant que la
+    /// résidence s'ouvre — la porte vient seule, jamais le Fil refusé avant elle.
+    @MainActor
+    func testUneConnexionFraicheMeneDroitALaPorteDuMotDePasseTemporaire() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-api-simulee", "-ecran", "connexion", "-compte", "temporaire"]
+        app.launch()
+
+        let email = app.textFields["connexion.email"]
+        app.toucher(email)
+        email.typeText("resident@example.com")
+        let motDePasse = app.secureTextFields["connexion.motDePasse"]
+        app.toucher(motDePasse)
+        motDePasse.typeText("temporaire1")
+        app.toucherAuDessin(app.buttons["connexion.valider"])
+        ConfirmationHoteUITests.confirmer(app)
+
+        XCTAssertTrue(app.secureTextFields["motDePasse.actuel"].apparait(), "la porte, dès l'ouverture")
+        XCTAssertFalse(app.buttons["pastille.residence"].exists, "le Fil ne s'est pas ouvert avant elle")
+        XCTAssertFalse(app.buttons["faceid.plusTard"].exists, "Face ID attend que la porte se lève")
+    }
 }

@@ -100,3 +100,38 @@ private func parcoursOuvert() throws -> Ouvert {
     #expect(relance.connues.identifiant(ServiceSimule.residence) == "resident@example.com")
     #expect(relance.connues.identifiant(ServiceSimule.demo) == nil, "un courriel par résidence")
 }
+
+/// Une connexion fraîche (#405) : le compte est lu AVANT que la résidence s'ouvre — un mot
+/// de passe temporaire est connu dès l'ouverture (la porte, pas le Fil refusé), la barre est
+/// celle du compte ; un compte illisible n'empêche pas d'entrer.
+@MainActor
+@Test func laConnexionLitLeCompteAvantDOuvrirLaResidence() async throws {
+    let reglages = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
+    let service = ServiceSimule(delai: .milliseconds(1))
+    service.profilSimule.motDePasseAChanger = true
+    let parcours = Parcours(
+        service: service, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
+
+    await parcours.ouvrirApresLeCompte(ServiceSimule.residence)
+
+    #expect(parcours.ouverte == ServiceSimule.residence)
+    #expect(parcours.ouverteAJour?.profil?.motDePasseAChanger == true, "la porte, dès l'ouverture")
+    let pages = parcours.pagesDeLaBarre(ServiceSimule.residence).map(\.id)
+    #expect(pages.contains("espace-cs"), "la barre du compte servi, sans attendre la relecture")
+    #expect(parcours.proposerFaceID, "une première connexion propose Face ID")
+}
+
+@MainActor
+@Test func unCompteIllisibleNEmpechePasDOuvrirLaResidence() async throws {
+    let reglages = try #require(UserDefaults(suiteName: "tests.\(UUID().uuidString)"))
+    let service = ServiceSimule(delai: .milliseconds(1))
+    let parcours = Parcours(
+        service: service, connues: InstallationsConnues(reglages: reglages, coffre: CoffreEnMemoire()))
+    // La session refusée : GET /auth/me échoue.
+    _ = await service.deconnecter(ServiceSimule.residence)
+
+    await parcours.ouvrirApresLeCompte(ServiceSimule.residence)
+
+    #expect(parcours.ouverte == ServiceSimule.residence, "la résidence s'ouvre ; OngletsView relira le compte")
+    #expect(parcours.ouverteAJour?.profil == nil)
+}

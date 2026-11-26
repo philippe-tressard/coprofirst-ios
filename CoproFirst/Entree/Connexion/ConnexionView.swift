@@ -247,7 +247,7 @@ struct ConnexionView: View {
             if parcours.service.aUneSessionGardee(installation) {
                 _ = await parcours.service.activerFaceID(installation)
             }
-            parcours.ouvrir(installation, premiereConnexion: true)
+            await parcours.ouvrirApresLeCompte(installation)
         } catch {
             montrer(ErreurService.depuis(error))
         }

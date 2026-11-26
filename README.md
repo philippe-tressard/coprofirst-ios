@@ -181,7 +181,9 @@ connexion — l'activation dit ce qui garde la session : Face ID, ou le seul
 verrouillage de l'appareil quand la biométrie manque —, démo, puis le fil de la résidence, jour par jour, et ses affaires.
 Un compte au mot de passe temporaire (les deux comptes initiaux d'une installation neuve,
 `mot_de_passe_a_changer`, #377) n'ouvre que « Choisir votre mot de passe » et la
-déconnexion ; choisi, la résidence s'ouvre.
+déconnexion ; choisi, la résidence s'ouvre. À la connexion, le compte se lit avant que la
+résidence s'ouvre (#405) : la porte vient seule, et la barre est celle du compte dès
+l'arrivée.
 « Nouvelle affaire » et « Modifier l'affaire » se composent selon la saisie réglée au
 Profil pour le compte, Essentielle ou Complète, comme sur le site.
 Pendant la saisie, la résidence dit ce qu'elle en fera, à mesure qu'on écrit
