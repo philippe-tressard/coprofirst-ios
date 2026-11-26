@@ -21,7 +21,7 @@ Ce que l'app sait faire : « Écrans livrés » ci-dessous et
 **L'app est publiée sur l'App Store** — iPhone et iPad, gratuite :
 <https://apps.apple.com/fr/app/coprofirst/id6834326392>. La 1.0 y est entrée le
 14/11/2026, la 1.1 (build 2, étiquette `v1.1.0`) le 18/11/2026 (#263) ; `main` prépare
-la 1.2 (build 3), iPhone et iPad, sans la montre ni l'Apple TV. Comment elle sort : « Sortir une version ».
+la 1.2 (build 3), iPhone et iPad, avec l'Apple Watch et l'Apple TV. Comment elle sort : « Sortir une version ».
 
 ## Sortir une version
 
@@ -141,8 +141,8 @@ lues », repliée ; un toucher ouvre l'alerte entière. Elle ne fait que lire �
 marque comme lu. Chaque alerte porte l'icône de son type (`TypesNotification`, publiée par
 coprofirst#2802).
 
-**La liaison** (lot 2), construite mais **éteinte** (`LiaisonMontre.active`) : elle
-s'allume avec celle de Wear OS, sur le geste de Philippe (coprofirst-android#207). Allumée : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
+**La liaison** (lot 2), **allumée** pour la 1.2 (`LiaisonMontre.active`, geste de Philippe du
+26/11/2026 ; celle de Wear OS reste la sienne, coprofirst-android#207) : à l'ouverture d'une résidence, si une montre jumelée porte l'app,
 l'iPhone demande un jeton de montre (coprofirst#2771 : la cloche seule, 30 jours) — renouvelé
 s'il en a déjà un — et le passe à la montre par WatchConnectivity, avec l'adresse et le nom de
 la résidence ; à la déconnexion, il le retire et efface la montre. L'iPhone ne garde que
