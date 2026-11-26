@@ -11,7 +11,8 @@
 #      à l'octet, API simulée comprise (scripts/concordance.py --plancher, #20) ;
 #   2. le logo et sa licence identiques à coprofirst (scripts/verifier-logo.sh, #133),
 #      comparés et recopiés à l'étiquette du plancher, jamais à une branche ;
-#   3. REUSE, à la version d'outillage.env : sur le runner, installée à cette version ;
+#   3. les renvois aux tickets de la documentation à jour (scripts/verifier-renvois.py --distant, #368) ;
+#   4. REUSE, à la version d'outillage.env : sur le runner, installée à cette version ;
 #      au poste, absente ou autre, INCONNU avec la commande d'installation.
 #
 # Sortie : 0 vert, 1 rouge, 2 INCONNU (sans réseau, sans reuse) — jamais vert.
@@ -76,6 +77,10 @@ for f in scripts/verifier-logo.sh scripts/importer-logo.sh; do
 done
 
 etape 120 "logo et sa licence (bash scripts/verifier-logo.sh)" bash scripts/verifier-logo.sh
+# Les renvois aux tickets de la documentation (#368) : un « #N en attente » ou un « non porté »
+# dont le ticket est clos. GitHub lu par gh : sans réseau, INCONNU.
+etape 180 "renvois aux tickets (python3 -I scripts/verifier-renvois.py --distant)" \
+  python3 -I scripts/verifier-renvois.py --distant
 
 PAQUET="reuse[charset-normalizer]==$REUSE_VERSION"
 REUSE=$(command -v reuse || true)
@@ -96,4 +101,4 @@ fi
 
 [ "$ROUGES" -eq 0 ] || exit 1
 [ "$INCONNUS" -eq 0 ] || exit 2
-echo "✅ plancher sans écart (${DUREES[0]}), logo identique à coprofirst (${DUREES[1]}), REUSE $REUSE_VERSION conforme (${DUREES[2]})"
+echo "✅ plancher sans écart (${DUREES[0]}), logo identique à coprofirst (${DUREES[1]}), renvois aux tickets à jour (${DUREES[2]}), REUSE $REUSE_VERSION conforme (${DUREES[3]})"
