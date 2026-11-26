@@ -111,6 +111,8 @@ struct MotDePasseView: View {
     /// Un refus (actuel incorrect, nouveau trop faible) porte la phrase du serveur.
     @State private var erreur: ErreurService?
     @State private var reussi = false
+    /// Chaque changement réussi : le retour haptique, aussi sur la porte, qui n'a pas d'alerte (#405).
+    @State private var succes = 0
 
     var body: some View {
         Form {
@@ -157,7 +159,7 @@ struct MotDePasseView: View {
         .scrollContentBackground(.hidden)
         .background(palette.bg)
         .navigationTitle(temporaire ? "Choisir votre mot de passe" : "Mot de passe")
-        .sensoryFeedback(.success, trigger: reussi)
+        .sensoryFeedback(.success, trigger: succes)
         .alert("Mot de passe modifié", isPresented: $reussi) { Button("OK") { fermer() } }
     }
 
@@ -178,6 +180,7 @@ struct MotDePasseView: View {
         do {
             try await parcours.serviceProfil.changerMotDePasse(actuel: actuel, nouveau: nouveau, dans: installation)
             erreur = nil
+            succes += 1
             // Temporaire : le compte relu ne porte plus le drapeau, l'app s'ouvre (`RacineView`).
             // Le jeton d'accès est tombé avec l'ancien mot de passe : la relecture le renouvelle.
             guard temporaire else { reussi = true; return }
