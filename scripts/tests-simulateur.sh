@@ -94,6 +94,8 @@ A_ETEINDRE=""
 DEBUT_JOURNAL=""
 # Le verrou du poste : prendre_verrou, rendre_verrou.
 source scripts/verrou-simulateur.sh
+# Un build pour six lots (#408) : construire_produits, produits_recus.
+source scripts/produits-tests.sh
 
 # Les descendants de $1, les plus lointains d'abord — par filiation, jamais par nom.
 descendants() {
@@ -339,18 +341,27 @@ jouer_passage() {
     return 2
   fi
   echo "Destination : $DESTINATION"
-  demarrer_simulateur || return 1
-  desinstaller | tee -a "$RESUME"
-  [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
-  # Le journal du simulateur, lu depuis ce point : l'app y dira son empreinte (#328).
-  DEBUT_JOURNAL=$(date '+%Y-%m-%d %H:%M:%S')
   local communs=(
     -project "$PROJET" -scheme "$SCHEMA" -destination "$DESTINATION"
     -derivedDataPath .build/DerivedData -skipPackagePluginValidation
     -onlyUsePackageVersionsFromResolvedFile CODE_SIGNING_ALLOWED=NO
   )
+  # Un build pour six lots (#408, scripts/produits-tests.sh) : le build de tête s'arrête là ;
+  # un lot joue les produits reçus, par leur .xctestrun, jamais un build de repli.
+  local premier=test
+  [ -z "${CONSTRUIRE_SEUL:-}" ] || { construire_produits "${communs[@]}"; return $?; }
+  if [ -n "${SANS_BUILD:-}" ]; then
+    produits_recus || return 2
+    communs=(-xctestrun "$XCTESTRUN" -destination "$DESTINATION")
+    premier=test-without-building
+  fi
+  demarrer_simulateur || return 1
+  desinstaller | tee -a "$RESUME"
+  [ "${PIPESTATUS[0]}" -eq 0 ] || return 2
+  # Le journal du simulateur, lu depuis ce point : l'app y dira son empreinte (#328).
+  DEBUT_JOURNAL=$(date '+%Y-%m-%d %H:%M:%S')
   local debut=$SECONDS code seuls decision
-  lancer "$RESULTATS/tests.log" test "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
+  lancer "$RESULTATS/tests.log" "$premier" "${communs[@]}" "$@" -resultBundlePath "$RESULTATS/tests.xcresult"
   code=$?
   # Le runner n'a pas démarré, aucun test joué (#50, « AX loaded notification ») : le
   # passage se rejoue UNE fois, sans rebuild, déclaré — et c'est la seule relance permise.

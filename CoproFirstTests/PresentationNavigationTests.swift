@@ -80,4 +80,11 @@ struct PresentationNavigationTests {
         }
         #expect(!ids.contains(Aiguillage.idPlus))
     }
+
+    /// « À propos » ferme la liste « Plus » : `GrandTexteUITests` la fait défiler JUSQU'À cette
+    /// entrée, le seul signe lu de sa fin (un glisser perdu laisse aussi « rien de neuf », #390).
+    /// Une entrée fixe ajoutée après elle échapperait au parcours en AX5 : ce test le dit.
+    @Test func aProposFermeLaListePlus() {
+        #expect(EntreeFixe.allCases.last == .aPropos)
+    }
 }

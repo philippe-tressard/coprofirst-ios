@@ -32,9 +32,7 @@ final class PrestatairesAffaireUITests: XCTestCase {
         app.ouvrirModificationAffaire()
         let enregistrer = app.buttons["modifier.enregistrer"]
         XCTAssertTrue(enregistrer.apparait())
-        let retirer = app.elementAcces("modifier.prestataire.2.retirer")
-        XCTAssertTrue(app.amener(retirer), "chaque prestataire a son ×")
-        app.toucher(retirer)
+        app.retirerPrestataire(2)
         XCTAssertTrue(app.elementAcces("modifier.prestataire.2").disparait())
         XCTAssertTrue(enregistrer.isEnabled, "la liste a changé : elle part")
 

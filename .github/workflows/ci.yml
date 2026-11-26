@@ -227,9 +227,51 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
 
+  construire:
+    # Un build pour les six lots d'interface (#408, option A de #397) : chacun construisait l'app
+    # lui-même, ~16 min hors tests sur 42 (lot 4 de 45492408940), six builds identiques par
+    # exécution. Les produits passent aux lots en archive tar (l'artefact perd les bits
+    # d'exécution) ; la relance d'un lot reprend l'artefact de son exécution, et un build rejoué
+    # le remplace (`overwrite`). L'empreinte compilée suit l'artefact : chaque lot la juge
+    # contre ses sources (#328), et des produits d'un autre Xcode sont INCONNU.
+    name: Build des tests d'interface (#408)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
+    runs-on: macos-latest
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-construire-main' || format('ci-construire-{0}', github.run_id) }}
+      cancel-in-progress: false
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Xcode du runner
+        run: xcodebuild -version
+      - name: Outillage épinglé (outillage.env)
+        run: bash scripts/installer-outillage-ci.sh
+      - name: Projet Xcode (XcodeGen)
+        run: bash scripts/generer-projet.sh
+      - name: Build pour les tests, sans les jouer (scripts/produits-tests.sh)
+        env:
+          CONSTRUIRE_SEUL: oui
+        run: |
+          bash scripts/tests-simulateur.sh
+          tar -czf produits-tests.tar.gz -C .build/DerivedData/Build Products
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          path: produits-tests.tar.gz
+          archive: false
+          overwrite: true
+          retention-days: 3
+          if-no-files-found: error
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
+
   interface:
     name: Interface (${{ matrix.lot }}/${{ strategy.job-total }})
-    needs: detection
+    needs: [detection, construire]
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
     # Sur main, une file PAR LOT et par branche, plus par commit (#235, standards/09 §8 bis) :
@@ -309,42 +351,30 @@ jobs:
         run: bash scripts/installer-outillage-ci.sh
       - name: Projet Xcode (XcodeGen)
         run: bash scripts/generer-projet.sh
-      - name: Build et tests d'interface au simulateur (lot ${{ matrix.lot }})
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: produits-tests.tar.gz
+      - name: Produits du build reçus (#408)
+        run: mkdir -p .build/DerivedData/Build && tar -xzf produits-tests.tar.gz -C .build/DerivedData/Build
+      - name: Tests d'interface au simulateur, sans build (lot ${{ matrix.lot }})
         # Requêtes d'accessibilité expirées, mesure à l'échec et relance bornée,
-        # déclarée au résumé du run : scripts/tests-simulateur.sh (#50).
+        # déclarée au résumé du run : scripts/tests-simulateur.sh (#50) ; les produits reçus
+        # par leur .xctestrun, jamais un build de repli (#408).
         env:
           LOT: ${{ matrix.lot }}
           DERNIER: ${{ strategy.job-total }}
+          SANS_BUILD: oui
         run: |
+          # Les filtres du lot (#243) : un LOT_ faux est INCONNU, rien ne se joue.
+          lus=$(bash scripts/filtres-lot.sh) || exit $?
           filtres=()
-          [ "$LOT" = "$DERNIER" ] && filtres+=(-only-testing:CoproFirstUITests)
-          # Un LOT_ au rang du dernier ou au-delà ne se jouerait jamais comme tel : INCONNU.
-          liste=LOT_$DERNIER
-          [ -z "${!liste:-}" ] || { echo "::error::$liste nommé, mais le lot $DERNIER joue le reste"; exit 2; }
-          vues=" "
-          for nomme in $(seq 1 $((DERNIER - 1))); do
-            liste=LOT_$nomme
-            [ -n "${!liste:-}" ] || { echo "::error::$liste absent ou vide : la matrice compte $DERNIER lots"; exit 2; }
-            for classe in ${!liste}; do
-              # Une classe renommée ne se jouerait plus nulle part, sans bruit : INCONNU.
-              grep -qE "class $classe([^[:alnum:]_]|$)" CoproFirstUITests/*.swift \
-                || { echo "::error::$liste nomme $classe, absente de CoproFirstUITests"; exit 2; }
-              # Nommée deux fois, elle jouerait deux fois et fausserait l'équilibre.
-              case "$vues" in *" $classe "*) echo "::error::$classe nommée dans deux lots"; exit 2 ;; esac
-              vues="$vues$classe "
-              if [ "$LOT" = "$nomme" ]; then
-                filtres+=("-only-testing:CoproFirstUITests/$classe")
-              elif [ "$LOT" = "$DERNIER" ]; then
-                filtres+=("-skip-testing:CoproFirstUITests/$classe")
-              fi
-            done
-          done
+          while IFS= read -r f; do [ -z "$f" ] || filtres+=("$f"); done <<< "$lus"
           debut=$SECONDS
           # `bash -e` : le statut se garde pour que la durée s'écrive aussi sur un échec.
           statut=0
           bash scripts/tests-simulateur.sh "${filtres[@]}" || statut=$?
           minutes=$(( (SECONDS - debut + 59) / 60 ))
-          echo "Lot $LOT : $minutes min de build et de tests (budget $BUDGET_LOT)" >> "$GITHUB_STEP_SUMMARY"
+          echo "Lot $LOT : $minutes min de tests, build reçu du job « Build des tests d'interface » (budget $BUDGET_LOT)" >> "$GITHUB_STEP_SUMMARY"
           [ "$statut" = 0 ] || exit "$statut"
           if [ "$minutes" -gt "$BUDGET_LOT" ]; then
             echo "::error::lot $LOT : $minutes min > $BUDGET_LOT — rééquilibrer les LOT_ sur les durées mesurées (#243)"
@@ -439,7 +469,7 @@ jobs:
     # dans sa file (#235) le rendrait vert sans avoir joué, ou rouge sans faute — chaque job
     # y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [detection, unitaires, montre, archive-montre, echantillons, interface]
+    needs: [detection, unitaires, montre, archive-montre, echantillons, construire, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5

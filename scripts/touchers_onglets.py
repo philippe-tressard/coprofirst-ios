@@ -24,9 +24,12 @@ dit pas qu'un libellé est un onglet ; la convention de nom le dit — `onglet�
 Un appel qui ne se ferme pas (parenthèses déséquilibrées) n'est pas lu : il est refusé,
 INCONNU, jamais admis.
 
-Il tient de même (#400) les touchers qui OUVRENT une feuille, nommés dans `OUVERTURES` par
-leur identifiant exact : nu, un toucher de ✏️ perdu sous charge laissait le détail sans
-feuille (main 1c47c05, échantillon iPad du 25/11). Leur point commun est nommé à côté.
+Il tient de même les touchers qui ont leur POINT COMMUN, nommés dans `POINTS_COMMUNS` par le
+motif entier de leur identifiant : ✏️ d'une affaire (#400 : nu, perdu sous charge, il laissait
+le détail sans feuille, main 1c47c05) et le × d'un prestataire (#390 : la ligne et la feuille
+restées, main 67be1cd). Pour eux, une variable qui REÇOIT l'identifiant (`let retirer =
+app.elementAcces("modifier.prestataire.2.retirer")`) est jugée comme lui : c'est par elle que
+le rouge de #390 passait.
 
 Exceptions DÉCLARÉES (`EXCEPTIONS`) : un toucher qui n'est pas idempotent — ouvrir un menu,
 qu'une reprise refermerait — reste nu, avec sa raison ; une exception qui ne sert plus
@@ -53,10 +56,14 @@ EXCEPTIONS = {
     ),
 }
 
-#: identifiant exact d'un toucher qui ouvre une feuille → son point commun, qui attend l'effet (#400).
-OUVERTURES = {
-    "affaire.modifier": "app.ouvrirModificationAffaire() (AttenteDetailAffaire.swift)",
+#: motif entier de l'identifiant d'un toucher → son point commun, qui attend l'effet.
+POINTS_COMMUNS = {
+    r"affaire\.modifier": "app.ouvrirModificationAffaire() (AttenteDetailAffaire.swift, #400)",
+    # L'id en clair ou interpolé (`\\(id)`) : le point commun lui-même l'interpole, avec `jusqua:`.
+    r"modifier\.prestataire\.(?:\d+|\\\(\w+\))\.retirer": "app.retirerPrestataire(id) (AttenteDetailAffaire.swift, #390)",
 }
+#: `let x = …` ou `var x = …`, jusqu'à la fin de la ligne.
+LIAISON = re.compile(r"\b(?:let|var)\s+(\w+)\s*=\s*([^\n]*)")
 
 APPEL = re.compile(r"(?<![\w])toucher\s*\(")
 #: Un toucher au dessin, sans attente d'effet : jamais sur un onglet (#340).
@@ -124,22 +131,33 @@ def arguments(texte: str, debut: int) -> list[str] | None:
     return None
 
 
-def ouverture(argument: str) -> str | None:
-    """L'identifiant d'OUVERTURES que l'argument désigne, ou None."""
-    return next((m.group(1) for m in LITTERAL.finditer(argument) if m.group(1) in OUVERTURES), None)
+def point_commun(argument: str, liees: dict[str, str] | None = None) -> str | None:
+    """Le motif de POINTS_COMMUNS que l'argument désigne — par un littéral, ou par une variable
+    qui a reçu ce littéral (`liees`) —, ou None."""
+    for m in LITTERAL.finditer(argument):
+        motif = next((k for k in POINTS_COMMUNS if re.fullmatch(k, m.group(1))), None)
+        if motif:
+            return motif
+    return (liees or {}).get(argument.strip())
 
 
-def designe_un_onglet(argument: str) -> bool:
-    """Un onglet, ou un toucher qui ouvre une feuille (`OUVERTURES`) : l'un et l'autre se
+def liaisons(texte: str) -> dict[str, str]:
+    """Les variables du fichier qui reçoivent un identifiant de POINTS_COMMUNS → son motif."""
+    return {m.group(1): motif for m in LIAISON.finditer(texte) if (motif := point_commun(m.group(2)))}
+
+
+def designe_un_onglet(argument: str, liees: dict[str, str] | None = None) -> bool:
+    """Un onglet, ou un toucher qui a son point commun (`POINTS_COMMUNS`) : l'un et l'autre se
     touchent jusqu'à leur effet."""
-    if VARIABLE_ONGLET.match(argument) or ouverture(argument):
+    if VARIABLE_ONGLET.match(argument) or point_commun(argument, liees):
         return True
     return any(SEGMENT_ONGLET.search(m.group(1)) for m in LITTERAL.finditer(argument))
 
 
-def nus(chemin: str, texte: str) -> list[tuple[int, str]]:
-    """Les touchers d'onglet sans `jusqua:` : (ligne, appel normalisé)."""
+def nus(chemin: str, texte: str) -> list[tuple[int, str, str | None]]:
+    """Les touchers d'onglet sans `jusqua:` : (ligne, appel normalisé, motif du point commun ou None)."""
     propre = sans_commentaires(texte)
+    liees = liaisons(propre)
     trouves = []
     for m in APPEL.finditer(propre):
         if propre[max(0, m.start() - 5) : m.start()] == "func ":
@@ -147,36 +165,35 @@ def nus(chemin: str, texte: str) -> list[tuple[int, str]]:
         args = arguments(propre, m.end() - 1)
         if args is None:
             ligne = propre.count("\n", 0, m.start()) + 1
-            trouves.append((ligne, "INCONNU : appel illisible, parenthèses déséquilibrées"))
+            trouves.append((ligne, "INCONNU : appel illisible, parenthèses déséquilibrées", None))
             continue
         if any(a.startswith("jusqua:") for a in args[1:]):
             continue
-        if designe_un_onglet(args[0]):
+        if designe_un_onglet(args[0], liees):
             appel = " ".join(propre[m.start() : propre.index("(", m.start())].split())
             prefixe = propre[: m.start()]
             objet = re.search(r"([\w.]*\.)$", prefixe)
             nom = (objet.group(1) if objet else "") + appel
-            trouves.append((propre.count("\n", 0, m.start()) + 1, f"{nom}({', '.join(args)})"))
+            trouves.append((propre.count("\n", 0, m.start()) + 1, f"{nom}({', '.join(args)})", point_commun(args[0], liees)))
     for m in APPEL_DESSIN.finditer(propre):
         args = arguments(propre, m.end() - 1)
-        if args and designe_un_onglet(args[0]):
-            trouves.append((propre.count("\n", 0, m.start()) + 1, f"toucherAuDessin({args[0]})"))
+        if args and designe_un_onglet(args[0], liees):
+            trouves.append((propre.count("\n", 0, m.start()) + 1, f"toucherAuDessin({args[0]})", point_commun(args[0], liees)))
     for m in TAP.finditer(propre):
         receveur = m.group(1)
-        if designe_un_onglet(receveur):
-            trouves.append((propre.count("\n", 0, m.start(1)) + 1, f"{receveur}.tap()"))
+        if designe_un_onglet(receveur, liees):
+            trouves.append((propre.count("\n", 0, m.start(1)) + 1, f"{receveur}.tap()", point_commun(receveur, liees)))
     return sorted(trouves)
 
 
 def juger(racine: pathlib.Path, fichiers: list[str]) -> int:
     fautes, servies = 0, set()
     for f in fichiers:
-        for ligne, appel in nus(f, (racine / f).read_text(encoding="utf-8")):
+        for ligne, appel, motif in nus(f, (racine / f).read_text(encoding="utf-8")):
             if (f, appel) in EXCEPTIONS:
                 servies.add((f, appel))
                 continue
-            ident = ouverture(appel)
-            conseil = (f"{OUVERTURES[ident]} (#400)" if ident else
+            conseil = (POINTS_COMMUNS[motif] if motif else
                        "app.toucherLOnglet(onglet) ou app.toucher(onglet, jusqua: effet) (#183, #334, #340)")
             print(f"❌ {f}:{ligne} : {appel} — {conseil}")
             fautes += 1
@@ -205,6 +222,11 @@ def autotest() -> int:
         "au dessin": "app.toucherAuDessin(onglet)",
         "ouverture nue": 'app.toucher(app.elementAcces("affaire.modifier"))',
         "ouverture, tap direct": 'app.elementAcces("affaire.modifier").tap()',
+        "× d'un prestataire nu": 'app.toucher(app.elementAcces("modifier.prestataire.12.retirer"))',
+        "× par une variable": 'let retirer = app.elementAcces("modifier.prestataire.2.retirer")\napp.toucher(retirer)',
+        "× par une variable, tap direct": 'let x = app.elementAcces("modifier.prestataire.2.retirer")\nx.tap()',
+        "× interpolé nu": 'app.toucher(app.elementAcces("modifier.prestataire.\\(id).retirer"))',
+        "ouverture par une variable": 'let modifier = app.elementAcces("affaire.modifier")\napp.toucher(modifier)',
     }
     admis = {
         "effet": 'app.toucher(app.elementAcces("onglet.x"), jusqua: carte)',
@@ -221,6 +243,10 @@ def autotest() -> int:
         "ouverture jusqu'à son effet": 'toucher(elementAcces("affaire.modifier"), jusqua: buttons["modifier.enregistrer"])',
         "ouverture lue sans toucher": 'XCTAssertTrue(app.elementAcces("affaire.modifier").exists)',
         "identifiant voisin": 'app.toucher(app.elementAcces("affaire.modifier.x"))',
+        "× jusqu'à son effet": 'let r = app.elementAcces("modifier.prestataire.2.retirer")\napp.toucher(r, jusqua: actif)',
+        "× lu sans toucher": 'let r = app.elementAcces("modifier.prestataire.2.retirer")\nXCTAssertTrue(r.exists)',
+        "variable d'autre chose": 'let r = app.elementAcces("modifier.prestataire.2")\napp.toucher(r)',
+        "même nom, autre fichier": "app.toucher(retirer)",
     }
     ok = True
     for nom, code in refuses.items():
