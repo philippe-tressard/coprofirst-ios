@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.121.2 (commit ac4f80f6ad5c8e861e61bd892c27d129025f80fa), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), dérivée de jetonsCharte, jetonsCharteSombre, palettesClaires, palettesSombres (tables-clients.json).
 
 import SwiftUI
 
@@ -20,6 +20,7 @@ extension Palette {
         dangerFond: Color(clair: RVBA(0xFD, 0xED, 0xEC, 1), sombre: RVBA(0x3B, 0x34, 0x43, 1)),
         dangerPlein: Color(clair: RVBA(0xC0, 0x39, 0x2B, 1), sombre: RVBA(0xC0, 0x39, 0x2B, 1)),
         fondLogo: Color(clair: RVBA(0x00, 0x00, 0x00, 0), sombre: RVBA(0xFF, 0xFF, 0xFF, 1)),
+        hachureSurPlein: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 0.28), sombre: RVBA(0xFF, 0xFF, 0xFF, 0.28)),
         importLie: Color(clair: RVBA(0x25, 0x63, 0xEB, 1), sombre: RVBA(0x65, 0x91, 0xF1, 1)),
         info: Color(clair: RVBA(0x25, 0x63, 0xA6, 1), sombre: RVBA(0x6F, 0xAE, 0xEE, 1)),
         infoBordure: Color(clair: RVBA(0xA8, 0xC1, 0xDB, 1), sombre: RVBA(0x3A, 0x5A, 0x80, 1)),
@@ -29,6 +30,7 @@ extension Palette {
         jauneTexte: Color(clair: RVBA(0xA1, 0x62, 0x07, 1), sombre: RVBA(0xE5, 0xC5, 0x4F, 1)),
         neutreBordure: Color(clair: RVBA(0xE3, 0xE8, 0xEF, 1), sombre: RVBA(0x24, 0x36, 0x5E, 1)),
         neutreFond: Color(clair: RVBA(0xF7, 0xF8, 0xFA, 1), sombre: RVBA(0x18, 0x26, 0x45, 1)),
+        ombreDefilement: Color(clair: RVBA(0x1A, 0x1A, 0x2E, 0.14), sombre: RVBA(0x1A, 0x1A, 0x2E, 0.14)),
         orange: Color(clair: RVBA(0xC2, 0x41, 0x0C, 1), sombre: RVBA(0xF2, 0x89, 0x5B, 1)),
         orangeBordure: Color(clair: RVBA(0xFE, 0xD7, 0xAA, 1), sombre: RVBA(0x6E, 0x4B, 0x45, 1)),
         orangeFond: Color(clair: RVBA(0xFF, 0xF7, 0xED, 1), sombre: RVBA(0x3B, 0x34, 0x3C, 1)),
@@ -52,6 +54,7 @@ extension Palette {
         surAccent: Color(clair: RVBA(0x1A, 0x1A, 0x2E, 1), sombre: RVBA(0x1A, 0x1A, 0x2E, 1)),
         surPlein: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 1), sombre: RVBA(0xFF, 0xFF, 0xFF, 1)),
         surPleinDiscret: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 0.55), sombre: RVBA(0xFF, 0xFF, 0xFF, 0.62)),
+        surPleinSecondaire: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 0.75), sombre: RVBA(0xFF, 0xFF, 0xFF, 0.75)),
         surVoile: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 1), sombre: RVBA(0xFF, 0xFF, 0xFF, 1)),
         surface: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 1), sombre: RVBA(0x13, 0x1E, 0x36, 1)),
         text: Color(clair: RVBA(0x14, 0x1B, 0x2D, 1), sombre: RVBA(0xE8, 0xE6, 0xE1, 1)),
@@ -59,7 +62,10 @@ extension Palette {
         textMuted: Color(clair: RVBA(0x53, 0x5B, 0x6B, 1), sombre: RVBA(0xA3, 0xB3, 0xD4, 1)),
         violet: Color(clair: RVBA(0x6B, 0x21, 0xA8, 1), sombre: RVBA(0xC6, 0xA0, 0xF0, 1)),
         violetFond: Color(clair: RVBA(0xF3, 0xE8, 0xFF, 1), sombre: RVBA(0x34, 0x37, 0x56, 1)),
+        voileMenu: Color(clair: RVBA(0x00, 0x00, 0x00, 0.35), sombre: RVBA(0x00, 0x00, 0x00, 0.35)),
         voileModale: Color(clair: RVBA(0x00, 0x00, 0x00, 0.45), sombre: RVBA(0x00, 0x00, 0x00, 0.6)),
+        voileSurPlein: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 0.3), sombre: RVBA(0xFF, 0xFF, 0xFF, 0.3)),
+        voileSurPleinSurvol: Color(clair: RVBA(0xFF, 0xFF, 0xFF, 0.6), sombre: RVBA(0xFF, 0xFF, 0xFF, 0.6)),
         warning: Color(clair: RVBA(0xB0, 0x7D, 0x1E, 1), sombre: RVBA(0xD9, 0xA4, 0x41, 1)),
         warningBordure: Color(clair: RVBA(0xDF, 0xCB, 0xA5, 1), sombre: RVBA(0x64, 0x56, 0x3A, 1)),
         warningFond: Color(clair: RVBA(0xFD, 0xF3, 0xE0, 1), sombre: RVBA(0x37, 0x38, 0x38, 1)),

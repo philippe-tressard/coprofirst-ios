@@ -34,10 +34,12 @@ final class ServiceSimule: ServiceCoproFirst, @unchecked Sendable {
     /// Le profil servi par la résidence inventée (un compte du conseil syndical). Sa saisie
     /// d'une affaire est le défaut du serveur sans choix — Essentielle pour tous (#2615).
     /// Son compte est Camille (`FixturesUtilisateursAdmin`, `id` 11) : « Utilisateurs » y
-    /// reconnaît le lecteur (#94).
+    /// reconnaît le lecteur (#94). Ses publics du menu sont ceux que `acces_du_menu` du
+    /// serveur sert à un membre du conseil (#355) ; `-compte` les change avec le compte.
     var profilSimule = ProfilResidence(
         statut: "copropriétaire_résident", roles: ["résident", "propriétaire", "conseil_syndical"],
-        libelleLogement: "Bât. A, T3, 2ème", saisieAffaire: "essentielle", estModerateur: true, idCompte: 11)
+        libelleLogement: "Bât. A, T3, 2ème", accesMenu: ["tous", "resident", "cs", "cs-ou-aidant"],
+        saisieAffaire: "essentielle", estModerateur: true, idCompte: 11)
 
     init(delai: Duration = .milliseconds(450)) {
         self.delai = delai

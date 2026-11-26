@@ -188,6 +188,13 @@ final class AdminUITests: XCTestCase {
         let app = LancementCaptures.lancer(arguments: arguments)
         let plus = app.descendants(matching: .any)["Plus"].firstMatch
         XCTAssertTrue(plus.apparait())
+        // Le compte technique n'a que l'administration (`acces_menu`, #355) : sa page tient
+        // dans la barre, devant « Plus ».
+        let dansLaBarre = app.tabBars.buttons["Admin"]
+        if dansLaBarre.exists {
+            app.toucher(dansLaBarre, jusqua: app.elementAcces("onglet.maintenance"))
+            return app
+        }
         plus.tap()
         let admin = app.libelleAcces("Admin")
         for _ in 0..<6 where !admin.sonde() || !admin.isHittable { app.swipeUp() }

@@ -96,9 +96,11 @@ struct FormulaireIdentite: View {
 }
 
 /// « Modifier le mot de passe » : l'actuel, puis le nouveau saisi deux fois. Le bouton
-/// dit pourquoi il attend, dans l'ordre du site.
+/// dit pourquoi il attend, dans l'ordre du site. `temporaire` : la porte d'un compte au
+/// mot de passe temporaire (#377) — l'enregistrement relit le compte, qui rouvre l'app.
 struct MotDePasseView: View {
     let installation: Installation
+    var temporaire = false
     @Environment(Parcours.self) private var parcours
     @Environment(\.dismiss) private var fermer
     @Environment(\.palette) private var palette
@@ -113,13 +115,21 @@ struct MotDePasseView: View {
     var body: some View {
         Form {
             Section {
-                SecureField("Mot de passe actuel", text: $actuel).textContentType(.password)
+                SecureField(temporaire ? "Mot de passe temporaire" : "Mot de passe actuel", text: $actuel)
+                    .textContentType(.password)
+                    .accessibilityIdentifier("motDePasse.actuel")
             } footer: {
-                Text("Il vous faut votre mot de passe actuel, puis le nouveau saisi deux fois.")
+                Text(
+                    temporaire
+                        ? "Votre mot de passe est temporaire : saisissez-le, puis choisissez-en un nouveau "
+                            + "pour continuer."
+                        : "Il vous faut votre mot de passe actuel, puis le nouveau saisi deux fois.")
             }
             Section {
                 SecureField("Nouveau mot de passe", text: $nouveau).textContentType(.newPassword)
+                    .accessibilityIdentifier("motDePasse.nouveau")
                 SecureField("Confirmation", text: $confirmation).textContentType(.newPassword)
+                    .accessibilityIdentifier("motDePasse.confirmation")
             } footer: {
                 if !confirmation.isEmpty, confirmation != nouveau {
                     Text("Cette saisie diffère du nouveau mot de passe.").foregroundStyle(palette.danger)
@@ -134,9 +144,11 @@ struct MotDePasseView: View {
                 Button {
                     Task { await modifier() }
                 } label: {
-                    Text(envoi ? "Modification…" : "Modifier le mot de passe").frame(maxWidth: .infinity)
+                    Text(envoi ? "Modification…" : temporaire ? "Choisir ce mot de passe" : "Modifier le mot de passe")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.plein)
+                .accessibilityIdentifier("motDePasse.valider")
                 .disabled(attente != nil || envoi)
                 .listRowBackground(Color.clear)
                 .listRowInsets(.init())
@@ -144,14 +156,14 @@ struct MotDePasseView: View {
         }
         .scrollContentBackground(.hidden)
         .background(palette.bg)
-        .navigationTitle("Mot de passe")
+        .navigationTitle(temporaire ? "Choisir votre mot de passe" : "Mot de passe")
         .sensoryFeedback(.success, trigger: reussi)
         .alert("Mot de passe modifié", isPresented: $reussi) { Button("OK") { fermer() } }
     }
 
     /// Ce qui manque encore, ou rien quand le bouton peut s'ouvrir.
     private var attente: String? {
-        if actuel.isEmpty { return "Saisissez d’abord votre mot de passe actuel." }
+        if actuel.isEmpty { return "Saisissez d’abord votre mot de passe \(temporaire ? "temporaire" : "actuel")." }
         if nouveau.count < TablesProfil.longueurMinimaleMotDePasse {
             let minimum = TablesProfil.longueurMinimaleMotDePasse
             return "Le nouveau mot de passe doit faire \(minimum) caractères au minimum."
@@ -166,7 +178,14 @@ struct MotDePasseView: View {
         do {
             try await parcours.serviceProfil.changerMotDePasse(actuel: actuel, nouveau: nouveau, dans: installation)
             erreur = nil
-            reussi = true
+            // Temporaire : le compte relu ne porte plus le drapeau, l'app s'ouvre (`RacineView`).
+            // Le jeton d'accès est tombé avec l'ancien mot de passe : la relecture le renouvelle.
+            guard temporaire else { reussi = true; return }
+            await parcours.rafraichirProfil()
+            if parcours.ouverteAJour?.profil?.motDePasseAChanger == true {
+                // Changé, mais le compte n'a pas pu être relu : ne pas resaisir l'ancien.
+                withAnimation(.snappy) { erreur = .refus(.init(phrase: MotDePasseTemporaireView.nonRelu)) }
+            }
         } catch {
             withAnimation(.snappy) { erreur = ErreurService.depuis(error) }
         }

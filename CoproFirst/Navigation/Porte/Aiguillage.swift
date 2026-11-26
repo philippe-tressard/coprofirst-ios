@@ -4,7 +4,7 @@
 /// Dans la résidence ouverte, où se pose un écran demandé : l'onglet de la barre qui le
 /// porte, « Plus » s'il est au-delà des premiers, ou une feuille pour une affaire dont
 /// l'onglet n'est pas dans la barre. Une page que le compte ne voit pas (réservée à un
-/// rôle, `PagesOuvertes`) ne s'ouvre pas : le fil, à la place.
+/// rôle, `PagesOuvertes`) ne s'ouvre pas : l'accueil de la barre, à la place (`OrdrePages.accueil`).
 enum Aiguillage: Equatable {
     case onglet(String)
     case affaireDansLOnglet(onglet: String, id: Int)
@@ -28,7 +28,7 @@ enum Aiguillage: Equatable {
         }
         switch ecran {
         case .page(let id):
-            return .onglet(place(id) ?? OrdrePages.idFil)
+            return .onglet(place(id) ?? OrdrePages.accueil(pages))
         case .affaire(let id, _):
             let affaires = CheminDuSite.affaires.flatMap(LienUniversel.idDeLaPage(route:))
             if let affaires, place(affaires) == affaires {
@@ -40,7 +40,7 @@ enum Aiguillage: Equatable {
         case .notifications:
             return .cloche
         case .accueil, .connexion, .navigateur:
-            return .onglet(OrdrePages.idFil)
+            return .onglet(OrdrePages.accueil(pages))
         }
     }
 }

@@ -23,7 +23,10 @@ extension ServiceSimule: ServiceSondage {
                 throw ErreurService.refus(.init(phrase: "Option invalide"))
             }
             fiche.monVote = fiche.options[rang].id
-            if fiche.resultatsVisibles { fiche.options[rang].nbVotes = (fiche.options[rang].nbVotes ?? 0) + 1 }
+            if fiche.resultatsVisibles {
+                fiche.options[rang].nbVotes = (fiche.options[rang].nbVotes ?? 0) + 1
+                Self.repartir(&fiche)
+            }
             if let precision = VoteSondage.nettoye(vote.reponseLibre), fiche.resultatsVisibles {
                 fiche.options[rang].reponsesLibres.append(precision)
             }
@@ -31,6 +34,17 @@ extension ServiceSimule: ServiceSondage {
                 fiche.commentaires.append(Self.commentaire(commentaire, apres: fiche.commentaires))
             }
             Self.ranger(fiche, dans: &fiches)
+        }
+    }
+
+    /// Les parts après un vote, comme les SERT le serveur simulé : `part_en_pourcent` de
+    /// coprofirst (demi au supérieur, en arithmétique entière, 0 sans vote). L'app, elle,
+    /// les lit (#391) ; seul le double du serveur les compose.
+    private static func repartir(_ fiche: inout DetailSondage) {
+        let total = fiche.totalVotes
+        for rang in fiche.options.indices {
+            let votes = fiche.options[rang].nbVotes ?? 0
+            fiche.options[rang].part = total == 0 ? 0 : (200 * votes + total) / (2 * total)
         }
     }
 

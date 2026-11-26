@@ -72,8 +72,8 @@ struct OngletAnnonces: View {
     /// croissant, 0 en décroissant : même place).
     private func trier(_ annonces: [Annonce]) -> [Annonce] {
         switch tri {
-        case "prix_asc": annonces.sorted { ($0.prix ?? .infinity) < ($1.prix ?? .infinity) }
-        case "prix_desc": annonces.sorted { ($0.prix ?? -1) > ($1.prix ?? -1) }
+        case "prix_asc": annonces.sorted { ($0.prixCentimes ?? .max) < ($1.prixCentimes ?? .max) }
+        case "prix_desc": annonces.sorted { ($0.prixCentimes ?? -1) > ($1.prixCentimes ?? -1) }
         default: annonces.sorted { $0.creeLe > $1.creeLe }
         }
     }
@@ -166,8 +166,8 @@ struct EtiquettesAnnonce: View {
             PastilleTeinte(
                 libelle: RegleCommunaute.libelle(annonce.categorie, dans: RegleCommunaute.categoriesAnnonce),
                 badge: "badge-gray")
-            if let prix = annonce.prix {
-                Text(FormatsDuSite.montant(prix))
+            if let centimes = annonce.prixCentimes {
+                Text(FormatsDuSite.montant(centimes: centimes))
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(palette.text)
                 if annonce.negotiable == true {

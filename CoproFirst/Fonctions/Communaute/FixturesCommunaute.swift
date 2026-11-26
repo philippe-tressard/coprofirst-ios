@@ -67,7 +67,8 @@ enum FixturesCommunaute {
         [
           {"id": 21, "titre": "Lave-linge presque neuf",
            "description": "<p>Huit kilos, deux ans, factures à l'appui.</p>",
-           "type_annonce": "vente", "categorie": "electromenager", "prix": 180, "negotiable": true, "photos": [],
+           "type_annonce": "vente", "categorie": "electromenager", "prix": 180, "prix_centimes": 18000,
+           "negotiable": true, "photos": [],
            "statut": "en_cours", "auteur_id": 12, "auteur_prenom": "Voisine du 2ᵉ", "auteur_affiche": "Voisine du 2ᵉ",
            "auteur_email": "voisine@example.com", "est_auteur": false, "peut_modifier": false,
            "peut_supprimer": true, "archivee": false,

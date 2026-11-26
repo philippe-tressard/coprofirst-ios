@@ -223,7 +223,17 @@ enum FormatsDuSite {
     /// d'un appel d'IA).
     static func montant(_ valeur: Double?, devise: String = "EUR", decimales: Int = 2) -> String {
         guard let valeur else { return tiret }
-        return decimal(valeur).formatted(
+        return montant(decimal(valeur), devise: devise, decimales: decimales)
+    }
+
+    /// Un montant servi en CENTIMES ENTIERS (`prix_centimes`, #376) : exact, sans flottant.
+    static func montant(centimes: Int?, devise: String = "EUR") -> String {
+        guard let centimes else { return tiret }
+        return montant(Decimal(centimes) / 100, devise: devise, decimales: 2)
+    }
+
+    private static func montant(_ valeur: Decimal, devise: String, decimales: Int) -> String {
+        valeur.formatted(
             .currency(code: devise).locale(locale).precision(.fractionLength(0...decimales))
                 .rounded(rule: .toNearestOrAwayFromZero))
     }

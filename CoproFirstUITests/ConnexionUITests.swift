@@ -34,4 +34,29 @@ final class ConnexionUITests: XCTestCase {
             "la résidence s'ouvre dès la réponse du serveur, sans second toucher")
         XCTAssertFalse(valider.exists, "l'écran de connexion n'est plus affiché")
     }
+
+    /// Un compte au mot de passe temporaire (#377) : rien d'autre ne s'ouvre avant d'en
+    /// choisir un ; choisi, le compte relu ouvre la résidence.
+    @MainActor
+    func testUnMotDePasseTemporaireSeChoisitAvantTout() throws {
+        let app = LancementCaptures.lancer(arguments: ["-compte", "temporaire"])
+        let actuel = app.secureTextFields["motDePasse.actuel"]
+        XCTAssertTrue(actuel.apparait(), "« Choisir votre mot de passe », seul")
+        // La pastille de la résidence, en tête du Fil : sur iPhone comme sur iPad, où la barre
+        // latérale n'a pas de « Plus ».
+        let residence = app.buttons["pastille.residence"]
+        XCTAssertFalse(residence.exists, "la résidence ne s'ouvre pas encore")
+        XCTAssertTrue(app.buttons["residence.deconnecter"].exists, "la déconnexion reste offerte")
+
+        app.toucher(actuel)
+        actuel.typeText("temporaire1")
+        let nouveau = app.secureTextFields["motDePasse.nouveau"]
+        app.toucher(nouveau)
+        nouveau.typeText("choisi-2026")
+        let confirmation = app.secureTextFields["motDePasse.confirmation"]
+        app.toucher(confirmation)
+        confirmation.typeText("choisi-2026")
+        app.toucher(app.buttons["motDePasse.valider"], jusqua: residence)
+        XCTAssertFalse(actuel.exists, "la porte se lève : la résidence s'ouvre")
+    }
 }
