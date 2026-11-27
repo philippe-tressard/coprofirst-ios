@@ -1,0 +1,37 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+# Sonde temporaire (#406) : un pas `failure() || cancelled()` joue-t-il après un dépassement ? Retirée avant la PR.
+name: Sonde 406
+on:
+  push:
+    branches: [claude/limite-alerte-406]
+permissions:
+  contents: read
+jobs:
+  depasse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: sleep 150
+      - name: failure seul
+        if: failure()
+        run: echo "FAILURE_SEUL statut=${{ job.status }}"
+      - name: alerte
+        if: failure() || cancelled()
+        run: echo "ALERTE_JOUEE statut=${{ job.status }}"
+  echoue:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: exit 1
+      - name: alerte
+        if: failure() || cancelled()
+        run: echo "ALERTE_JOUEE statut=${{ job.status }}"
+  reussit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: "true"
+      - name: alerte
+        if: failure() || cancelled()
+        run: echo "ALERTE_JOUEE statut=${{ job.status }}"
