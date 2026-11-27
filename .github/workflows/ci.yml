@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 #
 # CI : garde-fous du dépôt et REUSE (Linux) ; build, SwiftLint et tests unitaires ; l'Apple
-# Watch ; échantillons ; tests d'interface en six lots — en parallèle sur macOS, réunis sous
+# Watch ; échantillon iPad ; Apple TV ; tests d'interface en six lots — en parallèle sur macOS, réunis sous
 # le check requis. Une PR qui ne touche que la documentation n'occupe aucun exécutant macOS
 # (#204).
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
@@ -101,15 +101,14 @@ jobs:
       cancel-in-progress: false
     # Mesuré sur main le 18/11/2026 (#288) : 58 à 67 min avec l'échantillon iPad et l'Apple
     # TV, si près du plafond qu'une PR un peu lente le coupait sans défaut. Ces deux-là ont
-    # leur propre build : ils sont passés au job « Échantillons ». Reste ici le très grand
+    # leur propre build : ils sont passés à leurs jobs (#288, #420). Reste ici le très grand
     # texte, qui réutilise le build iPhone (4 min, contre ~17 ailleurs) : ~43 min attendues.
     timeout-minutes: 70
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
+      - uses: ./.github/actions/preparer-macos
+        with:
+          projet: "false"
       - name: SwiftLint
         run: swiftlint lint --strict --quiet
       - name: Tests du client d'API (généré depuis openapi.json)
@@ -170,12 +169,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
-      - name: Projet Xcode (XcodeGen)
-        run: bash scripts/generer-projet.sh
+      - uses: ./.github/actions/preparer-macos
       - name: Apple Watch — build et tests de la montre et du code partagé
         # La cible watchOS (#226) compile les mêmes fichiers que l'iPhone pour la charte, les
         # formats et l'alerte servie ; ses tests et ceux du code partagé y sont joués. Même
@@ -215,10 +209,9 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
+      - uses: ./.github/actions/preparer-macos
+        with:
+          projet: "false"
       - name: Archive Release sans signature, montre embarquée et dépendante
         run: bash scripts/verifier-archive-montre.sh
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
@@ -244,12 +237,7 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
-      - name: Projet Xcode (XcodeGen)
-        run: bash scripts/generer-projet.sh
+      - uses: ./.github/actions/preparer-macos
       - name: Build pour les tests, sans les jouer (scripts/produits-tests.sh)
         env:
           CONSTRUIRE_SEUL: oui
@@ -345,12 +333,7 @@ jobs:
       BUDGET_LOT: 62
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
-      - name: Projet Xcode (XcodeGen)
-        run: bash scripts/generer-projet.sh
+      - uses: ./.github/actions/preparer-macos
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: produits-tests.tar.gz
@@ -387,16 +370,17 @@ jobs:
         run: python3 -I scripts/signaler_rouge.py --signaler
 
   echantillons:
-    # Hors du job Unitaires depuis #288 : l'iPad et l'Apple TV construisent chacun pour leur
-    # destination, sans rien réutiliser du build iPhone — les y laisser poussait Unitaires à
+    # Hors du job Unitaires depuis #288 : l'iPad construit pour sa destination, sans rien
+    # réutiliser du build iPhone — les y laisser poussait Unitaires à
     # 67 min sur 70. Un exécutant macOS de plus par run (#204), décidé le 18/11/2026 : un
     # dépassement coûte une relance de 70 min. Seul, sans build iPhone à réutiliser : 27 min
     # sur #289 (iPad 22,6 + Apple TV 4,1), puis coupé à 40 sur un runner ~1,35 fois plus lent
     # (iPad 32,2 min, dont 13,8 de tests ; Apple TV encore au build à 7,7). Au pire mesuré,
     # ~42 min ; plafond à 1,5 fois : 65. Le 23/11/2026, coupé à 65 sans test rouge (#364, run
     # 45256597018 : échantillon iPad 62 min, Apple TV interrompue) ; six runs verts de main : 26 à
-    # 59. Avec CarnetUITests (#350, ~3,5 min ; 127 s au poste) et ~7 pour l'Apple TV : ~73 au pire ; 85.
-    name: Échantillons (iPad, Apple TV)
+    # 59. Avec CarnetUITests (#350, ~3,5 min ; 127 s au poste) : 77 mesurées (run 45903270698) ; 85.
+    # L'Apple TV a son job depuis #420 (`ecran-de-hall`).
+    name: Échantillon (iPad)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
@@ -407,12 +391,7 @@ jobs:
     timeout-minutes: 85
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Xcode du runner
-        run: xcodebuild -version
-      - name: Outillage épinglé (outillage.env)
-        run: bash scripts/installer-outillage-ci.sh
-      - name: Projet Xcode (XcodeGen)
-        run: bash scripts/generer-projet.sh
+      - uses: ./.github/actions/preparer-macos
       - name: Échantillon iPad (iPad Pro 13 pouces)
         # L'app est universelle (#219) : un ÉCHANTILLON sur iPad — la conformité du plist,
         # l'entrée et la connexion. La suite complète sur iPad se joue au poste avant la
@@ -446,6 +425,30 @@ jobs:
           -only-testing:CoproFirstUITests/CartesDuFilUITests/testLeConseilModifieLAffaireDepuisLeBandeau
           -only-testing:CoproFirstUITests/SondageUITests
           -only-testing:CoproFirstUITests/ModerationUITests/testLeProfilListeLesPersonnesMasqueesEtLesDemasque
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler
+
+  ecran-de-hall:
+    # L'Apple TV hors du job de l'iPad (#420) : derrière lui, elle était sautée quand il
+    # rougissait, et coupée par sa limite quand il était lent (run 45903270698 : iPad vert en
+    # 77 min, Apple TV interrompue au build à 85). Son job, sa limite, sa file — comme la montre.
+    # Mesuré dans l'ancien job : 4,1 min (#289), encore au build à 7,7 sur un runner lent ;
+    # le build seul de la montre a atteint 30 (#406) : 45.
+    name: Écran de hall (Apple TV)
+    needs: detection
+    if: needs.detection.outputs.macos == 'true'
+    runs-on: macos-latest
+    # Sur main, sa file à lui (voir `unitaires`, #397).
+    concurrency:
+      group: ${{ github.event_name == 'push' && 'ci-ecran-de-hall-main' || format('ci-ecran-de-hall-{0}', github.run_id) }}
+      cancel-in-progress: false
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/preparer-macos
       - name: Écran de hall (Apple TV) — build et tests du code partagé
         # La cible tvOS (#218) compile les mêmes fichiers que l'iPhone pour la charte et
         # les formats ; leurs tests y sont rejoués. Même script, même verdict : INCONNU
@@ -469,7 +472,7 @@ jobs:
     # dans sa file (#235) le rendrait vert sans avoir joué, ou rouge sans faute — chaque job
     # y parle pour lui-même.
     name: Build, tests, SwiftLint
-    needs: [detection, unitaires, montre, archive-montre, echantillons, construire, interface]
+    needs: [detection, unitaires, montre, archive-montre, echantillons, ecran-de-hall, construire, interface]
     if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5

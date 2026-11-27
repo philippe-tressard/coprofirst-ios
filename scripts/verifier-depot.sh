@@ -206,7 +206,7 @@ while IFS= read -r f; do
   if grep -nEi "$GESTES_REVUE" "$f" >/dev/null; then
     echec "$f : geste de soumission à Apple automatisé ($(grep -oEi "$GESTES_REVUE" "$f" | head -1)) — interdit, skill publication-app-store"
   fi
-done < <(grep -E '^(fastlane/|\.github/workflows/)' <<< "$FICHIERS")
+done < <(grep -E '^(fastlane/|\.github/(workflows|actions)/)' <<< "$FICHIERS")
 
 # Un worktree de session ajouté par erreur arrive comme lien de sous-module ou
 # comme fichiers : les deux se voient dans l'index.
