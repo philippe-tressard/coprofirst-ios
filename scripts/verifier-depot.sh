@@ -289,7 +289,7 @@ DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCE
 
 # Le job « Dépôt » de la CI n'a qu'une étape, ce script (#241) : poste, hook et CI jouent
 # la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
-JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, job macOS hors de l'agrégat, ou classe de l'iPad seul hors de l'échantillon iPad"; }
+JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, job macOS hors de l'agrégat, classe de l'iPad seul hors de l'échantillon iPad, ou Apple TV hors de son job (#420)"; }
 DISTANTS=$(bash scripts/controles-distants.sh)
 DISTANTS_CODE=$?
 [ "$DISTANTS_CODE" -eq 0 ] || echo "$DISTANTS"

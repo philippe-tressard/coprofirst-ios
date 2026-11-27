@@ -157,7 +157,8 @@ jobs:
     # finir. Le Release se construit désormais en arm64 seul et sans optimisation
     # (verifier-montre-dependante.sh).
     # Repris le 20/11/2026 sur les neuf derniers runs verts : 7 à 20 min de job, le pire
-    # à 20 ; 1,5 fois : 30 (#226).
+    # à 20 ; 1,5 fois : 30 (#226). Coupé deux fois le 25/11/2026 à 30 sur un runner lent, build
+    # et tests verts en 24 min 51 s puis 23 min 34 s (#406) : 45.
     name: Apple Watch (build, tests, app livrée dépendante)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
@@ -166,7 +167,7 @@ jobs:
     concurrency:
       group: ${{ github.event_name == 'push' && 'ci-montre-main' || format('ci-montre-{0}', github.run_id) }}
       cancel-in-progress: false
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/preparer-macos
