@@ -1,0 +1,26 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# La préparation commune des jobs macOS de la CI, écrite une fois (#420) : le Xcode du
+# runner, l'outillage épinglé, puis le projet XcodeGen — sauf `projet: 'false'`, pour le job
+# qui le génère plus tard (Unitaires) ou qui n'en a pas besoin (l'archive de la montre).
+# Elle suit `actions/checkout`, qui seul rend ce fichier lisible.
+name: Préparer un job macOS
+description: Xcode du runner, outillage épinglé (outillage.env) et projet Xcode (XcodeGen)
+inputs:
+  projet:
+    description: Générer le projet Xcode (XcodeGen)
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - name: Xcode du runner
+      shell: bash
+      run: xcodebuild -version
+    - name: Outillage épinglé (outillage.env)
+      shell: bash
+      run: bash scripts/installer-outillage-ci.sh
+    - name: Projet Xcode (XcodeGen)
+      if: inputs.projet == 'true'
+      shell: bash
+      run: bash scripts/generer-projet.sh

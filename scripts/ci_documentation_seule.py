@@ -45,6 +45,7 @@ def autotest() -> bool:
         (".claude/bin/outil.py",): False,
         ("scripts/verifier-depot.sh",): False,
         (".github/workflows/ci.yml",): False,
+        (".github/actions/preparer-macos/action.yml",): False,
         ("project.yml",): False,
         ("LICENSES/LicenseRef-CoproFirst-AppStore.txt",): False,
         (): False,

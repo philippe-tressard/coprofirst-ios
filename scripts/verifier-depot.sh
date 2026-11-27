@@ -206,7 +206,7 @@ while IFS= read -r f; do
   if grep -nEi "$GESTES_REVUE" "$f" >/dev/null; then
     echec "$f : geste de soumission à Apple automatisé ($(grep -oEi "$GESTES_REVUE" "$f" | head -1)) — interdit, skill publication-app-store"
   fi
-done < <(grep -E '^(fastlane/|\.github/workflows/)' <<< "$FICHIERS")
+done < <(grep -E '^(fastlane/|\.github/(workflows|actions)/)' <<< "$FICHIERS")
 
 # Un worktree de session ajouté par erreur arrive comme lien de sous-module ou
 # comme fichiers : les deux se voient dans l'index.
@@ -289,7 +289,7 @@ DEPENDANCES=$(python3 -I scripts/verifier-dependances.py) || { echo "$DEPENDANCE
 
 # Le job « Dépôt » de la CI n'a qu'une étape, ce script (#241) : poste, hook et CI jouent
 # la même chose, réseau et REUSE compris. Sans réseau ni reuse : INCONNU, jamais vert.
-JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, job macOS hors de l'agrégat, ou classe de l'iPad seul hors de l'échantillon iPad"; }
+JOBS_CI=$(python3 -I scripts/verifier-ci.py) || { echo "$JOBS_CI"; echec "CI : job « Dépôt » à plus d'une étape, job macOS hors de l'agrégat, classe de l'iPad seul hors de l'échantillon iPad, ou Apple TV hors de son job (#420)"; }
 DISTANTS=$(bash scripts/controles-distants.sh)
 DISTANTS_CODE=$?
 [ "$DISTANTS_CODE" -eq 0 ] || echo "$DISTANTS"

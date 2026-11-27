@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Trois règles de la CI, lues dans `.github/workflows/ci.yml`.
+"""Quatre règles de la CI, lues dans `.github/workflows/ci.yml`.
 
 1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241) — outre l'alerte
    d'un rouge, le dernier pas de chaque job.
@@ -23,6 +23,10 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
    en entier dans l'échantillon iPad (l'étape `APPAREIL: ipad`, #350) : le dernier lot
    d'interface tourne sur iPhone, où elle ne joue rien — sans l'échantillon, elle ne se
    jouait nulle part (`CarnetUITests`, jamais en CI jusqu'au 23/11/2026).
+
+4. L'Apple TV (l'étape `APPAREIL: tv`) a son job à elle, sans autre passage de
+   `tests-simulateur.sh` (#420) : derrière l'échantillon iPad, elle était sautée quand il
+   rougissait et coupée par sa limite quand il était lent (run 45903270698).
 
 Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
 (`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
@@ -159,9 +163,23 @@ def refus_ipad(texte: str, classes: list[str]) -> tuple[int, list[str]]:
     return 0, [f"✅ {len(classes)} classe(s) de l'iPad seul, toutes dans l'échantillon iPad"]
 
 
+def refus_tv(texte: str) -> tuple[int, list[str]]:
+    """Règle 4 — l'étape `APPAREIL: tv` est le seul passage au simulateur de son job."""
+    avec_tv = [j for j in jobs(texte) if any(re.match(r"^\s+APPAREIL:\s*tv\s*$", l) for l in bloc_du_job(texte, j) or [])]
+    if not avec_tv:
+        return 1, ["❌ aucune étape APPAREIL: tv : l'écran de hall (Apple TV) ne se joue nulle part en CI (#420)"]
+    messages = [f"❌ job « {j} » : l'Apple TV y suit un autre passage au simulateur — sautée s'il rougit, "
+                "coupée s'il est lent ; son job à elle (#420)"
+                for j in avec_tv if sum("tests-simulateur.sh" in l for l in bloc_du_job(texte, j) or []) != 1]
+    if messages:
+        return 1, messages
+    return 0, [f"✅ l'Apple TV seule dans son job ({', '.join(avec_tv)})"]
+
+
 def refus(texte: str, classes: list[str] | None = None) -> tuple[int, list[str]]:
-    """Les trois règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
-    regles = [refus_depot, refus_agregat] + ([lambda t: refus_ipad(t, classes)] if classes is not None else [])
+    """Les quatre règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
+    reelles = [lambda t: refus_ipad(t, classes), refus_tv] if classes is not None else []
+    regles = [refus_depot, refus_agregat] + reelles
     codes, messages = zip(*(r(texte) for r in regles))
     code = 1 if 1 in codes else max(codes)
     return code, [m for ms in messages for m in ms]
@@ -211,6 +229,12 @@ def autotest() -> int:
         (ipad, [], 2, "aucune classe lue"),
     ]
     ko += [nom for texte, classes, code, nom in cas_ipad if refus_ipad(texte, classes)[0] != code]
+    tv = "      - env:\n          APPAREIL: tv\n        run: bash scripts/tests-simulateur.sh\n"
+    seule = conforme.replace("      - run: x\n  " + AGREGAT, tv + "  " + AGREGAT)
+    derriere = seule.replace(tv, "      - run: bash scripts/tests-simulateur.sh\n" + tv)
+    cas_tv = [(seule, 0, "l'Apple TV seule dans son job"), (derriere, 1, "l'Apple TV derrière l'iPad"),
+              (conforme, 1, "aucune étape Apple TV")]
+    ko += [nom for texte, code, nom in cas_tv if refus_tv(texte)[0] != code]
     for nom in ko:
         print(f"❌ autotest : {nom} mal jugé")
     return 1 if ko else 0
