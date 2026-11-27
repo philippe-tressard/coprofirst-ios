@@ -13,6 +13,9 @@
 #   2. l'archive Release se construit ;
 #   3. elle contient Products/Applications/CoproFirst.app/Watch/CoproFirst.app ;
 #   4. la montre EMBARQUÉE se dit dépendante de l'iPhone (verifier-montre-dependante.sh).
+#   5. l'app iPhone et la montre embarquée ont chacune leur icône, compilée et nommée
+#      (`Assets.car`, `CFBundleIconName`) : le 27/11/2026, App Store Connect a refusé la 1.2
+#      (ITMS-90713, ITMS-90391), la montre n'ayant aucun catalogue d'images.
 #
 #   bash scripts/verifier-archive-montre.sh
 #
@@ -63,4 +66,15 @@ if [ ! -d "$MONTRE" ]; then
   exit 1
 fi
 echo "✅ archive iPhone avec la montre embarquée ($MONTRE)"
-bash scripts/verifier-montre-dependante.sh "$MONTRE/Info.plist"
+bash scripts/verifier-montre-dependante.sh "$MONTRE/Info.plist" || exit $?
+
+for app in "$ARCHIVE/Products/Applications/CoproFirst.app" "$MONTRE"; do
+  # watchOS la nomme à la racine ; iOS dans CFBundleIcons › CFBundlePrimaryIcon.
+  icone=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIconName' "$app/Info.plist" 2>/dev/null ||
+    /usr/libexec/PlistBuddy -c 'Print :CFBundleIcons:CFBundlePrimaryIcon:CFBundleIconName' "$app/Info.plist" 2>/dev/null)
+  if [ -z "$icone" ] || [ ! -f "$app/Assets.car" ]; then
+    echo "❌ $app : sans icône compilée (CFBundleIconName « $icone », Assets.car $([ -f "$app/Assets.car" ] && echo présent || echo absent)) — App Store Connect refuse l'envoi (ITMS-90713)" >&2
+    exit 1
+  fi
+done
+echo "✅ icônes : l'app iPhone et la montre nomment chacune la leur (CFBundleIconName) dans leur Assets.car"
