@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), pièce jointe openapi.json de la release (SuppressionNotifications.ids, maxItems).
+// Source : philippe-tressard/coprofirst v3.126.10 (commit 803696b615c922d3c0b93f69e2c81c6fa44c3e4c), pièce jointe openapi.json de la release (SuppressionNotifications.ids, maxItems).
 
 /// Ce que le contrat borne des notifications, et que le client généré n'expose pas (#118).
 enum LimitesNotifications {
