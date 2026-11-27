@@ -45,7 +45,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: bash scripts/verifier-depot.sh
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -78,7 +78,7 @@ jobs:
           cat "$RUNNER_TEMP/changes.txt"
           python3 -I scripts/ci_documentation_seule.py < "$RUNNER_TEMP/changes.txt" | tee -a "$GITHUB_OUTPUT"
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -143,7 +143,7 @@ jobs:
           [ ${#filtres[@]} -gt 0 ] || { echo "::error::REVUE_APPLE est vide"; exit 2; }
           bash scripts/tests-simulateur.sh "${filtres[@]}"
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -152,14 +152,10 @@ jobs:
     # Un job à part, en parallèle des autres (#226) : la montre a son propre build, comme les
     # échantillons ; ajoutée à Unitaires (l'iPhone et le très grand texte, ~43 min attendues),
     # elle l'aurait rapproché du plafond.
-    # Mesuré sur #292 le 18/11/2026 (run 44308489685) : build et tests de la montre 18 min ;
-    # build Release en -O pour deux architectures coupé au plafond de 45, après 27 min sans
-    # finir. Le Release se construit désormais en arm64 seul et sans optimisation
-    # (verifier-montre-dependante.sh).
-    # Repris le 20/11/2026 sur les neuf derniers runs verts : 7 à 20 min de job, le pire
-    # à 20 ; 1,5 fois : 30 (#226). Coupé deux fois le 25/11/2026 à 30 sur un runner lent, build
-    # et tests verts en 24 min 51 s puis 23 min 34 s (#406) : 45.
-    name: Apple Watch (build, tests, app livrée dépendante)
+    # 7 à 25 min de job ; coupé deux fois à 30 le 25/11/2026 sur un runner lent : 45 (#406). La
+    # montre livrée se juge dépendante sur l'archive (`archive-montre`), plus ici : ce job la
+    # reconstruisait en Release pour lire le même Info.plist (#406, verifier-ci.py règle 5).
+    name: Apple Watch (build et tests)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
     runs-on: macos-latest
@@ -179,14 +175,8 @@ jobs:
           APPAREIL: montre
           RESULTATS: .build/ResultatsMontre
         run: bash scripts/tests-simulateur.sh
-
-      - name: Apple Watch — l'app livrée reste dépendante de l'iPhone
-        # Construite en Release, l'app montre doit porter WKRunsIndependentlyOfCompanionApp à
-        # false : l'étape qui la déclare indépendante ne vaut que pour le Debug du simulateur
-        # (#226). Absente, true ou illisible : rouge, ou INCONNU si la construction échoue.
-        run: bash scripts/verifier-montre-dependante.sh
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -197,8 +187,8 @@ jobs:
     # inclus absent, greffon OpenAPI lancé deux fois dans le même build). Un job à part : le
     # build commun recompile l'iPhone ET la montre, ajouté au job Apple Watch il en doublerait
     # la durée. Mesuré au poste le 20/11/2026 : 1 min 16 à froid (arm64, sans -O, comme
-    # verifier-montre-dependante.sh) ; le runner est plus lent, le job Apple Watch qui construit
-    # la montre seule en prend 7 à 20. Plafond aligné sur lui, 30, à reprendre sur la mesure.
+    # verifier-montre-dependante.sh). 3 à 9 min de job sur les 12 derniers runs de main (28/11/2026) :
+    # 30. Seul juge de la montre livrée dépendante de l'iPhone (#406, verifier-ci.py règle 5).
     name: Archive iPhone avec la montre (#324)
     needs: detection
     if: needs.detection.outputs.macos == 'true'
@@ -216,7 +206,7 @@ jobs:
       - name: Archive Release sans signature, montre embarquée et dépendante
         run: bash scripts/verifier-archive-montre.sh
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -253,7 +243,7 @@ jobs:
           retention-days: 3
           if-no-files-found: error
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -365,7 +355,7 @@ jobs:
             exit 1
           fi
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -427,7 +417,7 @@ jobs:
           -only-testing:CoproFirstUITests/SondageUITests
           -only-testing:CoproFirstUITests/ModerationUITests/testLeProfilListeLesPersonnesMasqueesEtLesDemasque
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
@@ -459,7 +449,7 @@ jobs:
           RESULTATS: .build/ResultatsTV
         run: bash scripts/tests-simulateur.sh
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
-        if: failure()
+        if: failure() || cancelled()
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler
