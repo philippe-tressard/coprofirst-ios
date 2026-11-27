@@ -274,63 +274,44 @@ jobs:
         ${{ github.event_name == 'push' && format('ci-interface-main-{0}', matrix.lot)
         || format('ci-interface-{0}-{1}', github.run_id, matrix.lot) }}
       cancel-in-progress: false
-    # Les tests d'interface seuls font ~77 min en médiane (16/11/2026), ~137 le 20/11 : six lots, chacun sous BUDGET_LOT.
+    # Les tests d'interface font ~186 min en médiane (27/11/2026) : six lots, chacun sous BUDGET_LOT.
     timeout-minutes: 70
     strategy:
       fail-fast: false
       matrix:
         lot: [1, 2, 3, 4, 5, 6]
     env:
-      # Les lots 1 à 4, nommés classe par classe ; le DERNIER lot joue TOUT le reste — une
-      # classe neuve y tombe d'office, aucune n'est oubliée. Rééquilibrés le 17/11/2026 sur les
-      # durées MESURÉES de 34 jobs d'interface depuis #260 (b57cd45), répartis sur le PIRE temps
-      # de chaque classe : PrestatairesUITests y est passé de 11 à 14 min en médiane, 22 au plus
-      # lent, et le lot 4 a dépassé le budget (63 min sur c3d25e2). 98 min de tests en médiane,
-      # 135 au pire : ~18 à 22 min par lot en médiane, ~27 au pire, plus ~18 min de build au
-      # plus lent : ~45 min d'étape, 10 de marge. Les classes de l'iPad seul (BarreLaterale,
-      # ListeEtFiche, Carnet) restent au dernier lot, où l'iPhone les saute : elles se jouent dans
-      # l'échantillon iPad (job echantillons), que scripts/verifier-ci.py tient (#350).
-      # Le 19/11/2026 (#301), le dernier lot faisait 36 à 45 min d'étape et a dépassé le budget
-      # sur #297 (56 min, tests verts) : PrestatairesUITests y pesait 13 à 23,7 min. Répartis
-      # sur le PIRE temps de chaque classe, mesuré sur quatre runs (c4bdf79, b6f9b98, 23099de
-      # et le lot 5 de #297) : 150 min de tests au pire, ~31 par lot nommé, ~26 pour le
-      # dernier, qui garde de la place pour les classes neuves. Le build et la mise en route
-      # prennent 15 à 17 min (25 une fois) : ~48 min d'étape au pire, 7 de marge.
-      # Le 20/11/2026 (#286), ModerationUITests (neuve, 124 à 185 s) a porté le dernier lot à
-      # 56 min (63dea6c, tests verts). Étape mesurée sur les dix derniers runs complets : lot 1
-      # 21-54 min, lot 2 17-47 (médiane 37), lot 3 35-53, lot 4 24-51, lot 5 39-56. Elle va au
-      # lot 2, le plus léger : ~40 min en médiane, ~50 au pire ; le dernier redescend à ~53 au pire.
-      # Le soir même, le lot 1 a dépassé le budget sur main (ab11792 : 61 min, tests verts).
-      # Mesuré sur les 50 jobs d'interface des dix derniers runs complets (44663465733 à
-      # 44775072264) : 137 min de tests en médiane ; un runner lent étire TOUT son lot, jusqu'à
-      # 1,33 fois la somme des médianes de ses classes (ab11792, lot 1) ; le build et la mise en
-      # route prennent 6 à 21,5 min (17 en médiane). En cinq lots, ~27 min de médiane chacun :
-      # 1,33 × 27 + 20 = 56 au pire, au budget même. En SIX, répartis sur les médianes : 22,5 à
-      # 23,1 min chacun ; le pire observé d'un job (facteur et build du même job) donne 49 min
-      # au plus, la somme des pires de chaque classe 28 à 32 min de tests (+ 17 de build : 45 à
-      # 49). Le dernier lot, le plus léger, garde la place des classes neuves.
+      # Les lots 1 à 5, nommés classe par classe ; le DERNIER lot joue TOUT le reste — une
+      # classe neuve y tombe d'office, aucune n'est oubliée. Les classes de l'iPad seul
+      # (BarreLaterale, ListeEtFiche, Carnet) restent au dernier lot, où l'iPhone les saute :
+      # elles se jouent dans l'échantillon iPad (job echantillons), que verifier-ci.py tient (#350).
+      # Répartis sur la MÉDIANE de chaque classe (somme des médianes par lot, le pire entre
+      # parenthèses), lue dans les journaux de huit runs du 26 au 27/11/2026, build hors de
+      # l'étape (#413) : 33 (40), 31 (40), 34 (40), 31 (38), 27 (34) et 31 (40) min. Le lot 1
+      # pesait 44 (53) et prenait 42 à 57 min d'étape, au bord du budget sur un runner lent
+      # (#412) : AccesUITests est passé au lot 3, ModerationUITests au lot 4. Historique des
+      # répartitions précédentes (#243, #301, #286) : git log -L de ce bloc.
       # Un lot ajouté = une entrée de la matrice et un LOT_ de plus (#243).
       LOT_1: >-
-        SuppressionCompteUITests AccesUITests DelegationsCSUITests ModerationUITests NatureUITests
-        ConnexionUITests LiensUITests
+        SuppressionCompteUITests DelegationsCSUITests NatureUITests ConnexionUITests LiensUITests
       LOT_2: >-
         SaisieAffaireUITests EcransHallUITests GrandTexteUITests ConfirmationHoteUITests
         LogoResidenceUITests PiecesJointesUITests
       LOT_3: >-
         CartesDuFilUITests PrestatairesAffaireUITests AffairesUITests ParcoursUITests PushUITests
-        VitrineUITests
+        VitrineUITests AccesUITests
       LOT_4: >-
         AdminUITests HistoriqueUITests AvisReglementUITests EspaceCSUITests EcheanceUITests
-        RetourUITests ProtectionUITests
+        RetourUITests ProtectionUITests ModerationUITests
       LOT_5: >-
         PrestatairesUITests HorsLigneUITests ResidenceUITests
-      # Minutes de l'étape de build et de tests : sous le plafond du job (70), pour qu'un lot
-      # qui grossit échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243).
-      # 62 depuis le 22/11/2026 : en six lots (~23 min de tests en médiane), un lot vert a fait
-      # 60 min (#326, run 44796976326, lot 3) — un runner 1,47 fois plus lent sur les tests et
-      # 24 min de mise en route (simulateur, build). 1,47 × 23 + 24 ≈ 58 à 60 : à 55, un runner
-      # lent rendait main rouge sans défaut. 62 laisse 8 min sous la coupure du job (70) pour
-      # que le bilan s'écrive ; un lot qui grossit reste nommé avant d'être coupé.
+      # Minutes de l'étape de tests : sous le plafond du job (70), pour qu'un lot qui grossit
+      # échoue EN LE NOMMANT au lieu d'être coupé sans bilan (#243). Depuis #413, l'étape ne
+      # construit plus rien : les tests, plus 5 à 7 min de mise en route (simulateur, app et
+      # runner installés). Un runner lent étire les tests d'un lot jusqu'à 1,47 fois (#326) :
+      # 1,47 × 34 + 7 ≈ 57 pour le lot le plus lourd, sous 62, qui laisse 8 min sous la coupure
+      # pour que le bilan s'écrive. Les lots ne ralentissent pas ensemble dans un même run
+      # (#412) : un dépassement nomme d'abord un lot trop lourd, à rééquilibrer ici.
       BUDGET_LOT: 62
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
