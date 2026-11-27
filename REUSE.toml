@@ -33,6 +33,15 @@ precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
 SPDX-License-Identifier = "LicenseRef-CoproFirst-Logo"
 
+# L'icône de l'Apple Watch (#226) : le même dessin, redimensionné sur le fond blanc de sa tuile
+# (scripts/images_logo.py). La montre est une plateforme de l'app CoproFirst publiée par son
+# auteur (même fiche) : la licence du logo la couvre (Philippe, 27/11/2026, coprofirst-ios#320).
+[[annotations]]
+path = "CoproFirstWatch/Ressources/Assets.xcassets/AppIcon.appiconset/icone-1024.png"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Philippe TRESSARD"
+SPDX-License-Identifier = "LicenseRef-CoproFirst-Logo"
+
 # La couche ARRIÈRE de cette icône : un fond blanc, sans rien du dessin.
 [[annotations]]
 path = "CoproFirstTV/Ressources/Assets.xcassets/**/Back.imagestacklayer/Content.imageset/*.png"
@@ -76,6 +85,7 @@ path = [
   "CoproFirst/Ressources/Assets.xcassets/**/Contents.json",
   "CoproFirst/Ressources/Pictogrammes.xcassets/**/Contents.json",
   "CoproFirstTV/Ressources/Assets.xcassets/**/Contents.json",
+  "CoproFirstWatch/Ressources/Assets.xcassets/**/Contents.json",
 ]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Philippe TRESSARD"

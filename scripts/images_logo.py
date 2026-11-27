@@ -9,11 +9,14 @@ arrière opaque (le fond blanc de la tuile du logo) et une couche avant (le logo
 que tvOS fait bouger l'une sur l'autre sous le focus —, en deux jeux : celui de l'écran
 d'accueil (400 × 240 et son @2x) et celui de l'App Store (1280 × 768) ; puis l'image de
 l'étagère (Top Shelf, 1920 × 720) et sa variante large (2320 × 720), chacune avec son @2x.
+L'Apple Watch a la sienne (1024 px, opaque, #226) : le logo sur le fond blanc de sa tuile,
+assez petit pour que le cercle où watchOS la découpe n'en rogne rien. Sans elle, App Store
+Connect refuse l'archive de l'iPhone qui embarque la montre (ITMS-90713, ITMS-90391, 27/11/2026).
 Le dessin n'est jamais découpé en couches : ce serait le modifier (sa licence).
 
   --liste       une ligne par image à rendre : `chemin<TAB>largeur<TAB>hauteur<TAB>part<TAB>mode`
                 (lue par scripts/importer-logo.sh, qui appelle scripts/rendre-icone.swift) ;
-  --catalogue   écrit les Contents.json du catalogue de l'Apple TV depuis cette table ;
+  --catalogue   écrit les Contents.json des catalogues de l'Apple TV et de la montre ;
   --verifier    juge chaque PNG (largeur, hauteur, opacité lues dans l'en-tête, sans macOS :
                 le job « Dépôt » tourne sur Linux) et les Contents.json (= ceux que la table
                 écrit). Lu par scripts/verifier-logo.sh ;
@@ -36,9 +39,13 @@ CONFORME, ECART, INCONNU = 0, 1, 2
 IPHONE = "CoproFirst/Ressources/Assets.xcassets/AppIcon.appiconset/icone-1024.png"
 TV = "CoproFirstTV/Ressources/Assets.xcassets"
 MARQUE = f"{TV}/App Icon & Top Shelf Image.brandassets"
+MONTRE = "CoproFirstWatch/Ressources/Assets.xcassets"
+ICONE_MONTRE = f"{MONTRE}/AppIcon.appiconset"
 #: La part de la hauteur que prend le logo : l'icône garde une marge que tvOS rogne au focus,
 #: l'étagère est un bandeau où le logo reste à sa place de marque.
 PART_ICONE, PART_ETAGERE = 0.6, 0.5
+#: La montre découpe son icône en cercle : un carré de côté 0,7 y tient tout entier (0,7 × √2 < 1).
+PART_MONTRE = 0.7
 
 #: (dossier dans la marque, rôle, taille @1x, échelles)
 PILES = [
@@ -60,7 +67,7 @@ def nom(echelle: int, base: str) -> str:
 
 def images() -> list[tuple[str, int, int, float, str]]:
     """(chemin, largeur, hauteur, part, mode) — `icone` : carrée, opaque, logo plein cadre."""
-    rendus = [(IPHONE, 1024, 1024, 1.0, "icone")]
+    rendus = [(IPHONE, 1024, 1024, 1.0, "icone"), (f"{ICONE_MONTRE}/icone-1024.png", 1024, 1024, PART_MONTRE, "fond")]
     for pile, _, (l, h), echelles in PILES:
         for couche, part, mode in COUCHES:
             for e in echelles:
@@ -90,6 +97,9 @@ def catalogue() -> dict[str, dict]:
             fichiers[f"{dossier}/Content.imageset/Contents.json"] = imageset(couche.lower(), echelles)
     for dossier, _, _, echelles in ETAGERES:
         fichiers[f"{MARQUE}/{dossier}/Contents.json"] = imageset("etagere", echelles)
+    fichiers[f"{MONTRE}/Contents.json"] = {"info": INFO}
+    fichiers[f"{ICONE_MONTRE}/Contents.json"] = {"images": [
+        {"filename": "icone-1024.png", "idiom": "universal", "platform": "watchos", "size": "1024x1024"}], "info": INFO}
     return fichiers
 
 
@@ -128,7 +138,8 @@ def juger(racine: pathlib.Path) -> tuple[list[str], list[str]]:
         fichier = racine / chemin
         if not fichier.is_file() or fichier.read_text(encoding="utf-8") != ecrit(contenu):
             fautes.append(f"{chemin} ≠ la table de scripts/images_logo.py — python3 scripts/images_logo.py --catalogue")
-    rangs = {str(f.relative_to(racine)) for f in (racine / TV).rglob("*.png")} if (racine / TV).is_dir() else set()
+    rangs = {str(f.relative_to(racine)) for cat in (TV, MONTRE) if (racine / cat).is_dir()
+             for f in (racine / cat).rglob("*.png")}
     for orphelin in sorted(rangs - {c for c, *_ in images()}):
         fautes.append(f"{orphelin} : une image du catalogue que la table ne rend pas")
     return fautes, illisibles
@@ -156,6 +167,9 @@ def autotest() -> bool:
     cas = [
         ("conforme", {}, None, CONFORME),
         ("icône de l'iPhone transparente", {IPHONE: (1024, 1024, True)}, None, ECART),
+        ("icône de la montre absente", {f"{ICONE_MONTRE}/icone-1024.png": None}, None, INCONNU),
+        ("icône de la montre transparente", {f"{ICONE_MONTRE}/icone-1024.png": (1024, 1024, True)}, None, ECART),
+        ("catalogue de la montre modifié", {}, f"{ICONE_MONTRE}/Contents.json", ECART),
         ("étagère aux dimensions fausses", {etagere: (1920, 1080, False)}, None, ECART),
         ("couche avant sans transparence", {avant: (400, 240, False)}, None, ECART),
         ("image absente", {etagere: None}, None, INCONNU),
@@ -186,7 +200,7 @@ def main(arguments: list[str]) -> int:
         for chemin, contenu in catalogue().items():
             (RACINE / chemin).parent.mkdir(parents=True, exist_ok=True)
             (RACINE / chemin).write_text(ecrit(contenu), encoding="utf-8")
-        print(f"✅ {len(catalogue())} Contents.json écrits sous {TV}")
+        print(f"✅ {len(catalogue())} Contents.json écrits sous {TV} et {MONTRE}")
         return CONFORME
     if arguments == ["--autotest"]:
         if not autotest():

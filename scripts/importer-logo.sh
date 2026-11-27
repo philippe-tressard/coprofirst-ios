@@ -6,8 +6,9 @@
 # L'IDENTIQUE depuis coprofirst, lus sur GitHub à l'étiquette du PLANCHER par défaut
 # (scripts/plancher.sh, #133 ; le clone local d'une autre session peut être en
 # retard, et on n'en change pas la branche), puis les images rendues depuis le dessin :
-# l'icône de l'iPhone, l'icône en couches et l'étagère de l'Apple TV (#320) — la table de
-# scripts/images_logo.py, qui écrit aussi le catalogue de l'Apple TV. Un logo plus récent
+# l'icône de l'iPhone, celle de la montre (#226), l'icône en couches et l'étagère de
+# l'Apple TV (#320) — la table de scripts/images_logo.py, qui écrit aussi les catalogues
+# de l'Apple TV et de la montre. Un logo plus récent
 # que le plancher s'importe sur décision : `[ref]`.
 #
 # Le logo n'est pas sous l'AGPL : LicenseRef-CoproFirst-Logo (MARQUE.md de
