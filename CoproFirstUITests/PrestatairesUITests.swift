@@ -107,9 +107,9 @@ final class PrestatairesUITests: XCTestCase {
         XCTAssertTrue(app.elementDisant("avis.9", "Excellent").apparait(), "le récapitulatif relu")
 
         // L'avis reste déplié : ses gestes sont là.
-        app.toucher(app.elementAcces("avis.9.retirer"), essais: Self.loin)
+        // Jusqu'à la confirmation (#390) : la rejouer ne retire rien, elle seule retire.
         let confirmer = app.elementAcces("avis.confirmerRetrait")
-        XCTAssertTrue(confirmer.apparait(), "le retrait se confirme")
+        app.toucher(app.elementAcces("avis.9.retirer"), jusqua: confirmer, essais: Self.loin)
         LancementCaptures.capturer("prestataires-6b-retirer")
         app.toucher(confirmer)
         XCTAssertTrue(app.libelleAcces("Avis retiré.").apparait())

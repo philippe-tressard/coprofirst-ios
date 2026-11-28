@@ -48,7 +48,8 @@ final class ListeEtFicheUITests: XCTestCase {
     @MainActor
     func testUneAffaireSOuvreACoteDeLaListe() throws {
         let app = lancer("affaires")
-        app.toucher(app.elementAcces("barre.mes-demandes"))
+        // Jusqu'à la carte : « Aucune sélection » ne prouvait pas que la page avait pris (#390).
+        app.toucher(app.elementAcces("barre.mes-demandes"), jusqua: app.elementAcces("affaires.carte.A-0041"))
         XCTAssertTrue(app.staticTexts["Aucune sélection"].apparait(), "rien de choisi : la fiche vide")
 
         app.toucher(app.elementAcces("affaires.carte.A-0041"))
@@ -74,13 +75,12 @@ final class ListeEtFicheUITests: XCTestCase {
     @MainActor
     func testLAffaireOuverteSeRetrouveEnRevenantALaPage() throws {
         let app = lancer("affaires")
-        app.toucher(app.elementAcces("barre.mes-demandes"))
+        app.toucher(app.elementAcces("barre.mes-demandes"), jusqua: app.elementAcces("affaires.carte.A-0041"))
         app.toucher(app.elementAcces("affaires.carte.A-0041"))
         XCTAssertTrue(ficheAffaire("A-0041", dans: app))
 
-        app.toucher(app.elementAcces("barre.faq"))
-        XCTAssertTrue(app.navigationBars["FAQ"].apparait())
-        app.toucher(app.elementAcces("barre.mes-demandes"))
+        app.toucher(app.elementAcces("barre.faq"), jusqua: app.navigationBars["FAQ"])
+        app.toucher(app.elementAcces("barre.mes-demandes"), jusqua: app.elementRetenu("affaires.carte.A-0041"))
         XCTAssertTrue(ficheAffaire("A-0041", dans: app), "la fiche ouverte au départ, sans clignement vide")
         XCTAssertTrue(app.elementRetenu("affaires.carte.A-0041").apparait(), "sa carte toujours soulignée")
     }
@@ -106,8 +106,8 @@ final class ListeEtFicheUITests: XCTestCase {
     @MainActor
     func testLeSyndicSOuvreACoteDeLaFicheDeLaResidence() throws {
         let app = lancer("fil")
-        app.toucher(app.elementAcces("barre.residence"))
         let syndic = app.elementAcces("residence.syndic")
+        app.toucher(app.elementAcces("barre.residence"), jusqua: syndic)
         app.toucher(syndic)
         let appeler = app.elementAcces("annuaire.appeler")
         XCTAssertTrue(appeler.apparait(), "l'annuaire du syndic dans la colonne")
@@ -130,9 +130,10 @@ final class ListeEtFicheUITests: XCTestCase {
     @MainActor
     func testUneAnnonceSOuvreACoteDeSaListe() throws {
         let app = lancer("fil")
-        app.toucher(app.elementAcces("barre.communaute"))
+        let ongletAnnonces = app.elementAcces("communaute.onglet.annonces")
+        app.toucher(app.elementAcces("barre.communaute"), jusqua: ongletAnnonces)
         let annonce = app.elementAcces("annonce.21")
-        app.toucher(app.elementAcces("communaute.onglet.annonces"), jusqua: annonce)
+        app.toucher(ongletAnnonces, jusqua: annonce)
         app.toucher(annonce)
         let contact = app.elementAcces("annonce.contact")
         XCTAssertTrue(contact.apparait(), "l'annonce dans la colonne")
@@ -163,8 +164,8 @@ final class ListeEtFicheUITests: XCTestCase {
     func testEnPortraitLaFicheSOuvreParDessusLaListe() throws {
         XCUIDevice.shared.orientation = .portrait
         let app = lancer("affaires")
-        app.toucher(app.elementAcces("barre.mes-demandes"))
         let carte = app.elementAcces("affaires.carte.A-0041")
+        app.toucher(app.elementAcces("barre.mes-demandes"), jusqua: carte)
         XCTAssertTrue(carte.apparait())
         XCTAssertFalse(app.staticTexts["Aucune sélection"].exists, "pas de colonne de fiche en portrait")
         XCTAssertTrue(app.elementAcces("barre.faq").exists, "la barre latérale reste à côté")

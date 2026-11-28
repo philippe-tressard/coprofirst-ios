@@ -27,7 +27,8 @@ INCONNU, jamais admis.
 Il tient de même les touchers qui ont leur POINT COMMUN, nommés dans `POINTS_COMMUNS` par le
 motif entier de leur identifiant : ✏️ d'une affaire (#400 : nu, perdu sous charge, il laissait
 le détail sans feuille, main 1c47c05) et le × d'un prestataire (#390 : la ligne et la feuille
-restées, main 67be1cd). Pour eux, une variable qui REÇOIT l'identifiant (`let retirer =
+restées, main 67be1cd), puis une entrée de la barre latérale, une catégorie d'affaire et
+« Retirer cet avis » (#390 : trois touchers perdus sous charge, l'effet jamais lu). Pour eux, une variable qui REÇOIT l'identifiant (`let retirer =
 app.elementAcces("modifier.prestataire.2.retirer")`) est jugée comme lui : c'est par elle que
 le rouge de #390 passait.
 
@@ -61,6 +62,12 @@ POINTS_COMMUNS = {
     r"affaire\.modifier": "app.ouvrirModificationAffaire() (AttenteDetailAffaire.swift, #400)",
     # L'id en clair ou interpolé (`\\(id)`) : le point commun lui-même l'interpole, avec `jusqua:`.
     r"modifier\.prestataire\.(?:\d+|\\\(\w+\))\.retirer": "app.retirerPrestataire(id) (AttenteDetailAffaire.swift, #390)",
+    # #390 : trois touchers perdus sous charge, dont l'effet ne se lisait pas. Chacun est
+    # idempotent — ouvrir une page, choisir une catégorie, ouvrir une confirmation.
+    r"barre\.[\w-]+": "app.toucher(entrée, jusqua: ce que montre la page) — la barre latérale (#390)",
+    r"nouvelle\.categorie\.(?:\w+|\\\(\w+\))": (
+        'app.toucher(vignette, jusqua: app.elementRetenu("nouvelle.categorie.…")) (#390)'),
+    r"avis\.(?:\d+|\\\(\w+\))\.retirer": "app.toucher(retirer, jusqua: confirmation) (#390)",
 }
 #: `let x = …` ou `var x = …`, jusqu'à la fin de la ligne.
 LIAISON = re.compile(r"\b(?:let|var)\s+(\w+)\s*=\s*([^\n]*)")
@@ -227,6 +234,10 @@ def autotest() -> int:
         "× par une variable, tap direct": 'let x = app.elementAcces("modifier.prestataire.2.retirer")\nx.tap()',
         "× interpolé nu": 'app.toucher(app.elementAcces("modifier.prestataire.\\(id).retirer"))',
         "ouverture par une variable": 'let modifier = app.elementAcces("affaire.modifier")\napp.toucher(modifier)',
+        "entrée de la barre nue": 'app.toucher(app.elementAcces("barre.mes-demandes"))',
+        "catégorie nue": 'let panne = el(app, "nouvelle.categorie.panne")\napp.toucher(panne)',
+        "catégorie interpolée nue": 'app.toucher(el(app, "nouvelle.categorie.\\(code)"))',
+        "retrait d'un avis nu": 'app.toucher(app.elementAcces("avis.9.retirer"), essais: Self.loin)',
     }
     admis = {
         "effet": 'app.toucher(app.elementAcces("onglet.x"), jusqua: carte)',
@@ -234,7 +245,10 @@ def autotest() -> int:
         "onglet dans l'effet seul": 'app.toucher(plus, jusqua: app.elementAcces("onglet.reporting"))',
         "commentaire": "// app.toucher(onglet)",
         "commentaire en fin": 'app.toucher(carte)  // puis app.toucher(onglet)',
-        "pas un onglet": 'app.toucher(app.elementAcces("barre.communaute"))',
+        "pas un onglet": 'app.toucher(app.elementAcces("residence.syndic"))',
+        "entrée de la barre jusqu'à son effet": 'app.toucher(app.elementAcces("barre.faq"), jusqua: titre)',
+        "catégorie jusqu'à son effet": 'let p = el(app, "nouvelle.categorie.panne")\napp.toucher(p, jusqua: retenue)',
+        "retrait d'un avis jusqu'à son effet": 'app.toucher(app.elementAcces("avis.9.retirer"), jusqua: c, essais: 3)',
         "mot voisin": 'app.toucher(app.elementAcces("ongletsx.y"))',
         "déclaration": "func toucher(_ onglet: XCUIElement)",
         "point commun": 'app.toucherLOnglet(app.elementAcces("onglet.badges"))',
