@@ -19,7 +19,10 @@ struct SuppressionCompteTests {
         let etat = try FixturesSuppressionCompte.etatLu()
         #expect(etat.demande == nil)
         #expect(etat.delaiJours == 30)
-        #expect(etat.consequences.count == 4)
+        #expect(etat.consequences.count == 5)
+        // La dernière phrase vient de `consequences`, composée côté serveur du même délai que
+        // `delai_annonce_jours` (#407) : les deux ne se contredisent pas.
+        #expect(etat.consequences.last?.contains("sous \(etat.delaiJours) jours") == true)
         // Les continuations de ligne du JSON simulé ne laissent ni double espace ni retour.
         #expect(etat.consequences.allSatisfy { !$0.contains("  ") && !$0.contains("\n") })
     }
