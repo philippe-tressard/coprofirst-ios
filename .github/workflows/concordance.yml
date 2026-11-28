@@ -151,7 +151,7 @@ jobs:
           esac
       - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
         # Le ticket du job dit déjà ce rouge quand « Tickets » a réussi : l'alerte se tait (#395).
-        if: failure() && steps.tickets.outcome != 'success' && !inputs.simuler_ecart
+        if: (failure() || cancelled()) && steps.tickets.outcome != 'success' && !inputs.simuler_ecart
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -I scripts/signaler_rouge.py --signaler

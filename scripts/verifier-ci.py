@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 # SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
-"""Quatre règles de la CI, lues dans `.github/workflows/ci.yml`.
+"""Cinq règles de la CI, lues dans `.github/workflows/ci.yml`.
 
 1. Le job « Dépôt » n'a qu'une étape `run`, et c'est `verifier-depot.sh` (#241) — outre l'alerte
    d'un rouge, le dernier pas de chaque job.
@@ -27,6 +27,12 @@ Le poste, le hook pre-commit et la CI jouent alors exactement la même chose : l
 4. L'Apple TV (l'étape `APPAREIL: tv`) a son job à elle, sans autre passage de
    `tests-simulateur.sh` (#420) : derrière l'échantillon iPad, elle était sautée quand il
    rougissait et coupée par sa limite quand il était lent (run 45903270698).
+
+5. L'app montre livrée se juge dépendante de l'iPhone (`WKRunsIndependentlyOfCompanionApp`)
+   sur l'archive, une fois : `verifier-archive-montre.sh` y lit l'Info.plist de la montre
+   EMBARQUÉE, et aucune étape ne relance `verifier-montre-dependante.sh` seul, qui reconstruisait
+   la même montre en Release dans le job Apple Watch — 5 à 6 min, et deux coupures à 30 min le
+   25/11/2026 (#406).
 
 Et chaque job de chaque workflow finit par l'alerte d'un rouge de main ou d'un passage planifié
 (`scripts/signaler_rouge.py --verifier`, #362, standards/07 §1 bis).
@@ -176,9 +182,30 @@ def refus_tv(texte: str) -> tuple[int, list[str]]:
     return 0, [f"✅ l'Apple TV seule dans son job ({', '.join(avec_tv)})"]
 
 
-def refus(texte: str, classes: list[str] | None = None) -> tuple[int, list[str]]:
-    """Les quatre règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
-    reelles = [lambda t: refus_ipad(t, classes), refus_tv] if classes is not None else []
+ARCHIVE_MONTRE = "bash scripts/verifier-archive-montre.sh"
+DEPENDANTE = 'bash scripts/verifier-montre-dependante.sh "$MONTRE/Info.plist"'
+
+
+def refus_montre(texte: str, archive: str | None) -> tuple[int, list[str]]:
+    """Règle 5 — la montre livrée se juge dépendante sur l'archive, et nulle part en double."""
+    if archive is None:
+        return 2, ["❓ INCONNU : scripts/verifier-archive-montre.sh illisible"]
+    lignes = [l.strip().removeprefix("- ") for l in texte.splitlines()]
+    messages = []
+    if f"run: {ARCHIVE_MONTRE}" not in lignes:
+        messages.append("❌ aucune étape ne joue verifier-archive-montre.sh : la montre livrée n'est jugée nulle part (#324)")
+    if not any(l.strip().startswith(DEPENDANTE) for l in archive.splitlines()):
+        messages.append("❌ verifier-archive-montre.sh ne juge plus la montre EMBARQUÉE dépendante de l'iPhone (#226)")
+    if any(re.search(r"verifier-montre-dependante\.sh\s*$", l) for l in lignes if l.startswith("run:")):
+        messages.append("❌ une étape relance verifier-montre-dependante.sh seul : un build Release que l'archive "
+                        "fait déjà (#406)")
+    return (1, messages) if messages else (0, ["✅ la montre livrée se juge sur l'archive, une fois"])
+
+
+def refus(texte: str, classes: list[str] | None = None, archive: str | None = None) -> tuple[int, list[str]]:
+    """Les cinq règles : le code le plus grave (INCONNU l'emporte sur le vert, jamais sur le refus)."""
+    reelles = ([lambda t: refus_ipad(t, classes), refus_tv, lambda t: refus_montre(t, archive)]
+               if classes is not None else [])
     regles = [refus_depot, refus_agregat] + reelles
     codes, messages = zip(*(r(texte) for r in regles))
     code = 1 if 1 in codes else max(codes)
@@ -235,6 +262,13 @@ def autotest() -> int:
     cas_tv = [(seule, 0, "l'Apple TV seule dans son job"), (derriere, 1, "l'Apple TV derrière l'iPad"),
               (conforme, 1, "aucune étape Apple TV")]
     ko += [nom for texte, code, nom in cas_tv if refus_tv(texte)[0] != code]
+    arch = conforme.replace("      - run: x\n  " + AGREGAT, f"      - run: {ARCHIVE_MONTRE}\n  " + AGREGAT)
+    double = arch.replace("  echantillons:", "      - run: bash scripts/verifier-montre-dependante.sh\n  echantillons:")
+    juge = f"ARCHIVE=x\n{DEPENDANTE} || exit $?\n"
+    cas_montre = [(arch, juge, 0, "la montre jugée sur l'archive"), (double, juge, 1, "un build Release en double"),
+                  (conforme, juge, 1, "aucune archive jouée"), (arch, "ARCHIVE=x\n", 1, "l'archive sans le juge"),
+                  (arch, None, 2, "le script de l'archive illisible")]
+    ko += [nom for texte, a, code, nom in cas_montre if refus_montre(texte, a)[0] != code]
     for nom in ko:
         print(f"❌ autotest : {nom} mal jugé")
     return 1 if ko else 0
@@ -246,7 +280,9 @@ def main() -> int:
     if not WORKFLOW.is_file():
         print(f"❓ INCONNU : {WORKFLOW} absent")
         return 2
-    code, messages = refus(WORKFLOW.read_text(encoding="utf-8"), classes_ipad_seul())
+    archive = RACINE / "scripts" / "verifier-archive-montre.sh"
+    code, messages = refus(WORKFLOW.read_text(encoding="utf-8"), classes_ipad_seul(),
+                           archive.read_text(encoding="utf-8") if archive.is_file() else None)
     alertes = signaler_rouge.ecarts({f.name: f.read_text(encoding="utf-8")
                                      for f in sorted(WORKFLOW.parent.glob("*.yml"))})
     messages += alertes or ["✅ chaque job de chaque workflow finit par l'alerte d'un rouge (#362)"]

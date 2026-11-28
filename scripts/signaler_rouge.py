@@ -5,10 +5,10 @@
 
 Socle `standards/07` §1 bis : le courriel de GitHub n'est pas un destinataire — il n'avait rien
 fait voir en sept jours de rouge sur le site (23 au 30/10/2026) ; ici, `main` est restée rouge
-neuf heures le 19/11 (#353). Le pas est le DERNIER de chaque job, `if: failure()` :
+neuf heures le 19/11 (#353). Le pas est le DERNIER de chaque job, `if: failure() || cancelled()` :
 
     - name: Alerte d'un rouge (scripts/signaler_rouge.py)
-      if: failure()
+      if: failure() || cancelled()
       env:
         GH_TOKEN: ${{ github.token }}
       run: python3 -I scripts/signaler_rouge.py --signaler
@@ -18,8 +18,15 @@ PR ni une autre branche : son auteur voit le rouge là où il travaille. Un tick
 workflow, reconnu à son titre exact ; un échec suivant le complète, au plus une fois toutes les
 `DELAI_HEURES` (standards/07 §3). Il se ferme à la main, avec le passage vert qui le prouve.
 
-`--verifier` (lancé par `scripts/verifier-ci.py`) refuse un job sans ce pas en dernier, et un
-workflow sans `issues: write`. Un job qui ouvre déjà SON ticket (`gh issue create` : la
+Un job coupé par son `timeout-minutes` finit `cancelled`, pas `failure` : sous `if: failure()`
+seul, l'alerte était sautée, et la montre coupée sur main le 25/11/2026 n'a ouvert aucun ticket
+(#406). Les pas `cancelled()` jouent encore après la coupure (sonde de #406). Une PR annulée par
+sa tête suivante joue l'alerte, qui n'y signale rien ; un job en attente évincé ne joue aucun
+pas. Seul un workflow qui annule ses exécutions en cours sur `main` (`cancel-in-progress: true`
+littéral, « Dépôt à jour ») garde `failure()` seul : chez lui, une annulation est la règle.
+
+`--verifier` (lancé par `scripts/verifier-ci.py`) refuse un job sans ce pas en dernier, une
+coupure muette, et un workflow sans `issues: write`. Un job qui ouvre déjà SON ticket (`gh issue create` : la
 concordance, la santé de main) tait l'alerte quand ce pas a réussi — `steps.<id>.outcome !=
 'success'` dans sa condition, `<id>` un pas du job : sinon un même rouge fait deux tickets
 (#395, doublon de #380 le 25/11/2026). Une seule dispense, déclarée (`DISPENSES`) : un job qui exécute
@@ -43,6 +50,8 @@ from datetime import datetime, timedelta, timezone
 RACINE = pathlib.Path(__file__).resolve().parent.parent
 WORKFLOWS = RACINE / ".github" / "workflows"
 PAS = "python3 -I scripts/signaler_rouge.py --signaler"
+#: Un workflow qui annule ses exécutions en cours, `main` comprise : l'annulation y est la règle.
+ANNULE_EN_COURS = re.compile(r"^  cancel-in-progress: true\s*$", re.M)
 #: La condition qui tait l'alerte quand le job a ouvert son propre ticket.
 TAIRE = re.compile(r"steps\.([A-Za-z0-9_-]+)\.outcome != 'success'")
 ETIQUETTE = "priorité haute"
@@ -76,7 +85,7 @@ def decider(evenement: str, ref: str, workflow: str, ouverts: list[dict], mainte
 def corps(env: dict) -> str:
     adresse = f"{env.get('GITHUB_SERVER_URL', 'https://github.com')}/{env.get('GITHUB_REPOSITORY', '?')}"
     return (f"❌ « {env.get('GITHUB_WORKFLOW', '?')} », job `{env.get('GITHUB_JOB', '?')}`, rouge "
-            f"({env.get('GITHUB_EVENT_NAME', '?')}, commit {env.get('GITHUB_SHA', '?')[:7]}) : "
+            f"ou coupé par sa limite de durée ({env.get('GITHUB_EVENT_NAME', '?')}, commit {env.get('GITHUB_SHA', '?')[:7]}) : "
             f"{adresse}/actions/runs/{env.get('GITHUB_RUN_ID', '?')}\n\nUn main rouge passe avant tout autre "
             "lot (standards/09 §8 bis). Le même test sur main avant de parler d'instabilité. Signalé par "
             "`scripts/signaler_rouge.py` (#362) ; fermer au passage vert qui le prouve.")
@@ -124,6 +133,7 @@ def ecarts(fichiers: dict[str, str]) -> list[str]:
         lus = jobs(texte)
         if not lus:
             fautes.append(f"❓ INCONNU : {nom} sans job lu")
+        coupure = not ANNULE_EN_COURS.search(texte)
         if not re.search(r"^\s+issues: write\b", texte, re.M):
             fautes.append(f"❌ {nom} : aucun `issues: write` — le ticket ne pourrait pas s'ouvrir")
         for job, corps_job in lus.items():
@@ -132,8 +142,11 @@ def ecarts(fichiers: dict[str, str]) -> list[str]:
                 continue
             etapes = re.split(r"^      - ", corps_job, flags=re.M)[1:]
             dernier = etapes[-1] if etapes else ""
-            if PAS not in dernier or not re.search(r"^\s+if: failure\(\)", dernier, re.M):
+            if PAS not in dernier or not re.search(r"^\s+if: \(?failure\(\)", dernier, re.M):
                 fautes.append(f"❌ {nom}, job « {job} » : son dernier pas n'est pas l'alerte `if: failure()` → {PAS}")
+            elif coupure and not re.search(r"^\s+if: .*\bcancelled\(\)", dernier, re.M):
+                fautes.append(f"❌ {nom}, job « {job} » : une coupure par `timeout-minutes` finit `cancelled` et "
+                              "tairait l'alerte — `if: failure() || cancelled()` (#406)")
             elif "gh issue create" in corps_job:
                 taire = TAIRE.search(dernier)
                 if not taire or not re.search(rf"^\s+id: {re.escape(taire.group(1))}\s*$", corps_job, re.M):
@@ -153,20 +166,25 @@ def autotest() -> bool:
     ok &= decider("schedule", "refs/heads/main", "CI", recent, t)[0] == "rien"
     ok &= decider("pull_request", "refs/pull/3/merge", "CI", [], t)[0] == "rien"
     ok &= decider("push", "refs/heads/claude/x", "CI", [], t)[0] == "rien"
-    alerte = f"      - name: Alerte\n        if: failure()\n        run: {PAS}\n"
+    alerte = f"      - name: Alerte\n        if: failure() || cancelled()\n        run: {PAS}\n"
     sain = "permissions:\n  issues: write\njobs:\n  a:\n    steps:\n      - run: x\n" + alerte
     ok &= ecarts({"w.yml": sain}) == []
     ok &= len(ecarts({"w.yml": sain + "  b:\n    steps:\n      - run: y\n"})) == 1          # un job muet
-    ok &= len(ecarts({"w.yml": sain.replace("        if: failure()\n", "")})) == 1          # sans la condition
-    ok &= ecarts({"w.yml": sain.replace("if: failure()", "if: failure() || needs.a.result != 'success'")}) == []
+    ok &= len(ecarts({"w.yml": sain.replace("        if: failure() || cancelled()\n", "")})) == 1  # sans condition
+    muet = sain.replace(" || cancelled()", "")
+    ok &= len(ecarts({"w.yml": muet})) == 1                                                    # coupure muette
+    annule = muet.replace("jobs:\n", "concurrency:\n  group: g\n  cancel-in-progress: true\njobs:\n")
+    ok &= ecarts({"w.yml": annule}) == []                                                      # annuler est la règle
+    ok &= ecarts({"w.yml": sain.replace("|| cancelled()", "|| cancelled() || needs.a.result != 'success'")}) == []
     ok &= len(ecarts({"w.yml": sain + "      - run: apres\n"})) == 1                         # pas le dernier
     ok &= len(ecarts({"w.yml": sain.replace("  issues: write\n", "")})) == 1                # sans le droit
     ok &= len(ecarts({"depot-a-jour.yml": sain})) == 1                                         # dispense sans objet
     ok &= ecarts({}) != []
     propre = sain.replace("      - run: x\n", "      - name: Ticket\n        id: t\n        run: gh issue create\n")
     ok &= len(ecarts({"w.yml": propre})) == 1                                                  # deux tickets
-    ok &= ecarts({"w.yml": propre.replace("if: failure()", "if: failure() && steps.t.outcome != 'success'")}) == []
-    ok &= len(ecarts({"w.yml": propre.replace("if: failure()", "if: failure() && steps.u.outcome != 'success'")})) == 1
+    taire = "if: (failure() || cancelled()) && steps.%s.outcome != 'success'"
+    ok &= ecarts({"w.yml": propre.replace("if: failure() || cancelled()", taire % "t")}) == []
+    ok &= len(ecarts({"w.yml": propre.replace("if: failure() || cancelled()", taire % "u")})) == 1
     sortie: list[list[str]] = []
 
     def gh(args: list[str]) -> str:
