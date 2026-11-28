@@ -12,7 +12,10 @@ import Foundation
 /// Ce que l'API simulée sert pour la demande de suppression (#166) — en JSON, à la forme
 /// de la route, lu par le type GÉNÉRÉ puis par le même branchement que le service réel.
 /// Les conséquences sont celles du serveur (`CONSEQUENCES` de `utils/demande_suppression`,
-/// coprofirst v3.89.0) : l'app ne les écrit nulle part ailleurs.
+/// coprofirst v3.126.9, #3134, texte inchangé jusqu'à v3.127.4) : l'app ne les écrit nulle
+/// part ailleurs. Ce texte est AU-DESSUS du plancher (v3.126.5), choix du 28/11/2026 (#407) :
+/// le contrat ne change pas, seules les phrases servies ; la dernière se compose côté serveur
+/// du même délai que `delai_annonce_jours`.
 enum FixturesSuppressionCompte {
     typealias Reponse = FixturesAcces.Reponse
 
@@ -22,8 +25,9 @@ enum FixturesSuppressionCompte {
         {
           "delai_annonce_jours": 30,
           "consequences": [
-            "Votre compte et vos données personnelles sont effacés : profil, liens à vos lots, badges et demandes, notifications, sessions, petites annonces, avis, délégations et mandats.",
-            "Ce que vous avez écrit dans la vie collective de la résidence — affaires et leurs messages, votes, soutiens, réponses dans les échanges, documents publiés — reste, sans votre nom : il est attribué à « Ancien résident ».",
+            "Votre compte et vos données personnelles sont effacés : profil, liens à vos lots, demandes de badge et de modification, notifications, sessions et appareils, petites annonces, avis, délégations et mandats, baux de vos lots, signalements et masques, historique de navigation.",
+            "Les badges d'accès restent attachés à leur lot : seul le lien à votre nom est retiré.",
+            "Ce que vous avez écrit ou publié dans la vie collective de la résidence — affaires et leurs messages, consultations et votes, idées et soutiens, réponses dans les échanges, documents et rapports, règles de la résidence, annonces du hall, questions au règlement, évaluations des prestataires — reste, sans votre nom : il est attribué à « Ancien résident ».",
             "L'effacement est définitif. Vous pouvez retirer votre demande tant que l'administration ne l'a pas traitée.",
             "L'administration de la résidence la traite sous 30 jours au plus."
           ]
