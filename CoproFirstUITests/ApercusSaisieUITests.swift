@@ -24,6 +24,10 @@ final class ApercusSaisieUITests: XCTestCase {
         XCTAssertTrue(
             app.elementDisant("profil.identite.nom-affiche", "Résident EXEMPLE").apparait(),
             "le nom servi avec le compte, d'emblée")
+        // #411 : le titre dans le contenu, entier — la barre le tronquait en « Informations… ».
+        let titre = app.elementAcces("profil.identite.titre")
+        XCTAssertEqual(titre.label, "Informations personnelles", "le titre de la feuille, entier")
+        XCTAssertFalse(app.navigationBars.staticTexts["Informations personnelles"].exists, "aucun titre dans la barre")
         let prenom = app.elementAcces("profil.identite.prenom")
         app.toucher(prenom)
         prenom.typeText("e")

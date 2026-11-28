@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Philippe TRESSARD
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
+import UIKit
 import XCTest
 
 /// La connexion d'un seul toucher (#47), contre l'API simulée : aucune requête ne part.
@@ -58,6 +59,32 @@ final class ConnexionUITests: XCTestCase {
         confirmation.typeText("choisi-2026")
         app.toucher(app.buttons["motDePasse.valider"], jusqua: residence)
         XCTAssertFalse(actuel.exists, "la porte se lève : la résidence s'ouvre")
+    }
+
+    /// Le titre de la porte se lit en entier (#411) : dans le contenu, il passe à la ligne ;
+    /// la barre, où « Se déconnecter » le tronquait en « Choisir votre mot de… », n'en a pas.
+    @MainActor
+    func testLeTitreDeLaPorteSeLitEnEntierAToutesTailles() throws {
+        for taille in [LancementCaptures.Taille.parDefaut, .ax5] {
+            let app = LancementCaptures.lancer(taille: taille, arguments: ["-compte", "temporaire"])
+            let titre = app.elementAcces("motDePasse.titre")
+            XCTAssertTrue(titre.apparait(), "\(taille) : le titre de la porte, dans le contenu")
+            XCTAssertEqual(titre.label, "Choisir votre mot de passe", "\(taille) : le titre entier")
+            let fenetre = app.windows.firstMatch.frame
+            XCTAssertLessThanOrEqual(titre.frame.maxX, fenetre.maxX, "\(taille) : le titre tient dans la largeur")
+            let barre = app.navigationBars.firstMatch
+            XCTAssertFalse(
+                barre.staticTexts["Choisir votre mot de passe"].exists, "\(taille) : aucun titre tronqué dans la barre")
+            if taille == .ax5 {
+                let ligne = UIFont.preferredFont(
+                    forTextStyle: .largeTitle,
+                    compatibleWith: UITraitCollection(preferredContentSizeCategory: .accessibilityExtraExtraExtraLarge)
+                ).lineHeight
+                XCTAssertGreaterThan(titre.frame.height, ligne * 1.5, "en AX5, le titre passe à la ligne")
+            }
+            LancementCaptures.capturer("mot-de-passe-temporaire-\(taille)")
+            app.terminate()
+        }
     }
 
     /// La connexion FRAÎCHE d'un compte temporaire (#405) : le compte se lit avant que la

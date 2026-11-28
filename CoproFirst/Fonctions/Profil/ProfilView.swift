@@ -146,7 +146,7 @@ struct ProfilView: View {
             }
             .listRowBackground(palette.surface)
         } header: {
-            Text("Informations personnelles").styleLibelle()
+            Text(FormulaireIdentite.titre).styleLibelle()
         } footer: {
             Text("La photo de profil et l'étage de votre logement se règlent sur le site.")
         }

@@ -18,7 +18,13 @@ struct FormulaireIdentite: View {
 
     var body: some View {
         Form {
-            if let erreur { MessageErreur(texte: erreur.phrase).listRowBackground(Color.clear).listRowInsets(.init()) }
+            Section {
+                if let erreur {
+                    MessageErreur(texte: erreur.phrase).listRowBackground(Color.clear).listRowInsets(.init())
+                }
+            } header: {
+                EnTeteDeFormulaire(titre: FormulaireIdentite.titre, identifiant: "profil.identite.titre")
+            }
             Section {
                 TextField("Prénom", text: $saisie.prenom).textContentType(.givenName)
                     .accessibilityIdentifier("profil.identite.prenom")
@@ -57,7 +63,8 @@ struct FormulaireIdentite: View {
         .scrollContentBackground(.hidden)
         .background(palette.bg)
         .animation(.snappy, value: saisie.changeAdresse(compte.email))
-        .navigationTitle("Informations personnelles")
+        // Entre « Annuler » et « Enregistrer », la barre le tronquait en « Informations… » (#411).
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(envoi)
         .toolbar {
@@ -74,6 +81,8 @@ struct FormulaireIdentite: View {
         }
         .onAppear { if saisie.email.isEmpty { saisie = SaisieIdentite(compte) } }
     }
+
+    static let titre = "Informations personnelles"
 
     private func enregistrer() async {
         envoi = true
@@ -120,6 +129,10 @@ struct MotDePasseView: View {
                 SecureField(temporaire ? "Mot de passe temporaire" : "Mot de passe actuel", text: $actuel)
                     .textContentType(.password)
                     .accessibilityIdentifier("motDePasse.actuel")
+            } header: {
+                if temporaire {
+                    EnTeteDeFormulaire(titre: MotDePasseView.titreTemporaire, identifiant: "motDePasse.titre")
+                }
             } footer: {
                 Text(
                     temporaire
@@ -158,10 +171,15 @@ struct MotDePasseView: View {
         }
         .scrollContentBackground(.hidden)
         .background(palette.bg)
-        .navigationTitle(temporaire ? "Choisir votre mot de passe" : "Mot de passe")
+        // La porte n'a pas de titre dans la barre : « Se déconnecter » ne lui laissait que
+        // « Choisir votre mot de… » (#411). Son titre est l'en-tête du formulaire.
+        .navigationTitle(temporaire ? "" : "Mot de passe")
+        .navigationBarTitleDisplayMode(temporaire ? .inline : .automatic)
         .sensoryFeedback(.success, trigger: succes)
         .alert("Mot de passe modifié", isPresented: $reussi) { Button("OK") { fermer() } }
     }
+
+    static let titreTemporaire = "Choisir votre mot de passe"
 
     /// Ce qui manque encore, ou rien quand le bouton peut s'ouvrir.
     private var attente: String? {
@@ -192,5 +210,25 @@ struct MotDePasseView: View {
         } catch {
             withAnimation(.snappy) { erreur = ErreurService.depuis(error) }
         }
+    }
+}
+
+/// Le titre d'un formulaire du Profil que la barre tronquerait entre ses boutons (#411) :
+/// dans le contenu, comme le site, en tête de la première section — il passe à la ligne
+/// à toute taille, et VoiceOver le lit comme un en-tête. La barre n'a alors pas de titre.
+struct EnTeteDeFormulaire: View {
+    let titre: String
+    let identifiant: String
+    @Environment(\.palette) private var palette
+
+    var body: some View {
+        Text(titre)
+            .font(.titre(.largeTitle))
+            .foregroundStyle(palette.text)
+            .textCase(nil)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.bottom, 8)
+            .accessibilityAddTraits(.isHeader)
+            .accessibilityIdentifier(identifiant)
     }
 }
