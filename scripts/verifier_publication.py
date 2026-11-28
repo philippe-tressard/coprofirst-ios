@@ -11,18 +11,18 @@ n'est pas publier (publication manuelle). Seul ce que le magasin SERT fait foi.
 Ce qu'il juge, sur la fiche publique (`itunes.apple.com/lookup`, sans compte, magasin français) :
 1. l'iPhone et l'iPad : la version servie est au moins la version voulue ;
 2. l'Apple Watch (depuis `PLATEFORMES["montre"]`) : la fiche servie la nomme parmi ses appareils ;
-3. l'Apple TV (depuis `PLATEFORMES["tv"]`) : AUCUNE source publique ne la dit (la recherche
-   tvOS rend zéro résultat, même pour une app TV en ligne) — INCONNU, sauf `--confirme tv`
-   quand Philippe lit dans App Store Connect « Prêt à la distribution » pour la version tvOS.
-Une fiche illisible, absente ou d'une autre app : INCONNU, jamais vert.
+3. l'Apple TV (depuis `PLATEFORMES["tv"]`) : la fiche tvOS (`entity=tvSoftware`) sert au moins
+   la version voulue — elle a sa propre version, ses appareils `AppleTV…` (témoins du
+   28/11/2026 : Infuse et Netflix y rendent leur version tvOS ; CoproFirst, zéro résultat).
+Une fiche iPhone illisible, absente ou d'une autre app : INCONNU, jamais vert ; une fiche tvOS
+vide quand la fiche iPhone se lit : l'Apple TV n'est pas publiée (rouge).
 
 La version voulue : celle de `project.yml` (lue par `avant_soumission.version`), ou
 `--version X.Y.Z`, ou `--etiquette` (la plus haute étiquette `v*`, le mode du passage
 planifié : une étiquette de moins de `DELAI_REVUE_JOURS` jours non servie est EN ATTENTE de la
-revue, sortie 3 ; au-delà, un rouge, qui ouvre un ticket). Le mode planifié ne juge pas l'Apple
-TV (aucune source sans compte) et le dit.
+revue, sortie 3 ; au-delà, un rouge, qui ouvre un ticket).
 
-Usage : verifier_publication.py [--version X.Y.Z | --etiquette] [--confirme tv] | --autotest
+Usage : verifier_publication.py [--version X.Y.Z | --etiquette] | --autotest
 Sortie : 0 publiée, 1 pas publiée, 2 INCONNU, 3 en attente de la revue (--etiquette seul).
 """
 
@@ -61,9 +61,11 @@ def au_moins(minimum: str, lue: str) -> bool | None:
     return None if code == 2 else code == 0
 
 
-def lire_fiche() -> tuple[dict | None, str]:
-    """La fiche servie, ou (None, la raison). Un paramètre neuf contourne le cache d'un jour."""
-    adresse = f"https://itunes.apple.com/lookup?id={APP_ID}&country={PAYS}&_={int(time.time())}"
+def lire_fiche(entite: str = "software") -> tuple[dict | None, str]:
+    """La fiche servie (`software` : iPhone et iPad ; `tvSoftware` : Apple TV), ou (None, la
+    raison). Un paramètre neuf contourne le cache d'un jour (`max-age=86400`)."""
+    adresse = (f"https://itunes.apple.com/lookup?id={APP_ID}&country={PAYS}&entity={entite}"
+               f"&_={int(time.time())}")
     try:
         with urllib.request.urlopen(adresse, timeout=20) as reponse:  # noqa: S310 (adresse fixe, https)
             return json.load(reponse), adresse
@@ -71,14 +73,26 @@ def lire_fiche() -> tuple[dict | None, str]:
         return None, f"{adresse} : {erreur}"
 
 
-def juger(voulue: str, fiche: dict | None, confirmees: set[str], avec_tv: bool = True) -> list[tuple[str, str, str]]:
-    """Fonction pure (standards/04 §11) : (sujet, état, détail) pour chaque plateforme attendue."""
+def _servie(fiche: dict | None) -> tuple[dict | None, str]:
+    """(la fiche de CETTE app, « ») ou (None, la raison de l'INCONNU)."""
     resultats = (fiche or {}).get("results")
     if not isinstance(resultats, list) or len(resultats) != 1:
-        return [("App Store", INCONNU, f"fiche illisible ou absente ({(fiche or {}).get('resultCount', '?')} résultat)")]
+        return None, f"fiche illisible ou absente ({(fiche or {}).get('resultCount', '?')} résultat)"
     servie = resultats[0]
     if servie.get("trackId") != APP_ID or servie.get("bundleId") != PAQUET:
-        return [("App Store", INCONNU, f"fiche d'une autre app : {servie.get('trackId')} / {servie.get('bundleId')}")]
+        return None, f"fiche d'une autre app : {servie.get('trackId')} / {servie.get('bundleId')}"
+    return servie, ""
+
+
+def _appareil(servie: dict, prefixe: str) -> bool:
+    return any(str(a).startswith(prefixe) for a in servie.get("supportedDevices", []))
+
+
+def juger(voulue: str, fiche: dict | None, fiche_tv: dict | None) -> list[tuple[str, str, str]]:
+    """Fonction pure (standards/04 §11) : (sujet, état, détail) pour chaque plateforme attendue."""
+    servie, raison = _servie(fiche)
+    if servie is None:
+        return [("App Store", INCONNU, raison)]
     lue = str(servie.get("version", ""))
     publiee = au_moins(voulue, lue)
     if publiee is None:
@@ -86,18 +100,29 @@ def juger(voulue: str, fiche: dict | None, confirmees: set[str], avec_tv: bool =
     lignes = [("iPhone et iPad", OK if publiee else ROUGE,
                f"{lue} servie" + ("" if publiee else f", {normaliser(voulue)} voulue : pas encore publiée"))]
     if au_moins(PLATEFORMES["montre"], voulue):
-        montre = any(str(a).startswith("Watch") for a in servie.get("supportedDevices", []))
+        montre = _appareil(servie, "Watch")
         lignes.append(("Apple Watch", OK if publiee and montre else ROUGE,
                        "la fiche servie la nomme" if montre else "la fiche servie ne nomme aucune Apple Watch"))
     if au_moins(PLATEFORMES["tv"], voulue):
-        if not avec_tv:
-            lignes.append(("Apple TV", "➖", "non jugée par le passage planifié : aucune source publique"))
-        elif "tv" in confirmees:
-            lignes.append(("Apple TV", OK, "confirmée par Philippe (App Store Connect : « Prêt à la distribution »)"))
-        else:
-            lignes.append(("Apple TV", INCONNU, "aucune source publique : lire la version tvOS dans App Store "
-                                                "Connect, puis --confirme tv"))
+        lignes.append(("Apple TV", *juger_tv(voulue, fiche_tv)))
     return lignes
+
+
+def juger_tv(voulue: str, fiche_tv: dict | None) -> tuple[str, str]:
+    if fiche_tv is None:
+        return INCONNU, "fiche tvOS illisible"
+    if fiche_tv.get("resultCount") == 0 and fiche_tv.get("results") == []:
+        return ROUGE, "aucune version tvOS servie : pas encore publiée"
+    servie, raison = _servie(fiche_tv)
+    if servie is None:
+        return INCONNU, raison
+    lue = str(servie.get("version", ""))
+    publiee = au_moins(voulue, lue)
+    if publiee is None:
+        return INCONNU, f"version tvOS illisible : « {lue} »"
+    if not _appareil(servie, "AppleTV"):
+        return INCONNU, f"fiche tvOS {lue} sans appareil Apple TV"
+    return (OK, f"{lue} servie") if publiee else (ROUGE, f"{lue} servie, {normaliser(voulue)} voulue")
 
 
 def verdict(lignes: list[tuple[str, str, str]]) -> int:
@@ -121,20 +146,23 @@ def autotest() -> int:
     def fiche(v: str = "1.2", appareils: tuple = ("iPhone17-iPhone17", "Watch7-Watch7"), **autre) -> dict:
         return {"resultCount": 1, "results": [{"trackId": APP_ID, "bundleId": PAQUET, "version": v,
                                                 "supportedDevices": list(appareils), **autre}]}
+    tv = fiche("1.2", ("AppleTV4-AppleTV4",))
+    vide = {"resultCount": 0, "results": []}
     cas = [
-        ("1.1.0", fiche("1.1"), set(), True, 0), ("1.2.0", fiche("1.1"), set(), True, 1),
-        ("1.2.0", fiche("1.2"), {"tv"}, True, 0), ("1.2.0", fiche("1.2"), set(), True, 2),
-        ("1.2.0", fiche("1.2"), set(), False, 0), ("1.2.0", fiche("1.3"), {"tv"}, True, 0),
-        ("1.2.0", fiche("1.2", ("iPhone17-iPhone17",)), {"tv"}, True, 1),
-        ("1.1.0", fiche("1.1", ("iPhone17-iPhone17",)), set(), True, 0),
-        ("1.10.0", fiche("1.9"), {"tv"}, True, 1),
-        ("1.2.0", None, {"tv"}, True, 2), ("1.2.0", {"resultCount": 0, "results": []}, {"tv"}, True, 2),
-        ("1.2.0", fiche("1.2", trackId=1), {"tv"}, True, 2),
-        ("1.2.0", fiche("1.2", bundleId="app.autre.test"), {"tv"}, True, 2),
-        ("1.2.0", fiche("deux"), {"tv"}, True, 2),
+        ("1.1.0", fiche("1.1"), vide, 0), ("1.2.0", fiche("1.1"), vide, 1),
+        ("1.2.0", fiche("1.2"), tv, 0), ("1.2.0", fiche("1.3"), fiche("1.3", ("AppleTV4-AppleTV4",)), 0),
+        ("1.2.0", fiche("1.2"), vide, 1), ("1.2.0", fiche("1.2"), fiche("1.1", ("AppleTV4-AppleTV4",)), 1),
+        ("1.2.0", fiche("1.2"), None, 2), ("1.2.0", fiche("1.2"), fiche("1.2"), 2),
+        ("1.2.0", fiche("1.2"), fiche("1.2", ("AppleTV4-AppleTV4",), trackId=1), 2),
+        ("1.2.0", fiche("1.2", ("iPhone17-iPhone17",)), tv, 1),
+        ("1.1.0", fiche("1.1", ("iPhone17-iPhone17",)), None, 0),
+        ("1.10.0", fiche("1.9"), tv, 1),
+        ("1.2.0", None, tv, 2), ("1.2.0", vide, tv, 2),
+        ("1.2.0", fiche("1.2", trackId=1), tv, 2),
+        ("1.2.0", fiche("1.2", bundleId="app.autre.test"), tv, 2),
+        ("1.2.0", fiche("deux"), tv, 2),
     ]
-    rate = [f"{v} / {f and f['results'][0]['version'] if f and f.get('results') else f} / {c} / tv={t} : {a} attendu"
-            for v, f, c, t, a in cas if verdict(juger(v, f, c, t)) != a]
+    rate = [f"{v} / {f} / tv={ft} : {a} attendu" for v, f, ft, a in cas if verdict(juger(v, f, ft)) != a]
     if normaliser("v1.2") != "1.2.0" or normaliser("1.2.3") != "1.2.3":
         rate.append("normaliser")
     for r in rate:
@@ -148,15 +176,10 @@ def main() -> int:
     groupe = parser.add_mutually_exclusive_group()
     groupe.add_argument("--version", help="la version voulue (défaut : celle de project.yml)")
     groupe.add_argument("--etiquette", action="store_true", help="la plus haute étiquette v* (passage planifié)")
-    parser.add_argument("--confirme", default="", help="tv : Philippe a lu la version tvOS « Prêt à la distribution »")
     parser.add_argument("--autotest", action="store_true")
     args = parser.parse_args()
     if args.autotest:
         return autotest()
-    confirmees = {c for c in args.confirme.split(",") if c}
-    if confirmees - {"tv"}:
-        print(f"❓ --confirme : {', '.join(sorted(confirmees - {'tv'}))} inconnu(s) ; permis : tv")
-        return 2
     age = None
     if args.etiquette:
         lue = etiquette_recente()
@@ -173,13 +196,15 @@ def main() -> int:
             return 2
         voulue = lue[0]
     fiche, source = lire_fiche()
-    lignes = juger(voulue, fiche, confirmees, avec_tv=not args.etiquette)
+    fiche_tv, source_tv = lire_fiche("tvSoftware")
+    lignes = juger(voulue, fiche, fiche_tv)
     sortie = verdict(lignes)
     print(f"## Publication de CoproFirst {normaliser(voulue)} sur l'App Store ({PAYS})\n")
     print("| Plateforme | État | Détail |\n|---|---|---|")
     print("\n".join(f"| {s} | {e} | {d} |" for s, e, d in lignes))
-    if fiche is None:
-        print(f"\nLecture impossible : {source}")
+    for lu, origine in ((fiche, source), (fiche_tv, source_tv)):
+        if lu is None:
+            print(f"\nLecture impossible : {origine}")
     if sortie == 1 and age is not None and age < DELAI_REVUE_JOURS:
         print(f"\n⏳ {voulue} étiquetée il y a {age:.1f} j : en attente de la revue ou de la publication "
               f"(rouge au-delà de {DELAI_REVUE_JOURS} j).")

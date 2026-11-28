@@ -82,7 +82,7 @@ le disait : la procédure s'arrêtait à « Philippe la soumet ».
 | 6 | `python3 scripts/avant_soumission.py --confirme …` vert sur `HEAD` = `origin/main` = le commit des archives, puis `--etiqueter` (pose `vX.Y.Z`) — **après** le « oui » écrit de Philippe pour CETTE version | moi | sortie 0, étiquette poussée |
 | 7 | Déclarer la version dans coprofirst (contrat figé, `EN_CIRCULATION`) — la ligne que dit le compte rendu du pas 6 | moi | le ticket ou la PR de coprofirst |
 | 8 | « Ajouter pour vérification », puis soumettre (iOS et tvOS) | Philippe | état « En attente de vérification », puis « Prêt à la distribution » |
-| 9 | Constater la publication : `python3 scripts/verifier_publication.py --confirme tv` (iPhone, iPad et montre lus sur la fiche publique ; l'Apple TV n'a aucune source publique, Philippe la lit dans App Store Connect) | moi | sortie 0, collée dans le ticket de la version, qui se ferme alors |
+| 9 | Constater la publication : `python3 scripts/verifier_publication.py` — la fiche publique du magasin, iPhone et iPad, la montre parmi ses appareils, et la fiche tvOS pour l'Apple TV | moi | sortie 0, collée dans le ticket de la version, qui se ferme alors |
 
 Le passage planifié « Publication constatée » (`.github/workflows/publication.yml`) rejoue le
 pas 9 chaque jour sur la plus haute étiquette : une étiquette non servie après
