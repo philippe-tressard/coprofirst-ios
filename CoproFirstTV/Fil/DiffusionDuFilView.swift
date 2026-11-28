@@ -44,9 +44,18 @@ struct DiffusionDuFilView: View {
     var body: some View {
         GrilleDuHallView(diffusion: diffusion, reduit: reduit, espace: espace)
             .environment(\.colorScheme, .light)
-            .dynamicTypeSize(reglages.grandTexte ? .xxxLarge : .large)
+            .modifier(GrandTexteImpose(actif: reglages.grandTexte))
             .gestesDuHall(retiree: diffusion.retire, retire: retire)
             .task { await diffusion.diffuser() }
+    }
+}
+
+/// Le grand texte des captures (`-grand-texte`) ; sinon, la taille que règle l'Apple TV.
+private struct GrandTexteImpose: ViewModifier {
+    let actif: Bool
+
+    func body(content: Content) -> some View {
+        if actif { content.dynamicTypeSize(.xxxLarge) } else { content }
     }
 }
 
@@ -112,8 +121,8 @@ private struct GrilleDuHallView: View {
                         .transition(.opacity)
                 } else {
                     MiseEnAvantView(tuile: tuile, diffusion: diffusion)
-                        .matchedGeometryEffect(id: tuile.id, in: espace, isSource: true)
-                        .transition(.opacity.animation(.smooth(duration: 0.3)))
+                        .matchedGeometryEffect(id: tuile.id, in: espace)
+                        .transition(.opacity)
                 }
             }
             .id(tuile.id)

@@ -45,6 +45,9 @@ enum EcranDeHall {
     static let repondreDansLApp = "Répondez dans l'app"
     static let ouvrirDansLApp = "Scannez pour ouvrir dans l'app"
     static let aDebattre = "à débattre"
+    static func autresEpingles(_ nombre: Int) -> String {
+        nombre > 1 ? "+\(nombre) autres épinglés" : "+1 autre épinglé"
+    }
     static func votants(_ nombre: Int) -> String {
         "\(FormatsDuSite.nombre(nombre)) \(nombre > 1 ? "votes" : "vote")"
     }

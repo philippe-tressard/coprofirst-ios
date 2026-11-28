@@ -95,16 +95,18 @@ struct CarteDuHallView: View {
 }
 
 extension View {
-    /// La tuile grandit depuis sa place quand elle passe en avant (`matchedGeometryEffect`,
-    /// source tant qu'elle est à sa place) et s'efface le temps de l'être. Avec le mouvement
-    /// réduit, aucun déplacement : la mise en avant paraît en fondu.
+    /// La tuile grandit depuis sa place quand elle passe en avant : elle quitte la grille dans la
+    /// même transaction où la mise en avant entre, sous le même identifiant (`matchedGeometryEffect`),
+    /// et SwiftUI fait passer l'une du cadre de l'autre ; une case vide garde sa place. Avec le
+    /// mouvement réduit, aucun déplacement : la mise en avant paraît en fondu.
     @ViewBuilder
     func grandit(_ id: String, dans espace: Namespace.ID, enAvant: String?, reduit: Bool) -> some View {
-        if reduit {
-            opacity(enAvant == id ? 0 : 1)
+        if enAvant == id {
+            Color.clear
+        } else if reduit {
+            self
         } else {
-            matchedGeometryEffect(id: id, in: espace, isSource: enAvant != id)
-                .opacity(enAvant == id ? 0 : 1)
+            matchedGeometryEffect(id: id, in: espace)
         }
     }
 }

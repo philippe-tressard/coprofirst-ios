@@ -25,6 +25,19 @@ enum FilSimule {
         "ticket_resolu:31": .fil,
     ]
 
+    /// Le pire que le serveur peut servir (`-fil-plein`) : trois urgences et cinq épinglés, les
+    /// bornes de la règle du site (`PLAFOND_EPINGLES`) ; plus rien pour le carrousel.
+    static let servisPlein: [String: RegistreDuFil] = [
+        "ticket_ouvert:41": .urgent,
+        "publication:12": .urgent,
+        "ticket_mis_a_jour:38": .urgent,
+        "point_conseil:2": .epingle,
+        "sondage_ouvert:3": .epingle,
+        "document:7": .epingle,
+        "ticket_mis_a_jour:45": .epingle,
+        "ticket_resolu:31": .epingle,
+    ]
+
     /// Ce que le serveur met à la une de la communauté : un sondage ouvert, l'idée la plus
     /// soutenue, une annonce en cours.
     static let sondageALaUne = 12
@@ -35,8 +48,9 @@ enum FilSimule {
     /// une tuile de la communauté absente.
     enum Manque: String, CaseIterable { case urgence, epingles, sondage, idee, annonce }
 
-    static func fil(sans manques: Set<Manque> = []) throws -> FilDuHall {
-        var elements = Apercu.fil.compactMap(servi)
+    static func fil(sans manques: Set<Manque> = [], plein: Bool = false) throws -> FilDuHall {
+        let registres = plein ? servisPlein : servis
+        var elements = Apercu.fil.compactMap { servi($0, registres) }
         if manques.contains(.urgence) { elements.removeAll { $0.registre == .urgent } }
         if manques.contains(.epingles) { elements.removeAll { $0.registre == .epingle } }
         let communaute = try CommunauteDuHall(
@@ -48,8 +62,8 @@ enum FilSimule {
 
     /// Un élément du Fil tel que la route publique le servirait : sans « me concerne », sans
     /// lecture, son registre et son lien.
-    private static func servi(_ element: ElementDuFil) -> ElementDuHall? {
-        guard let registre = servis[element.id] else { return nil }
+    private static func servi(_ element: ElementDuFil, _ registres: [String: RegistreDuFil]) -> ElementDuHall? {
+        guard let registre = registres[element.id] else { return nil }
         return ElementDuHall(
             id: element.id, type: element.type, registre: registre, titre: element.titre, detail: element.detail,
             date: element.date, echeance: element.echeance?.libelle, lieu: element.lieu,

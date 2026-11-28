@@ -34,20 +34,24 @@ struct TuileView: View {
     }
 
     /// Rouge plein, comme l'urgence du Fil du site.
+    /// Rouge plein, comme l'urgence du Fil du site. Le QR code à droite, les vignettes en bas : à
+    /// trois urgences, la colonne du texte garde sa largeur.
     private func urgence(_ element: ElementDuHall) -> some View {
-        HStack(alignment: .top, spacing: MiseTV.joint) {
-            VStack(alignment: .leading, spacing: 8) {
-                EnTeteDeTuile(libelle: EcranDeHall.urgent, icone: element.nature.icone)
-                Text(element.titre).font(.headline.weight(.bold)).lineLimit(2)
-                if let detail = element.detail {
-                    Text(TexteDuSite.apercu(detail)).font(.callout).lineLimit(1)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: MiseTV.joint) {
+                VStack(alignment: .leading, spacing: 8) {
+                    EnTeteDeTuile(libelle: EcranDeHall.urgent, icone: element.nature.icone)
+                    Text(element.titre).font(.headline.weight(.bold)).lineLimit(2)
+                    if let detail = element.detail {
+                        Text(TexteDuSite.apercu(detail)).font(.callout).lineLimit(1)
+                    }
                 }
-                Spacer(minLength: 0)
-                LigneDuLieu(element: element)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            VStack(alignment: .trailing, spacing: 12) {
+                .frame(maxWidth: .infinity, alignment: .leading)
                 CodeQRView(adresse: diffusion.adresse(element.lien), cote: MiseTV.codeQR, titre: element.titre)
+            }
+            Spacer(minLength: 0)
+            HStack(alignment: .bottom, spacing: 12) {
+                LigneDuLieu(element: element)
                 Spacer(minLength: 0)
                 VignettesDuHall(source: .element(element.id), nombre: element.photos, diffusion: diffusion)
             }
@@ -64,9 +68,14 @@ struct TuileView: View {
                 .foregroundStyle(palette.jauneTexte)
             // Toute la hauteur qui reste lui est proposée : sinon, partagée avec un espaceur, elle
             // retombait aux titres seuls alors que les détails tenaient.
+            // Jusqu'à cinq épinglés (`PLAFOND_EPINGLES` du site) : avec leur détail, leurs titres, puis
+            // les premiers et « +N » — tout se lit dans la mise en avant.
             ViewThatFits(in: .vertical) {
                 lignesEpinglees(elements, details: true)
                 lignesEpinglees(elements, details: false)
+                ForEach(Array(stride(from: elements.count - 1, through: 1, by: -1)), id: \.self) { montres in
+                    lignesEpinglees(Array(elements.prefix(montres)), details: false, reste: elements.count - montres)
+                }
             }
             .frame(maxHeight: .infinity, alignment: .top)
         }
@@ -74,7 +83,7 @@ struct TuileView: View {
         .surfaceDeTuile(palette.jauneFond)
     }
 
-    private func lignesEpinglees(_ elements: [ElementDuHall], details: Bool) -> some View {
+    private func lignesEpinglees(_ elements: [ElementDuHall], details: Bool, reste: Int = 0) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             ForEach(elements) { element in
                 HStack(spacing: MiseTV.joint) {
@@ -88,6 +97,11 @@ struct TuileView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     CodeQRView(adresse: diffusion.adresse(element.lien), cote: MiseTV.codeQRPetit, titre: element.titre)
                 }
+            }
+            if reste > 0 {
+                Text(EcranDeHall.autresEpingles(reste))
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(palette.jauneTexte)
             }
         }
     }
@@ -166,6 +180,8 @@ struct EnTeteDeTuile: View {
             .font(.caption.weight(.bold))
             .textCase(.uppercase)
             .tracking(Mise.approcheLibelle * 2)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
     }
 }
 
@@ -195,29 +211,39 @@ struct VignettesDuHall: View {
 
     var body: some View {
         if nombre > 0 {
-            HStack(spacing: 8) {
-                ForEach(0..<min(nombre, MiseTV.vignettesMax), id: \.self) { rang in
-                    Group {
-                        if photos.indices.contains(rang) {
-                            Image(uiImage: photos[rang]).resizable().scaledToFill()
-                        } else {
-                            palette.neutreFond
-                        }
-                    }
-                    .frame(width: MiseTV.vignette, height: MiseTV.vignette)
-                    .clipShape(.rect(cornerRadius: MiseTV.rayon / 3, style: .continuous))
-                }
-                if nombre > MiseTV.vignettesMax {
-                    Text("+\(nombre - MiseTV.vignettesMax)")
-                        .font(.headline.weight(.bold).monospacedDigit())
-                        .padding(.horizontal, 12)
-                        .frame(height: MiseTV.vignette)
-                        .background(.thinMaterial, in: .rect(cornerRadius: MiseTV.rayon / 3, style: .continuous))
+            // Trois vignettes, ou moins quand la tuile est étroite (trois urgences côte à côte).
+            ViewThatFits(in: .horizontal) {
+                ForEach(Array(stride(from: min(nombre, MiseTV.vignettesMax), through: 1, by: -1)), id: \.self) {
+                    rangee(montrees: $0)
                 }
             }
             .accessibilityHidden(true)
             .task(id: source) {
                 photos = await diffusion.photosDe(source, nombre: nombre).compactMap(UIImage.init(data:))
+            }
+        }
+    }
+
+    private func rangee(montrees: Int) -> some View {
+        HStack(spacing: 8) {
+            ForEach(0..<montrees, id: \.self) { rang in
+                Group {
+                    if photos.indices.contains(rang) {
+                        Image(uiImage: photos[rang]).resizable().scaledToFill()
+                    } else {
+                        palette.neutreFond
+                    }
+                }
+                .frame(width: MiseTV.vignette, height: MiseTV.vignette)
+                .clipShape(.rect(cornerRadius: MiseTV.rayon / 3, style: .continuous))
+            }
+            if nombre > montrees {
+                Text("+\(nombre - montrees)")
+                    .font(.headline.weight(.bold).monospacedDigit())
+                    .padding(.horizontal, 12)
+                    .frame(height: MiseTV.vignette)
+                    .background(.thinMaterial, in: .rect(cornerRadius: MiseTV.rayon / 3, style: .continuous))
+                    .fixedSize()
             }
         }
     }

@@ -4,12 +4,13 @@
 import XCTest
 
 /// Le Fil en tuiles de l'écran de hall (#429), au simulateur Apple TV, sur le serveur simulé :
-/// la grille, la mise en avant (tenue, puis par sa propre cadence), le mouvement réduit, le fond
-/// clair sous le thème sombre, le grand texte.
+/// la grille, la mise en avant tenue, le mouvement réduit, le clic de la télécommande, le fond
+/// clair sous le thème sombre, le grand texte. Aucun test n'attend la cadence (20 s, puis 10 s) :
+/// un état passager ne s'attend pas contre la montre (skill `swiftui-patterns`, tests §4).
 final class FilDuHallUITests: XCTestCase {
-    private static let tuiles = [
-        "urgence.ticket_ouvert:41", "epingles", "sondage.12", "idee.3", "annonce.21",
-    ]
+    /// Les tuiles de la démo ; puis celles qui ne paraissent qu'au pire cas (`-fil-plein`).
+    private static let tuiles = ["urgence.ticket_ouvert:41", "epingles", "sondage.12", "idee.3", "annonce.21"]
+    private static let tuilesDuPireCas = ["urgence.publication:12", "urgence.ticket_mis_a_jour:38"]
 
     override func setUp() {
         continueAfterFailure = false
@@ -63,22 +64,33 @@ final class FilDuHallUITests: XCTestCase {
         XCTAssertGreaterThan(avant.frame.width, element(app, "hall.tuile.epingles").frame.width)
     }
 
-    /// Sans télécommande, l'écran agrandit lui-même une tuile, puis la referme.
-    @MainActor
-    func testLaMiseEnAvantSOuvreEtSeRefermeSeule() {
-        let app = lancer()
-        let avant = element(app, "hall.miseEnAvant")
-        XCTAssertTrue(avant.apparait(), "une mise en avant dans les 30 s")
-        XCTAssertTrue(avant.disparait(), "refermée après ses 10 s")
-    }
-
-    /// Avec le mouvement réduit, la mise en avant paraît encore — en fondu — et se referme.
+    /// Avec le mouvement réduit, la mise en avant paraît encore — en fondu, sans agrandissement.
+    /// Son cycle (s'ouvrir seule, se refermer) se prouve sans horloge : `DiffusionDuFilTests`.
     @MainActor
     func testLeMouvementReduitGardeLaMiseEnAvant() {
-        let app = lancer(["-mouvement-reduit"])
+        let app = lancer(["-mise-en-avant", "epingles", "-mouvement-reduit"])
         let avant = element(app, "hall.miseEnAvant")
         XCTAssertTrue(avant.apparait())
-        XCTAssertTrue(avant.disparait())
+        XCTAssertEqual(avant.value as? String, "epingles")
+    }
+
+    /// Un clic de la télécommande propose « Désappairer » — sur le Fil comme sur les affiches
+    /// (`GestesDuHall`, écrit une fois) : c'est la seule sortie de l'écran.
+    @MainActor
+    func testUnClicProposeDeDesappairer() {
+        for hall in ["fil", "diffusion"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-api-simulee", "-hall", hall]
+            app.launch()
+            XCTAssertTrue(element(app, "hall.residence").apparait(), hall)
+            XCUIRemote.shared.press(.select)
+            // Le dialogue est du système : son bouton se trouve par son identifiant, ou son libellé.
+            let desappairer = app.descendants(matching: .any).matching(
+                NSPredicate(format: "identifier == %@ OR label == %@", "hall.desappairer", "Désappairer")
+            ).firstMatch
+            XCTAssertTrue(desappairer.apparait(), "le clic, sur « \(hall) »")
+            app.terminate()
+        }
     }
 
     /// Le fond reste clair quand l'Apple TV est en sombre : on le lit sur l'écran capturé.
@@ -91,10 +103,11 @@ final class FilDuHallUITests: XCTestCase {
         XCTAssertGreaterThan(luminance, 0.85, "le haut de l'écran, au-dessus de la grille")
     }
 
-    /// Au grand texte, chaque tuile reste dans l'écran et chez elle.
+    /// Au grand texte et au pire que sert le serveur (trois urgences, cinq épinglés), chaque tuile
+    /// reste dans l'écran et chez elle.
     @MainActor
     func testLeGrandTexteNeDebordePas() {
-        let app = lancer(["-grand-texte"])
+        let app = lancer(["-grand-texte", "-fil-plein"])
         XCTAssertTrue(element(app, "hall.tuile.epingles").apparait())
         tuilesDansLEcranSansChevauchement(app)
     }
@@ -104,8 +117,8 @@ final class FilDuHallUITests: XCTestCase {
         _ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
     ) {
         let ecran = app.windows.firstMatch.frame
-        let cadres = Self.tuiles.map { element(app, "hall.tuile.\($0)") }.filter { $0.exists }.map { $0.frame }
-            + [element(app, "hall.carrousel").frame]
+        let cadres = ((Self.tuiles + Self.tuilesDuPireCas).map { "hall.tuile.\($0)" } + ["hall.carrousel"])
+            .map { element(app, $0) }.filter { $0.exists }.map { $0.frame }
         for cadre in cadres {
             XCTAssertTrue(ecran.contains(cadre), "\(cadre) sort de l'écran", file: file, line: line)
         }
