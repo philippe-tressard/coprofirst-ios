@@ -32,6 +32,9 @@ protocol ServiceGestesAffaire: Sendable {
         async throws
     /// DELETE /tickets/{id}/messages/{msg_id} : SON message retiré, et son miroir avec lui.
     func supprimerMessage(_ message: Int, de affaire: Int, dans installation: Installation) async throws
+    /// GET /tickets/{id}/agenda : le rendez-vous que le serveur compose (contrat 2.15.0,
+    /// porte `VersionContrat.agenda`, #435) — sous la règle de lecture de l'affaire.
+    func rendezVous(de affaire: Int, dans installation: Installation) async throws -> RendezVousAffaire
 }
 
 extension ServiceCoproFirst {

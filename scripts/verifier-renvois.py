@@ -39,7 +39,6 @@ EXCEPTIONS = {
     (".claude/skills/ux-patterns-ios/SKILL.md", "FormulaireTicket"): "un composant du site (coprofirst), son modèle",
     (".claude/skills/ux-patterns-ios/SKILL.md", "SectionDestinataires.svelte"): "un composant du site (coprofirst)",
     (".claude/skills/ux-patterns-ios/SKILL.md", "ExtraitRecherche"): "un composant du site (coprofirst)",
-    (".claude/skills/ux-patterns-ios/SKILL.md", "BoutonLien"): "un composant du site (coprofirst)",
     (".claude/skills/ux-patterns-ios/SKILL.md", "BadgePerimetre"): "un composant du site (coprofirst)",
     (".claude/skills/ux-patterns-ios/SKILL.md", "FormulaireNotation"): "un composant du site (coprofirst)",
     (".claude/skills/ux-patterns-ios/SKILL.md", "SUPPRESSION"): "une constante du site (coprofirst)",

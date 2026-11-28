@@ -12,21 +12,6 @@ import Testing
 // « Qui la lit » (#129) et le lieu (#130), au contrat depuis 1.22.0 et 1.24.0 : chaque route
 // LIT ce que le serveur sert, par le client généré. Rien n'est recomposé ici.
 
-/// Un serveur qui sert un corps par chemin (sous `/api`, sans requête) ; 404 ailleurs.
-private struct TransportParRoute: ClientTransport {
-    let corps: [String: String]
-
-    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
-        -> (HTTPResponse, HTTPBody?) {
-        let chemin = (request.path ?? "").split(separator: "?").first.map(String.init) ?? ""
-        let route = chemin.hasPrefix("/api") ? String(chemin.dropFirst(4)) : chemin
-        guard let servi = corps[route] else { return (HTTPResponse(status: .notFound), nil) }
-        var reponse = HTTPResponse(status: .ok)
-        reponse.headerFields[.contentType] = "application/json"
-        return (reponse, HTTPBody(servi))
-    }
-}
-
 private func service(_ corps: [String: String]) -> ServiceAPI {
     ServiceAPI(transport: { _ in TransportParRoute(corps: corps) })
 }
@@ -35,22 +20,11 @@ private let residence = ServiceSimule.residence
 /// La pastille « CS » telle que coprofirst v3.88.1 la sert.
 private let lectureCS = Apercu.lecturesServies["cs"] ?? "null"
 
-/// Une affaire de `TicketRead` au plancher, avec `extra` tel que servi.
-private func ticket(_ id: Int, _ extra: String = "") -> String {
-    #"""
-    {"id": \#(id), "numero": "TK-\#(id)", "titre": "Essai", "description": "", "categorie": "panne",
-     "statut": "ouvert", "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
-     "categorie_libelle": "Panne", "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null,
-     "nouveau": false, "nom_proprietaire": "Camille Essai", "perimetre_libelle": "Bât. 2 › Toit",
-     "suivi_actualite_libelle": "", "frequence_libelle": ""
-    """# + extra + "}"
-}
-
 // MARK: - #129 : qui la lit
 
 @Suite struct LectureServieTests {
     @Test func laListeDesAffairesLitLaPastilleServie() async throws {
-        let corps = "[" + ticket(9, ", \"lecture\": " + lectureCS) + "," + ticket(10) + "]"
+        let corps = "[" + ticketServi(9, ", \"lecture\": " + lectureCS) + "," + ticketServi(10) + "]"
         let affaires = try await service(["/tickets": corps]).affaires(residence)
         let servie = try #require(affaires.first { $0.id == 9 }?.lecture)
         #expect(servie.court == "CS" && servie.icones == ["shield-check"])
@@ -68,7 +42,7 @@ private func ticket(_ id: Int, _ extra: String = "") -> String {
               "perimetre_precise_libelle": "", "etat_propose_libelle": "", "nouveau_statut_libelle": ""}]
             """#
         let detail = try await service([
-            "/tickets/9": ticket(9, ", \"lecture\": " + lectureCS),
+            "/tickets/9": ticketServi(9, ", \"lecture\": " + lectureCS),
             "/tickets/9/evolutions": suites, "/tickets/9/messages": "[]",
         ]).affaire(9, dans: residence)
         #expect(detail.lecture?.cle == "cs")

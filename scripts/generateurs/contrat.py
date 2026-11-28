@@ -45,6 +45,11 @@ VERSION = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 #: pour un champ, #89).
 AU_DESSUS_DU_PLANCHER: dict[str, tuple[str, str, tuple[str, ...]]] = {
     # « moderation » (v3.118.0, /masquages) : au plancher depuis v3.121.2 (#313), retirée.
+    # Le fichier `.ics` (`/agenda.ics`) ne se déclare pas : l'app ajoute le rendez-vous par
+    # la feuille du système, et le site retire lui-même « Fichier .ics » des autres
+    # agendas d'un appareil Apple (`autresAgendas`, coprofirst#3164).
+    "agenda": ("v3.128.0", "« Ajouter à mon agenda » (coprofirst#3164, #435)",
+               ("/tickets/{ticket_id}/agenda",)),
 }
 
 

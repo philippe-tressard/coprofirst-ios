@@ -25,13 +25,15 @@ struct BandeauAffaireTests {
 
     @Test func leConseilSuitLAffaireSansRepondre() {
         #expect(
-            GesteAffaire.offerts(pour: affaire(tout), conseil: true) == [.lien, .suite, .modifier, .options, .archiver])
+            GesteAffaire.offerts(pour: affaire(tout), conseil: true)
+                == [.partager, .suite, .modifier, .options, .archiver])
     }
 
     @Test func unResidentRepondQuandLaRouteLAccepte() {
-        #expect(GesteAffaire.offerts(pour: affaire(.init(repondre: true)), conseil: false) == [.lien, .repondre])
+        #expect(GesteAffaire.offerts(pour: affaire(.init(repondre: true)), conseil: false) == [.partager, .repondre])
         #expect(
-            GesteAffaire.offerts(pour: affaire(.init()), conseil: false) == [.lien], "aucun droit servi : le lien seul")
+            GesteAffaire.offerts(pour: affaire(.init()), conseil: false) == [.partager],
+            "aucun droit servi : Partager seul")
     }
 
     @Test func niActualiteNiFusionneeNiArchiveeNOffrentLeursGestes() {

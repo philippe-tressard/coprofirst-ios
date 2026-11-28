@@ -8,21 +8,26 @@ import Foundation
 extension ServiceAPI {
     func affaire(_ id: Int, dans installation: Installation) async throws -> DetailAffaire {
         let client = client(installation.adresse)
-        async let ticket = appeler { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        // Le corps se garde : `agenda_propose` (contrat 2.15.0) est servi au-dessus du plancher (#435).
+        async let ticketServi = appeler {
+            try await CorpsServi.garder { try await client.getTicketsTicketId(path: .init(ticketId: id)) }
+        }
         async let evolutions = appeler { try await client.getTicketsTicketIdEvolutions(path: .init(ticketId: id)) }
         async let messages = appeler { try await client.getTicketsTicketIdMessages(path: .init(ticketId: id)) }
         async let servis = referentiels(installation)
         async let comptesRendus = comptesRendus(id, client: client)
 
         let lu: Components.Schemas.TicketRead
-        switch try await ticket {
+        let (ticket, corps) = try await ticketServi
+        switch ticket {
         case .ok(let ok): lu = try ok.body.json
         case .unprocessableContent: throw ErreurService.inattendue(422)
         case .undocumented(let statut, _): throw ErreurService.depuisLecture(statut)
         }
         var lues: [Components.Schemas.TicketEvolutionRead] = []
         if case .ok(let ok) = try await evolutions { lues = try ok.body.json }
-        var detail = DetailAffaire.lue(lu, evolutions: lues)
+        var detail = DetailAffaire.lue(
+            lu, evolutions: lues, agenda: Relecture.auDessusDuPlancher(ChampsAgenda.self, corps: corps))
         // Des référentiels illisibles n'empêchent pas de lire l'affaire : rien de ce qu'ils
         // ouvrent n'est alors offert (états d'une Suite, catégories), et un état que l'objet
         // ne met pas en clair se montre par son code.

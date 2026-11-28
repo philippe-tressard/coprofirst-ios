@@ -42,6 +42,32 @@ final class EcheanceUITests: XCTestCase {
         XCTAssertTrue(app.attendreDetailAffaire("A-0031"))
     }
 
+    /// « Ajouter à mon agenda » (#435, coprofirst#3164) : la résidence sert le contrat 2.15.0,
+    /// et l'affaire datée à venir (A-0044) sert `agenda_propose`. Le menu « Partager » offre
+    /// alors Calendrier et les agendas en ligne du rendez-vous servi. La feuille du système ne
+    /// s'ouvre pas ici : elle s'affiche hors de l'app ; son contenu se prouve en unitaire
+    /// (`RendezVousServiTests`).
+    @MainActor
+    func testUneAffaireDateeSAjouteASonAgenda() throws {
+        let app = LancementCaptures.lancer(arguments: ["-contrat", "2.15.0"])
+        let datee = app.elementAcces("fil.ticket_mis_a_jour:44")
+        XCTAssertTrue(datee.apparait(), "le fil est chargé")
+        defiler(app, jusqua: datee)
+        app.toucher(datee)
+        XCTAssertTrue(app.attendreDetailAffaire("A-0044"))
+
+        app.toucher(app.elementAcces("affaire.partager"))
+        XCTAssertTrue(app.elementAcces("affaire.partager.copier").apparait(), "« Copier le lien », d'abord")
+        XCTAssertTrue(app.elementAcces("affaire.agenda").exists, "« Ajouter à Calendrier »")
+        let autres = app.elementAcces("affaire.agenda.autres")
+        XCTAssertTrue(autres.exists, "« Autre agenda… »")
+        LancementCaptures.capturer("agenda-1-menu-partager")
+        app.toucher(autres)
+        XCTAssertTrue(app.buttons["Google Agenda"].apparait(), "les pages servies du rendez-vous")
+        XCTAssertTrue(app.buttons["Outlook — Microsoft 365"].exists)
+        LancementCaptures.capturer("agenda-2-autres-agendas")
+    }
+
     @MainActor
     private func defiler(_ app: XCUIApplication, jusqua carte: XCUIElement) {
         for _ in 0..<16 where !carte.exists || !carte.isHittable { app.swipeUp() }

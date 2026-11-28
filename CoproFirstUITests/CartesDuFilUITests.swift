@@ -26,7 +26,7 @@ final class CartesDuFilUITests: XCTestCase {
         XCTAssertTrue(changement.exists)
 
         // Le bandeau d'un résident : le lien et la réponse, rien de ce que fait le conseil.
-        XCTAssertTrue(app.elementAcces("affaire.lien").exists)
+        XCTAssertTrue(app.elementAcces("affaire.partager").exists)
         XCTAssertFalse(app.elementAcces("affaire.suite").exists)
         XCTAssertFalse(app.elementAcces("affaire.archiver").exists)
         // Le fil des messages, sous l'Historique : la note interne du conseil n'y est pas.

@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 
 import SwiftUI
-import UIKit
 
 /// Le bandeau d'une affaire : la rangée d'icônes du site (`ActionsTicket`), rendue en
 /// barre d'outils du bas — le matériau du système (verre sous iOS 26), qui laisse
@@ -84,18 +83,9 @@ struct BandeauAffaire: ViewModifier {
             .frame(minWidth: dansLaColonne ? Mise.cible : nil, minHeight: dansLaColonne ? Mise.cible : nil)
             .contentShape(.rect)
         switch geste {
-        case .lien:
-            // Un toucher COPIE, comme le site (`BoutonLien`) ; l'appui long offre le partage.
-            if let adresse {
-                Menu {
-                    ShareLink(item: adresse) { Label("Partager…", systemImage: "square.and.arrow.up") }
-                } label: {
-                    icone
-                } primaryAction: {
-                    UIPasteboard.general.url = adresse
-                    avis.dire("Lien copié")
-                }
-            }
+        case .partager:
+            // Le menu du site (`MenuPartage`, coprofirst#3164) : copier le lien passe à deux touchers.
+            MenuPartage(affaire: affaire, installation: installation, avis: avis) { icone }
         case .options:
             Menu {
                 ForEach(OptionAffaire.toutes) { option in
@@ -118,9 +108,6 @@ struct BandeauAffaire: ViewModifier {
                 .gesteEnLigne()
         }
     }
-
-    /// L'adresse de la page de l'affaire — celle de `lien_ticket()` côté serveur.
-    private var adresse: URL? { CheminDuSite.adresse(affaire: affaire.id, sur: installation.adresse) }
 
     private func envoyee(_ phrase: String) {
         avis.direApresFermeture(phrase)

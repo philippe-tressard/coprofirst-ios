@@ -60,7 +60,7 @@ enum FixturesDetailAffaire {
            "colonne_kanban": "termine", "nouveau": false, "nom_proprietaire": "",
            "cree_le": "2026-11-06T18:00:00", "auteur_nom": "Le conseil syndical",
            "perimetre_cible": ["parking"], "perimetre_libelle": "Parking",
-           "suivi_actualite_libelle": "", "frequence_libelle": ""},
+           "suivi_actualite_libelle": "", "frequence_libelle": "", "agenda_propose": false},
           {"id": 44, "numero": "A-0044", "titre": "Ramonage des conduits de cheminée",
            "description": "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits.",
            "categorie": "entretien", "categorie_libelle": "Entretien", "statut": "en_cours",
@@ -70,7 +70,8 @@ enum FixturesDetailAffaire {
            "perimetre_cible": ["bat_b"], "perimetre_libelle": "Bâtiment B",
            "prestataire_id": 9, "prestataire_nom": "Ramonage Exemple (fictif)",
            "prestataires": [{"id": 9, "nom": "Ramonage Exemple (fictif)"}], "frequence_type": "fois_par_an",
-           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": ""},
+           "frequence_valeur": 1, "frequence_libelle": "↺ 1×/an", "suivi_actualite_libelle": "",
+           "debut": "2026-12-03T07:00:00", "fin": "2026-12-03T11:00:00", "agenda_propose": true},
           {"id": 45, "numero": "A-0045", "titre": "Contrôle annuel de l'ascenseur",
            "description": "Le contrôleur est passé ; son rapport sera transmis au conseil syndical.",
            "categorie": "entretien", "categorie_libelle": "Entretien", "statut": "en_cours",
@@ -131,14 +132,42 @@ enum FixturesDetailAffaire {
     static let parSchema: [Reponse] = [
         Reponse(nom: "affaires", schema: "TicketRead", json: affaires),
         Reponse(nom: "evolutions", schema: "TicketEvolutionRead", json: evolutions),
+        Reponse(nom: "agenda", schema: "AgendaServi", json: agenda),
     ]
+
+    /// `agenda_propose` (#435) : servi par une installation au contrat 2.15.0, au-dessus du
+    /// plancher — vrai pour l'affaire datée à venir (44), faux pour la close (31), absent
+    /// des autres, comme d'une installation antérieure.
+    static let auDessus = AuDessusDuPlancher(schema: "TicketRead", champs: ["agenda_propose"], contrat: "2.15.0")
+
+    /// GET /tickets/44/agenda → `AgendaServi` : le rendez-vous que le serveur compose
+    /// (`utils/rendez_vous`), dates en UTC, et les pages des agendas en ligne (hôte réservé).
+    static let agenda = #"""
+        {"uid": "affaire-44@demo.example.org", "titre": "Ramonage des conduits de cheminée",
+         "debut": "2026-12-03T07:00:00Z", "fin": "2026-12-03T11:00:00Z",
+         "lieu": "1 rue de l'Exemple, 75000 Paris — Bâtiment B",
+         "description": "Le ramoneur passe dans les caves du bâtiment B ; laissez l'accès aux conduits.",
+         "lien": "https://demo.example.org/tickets/44",
+         "liens": {"google": "https://google.agenda.test/render?action=TEMPLATE",
+                   "outlook": "https://outlook.agenda.test/compose",
+                   "microsoft365": "https://microsoft365.agenda.test/compose",
+                   "yahoo": "https://yahoo.agenda.test/?v=60"}}
+        """#
 
     /// L'affaire `id` telle que le service réel la lirait, puis ses évolutions.
     static func lue(_ id: Int) throws -> DetailAffaire? {
         let tickets = try Relecture.generee([Components.Schemas.TicketRead].self, json: affaires)
         guard let ticket = tickets.first(where: { $0.id == id }) else { return nil }
         let suites = try Relecture.generee([Components.Schemas.TicketEvolutionRead].self, json: evolutions)
-        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id })
+        let agenda = Relecture.auDessusDuPlancher(parLigne: ChampsAgenda.self, corps: Data(affaires.utf8))[id]
+        return DetailAffaire.lue(ticket, evolutions: suites.filter { $0.ticketId == id }, agenda: agenda)
+    }
+
+    /// Le rendez-vous de l'affaire `id`, tel que le service réel le lirait ; `nil` sans
+    /// rendez-vous à proposer (le serveur répond 404).
+    static func rendezVous(_ id: Int) throws -> RendezVousAffaire? {
+        guard id == 44 else { return nil }
+        return RendezVousAffaire(try Relecture.generee(Components.Schemas.AgendaServi.self, json: agenda))
     }
 }
 #endif

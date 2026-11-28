@@ -326,6 +326,8 @@ contrôle.
 | `VisionKit` | Apple (iOS) | lecture du QR code, sur l'appareil |
 | `QuickLook` | Apple (iOS) | aperçu d'un document téléchargé |
 | `SafariServices` | Apple (iOS) | ouvrir une page du site dans Safari intégré |
+| `EventKit` | Apple (iOS) | l'évènement d'une affaire datée, préparé pour la feuille du système (#435) : aucune autorisation, l'app ne lit ni n'écrit aucun calendrier |
+| `EventKitUI` | Apple (iOS) | la feuille « Nouvel évènement » d'iOS, affichée hors de l'app : la personne y choisit d'ajouter le rendez-vous (#435) |
 | `ClientAPI` | ce dépôt | le client généré depuis le contrat |
 | `OpenAPIRuntime` | Apple (paquet libre) | types du client généré |
 | `OpenAPIURLSession` | Apple (paquet libre) | transport HTTP par `URLSession` |

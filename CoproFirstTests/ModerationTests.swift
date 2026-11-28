@@ -52,7 +52,8 @@ struct ModerationTests {
     /// `!peutCorriger && !archive` d'`ActionsTicket.svelte`, après 🔗.
     @Test func leDrapeauSOffreAQuiLaLitSansLaCorriger() {
         let lecteur = affaire(.init(repondre: true))
-        #expect(GesteAffaire.offerts(pour: lecteur, conseil: false, moderation: true) == [.lien, .signaler, .repondre])
+        #expect(
+            GesteAffaire.offerts(pour: lecteur, conseil: false, moderation: true) == [.partager, .signaler, .repondre])
         #expect(!GesteAffaire.offerts(pour: lecteur, conseil: false).contains(.signaler), "porte fermée : rien")
         let auteur = affaire(.init(corriger: true))
         #expect(!GesteAffaire.offerts(pour: auteur, conseil: false, moderation: true).contains(.signaler))

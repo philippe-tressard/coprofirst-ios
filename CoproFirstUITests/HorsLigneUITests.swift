@@ -52,7 +52,8 @@ final class HorsLigneUITests: XCTestCase {
         XCTAssertTrue(element(app, "horsligne.bandeau").exists)
         XCTAssertTrue(controle(app, "affaire.suite", actif: false).exists, "« Ajouter une suite » en place, grisée")
         XCTAssertTrue(controle(app, "affaire.modifier", actif: false).exists, "« Modifier » aussi")
-        XCTAssertTrue(controle(app, "affaire.lien", actif: true).exists, "copier le lien n'a pas besoin du serveur")
+        XCTAssertTrue(
+            controle(app, "affaire.partager", actif: true).exists, "copier ou partager n'a pas besoin du serveur")
     }
 
     @MainActor

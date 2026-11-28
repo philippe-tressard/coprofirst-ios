@@ -104,6 +104,16 @@ extension ServiceSimule: ServiceGestesAffaire {
         try changerAffaireSimulee(id) { _ in }
     }
 
+    /// Le rendez-vous servi (`FixturesDetailAffaire.agenda`) ; une résidence sous le contrat
+    /// 2.15.0 n'a pas la route, une affaire sans rendez-vous répond 404, comme le serveur.
+    func rendezVous(de affaire: Int, dans installation: Installation) async throws -> RendezVousAffaire {
+        try await Task.sleep(for: .milliseconds(200))
+        guard installation.sert(.agenda), let servi = try FixturesDetailAffaire.rendezVous(affaire) else {
+            throw ErreurService.introuvable
+        }
+        return servi
+    }
+
     /// Un geste sur l'affaire `id` du magasin de la session — aussi pour ceux de son
     /// Historique (`ServiceSimule+Historique.swift`).
     @discardableResult

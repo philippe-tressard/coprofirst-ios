@@ -42,7 +42,7 @@ final class ListeEtFicheUITests: XCTestCase {
     private func ficheAffaire(_ numero: String, dans app: XCUIApplication) -> Bool {
         let numero = app.descendants(matching: .any)
             .matching(NSPredicate(format: "identifier == 'affaire.numero' AND label == %@", numero)).firstMatch
-        return numero.apparait() && app.elementAcces("affaire.lien").apparait()
+        return numero.apparait() && app.elementAcces("affaire.partager").apparait()
     }
 
     @MainActor
@@ -56,7 +56,7 @@ final class ListeEtFicheUITests: XCTestCase {
         XCTAssertTrue(app.elementAcces("affaires.carte.A-0040").exists, "la liste reste à côté")
         XCTAssertTrue(app.navigationBars["Mes affaires"].exists, "la page garde son titre")
         // Le bandeau est au bas de la colonne de la fiche, pas sous la liste.
-        let lien = app.elementAcces("affaire.lien").frame
+        let lien = app.elementAcces("affaire.partager").frame
         let liste = app.elementAcces("affaires.carte.A-0040").frame
         XCTAssertGreaterThan(lien.minX, liste.maxX, "le bandeau sous la fiche, à droite de la liste")
         XCTAssertGreaterThan(lien.minY, liste.minY, "au bas de la colonne")
@@ -174,7 +174,7 @@ final class ListeEtFicheUITests: XCTestCase {
 
         app.toucher(carte)
         XCTAssertTrue(app.navigationBars["A-0041"].apparait(), "la fiche poussée, son numéro en barre")
-        XCTAssertTrue(app.elementAcces("affaire.lien").apparait())
+        XCTAssertTrue(app.elementAcces("affaire.partager").apparait())
         XCTAssertFalse(app.elementAcces("affaires.carte.A-0040").exists, "la liste est sous la fiche")
         capture("affaires-portrait-fiche", app)
 

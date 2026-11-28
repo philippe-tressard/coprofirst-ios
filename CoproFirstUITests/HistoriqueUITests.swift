@@ -48,7 +48,8 @@ final class HistoriqueUITests: XCTestCase {
     private func laReponseSeSignaleSansSeCorriger(_ app: XCUIApplication) {
         let gestes = app.elementAcces("historique.gestes.3")
         // Au-dessus du bandeau du bas, comme dans ModerationUITests (#307).
-        XCTAssertTrue(app.amener(gestes, auDessusDe: app.elementAcces("affaire.lien")), "la réponse offre ses gestes")
+        XCTAssertTrue(
+            app.amener(gestes, auDessusDe: app.elementAcces("affaire.partager")), "la réponse offre ses gestes")
         app.toucher(gestes)
         XCTAssertTrue(app.elementAcces("historique.geste.signaler").apparait(), "« Signaler cette suite »")
         XCTAssertFalse(app.elementAcces("historique.geste.modifier").exists, "la réponse appartient à son auteur")

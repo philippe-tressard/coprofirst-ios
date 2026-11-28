@@ -26,3 +26,29 @@ func client(servant corps: String, statut: HTTPResponse.Status = .ok) -> Client 
     ClientCoproFirst.client(
         installation: URL(string: "https://demo.test")!, transport: TransportFixe(corps: corps, statut: statut))
 }
+
+/// Un serveur qui sert un corps par chemin (sous `/api`, sans requête) ; 404 ailleurs.
+struct TransportParRoute: ClientTransport {
+    let corps: [String: String]
+
+    func send(_ request: HTTPRequest, body: HTTPBody?, baseURL: URL, operationID: String) async throws
+        -> (HTTPResponse, HTTPBody?) {
+        let chemin = (request.path ?? "").split(separator: "?").first.map(String.init) ?? ""
+        let route = chemin.hasPrefix("/api") ? String(chemin.dropFirst(4)) : chemin
+        guard let servi = corps[route] else { return (HTTPResponse(status: .notFound), nil) }
+        var reponse = HTTPResponse(status: .ok)
+        reponse.headerFields[.contentType] = "application/json"
+        return (reponse, HTTPBody(servi))
+    }
+}
+
+/// Une affaire de `TicketRead` au plancher, avec `extra` tel que servi.
+func ticketServi(_ id: Int, _ extra: String = "") -> String {
+    #"""
+    {"id": \#(id), "numero": "TK-\#(id)", "titre": "Essai", "description": "", "categorie": "panne",
+     "statut": "ouvert", "priorite": "normale", "cree_le": "2026-11-02T09:00:00", "urgente": false,
+     "categorie_libelle": "Panne", "statut_libelle": "Ouvert", "close": false, "colonne_kanban": null,
+     "nouveau": false, "nom_proprietaire": "Camille Essai", "perimetre_libelle": "Bât. 2 › Toit",
+     "suivi_actualite_libelle": "", "frequence_libelle": ""
+    """# + extra + "}"
+}

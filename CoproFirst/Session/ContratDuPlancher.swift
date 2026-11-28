@@ -10,4 +10,7 @@ extension VersionContrat {
     /// Une installation qui sert un contrat plus ancien ne se décode plus : la découverte
     /// le dit (« cette résidence doit être mise à jour »), au lieu d'une erreur muette.
     static let plancher = VersionContrat(2, 14, 0)
+
+    /// Au-dessus du plancher : « Ajouter à mon agenda » (coprofirst#3164, #435) — servi depuis v3.128.0 (contrat 2.15.0).
+    static let agenda = VersionContrat(2, 15, 0)
 }
