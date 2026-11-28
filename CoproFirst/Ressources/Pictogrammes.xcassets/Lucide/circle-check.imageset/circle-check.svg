@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN. -->
-<!-- Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/icones-svg.json (circle-check). -->
+<!-- Source : philippe-tressard/coprofirst v3.126.10 (commit 803696b615c922d3c0b93f69e2c81c6fa44c3e4c), front/src/lib/icones-svg.json (circle-check). -->
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" stroke="#000000"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>

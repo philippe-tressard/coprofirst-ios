@@ -25,13 +25,12 @@ AU-DESSUS, le ticket « a-monter » dit jusqu'où le plancher peut monter.
 # aucun, et n'en lit aucun (spec multi-coproprietes §4.1 bis de coprofirst).
 INSTALLATIONS = ("demo.coprofirst.fr", "5hostachy.fr")
 
-VERSION = "v3.126.5"
+VERSION = "v3.126.10"
 RAISON = (
     "contrat 2.14.0 : la version que servent demo.coprofirst.fr et 5hostachy.fr, mesurée par la "
     "concordance quotidienne (#373, #83) — toutes deux au moins 2.14.0, donc le plancher monte à la "
-    "release la plus récente de ce contrat. Le nouveau contrat n'exige aucun champ et ne refuse aucune "
-    "réponse simulée ; il fait entrer au plancher le menu servi (acces_menu, coprofirst#3003, #355), le "
-    "prix en centimes (#376), la part d'un sondage (#391) et le mot de passe temporaire (#377). Montée "
-    "décidée le 25/11/2026 à 20:00 par le coordinateur des sessions, selon la règle du plancher (aucune "
-    "exigence ni refus : pas de régression) ; l'app Android suit le même plancher (coprofirst-android#381)"
+    "release la plus récente de ce contrat, v3.126.10. Depuis v3.126.5, aucun champ exigé, aucune "
+    "réponse simulée refusée, aucun fichier généré changé hors de sa source (`concordance.py --montee`, "
+    "28/11/2026). Montée décidée par le coordinateur des sessions le 28/11/2026, avec l'app Android à la "
+    "même valeur (coprofirst-android#395), après la pose de v1.2.0"
 )
