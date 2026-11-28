@@ -67,6 +67,8 @@ enum Pictogrammes {
         "lock": "lock.fill",
         "message-square-text": "exclamationmark.bubble.fill",
         "newspaper": "newspaper.fill",
+        // Le registre « Épinglé » du Fil (l'épingle de `front/src/lib/flux.ts`), à l'écran de hall (#429).
+        "pin": "pin.fill",
         "refresh-cw": "arrow.triangle.2.circlepath",
         "settings": "gearshape.fill",
         "shield-check": "checkmark.shield.fill",

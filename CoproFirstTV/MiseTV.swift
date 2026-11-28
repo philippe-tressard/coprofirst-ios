@@ -22,6 +22,31 @@ enum MiseTV {
     static let ecart: CGFloat = 24
     /// Le repère d'une affiche, en bas de l'écran.
     static let repere: CGFloat = 14
+
+    // Le Fil en tuiles (#429, maquette 5.2), sur 1920 × 1080 dans les marges sûres de tvOS :
+    // 60 points en haut et en bas, 80 sur les côtés.
+    static let largeurUtile: CGFloat = 1_920 - 2 * 80
+    /// Entre deux tuiles, et entre deux rangées.
+    static let joint: CGFloat = 24
+    /// Le dedans d'une tuile, et son arrondi — celui des cartes de l'iPhone, à l'échelle du salon.
+    static let dedans: CGFloat = 24
+    static let rayon: CGFloat = 24
+    /// Les cartes du carrousel visibles à la fois : quatre, lisibles à trois mètres.
+    static let placesCarrousel = 4
+    /// La hauteur d'une carte du carrousel : sa rubrique, deux lignes de titre, ses vignettes.
+    static let carrousel: CGFloat = 230
+    /// La vignette d'une photo sur une tuile, et le nombre qu'une tuile en montre avant « +N ».
+    static let vignette: CGFloat = 64
+    static let vignettesMax = 3
+    /// Le QR code d'une tuile, puis celui de la mise en avant : plus gros, lu de plus loin.
+    static let codeQR: CGFloat = 80
+    /// Celui d'une ligne d'épinglé, et celui d'une carte du carrousel.
+    static let codeQRPetit: CGFloat = 64
+    static let codeQRAgrandi: CGFloat = 260
+    /// La mise en avant : la part de l'écran qu'elle couvre, et la hauteur de sa mosaïque.
+    static let miseEnAvantLargeur: CGFloat = 1_440
+    static let miseEnAvantHauteur: CGFloat = 820
+    static let mosaique: CGFloat = 420
 }
 
 /// Le rythme de l'écran de hall (#218, lot 3, 18/11/2026) : ce que le serveur n'impose pas.
@@ -33,4 +58,14 @@ enum RythmeTV {
     static let relecture: Duration = .seconds(120)
     /// Le fondu d'une affiche à la suivante — un changement ambiant, pas une réponse au geste.
     static let fondu: Double = 0.6
+
+    // Le Fil en tuiles (#429) : fixe dans l'app au départ ; un réglage par écran dans l'Espace
+    // CS pourra venir (« à arbitrer » de #429).
+    /// Le carrousel avance d'une carte, par cran (12 à 15 s), jamais en continu.
+    static let cran: Duration = .seconds(13)
+    /// Une mise en avant environ toutes les 30 s, ouverte 10 s.
+    static let miseEnAvant: Duration = .seconds(30)
+    static let ouverture: Duration = .seconds(10)
+    /// Entre deux lectures du Fil : un vote compte à l'écran dans la minute.
+    static let relectureDuFil: Duration = .seconds(60)
 }

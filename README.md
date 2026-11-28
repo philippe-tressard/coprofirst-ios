@@ -127,13 +127,27 @@ avec leurs avis et le texte d'Apache-2.0 — la liste et les fichiers de l'iPhon
 (`scripts/verifier-dependances.py`). Son icône en couches et l'image de l'étagère sont
 rendues depuis le logo (`scripts/importer-logo.sh`, table `scripts/images_logo.py`). En
 Debug, `-api-simulee -hall appairage|diffusion|vide`, `-a-propos`, `-composant <paquet>` et
-`-theme clair|sombre` la montrent sans serveur, pour les captures. Elle embarque son propre manifeste de confidentialité
+`-theme clair|sombre` la montrent sans serveur, pour les captures.
+
+**Le Fil en tuiles** (#429, maquette 5.2 ; lot 1, sans le serveur) : sur fond clair, le nom
+et l'heure de l'Apple TV, puis l'urgence et les épinglés, la communauté à la une (sondage,
+idée, petite annonce) et le reste du Fil en carrousel, qui avance d'une carte toutes les 13 s
+(en fondu avec le mouvement réduit). Toutes les 30 s, une tuile grandit depuis sa place
+pendant 10 s : texte entier, photos en mosaïque, QR code agrandi. Chaque élément porte son QR
+code (Core Image, sur l'appareil), qui ouvre sa page dans l'app ou sur le site. Le registre de
+chaque élément (urgent, épinglé, fil) est servi, jamais recomposé. Aucune installation ne sert
+encore le Fil de l'écran (coprofirst#3159, #3160) : une installation réelle garde la diffusion
+des affiches, et le Fil se voit en Debug, `-hall fil|fil-vide`, réglé par
+`-fil-sans urgence,epingles,sondage,idee,annonce`, `-mise-en-avant <tuile>`,
+`-mouvement-reduit` et `-grand-texte` (`LancementTVSimule`, `FilSimule` : les jeux de démo de
+l'iPhone). Elle embarque son propre manifeste de confidentialité
 (`CoproFirstTV/PrivacyInfo.xcprivacy` : rien de collecté, aucune API à raison requise),
 jugé sur le code qu'elle compile, comme celui de l'Apple Watch
 (`scripts/confidentialite_cibles.py`). Elle compile les
 fichiers de l'app que `project.yml` nomme — la charte, le texte du site, l'entrée
 (adresse, GET /config, plancher), le coffre du Trousseau — et rejoue leurs tests sur
-tvOS, avec les siens (`CoproFirstTVTests/`) :
+tvOS, avec les siens (`CoproFirstTVTests/`), et ses tests d'interface
+(`CoproFirstTVUITests/`, #429) :
 
 ```bash
 APPAREIL=tv bash scripts/tests-simulateur.sh

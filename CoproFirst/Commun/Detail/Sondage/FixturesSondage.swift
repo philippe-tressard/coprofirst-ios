@@ -14,7 +14,7 @@ import Foundation
 /// aux résultats masqués jusqu'à la clôture (11) ; clôturé, mon vote compris (9).
 /// Tout est inventé : aucun nom de personne.
 enum FixturesSondage {
-    typealias Reponse = FixturesAcces.Reponse
+    typealias Reponse = ReponseSimulee
 
     /// L'identifiant du compte simulé (celui de `moiCommunaute`).
     static let moi = 7
@@ -79,11 +79,5 @@ enum FixturesSondage {
     static let parSchema: [Reponse] = [
         Reponse(nom: "fiches", schema: "SondageDetail", json: fiches)
     ]
-
-    /// Lues comme le client généré les lit, puis par le branchement du service réel.
-    static func lues() throws -> [DetailSondage] {
-        try Relecture.generee([Components.Schemas.SondageDetail].self, json: fiches)
-            .map { DetailSondage($0, moi: moi) }
-    }
 }
 #endif

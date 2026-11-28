@@ -3,10 +3,8 @@
 
 import SwiftUI
 
-/// Les photos d'un élément en mosaïque, comme Messages les groupe : une photo occupe
-/// tout le cadre ; deux, côte à côte ; trois et plus, une grande à gauche et deux
-/// petites à droite, la dernière disant « +N » quand il en reste. Le cadre garde la même
-/// hauteur quel que soit le nombre : le texte qui suit ne saute pas.
+/// Les photos d'un élément en mosaïque, à la règle de `DispositionMosaique` : chaque tuile
+/// est un bouton qui ouvre Coup d'œil.
 ///
 /// Les tuiles REMPLISSENT leur case (une photo portrait y perd ses bords) : la photo
 /// entière se voit au toucher, dans Coup d'œil — divergence déclarée face au format
@@ -19,37 +17,10 @@ struct MosaiquePhotos: View {
     let enCours: String?
     let ouvrir: (Int) -> Void
 
-    /// L'écart entre deux tuiles : un filet, comme Messages.
-    private let joint: CGFloat = 2
-
     var body: some View {
-        Group {
-            switch chemins.count {
-            case 0:
-                EmptyView()
-            case 1:
-                tuile(0)
-            case 2:
-                HStack(spacing: joint) {
-                    tuile(0)
-                    tuile(1)
-                }
-            default:
-                GeometryReader { cadre in
-                    HStack(spacing: joint) {
-                        tuile(0)
-                        VStack(spacing: joint) {
-                            tuile(1)
-                            tuile(2, reste: chemins.count - 3)
-                        }
-                        .frame(width: (cadre.size.width - joint) / 3)
-                    }
-                }
-            }
+        DispositionMosaique(nombre: chemins.count, hauteur: hauteur) { rang, reste in
+            tuile(rang, reste: reste)
         }
-        .frame(maxWidth: .infinity)
-        .frame(height: hauteur)
-        .clipShape(.rect(cornerRadius: Mise.rayon, style: .continuous))
     }
 
     private func tuile(_ rang: Int, reste: Int = 0) -> some View {

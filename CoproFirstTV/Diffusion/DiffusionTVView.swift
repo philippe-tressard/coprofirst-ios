@@ -4,18 +4,12 @@
 import SwiftUI
 import UIKit
 
-/// La diffusion à l'écran (#218, lot 3) : le nom de la résidence en tête, une affiche à la
-/// fois — son titre, son message, ses photos à droite —, un repère par affiche en bas.
-///
-/// L'écran reste allumé tant qu'il diffuse (`isIdleTimerDisabled`, rendu en quittant) : une
-/// Apple TV en veille ne montrerait rien au hall.
-///
-/// Un clic de la télécommande propose « Désappairer » (#218, lot 5), confirmé, et « À propos »
-/// (#320) : rien à l'écran ne l'annonce, l'écran est fait pour être lu, pas manié.
+/// La diffusion des affiches (#218, lot 3) : le nom de la résidence en tête, une affiche à la
+/// fois — son titre, son message, ses photos à droite —, un repère par affiche en bas. Celle
+/// d'une installation qui ne sert pas le Fil de l'écran (#429). L'écran allumé, le clic de la
+/// télécommande et le retrait : `GestesDuHall`.
 struct DiffusionTVView: View {
     @State private var diffusion: DiffusionTV
-    @State private var gestes = false
-    @State private var aPropos = false
     let retire: () -> Void
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var mouvementReduit
@@ -36,22 +30,8 @@ struct DiffusionTVView: View {
             if diffusion.affiches.count > 1 { reperes }
         }
         .padding(Mise.marge * 3)
-        .focusable()
-        .focusEffectDisabled()
-        .onTapGesture { gestes = true }
-        .confirmationDialog(EcranDeHall.gestesTitre, isPresented: $gestes, titleVisibility: .visible) {
-            Button(EcranDeHall.desappairer, role: .destructive, action: retire)
-                .accessibilityIdentifier("hall.desappairer")
-            Button(EcranDeHall.aPropos) { aPropos = true }
-                .accessibilityIdentifier("hall.a-propos")
-        } message: {
-            Text(EcranDeHall.desappairerMessage)
-        }
-        .modifier(AProposTVPresente(ouvert: $aPropos))
+        .gestesDuHall(retiree: diffusion.retire, retire: retire)
         .task { await diffusion.diffuser() }
-        .onChange(of: diffusion.retire) { _, retiree in if retiree { retire() } }
-        .onAppear { UIApplication.shared.isIdleTimerDisabled = true }
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false }
     }
 
     @ViewBuilder
