@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
 //
 // swift-format-ignore-file
-// Source : philippe-tressard/coprofirst v3.126.5 (commit 62852e89915e6bfaf695125a8cca5affa72abdcf), front/src/lib/notations.ts#ETATS, front/src/lib/notations.ts#PAR_ETAT, front/src/lib/notations.ts#SEUILS_DE_MOYENNE, front/src/lib/notations.ts#ETAT_AU_DELA (tables-clients.json), front/src/lib/notations.ts#POINTS_FORTS, front/src/lib/notations.ts#POINTS_FAIBLES, front/src/lib/notations.ts#FORME_COMMENTAIRE (tables-clients.json).
+// Source : philippe-tressard/coprofirst v3.126.10 (commit 803696b615c922d3c0b93f69e2c81c6fa44c3e4c), front/src/lib/notations.ts#ETATS, front/src/lib/notations.ts#PAR_ETAT, front/src/lib/notations.ts#SEUILS_DE_MOYENNE, front/src/lib/notations.ts#ETAT_AU_DELA (tables-clients.json), front/src/lib/notations.ts#POINTS_FORTS, front/src/lib/notations.ts#POINTS_FAIBLES, front/src/lib/notations.ts#FORME_COMMENTAIRE (tables-clients.json).
 
 /// La notation d'un prestataire, telle que le site l'écrit.
 enum TablesNotations {
