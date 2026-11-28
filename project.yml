@@ -29,8 +29,8 @@ settings:
     # signature automatique. L'identifiant d'équipe n'est pas secret — il figure
     # dans chaque app signée. Les certificats et la connexion de Xcode au compte
     # restent sur le poste (skill publication-app-store) ; la CI ne signe pas
-    # (CODE_SIGNING_ALLOWED=NO, passé par les scripts que la CI lance : tests-simulateur.sh,
-    # verifier-archive-montre.sh, verifier-montre-dependante.sh).
+    # (CODE_SIGNING_ALLOWED=NO, passé par les scripts qui construisent : tests-simulateur.sh,
+    # verifier-archive-montre.sh, et verifier-montre-dependante.sh au poste).
     DEVELOPMENT_TEAM: GUX8KASNTG
     CODE_SIGN_STYLE: Automatic
     # La version publiée suivante ; chaque version soumise porte son étiquette vX.Y.Z.
