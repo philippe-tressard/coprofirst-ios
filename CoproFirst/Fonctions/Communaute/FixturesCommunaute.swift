@@ -15,9 +15,10 @@ import Foundation
 /// « Impossible d'afficher les idées ». `scripts/verifier-fixtures.py` confronte
 /// chaque réponse déclarée dans `parSchema` au schéma de sa route.
 ///
-/// Tout est inventé : aucun nom de personne.
+/// Tout est inventé : aucun nom de personne. Les lectures par le branchement de l'iPhone sont
+/// dans `FixturesCommunaute+Lues.swift` : l'écran de hall compile les réponses seules (#429).
 enum FixturesCommunaute {
-    typealias Reponse = FixturesAcces.Reponse
+    typealias Reponse = ReponseSimulee
 
     /// GET /idees → `[IdeeRead]`.
     static let idees = #"""
@@ -116,15 +117,5 @@ enum FixturesCommunaute {
         Reponse(nom: "idees", schema: "IdeeRead", json: idees),
         Reponse(nom: "annonces", schema: "AnnonceRead", json: annonces),
     ]
-
-    // MARK: - Lues comme le client généré les lit, branchées comme le service réel
-
-    static func ideesLues() throws -> [Idee] {
-        try Relecture.generee([Components.Schemas.IdeeRead].self, json: idees).map(Idee.init)
-    }
-
-    static func annoncesLues() throws -> [Annonce] {
-        try Relecture.generee([Components.Schemas.AnnonceRead].self, json: annonces).map(Annonce.init)
-    }
 }
 #endif

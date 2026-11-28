@@ -32,6 +32,27 @@ enum EcranDeHall {
     static let lecture = "Lecture des annonces…"
     static func position(_ rang: Int, sur total: Int) -> String { "Annonce \(rang + 1) sur \(total)" }
 
+    // Le Fil en tuiles (#429, maquette 5.2). Les textes de l'entrée, de l'appairage et de
+    // l'écran vide disent encore les affiches : leur passage au Fil est le lot 4.
+    static let urgent = "Urgent"
+    static let epingle = "Épinglé"
+    static let etAussi = "Et aussi"
+    static let filVide = "Rien à afficher pour l'instant"
+    static let filVideMessage = "Le Fil de la résidence s'affichera ici."
+    static let lectureDuFil = "Lecture du Fil…"
+    static let voterDansLApp = "Votez dans l'app"
+    static let soutenirDansLApp = "Soutenez dans l'app"
+    static let repondreDansLApp = "Répondez dans l'app"
+    static let ouvrirDansLApp = "Scannez pour ouvrir dans l'app"
+    static let aDebattre = "à débattre"
+    static func votants(_ nombre: Int) -> String {
+        "\(FormatsDuSite.nombre(nombre)) \(nombre > 1 ? "votes" : "vote")"
+    }
+    static func soutiens(_ nombre: Int) -> String {
+        "\(FormatsDuSite.nombre(nombre)) \(nombre > 1 ? "soutiens" : "soutien")"
+    }
+    static func codeQR(_ titre: String) -> String { "Code QR : ouvrir « \(titre) » dans l'app" }
+
     // « Désappairer » (lot 5) : un geste local ; couper l'accès se fait dans l'Espace CS.
     // Le même dialogue offre « À propos » (#320) : aucun bouton à l'écran pendant la diffusion.
     static let desappairer = "Désappairer"

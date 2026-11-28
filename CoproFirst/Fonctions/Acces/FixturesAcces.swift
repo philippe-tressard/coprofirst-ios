@@ -119,12 +119,8 @@ enum FixturesAcces {
          "bailleur_telephone": "01 99 00 00 70", "acces": []}
         """#
 
-    /// Une réponse simulée et le schéma de sa route (`components/schemas`).
-    struct Reponse: Sendable {
-        let nom: String
-        let schema: String
-        let json: String
-    }
+    /// Une réponse simulée et le schéma de sa route : `ReponseSimulee`, que l'Apple TV compile aussi.
+    typealias Reponse = ReponseSimulee
 
     /// Chaque réponse et le schéma de sa route, pour le juge (`scripts/verifier-fixtures.py`).
     static let parSchema: [Reponse] = [

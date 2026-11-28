@@ -95,7 +95,7 @@ relais de l'éditeur, puis par Apple (§4).
 | la date du report de l'offre de notifications | réglages | `CoproFirst/Fonctions/Notifications/Push/NotificationsPush.swift` › `private static let cleReport = "push-offre-reportee"` |
 | le thème choisi | réglages | `CoproFirst/Fonctions/Profil/ThemeChoisi.swift` › `@AppStorage(ThemeChoisi.cle)` |
 | la dernière lecture de la vitrine | cache de l'app | `CoproFirst/Entree/Contenu/Vitrine.swift` › `appendingPathComponent("contenu-vitrine.json")` |
-| un document ou une pièce jointe ouverts | dossier temporaire, chiffré | `CoproFirst/Commun/Session/FichierServi.swift` › `static let protection: Data.WritingOptions = [.atomic, .completeFileProtection]` |
+| un document ou une pièce jointe ouverts | dossier temporaire, chiffré | `CoproFirst/Commun/Session/Fichiers.swift` › `static let protection: Data.WritingOptions = [.atomic, .completeFileProtection]` |
 | la dernière lecture de la résidence, **si** Face ID est activé (#101) : fil, affaires (liste et détail, messages, Historique), profil, annuaire, documents et photos déjà ouverts — rien de l'administration ni de l'Espace CS, aucun jeton ni cookie | `Application Support`, un dossier par résidence, chiffré (`.complete`), **exclu des sauvegardes** iCloud et Finder ; effacée au-delà de 7 jours sans lecture fraîche | `CoproFirst/Session/LectureGardee/LecturesGardees.swift` › `exclue.isExcludedFromBackup = true` ; `CoproFirst/Session/LectureGardee/HorsLigne.swift` › `static let joursMax = 7` ; `CoproFirst/Session/LectureGardee/GarderLesLectures.swift` › `static let operations: Set<String> = [` |
 
 La déconnexion efface la session — le jeton, la dernière lecture gardée et les copies des
@@ -324,6 +324,7 @@ contrôle.
 | `WidgetKit` | Apple (watchOS) | le widget de la montre (pile et cadran), et sa relecture |
 | `WatchConnectivity` | Apple (iOS, watchOS) | la liaison iPhone ↔ Apple Watch : la résidence et son jeton de montre, d'un appareil de la personne à l'autre (#226) |
 | `VisionKit` | Apple (iOS) | lecture du QR code, sur l'appareil |
+| `CoreImage` | Apple (tvOS) | le QR code d'un élément du Fil à l'écran de hall, dessiné sur l'appareil — rien n'est envoyé (#429) |
 | `QuickLook` | Apple (iOS) | aperçu d'un document téléchargé |
 | `SafariServices` | Apple (iOS) | ouvrir une page du site dans Safari intégré |
 | `ClientAPI` | ce dépôt | le client généré depuis le contrat |

@@ -7,6 +7,7 @@ import SwiftUI
 /// diffusion — à la palette de SA résidence (`site_palette`), comme `RacineView` sur l'iPhone.
 struct EcranDeHallView: View {
     let hall: HallTV
+    @Environment(\.reglagesDuHall) private var reglages
 
     var body: some View {
         let palette = hall.residence?.palette ?? Palette.pour(code: nil)
@@ -24,8 +25,14 @@ struct EcranDeHallView: View {
                 .padding(Mise.marge)
                 .id(residence.adresse)
             case .diffusion(let appairage):
-                DiffusionTVView(appairage: appairage, service: hall.service) { hall.retirer() }
-                    .id(appairage.jeton)
+                // Le Fil quand le service le sert (#429) ; les affiches sinon.
+                if let fil = hall.service.filDuHall {
+                    DiffusionDuFilView(appairage: appairage, service: fil, reglages: reglages) { hall.retirer() }
+                        .id(appairage.jeton)
+                } else {
+                    DiffusionTVView(appairage: appairage, service: hall.service) { hall.retirer() }
+                        .id(appairage.jeton)
+                }
             }
         }
         .transition(.opacity)

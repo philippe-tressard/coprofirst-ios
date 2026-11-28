@@ -37,7 +37,7 @@ extension ServiceSimule {
     func fichierProtege(_ chemin: String, dans installation: Installation) async throws -> Data {
         try await Task.sleep(for: .milliseconds(250))
         let nom = Fichiers.nomAffiche(chemin)
-        if Fichiers.estImage(chemin) { return Self.photoDessinee(chemin) }
+        if Fichiers.estImage(chemin) { return PhotoDessinee.jpeg(chemin) }
         if nom.lowercased().hasSuffix(".pdf") {
             return UIGraphicsPDFRenderer(bounds: CGRect(x: 0, y: 0, width: 595, height: 842)).pdfData { contexte in
                 contexte.beginPage()
@@ -47,18 +47,6 @@ extension ServiceSimule {
             }
         }
         return Data("\(Fichiers.nomSansExtension(chemin)) — texte fictif de l'API simulée.\n".utf8)
-    }
-
-    private static func photoDessinee(_ chemin: String) -> Data {
-        let teintes = [Palette.seine.filIndigoFond, Palette.seine.filCyanFond, Palette.seine.infoFond]
-        let teinte = UIColor(teintes[chemin.unicodeScalars.reduce(0) { $0 + Int($1.value) } % teintes.count])
-        let image = UIGraphicsImageRenderer(size: CGSize(width: 640, height: 480)).image { contexte in
-            teinte.setFill()
-            contexte.fill(CGRect(x: 0, y: 0, width: 640, height: 480))
-            let symbole = UIImage(systemName: "drop.fill")?.withTintColor(UIColor(Palette.seine.primary))
-            symbole?.draw(in: CGRect(x: 260, y: 180, width: 120, height: 120))
-        }
-        return image.jpegData(compressionQuality: 0.8) ?? Data()
     }
 
     /// Les affaires de `FixturesDetailAffaire`, lues comme le service réel les lit ; les

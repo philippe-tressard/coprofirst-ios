@@ -7,8 +7,11 @@ import SwiftUI
 
 #if DEBUG
 /// L'écran de hall sans serveur, pour les captures et les essais au simulateur (#320) :
-/// `-api-simulee -hall appairage|diffusion|vide` — le code d'appairage qui attend le conseil,
-/// trois affiches qui défilent, ou aucune ; `-a-propos` ouvre « À propos » à l'entrée et à
+/// `-api-simulee -hall appairage|diffusion|vide|fil|fil-vide` — le code d'appairage qui attend
+/// le conseil, trois affiches qui défilent, ou aucune ; le Fil en tuiles (#429, `FilSimule`), ou
+/// un Fil vide. Le Fil se règle : `-fil-sans urgence,annonce…` (`FilSimule.Manque`),
+/// `-mise-en-avant <tuile>` (une tuile tenue agrandie : `urgence.ticket_ouvert:41`, `epingles`…),
+/// `-mouvement-reduit`, `-grand-texte`. `-a-propos` ouvre « À propos » à l'entrée et à
 /// l'appairage (`BoutonAProposTV`), `-composant <nom>` y ouvre les textes d'un paquet ;
 /// `-theme clair|sombre` impose le thème. Debug seul (#84) ; hors de ces arguments, l'app
 /// parle aux vraies installations, et rien n'est gardé au Trousseau.
@@ -26,10 +29,30 @@ enum LancementTVSimule {
         let entree = EntreeTV()
         switch etape(arguments) {
         case "appairage": entree.reprendre(residence)
-        case "diffusion", "vide": memoire.ranger(.init(residence: residence, jeton: "jeton-simule"))
+        case "diffusion", "vide", "fil", "fil-vide": memoire.ranger(.init(residence: residence, jeton: "jeton-simule"))
         default: break
         }
-        return HallTV(entree: entree, service: serveur, memoire: memoire)
+        let service: any ServiceEcranTV
+        switch etape(arguments) {
+        case "fil":
+            let lecture = Result { try FilSimule.fil(sans: manques(arguments)) }
+                .mapError { _ in ErreurService.inattendue(500) }
+            service = ServeurFilSimule(ecran: serveur, lecture: lecture)
+        case "fil-vide": service = ServeurFilSimule(ecran: serveur, lecture: .success(.vide))
+        default: service = serveur
+        }
+        return HallTV(entree: entree, service: service, memoire: memoire)
+    }
+
+    static func reglages(_ arguments: [String]) -> ReglagesDuHall {
+        ReglagesDuHall(
+            tenue: valeur("-mise-en-avant", arguments), mouvementReduit: arguments.contains("-mouvement-reduit"),
+            grandTexte: arguments.contains("-grand-texte"))
+    }
+
+    private static func manques(_ arguments: [String]) -> Set<FilSimule.Manque> {
+        let noms = (valeur("-fil-sans", arguments) ?? "").split(separator: ",")
+        return Set(noms.compactMap { FilSimule.Manque(rawValue: String($0)) })
     }
 
     static func theme(_ arguments: [String]) -> ColorScheme? {

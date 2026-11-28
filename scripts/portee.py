@@ -33,7 +33,7 @@ RACINE = pathlib.Path(__file__).resolve().parent.parent
 CODE = ("CoproFirst", "CoproFirstTV", "CoproFirstWatch", "CoproFirstWatchWidget", "Paquets/ClientAPI/Sources")
 #: Leurs tests.
 TESTS = (
-    "CoproFirstTests", "CoproFirstUITests", "CoproFirstTVTests", "CoproFirstWatchTests",
+    "CoproFirstTests", "CoproFirstUITests", "CoproFirstTVTests", "CoproFirstTVUITests", "CoproFirstWatchTests",
     "CoproFirstWatchUITests", "Paquets/ClientAPI/Tests",
 )
 #: Lus par SwiftLint seul : le manifeste du paquet.

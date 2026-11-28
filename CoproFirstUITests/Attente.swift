@@ -57,6 +57,9 @@ extension XCUIElement {
     }
 }
 
+// Les gestes : défiler, toucher, balayer. tvOS n'en a aucun (ni `tap()` ni défilement au
+// doigt) : l'écran de hall (#429) ne compile que les attentes ci-dessus.
+#if !os(tvOS)
 extension XCUIApplication {
     /// L'élément amené à l'écran, touchable : par PETITS défilements (un quart d'écran), vers
     /// le bas du contenu d'abord, puis vers le haut s'il a été dépassé. Un balayage plein
@@ -453,3 +456,4 @@ extension XCUIApplication {
         }
     }
 }
+#endif

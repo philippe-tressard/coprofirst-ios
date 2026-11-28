@@ -195,6 +195,26 @@ targets:
         buildPhase: resources
       - path: LICENSES/Apache-2.0.txt
         buildPhase: resources
+      # Le Fil de la résidence en tuiles (#429) : l'élément du Fil et ce qu'il relit de `meta`,
+      # les pièces jointes et la règle de la mosaïque — les fichiers de l'iPhone, nommément.
+      - path: CoproFirst/Donnees/ElementDuFil.swift
+      - path: CoproFirst/Donnees/CibleDuFil.swift
+      - path: CoproFirst/Donnees/Lecture.swift
+      - path: CoproFirst/Donnees/LieuServi.swift
+      - path: CoproFirst/Commun/Fil/EcheanceDuFil.swift
+      - path: CoproFirst/Commun/Fil/MetaDuFil.swift
+      - path: CoproFirst/Commun/Session/Relecture.swift
+      - path: CoproFirst/Commun/Session/Fichiers.swift
+      - path: CoproFirst/Commun/PiecesJointes/PiecesJointes.swift
+      - path: CoproFirst/Commun/PiecesJointes/DispositionMosaique.swift
+      # Ses données simulées (Debug) : les jeux de démo du Fil et de la Communauté, et la
+      # photo dessinée de l'API simulée — ceux de l'iPhone, jamais une copie.
+      - path: CoproFirst/Donnees/Apercu.swift
+      - path: CoproFirst/Donnees/Apercu+Lecture.swift
+      - path: CoproFirst/Donnees/ReponseSimulee.swift
+      - path: CoproFirst/Donnees/PhotoDessinee.swift
+      - path: CoproFirst/Fonctions/Communaute/FixturesCommunaute.swift
+      - path: CoproFirst/Commun/Detail/Sondage/FixturesSondage.swift
     dependencies:
       - package: ClientAPI
     info:
@@ -244,6 +264,21 @@ targets:
         # « CoproFirstTV.app » et le test ne trouverait pas son hôte.
         TEST_HOST: $(BUILT_PRODUCTS_DIR)/CoproFirst.app/CoproFirst
         BUNDLE_LOADER: $(TEST_HOST)
+  # L'interface du Fil en tuiles (#429), au simulateur Apple TV, sur ses attentes communes avec
+  # l'iPhone (les gestes de `Attente.swift` n'y sont pas compilés : tvOS n'a pas de toucher).
+  CoproFirstTVUITests:
+    type: bundle.ui-testing
+    platform: tvOS
+    sources:
+      - path: CoproFirstTVUITests
+      - path: CoproFirstUITests/Attente.swift
+    dependencies:
+      - target: CoproFirstTV
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: fr.coprofirst.app.tv.uitests
+        GENERATE_INFOPLIST_FILE: "YES"
+        TEST_TARGET_NAME: CoproFirstTV
   # L'Apple Watch (#226) : la cloche de la dernière résidence ouverte, en LECTURE seule
   # (jeton de montre, coprofirst#2771). Comme l'écran de hall, elle compile les MÊMES
   # fichiers que l'iPhone, nommément ; ce qui est propre à iOS s'isole et s'exclut ici.
@@ -428,6 +463,7 @@ schemes:
       region: FR
       targets:
         - CoproFirstTVTests
+        - CoproFirstTVUITests
   CoproFirstWatch:
     build:
       targets:

@@ -17,6 +17,7 @@ struct CoproFirstTVApp: App {
         WindowGroup {
             EcranDeHallView(hall: hall)
                 .preferredColorScheme(Self.themeImpose)
+                .environment(\.reglagesDuHall, Self.reglages)
         }
     }
 
@@ -27,6 +28,15 @@ struct CoproFirstTVApp: App {
         if let simule = LancementTVSimule.hall(ProcessInfo.processInfo.arguments) { return simule }
         #endif
         return HallTV(memoire: MemoireEcran(coffre: CoffreTrousseau()))
+    }
+
+    /// Rien en Release ; en Debug, ce que les captures imposent au Fil (`LancementTVSimule`).
+    private static var reglages: ReglagesDuHall {
+        #if DEBUG
+        LancementTVSimule.reglages(ProcessInfo.processInfo.arguments)
+        #else
+        ReglagesDuHall()
+        #endif
     }
 
     /// Le thème du système ; en Debug, `-theme clair|sombre` l'impose aux captures : le
