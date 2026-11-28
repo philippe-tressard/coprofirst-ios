@@ -11,7 +11,7 @@ n'est pas publier (publication manuelle). Seul ce que le magasin SERT fait foi.
 Ce qu'il juge, sur la fiche publique (`itunes.apple.com/lookup`, sans compte, magasin français) :
 1. l'iPhone et l'iPad : la version servie est au moins la version voulue ;
 2. l'Apple Watch (depuis `PLATEFORMES["montre"]`) : la fiche servie la nomme parmi ses appareils ;
-3. l'Apple TV (depuis `PLATEFORMES["tv"]`) : la fiche tvOS (`entity=tvSoftware`) sert au moins
+3. l'Apple TV (depuis `PLATEFORMES["tv"]`, aucune version tant qu'elle vaut None) : la fiche tvOS (`entity=tvSoftware`) sert au moins
    la version voulue — elle a sa propre version, ses appareils `AppleTV…` (témoins du
    28/11/2026 : Infuse et Netflix y rendent leur version tvOS ; CoproFirst, zéro résultat).
 Une fiche iPhone illisible, absente ou d'une autre app : INCONNU, jamais vert ; une fiche tvOS
@@ -44,8 +44,11 @@ from version_au_moins import comparer  # noqa: E402  (nombre par nombre : 1.10 >
 #: L'app sur le magasin : l'identifiant d'Apple et l'identifiant de paquet, comparés TOUS
 #: DEUX à la fiche lue (standards/04 §44 : une clé partielle confond les homonymes).
 APP_ID, PAQUET, PAYS = 6834326392, "fr.coprofirst.app", "fr"
-#: Depuis quelle version chaque plateforme sort avec l'app (la 1.2, décision du 26/11/2026).
-PLATEFORMES = {"montre": "1.2.0", "tv": "1.2.0"}
+#: Depuis quelle version chaque plateforme sort avec l'app ; None : aucune version publiée ne
+#: l'embarque encore, elle n'est pas exigée. La montre sort avec la 1.2 ; l'Apple TV en a été
+#: écartée par Philippe le 28/11/2026 (décision « B », #427) : sa version s'écrit ici le jour
+#: où une version tvOS est soumise (#429).
+PLATEFORMES: dict[str, str | None] = {"montre": "1.2.0", "tv": None}
 #: Au-delà, une étiquette non servie n'attend plus la revue d'Apple : quelque chose manque.
 DELAI_REVUE_JOURS = 7
 
@@ -88,7 +91,14 @@ def _appareil(servie: dict, prefixe: str) -> bool:
     return any(str(a).startswith(prefixe) for a in servie.get("supportedDevices", []))
 
 
-def juger(voulue: str, fiche: dict | None, fiche_tv: dict | None) -> list[tuple[str, str, str]]:
+def exigee(plateforme: str, voulue: str, plateformes: dict[str, str | None]) -> bool:
+    """La plateforme sort-elle avec la version voulue ? None : aucune version ne l'embarque."""
+    depuis = plateformes.get(plateforme)
+    return depuis is not None and bool(au_moins(depuis, voulue))
+
+
+def juger(voulue: str, fiche: dict | None, fiche_tv: dict | None,
+          plateformes: dict[str, str | None] = PLATEFORMES) -> list[tuple[str, str, str]]:
     """Fonction pure (standards/04 §11) : (sujet, état, détail) pour chaque plateforme attendue."""
     servie, raison = _servie(fiche)
     if servie is None:
@@ -99,11 +109,11 @@ def juger(voulue: str, fiche: dict | None, fiche_tv: dict | None) -> list[tuple[
         return [("App Store", INCONNU, f"version illisible : servie « {lue} », voulue « {voulue} »")]
     lignes = [("iPhone et iPad", OK if publiee else ROUGE,
                f"{lue} servie" + ("" if publiee else f", {normaliser(voulue)} voulue : pas encore publiée"))]
-    if au_moins(PLATEFORMES["montre"], voulue):
+    if exigee("montre", voulue, plateformes):
         montre = _appareil(servie, "Watch")
         lignes.append(("Apple Watch", OK if publiee and montre else ROUGE,
                        "la fiche servie la nomme" if montre else "la fiche servie ne nomme aucune Apple Watch"))
-    if au_moins(PLATEFORMES["tv"], voulue):
+    if exigee("tv", voulue, plateformes):
         lignes.append(("Apple TV", *juger_tv(voulue, fiche_tv)))
     return lignes
 
@@ -162,7 +172,15 @@ def autotest() -> int:
         ("1.2.0", fiche("1.2", bundleId="app.autre.test"), tv, 2),
         ("1.2.0", fiche("deux"), tv, 2),
     ]
-    rate = [f"{v} / {f} / tv={ft} : {a} attendu" for v, f, ft, a in cas if verdict(juger(v, f, ft)) != a]
+    avec_tv = {"montre": "1.2.0", "tv": "1.2.0"}
+    rate = [f"{v} / {f} / tv={ft} : {a} attendu" for v, f, ft, a in cas if verdict(juger(v, f, ft, avec_tv)) != a]
+    # Sans version tvOS (la 1.2, décision « B ») : la fiche tvOS vide ne rougit rien, la montre reste exigée.
+    sans_tv = {"montre": "1.2.0", "tv": None}
+    for v, f, ft, a in [("1.2.0", fiche("1.2"), vide, 0), ("1.2.0", fiche("1.2"), None, 0),
+                        ("1.2.0", fiche("1.1"), vide, 1), ("1.2.0", fiche("1.2", ("iPhone17-iPhone17",)), vide, 1)]:
+        lignes = juger(v, f, ft, sans_tv)
+        if verdict(lignes) != a or any(s == "Apple TV" for s, _, _ in lignes):
+            rate.append(f"sans TV : {v} / {f} / tv={ft} : {a} attendu, sans ligne Apple TV")
     if normaliser("v1.2") != "1.2.0" or normaliser("1.2.3") != "1.2.3":
         rate.append("normaliser")
     for r in rate:

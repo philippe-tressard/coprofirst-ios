@@ -75,14 +75,14 @@ le disait : la procédure s'arrêtait à « Philippe la soumet ».
 | # | Pas | Qui | Preuve |
 |---|---|---|---|
 | 1 | Monter `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` (`project.yml`), Nouveautés dans « Les versions publiées » ; ouvrir le ticket « Version X.Y » | moi | la PR fusionnée, CI de `main` verte |
-| 2 | Archives Release depuis un worktree épinglé sur `origin/main` : iPhone avec `ARCHIVE_AVEC_MONTRE=true`, Apple TV à part (tableau plus bas) ; « Validate App » | moi | `scripts/verifier-archive-montre.sh` vert sur l'archive ; l'Organizer valide |
+| 2 | Archives Release depuis un worktree épinglé sur `origin/main` : iPhone avec `ARCHIVE_AVEC_MONTRE=true` ; Apple TV à part, quand la version l'embarque (`PLATEFORMES` de `verifier_publication.py`, tableau plus bas) ; « Validate App » | moi | `scripts/verifier-archive-montre.sh` vert sur l'archive ; l'Organizer valide |
 | 3 | Envoyer chaque archive (Organizer › Distribute App › App Store Connect) | Philippe | `Distributions › uploadEvent › state = success` dans le plist de l'archive |
 | 4 | Attendre le traitement d'Apple (un courriel ITMS dit un refus) ; installer par TestFlight **interne** pour juger le rendu | Philippe | App Store Connect › TestFlight : le build X « Prêt à tester » |
-| 5 | Dans App Store Connect › Distribution, créer la version X.Y **iOS** et, depuis la 1.2, la version X.Y **tvOS** ; y rattacher le build ; Nouveautés, description, notes de revue ; captures iPhone, iPad 13 pouces, **Apple Watch** (iOS) et **Apple TV** (tvOS) ; App Privacy ; **choisir la publication** (manuelle ou automatique : le bouton radio, voir « Publication ») | Philippe | ce qu'il voit, confirmé au pas 6 par `--confirme` |
+| 5 | Dans App Store Connect › Distribution, créer la version X.Y **iOS** et, si la version embarque l'Apple TV, la version X.Y **tvOS** ; y rattacher le build ; Nouveautés, description, notes de revue ; captures iPhone, iPad 13 pouces, **Apple Watch** (iOS, depuis la 1.2) et, le cas échéant, **Apple TV** (tvOS) ; App Privacy ; **choisir la publication** (manuelle ou automatique : le bouton radio, voir « Publication ») | Philippe | ce qu'il voit, confirmé au pas 6 par `--confirme` |
 | 6 | `python3 scripts/avant_soumission.py --confirme …` vert sur `HEAD` = `origin/main` = le commit des archives, puis `--etiqueter` (pose `vX.Y.Z`) — **après** le « oui » écrit de Philippe pour CETTE version | moi | sortie 0, étiquette poussée |
 | 7 | Déclarer la version dans coprofirst (contrat figé, `EN_CIRCULATION`) — la ligne que dit le compte rendu du pas 6 | moi | le ticket ou la PR de coprofirst |
-| 8 | « Ajouter pour vérification », puis soumettre (iOS et tvOS) | Philippe | état « En attente de vérification », puis « Prêt à la distribution » |
-| 9 | Constater la publication : `python3 scripts/verifier_publication.py` — la fiche publique du magasin, iPhone et iPad, la montre parmi ses appareils, et la fiche tvOS pour l'Apple TV | moi | sortie 0, collée dans le ticket de la version, qui se ferme alors |
+| 8 | « Ajouter pour vérification », puis soumettre (iOS, et tvOS s'il y a lieu) | Philippe | état « En attente de vérification », puis « Prêt à la distribution » |
+| 9 | Constater la publication : `python3 scripts/verifier_publication.py` — la fiche publique du magasin, iPhone et iPad, la montre parmi ses appareils, et la fiche tvOS pour l'Apple TV quand `PLATEFORMES["tv"]` dit la version qui l'embarque | moi | sortie 0, collée dans le ticket de la version, qui se ferme alors |
 
 Le passage planifié « Publication constatée » (`.github/workflows/publication.yml`) rejoue le
 pas 9 chaque jour sur la plus haute étiquette : une étiquette non servie après
@@ -97,14 +97,16 @@ que chez le magasin, jamais à l'étiquette : `python3 scripts/verifier_publicat
 
 - **1.0** (build 1, `v1.0.0`) : approuvée le 14/11/2026 à 00:27, en ligne le 13/11 à 23:26 UTC.
 - **1.1** (build 2, `v1.1.0`) : en ligne le 18/11/2026 (#263), iPhone et iPad (#219).
-- **1.2** (build 3, `v1.2.0` à poser par `avant_soumission.py`) : préparée le 26/11/2026,
-  sans l'Android (décision de Philippe du 26/11 : la règle de sortie commune avec l'Android
-  levée pour cette version). **Avec l'app Apple Watch et l'Apple TV** (Philippe, 26/11 après-midi :
-  « la livraison doit watch et tv », puis « Oui, allume-la » pour la liaison de #226), qui
-  remplace son « Oui » du matin à une 1.2 sans la montre. Archive iPhone avec
-  `ARCHIVE_AVEC_MONTRE=true`, archive tvOS à part (#320) ; relais des notifications éteint (#318).
+- **1.2** (build 3, `v1.2.0` sur `8d1121d`) : **soumise le 28/11/2026** vers 15 h 10, iOS seul,
+  publication automatique dès l'approbation (#427). Sans l'Android (décision de Philippe du
+  26/11). **Avec l'app Apple Watch** (« Oui, allume-la » pour la liaison de #226), archive
+  iPhone avec `ARCHIVE_AVEC_MONTRE=true` ; relais des notifications éteint (#318). **Sans
+  l'Apple TV** : son build 1.2 (3) est envoyé et traité, mais Philippe l'a écartée le 28/11
+  après l'essai (décision « B », #427 : « fonctionnalité à revoir, elle s'adresse qu'au CS ») ;
+  aucune version tvOS n'est créée, la refonte est #429. `PLATEFORMES["tv"]` vaut `None`
+  jusqu'à la version qui la publiera.
 
-Nouveautés de la 1.2 (*What's New in This Version*), à coller par Philippe :
+Nouveautés de la 1.2 (*What's New in This Version*), collées par Philippe le 28/11 :
 
 ```text
 • Signalez au conseil syndical une affaire, une suite ou la réponse de l'assistant. Masquez ce que publie un voisin, pour vous seul.
@@ -116,7 +118,6 @@ Nouveautés de la 1.2 (*What's New in This Version*), à coller par Philippe :
 • iPad : la liste et la fiche côte à côte sur tous les écrans, en portrait aussi ; ⌘F pour chercher.
 • iPhone pliable : le Fil en carnet, une journée par double page.
 • Apple Watch : les alertes de votre résidence au poignet, en lecture seule, même sans réseau.
-• Apple TV : l'écran du hall diffuse les affiches de la résidence, appairé par un code depuis l'Espace du conseil syndical.
 • Meilleure lecture en très grand texte, et de nombreuses corrections.
 ```
 
@@ -132,7 +133,7 @@ Fait pour la 1.0, à ne pas refaire — et à reprendre pour chaque version :
 | **Icônes** (1.2, 27/11/2026) | App Store Connect refuse l'archive iPhone dont la montre embarquée n'a pas d'icône (ITMS-90713, ITMS-90391). La montre a son catalogue (`CoproFirstWatch/Ressources/Assets.xcassets`, rendu par `scripts/images_logo.py`) et `scripts/verifier-archive-montre.sh` exige une icône compilée et nommée de l'iPhone et de la montre. Avant d'envoyer, « Validate App » dans l'Organizer joue les mêmes contrôles sans déposer de build. |
 | **Contrôler l'app construite, pas `project.yml`** | Le 12/11/2026, l'archive Release sortait **iPhone et iPad** (XcodeGen posait `1,2` sur la cible) et une version écrite en dur. `ConformiteAppStoreTests` lit le plist de l'app construite ; relire aussi `codesign -d --entitlements` et la présence des symboles de simulation (aucun). |
 | **Jouer le geste exigé par la revue** | La feuille « Supprimer mon compte » **ne s'ouvrait pas** (attachée à la `Section` d'une `List`) et aucun test ne le voyait. `SuppressionCompteUITests` joue le parcours. Toute règle d'Apple qui demande un geste dans l'app se joue **à l'écran** avant l'envoi. |
-| **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). Pas d'iPhone Duo (#119). **Depuis la 1.2** : captures **Apple Watch** sur la version iOS (une seule taille pour toutes les langues ; la plus grande, Ultra, 422 × 514), et captures **Apple TV** sur la version tvOS (1920 × 1080 ou 3840 × 2160, paysage) — tailles à relire sur la page « Screenshot specifications » d'Apple avant de produire. |
+| **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). iPhone Duo : 2 captures neuves à la 1.2 (#427). **Depuis la 1.2** : captures **Apple Watch** sur la version iOS (une seule taille pour toutes les langues ; à la 1.2, Ultra 4, 3 captures), et, quand une version tvOS sort, captures **Apple TV** (1920 × 1080 ou 3840 × 2160, paysage) — tailles à relire sur la page « Screenshot specifications » d'Apple avant de produire. |
 | **Fiche** | Textes, notes de revue (`notes-revue.md`), compte de démonstration `user-copro@demo.coprofirst.fr`, confidentialité (à la 1.0 : 8 types, tous « Fonctionnement de l'app », liés à l'identité, sans suivi ; depuis la 1.1, ce que dit `confidentialite.md` §5), classification **4+** (contenu généré par les utilisateurs : Oui ; réseaux sociaux et messagerie : Non), gratuite, 175 pays, **Mac et Vision décochés**. |
 | **Publication** | Le choix « manuelle » du 13/11 n'a **pas** tenu : l'app est sortie dès l'approbation. **Vérifier le bouton radio avant « Ajouter pour vérification »** si l'on veut garder la main. |
 | **UE (DSA)** | Statut **non-commerçant** déclaré le 13/11/2026 (Business › Conformité) : app gratuite, libre, à titre personnel. À revoir si l'offre hébergée payante démarre — ticket #194. |

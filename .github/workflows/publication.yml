@@ -8,7 +8,8 @@
 #   - pas servie depuis moins de DELAI_REVUE_JOURS jours : en attente de la revue, vert
 #     (sortie 3, une information) ;
 #   - au-delà, ou une fiche illisible : rouge, et le ticket « CI rouge » (signaler_rouge.py).
-# iPhone et iPad, Apple Watch (appareils de la fiche) et Apple TV (fiche tvOS) : tout se lit sans compte.
+# iPhone et iPad, Apple Watch (appareils de la fiche) et Apple TV (fiche tvOS, dès que PLATEFORMES
+# dit la version qui l’embarque) : tout se lit sans compte.
 # Aucune voie vers la revue d'Apple : ce passage lit une fiche publique, rien d'autre.
 # Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
 name: Publication constatée
