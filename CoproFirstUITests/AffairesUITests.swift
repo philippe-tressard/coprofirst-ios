@@ -67,7 +67,7 @@ final class AffairesUITests: XCTestCase {
         app.toucher(element("affaires.nouvelle", dans: app), jusqua: panne)
         XCTAssertTrue(panne.apparait())
         XCTAssertTrue(desactive("nouvelle.envoyer", dans: app), "rien n'est saisi : Envoyer est désactivé")
-        app.toucher(panne)
+        app.toucher(panne, jusqua: app.elementRetenu("nouvelle.categorie.panne"))
         capturer("4-categories")
         let titre = element("nouvelle.titre", dans: app)
         app.amener(titre)

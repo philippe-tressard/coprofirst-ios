@@ -55,7 +55,7 @@ final class SaisieAffaireUITests: XCTestCase {
         app.swipeDown()
         let panne = el(app, "nouvelle.categorie.panne")
         XCTAssertTrue(panne.apparait())
-        app.toucher(panne)
+        app.toucher(panne, jusqua: app.elementRetenu("nouvelle.categorie.panne"))
         XCTAssertTrue(app.amener(el(app, "nouvelle.urgente")), "l'urgence d'une panne est essentielle")
         // Le groupe se retire après le toucher : son absence s'attend, elle ne se lit pas
         // par `.exists` dans la foulée (vu rouge au poste chargé, 11/11/2026).
@@ -100,7 +100,7 @@ final class SaisieAffaireUITests: XCTestCase {
         XCTAssertTrue(lu(app, "nouvelle.quiLaLira", contient: "catégorie choisie"), "rien à demander sans catégorie")
         let panne = el(app, "nouvelle.categorie.panne")
         for _ in 0..<6 where !(panne.exists && panne.isHittable) { app.swipeDown() }
-        app.toucher(panne)
+        app.toucher(panne, jusqua: app.elementRetenu("nouvelle.categorie.panne"))
         XCTAssertTrue(app.amener(el(app, "nouvelle.lieuServi")))
         XCTAssertTrue(lu(app, "nouvelle.lieuServi", contient: "Toute la copropriété"), "le défaut, en clair")
         XCTAssertTrue(app.amener(el(app, "nouvelle.quiLaLira")))
