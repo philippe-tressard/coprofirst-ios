@@ -65,10 +65,34 @@ fait après le « oui ».
   Store Connect créée par Philippe, rangée dans les secrets de GitHub par lui —
   la CI la lit, personne ne la voit passer.
 
+## De bout en bout : une version, du numéro au magasin (#426)
+
+Une version n'est **publiée** que lorsque le magasin la SERT. Chaque pas ci-dessous a sa
+preuve ; un pas sans preuve est INCONNU, et rien ne se dit « publié » avant le pas 9. Le
+28/11/2026, la 1.2 était envoyée depuis la veille, sans étiquette ni soumission, et rien ne
+le disait : la procédure s'arrêtait à « Philippe la soumet ».
+
+| # | Pas | Qui | Preuve |
+|---|---|---|---|
+| 1 | Monter `MARKETING_VERSION` et `CURRENT_PROJECT_VERSION` (`project.yml`), Nouveautés dans « Les versions publiées » ; ouvrir le ticket « Version X.Y » | moi | la PR fusionnée, CI de `main` verte |
+| 2 | Archives Release depuis un worktree épinglé sur `origin/main` : iPhone avec `ARCHIVE_AVEC_MONTRE=true`, Apple TV à part (tableau plus bas) ; « Validate App » | moi | `scripts/verifier-archive-montre.sh` vert sur l'archive ; l'Organizer valide |
+| 3 | Envoyer chaque archive (Organizer › Distribute App › App Store Connect) | Philippe | `Distributions › uploadEvent › state = success` dans le plist de l'archive |
+| 4 | Attendre le traitement d'Apple (un courriel ITMS dit un refus) ; installer par TestFlight **interne** pour juger le rendu | Philippe | App Store Connect › TestFlight : le build X « Prêt à tester » |
+| 5 | Dans App Store Connect › Distribution, créer la version X.Y **iOS** et, depuis la 1.2, la version X.Y **tvOS** ; y rattacher le build ; Nouveautés, description, notes de revue ; captures iPhone, iPad 13 pouces, **Apple Watch** (iOS) et **Apple TV** (tvOS) ; App Privacy ; **choisir la publication** (manuelle ou automatique : le bouton radio, voir « Publication ») | Philippe | ce qu'il voit, confirmé au pas 6 par `--confirme` |
+| 6 | `python3 scripts/avant_soumission.py --confirme …` vert sur `HEAD` = `origin/main` = le commit des archives, puis `--etiqueter` (pose `vX.Y.Z`) — **après** le « oui » écrit de Philippe pour CETTE version | moi | sortie 0, étiquette poussée |
+| 7 | Déclarer la version dans coprofirst (contrat figé, `EN_CIRCULATION`) — la ligne que dit le compte rendu du pas 6 | moi | le ticket ou la PR de coprofirst |
+| 8 | « Ajouter pour vérification », puis soumettre (iOS et tvOS) | Philippe | état « En attente de vérification », puis « Prêt à la distribution » |
+| 9 | Constater la publication : `python3 scripts/verifier_publication.py --confirme tv` (iPhone, iPad et montre lus sur la fiche publique ; l'Apple TV n'a aucune source publique, Philippe la lit dans App Store Connect) | moi | sortie 0, collée dans le ticket de la version, qui se ferme alors |
+
+Le passage planifié « Publication constatée » (`.github/workflows/publication.yml`) rejoue le
+pas 9 chaque jour sur la plus haute étiquette : une étiquette non servie après
+`DELAI_REVUE_JOURS` jours ouvre un ticket. Une publication **manuelle** approuvée attend le
+geste « Publier cette version » de Philippe : c'est le pas 9 qui la voit en attente.
+
 ## Les versions publiées
 
-Chaque version soumise porte son étiquette `vX.Y.Z` ; celle qui est en ligne se relit sans
-compte, jamais ici : `curl "https://itunes.apple.com/lookup?bundleId=fr.coprofirst.app&country=fr"`
+Chaque version soumise porte son étiquette `vX.Y.Z` ; celle qui est **en ligne** ne se lit
+que chez le magasin, jamais à l'étiquette : `python3 scripts/verifier_publication.py`
 (<https://apps.apple.com/fr/app/coprofirst/id6834326392>).
 
 - **1.0** (build 1, `v1.0.0`) : approuvée le 14/11/2026 à 00:27, en ligne le 13/11 à 23:26 UTC.
@@ -108,7 +132,7 @@ Fait pour la 1.0, à ne pas refaire — et à reprendre pour chaque version :
 | **Icônes** (1.2, 27/11/2026) | App Store Connect refuse l'archive iPhone dont la montre embarquée n'a pas d'icône (ITMS-90713, ITMS-90391). La montre a son catalogue (`CoproFirstWatch/Ressources/Assets.xcassets`, rendu par `scripts/images_logo.py`) et `scripts/verifier-archive-montre.sh` exige une icône compilée et nommée de l'iPhone et de la montre. Avant d'envoyer, « Validate App » dans l'Organizer joue les mêmes contrôles sans déposer de build. |
 | **Contrôler l'app construite, pas `project.yml`** | Le 12/11/2026, l'archive Release sortait **iPhone et iPad** (XcodeGen posait `1,2` sur la cible) et une version écrite en dur. `ConformiteAppStoreTests` lit le plist de l'app construite ; relire aussi `codesign -d --entitlements` et la présence des symboles de simulation (aucun). |
 | **Jouer le geste exigé par la revue** | La feuille « Supprimer mon compte » **ne s'ouvrait pas** (attachée à la `Section` d'une `List`) et aucun test ne le voyait. `SuppressionCompteUITests` joue le parcours. Toute règle d'Apple qui demande un geste dans l'app se joue **à l'écran** avant l'envoi. |
-| **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). Pas d'iPhone Duo (#119). |
+| **Captures** | iPhone « Dynamic Island, écran moyen » : **1206 × 2622**, PNG sans transparence, 10 au plus. Produites au simulateur par défaut, thème clair, avec `TEST_RUNNER_CAPTURES` ; dans App Store Connect, l'onglet **« Aperçus d'app et captures d'écran »** — pas « En-tête et résultats de recherche », dont la zone n'accepte que 5244 × 2950. **iPad** (app universelle depuis #219) : captures **iPad 13 pouces** (2064 × 2752 ou 2048 × 2732, portrait ou paysage), au simulateur « iPad Pro 13-inch » (`APPAREIL=ipad`). Pas d'iPhone Duo (#119). **Depuis la 1.2** : captures **Apple Watch** sur la version iOS (une seule taille pour toutes les langues ; la plus grande, Ultra, 422 × 514), et captures **Apple TV** sur la version tvOS (1920 × 1080 ou 3840 × 2160, paysage) — tailles à relire sur la page « Screenshot specifications » d'Apple avant de produire. |
 | **Fiche** | Textes, notes de revue (`notes-revue.md`), compte de démonstration `user-copro@demo.coprofirst.fr`, confidentialité (à la 1.0 : 8 types, tous « Fonctionnement de l'app », liés à l'identité, sans suivi ; depuis la 1.1, ce que dit `confidentialite.md` §5), classification **4+** (contenu généré par les utilisateurs : Oui ; réseaux sociaux et messagerie : Non), gratuite, 175 pays, **Mac et Vision décochés**. |
 | **Publication** | Le choix « manuelle » du 13/11 n'a **pas** tenu : l'app est sortie dès l'approbation. **Vérifier le bouton radio avant « Ajouter pour vérification »** si l'on veut garder la main. |
 | **UE (DSA)** | Statut **non-commerçant** déclaré le 13/11/2026 (Business › Conformité) : app gratuite, libre, à titre personnel. À revoir si l'offre hébergée payante démarre — ticket #194. |
@@ -134,7 +158,8 @@ son contrat figé, coprofirst#3023). Sans elle, la CI du serveur refuse l'étiqu
 toutes ses PR ; le ticket de la version ne se ferme qu'avec ce renvoi (#354). Une version
 refusée à la revue garde son étiquette : elle se déclare de même, ou sort par `SORTIES`. La parité avec
 l'Android n'en est pas une condition (18/11/2026 : sortir ensemble est une occasion). La
-soumission reste le geste de Philippe.
+soumission reste le geste de Philippe. Une étiquette dit « soumise », jamais « publiée » :
+la publication se constate au pas 9 de « De bout en bout ».
 
 ## La première soumission — historique (1.0, 13/11/2026)
 

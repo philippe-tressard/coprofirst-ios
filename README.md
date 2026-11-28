@@ -42,10 +42,14 @@ Philippe :
 4. l'étiquette posée, la version se déclare dans coprofirst (`EN_CIRCULATION` et son contrat
    figé, coprofirst#3023) : la CI du serveur refuse une étiquette de l'app non déclarée. Le
    contrôle avant soumission dit la ligne à ouvrir (#354).
+5. une étiquette dit « soumise », jamais « publiée » : la version n'est publiée que lorsque
+   l'App Store la sert, constaté par `python3 scripts/verifier_publication.py` (#426), qui
+   refuse de dire « publiée » avant — et que le passage planifié « Publication constatée »
+   rejoue chaque jour sur la dernière étiquette.
 
 Le contrôle de cohérence qui précède chaque soumission, et l'étiquette qu'il pose :
 `python3 scripts/avant_soumission.py` (#205) — il refuse sur le moindre rouge comme sur un
-INCONNU, et ne soumet rien. Le pas à pas (archive, captures, fiche, ce qui a surpris pour la 1.0) et ce qui est
+INCONNU, et ne soumet rien. Le pas à pas de bout en bout (« De bout en bout », #426 : archive, envoi, App Store Connect, soumission, publication constatée) et ce qui est
 un geste de Philippe : skill
 [`publication-app-store`](.claude/skills/publication-app-store/SKILL.md).
 

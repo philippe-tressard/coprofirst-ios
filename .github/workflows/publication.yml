@@ -1,0 +1,53 @@
+# SPDX-FileCopyrightText: 2026 Philippe TRESSARD
+# SPDX-License-Identifier: AGPL-3.0-or-later WITH LicenseRef-CoproFirst-AppStore
+#
+# Publication constatée (#426), chaque jour : la plus haute étiquette v* est-elle SERVIE par
+# l'App Store ? (scripts/verifier_publication.py --etiquette). Une étiquette dit « soumise »,
+# jamais « publiée » : le 28/11/2026, la 1.2 attendait sans que rien ne le dise.
+#   - servie : vert ;
+#   - pas servie depuis moins de DELAI_REVUE_JOURS jours : en attente de la revue, vert
+#     (sortie 3, une information) ;
+#   - au-delà, ou une fiche illisible : rouge, et le ticket « CI rouge » (signaler_rouge.py).
+# L'Apple TV n'est pas jugée ici (aucune source sans compte) : le script le dit.
+# Aucune voie vers la revue d'Apple : ce passage lit une fiche publique, rien d'autre.
+# Actions épinglées par SHA de commit : une étiquette se déplace, un SHA non.
+name: Publication constatée
+
+on:
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: publication
+  cancel-in-progress: false
+
+jobs:
+  publication:
+    name: Version étiquetée servie par l'App Store
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Autotest (une version non servie est vue, une fiche illisible n'est pas un vert)
+        run: python3 -I scripts/verifier_publication.py --autotest
+      - name: Version étiquetée servie ?
+        run: |
+          set +e
+          python3 -I scripts/verifier_publication.py --etiquette | tee -a "$GITHUB_STEP_SUMMARY"
+          code=${PIPESTATUS[0]}
+          case "$code" in
+            0|3) exit 0 ;;
+            *) exit 1 ;;
+          esac
+      - name: Alerte d'un rouge de main ou d'un passage planifié (scripts/signaler_rouge.py, #362)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python3 -I scripts/signaler_rouge.py --signaler

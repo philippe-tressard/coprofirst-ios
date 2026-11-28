@@ -44,6 +44,7 @@ VRAIS = (
     "github.com", "githubusercontent.com",      # le dépôt, le contrat publié
     "w3.org",                                   # espaces de noms XML et SVG
     "chat.whatsapp.com",                        # le lien d'un groupe, reconnu tel que servi
+    "itunes.apple.com",                         # la fiche publique du magasin (verifier_publication.py, #426)
 )
 #: chemin → raison. Une dispense qui ne couvre plus rien échoue.
 DISPENSES: dict[str, str] = {

@@ -53,7 +53,10 @@ OK, ROUGE, INCONNU = "✅", "❌", "❓"
 LABEL = "bloque-soumission"
 #: Ce que seul Philippe peut voir : il le confirme, nommément (`--confirme`).
 CONFIRMATIONS = {
-    "captures": "captures déposées dans App Store Connect (iPhone ; iPad 13 pouces)",
+    "captures": "captures déposées dans App Store Connect (iPhone ; iPad 13 pouces ; Apple Watch ; "
+                "Apple TV sur la version tvOS — depuis la 1.2, #426)",
+    "rattachement": "build de CETTE version rattaché aux versions iOS et tvOS d'App Store Connect, "
+                    "et la publication choisie, manuelle ou automatique (#426)",
     "notes": "notes de version saisies, et description à jour (fiche de la skill)",
     "confidentialite": "étiquette App Privacy saisie, égale à la fiche (confidentialite.md)",
     "rendu": "rendu validé par Philippe pour CETTE version (simulateur, iPhone, TestFlight interne)",
