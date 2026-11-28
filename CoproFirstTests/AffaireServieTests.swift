@@ -42,7 +42,7 @@ struct AffaireServieTests {
     /// L'auteur d'une affaire engagée garde le crayon et les options ; il ne corrige plus le contenu.
     @Test func leCrayonSuitPeutCorriger() throws {
         let auteur = try affaire(#", "peut_modifier": false, "peut_corriger": true"#)
-        #expect(GesteAffaire.offerts(pour: auteur, conseil: false) == [.lien, .repondre, .modifier, .options])
+        #expect(GesteAffaire.offerts(pour: auteur, conseil: false) == [.partager, .repondre, .modifier, .options])
         #expect(auteur.contenuFige)
         let lecteur = try affaire(#", "peut_modifier": false, "peut_corriger": false"#)
         #expect(!GesteAffaire.offerts(pour: lecteur, conseil: false).contains(.modifier))

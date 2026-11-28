@@ -114,4 +114,16 @@ extension ServiceAPI: ServiceGestesAffaire {
         }
         return .init(contenu: correction.contenuHTML, nouveauStatut: nouveau, _type: correction.suivi?.type)
     }
+
+    func rendezVous(de affaire: Int, dans installation: Installation) async throws -> RendezVousAffaire {
+        let sortie = try await appeler {
+            try await client(installation.adresse).getTicketsTicketIdAgenda(path: .init(ticketId: affaire))
+        }
+        switch sortie {
+        case .ok(let ok): return RendezVousAffaire(try ok.body.json)
+        case .unprocessableContent: throw ErreurService.inattendue(422)
+        // 404 : plus de rendez-vous à proposer (passé, clos, annulé) ; 403 : plus lisible.
+        case .undocumented(let statut, let reponse): throw await Self.refus(statut, reponse)
+        }
+    }
 }

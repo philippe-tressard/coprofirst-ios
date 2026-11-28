@@ -14,4 +14,4 @@ GÉNÉRÉ par scripts/generer.py — NE PAS MODIFIER À LA MAIN.
 | Version du contrat | `2.14.0` (`info.version` du contrat publié, servie par chaque installation en `version_contrat` de `GET /config`) |
 | Préfixe servi | `/api` : les chemins du schéma s'entendent sous `https://<hôte>/api` |
 | Normalisation | `anyOf: [X, null]` réécrit en `type: [X, "null"]` (`$ref` : nullabilité retirée) — le générateur supprimait ces champs ; paramètres `in: cookie` retirés — iOS envoie les cookies de session seul |
-| Au-dessus du plancher | aucune route |
+| Au-dessus du plancher | `/tickets/{ticket_id}/agenda` et `AgendaServi`, `LiensAgenda`, de v3.128.0 (contrat 2.15.0) — porte `VersionContrat.agenda` |

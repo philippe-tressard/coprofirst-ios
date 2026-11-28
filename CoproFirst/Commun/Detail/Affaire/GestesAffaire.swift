@@ -4,18 +4,18 @@
 import Foundation
 
 /// Une icône du bandeau d'une affaire. L'ORDRE est celui de la rangée du site
-/// (`ActionsTicket.svelte`, arbitré le 18/08/2026) : 🔗 · 🚩 · 💬 · 🔄 · ✏️ · options · 📦.
+/// (`ActionsTicket.svelte`, arbitré le 18/08/2026) : Partager (🔗 jusqu'à coprofirst#3164) · 🚩 · 💬 · 🔄 · ✏️ · options · 📦.
 ///
 /// ✏️ modifie l'AFFAIRE (décision du 10/11/2026, #91) ; corriger une suite de son
 /// Historique attend que le serveur en serve le droit (coprofirst#2646).
 enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
-    case lien, signaler, repondre, suite, modifier, options, archiver
+    case partager, signaler, repondre, suite, modifier, options, archiver
 
     var id: String { rawValue }
 
     var libelle: String {
         switch self {
-        case .lien: "Copier le lien"
+        case .partager: "Partager"
         case .signaler: TextesSignalement.titre
         case .repondre: "Répondre"
         case .suite: "Ajouter une suite"
@@ -29,7 +29,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
     /// Le symbole SF le plus proche de l'icône du site (`IconeAction`, Lucide).
     var symbole: String {
         switch self {
-        case .lien: "link"
+        case .partager: "square.and.arrow.up"
         case .signaler: "flag"
         case .repondre: "text.bubble"
         case .suite: "arrow.triangle.2.circlepath"
@@ -41,7 +41,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
 
     /// Les icônes offertes à CE lecteur, dans l'ordre du site. Chaque droit est celui
     /// que le serveur sert avec l'affaire ; l'app n'en ajoute aucun, elle en retire :
-    /// - 🔗 à tous : l'adresse ne donne pas plus d'accès que l'écran (`BoutonLien`) ;
+    /// - Partager à tous : l'adresse ne donne pas plus d'accès que l'écran (`MenuPartage`) ;
     /// - 🚩 à qui la lit sans pouvoir la corriger, hors des Archives — son auteur, le
     ///   conseil et l'administration ont d'autres gestes —, si l'installation le sert
     ///   (`moderation` : `installation.sert(.plancher)`, coprofirst#2861, #286, #313) ;
@@ -55,7 +55,7 @@ enum GesteAffaire: String, CaseIterable, Identifiable, Sendable {
     static func offerts(pour affaire: DetailAffaire, conseil: Bool, moderation: Bool = false) -> [GesteAffaire] {
         allCases.filter { geste in
             switch geste {
-            case .lien: true
+            case .partager: true
             case .signaler: moderation && !affaire.droits.corriger && !affaire.archivee
             case .repondre: affaire.droits.repondre && !conseil && !affaire.estActualite && !affaire.fusionnee
             case .suite: affaire.droits.changerEtat

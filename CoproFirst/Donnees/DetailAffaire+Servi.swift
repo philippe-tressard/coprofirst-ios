@@ -6,9 +6,11 @@ import Foundation
 
 extension DetailAffaire {
     /// L'affaire servie et ses suites, par les types générés — le MÊME branchement pour le
-    /// service réel et l'API simulée.
+    /// service réel et l'API simulée. `agenda` : ce que le corps servi porte au-dessus du
+    /// plancher (`ChampsAgenda`, #435), `nil` d'une installation antérieure.
     static func lue(
-        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead]
+        _ ticket: Components.Schemas.TicketRead, evolutions: [Components.Schemas.TicketEvolutionRead],
+        agenda: ChampsAgenda? = nil
     ) -> DetailAffaire {
         let suites = evolutions.map { evolution in
             var suite = SuiteAffaire(evolution: evolution)
@@ -30,6 +32,7 @@ extension DetailAffaire {
         detail.rythme = ticket.contrat?.frequenceLibelle ?? ticket.frequenceLibelle
         // « Qui la lit », servie (`lecture`, contrat 1.22.0, #129).
         detail.lecture = ticket.lecture.map(Lecture.init)
+        detail.agendaPropose = ChampsAgenda.propose(agenda, pour: ticket.id)
         return detail
     }
 

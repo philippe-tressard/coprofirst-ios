@@ -1053,6 +1053,56 @@
         "title": "AfficheEcran",
         "type": "object"
       },
+      "AgendaServi": {
+        "description": "`GET /tickets/{id}/agenda` : le rendez-vous, et ses liens en ligne.",
+        "properties": {
+          "debut": {
+            "format": "date-time",
+            "title": "Debut",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "fin": {
+            "format": "date-time",
+            "title": "Fin",
+            "type": "string"
+          },
+          "lien": {
+            "title": "Lien",
+            "type": "string"
+          },
+          "liens": {
+            "$ref": "#/components/schemas/LiensAgenda"
+          },
+          "lieu": {
+            "title": "Lieu",
+            "type": "string"
+          },
+          "titre": {
+            "title": "Titre",
+            "type": "string"
+          },
+          "uid": {
+            "title": "Uid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "titre",
+          "debut",
+          "fin",
+          "lieu",
+          "description",
+          "lien",
+          "liens"
+        ],
+        "title": "AgendaServi",
+        "type": "object"
+      },
       "AlerteLue": {
         "properties": {
           "code": {
@@ -10459,6 +10509,35 @@
           "deja_valide"
         ],
         "title": "LienRead",
+        "type": "object"
+      },
+      "LiensAgenda": {
+        "description": "Les pages de saisie des agendas en ligne, préremplies.",
+        "properties": {
+          "google": {
+            "title": "Google",
+            "type": "string"
+          },
+          "microsoft365": {
+            "title": "Microsoft365",
+            "type": "string"
+          },
+          "outlook": {
+            "title": "Outlook",
+            "type": "string"
+          },
+          "yahoo": {
+            "title": "Yahoo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "google",
+          "outlook",
+          "microsoft365",
+          "yahoo"
+        ],
+        "title": "LiensAgenda",
         "type": "object"
       },
       "LieuRead": {
@@ -38303,6 +38382,49 @@
           }
         },
         "summary": "Update Ticket",
+        "tags": [
+          "tickets",
+          "tickets"
+        ]
+      }
+    },
+    "/tickets/{ticket_id}/agenda": {
+      "get": {
+        "operationId": "get_tickets_ticket_id_agenda",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "ticket_id",
+            "required": true,
+            "schema": {
+              "title": "Ticket Id",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgendaServi"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Agenda De L Affaire",
         "tags": [
           "tickets",
           "tickets"

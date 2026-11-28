@@ -23,7 +23,7 @@ extension XCUIApplication {
                 .matching(NSPredicate(format: "identifier == 'affaire.numero' AND label == %@", numero)).firstMatch
             : navigationBars[numero]
         guard numeroLu.apparait() else { return false }
-        return elementAcces("affaire.lien").apparait()
+        return elementAcces("affaire.partager").apparait()
     }
 
     /// ✏️ du bandeau, JUSQU'À la feuille « Modifier » lue (son « Enregistrer ») — le seul

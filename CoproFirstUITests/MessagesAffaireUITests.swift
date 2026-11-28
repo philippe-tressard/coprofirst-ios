@@ -20,7 +20,7 @@ final class MessagesAffaireUITests: XCTestCase {
         let gestes = app.elementAcces("message.gestes.501")
         // Au-dessus du bandeau du bas (🔗 y est offert à tous) : sous son verre, le « ⋯ » ne
         // s'ouvre pas (iOS 26.5).
-        let bandeau = app.elementAcces("affaire.lien")
+        let bandeau = app.elementAcces("affaire.partager")
         XCTAssertTrue(app.amener(gestes, auDessusDe: bandeau), "son message offre ses gestes")
         app.toucher(gestes)
         let modifier = app.elementAcces("message.geste.modifier")

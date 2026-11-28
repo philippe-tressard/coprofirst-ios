@@ -232,6 +232,15 @@ réponse, un commentaire ou une suite d'un autre résident nommé, cache tout ce
 publie, pour soi seul, après confirmation ; Profil › Personnes masquées le défait.
 Ces routes sont au plancher depuis v3.121.2 (#313) : toute résidence qui s'ouvre les
 sert, aucune porte ne les garde plus.
+**Partager une affaire et l'ajouter à son agenda** (coprofirst v3.128.0, contrat 2.15.0,
+#435) : l'icône « Partager » du bandeau remplace 🔗, comme sur le site — « Copier le lien »,
+« Partager… » (la feuille de partage d'iOS) et, pour une affaire datée à venir, « Ajouter à
+Calendrier », qui ouvre la feuille « Nouvel évènement » d'iOS préremplie du rendez-vous que
+la résidence compose (titre, dates, lieu, description, lien) : la personne choisit son
+calendrier et ajoute, sans autorisation à donner — l'app ne lit aucun calendrier. « Autre
+agenda… » ouvre Google Agenda, Outlook.com, Outlook — Microsoft 365 ou Yahoo Agenda. Une
+résidence plus ancienne ne propose pas l'agenda : le champ et la route sont au-dessus du
+plancher, derrière leur porte. Le Manuel utilisateur, servi par la résidence, le décrit.
 L'accueil et la démo ne s'offrent qu'à un appareil qui n'a encore ouvert aucune
 résidence ; ensuite l'app rouvre la dernière : Face ID demandé d'emblée si la
 session est gardée, sinon la connexion avec l'adresse et le courriel retenus. La

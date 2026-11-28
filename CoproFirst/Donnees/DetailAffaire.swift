@@ -61,6 +61,9 @@ struct DetailAffaire: Hashable, Sendable {
     var comptesRendus: [CompteRenduAffaire]? = []
     /// Sa synthèse, d'une affaire close seulement (#178).
     var synthese: SyntheseAffaire?
+    /// « Ajouter à mon agenda » a un sens — datée, ni close ni annulée, pas finie : SERVI
+    /// (`agenda_propose`, contrat 2.15.0, au-dessus du plancher, #435), jamais recalculé ici.
+    var agendaPropose = false
 
     var estActualite: Bool { categorie == "actualite" }
 
